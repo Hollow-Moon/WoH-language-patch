@@ -1,0 +1,1236 @@
+﻿/// HistoryLayer.override.tjs - 履歴レイヤーのオーバーライド
+@if(__HISTORYLAYER_OVERRIDE_DEFINED__==0)
+@set(__HISTORYLAYER_OVERRIDE_DEFINED__=1)
+
+@set(USE_FONT_MESSAGE_SETTING = 0)	// =1:メッセージレイヤと同じフォントでバックログを表示する, =0:従来のMSP明朝固定
+
+KAGLoadScript("ExButtonLayer.tjs");
+KAGLoadScript("ScrollBarLayer.tjs");
+
+class HistoryLayer extends HistoryLayerOriginal
+{
+	var historyFontSize	= [];	//	各ページがどのフォントサイズで表示されていたかを記録
+	var historyLineSpacing	= [];	//	行間の記録
+	var currentRuby		= void;	//	次の文字に付与されるルビ
+	var historyRuby		= [];	//	ルビ情報(ルビ文字, 桁, align)
+	var historyInfo		= [];	//	履歴に対応するラベル/タイトル情報(currentLabel/currentPageName/curStorage)の文字列形式
+
+	var historyStack	= %[];	//	通常使用時の履歴をとっておく場所(リプレイやシナリオジャンプ時に退避させる)
+
+	var marginLF = 4;				//	行送り時の行間想定値
+
+	var scroll = void;
+	var controlWidth	= 27;
+	var controlHeight	= 28;
+	var keyDisregardOnce = true;
+	var historyLabelColor = 0;
+
+	var bgimage = void;
+	var bgimageLayer = void;
+
+	var	marginRCh	= 2;
+
+	var	wheelEnabled= true;	//	マウスホイールが使用可能かどうか
+@if(0)
+	var	_dataPage	= 0;
+	property dataPage
+	{
+		setter(v)
+		{
+			if(dataPage !== v)
+			{
+				dmt("        dataPage = "+dataPage+" → "+v);
+				_dataPage	= v;
+			}
+		}
+		getter	{ return _dataPage; }
+	}
+@endif
+
+	function HistoryLayer()
+	{
+		super.HistoryLayerOriginal(...);
+		historyColor			= 0xffffff;		//	履歴文字色
+		historyLabelColor		= 0x7f7f7f;		//	履歴内のラベル色
+
+		focusable	= false;
+	}
+
+	function finalize()
+	{
+		invalidate bgimageLayer if bgimageLayer !== void;
+		super.finalize(...);
+	}
+
+	property visible
+	{
+		setter(v)
+		{
+			super.visible	= v;
+			absolute	= 2000000 if v;
+		}
+		getter	{ return super.visible; }
+	}
+
+	function clear()
+	{
+		data = [];
+		lineStart = [];
+		actionInfo = [];
+
+		if(everypage)
+		{
+			historyFontSize		= [];
+			historyLineSpacing	= [];
+			historyRuby			= [];
+			historyInfo			= [];
+		}
+
+		dataStart = 0;
+		dataLines = 0;
+		dataPos = 0;
+		dataPages = 0;
+		dataPage = 0;
+
+		if(everypage)
+		{
+			data[dataPage]					= [];
+			lineStart[dataPage]				= [];
+			actionInfo[dataPage] 			= [];
+
+			historyFontSize[dataPage]		= [];
+			historyLineSpacing[dataPage]	= [];
+			historyRuby[dataPage]			= void;
+			historyInfo[dataPage]			= "";
+		}
+		else
+			dataLines = 1;
+
+		currentLine = "";
+
+		currentAction = void;
+		currentActionExp = void;
+		currentActionID = 1;
+
+		lastHighlightedActionID = 0;
+
+		calcRelinePos();
+	};
+
+	//	スタックエリアに履歴データをまるごと退避してクリアする
+	function pushStackHistory()
+	{
+		with(historyStack)
+		{
+			if( .data )
+			{
+				throw new Exception("空でないスタックにpushしようとしました。内容が破壊されます。");
+				return;
+			}
+			.data		= [];	.data.assignStruct(data);
+			.lineStart	= [];	.lineStart.assignStruct(lineStart);
+			.actionInfo	= [];	.actionInfo.assignStruct(actionInfo);
+
+			if(everypage)
+			{
+				.historyFontSize		= [];	.historyFontSize.assignStruct(historyFontSize);
+				.historyLineSpacing		= [];	.historyLineSpacing.assignStruct(historyLineSpacing);
+				.historyRuby			= [];	.historyRuby.assignStruct(historyRuby);
+				.historyInfo			= [];	.historyInfo.assignStruct(historyInfo);
+			}
+			else
+			{
+				.dataLines	= dataLines;
+			}
+
+			.dataStart	= dataStart;
+			.dataLines	= dataLines;
+			.dataPos	= dataPos;
+			.dataPages	= dataPages;
+			.dataPage	= dataPage;
+
+			.currentLine				= currentLine;
+			.currentAction				= currentAction;
+			.currentActionExp			= currentActionExp;
+			.currentActionID			= currentActionID;
+			.lastHighlightedActionID	= lastHighlightedActionID;
+		}
+
+		clear();
+//		dm("pushStackHistory()");
+	}
+
+	//	スタックしておいた履歴に戻す
+	function popStackHistory()
+	{
+		with(historyStack)
+		{
+			if( ! .data )
+			{
+				throw new Exception("空のスタックからpopしようとしました。内容が破壊されます。");
+				return;
+			}
+
+			clear();
+
+			data.assignStruct(.data);				delete .data;
+			lineStart.assignStruct(.lineStart);		delete .lineStart;
+			actionInfo.assignStruct(.actionInfo);	delete .actionInfo;
+
+			if(everypage)
+			{
+				historyFontSize.assignStruct(.historyFontSize);			delete .historyFontSize;
+				historyLineSpacing.assignStruct(.historyLineSpacing);	delete .historyLineSpacing;
+				historyRuby.assignStruct(.historyRuby);					delete .historyRuby;
+				historyInfo.assignStruct(.historyInfo);					delete .historyInfo;
+			}
+			else
+			{
+				dataLines	= .dataLines;	delete .dataLines;
+			}
+
+			dataStart	= .dataStart;		delete .dataStart;
+			dataLines	= .dataLines;		delete .dataLines;
+			dataPos		= .dataPos;			delete .dataPos;
+			dataPages	= .dataPages;		delete .dataPages;
+			dataPage	= .dataPage;		delete .dataPage;
+
+			currentLine				= .currentLine;				delete .currentLine;
+			currentAction			= .currentAction;			delete .currentAction;
+			currentActionExp		= .currentActionExp;		delete .currentActionExp;
+			currentActionID			= .currentActionID;			delete .currentActionID;
+			lastHighlightedActionID	= .lastHighlightedActionID;	delete .lastHighlightedActionID;
+		}
+		//念のため再生成
+		historyStack = %[];
+
+		calcRelinePos();
+
+//		dm("popStackHistory()");
+	}
+
+	//配列データの中を調べてデフォルト値もしくはvoidしか入っていなければ配列自体を削除する
+	function compressArray( obj, def )
+	{
+		if( obj === void )
+			return void;
+
+		var notdef = 0;
+
+		for( var i=0; i<obj.count; i++ )
+		{
+			if( obj[i] instanceof "Array" )
+			{
+				obj[i] = compressArray( obj[i], def );
+				if( obj[i] !== void )
+					notdef++;
+			}
+			else
+			{
+				if( obj[i] != def && obj[i] !== void )
+					notdef++;
+				else
+					obj[i] = void;
+			}
+		}
+		if( ! notdef )
+			obj = void;
+
+		return obj;
+	}
+
+	function getActionInfo2(n, m)
+	{
+		// n ページ目の、m 行目のアクション情報を得る
+		n += dataStart;
+		if(n >= maxPages) n -= maxPages;
+		return actionInfo[n] != void ? actionInfo[n][m] : void;
+	}
+
+	function save()
+	{
+		//※注意：配列およびディクショナリの保存時は参照代入ではなく実体をコピーしないと
+		//栞のsave/loadは問題ないがオンラインでの通過記録ジャンプで問題となる
+
+		if(!storeState) return void;
+		var ret;
+		var dic = %[];
+
+		with(dic)
+		{
+			lineStart = [] if lineStart === void || ! isvalid lineStart;
+			actionInfo = [] if actionInfo === void || ! isvalid actionInfo;
+			data = [] if data === void || ! isvalid data;
+
+			(.lineStart = []).assignStruct(lineStart);
+			(.actionInfo = []).assignStruct(actionInfo);
+			(.data = []).assignStruct(data);
+
+			.lineStart = compressArray( .lineStart, 0 );
+			.actionInfo = compressArray( .actionInfo, void );
+			.data = compressArray( .data, void );
+
+			delete .lineStart if .lineStart === void;
+			delete .actionInfo if .actionInfo === void;
+			delete .data if .data === void;
+
+			.dataStart = dataStart if dataStart;
+			.dataPos = dataPos if dataPos;
+			.dataPages = dataPages if dataPages;
+			.dataPage = dataPage if dataPage && dataPages != dataPage;
+			.dataLines = dataLines if dataLines;
+			.currentLine = currentLine if currentLine != "";
+			.currentAction = currentAction if currentAction !== void;
+			.currentActionExp = currentActionExp if currentActionExp !== void;
+			.currentActionID = currentActionID if currentActionID != 1;
+			.lastHighlightedActionID = lastHighlightedActionID if lastHighlightedActionID;
+
+			if(everypage)
+			{
+				//dm("historyLayer: save");
+				historyFontSize = [] if historyFontSize === void || ! isvalid historyFontSize;
+				historyLineSpacing = [] if historyLineSpacing === void || ! isvalid historyLineSpacing;
+				historyRuby = [] if historyRuby === void || ! isvalid historyRuby;
+				historyInfo = [] if historyInfo === void || ! isvalid historyInfo;
+
+				(.historyFontSize = []).assignStruct(historyFontSize);
+				(.historyLineSpacing = []).assignStruct(historyLineSpacing);
+				(.historyRuby = []).assignStruct(historyRuby);
+				(.historyInfo = []).assignStruct(historyInfo);
+
+				.historyFontSize = compressArray( .historyFontSize, fontHeight );
+				.historyLineSpacing = compressArray( .historyLineSpacing, 0 );
+				.historyRuby = compressArray( .historyRuby, void );
+				.historyInfo = compressArray( .historyInfo, void );
+
+				delete .historyFontSize if .historyFontSize === void;
+				delete .historyLineSpacing if .historyLineSpacing === void;
+				delete .historyRuby if .historyRuby === void;
+				delete .historyInfo if .historyInfo === void;
+			}
+		}
+		//DEBUG
+		//(Dictionary.saveStruct incontextof dic)(System.exePath+"savedata/hist.tjs");
+		//DEBUG
+		return dic;
+	}
+
+	function load(dic)
+	{
+		//※注意：配列およびディクショナリの保存時は参照代入ではなく実体をコピーしないと
+		//栞のsave/loadは問題ないがオンラインでの通過記録ジャンプで問題となる
+
+		if(!storeState) return;
+		if(dic === void) return;
+
+		clear();
+
+		with(dic)
+		{
+			if( .data !== void )
+			{
+				data.assignStruct(.data);		//先に復元し、配列領域の参照用にする
+
+				if(everypage)
+				{
+					historyFontSize.assignStruct(.historyFontSize) if .historyFontSize !== void;
+					historyLineSpacing.assignStruct(.historyLineSpacing) if .historyLineSpacing !== void;
+					historyRuby.assignStruct(.historyRuby) if .historyRuby !== void;
+					historyInfo.assignStruct(.historyInfo) if .historyInfo !== void;
+				}
+				lineStart.assignStruct(.lineStart) if .lineStart !== void;
+				actionInfo.assignStruct(.actionInfo) if .actionInfo !== void;
+				data.assignStruct(.data) if .data !== void;
+				dataStart = .dataStart if .dataStart !== void;
+				dataPos = .dataPos if .dataPos !== void;
+				dataPages = .dataPages if .dataPages !== void;
+				dataPage = (.dataPage !== void) ? .dataPage : dataPages;
+				dataLines = .dataLines if .dataLines !== void;
+				currentLine = .currentLine if .currentLine !== void;
+				currentAction = .currentAction if .currentAction !== void;
+				currentActionExp = .currentActionExp if .currentActionExp !== void;
+				currentActionID = .currentActionID if .currentActionID !== void;
+				lastHighlightedActionID = .lastHighlightedActionID if .lastHighlightedActionID !== void;
+			}
+		}
+
+		calcRelinePos();
+
+		correctDatas();		//配列の整合
+
+		//dm("historyLayer: load");
+	}
+
+	function store(ch)
+	{
+		if(currentLine!==void && currentLine.length<2)
+		{
+			//	計測用にフォントサイズを変更し、更に記録しておく
+			historyLineSpacing[dataPage]= [] if historyLineSpacing[dataPage] == void;
+			if( window.current.lineSpacing != window.current.defaultLineSpacing )		//	デフォルトは保存しない
+				historyLineSpacing[dataPage][dataPos]	= window.current.lineSpacing;	//	行間は行単位で記録
+		}
+		font.height	= window.current.fontSize;
+@if(USE_FONT_MESSAGE_SETTING==1)
+		//メッセージレイヤ用のフォント設定をそのまま使う
+		font.face = window.current.fontFace;
+		font.bold = window.current.bold;
+@endif
+
+		if(!autoReturn)
+		{
+			// 自動改行を行わない場合
+			currentLine += ch;
+		}
+		else
+		{
+			// 自動改行を行う場合
+			var len	= font.getTextWidth(currentLine) + (currentLine == void ? 0 : currentLine.length) * window.current.pitch;
+			currentLine += ch;
+//			dm("relinePos = "+relinePos+" / x = "+len);
+			if(len >= relinePos)
+			{
+				var curlen = currentLine.length;
+				var lastch = curlen >= 2 ? currentLine[curlen - 2] : '';
+
+				if(((lastch=='' || wwLeading.indexOf(lastch)==-1) &&
+					wwFollowing.indexOf(ch)==-1) ||
+					(lastch!='' && wwFollowingWeak.indexOf(lastch)!=-1 &&
+						wwFollowingWeak.indexOf(ch)!=-1) || len > limitPos)
+				{
+					// 最後に描画したのが行末禁則文字でない場合
+					// しかもこれから描画するのが行頭禁則文字でない
+					// 場合
+					// または弱禁則文字が連続していない場合
+					// はたまたこれから描画するのが強禁則文字ではなくて、
+					// 確実に 右端を越える場合
+					// ( この場合は余白は考えない )
+					currentLine=
+						currentLine.substring(0, currentLine.length - ch.length);	//	追加した文字を取り除く
+					reline();
+					currentLine = ch;
+				}
+			}
+		}
+
+		//	フォントサイズを保存
+		if( font.height != fontHeight )		//デフォルトは保存しない
+		{
+			if(historyFontSize[dataPage] == void)
+				historyFontSize[dataPage]	= [];
+			if(historyFontSize[dataPage][dataPos] == void)
+				historyFontSize[dataPage][dataPos]	= [];
+			for(var i=0; i<ch.length; i++)
+				historyFontSize[dataPage][dataPos].add(font.height);
+		}
+
+		//	ルビを保存
+		if(currentRuby)
+		{
+			historyRuby[dataPage]= [] if historyRuby[dataPage]==void;
+			if(currentRuby[5])
+			{//	一文字ずつに分けて割り付ける
+				var	text= currentRuby[0];
+				for(var i=0; i<text.length; i++)
+				{
+					var	rb	= [ currentRuby[0][i], dataPos, currentLine.length + i - 1, currentRuby[3] ];
+					rb[5]	= currentRuby[6] if currentRuby[6] != void;
+					historyRuby[dataPage].add(rb);
+				}
+			}
+			else
+			{
+				currentRuby[1]	= dataPos;				//	行
+				currentRuby[2]	= currentLine.length-1;	//	桁
+				currentRuby.erase(5);
+				historyRuby[dataPage].add(currentRuby);
+			}
+			currentRuby	= void;
+		}
+
+		//	ラベル情報を保存
+		var lb = window.currentLabel;
+		var pn = window.currentPageName;
+		var sc = window.mainConductor.curStorage;
+
+		if( typeof global.quickjump_object != "undefined" )
+		{
+			var heads = quickjump_object.QUICK_HEADS;
+			for( var i=0; i<heads.count; i++ )
+				if( lb == heads[i] ) lb = "*page0";
+		}
+
+		if( historyInfo[dataPage] != lb + "/" + pn + "/" + sc )
+		{
+			//dm("⇒history store: " + window.currentLabel + "/" + window.currentPageName + " → " + lb + "/" + pn);
+			historyInfo[dataPage] = lb + "/" + pn + "/" + sc;
+		}
+		window.onUpdateScenarioLabelByHistory(lb, pn, window.mainConductor.curStorage);
+	}
+
+	function backspace(elm)
+	{
+		// 指定の文字数バックスペース
+		var	cnt	= elm.cnt !== void ? +elm.cnt : 1;
+		for(var i=0; i<cnt; i++)
+		{
+			if(currentLine.length == 0)
+			{
+				if(dataPos == 0)
+					return;	//	ページを超えては消さない
+
+				lastLine	= "";
+				dataPos--;
+				currentLine	= lastLine;
+				if(everypage)
+					data[dataPage].count	= dataPos;
+				else
+					data.count	= dataPos;
+			}
+			currentLine	= currentLine.substr(0, currentLine.length - 1);
+		}
+
+		// 不要になったルビを削除
+		var	rubys	= historyRuby[dataPage];
+		if(rubys != void)
+		{
+			for(var i=rubys.count-1; i>=0; i--)
+			{
+				if(rubys[i][1] < dataPos || (rubys[i][1] == dataPos && rubys[i][2] < currentLine.length))
+					break;
+				rubys.erase(i);
+			}
+		}
+	}
+
+	function storeRuby(elm)
+	{
+		//				ルビ		行	桁	表示位置(c,l)	割付先文字数	一文字ずつ割り付けるか？
+		currentRuby	= [ elm.text,	0,	0,	elm.pos[0],		+elm.char,		elm.o2o ];
+		currentRuby.add(elm.offset) if elm.offset != void;
+	}
+
+	function repage()
+	{
+		//何も出力されていない場合
+		if( ! chkHistEmpty() )
+		{
+			//カレントページを更新しないでsuper.repage()内の初期化処理のみ走らせる
+			endAction();
+			lastLine	= currentLine;
+			lastAction = currentAction;
+
+			dataPos	= 0;
+			data[dataPage]	= [];
+			lineStart[dataPage]	= [];
+			lineStart[dataPage][dataPos]	= indentPos;
+			actionInfo[dataPage] = [];
+			actionInfo[dataPage][dataPos] = currentAction;
+
+			currentAction = void;
+			currentLine	= '';
+			continueAction();
+
+			afterRepage();
+
+			return;
+		}
+		super.repage(...);
+		if(everypage)
+			afterRepage();
+	}
+
+	function afterRepage()
+	{
+		//	新しい入れ物を作る
+		historyFontSize[dataPage]	= [];
+		historyLineSpacing[dataPage]= [];
+		historyRuby[dataPage]		= void;
+		historyInfo[dataPage]		= "";
+	}
+
+	//空の履歴かどうかチェックする true:中身がある / false:空
+	function chkHistEmpty()
+	{
+		if( data === void || ! isvalid data )
+		{
+//				dm("   chkHistEmpty: return false (data is void or invalid)");
+			return false;
+		}
+
+		var tmp = data[dataPage];
+		if( tmp === void || ! isvalid tmp )
+			contitune;
+
+		for( var j=0; j<tmp.count; j++ )
+		{
+			if( tmp[j] === void || tmp[j] == "" )
+				continue;
+//				dm("   chkHistEmpty: return true [" + tmp[j] + "]");
+			return true;
+		}
+//			dm("   chkHistEmpty: return false (not found text data)");
+		return false;
+	}
+
+	function drawRuby(x, y, text, cw, pos="c", msg)
+	{
+@if(USE_FONT_MESSAGE_SETTING==1)
+		//メッセージレイヤ用のフォント設定をそのまま使う
+		font.face = window.current.fontFace;
+		font.bold = window.current.rubyBold;
+@endif
+		font.height	= msg.rubySize;
+		if(pos == "c")
+			x	-= (font.getTextWidth(text) - cw) \ 2;	//	センタリング
+		drawText(x, y + msg.lineSpacing - msg.rubySize - msg.rubyOffset, text, historyColor, 255, antialiased);
+@if(USE_FONT_MESSAGE_SETTING==1)
+		//ルビを打ったあとは太字設定を戻す
+		font.bold = window.current.bold;
+@endif
+	}
+
+	function drawPage()
+	{
+@if(USE_FONT_MESSAGE_SETTING==1)
+		//メッセージレイヤ用のフォント設定をそのまま使う
+		font.face = window.current.fontFace;
+		font.bold = window.current.bold;
+@endif
+//		dm("drawPage(): "+font.face, font.bold, font.height);
+		var page	= getPage(dispStart);
+		var	n	= dispStart + dataStart;
+		if(n >= maxPages) n -= maxPages;
+		var fszs	= historyFontSize[n];		//	表示開始ページのフォントサイズ
+		var lspcs	= historyLineSpacing[n];	//	行間
+		var ruby	= historyRuby[n];			//	ページのルビ
+		var inf		= historyInfo[n];			//	ラベル情報
+		var lastls	= window.current.defaultLineSpacing;
+		var rc = 0;
+		var offy	= lineHeight + marginLF;	//	ページ上オフセット
+		var	msg		= window.fore.messages[0];
+
+		if(verticalView)
+		{
+			var x = width - marginR, y;
+			for(var i = 0; i < repageLine; i++)
+			{
+				//	フォントサイズを変更
+				fszs = [] if fszs === void;
+				fszs[i] = [] if fszs[i] === void;
+				font.height = fontHeight;
+				font.height	= fszs[i] if fszs != void && fszs[i] != void && font.height != fszs[i];
+
+				if(page[i]!="")
+				{
+					drawText(x, marginT + getLineStart2(dispStart, i),
+						page[i], historyColor, 255, antialiased);
+
+					//	ルビ
+					if(ruby)
+					{
+						var fh = font.height;
+						var r;
+						while((r = ruby[rc]) != "" && r[1]==i)	//	同じ行のルビを描画
+						{
+							var ry = y + font.getTextHeight(page[i].substr(0, r[2]));
+							if(r[3]=="c")
+							{//	センタリングする
+								var ch = font.getTextHeight(page[i].substr(r[2], r[4] == void ? 1 : r[4]));
+								ry -= (font.getTextHeight(r[0]) - ch) \ 2;
+							}
+							ry	+= r[5];	//	offset
+							font.height = int(fh * 0.43 + 0.5);	//	ruby用フォントサイズ
+							drawText(x-font.height+1, ry, r[0], historyColor, 255, antialiased);
+							font.height	= fh;
+							rc++;	//	次のルビ
+						}
+					}
+				}
+				x -= font.height + (lspcs[i]!==void ? (lastls=lspcs[i]) : lastls);	//	次行へ
+			}
+		}
+		else if(inf != "")
+		{
+			var	y		= marginT, maxx = 0;
+			var	right	= width - marginR;
+			var	nrx, nrc, rt, rp;	//	描画を開始する位置、ルビ終了の文字番号、ルビテキスト、ルビ位置
+			var	rcp, rcc;	//	ルビ当て開始位置、ルビ当て文字数
+			for(var l=0; l<repageLine; l++)
+			{
+				var	x = marginL;
+				var	line	= page[l];
+				var	maxfh	= font.height = fontHeight;	//	この行の最大サイズ / フォントサイズは行毎に変更される場合があるのでリセットする
+				if(line != "")
+				{
+					fszs = [] if fszs === void;
+					var	fhs	= fszs[l];
+					fhs = [] if fhs === void;
+					for(var c=0; c<fhs.count; c++)
+						maxfh	= fhs[c] if maxfh < fhs[c];
+					var	len	= line.length;
+					var	cw	= 0;
+					for(var c=0; c<len; c++)
+					{
+						font.height	= ( fhs[c] !== void ) ? fhs[c] : fontHeight;
+						cw	= font.getTextWidth(line[c]);
+						drawText(x, y + msg.lineSpacing, line[c], historyColor, 255, antialiased);
+
+						if(ruby)
+						{
+							var r;
+							while((r = ruby[rc]) != "" && r[1] == l && r[2] == c)
+							{
+								if(r[4] > 1)
+								{//	複数文字に対応するルビ
+									nrx	= x + r[5];	//	描画を開始する文字の位置
+									rcp	= r[2];
+									rcc	= r[4];
+									nrc	= rcp + rcc - 1;
+									rt	= r[0];
+									rp	= r[3];
+								}
+								else
+								{//	一文字に対応するルビ
+									drawRuby(x + r[5], y, r[0], cw, r[3], msg);
+								}
+								rc++;
+							}
+						}
+						if(nrc !== void && c == nrc)
+						{//	複数文字に対応するルビを描画
+							drawRuby(nrx, y, rt, x + cw - nrx, rp, msg);
+							nrc	= void;
+						}
+
+						x	+= cw + msg.pitch;
+					}
+					if(nrc !== void)
+					{//	行をまたぐので、とりあえず割り振る
+						var	tc	= len - rcp;					//	割り振り先の文字数
+						var	rc	= int(tc * rt.length / rcc);	//	割り振るルビ文字数
+						drawRuby(nrx, y, rt.substr(0, rc), x - nrx, rp, msg);
+
+						//	次行以降の分を残す
+						rt	= rt.substr(rc);
+						rcp	= 0;
+						rcc	-= tc;
+						nrc	= rcp + rcc - 1;
+						nrx	= marginL;
+					}
+				}
+				y	+= maxfh + msg.lineSpacing;
+//				maxx= Math.max(x, maxx);
+			}
+//			region	= %[left:marginL, top:marginT, width:maxx-marginL, height:y-marginT];
+			//クイックジャンプ対応であればジャンプ可否を調べてボタン状態を変更、ボタンが押されたら飛ぶ位置を特定する
+			if( typeof global.quickjump_object != "undefined" )
+			{
+				//同一のラベルで複数行にまたがる記述は基本的に行わないのでカレントだけみる
+				global.quickjump_object.jumpHistoryOfStore(global.quickjump_object.checkExistHistoryOfStore(inf));
+				global.quickjump_object.currentInf = inf;	//カレント保持
+
+			}
+		}
+		else
+		{
+			if( typeof global.quickjump_object != "undefined" )
+				global.quickjump_object.currentInf = "";	//カレント破棄
+		}
+	}
+
+	//ロード後などの配列数整合処理
+	function correctDatas()
+	{
+		if(! everypage) return;
+//		dm("        HistoryLayer.correctDatas(): dataPage = "+dataPage+", dataPos = "+dataPos);
+		//整合処理対象の二次元配列名
+		var tgts = ["data","actionInfo","lineStart"];
+		//整合処理対象項目のデフォルト値
+		var defs = ["",void,0];
+
+		for( var i=0; i<tgts.count; i++ )
+		{
+			var tgt = tgts[i];
+			var def = defs[i];
+			if( this[tgt] instanceof "Array" )
+			{
+				if( this[tgt].count > dataPage )
+				{
+					if( ! this[tgt][dataPage] instanceof "Array")
+					{
+						this[tgt][dataPage] = [];
+						this[tgt][dataPage][dataPos] = def;
+					}
+				}
+				else
+				{
+					this[tgt][dataPage] = [];
+					this[tgt][dataPage][dataPos] = def;
+				}
+			}
+			else
+			{
+				this[tgt] = [];
+				this[tgt][dataPage] = [];
+				this[tgt][dataPage][dataPos] = def;
+			}
+		}
+	}
+@if(DEBUG)
+	function dispData(page)
+	{
+		var	lines	= data[page];
+		if(lines != void)
+		{
+			for(var i=0; i<lines.count; i++)
+				dm(lines[i]);
+		}
+	}
+@endif
+	//桁数・行数の算出
+	function calcRelinePos()
+	{
+		if(verticalView)
+		{
+			relinePos = relinePos_org = height - marginT - marginB - controlHeight;
+			limitPos =  limitPos_org = height - marginT - controlHeight;
+	//		repageLine	= (width - marginL - marginR) \ lineHeight;
+			repageLine	= (width - marginL - marginR) \ (lineHeight + marginLF);
+		}
+		else
+		{
+			relinePos = relinePos_org = width - marginL - marginR - font.height * marginRCh;
+			//	改ページの基準となる行数を計算
+			limitPos = limitPos_org = width - marginL;
+	//		repageLine	= (height - marginT - marginB - controlHeight) \ lineHeight;
+			repageLine	= (height - marginT - marginB - controlHeight ) \ (lineHeight + marginLF);
+		}
+	}
+
+	//	シンプルなアクション(メニューのmouse〜から呼び出すためのもの)
+	function ssact(time, prop, value, delay=0, accel=0, canpause=true)
+	{
+		var	elm	= %[time:time, start:this[prop], value:value];
+		if(time === void)
+		{
+			elm.handler	= SetAction;	//	値を指定の時間後に設定
+			elm.time	= delay;
+		}
+		else
+		{//	キーフレームで処理
+			elm.props	= prop;
+			elm.keys	= [ [delay, this[prop], accel, "l"], [time + delay, value, 0, "n"] ];
+			elm.module	= KeyFrameActionModule;
+			window.beginAction(this, elm,,, canpause);
+			return;
+		}
+		window.beginAction(this, %[prop => elm],,, canpause);
+	}
+
+	function dispInit()
+	{
+		//dm("HistoryLayer dispInit : dataPages=" + dataPages);
+		if(typeof window.pauseClickRepeat != "undefined")
+			window.pauseClickRepeat(true);	//	クリックリピートを一時停止
+
+		//	背景画像を用意
+		if(bgimage!="")
+		{
+			with(bgimageLayer = new global.Layer(window, this))
+			{
+				.loadImages(bgimage);
+				.setSizeToImageSize();
+			}
+		}
+
+		//	テキスト履歴用のメニューアイテムを表示
+		var	time	= 750;
+		if(typeof global.showBacklogMenuItem != "undefined")
+			time	= showBacklogMenuItem();
+
+		//	フェード処理
+		opacity	= 0;
+		window.stopAction(this);	//	アクションを停止
+		ssact(time, "opacity", 255);
+
+		super.dispInit(...);
+	}
+
+	//	モードは得ない(showBacklogMenuItem が base の子レイヤーになるので)
+	function setMode(){}
+	function removeMode(){}
+
+	function dispUninit()
+	{
+		window.focusedLayer	= null;	//	フォーカスを離す
+		super.dispUninit();
+		window.focusedLayer	= null;	//	フォーカスを離す
+
+		//	テキスト履歴用のメニューアイテムを隠す
+		var	time	= 300;
+		if(typeof global.hideBacklogMenuItem != "undefined")
+			time	= hideBacklogMenuItem(...);
+
+		//	フェード処理
+		visible	= true;	//	false になっているので、戻す
+		window.stopAction(this);	//	アクションを停止
+		ssact(time, "opacity", 0,,, false);			//	pause できない
+		ssact(, "visible", false, time,, false);
+
+		//	背景画像を消去
+		if(bgimageLayer != void && typeof bgimageLayer == "Object"){
+			invalidate bgimageLayer;
+		}
+
+		if(typeof window.pauseClickRepeat != "undefined")
+			window.pauseClickRepeat(false);	//	クリックリピートを再開
+	}
+
+	var	region;
+	function clearBack(n)
+	{
+		//	透明にする
+		if(region != void)
+		{
+			fillRect(region.left, region.top, region.width, region.height, 0);
+			region	= void;
+		}
+		else
+			fillRect(0, 0, width, height, 0);
+	}
+
+
+	function makeButtons()
+	{
+		if(typeof global.showBacklogMenuItem != "undefined")
+			return;	//	ボタン類は showBacklogMenuItem で作成
+
+		if(prevPageButton !== void)
+		{
+			//	既に作成済み
+			with(scroll)
+			{
+				.total	= dataPages;
+				.area	= 1;
+				.current= dataPages;
+			}
+			return;
+		}
+
+		var cw = controlWidth;
+		var ch = controlHeight;
+		var marginY = 10;		//高さマージン(レイヤー高さぎりぎりにしない)
+
+		//	閉じるボタン
+		with(closeButton = new global.ExButtonLayer(window, this, "close", width-cw, 0, "backlog_キャンセルボタン", "メッセージ履歴を閉じる"))
+		{
+			.left	= width - .width;
+			.mode	= 3;
+			.readyVisible();
+		}
+		if(verticalView)
+		{
+			//	縦書きには未対応
+			throw new Exception("HistoryLayer.override.tjs makeButton: 縦書きにはまだ対応していません");
+		}
+		else
+		{
+			//	ボタン
+			prevPageButton = new global.ExButtonLayer(window, this, "prev", width-cw, closeButton.height, "backlog_矢印上ボタン", "前のページを表示します。");
+			with(prevPageButton)
+			{
+				.left	= width - .width;
+				.mode	= 3;
+				.readyVisible();
+			}
+			nextPageButton = new global.ExButtonLayer(window, this, "next", width-cw, height-ch-marginY, "backlog_矢印下ボタン", "次のページを表示します。");
+			with(nextPageButton)
+			{
+				.left	= width - .width;
+				.mode	= 3;
+				.readyVisible();
+			}
+
+			//	スクロールバー
+			scroll	= new global.ScrollBarLayer(window, this, height-ch*2-closeButton.height-marginY*2, 6, 7,, [ "backlog_カーソルバー", "backlog_カーソル" ]);
+			with(scroll)
+			{
+				//dm("HistoryLayer makeButtons: dataPages=" + dataPages );
+				.left	= width - .width;
+				.top	= ch + closeButton.height + marginY;
+				.total	= dataPages;
+				.area	= 1;
+				.current= dataPages;
+				.moving	= 1;
+				.slider.onMouseWheel	= function()
+				{
+					//	履歴レイヤーからのメッセージのみで動作するように
+				} incontextof scroll.slider;
+			}
+		}
+	}
+
+	//	表示するページ番号
+	property dispPage
+	{
+		setter(v)
+		{
+			if(!canScroll)
+				return;
+			v	= Math.max(0, Math.min(dataPages-1, +v));
+			if(v !== dispStart)
+			{
+				clearActionHighlights();
+				dispStart	= v;
+				clearBack();
+				drawPage();
+				updateButtonState();
+			}
+		}
+		getter	{ return dispStart; }
+	}
+
+	function prev()
+	{
+		if(scroll != void)
+		{
+			var	last	= scroll.current;
+			scroll.current	-= scroll.slider.moving;
+			if(last == scroll.current)
+				hide();	//	一番上で更に上に行こうとしたので
+		}
+		else
+			prevPage();
+	}
+
+	function next()
+	{
+		if(scroll != void)
+		{
+			with(scroll)
+			{
+				var cur = .current;
+				.current	+= .slider.moving;
+				if(cur == .current)
+					hide();	//	一番下でさらに下に行こうとしたので
+			}
+		}
+		else
+			nextPage();
+	}
+
+	function updateButtonState()
+	{
+		if(prevPageButton == void)
+			return;
+
+		if(!canScroll)
+		{
+			prevPageButton.enabled	= canScroll;
+			nextPageButton.enabled	= canScroll;
+		}
+		prevPageButton.enabled	= !(dispStart==0);
+		nextPageButton.enabled	= !((everypage && dispStart >= dataPages-1) || (!everypage && dispStart >= dataLines-dispLines));
+		scroll.enabled	= canScroll;
+	}
+
+	function windowMouseWheel(shift, delta, x, y)
+	{
+		// ウィンドウのホイール操作メッセージがここに流される
+		if(!wheelEnabled)
+			return;
+		var currenttick = System.getTickCount();
+		delta = delta \ 120;
+		if(delta > 0 )
+		{
+			//dm("History Scroll prev");
+			prev();
+		}
+		else if(delta < 0 )
+		{
+			// 手前
+			if(currenttick - lastWheelTick > 150 &&
+				((everypage && dispStart >= dataPages-1) ||
+				(!everypage && dispStart >= dataLines - dispLines)))
+			{
+				// くるくる回しているうちにいきなり履歴が閉じたりしないような仕掛け
+				// 既に最終部分を表示している
+				hide();
+			}
+			else
+			{
+				//dm("History Scroll next");
+				next();
+			}
+		}
+		lastWheelTick = currenttick;
+	}
+
+	function onButtonDown(btn)
+	{
+		switch(btn.id)
+		{
+		case "prev":
+			prev();
+			break;
+		case "next":
+			next();
+			break;
+		case "close":
+			hide();
+			break;
+		}
+	}
+
+	function onKeyDown(key, shift)
+	{
+//		dm("onKeyDown("+key+", "+shift+") / key == Esc ? "+(key == VK_ESCAPE));
+		//dm("on key down(in history)");
+		window.hideMouseCursor();
+		if(keyDisregardOnce && (key == VK_UP || key==VK_PRIOR))
+		{
+			//	キー入力を一回だけ無視する(PageUpで履歴を表示すると、一つ上のページから開始してしまうので)
+			keyDisregardOnce	= false;
+			return;
+		}
+
+		// クイックジャンプのショートカット
+		if( key == #'J' && typeof global.quickjump_object != "undefined" )
+		{
+			window.goBackHistory(true, qjumpIndex) if qjumpIndex>=0;
+			return;
+		}
+
+		if(canScroll)
+		{
+			if(verticalView)
+			{
+				if(key == VK_DOWN)
+					return next();
+				else if(key == VK_UP)
+					return prev();
+				else if(key == VK_LEFT || key == VK_PRIOR)
+				{
+					if(everypage)
+						return prev();
+					else
+						return scrollUp();
+				}
+				else if(key == VK_RIGHT || key == VK_NEXT)
+				{
+					if(everypage)
+						return next();
+					else
+						return scrollDown();
+				}
+			}
+			else
+			{
+				if(key == VK_DOWN)
+				{
+					if(everypage)
+						return next();
+					else
+						return scrollUp();
+				}
+				else if(key == VK_UP)
+				{
+					if(everypage)
+						return prev();
+					else
+						return scrollDown();
+				}
+				else if(key == VK_LEFT || key == VK_PRIOR)
+					return prev();
+				else if(key == VK_RIGHT || key == VK_NEXT)
+					return next();
+			}
+		}
+		if(key == VK_ESCAPE || key == VK_RETURN || key == VK_SPACE)
+			return hide();
+		else if(opacity != 0 && (key == VK_R || key == VK_F5))
+			return hide();
+		global.Layer.onKeyDown(key, shift, true);
+	}
+
+	function onScroll(cur)
+	{
+		if(everypage)
+		{
+			dispStart	= cur;
+			clearBack();
+			drawPage();
+		}
+		else
+		{
+			//	未実装
+		}
+		updateButtonState();
+	}
+
+	property lastLine
+	{
+		getter
+		{
+			if(everypage)
+			{
+				if( data[dataPage] === void )
+					data[dataPage] = [];
+				return data[dataPage][dataPos];
+			}
+			else
+				return data[dataPos];
+		}
+
+		setter(line)
+		{
+			if(everypage)
+			{
+				if( data[dataPage] === void )
+					data[dataPage] = [];
+				data[dataPage][dataPos]	= line;
+			}
+			else
+				data[dataPos] = line;
+		}
+	}
+
+	property lastAction
+	{
+		getter
+		{
+			if(everypage)
+			{
+				if( actionInfo[dataPage] === void )
+					actionInfo[dataPage] = [];
+				return actionInfo[dataPage][dataPos];
+			}
+			else
+				return actionInfo[dataPos];
+		}
+
+		setter(n)
+		{
+			if(everypage)
+			{
+				if( actionInfo[dataPage] === void )
+					actionInfo[dataPage] = [];
+				actionInfo[dataPage][dataPos]	= n;
+			}
+			else
+				actionInfo[dataPos] = n;
+		}
+	}
+}
+
+//履歴画面内部で使用されるButtonLayerの機能拡張(ExButtonLayer)
+ButtonLayer.readyVisible = function()
+{
+	focusable	= true;
+	opacity		= 255;
+	visible		= true;
+};
+
+
+@endif

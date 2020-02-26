@@ -1,0 +1,92 @@
+﻿@if(__BITMAPFONT_DEFINED__==0)
+@set(__BITMAPFONT_DEFINED__=1)
+
+//	ビットマップフォントの設定
+var	fontFileExt	= ".tft";
+var	fontItalicSuffix	= "_i";	//	italic=true のときに末尾に付加する
+var	bitmapFonts	= [
+//	face名			ファイル名
+	"明朝D",		%[26=>"筑紫明朝d",		24=>"筑紫明朝d24",		12=>"筑紫明朝d_rb" ],
+	"明朝B",		%[26=>"筑紫明朝b",		24=>"筑紫明朝b24",		12=>"筑紫明朝b_rb" ],
+	"明朝E",		%[26=>"筑紫明朝e",		24=>"筑紫明朝e24",		12=>"筑紫明朝e_rb" ],
+	"ゴシックD",	%[26=>"筑紫ゴシックd",	24=>"筑紫ゴシックd24",	12=>"筑紫ゴシックd_rb" ],
+	"ゴシックB",	%[26=>"筑紫ゴシックb",	24=>"筑紫ゴシックb24",	12=>"筑紫ゴシックb_rb" ],
+	"ゴシックE",	%[26=>"筑紫ゴシックe",	24=>"筑紫ゴシックe24",	12=>"筑紫ゴシックe_rb" ]
+];
+var	loadedBitmapFonts	= %[];
+for(var i=0; i<bitmapFonts.count; i+=2)
+	loadedBitmapFonts[bitmapFonts[i]]	= bitmapFonts[i+1];
+
+/*
+ *	フォントを一度だけ読み込むようにすると、文字レイヤーが破棄されたタイミングで読み込まれていない状態になるため
+ *	念のため毎回ビットマップフォントファイルを設定するようにしている
+ */
+
+Layer.getFontList	= function(opt)
+{
+	opt	= fsfSameCharSet | fsfNoVertical if opt === void;
+	var	list	= font.getList(opt);
+	var	lastface= font.face, lastheight = font.height;
+	with(list)
+	{
+		.remove("FixedSys");
+		.remove("System");
+		.remove("Terminal");
+	}
+	for(var i=0; i<bitmapFonts.count; i+=2)
+	{
+		var	fc	= bitmapFonts[i];
+//		list.add(fc);
+		list.insert(i\2, fc);
+		var	keys	= [];
+		keys.assign(bitmapFonts[i+1]);
+		for(var j=0; j<keys.count; j+=2)
+		{
+			var	fh	= keys[i];
+			var	st	= keys[i+1]+fontFileExt;
+			font.face	= fc;
+			font.height	= fh;
+			if(Storages.isExistentStorage(st))
+				font.mapPrerenderedFont(st);
+
+			//	イタリックフォントが存在したら、それも追加
+			st	= keys[i+1] + fontItalicSuffix + fontFileExt;
+			if(Storages.isExistentStorage(st))
+			{
+				font.italic	= true;
+				font.mapPrerenderedFont(st);
+				font.italic	= false;
+			}
+		}
+	}
+	font.face	= lastface;
+	font.height	= lastheight;
+	return list;
+};
+
+Layer.setFontFace	= function(face, height=font.height, italic=font.italic)
+{
+	var	fh	= Math.abs(font.height);
+	var	nh	= Math.abs(height);
+//	dm(name+": "+font.face+" !== "+face+" || "+fh+" !== "+nh+" || "+font.italic+" !== "+italic);
+	if(font.face !== face || fh !== nh || font.italic !== italic)
+	{
+		font.height	= height;
+		font.italic	= italic;
+		//dm(" font.face = " + font.face + " / face = " + face);
+		font.face = face if face !== void && face != "";
+		var	loaded	= loadedBitmapFonts[font.face], st;
+		if(loaded !== void && (st = loaded[nh]) !== void)
+		{
+			st	+= fontItalicSuffix if italic;
+			st	+= fontFileExt;
+			if(Storages.isExistentStorage(st))
+				font.mapPrerenderedFont(st);
+//			else
+//				dm(name+".setFontFace: "+st+" is not found.");
+		}
+	}
+};
+
+
+@endif

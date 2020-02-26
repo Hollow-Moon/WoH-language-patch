@@ -1,0 +1,426 @@
+﻿/*-----------------------------------------------------------------------------/
+/	Copyright (C) TYPE-MOON All Rights Reserved.
+/		テキストレイヤーをトランジションでなくopacityでON/OFFさせるプラグイン
+/-----------------------------------------------------------------------------*/
+@if(__TEXT_ON_OFF_PLUGIN__==0)
+@set(__TEXT_ON_OFF_PLUGIN__=1)
+dm("load TextOnOffPlugin.tjs");
+
+// メッセージレイヤーの表示設定
+f.messageAlways	= "default" if typeof f.messageAlways == "undefined";
+
+class TextOnOffPlugin extends KAGPlugin
+{
+	var	triggername			= "textonoff";
+	var	default_interval	= 32;	//	更新間隔
+	var	default_fadetime	= 300;	//	フェード時間
+
+	var layer;			//	処理対象のレイヤー(0〜/all)
+	var tovisible;		//	目的とする状態(表示か非表示)
+	var	msgs;
+
+	var	timer;			//	タイマー
+	var starttick;		//	処理開始時刻
+
+	function TextOnOffPlugin()
+	{
+		super.KAGPlugin();
+
+		timer	= new Timer(handler, "");
+		timer.interval	= default_interval;
+	}
+
+	function finalize()
+	{
+		stop();
+		super.finalize(...);
+
+		invalidate timer if timer != void;
+	}
+
+	property turning
+	{
+		setter(d)	{ timer.enabled	= d; }
+		getter		{ return timer.enabled; }
+	}
+
+	property turning_on		{ getter { return turning && tovisible; } }
+	property turning_off	{ getter { return turning && !tovisible; } }
+
+	/*------------------------------------------------------------------------/
+	/	処理を行うための初期設定を行う
+	/	in	: time	時間
+	/		: layer	対象レイヤー(0〜, all)
+	/		: vis	表示/非表示
+	/------------------------------------------------------------------------*/
+	function init(time, layer, vis)
+	{
+		//	初期準備/設定
+		tovisible	= vis;
+		this.time	= time = time!==void ? +time : message_fadetime;
+		this.layer	= layer;
+		msgs = kag.fore.messages;
+		if(layer == "all")
+		{
+			for(var i=0; i<msgs.count; i++)
+				msgs[i]["start_opacity"]= (tovisible ? (msgs[i].opacity < 255 ? msgs[i].opacity : 0) : (msgs[i].opacity > 0 ? msgs[i].opacity : 255));
+		}
+		else
+			msgs[+layer]["start_opacity"]	= (tovisible ? (msgs[+layer].opacity < 255 ? msgs[+layer].opacity : 0) : (msgs[+layer].opacity > 0 ? msgs[+layer].opacity : 255));
+
+		//	処理開始
+		turning	= true;
+		if(time < 1)
+			finish();
+		else
+			starttick	= System.getTickCount();
+	}
+
+	/*------------------------------------------------------------------------/
+	/	毎度毎度の処理(指定時刻における状態の再現)
+	/------------------------------------------------------------------------*/
+	function handler()
+	{
+		var past = System.getTickCount() - starttick;	//	経過した時間
+
+//		dm("TextOnOff: "+past+" / "+time);
+		//	進行度を測る
+		if(past > time)
+			finish();	//	終了の時刻を過ぎているので、最終状態にする
+		else
+		{
+			//	時間があるので、現在の進行度に対応した状態を再現
+			var	per	= past / time;
+			if(tovisible)
+			{
+				if(per < 0.5)
+					per	= 0.0;
+				else
+					per	= (per - 0.5) * 2;
+			}
+			else
+			{
+				if(per < 0.5)
+					per	*= 2;
+				else
+					per	= 1.0;
+			}
+			construct(per);			//	状態の再現
+		}
+	}
+
+	/*------------------------------------------------------------------------/
+	/	指定進行度における状態の再現
+	/	in	: per	進行度
+	/------------------------------------------------------------------------*/
+	function construct(per)
+	{
+		//	進行度に対応した状態の再現
+		var wb		= kag.currentWithBack;
+		if(layer == "all")
+		{
+			for(var i=0; i<msgs.count; i++)
+			{
+				with(msgs[i])
+				{
+					.opacity = tovisible ? int(per * (255 - .start_opacity)) + .start_opacity : .start_opacity - int(per * .start_opacity);
+					.visible = true;
+					.comp.opacity = .opacity, .comp.visible = true if wb;
+				}
+			}
+		}
+		else
+		{
+			with(msgs[+layer])
+			{
+				.opacity = tovisible ? int(per * (255 - .start_opacity)) + .start_opacity : .start_opacity - int(per * .start_opacity);
+				.visible = true;
+				.comp.opacity = .opacity, .comp.visible = true if wb;
+			}
+		}
+	}
+
+	/*------------------------------------------------------------------------/
+	/	最終状態へ移行
+	/------------------------------------------------------------------------*/
+	function finish()
+	{
+		construct(1.0);	//	最終状態にする
+		stop();			//	処理を停止する
+	}
+
+	/*------------------------------------------------------------------------/
+	/	処理を停止する
+	/------------------------------------------------------------------------*/
+	function stop()
+	{
+		if(turning)
+		{
+			turning	= false;
+			kag.trigger(triggername);
+		}
+	}
+
+	function onStore(f, elm)
+	{
+		// 栞を保存する際に呼ばれる
+		// f = 保存先の栞データ ( Dictionary クラスのオブジェクト )
+		// elm = tempsave 時のオプション ( 現在は常に void )
+
+		//	現在の更新間隔、フェード時間を記録
+		f.textonoffplugin_default_fadetime	= default_fadetime;
+		f.textonoffplugin_default_interval	= default_interval;
+	}
+
+	function onRestore(f, clear, elm)
+	{
+		// 栞を読み出すときに呼ばれる
+		// f = 読み込む栞データ ( Dictionary クラスのオブジェクト )
+		// clear = テキストレイヤをクリアするか ( tempload の時のみ false )
+		// elm = tempload 時のオプション ( tempload でない場合は 常に void,
+		//                                 tempload の時は Dictionary クラスのオブジェクト )
+		stop();
+
+		//	更新間隔、フェード時間が記録されていれば、復帰する
+		default_fadetime	= f.textonoffplugin_default_fadetime if f.textonoffplugin_default_fadetime !== void;
+		default_interval	= f.textonoffplugin_default_interval if f.textonoffplugin_default_interval !== void;
+		timer.interval		= default_interval;
+	}
+}
+// プラグインオブジェクトを作成し、登録する
+kag.addPlugin(global.textonoff_object = new TextOnOffPlugin(kag));
+
+//	メッセージレイヤーが表示されていないか？
+kag.isMessageInvisible	= function(layer=string currentNum)
+{
+	if( fore.messages === void || fore.messages.count == 0 )
+		return true;
+
+	//	対象のテキストレイヤーの状態
+	var vis	= false;
+	var opac;
+	if(layer == "all")
+	{
+		opac	= 255;
+		for(var i=0; i<fore.messages.count; i++)
+		{
+			vis	|= fore.messages[i].visible;
+			opac = fore.messages[i].opacity if fore.messages[i].opacity < opac;
+		}
+	}
+	else
+	{
+		vis	= fore.messages[+layer].visible;
+		opac= fore.messages[+layer].opacity;
+	}
+	return !vis || opac < 255;
+} incontextof kag;
+
+//	メッセージレイヤーが表示されているか？
+kag.isMessageVisible	= function(layer="all")
+{
+	if( fore.messages === void || fore.messages.count == 0 )
+		return false;
+
+	var vis	= false;
+	var opac;
+	if(layer == "all")
+	{
+		opac	= 0;
+		for(var i=0; i<fore.messages.count; i++)
+		{
+			vis	|= fore.messages[i].visible;
+			opac+= fore.messages[i].opacity if fore.messages[i].opacity > opac;
+		}
+	}
+	else
+	{
+		vis	= fore.messages[+layer].visible;
+		opac= fore.messages[+layer].opacity;
+	}
+	return vis && opac > 0;
+} incontextof kag;
+
+//-- タグ宣言 -----------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+/**TAG
+ *	texton - テキストレイヤーを表示する
+ *	@param layer	表示するテキストレイヤー(0〜,all/default:current)
+ *	@param time		表示に掛かる時間
+ *	@param nowait	処理を待たないか(default:false)
+ *		@link:		texton, textoff, settextonofftime, settextonoff, hidebeforeexecute
+ *		@group:		メッセージ操作
+ */
+kag.tagHandlers.texton = function(mp)
+{
+	//	常にテキストを表示しない場合は、処理を行なわない
+	if(f.messageAlways == "off")
+		return 0;
+
+//	dm("-- text on --");
+	with(mp)
+	{
+		//	対象のテキストレイヤー(default:current)
+		var layer = .layer !== void ? .layer : (string currentNum);
+		textonoff_object.finish() if textonoff_object.turning;	//	現在実行している処理を完了させる
+
+		//	対象のテキストレイヤーが非表示のとき
+		if(isMessageInvisible(layer))
+		{
+			.time	= int(+(.time !== void ? .time : textonoff_object.default_fadetime) * kag.drawspeed);
+			textonoff_object.init(.time, layer, true);
+			.name	= textonoff_object.triggername;
+			.onskip	= "global.textonoff_object.finish()";
+
+			//	メッセージレイヤーのアクションを再開
+			kag.resumeMessageAction();
+			kag.showMessageLayerByUser();	//	ユーザーによって隠されていても、元に戻す
+
+			if(textonoff_object.turning && !.nowait)
+				return tagHandlers.waittrig(mp);
+		}
+	}
+	return 0;
+} incontextof kag;
+
+/**TAG
+ *	textoff - テキストレイヤーを非表示する
+ *	@param layer	非表示するテキストレイヤー(0〜,all/default:current)
+ *	@param time		非表示に掛かる時間
+ *	@param nowait	処理を待たないか(default:false)
+ *		@link:		texton, textoff, settextonofftime, settextonoff, hidebeforeexecute
+ *		@group:		メッセージ操作
+ */
+kag.tagHandlers.textoff = function(mp)
+{
+	//	常にテキストレイヤーを表示する
+	if(f.messageAlways == "on")
+		return 0;
+
+//	dm("-- text off --");
+	with(mp)
+	{
+		//	対象のテキストレイヤー(default:all)
+		var layer = .layer !== void ? .layer : "all";
+		textonoff_object.finish() if textonoff_object.turning;	//	現在実行している処理を完了させる
+
+		//	表示状態かつテキスト常駐でないとき
+		if(isMessageVisible(layer))
+		{
+			.time	= int(+(.time !== void ? .time : textonoff_object.default_fadetime) * kag.drawspeed);
+			textonoff_object.init(.time, layer, false);
+			.name	= textonoff_object.triggername;
+			.onskip	= "global.textonoff_object.finish()";
+
+			//	メッセージレイヤーのアクションを一時停止
+			kag.pauseMessageAction();
+
+			if(textonoff_object.turning && !.nowait)
+				return tagHandlers.waittrig(mp);
+		}
+	}
+	return 0;
+} incontextof kag;
+
+/**TAG
+ *	settextonofftime - テキストONOFF切り替え時間の設定
+ *	@param time		切り替え時間(default:400)
+ *	@param interval	切り替えの更新間隔(default:32)
+ *		@link:		texton, textoff, settextonofftime, settextonoff, hidebeforeexecute
+ *		@group:		メッセージ操作
+ */
+kag.tagHandlers.settextonofftime	= function(elm)
+{
+	with(elm)
+	{
+		textonoff_object.default_fadetime	= +.time;
+		textonoff_object.default_interval	= textonoff_object.timer.interval = +.interval;
+	}
+	return 0;
+} incontextof kag;
+
+/**TAG
+ *	settextonoff - メッセージレイヤーの状態変更
+ *	@param	always	"on"=常に表示、"off"=常に非表示、"default"=状況にあわせて切り替え
+ *		@link:		texton, textoff, settextonofftime, settextonoff, hidebeforeexecute
+ *		@group:		メッセージ操作
+ */
+kag.tagHandlers.settextonoff	= function(elm)
+{
+	with(elm)
+		f.messageAlways	= +.always if .always !== void;
+	return 0;
+} incontextof kag;
+
+//-----------------------------------------------------------------------------
+//	ch の上書き
+kag.tagHandlers.ch_org	= kag.tagHandlers.ch;
+kag.tagHandlers.ch	= function(elm)
+{
+	//	テキストレイヤーが表示されていなければ、
+	if(!current.visible || current.opacity < 255)
+	{
+		//	文字表示をpendingしておいて
+		elm.tagname			= "ch";
+		conductor.pendings.insert(0, elm);
+
+		//	文字表示前に、必ずテキストレイヤーを表示する
+		return tagHandlers.texton(%[]);
+	}
+
+	// 普通に文字表示
+	return tagHandlers.ch_org(elm);
+} incontextof kag;
+
+/**TAG
+ *	hidebeforeexecute - テキストレイヤーが消えておいて欲しい命令のサポート命令
+ *	@param	texton			表示したままにする場合の指定
+ *	@param	textoff			非表示にする場合の指定
+ *	@param	forcetextoff	cf.noTextOff が設定されていても隠す
+ *		@memo:		return true ならメッセージを消去して次の処理を行うので、return 0 してね
+ *		@link:		texton, textoff, settextonofftime, settextonoff, hidebeforeexecute
+ *		@group:		メッセージ操作
+ */
+kag.hidebeforeexecute	= function(elm)
+{
+	//	メッセージレイヤーが表示されており、テキストレイヤーを消去する意思があり、
+	//	メッセージを残す指定がなければ先にメッセージレイヤーを消去してトランジションする
+//	dm("hidebeforeexecute: "+elm.texton+" | "+elm.textoff+", "+cf.noTextOff+" / "+Scripts.getTraceString());
+	if(isMessageVisible() && !textonoff_object.turning_off &&
+		+elm.texton == false && (elm.textoff === void || +elm.textoff != false) && (!cf.noTextOff || elm.forcetextoff))
+	{
+//		dm("hidebeforeexecute: textoff");
+		//	トランジション前にメッセージレイヤーをバックアップ
+		for(var i=0; i<fore.messages.count; i++)
+		{
+			//	currentWithBack == false の時だけバックアップ
+			backupLayer(%[layer:"message"+i], true) if !currentWithBack;
+			back.messages[i].opacity	= 0;
+		}
+
+		//	処理をpendingしておいて
+		var	tmpelm	= %[];
+		(Dictionary.assignStruct incontextof tmpelm)(elm);
+		conductor.pendings.insert(0, tmpelm);
+
+		//	先にテキストレイヤーを消去
+		return tagHandlers.textoff(%[]);
+	}
+	return void;
+} incontextof kag;
+
+//-----------------------------------------------------------------------------
+//	trans の上書き
+kag.tagHandlers.trans_org	= kag.tagHandlers.trans;
+kag.tagHandlers.trans	= function(elm)
+{
+	elm.tagname		= "trans";		//	このタグの名前
+	var	ret	= hidebeforeexecute(elm);	//	実行前にテキストレイヤーを隠しておいてもらう
+	if(ret !== void)
+		return ret;
+	else
+		return tagHandlers.trans_org(elm);
+} incontextof kag;
+
+@endif

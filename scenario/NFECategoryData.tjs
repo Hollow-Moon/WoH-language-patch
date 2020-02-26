@@ -1,0 +1,104 @@
+﻿/*-----------------------------------------------------------------------------
+/	Copyright (C) status-MOON All Rights Reserved.
+/		フローチャートデータ - カテゴリーデータ
+/----------------------------------------------------------------------------*/
+@if(__NFECATEGORYDATA_DEFINED__==0)
+@set(__NFECATEGORYDATA_DEFINED__=1)
+
+class NFECategoryData
+{
+	var	_owner;
+	var	id;
+	var	parent;		//	親カテゴリーのID
+	var	name;		//	カテゴリー名
+	var	children;	//	子
+
+	function NFECategoryData(owner, id, parent, name)
+	{
+		this._owner	= owner;
+		this.id		= id;
+		this.parent	= parent;
+		this.name	= name;
+
+		children	= [];
+
+		chart.registObject(this);
+	}
+
+	function finalize()
+	{
+		chart.unregistObject(this);
+
+		if(children != void)
+		{
+			for(var i=0; i<children.count; i++)
+				invalidate children[i] if children[i] != void && typeof children[i] == "Object";
+			invalidate children;
+		}
+	}
+
+	property owner	{ getter { return _owner; } }
+	property chart	{ getter { return _owner; } }
+
+	function getSaveData()
+	{
+		var	data	= %[];
+		with(data)
+		{
+			.id			= id;
+			.parent		= parent;
+			.name		= name;
+			.children	= [];
+			for(var i=0; i<children.count; i++)
+			{
+				if(typeof children[i] == "Object")
+					.children.add(children[i].getSaveData());
+				else
+					.children.add(children[i]);
+			}
+		}
+		return data;
+	}
+
+	function setLoadData(data)
+	{
+		with(data)
+		{
+			id		= .id;
+			parent	= .parent;
+			name	= .name;
+			children.clear();
+			for(var i=0; i<.children.count; i++)
+			{
+				if(typeof .children[i] == "Object")
+				{
+					children[i]	= createCategory(owner, .children[i].id);
+					children[i].setLoadData(.children[i]);
+				}
+				else
+					children[i]	= .children[i];
+			}
+		}
+	}
+
+	function clear()
+	{
+		for(var i=0; i<children.count; i++)
+			children[i].clear() if typeof children[i] == "Object";
+		children.clear();
+
+		invalidate this;
+	}
+
+	function createCategory()
+	{
+		return new global.NFECategoryData(...);
+	}
+
+	function getObjectByID(id)
+	{
+		return owner.getObjectByID(id);
+	}
+}
+
+@endif

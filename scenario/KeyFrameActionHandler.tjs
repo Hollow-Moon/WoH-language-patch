@@ -1,0 +1,2283 @@
+﻿/*-----------------------------------------------------------------------------/
+/	Copyright (C) TYPE-MOON All Rights Reserved.
+/		アクションハンドラ
+/-----------------------------------------------------------------------------*/
+@if(__KEYFRAME_ACTION_HANDLER_DEFINED__==0)
+@set(__KEYFRAME_ACTION_HANDLER_DEFINED__=1)
+
+dm("load: KeyFrameActionHandler.tjs");
+
+Plugins.link("stringUtil.dll");	//	isNumber, parseKeyFrame, initSpline
+
+//	キーフレームアクションについて詳細を出力する
+@set(KEYFRAMEACTION_VERVOSE=0)
+
+//	自動的に srcopacity を設定する
+@set(AUTO_SRCOPACITY=0)
+
+@if(KEYFRAMEACTION_VERVOSE)
+function dmv(msg)
+{
+	dm("★" + msg);
+}
+@endif
+@if(!KEYFRAMEACTION_VERVOSE)
+function dmv{return;}
+@endif
+
+//	caurina の equation を使用するか(=1)
+@set(USE_EQUATIONS=1)
+
+@if(USE_EQUATIONS)
+Plugins.link("Equations.dll");
+var	equations	= new Equations();
+@endif
+
+/**
+ * キーフレームに従って、プロパティ値を変化させるアクション.
+ * KeyFrameAction を absolute でも relative でも使えるよう、_KeyFrameAction を ActionHandler から継承し、
+ * KeyFrameAction には function AbsoluteActionHandler を、RelativeKeyFrameAction には function RelativeActionHandler を
+ * 追加した。Loop〜 はそれぞれを継承。
+ */
+class _KeyFrameAction extends ActionHandler
+{
+	var	keys = [];	//	[ [time, value, accel/equation, interpolation], ... ]
+		//	time			キーフレームの時刻
+		//	value			そのときの値
+		//	accel			そのキーフレームに至る区間の加速度(USE_EQUATIONS != 1)
+		//	equation		そのキーフレームに至る区間の変化方法(USE_EQUATIONS == 1)
+		//	interpolation	このキーフレームの補間方法(""/"l"=linear,"s"=spline,"n"=none)
+	var orgtimes = [];		//drawspeedによらない本来の時間指定
+	var	force;
+
+	var	asOne	= false;	//	先頭の加速度を通しで行う
+
+	//	elm.keys	keys に同じ
+	function _KeyFrameAction(target, propName, elm)
+	{
+//initMicro(7, "");
+//		dm("KeyFrameAction constructor target=" + target.name + " prop=" + propName) if propName == "opacity";
+		super.ActionHandler(...);
+	}
+
+	function construct(target, propName, elm)
+	{
+		super.construct(...);
+//dispMicro("super", 7);
+		if(elm != void)
+		{
+			force	= +elm.force;
+			setKeys(target, propName, elm.keys);
+//dispMicro("set keys", 7);
+		}
+
+		//	アクションを開始する前に画像をキャッシュする
+		if(propName == "storage" && target instanceof "Layer")
+		{
+			var	list	= [];
+			for(var i=0; i<keys.count; i++)
+				addTouchList(list, keys[i][1]);		//	addTouchList は Conductor.tjs で定義
+			System.touchImages(list) if list.count > 0;
+//dispMicro("touch images", 7);
+		}
+
+@if(KEYFRAMEACTION_VERVOSE)
+		dm(target.name+"."+propName+" / current = "+(typeof target[propName] != "undefined" ? target[propName] : "unknown")) if target != void;
+		if( keys.count == 0 ){
+			dm("WARNING: KeyFrameAction keys.count==0");
+		}
+		for(var i=0; i<keys.count; i++)
+			dm(i+": "+keys[i][0]+", "+keys[i][1]+", "+keys[i][2]+", "+keys[i][3]);
+@endif
+
+		//	propName に "color" が含まれていたら、色として中間値を計算する
+		if(propName.indexOf("color") >= 0)
+		{
+			linearInterpolate	= linearInterpolate4Color;
+			splineInterplate	= linearInterpolate4Color;	//	色のスプライン補間はあまり意味がなさそうなので
+		}
+
+		//	一通りの動作を先頭キーフレームに指定されている加速度で行うか？
+//		dm("asOne: "+elm.asone);
+		asOne	= elm != void ? +elm.asone : false;
+//dispMicro("set keys ", 8);
+
+		//	初期化する
+		setValue(target, propName, keys[0][1]) if keys[0] !== void;
+//dispMicro("set value", 7);
+	}
+
+	property drawspeed	{ getter { return
+@if(!USE_RECORD)
+		(noRapid) ? 1.0 :
+@endif
+	kag.drawspeed; } }
+
+	//	最終的な値
+	property value		{ getter { return keys[keys.count-1][1]; } }
+
+	//	キーの設定
+	function setKeys(target, propName, inkeys)
+	{
+//initMicro(8, "");
+		if(inkeys === void){
+			dm("！KeyFrameAction.setKeys inkeys==void, target=" + target + ", propName=" + propName);
+			return false;
+		}
+
+		keys.clear();
+		keys.assign(inkeys);
+//		dm(target+"."+propName+" = "+keys.join(","));
+		var	i;
+		if(keys[0][0] > 0)						//	time<=0のフレームが存在しなければ
+		{
+			keys.insert(0, [0, target[propName]]);	//	先頭に現在の値を記録
+			i	= 1;
+		}
+		else
+			i	= 0;
+//dispMicro("assign keys", 8);
+		var	useSpline	= false;
+		for(; i<keys.count; i++)
+		{
+			orgtimes[i] = +keys[i][0];
+			keys[i][0]	*= drawspeed;
+			var	val	= keys[i][1];
+			//dm("setKeys:"+target.name+"."+propName+"["+i+"] = "+val);
+			if(val !== void)
+				keys[i][1]	= typeof val != "String" || isNumber(val) ? +val : val;	//	文字列が数字のみなら、数値に変換
+			else if(val == "void")
+				keys[i][1]	= "";
+			else
+				keys[i][1]	= keys[i-1][1];	//	指定がなければ直前のキーフレームの値
+			keys[i][2]	= +keys[i][2];
+			if(typeof keys[i][1] == "String")
+				keys[i][3]	= "n";	//	文字列なら補間しない
+			else if(keys[i][3] == void)
+				keys[i][3]	= "l";	//	指定がなければ線形補間
+			else if(keys[i][3][0] == "s")
+				useSpline	= true;	//	スプライン補間の準備を行う
+		}
+		if(drawspeed == 0)
+		{//	瞬間表示なので、最初と最後のみにする
+			if(keys.count > 2)
+			{
+				for(var i=keys.count-2; i>0; i--)
+					keys.erase(i);
+			}
+			keys[1][0]	= 1;
+		}
+		time	= keys[keys.count - 1][0];		//	トータル時間
+//dispMicro("correct keys", 8);
+		//	一部でもスプライン補間を行なうなら、
+		if(useSpline)
+		{
+			//	ワークを作成する
+			if(keys.count < 3)
+			{
+@if(DEBUG)
+				dm("KeyFrameAction["+propName+"]: キーフレームがスプライン補間に必要な数(3つ)ありません。線形補間を行います。");
+@endif
+				for(var i=0; i<keys.count; i++)
+					keys[i][3]	= "l";	//	線形補間に変更
+				return false;
+			}
+
+			//	補間用の情報を作成
+			this.work	= initSpline(keys);	//	TJS式の半分の時間で処理できる
+//dispMicro("calc spline", 8);
+		}
+
+		return true;
+	}
+
+	function doAction(target, propName, now, stopFlag)
+	{
+		if(stopFlag)
+		{
+			var	lastkey	= keys[keys.count - 1];
+			var	val	= lastkey[1];
+			if( val !== meansCurrent )
+			{
+				//	afx, afy は特殊な値があるので、通常の値に戻して比較する
+				if(propName == "afx")		val	= target.calcAfx(val);
+				else if(propName == "afy")	val	= target.calcAfy(val);
+				else if(propName == "srcafx")	val	= target.calcSrcAfx(val);
+				else if(propName == "srcafy")	val	= target.calcSrcAfy(val);
+
+				if(lastkey[0] >= 0 || now == 0)			//	過去の処理(time<0)でないか、now == 0(初回の処理)なら
+					setValue(target, propName, val);	//	最終状態にする
+			}
+//			dm("KeyFrameAction.doAction stop "+className+" / "+now+": "+target.name+"."+propName+" = "+target[propName]);// if propName == "opacity";
+			if(typeof target.attach != "undefined")
+				target.attach = void;
+
+			return true;	//	処理終了
+		}
+		else
+		{
+			var	cur		= getValue(now);
+//			dm(target+": "+now+"."+propName+" = "+cur+"(isvoid = "+(cur === void ? "true" : "false")+")") if propName == "mouseUp";
+//			dm("KeyFrameAction.doAction: "+now+":"+target.name+"."+propName+" = "+cur);
+//			dm("KeyFrameAction.doAction stop "+className+" / "+now+": "+target.name+"."+propName+" = "+target[propName]) if propName == "opacity";
+			setValue(target, propName, cur);
+			return false;	//	処理続行
+		}
+	}
+
+	//	値を設定する
+	function setValue(target, propName, val)
+	{
+		if( val == meansCurrent ) return;		//その時の値なら何もしない
+		if(target[propName] != val || force)
+		{
+			if((propName=="top" || propName=="left") && typeof target.attach != "undefined" && target.attach != void && typeof target.attach[propName] != "undefined")
+				val += target.attach[propName];
+
+			target[propName]		= val;
+			target.trans[propName]	= val if typeof target.trans != "undefined" && target.trans != void;	//	個別トランジション中なら、対応するレイヤーへも値を入れる
+		}
+	}
+
+	//	指定時刻での値
+	//	in	: now	時刻
+	function getValue(now)
+	{
+		var	cpfunc	= currentPosition;
+		if(asOne)
+		{//	全ての区間を先頭キーフレームの加速度で進行させる
+			var	total	= keys[keys.count-1][0];
+//			var	ln	= now;
+			now		= equations.calc(+keys[0][2], now, 0, total, total);
+//			dm("now = %4d → %4d(%7.3f)".sprintf(ln, now, now/ln));
+			cpfunc	= normarlPosition;	//	既に now の値で加速度を反映させているので、進行度は等速に処理する
+		}
+		for(var i=1; i<keys.count; i++)
+		{
+			if(keys[i][0] >= now)
+			{
+				i--;
+				if(keys[i][3] === void)
+					return keys[i][1];
+				switch(keys[i][3][0])
+				{
+				case "l":	//	線形補間
+					return linearInterpolate(i, cpfunc(i, now));
+				case "s":	//	スプライン補間
+					return splineInterplate(i, cpfunc(i, now));
+				}
+				return keys[i][1];	//	補間なし
+			}
+		}
+
+		//	範囲外なら、最終値を返す
+		var	lastkey	= keys[keys.count - 1];
+//		if(lastkey[0] >= 0)		//	ただし、最終値が過去でない限り
+			return lastkey[1];
+	}
+
+	//	加速度考慮した進行状況を返す
+	//	in	: i		キーフレーム
+	//		: now	時刻
+	function currentPosition(i, now)
+	{
+		var	per;
+@if(!USE_EQUATIONS)
+		var	accel	= +keys[i][2];
+		per		= (now - +keys[i][0]) / (+keys[i+1][0] - +keys[i][0]);
+		if(accel > 1 || accel < -1)
+			per		= accel > 0 ? Math.pow(per, accel) : (accel < 0 ? (1.0 - Math.pow(1.0 - per, -accel)) : per);
+@endif
+@if(USE_EQUATIONS)
+		per	= equations.calc(+keys[i][2], now - +keys[i][0], 0, 1, +keys[i+1][0] - +keys[i][0]);
+@endif
+		return per;
+	}
+
+	//	特に加速度を考慮しない進行状況を返す
+	function normarlPosition(i, now)
+	{
+		return (now - +keys[i][0]) / (+keys[i+1][0] - +keys[i][0]);
+	}
+
+	//	線形補間
+	//	in	: i		キーフレーム
+	//		: per	進行度
+	function linearInterpolate(i, per)
+	{
+		return +keys[i][1] + (+keys[i+1][1] - +keys[i][1]) * per;
+	}
+
+	//	色の線形補間
+	//	in	: i		キーフレーム
+	//		: per	進行度
+	function linearInterpolate4Color(i, per)
+	{
+		var	per	= int(per * 256);
+		var	from= +keys[i][1];
+		var	to	= +keys[i+1][1];
+		var	ag	= (from & 0xff00ff00) + ((((to >> 8) & 0x00ff00ff) - ((from >> 8) & 0x00ff00ff)) * per);
+		var	rb	= (from & 0x00ff00ff) + ((((to & 0x00ff00ff) - (from & 0x00ff00ff)) * per) >> 8);
+		var	argb= (ag & 0xff00ff00) | (rb & 0x00ff00ff);
+		return argb;
+	}
+
+	//	スプライン補間
+	//	in	: i		キーフレーム
+	//		: per	進行度
+	function splineInterplate(i, per)
+	{
+		if(work.count < 1)
+			return linearInterpolate(...);
+		else
+		{
+			return	(((work[i+1] - work[i]) * per + work[i]*3) * per +
+					((+keys[i+1][1] - +keys[i][1]) - (work[i]*2 + work[i+1]))) * per + +keys[i][1];
+		}
+	}
+
+	//	保存
+	function store()
+	{
+		if( keys === void )		//終了しているキーフレームアクションは保存する必要なし
+			return void;
+
+		var	dic	= super.store();
+		dic.keys	= [];
+//		dic.keys.assign(keys);
+		dic.keys.assignStruct(keys);
+		for( var i=0; i<keys.count; i++ )	//加速によらない本来の時間設定で保存する
+			dic.keys[i][0] = +orgtimes[i];
+		if(dic.keys[0][0] > 0 )		//	0 以下のフレームが挿入されていなければ、
+			dic.keys.insert(0, keys[0]);	//	計算後の 0 フレームを挿入する
+		dic.force	= force if force;
+		dic.work	= work if typeof this.work != "undefined";
+		return dic;
+	}
+
+	//	復元
+	function restore(dic)
+	{
+		super.restore(dic);
+		with(dic)
+		{
+			force = false;
+			force = .force if .force !== void;			//無指定時は保存しないで節約
+			keys	= [];
+			keys.assignStruct(.keys) if .keys !== void;
+			for( var i=0; i<keys.count; i++ )
+				orgtimes[i] = +keys[i][0];
+			if(.work != void)
+			{
+				this.work	= [];
+				work.assignStruct(.work);
+			}
+		}
+	}
+
+	//	一番最初の処理
+	function init(target, propName)
+	{
+		//	初期値の設定
+//		setValue(target, propName, keys[0][1]);
+	}
+
+	//	最終的な状態
+	function getResultValue()
+	{
+		if( keys === void )
+		{
+@if(KEYFRAMEACTION_VERVOSE)
+			dm("！KeyFrameAction.getResultValue keys==void");
+@endif
+			//dm("　　　target=" + _target + " propName=" + _propName);
+			return void;
+		}
+		return keys[keys.count - 1][1];
+	}
+}
+class KeyFrameAction extends _KeyFrameAction
+{
+	function KeyFrameAction()
+	{
+		super._KeyFrameAction(...);
+	}
+
+	function AbsoluteActionHandler()
+	{
+	}
+}
+
+/**
+ * ループするキーフレームアクション
+ */
+class LoopKeyFrameAction extends KeyFrameAction
+{
+	var	loopStart;
+
+	function LoopKeyFrameAction(target, propName, elm)
+	{
+		super.KeyFrameAction(...);
+	}
+
+	function construct(target, propName, elm)
+	{
+		super.construct(...);
+		loopStart	= +elm.loop if elm != void;	//	ループの始点時間
+		time = orgtime =	0x7fffffffffffffff;	//	止めるまで続く
+	}
+
+	property drawspeed	{ getter { return
+@if(USE_RECORD)
+		Math.max(1, kag.drawspeed)
+@endif
+@if(!USE_RECORD)
+		1	//	ループする場合は、drawspeed の影響を受けない
+@endif
+	; } }
+
+	//	指定時刻での値
+	//	in	: now	時刻
+	function getValue(now)
+	{
+		//	初回は通常通り処理
+		var	totaltime	= keys[keys.count-1][0];
+		if(now < totaltime)
+			return super.getValue(now);
+
+		//	2回目以降は、ループ開始位置が全体の開始位置とずれる可能性があるので、その分計算する
+		now	-= totaltime;
+		if( totaltime - loopStart >= 1 ){//	ゼロ除算防止
+			//dm("now=" + now + " totaltime=" + totaltime + " loopStart=" + loopStart);
+			now	= now % (totaltime - loopStart) + loopStart;
+		}
+		return super.getValue(now);
+	}
+}
+
+//	キーフレームの解析
+//		"(...)(...)(...)" となっているところの"..."(要素)のみを取り出す
+/*
+function parseKeyFrame(keyframe)
+{
+@if(0)
+	if(typeof keyframe == "String" || keyframe == void)
+		dm("keyframe = "+keyframe);
+	else
+	{
+		var	k;
+		for(var i=0; i<keyframe.count; i++)
+			k	+= "(" + keyframe[i].join(",") + ")";
+		dm("keyframe = "+k);
+	}
+@endif
+	//	解析する必要がなければ、そのまま返す
+	if(typeof keyframe == "Object" && keyframe instanceof "Array")
+		return keyframe;
+
+//	var	keys	= keyframe.split("()",, true);	//	この方法でやると、要素部分に()が含まれているときに意図しない動作になる
+	if(keyframe[0] != "(")
+		throw new Exception("キーフレームが解析できません。: "+keyframe);
+	keyframe	= keyframe.substr(1);
+	var	keys	= [];
+	var	pos	= keyframe.indexOf(")(");
+	while(pos >= 0)
+	{
+		keys.add(keyframe.substr(0, pos));
+		keyframe	= keyframe.substr(pos+2);
+		pos	= keyframe.indexOf(")(");
+	}
+	if(keyframe[keyframe.length - 1] != ")")
+		throw new Exception("キーフレームの最後が不正です: "+keyframe);
+	keys.add(keyframe.substr(0, keyframe.length - 1));
+
+	for(var i=0; i<keys.count; i++)
+	{
+//		keys[i]		= keys[i].split(",");
+		var	key	= keys[i], j = 0;
+		var	array = keys[i] = [];
+		while(1)
+		{
+			var	pos_c	= key.indexOf(",");
+			var	pos_b	= key.indexOf("(");
+//			dm("key = "+key+" / comma = "+pos_c+" / bracket = "+pos_b);
+			if(pos_c < 0)
+			{
+				array[j]	+= key;
+				break;
+			}
+			else if(pos_b < 0 || pos_c < pos_b)
+			{
+				array[j]+= key.substr(0, pos_c);
+				key		= key.substr(pos_c + 1);
+				j++;
+			}
+			else
+			{
+				pos_b	= key.indexOf(")");
+//				dm("bracket = "+pos_b);
+				array[j]+= key.substr(0, pos_b+1);
+				key		= key.substr(pos_b + 1);
+			}
+		}
+		keys[i][0]	= +keys[i][0];
+@if(0)
+		var	v	= "";
+		for(var j=0; j<keys[i].count; j++)
+			v	+= keys[i][j] + ",";
+		dm("keys["+i+"] = "+v);
+@endif
+	}
+	return keys;
+}
+*/
+
+/**
+ *	キーフレームに沿った変化を行なうアクションを生成するモジュール
+ *	elm.props	対象のプロパティ
+ *	elm.keys	キーフレーム
+ *	elm.delay	開始遅延時間
+ *		呼び出し方は
+ *		[action page=fore layer=0 module=KeyFrameActionModule props=opacity keys="(0,0)(1000,64)(2000,128)(3000,255)" delay=0 spline=0]
+ *		→	fore.layers[0] の不透明度を0の状態から、1000ミリ秒後に64、2000ミリ秒後に128、3000ミリ秒後に255と変化させる
+ *		[action target=se[0] module=KeyFrameActionModule props=pan keys="(0,-100)(3000,100)"]
+ *		→	se[0] の音像位置を、左から右へ3000ミリ秒で移動させる
+ */
+function KeyFrameActionModule(info, elm)
+{
+	//	キーフレームを解析
+	//		キーフレームは、"(time,value,accel)(time,value,accel)(time,value,accel) ... )"という形で入っている
+	//		time=0 のキーフレームがない場合、開始時点のプロパティ値が0フレームの値となる
+	//		accel の指定がない場合は、0(加減速なし)とする
+	elm.keys	= parseKeyFrame(elm.keys);
+	info.addAction(elm.props, KeyFrameAction, elm);
+}
+
+//	補間不可能な値かを判定
+var	isNotInterpolate= %[afx:function(v){return v < -99999;}, afy:function(v){return v < -99999;},
+					srcafx:function(v){return v < -99999;}, srcafy:function(v){return v < -99999;}];
+
+/**
+ *	キーフレームに沿った変化を行なうアクションの詰め合わせを処理するモジュール
+ *	elm.props		対象のプロパティ(カンマ区切り)
+ *	elm.keys		キーフレーム(time,accel,interpolation,props[0],props[1],...)
+ *	elm.delay		開始遅延時間
+ *	elm.noinit		区間中にキーフレームが存在しない場合、初期化処理も行なわない
+ *	elm.usecurrent	0フレームのみ、各プロパティの現在の値を使用する
+ *	elm.force		変化がなくてもkey生成して実行を強制する(move,dashなどの旧システム互換用)
+ */
+function MixedKeyFrameActionModule(info, elm,
+	kfact=KeyFrameAction, lpact=LoopKeyFrameAction,
+	kfeact=KeyFrameExchangeAction, lpkfeact=LoopKeyFrameExchangeAction)
+{
+//initMicro(4, "");
+//dispMicro("micro time", 4);
+//initMicro(5, "");
+	var	props	= typeof elm.props == "String" ? elm.props.split(",",, true) : elm.props;
+	var	keys	= typeof elm.keys == "String" ? parseKeyFrame(elm.keys) : elm.keys;
+//dispMicro("parse key frame", 5);
+/*	dm(elm.keys);
+	for(var i=0; i<keys.count; i++)
+		dm(i+": "+keys[i].join(", "));
+*/
+//dispMicro("parse keyframe", 4);
+//	dm("keys " + getDebugStringFromElm(keys));
+	var	usecurrent	= keys.count > 1 ? elm.usecurrent : false;
+	var force		= elm.force !== void ? elm.force : (elm.loop !== void && elm.loop !== "");
+		//	ループするときは、無駄に思えるキーも無視しない
+		//	ループの長さに関係する場合があるので
+
+	//	補間不可能な値かどうかを、プロパティ毎に判定する
+	var	noips	= isNotInterpolate;
+
+	//	各プロパティの規定の初期値をコピー
+	var	initvalues	= %[];
+	var	ifnoinit_usercurrent	= false;
+@if(0)
+	{
+		dm("MixedKeyFrameActionModule(): elm.init = "+elm.init);
+		var	keys	= [];
+		keys.assign(elm.init);
+		for(var i=0; i<keys.count; i+=2)
+			dm("\t\t"+keys[i]+" = "+keys[i+1]);
+	}
+@endif
+	if(elm.init != void)
+	{
+//		dm("use init...");
+		(Dictionary.assign incontextof initvalues)(elm.init);
+	}
+	else
+	{
+//		dm("use current if noinit..");
+		ifnoinit_usercurrent	= true;	//	初期値として現在の値を使う
+	}
+	var	issetinit	= !(elm.noinit | usecurrent);
+
+@if(AUTO_SRCOPACITY)
+	var	srcopacity;	//	srcopacity 専用のキー
+	var	existsrcopacity	= false;	//	srcopacity が存在するかどうか
+@endif
+//	var	middleRates;
+//dispMicro("pre props", 5);
+	for(var i=0; i<props.count; i++)
+	{
+//initMicro(6, "");
+		//	プロパティ
+		var	prop	= props[i];
+		var	nip		= false;	//	補間する
+		if(prop[0] == "-")
+		{
+			//	先頭に"-"のついているプロパティは補間しない
+			prop	= prop.substr(1);
+			nip		= true;
+		}//	それ以外は、指定の補間を行なう
+		var	func	= noips[prop];	//	判定関数が存在するか
+
+		if(ifnoinit_usercurrent)
+			initvalues[prop]	= info.target[prop];
+
+		//	各プロパティ毎にキーフレームを作成
+		var	elmkeys	= elm.keys	= [];
+		var	prev	= initvalues[prop], next;
+		var	firstvalue	= null;
+		var	firsttime;
+		var	changed	= false;
+		var	accel = 0, interpolate = "n";
+		var	usemiddle	= false;
+//dispMicro("pre loop", 6);
+		for(var j=0; j<keys.count; j++)
+		{
+			var	key	= keys[j];
+			var	val	= key[i+3];
+			var	time= +key[0];
+
+			//	中間値を示す値で、
+			if(val == meansMiddle)
+			{
+//				dm("middle: "+key[1]+" / "+accel+"("+(key[1] == "" || key[1] == accel)+")");
+				if(key[1] == "" || key[1] == accel)
+					continue;	//	加速度も同じなら次へ
+
+				//	加速度が異なるなら、中間値のキーフレームを作成
+				accel		= key[1] if key[1] !== void && key[1] !== "";
+				interpolate	= key[2] if key[2] !== void && key[2] !== "";
+				var	v	= val == meansVoid ? "" : val;
+				elmkeys.add([
+					time,		//	time
+					v,			//	val
+					accel,		//	accel
+					interpolate,//	interpolation
+				]);
+				firsttime	= time if firsttime === void;
+				prev		= val;
+				usemiddle	= true;
+			}
+			//	通常の値
+			else
+			{
+				//	現在の値を使うかどうか
+				if(!j & usecurrent)
+				{
+					val	= info.target[prop];	//	初期値のみ現在の値を使う(直前の状態を引き継ぐため)
+					time	= 0;
+				}
+				else if(val === meansCurrent)
+				{
+					//その時の状態を示す値（オブジェクトを操作しない）
+					val	= info.target[prop];
+				}
+				else if(val === void || val === "")
+					val	= prev;	//	値が設定されていなければ、直前の値を入れる
+
+				//	次の値を取得
+				next	= j < keys.count - 1 ? keys[j+1][i+3] : val;
+				next	= val if next === "";
+
+				//	判定関数が存在するなら、判定して補間するかしないか決める
+				if(func != void)
+					nip	= func(val) | func(next);	// このフレームか次のフレームが補間不可能な値だったら補間しない
+
+				accel		= key[1] if key[1] !== void && key[1] !== "";
+				interpolate	= key[2] if key[2] !== void && key[2] !== "";
+
+				//	最初のフレームか、直前か直後と値が異なるなら、キーを設定する
+//				dm(prev+", "+val+", "+next+"("+force+")");
+				if(val != prev || val != next || force)
+				{
+					var	v	= val == meansVoid ? "" : val;
+					elmkeys.add([
+						time,		//	time
+						v,			//	val
+						accel,		//	accel
+						interpolate,//	interpolation
+					]);
+					firsttime	= time if firsttime === void;
+					changed	|= j > 0;	//	最初以外で変更があったときのみ changed=true
+				}
+				prev		= val;
+				firstvalue	= val if firstvalue === null;
+			}
+		}
+//dispMicro("loop", 6);
+
+@if(KEYFRAMEACTION_VERVOSE)
+		var	text;
+		for(var i=0; i<elmkeys.count; i++)
+			text	+= elmkeys[i][1]+", ";
+		dm("MixedKeyFrameActionModule "+prop+": "+text+" / init = "+initvalues[prop]);
+@endif
+
+		//	補間しないプロパティなら、補間方法を"n"(none)に変える
+		if(nip && prop != "storage")
+		{
+			for(var i=0; i<elmkeys.count; i++)
+				elmkeys[i][3]	= "n";
+		}
+
+		//	KeyFrameExchangeAction を使うかどうか
+		//	→	exchg が指定されており、storage で、変化がある場合
+		var	exchg	= typeof elm.exchg != "undefined" && elm.exchg && prop == "storage" && changed;
+//dispMicro("analyze timeline["+keys.count+"]", 5);
+		//	値に変化があるか、最初のフレームが1ミリ秒以降か、画像を示すプロパティのときは、
+		//	キーフレームアクションを実行する
+		if(changed || firsttime > 0 || force)
+		{
+			//	未確定の中間値が存在するなら
+			if(usemiddle)
+			{
+				//	比率を計算する
+				var	st;
+				for(var i=1; i<elmkeys.count; i++)
+				{
+					if(elmkeys[i][1] == meansMiddle)
+					{
+						if(st === void)
+							st	= i - 1;
+					}
+					else if(st !== void)
+					{
+						var	ed	= i;
+
+						//	中間値区間情報を取得
+						var	sttime		= +elmkeys[st][0], edtime = +elmkeys[ed][0];
+						var	stval		= +elmkeys[st][1], edval = +elmkeys[ed][1];
+						var	totaltime	= edtime - sttime, totalvalue = edval - stval;
+						var	times		= [];
+//						dm(st+" - "+ed+"\n\t\ttime = "+sttime+" 〜 "+edtime+" ("+(edtime-sttime)+")\n\t\tvalue= "+stval+" 〜 "+edval+" ("+(edval-stval)+")");
+
+						//	比率の計算を複数回行って、集束させる
+//						for(var cnt=0; cnt<1; cnt++)
+						{
+							//	最初の区間の最後のフレーム(16ミリ秒)の、値の速度を取得
+							var	pasttime	= +elmkeys[st+1][0] - sttime;
+							var	secchange	= totalvalue * pasttime / totaltime;
+							var	lastspd		= equations.calc(elmkeys[st][2], 16, 0, secchange, pasttime);
+//							dm("sector = "+st+" / pasttime = "+pasttime+" / sector change = "+secchange+"\n\t\tcurrate rate = "+(pasttime / totaltime)+"\n\t\tspeed = "+lastspd+" point/16ms");
+							times.add(pasttime);	//	最初の区間の時間
+
+							var	sector	= st + 1;
+							while(sector < ed)
+							{
+								//	次の区間の、最初のフレームに↑の加速度を当てはめて、値の比率を計算
+								pasttime	= +elmkeys[sector+1][0] - +elmkeys[sector][0];
+								secchange	= totalvalue * pasttime / totaltime;
+								var	fstspd	= equations.calc(elmkeys[sector][2], 16, 0, secchange, pasttime);
+								var	time	= lastspd / fstspd * pasttime;	//	傾きを維持した場合の区間時間
+//								dm("sector = "+sector+" / pasttime = "+pasttime+" / sector change = "+secchange+"\n\t\tcurrate rate = "+((elmkeys[sector+1][0] - sttime) / totaltime)+"\n\t\tfirst speed = "+fstspd+" point/16ms\n\t\t=> time = "+time);
+								times.add(time);	//	途中区間の時間
+
+								//	この区間でも最後のフレームの加速度を取得して、次の区間の先頭に当てはめる
+								lastspd	= equations.calc(elmkeys[sector][2], 16, 0, secchange, time);
+//								dm("speed = "+lastspd);
+								sector++;
+							}
+
+							//	各区間にふさわしいと思われる時間から、実際の時間と値を計算
+							var	tt	= 0;
+							for(var i=0; i<times.count; i++)
+								tt	+= times[i];
+							tt	= totaltime / tt;
+							var	ttr		= 1 / totaltime;
+							var	time1	= elmkeys[st][0];
+							for(var i=st; i<ed-1; i++)
+							{
+								var	time= times[i-st] * tt;
+								time1	+= time;
+								elmkeys[i+1][1]	= stval + totalvalue * time1 * ttr;
+//								dm("sector["+(i+1)+"] = "+elmkeys[i+1][0]+" / "+elmkeys[i+1][1]);
+							}
+
+							times.clear();
+						}
+
+						//	この中間値区間は処理終了
+						st	= void;
+					}
+				}
+				//	最終値の指定が存在しないなら、
+				if(st !== void)
+				{
+					//	中間値指定を削除
+					for(var i=st+1; i<elmkeys.count; i++)
+					{
+						if(elmkeys[i][1] == meansMiddle)
+						{
+							elmkeys.erase(i);
+							i--;
+						}
+					}
+				}
+//dispMicro("use middle", 6);
+			}
+
+			elm.prop	= prop;
+			var	act;
+			if(elm.loop !== void && elm.loop !== "")
+				act	= exchg ? lpkfeact : lpact;	//	ループする
+			else
+				act	= exchg ? kfeact : kfact;
+			info.addAction(prop, act, elm);
+//dispMicro("add action("+prop+")", 6);
+@if(KEYFRAMEACTION_VERVOSE)
+			var	func	= function(keys) { var text; for(var i=0; i<keys.count; i++) { text += "("+keys[i].join(",")+")"; } return text; };
+			dm("MixedKeyFrameActionModule: addAction " + prop+" / "+func(elmkeys));
+@endif
+			delete initvalues[prop];	//	値の指定があるプロパティは、初期値のリストから取り除く
+
+@if(AUTO_SRCOPACITY)
+			//	srcleft, srctop の秒間変化量が32ピクセル以下なら、srcopacity を255未満に設定する
+			if(prop == "srcleft" || prop == "srctop")
+			{
+				if(srcopacity !== null)
+				{
+					for(var i=0; i<elmkeys.count-1; i++)
+					{
+						var	delta	= (elmkeys[i+1][1] - elmkeys[i][1]) / elmkeys[i+1][0] * 1000;
+						if(delta <= 32)
+						{
+							var	so	= Math.min(Math.max(int(delta * 8), 32), 255);
+							if(srcopacity == void)
+								srcopacity	= [];
+							if(srcopacity[i] != void)
+								srcopacity[i][1]= so if srcopacity[i][1] > so;
+							else
+								srcopacity[i]	= [ elmkeys[i][0], so, 0, "n" ];
+						}
+					}
+				}
+				existsrcopacity	= true;
+			}
+			else if(prop == "srcopacity")
+				srcopacity	= null;
+@endif
+		}
+
+		//	プロパティが storage なら、変化がない場合でも単独の InitializeAction を生成する
+		else if(prop == "storage")
+		{
+			//	storage が設定されて、目的の画像が最初に読み込まれていることが、一つの条件になっているため
+			info.addAction(prop, InitializeAction, %[prop:prop, inits:[prop, firstvalue]]);
+			delete initvalues[prop];
+//dispMicro("add initialize("+prop+")", 6);
+		}
+
+		//	初期値のみのプロパティは、まとめて値を設定する
+		else if(firstvalue !== null && issetinit)
+			initvalues[prop]	= firstvalue;
+//dispMicro(prop, 5);
+	}
+@if(AUTO_SRCOPACITY)
+	//	srcopacity のキーを登録
+	if(srcopacity != void && srcopacity != null)
+	{
+		for(var i=0; i<keys.count-1; i++)
+			srcopacity[i]	= [ keys[i][0], 255, 0, "n" ] if srcopacity[i] == void;
+		elm.prop	= "srcopacity";
+		elm.keys	= srcopacity;
+		info.addAction(elm.prop, elm.loop !== void && elm.loop !== "" ? lpact : kfact, elm);
+	}
+	else if(existsrcopacity)
+		initvalues["srcopacity"]	= 255;
+@endif
+	//	初期値を設定するアクションを実行
+	var	keys	= [];
+	keys.assign(initvalues);
+	if(keys.count > 0 && issetinit)	//	noinit か usercurrent が true なら初期化なし
+	{
+		var	elm	= %[prop:keys[0], inits:keys];
+		info.addAction(elm.prop, InitializeAction, elm);
+	}
+//dispMicro("init actions["+(keys.count\2)+"]", 5);
+//dispMicro("post props", 5);
+//dispMicro("mixed keyframe", 4);
+}
+
+/**
+ *	キーフレームに従って、相対的にプロパティ値を変化させるアクション
+ */
+class RelativeKeyFrameAction extends _KeyFrameAction
+{
+	var	keys	= [];
+
+	function RelativeKeyFrameAction(target, propName, elm)
+	{
+		super._KeyFrameAction(...);
+	}
+
+	function RelativeActionHandler()
+	{
+	}
+
+	//	値を設定する
+	function setValue(target, propName, val)
+	{
+		target[propName]		+= val;
+		target.trans[propName]	+= val if typeof target.trans != "undefined" && target.trans != void;	//	個別トランジション中なら、対応するレイヤーへも値を入れる
+//		dm(target.name+"."+propName+" = "+target[propName]);
+	}
+}
+
+/**
+ *	ループする相対キーフレームアクション
+ */
+class LoopRelativeKeyFrameAction extends RelativeKeyFrameAction
+{
+	var	loopStart;
+
+	function LoopRelativeKeyFrameAction(target, propName, elm)
+	{
+		super.RelativeKeyFrameAction(...);
+	}
+
+	function construct(target, propName, elm)
+	{
+		super.construct(...);
+		loopStart	= +elm.loop;	//	ループの始点時間
+		time = orgtime =	0x7fffffffffffffff;	//	止めるまで続く
+	}
+
+	property drawspeed	{ getter { return
+@if(USE_RECORD)
+		Math.max(1, kag.drawspeed)
+@endif
+@if(!USE_RECORD)
+		1	//	ループする場合は、drawspeed の影響を受けない
+@endif
+	; } }
+
+	//	指定時刻での値
+	//	in	: now	時刻
+	function getValue(now)
+	{
+		//	初回は通常通り処理
+		var	totaltime	= keys[keys.count-1][0];
+		if(now < totaltime)
+			return super.getValue(now);
+
+		//	2回目以降は、ループ開始位置が全体の開始位置とずれる可能性があるので、その分計算する
+		now	-= totaltime;
+		if( totaltime - loopStart >= 1 ){//	ゼロ除算防止
+			//dm("now=" + now + " totaltime=" + totaltime + " loopStart=" + loopStart);
+			now	= now % (totaltime - loopStart) + loopStart;
+		}
+		return super.getValue(now);
+	}
+}
+
+/**
+ *	キーフレームに沿った変化を行う相対アクションの詰め合わせを処理するモジュール
+ *	※ ほぼ、メニューオブジェクトの個別アクション専用
+ */
+function MixedRelativeKeyFrameActionModule(info, elm,
+	kfact=RelativeKeyFrameAction, lpact=LoopRelativeKeyFrameAction)
+{
+	var	props	= typeof elm.props == "String" ? elm.props.split(",",, true) : elm.props;
+	var	keys	= typeof elm.keys == "String" ? parseKeyFrame(elm.keys) : elm.keys;
+
+	//	補間不可能な値かどうかを、プロパティ毎に判定する
+	var	noips	= isNotInterpolate;
+
+	//	初期値(基準値)
+	var	initvalues	= %[];
+	(Dictionary.assign incontextof initvalues)(elm.init) if elm.init != void;
+	var	initprops	= %[];
+	if(elm.basicitem != void)
+	{
+		//	相対アクションのために生成されたオブジェクトは適切な初期化が行われていないので
+		//	ここで行う
+		info.target.center	= elm.basicitem.center;
+		info.target.vcenter	= elm.basicitem.vcenter;
+		info.target.absolute= 1000;
+	}
+	initvalues.center	= 512;
+	initvalues.vcenter	= 288;
+
+	for(var i=0; i<props.count; i++)
+	{
+		//	プロパティ
+		var	prop	= props[i];
+		var	nip		= false;
+		if(prop[0] == "-")
+		{
+			prop	= prop.substr(1);
+			nip		= true;
+		}//	それ以外は、指定の補間を行なう
+		var	func	= noips[prop];	//	判定関数が存在するか
+
+		//	各プロパティ毎にキーフレームを作成
+		elm.keys	= [];
+		var	prev	= 0, next;
+		var	firsttime;
+		var	changed	= false;
+		var	accel = 0, interpolate = "n";
+		for(var j=0; j<keys.count; j++)
+		{
+			var	key		= keys[j];
+			var	val	= key[i+3];
+
+			//	中間値を示す値なら、次へ
+			if(val == meansMiddle)
+			{
+				if(key[1] !== "" && keys[1] != accel)
+				{
+					System.inform("相対キーフレームアクションで、中間で加速度の異なる処理は未実装です。");
+					return;
+				}
+				continue;
+			}
+			else if(val === void || val === "")
+				val	= prev;
+/*			{
+				if(j < 1)
+					val	= initvalues[prop];	//	初期値を入れる(一番最初)
+				else
+					val	= keys[j-1][i+3];	//	直前の値を入れる
+			}
+*/
+			var	time	= key[0];
+			accel		= key[1] if key[1] !== void && key[1] !== "";
+			interpolate	= key[2] if key[2] !== void && key[2] !== "";
+
+			//	次の値を取得
+			next	= j < keys.count - 1 ? keys[j+1][i+3] : val;
+			next	= val if next === void || next === "";
+
+			//	判定関数が存在するなら、判定して補間するかしないか決める
+			if(func != void)
+				nip	= func(val) | func(next);	// このフレームか次のフレームが補間不可能な値だったら補間しない
+
+			val	-= initvalues[prop];	//	相対値にする
+			next	-= initvalues[prop];	//	相対値にする
+
+			//	最初のフレームか、直前か直後と値が異なるなら、キーを設定する
+			if(val != prev || val != next)
+			{
+				var	v	= val == meansVoid ? "" : val;
+				elm.keys.add([
+					time,		//	time
+					v,			//	val
+					accel,		//	accel
+					interpolate,//	interpolation
+				]);
+				firsttime	= time if firsttime === void;
+				changed	|= j > 0;	//	最初以外で変更があったときのみ changed=true
+			}
+			prev	= val;
+		}
+//		dm(prop+".changed = "+changed);
+
+		//	補間しないプロパティなら、補間方法を"n"(none)に変える
+		if(nip)
+		{
+			for(var i=0; i<elm.keys.count; i++)
+				elm.keys[i][3]	= "n";
+		}
+
+		//	値に変化があるか、最初のフレームが1ミリ秒以降か、画像を示すプロパティのときは、
+		//	キーフレームアクションを実行する
+		if((changed || firsttime > 0) && prop != "storage")
+		{
+			elm.prop	= prop;
+			var	act;
+			if(elm.loop !== void && elm.loop !== "")
+				act	= lpact;	//	ループする
+			else
+				act	= kfact;
+			info.addAction(prop, act, elm);
+		}
+		else if(elm.origin == void && prop != "center" && prop != "vcenter")
+		{//	初期値を設定する
+			info.target[prop]	= keys[0][i+3];
+		}
+	}
+}
+
+/**
+ * 複数のプロパティの初期値を設定するのみのアクション
+ */
+class InitializeAction extends AbsoluteActionHandler
+{
+	var	inits;
+	var	force;
+
+	function InitializeAction(target, propName, elm)
+	{
+@if(KEYFRAMEACTION_VERVOSE)
+		dm("InitializeAction("+target+", "+propName+", elm)");
+@endif
+		super.AbsoluteActionHandler(...);
+	}
+
+	function construct(target, propName, elm)
+	{
+		super.construct(...);
+		time	= delay = 0;
+		inits	= elm.inits;
+		force	= elm.force;
+
+		for(var i=0; i<inits.count; i+=2)
+		{
+			var	prop	= inits[i];
+			var	val	= inits[i+1];
+			val	= isNumber(val) ? +val : val;	//	文字列が数字のみなら、数値に変換
+
+			if(val != meansCurrent)
+			{
+				//	afx, afy は特殊な値があるので、通常の値に戻して比較する
+				if(prop == "afx")		val	= target.calcAfx(val);
+				else if(prop == "afy")	val	= target.calcAfy(val);
+				else if(prop == "srcafx")	val	= target.calcSrcAfx(val);
+				else if(prop == "srcafy")	val	= target.calcSrcAfy(val);
+@if(KEYFRAMEACTION_VERVOSE)
+				dm("initialize: "+target.name+"."+prop+" = "+target[prop]+" → "+val);
+@endif
+				target[prop]	= val if target[prop] !== val || force;
+			}
+		}
+	}
+
+	function doAction(target, propName, now, stopFlag)
+	{
+		return true;	//	値を設定したらすぐ終了
+	}
+
+	function getResultValue()
+	{
+		return inits[0][1];
+	}
+}
+
+/**
+ * キーフレームで実行を開始するアクション
+ */
+class KeyFrameExecuteAction extends AbsoluteActionHandler
+{
+	var	keys	= [];	//	[ [time, execute], ... ]
+	var	lastKeyFrameNo;	//	直前に処理したキーフレーム
+
+	function KeyFrameExecuteAction(target, propName, elm)
+	{
+		super.AbsoluteActionHandler(...);
+	}
+
+	function construct(target, propName, elm)
+	{
+		super.construct(...);
+		keys.clear();
+		if(elm != void)
+		{
+			keys.assign(elm.keys);
+		}
+		if(keys.count > 0)
+		{
+			if(keys[0][0] > 0)
+				keys.insert(0, [ 0 ]);	//	time=0のフレームに、何もしないを入れる
+			for(var i=0; i<keys.count; i++)
+				keys[i][0]	*= drawspeed;
+			time	= keys[keys.count - 1][0];	//	トータル時間
+		}
+
+		//	アクションを開始する前に画像をキャッシュする
+		if(propName == "storage" && target instanceof "Layer")
+		{
+			var	list	= [];
+			for(var i=0; i<keys.count; i++)
+				addTouchList(list, keys[i][1]);		//	addTouchList は Conductor.tjs で定義
+			System.touchImages(list) if list.count > 0;
+		}
+
+		lastKeyFrameNo	= -1;
+@if(KEYFRAMEACTION_VERVOSE)
+		dm(target+"."+propName+" / current = "+target[propName]) if target != void && typeof target[propName] != "undefined";
+		for(var i=0; i<keys.count; i++)
+			dm(i+": "+keys[i].join(", "));
+@endif
+	}
+
+	property drawspeed	{ getter { return
+@if(!USE_RECORD)
+		(noRapid) ? 1.0 :
+@endif
+	kag.drawspeed; } }
+
+	/**
+	 * アクションの実行
+	 */
+	function doAction(target, propName, now, stopFlag)
+	{
+//		dm("KeyFrameExecuteAction.doAction("+target+", "+propName+", "+now+", "+stopFlag+"): frame = "+currentFrame(now));
+//		dm(this+" / "+Scripts.getTraceString());
+		if(stopFlag)
+		{
+			//	アクションを途中でも停止させる
+			atEndOfAction(target, propName, now);
+		}
+		else
+		{
+			execute(currentFrame(now), target);	//	実行する
+
+			//	所定の時刻を過ぎた
+			if(now >= time)
+			{
+				atEndOfAction(target, propName, now);
+				return true;
+			}
+		}
+		return stopFlag;
+	}
+
+	/**
+	 * アクションが途中で停止したときの処理
+	 */
+	function atEndOfAction(target, propName, now)
+	{
+		//	とりあえず最終フレームの処理を行なう
+		execute(keys.count - 1, target);
+	}
+
+	/**
+	 * 指定フレームでの状態を再現する
+	 */
+	function execute(keyframeno, target)
+	{
+		if(lastKeyFrameNo >= keyframeno)
+			return;	//	既に処理済のフレームなので
+
+		for(var i=keyframeno; i>=0; i--)
+		{
+			if(keys[i] != void && keys[i][1] != void)
+			{
+//				dm(target.name+".execute = "+keys[i][1]);
+				Scripts.eval(keys[i][1]) incontextof target;
+				keys[i][1]	= void;
+				break;
+			}
+		}
+		lastKeyFrameNo	= keyframeno;	//	処理が終了していることを記録
+	}
+
+	/**
+	 * 時間から、現在のフレームを取得する
+	 */
+	function currentFrame(now)
+	{
+//		dm("currentFrame("+now+"), keys.count = "+keys.count);
+		for(var i=1; i<keys.count; i++)
+		{
+//			dm(i+": "+keys[i][0]+" >= "+now);
+			if(keys[i][0] >= now)
+				return i - 1;
+		}
+		return keys.count - 1;
+	}
+
+	//	保存
+	function store()
+	{
+		var	dic	= super.store();
+		dic.keys	= [];
+		dic.keys.assign(keys);
+		if(dic.keys[0][0] > 0)			//	0 以下のフレームが挿入されていなければ、
+			dic.keys.insert(0, keys[0]);//	計算後の 0 フレームを挿入する
+		dic.lastKeyFrameNo	= lastKeyFrameNo;
+		return dic;
+	}
+
+	//	復元
+	function restore(dic)
+	{
+		with(dic)
+		{
+			keys	= [];
+			keys.assignStruct(.keys) if .keys !== void;
+			lastKeyFrameNo = .lastKeyFrameNo if .lastKeyFrameNo !== void;
+		}
+	}
+
+	/**
+	 * 移動の結果
+	 */
+	function getResultValue()
+	{
+		return void;	//	新たに設定する必要はないので、void を返す
+	}
+}
+
+/**
+ * キーフレームでトランジションを開始するアクション
+ */
+class KeyFrameTransitionAction extends KeyFrameExecuteAction
+{
+	//	keys = [ [time, rule, transition time, vague], ... ]
+
+	var	asyncTrigger;	//	Actionの処理が終了した後にトランジションを開始する
+	var	transParams;	//	トランジションパラメータ
+
+	function KeyFrameTransitionAction()
+	{
+		super.KeyFrameExecuteAction(...);
+	}
+
+	function construct(target, propName, elm)
+	{
+		super.construct(...);
+		//	keys の整理
+		for(var i=0; i<keys.count; i++)
+		{
+			if(keys[i][1] != void)
+			{
+				if(keys[i][2] === void)
+				{
+					if(i < keys.count - 1)
+						keys[i][2]	= keys[i+1][0] - keys[i][0];	//	トランジション時間の設定がなければ、次のキーフレームまでの時間
+					else
+						keys[i][2]	= 0;
+				}
+				if(keys[i][3] === void)
+					keys[i][3]	= keys[i][1] == "crossfade" ? 60000 : 64;
+			}
+		}
+		var	last	= keys[keys.count - 1];
+		time	= last[0] + last[2];	//	トランジション完了まで担当
+
+		createAsyncTrigger();
+	}
+
+	function createAsyncTrigger()
+	{
+		with(asyncTrigger = new AsyncTrigger(beginTrans, ""))
+		{
+			.cached	= true;
+			.mode	= atmAtIdle;
+		}
+	}
+
+	function finalize()
+	{
+		invalidate asyncTrigger if asyncTrigger != void;
+	}
+
+	/**
+	 *	実行中のトランジションを停止
+	 */
+	function stopTransition(target)
+	{
+/*		//	オーバーライドのこと
+		target.stopTransition();
+		target.comp.stopTransition();
+*/
+	}
+
+	/**
+	 *	一回だけトランジション後の切り替えを行う必要がある時の処理
+	 */
+	function exchangeOnce(target, keyframeno)
+	{
+/*		//	オーバーライドのこと
+		target.atEndOfTransition(target.comp, true, true);
+		target.absolute <-> target.comp.absolute;
+		target.visible <-> target.comp.visible;
+*/
+	}
+
+	/**
+	 *	トランジションの source を取得
+	 */
+	function getTransSource(target)
+	{
+		//	オーバーライドのこと
+
+		return void;	//	void なら、comp レイヤー
+	}
+
+	/**
+	 *	トランジション前の処理
+	 */
+	function beforeTrans(target, keyframeno)
+	{
+	}
+
+	/**
+	 *	アクションが途中で停止したときの処理
+	 */
+	function atEndOfAction(target, propName, now)
+	{
+//		dm("KeyFramePageAction.atEndOfAction: seqid="+seqid+" stop "+className+" / "+now+": "+target.name+"."+propName+" = "+target[propName]+" keys→void initState="+initState);
+		stopAndSkipTransition(keys.count-1, target);
+	}
+
+	/**
+	 *	トランジションの停止とスキップ処理
+	 *	@param target	対象のレイヤー
+	 *	@param keyframeno	このキーフレームまで実行する
+	 */
+	function stopAndSkipTransition(keyframeno, target)
+	{
+		//	実行中のトランジションを停止
+		stopTransition(target);
+
+		//	残っているトランジションの回数を調べる
+		var	cnt	= 0;
+		var	notTrans	= %[action:true, stop:true];
+		for(var i=lastKeyFrameNo+1; i<=keyframeno; i++)
+		{
+			var	key	= keys[i];
+			if(key != void && key[1] != void && !notTrans[key[1]])
+				cnt++;
+		}
+
+		//	トランジションが奇数回残っていたら、1回だけページを切り替える
+		if(cnt & 1)
+			exchangeOnce(target, keyframeno);
+
+		lastKeyFrameNo	= keyframeno;
+	}
+
+	/**
+	 *	トランジションを予約して、指定フレームでの状態を再現する
+	 */
+	function execute(keyframeno, target)
+	{
+		if(lastKeyFrameNo >= keyframeno)
+			return;	//	既に処理済のフレームなので
+
+//		dmt("KeyFrameTransitionAction.execute("+keyframeno+", "+target.name+"):");
+
+		//	実行中のトランジションを停止し、スキップ処理を行なう
+		stopAndSkipTransition(keyframeno-1, target);
+
+		//	実行しないキーフレームかどうか
+		var	key	= keys[keyframeno];
+		if(key == void || key[1] == "stop" || key[1] == "")
+		{
+			transParams	= void;
+			lastKeyFrameNo	= keyframeno;
+			return;
+		}
+
+		//	トランジションのパラメータを設定する
+		transParams	= %[
+			time:key[2] * drawspeed,
+			method:(key[1] == "crossfade" ? "crossfade" : "universal"),
+			rule:key[1],
+			exchange:true,
+			vague:key[3],
+		];
+		if(transParams.method == "scroll")
+		{
+			transParams.from	= key[4] if key[4] != void;
+			transParams.stay	= key[5] if key[5] != void;
+		}
+
+		//	実行を予約する
+		transParams.target	= target;
+		transParams.source	= getTransSource(target);
+		asyncTrigger.trigger();
+		transParams.startTick	= System.getTickCount();
+
+		//	トランジション前の処理
+		beforeTrans(target, keyframeno);
+
+		lastKeyFrameNo	= keyframeno;
+	}
+
+	/**
+	 *	トランジションを開始する
+	 */
+	function beginTrans()
+	{
+		if(transParams != void)
+		{
+			transParams.time	-= System.getTickCount() - transParams.startTick;
+			transParams.target.beginTransition(transParams, transParams.source);
+		}
+	}
+}
+
+/**
+ *	ページの裏表を切り替えるアクション.
+ *	target != kag.fore.base, kag.back.base なので、target は無視して直接処理している
+ */
+class KeyFramePageAction extends KeyFrameTransitionAction
+{
+	function KeyFramePageAction()
+	{
+		super.KeyFrameTransitionAction(...);
+	}
+
+	function stopTransition()
+	{
+		kag.fore.base.stopTransition();
+		kag.back.base.stopTransition();
+	}
+
+	function exchangeOnce(target, keyframeno)
+	{
+		kag.fore.base.atEndOfTransition(kag.back.base, true, true);
+
+		//	以下の2つが入れ替わらないので、ここで入れ替える
+		kag.fore.base.absolute <-> kag.back.base.absolute;
+		kag.fore.base.visible <-> kag.back.base.visible;
+	}
+
+	//	トランジションを開始する
+	function beginTrans()
+	{
+//		if(transParams != void)
+		{
+//			dm("start transition: "+transParams.method+", "+transParams.rule+", "+transParams.time);
+			kag.back.base.visible	= false;	//	念のため、トランジションの相手方を非表示にする
+			transParams.time	-= System.getTickCount() - transParams.startTick;
+			kag.fore.base.beginTransition(transParams);
+		}
+	}
+}
+
+/**
+ *	キーフレームに沿ったコマンドの実行を行なうアクションを生成するモジュール
+ *	elm.keys	キーフレーム
+ *	elm.delay	開始遅延時間
+ *		呼び出し方は
+ *		[action page=fore layer=base module=KeyFramePageModule keys="(1600,crossfade,800)" delay=0]
+ *		→	1600ミリ秒後、クロスフェードトランジション(800ミリ秒)を開始する
+ */
+function KeyFramePageModule(info, elm)
+{
+	elm.keys	= parseKeyFrame(elm.keys);
+	info.addAction("visible", KeyFramePageAction, elm);	//	propName = visible に特に意味は無い(プロパティ名は必ず指定する必要があるため)
+}
+
+/**
+ * キーフレームで音声関連の動作を制御するアクション
+ */
+class KeyFrameSoundAction extends KeyFrameExecuteAction
+{
+	function KeyFrameSoundAction()
+	{
+		super.KeyFrameExecuteAction(...);
+	}
+
+	/**
+	 * アクションが途中で停止したときの処理
+	 */
+	function atEndOfAction(target, propName, now)
+	{
+		//	最低限行なわなければならない処理の開始位置を探す
+		var	keyframeno;
+		for(var keyframeno=keys.count-1; keyframeno>lastKeyFrameNo; keyframeno--)
+		{
+			var	key	= keys[keyframeno];
+			var	cmd;
+			if(key != void && key[1] != void && (key[1] == "play" || key[1] == "stop"))
+				break;
+		}
+		if(keyframeno == lastKeyFrameNo)
+			keyframeno++;
+
+		//	処理を実行する
+		for(var i=int(keyframeno); i<keys.count; i++)
+			execute(i, target);
+	}
+
+	/**
+	 * アクションが一時停止/復帰されたときの処理
+	 */
+	property pause
+	{
+		setter(v)
+		{
+			v	= +v;
+			if(v !== pause)
+			{
+				super.pause	= v;
+				if(targetBuffer != void)
+				{
+					if(typeof targetBuffer.paused != "undefined")
+					{
+						dm(targetBuffer+".paused = "+v);
+						targetBuffer.paused	= v;
+					}
+					else
+					{
+						dm(targetBuffer+".buf1.paused = "+v);
+						targetBuffer.buf1.paused = targetBuffer.buf2.paused = v;
+					}
+				}
+			}
+		}
+		getter	{ return super.pause; }
+	}
+
+	function action(target, propName, now, stopFlag)
+	{
+		if(startTime === void)
+			startTime	= now;
+		now	-= startTime;
+
+		if(!stopFlag && delay !== void)
+		{
+			now	-= delay;
+			if(now < 0)
+				return false;	//	まだ開始されていない
+		}
+
+		return doAction(target, propName, now, stopFlag);
+	}
+
+	function doAction(target, propName, now, stopFlag)
+	{
+		if(stopFlag)
+		{
+			//	アクションを途中でも停止させる
+			atEndOfAction(target, propName, now);
+		}
+		else
+		{
+			execute(currentFrame(now), target);	//	実行する
+
+			//	所定の時刻を過ぎた
+			if(now > time)
+			{
+				var	storage	= getLatestSoundStorage();
+				if(storage != "" && storage == target.playingStorage && !target.looping)	//	ループ中のBGM/効果音は時間通り
+					return false;	//	最後に指定したBGM/効果音が再生されている間はアクションが有効
+				else
+				{
+					atEndOfAction(target, propName, now);
+					return true;
+				}
+			}
+		}
+		return stopFlag;
+	}
+
+	function getLatestSoundStorage()
+	{
+		for(var i=keys.count-1; i>=0; i--)
+		{
+			if(keys[i][2] != "")	//	keys[i][1] はリセットされてしまうので、ファイル名だけで判断
+				return keys[i][2];
+		}
+		return "";
+	}
+
+	/**
+	 * 指定フレームでの状態を再現する
+	 */
+	var	targetBuffer;	//	一時停止/復帰用に対象のバッファを記録する
+	function execute(keyframeno, target)
+	{
+		if(lastKeyFrameNo >= keyframeno)
+			return;
+
+//		dm("KeyFrameSoundAction.execute("+keyframeno+", "+target+")");
+//		if( keyframeno === void || keyframeno == "" ){
+//			dm("ERROR!! KeyFrameActionHandler: execute keyframeno = " + keyframeno);
+//			keyframeno = 0;
+//		}
+		var	key	= keys[keyframeno];
+		if(key != void && key[1] != void)
+		{
+			var	elm;
+//			dm("se: cmd = "+key[1]);
+			switch(key[1])
+			{
+			case "play":
+				//	BGMの場合、exchange もある
+				if(target instanceof "BGM")
+				{
+					dm(@"play BGM: ${key[2]}, ${key[3]}");
+					elm	= %[
+						storage:key[2],
+						time:key[3],
+						loop:key[6],
+						label:key[7],
+						overlap:key[8],
+						chgloop:key[10]
+					];
+					target.setVolume(int(+key[9] * 1000)) if key[9] !== void && key[9] !== "";	//	開始時音量及びフェードイン後音量
+					if(elm.time > 0)
+					{
+						if(target.currentBuffer.status == "play")
+						{
+							elm.intime	= elm.outtime	= elm.time;
+							elm.overlap	= elm.time if elm.overlap === "";
+							target.exchange(elm);
+						}
+						else
+							target.fadeIn(elm);
+					}
+					else
+						target.play(elm);
+				}
+				//	SEの場合、start (開始位置指定)がある
+				else
+				{
+					dm(@"play SE: init(vol=${key[8]}, pan=${key[9]}), play(${key[2]}, ${key[3]}, ${key[5]}, ${key[6]}), fade(vol=${key[4]}, pan=${key[7]})");
+					//	初期設定
+					target.volume	= key[8] if key[8] !== void && key[8] !== "";
+					target.pan		= key[9] if key[9] !== void && key[9] !== "";
+
+					//	再生・フェード設定
+					var	elm	= %[storage:key[2], loop:key[6]];
+					if(key[5] != "")
+						elm.start	= key[5];
+					target.play(elm);	//	再生
+					if(key[3] > 0)
+					{
+						elm	= %[time:key[3], volume:key[4], pan:key[7], chgloop:key[10]];
+						if(key[8] !== key[4])
+							target.fade(elm);	//	フェードイン
+
+						//	パン変化設定
+						if(key[9] !== key[7])
+						{
+@if(DEBUG)
+							if( typeof target.panning == "undefined" )
+								dm("target:" + getClassName(target) + " にpanningメソッドがありません");
+@endif
+							//target.panning(elm);
+							target.startPan(elm);
+						}
+					}
+				}
+				break;
+			case "stop":
+				dm(@"stop: stop(${key[2]})");
+				if(key[2] > 0)
+					target.fadeOut(%[time:key[2], volume:key[3]]);
+				else
+					target.stop();
+				break;
+			case "param":	//	音量、スピーカー位置の変更
+				dm(@"param: pan(${key[2]}, ${key[4]})");
+				//	pan
+				elm	= %[
+					time:key[2],
+					pan:key[4]
+				];
+				//target.panning(elm);
+				target.chgloop = key[5] if key[5] !== void;
+				target.startPan(elm);
+
+				//	音量は "fade" と同じ
+			case "volume":	//	音量の変更
+				dm(@"volume: fade(${key[2]}, ${key[3]})");
+				elm	= %[
+					time:key[2],
+					volume:key[3]
+				];
+				target.chgloop = key[5] if key[5] !== void;
+				target.fade(elm);
+				break;
+			case "pan":		//	スピーカー位置の変更
+				dm(@"pan: pan(${key[2]}, ${key[3]})");
+				elm	= %[
+					time:key[2],
+					pan:key[3]
+				];
+				//target.panning(elm);
+				target.chgloop = key[5] if key[5] !== void;
+				target.startPan(elm);
+				break;
+			case "pause":
+				target.pause() if target instanceof "BGM";
+				break;
+			case "resume":
+				target.resume() if target instanceof "BGM";
+				break;
+			case "continuous":
+				break;
+			}
+			key[1]	= void;
+		}
+		lastKeyFrameNo	= keyframeno;
+		targetBuffer	= target;
+	}
+}
+
+/**
+ *	キーフレームで音声関連の動作を制御するアクションを生成するモジュール
+ *	elm.keys	キーフレーム
+ *	elm.delay	開始遅延時間
+ *		呼び出し方は
+ *		[action target=se[0] module=KeyFrameSoundModule keys="(1600,play,se001)" delay=0]
+ *		→	soundbuffer[0] で、1600ミリ秒後に se001 を再生開始
+ *		[action target=se[0] module=KeyFrameSoundModule keys="(1600,play,se001,200,50)" delay=0]
+ *		→	soundbuffer[0] で、1600ミリ秒後に se001 を200ミリ秒のフェードインで再生開始。最終音量は50%
+ *		[action target=se[0] module=KeyFrameSoundModule keys="(1600,play,se001,,,-100)" delay=0]
+ *		→	soundbuffer[0] で、1600ミリ秒後に se001 を左へ移動させながら再生開始。
+ *		[action target=se[0] module=KeyFrameSoundModule keys="(1600,play,se001,,,,2nd)" delay=0]
+ *		→	soundbuffer[0] で、1600ミリ秒後に se001 を 2nd ラベルから再生開始
+ *		[action target=se[0] module=KeyFrameSoundModule keys="(1600,play,se001,,,,,true)" delay=0]
+ *		→	soundbuffer[0] で、1600ミリ秒後に se001 をループ再生開始
+ *		[action target=se[0] module=KeyFrameSoundModule keys="(1600,stop)" delay=0]
+ *		→	soundbuffer[0] で、1600ミリ秒後に 再生停止
+ *		[action target=se[0] module=KeyFrameSoundModule keys="(1600,stop,800)" delay=0]
+ *		→	soundbuffer[0] で、1600ミリ秒後に 800ミリ秒のフェードアウトを開始
+ *		[action target=se[0] module=KeyFrameSoundModule keys="(1600,fade,2000,50)" delay=0]
+ *		→	soundbuffer[0] で、1600ミリ秒後に 2000ミリ秒掛けて音量を50%にするフェードを開始
+ *		[action target=se[0] module=KeyFrameSoundModule keys="(1600,param,1000,50,100)" delay=0]
+ *		→	soundbuffer[0] で、1600ミリ秒後に 1000ミリ秒掛けて全体音量を50%にし、右へ移動するフェードを開始
+ *		[action target=bgm module=KeyFrameSoundModule keys="(1600,pause)" delay=0]
+ *		→	BGM を 1600ミリ秒後に一時停止
+ *		[action target=bgm module=KeyFrameSoundModule keys="(1600,resume)" delay=0]
+ *		→	BGM を 1600ミリ秒後に再生再開
+ *		[action target=bgm module=KeyFrameSoundModule keys="(1600,play,bgm00,2000)" delay=0]
+ *		→	1600ミリ秒後に BGM を2000ミリ秒のフェードで開始
+ *			もしBGM再生中なら、2000ミリ秒の重なりでBGMを切り替える
+ */
+function KeyFrameSoundModule(info, elm)
+{
+	if( elm === void || elm.keys === void ) return;
+	elm.keys	= parseKeyFrame(elm.keys);
+	info.addAction("owner", KeyFrameSoundAction, elm);
+}
+
+/**
+ *	次のキーフレームの画像へ、徐々に変更するアクション.
+ *	二つの画像をトランジションさせて切り替える
+ */
+class KeyFrameExchangeAction extends KeyFrameExecuteAction
+{
+	//	keys = [ [time, storage, accel, interpolation ], ... ]
+
+	var	asyncTrigger;	//	Actionの処理が終了した後にトランジションを開始する
+	var	transParams;	//	トランジションパラメータ
+
+	function KeyFrameExchangeAction(target, propName, elm)
+	{
+		super.KeyFrameExecuteAction(...);
+	}
+
+	function construct(target, propName, elm)
+	{
+		super.construct(...);
+		//	keys = [ [time, storage, accel, interpolation ], ... ] を [ [time, rule, transition time, vague, last storage, new storage], ... ] に変える
+		//	transition time == 0 なら、トランジションしない
+		if(keys.count > 0)
+		{
+			var	newkeys		= [];
+			for(var i=0; i<keys.count-1; i++)
+			{
+				var	key	= keys[i];
+				var	next= keys[i+1];
+				var	nk	= [ key[0], "crossfade", 0, 60000, key[1], next[1] ];
+				if(key[1] != next[1] && key[3][0] != "n")
+					nk[2]	= next[0] - key[0];
+				newkeys.add(nk);
+			}
+			var	last	= keys[keys.count-1];
+			newkeys.add([ last[0],, 0,, last[1] ]);
+			keys	= newkeys;
+@if(KEYFRAMEACTION_VERVOSE)
+			for(var i=0; i<keys.count; i++)
+			{
+				var	key	= keys[i];
+				dm(i+" / "+target.name+": "+key[0]+", "+key[1]+", "+key[2]+", "+key[4]+" → "+key[5]+"("+key[6]+")");
+			}
+@endif
+			if(keys.count > 1)
+			{
+				var	last	= keys[keys.count - 1];
+				time	= last[0] + last[2];	//	トランジション完了までが担当
+			}
+			else
+				target.storage	= keys[0][1] if keys.count > 0;
+		}
+
+		with(asyncTrigger = new AsyncTrigger(beginTrans, ""))
+		{
+			.cached	= true;
+			.mode	= atmAtIdle;
+		}
+		this.tick	= System.getTickCount();
+
+		init(target, propName);	//	初期化する
+	}
+
+	function finalize()
+	{
+		invalidate asyncTrigger if asyncTrigger != void;
+	}
+
+	function init(target, propName)
+	{
+		target.storage	= keys[0][4] if keys.count > 0;	//	最初の画像にする
+		lastKeyFrameNo	= -1;
+	}
+
+	function stopTransition(target)
+	{
+//		dm("stopTransition: "+Scripts.getTraceString());
+		target.stopTransition();
+		target.trans.stopTransition() if target.trans != void;
+	}
+
+	function atEndOfAction(target, propName, now)
+	{
+		stopAndSkipTransition(keys.count-1, target);
+		target.storage	= keys[keys.count-1][4];	//	念のため設定
+	}
+
+	/**
+	 *	トランジションの停止とスキップ処理
+	 *	@param target	対象のレイヤー
+	 *	@param keyframeno	このキーフレームまで実行する
+	 */
+	function stopAndSkipTransition(keyframeno, target)
+	{
+		//	実行中のトランジションを停止
+		stopTransition(target);
+
+		//	指定キーフレームの状態にする
+		target.storage	= keys[keyframeno][4];
+
+		lastKeyFrameNo	= keyframeno;
+	}
+
+	/**
+	 *	トランジションを予約して、指定フレームでの状態を再現する
+	 */
+	function execute(keyframeno, target)
+	{
+		if(lastKeyFrameNo >= keyframeno)
+			return;	//	既に処理済のフレームなので
+		var	key	= keys[keyframeno];
+		var	nextstorage	= keys[keyframeno+1][4];	//	次のstorage
+//		dm("KeyFrameExchangeAction.execute("+keyframeno+", "+target+"): "+lastKeyFrameNo+" >= "+keyframeno+" = "+(System.getTickCount() - tick)+"(ms)");
+//		dm(target.name+".transition: "+target.storage+" → "+nextstorage);
+
+		stopTransition(target);
+
+		if(target.storage != nextstorage)
+		{
+			if(key[2] > 0)
+			{
+				//	トランジションのパラメータを設定する
+				transParams	= %[
+					time:key[2],
+					method:(key[1] == "crossfade" ? "crossfade" : "universal"),
+					rule:key[1],
+					exchange:true,
+					vague:key[3],
+				];
+				if(transParams.method == "scroll")
+				{
+					transParams.from	= key[4] if key[4] != void;
+					transParams.stay	= key[5] if key[5] != void;
+				}
+
+				//	実行を予約する
+				transParams.target	= target;
+				target.init_trans();
+				transParams.source	= target.trans;
+				asyncTrigger.trigger();
+				transParams.startTick	= System.getTickCount();
+
+				//	トランジション前に、相手先レイヤーの準備
+				with(target.trans)
+				{
+//					dm("    to "+.name);
+//					dm("    time = "+transParams.time);
+					.assign(target, false);		//	action はコピーしない
+					.storage	= nextstorage;
+					.visible	= false;
+				}
+			}
+			else
+			{
+				//	瞬間的に変える
+				target.storage	= nextstorage;
+			}
+		}
+
+		lastKeyFrameNo	= keyframeno;
+	}
+
+	/**
+	 *	トランジションを開始する
+	 */
+	function beginTrans()
+	{
+		if(transParams != void)
+		{
+//			dm("beginTrans: "+transParams.target.name+" → "+transParams.source.name+"("+transParams.time+" ms)");
+			transParams.time	-= System.getTickCount() - transParams.startTick;
+			transParams.target.beginTransition(transParams, transParams.source);
+		}
+	}
+}
+
+/**
+ *	ループする、次のキーフレームの画像へ徐々に変更するアクション.
+ */
+class LoopKeyFrameExchangeAction extends KeyFrameExchangeAction
+{
+	var	loopStart;
+
+	function LoopKeyFrameExchangeAction(target, propName, elm)
+	{
+		super.KeyFrameExchangeAction(...);
+	}
+
+	function construct(target, propName, elm)
+	{
+		loopStart	= +elm.loop;	//	ループの始点時間
+		super.construct(...);
+		time = orgtime =	0x7fffffffffffffff;	//	止めるまで続く(←この値を基準にループかどうか判定するので、変えないこと)
+//		dm("LoopKeyFrameExchangeAction: "+target.name+" / "+loopStart);
+	}
+
+	property drawspeed	{ getter { return
+@if(USE_RECORD)
+		Math.max(1, kag.drawspeed)
+@endif
+@if(!USE_RECORD)
+		1	//	ループする場合は、drawspeed の影響を受けない
+@endif
+	; } }
+
+	function doAction(target, propName, now, stopFlag)
+	{
+//		dm("LoopKeyFrameExchangeAction.doAction("+target+", "+propName+", "+now+", "+stopFlag+"): frame = "+currentFrame(now));
+		var	totaltime	= keys[keys.count-1][0];
+		if(now >= totaltime)
+		{
+			now	-= totaltime;
+			var	term	= totaltime - loopStart;
+			now	= now % term + loopStart if term;
+			var	f	= currentFrame(now);
+			if(f < lastKeyFrameNo)
+				init(target, propName);
+		}
+//		dm(target.name+" = "+now+", "+totaltime);
+		return super.doAction(target, propName, now, stopFlag);
+	}
+}
+
+//	haze と noize はオブジェクトに内包されたので、特別なアクションは不要
+
+//	揺らぎ実行アクション
+class HazeAction extends RelativeActionHandler
+{
+	var	omega	= 1;	//	1ミリ秒あたりの角速度(=波の移動速度/大きい程上下にすばやく移動する)
+	var	interval= 50;	//	描画周期(ms)
+	var	drawtick;		//	次に描画する時間
+
+	function HazeAction(target, propName, elm)
+	{
+		super.RelativeActionHandler(target, propName, elm);
+	}
+
+	function construct(target, propName, elm)
+	{
+		super.construct(...);
+//		omega	= +elm.omega if elm.omega !== void;
+		interval= +elm.interval if elm.interval != void;
+		target.updateWaveTable();	//	使用する波テーブルを更新する
+	}
+
+	function doAction(target, propName, now, stopFlag)
+	{
+		if(stopFlag)
+			return true;
+		else if(now >= drawtick)
+		{
+			drawtick	= now + interval;	//	次の描画時刻
+//			target.doHaze(now * omega);
+			target.doHaze(now);
+//			target.doHaze	= now * omega;
+		}
+	}
+}
+
+//	ノイズアクション
+class NoiseAction extends RelativeActionHandler
+{
+	var	interval	= 50;	//	ノイズを掛ける周期(ms)
+	var	drawtick;			//	次に描画する時間
+
+	function NoiseAction(target, propName, elm)
+	{
+		super.RelativeActionHandler(target, propName, elm);
+	}
+
+	function construct(target, propName, elm)
+	{
+		super.construct(...);
+		interval	= +elm.interval if elm.interval !== void;
+	}
+
+	function doAction(target, propName, now, stopFlag)
+	{
+		if(stopFlag)
+			return true;
+		else if(now >= drawtick)
+		{
+			drawtick	= now + interval;	//	次の描画時刻
+//			target.doNoise(now);
+			target.doNoise	= now;
+		}
+	}
+}
+
+//	指定のレイヤーオブジェクトを示すTJS式を取得する
+function getObjectTJSFromLayerObject(obj)
+{
+	if(global.kag.fore.base == obj)
+		return "global.kag.fore.base";
+	else if(global.kag.back.base == obj)
+		return "global.kag.back.base";
+	else
+	{
+		var	pgs	= [ "fore", "back" ];
+		for(var i=0; i<pgs.count; i++)
+		{
+			var	ls	= global.kag[pgs[i]].layers;
+			for(var j=0; j<ls.count; j++)
+			{
+				if(ls[j] == obj)
+					return "global.kag."+pgs[i]+".layers["+j+"]";
+			}
+		}
+	}
+	return "";
+}
+
+//-----------------------------------------------------------------------------
+//	プラグイン用のアクション
+//-----------------------------------------------------------------------------
+class KeyFrameAction4Plugin extends KeyFrameAction
+{
+	var	targetPage;	//	処理の対象とする親レイヤーを示す、TJS式
+	var	isPlugin;	//	target がプラグイン自体なら true
+
+	function KeyFrameAction4Plugin(target, propName, elm)
+	{
+		super.KeyFrameAction(target, propName, elm);
+	}
+
+	function construct(target, propName, elm)
+	{
+		//	どこでプロパティが参照されるかわからないので、一番最初に page を設定しておく
+//		dm("KeyFrameAction4Plugin("+target+", "+propName+", "+elm+")");
+//		dm("target page = "+elm.targetpage);
+		elm.targetpage	= "kag."+elm.targetpage+".base" if elm.targetpage == "fore" || elm.targetpage == "back";
+		var	tp	= typeof elm.targetpage == "String" ? (elm.targetpage)! : elm.targetpage;
+		targetPage = tp != void ? tp : "default";	//	ページが指定されていない/ページに寄らないプラグインもあるので
+		isPlugin	= target instanceof "BasePlugin";
+		setTargetPage(target);
+
+		super.construct(...);
+	}
+
+	function setTargetPage(target)
+	{
+		target[isPlugin ? "page" : "parent"]	= targetPage;
+	}
+
+	function setKeys(target, propName, inkeys)
+	{
+		//	現在の値を取得する前に、ページ切り替え
+		setTargetPage(target);
+		super.setKeys(target, propName, inkeys);
+	}
+
+	function setValue(target, propName, val)
+	{
+		//	値を設定する前に、ページ切り替え
+		setTargetPage(target);
+		super.setValue(target, propName, val);
+	}
+
+	function store()
+	{
+		var	dic	= super.store();
+		dic.targetpage	= getObjectTJSFromLayerObject(targetPage);
+		return dic;
+	}
+
+	function restore(dic)
+	{
+		super.restore(...);
+		targetPage	= (dic.targetpage)!;
+	}
+}
+
+class LoopKeyFrameAction4Plugin extends LoopKeyFrameAction
+{
+	var	targetPage;	//	処理の対象とする親レイヤーを示す、TJS式
+	var	isPlugin;	//	target がプラグイン自体なら true
+
+	function LoopKeyFrameAction4Plugin(target, propName, elm)
+	{
+		super.LoopKeyFrameAction(...);
+	}
+
+	function construct(target, propName, elm)
+	{
+		//	どこでプロパティが参照されるかわからないので、一番最初に page を設定しておく
+		elm.targetpage	= "kag."+elm.targetpage+".base" if elm.targetpage == "fore" || elm.targetpage == "back";
+		var	tp	= typeof elm.targetpage == "String" ? (elm.targetpage)! : elm.targetpage;
+		targetPage = tp != void ? tp : "default";	//	ページが指定されていない/ページに寄らないプラグインもあるので
+		isPlugin	= target instanceof "BasePlugin";
+		setTargetPage(target);
+
+		super.construct(...);
+	}
+
+	function setTargetPage(target)
+	{
+		target[isPlugin ? "page" : "parent"]	= targetPage;
+	}
+
+	function setValue(target, prop, val)
+	{
+		//	値を設定する前に、ページ切り替え
+		setTargetPage(target);
+
+		super.setValue(...);
+	}
+
+	function store()
+	{
+		var	dic	= super.store();
+		dic.targetpage	= getObjectTJSFromLayerObject(targetPage);
+		return dic;
+	}
+
+	function restore(dic)
+	{
+		super.restore(...);
+		targetPage	= (dic.targetpage)!;
+	}
+}
+
+function MixedKeyFrameActionModule4Plugin(info, elm)
+{
+	return MixedKeyFrameActionModule(info, elm, KeyFrameAction4Plugin, LoopKeyFrameAction4Plugin);
+}
+
+@endif

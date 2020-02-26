@@ -1,0 +1,176 @@
+﻿/*-----------------------------------------------------------------------------
+/	Copyright (C) TYPE-MOON All Rights Reserved.
+/		フローチャートデータ - ブロックデータ
+/----------------------------------------------------------------------------*/
+@if(__NFEBLOCKDATA_DEFINED__==0)
+@set(__NFEBLOCKDATA_DEFINED__=1)
+
+Scripts.execStorage("NFERouteData.tjs");
+
+with(global)
+{
+	.NFE_FORCE_SKIP	= 1;	//	既読時は、強制的にスキップ
+	.NFE_FORCE_PLAY	= 2;	//	    〃    強制的に再生
+}
+
+//	データ処理クラス(フローチャート実行時使用)
+class NFEBlockData
+{
+	var	id;			//	ブロックID
+	var	title;		//	タイトル
+	var	subtitle;	//	サブタイトル
+	var	data;		//	自由に使えるデータ
+	var	synopsis;	//	あらすじ
+	var	script;		//	対応するスクリプトファイル
+	var	_operate;	//	フラグ処理
+	var	_diverge;	//	分岐モード
+	var	routes;		//	ブロックから伸びるルート
+	var	_owner;		//	ブロックを保持するページ
+
+	var	readblocks;	//	このブロックを通過したとき、既読にするブロックのID
+	var	force;		//	既読時の、このブロックの処理方法
+
+	var	divergedata;//	特殊分岐用のデータ(マップ等)
+
+	function NFEBlockData(owner, id, title, script)
+	{
+		this._owner	= owner;
+		this.id		= id;
+		this.title	= title;
+		this.script	= script;
+
+		_operate		= "";
+		routes		= [];
+		synopsis	= "";
+
+		_diverge	= "alternative";
+		divergedata	= %[];
+
+		chart.registObject(this);
+	}
+
+	function finalize()
+	{
+		chart.unregistObject(this);
+
+		if(routes != void)
+		{
+			for(var i=0; i<routes.count; i++)
+				invalidate routes[i] if routes[i] != void;
+			invalidate routes;
+		}
+	}
+
+	property owner	{ getter { return _owner; } }
+	property page	{ getter { return _owner; } }
+	property chart	{ getter { return _owner.chart; } }
+
+	property operate
+	{
+		setter(o)	{ _operate	= o; }
+		getter		{ return _operate; }
+	}
+
+	property diverge
+	{
+		setter(d)	{ _diverge	= d; }
+		getter		{ return _diverge; }
+	}
+
+	function getSaveData()
+	{
+		var	data	= %[];
+		with(data)
+		{
+			.id			= id;
+			.title		= title;
+			.subtitle	= subtitle;
+			.data		= this.data;
+			.synopsis	= synopsis;
+			.script		= script;
+			.operate	= operate;
+			._diverge	= _diverge;
+			if(divergedata != void)
+			{
+				if(.divergedata == void)
+					.divergedata	= %[];
+				else
+					(Dictionary.clear incontextof .divergedata)();
+				(Dictionary.assignStruct incontextof .divergedata)(divergedata);
+			}
+			.routes		= [];
+			for(var i=0; i<routes.count; i++)
+				.routes.add(routes[i].getSaveData());
+
+			.readblocks	= readblocks;
+			.force		= force;
+		}
+		return data;
+	}
+
+	function setLoadData(data)
+	{
+		with(data)
+		{
+			id			= .id;
+			title		= .title;
+			subtitle	= .subtitle;
+			this.data	= .data;
+			synopsis	= .synopsis;
+			script		= .script;
+			operate		= .operate;
+			_diverge	= ._diverge;
+			if(.divergedata != void)
+			{
+				divergedata	= %[];
+				(Dictionary.assignStruct incontextof divergedata)(.divergedata);
+			}
+			routes		= [];
+			for(var i=0; i<.routes.count; i++)
+			{
+				routes[i]	= createRoute(this, .routes[i].id);
+				routes[i].setLoadData(.routes[i]);
+			}
+
+			readblocks	= .readblocks;
+			force		= .force;
+		}
+	}
+
+	function clear()
+	{
+		for(var i=0; i<routes.count; i++)
+			routes[i].clear();
+		routes.clear();
+
+		invalidate this;
+	}
+
+	//	ルート生成
+	function createRoute()
+	{
+		return new NFERouteData(...);
+	}
+
+	//	ルートの順番
+	function getPriority(route)
+	{
+		if(typeof route == "Object")
+			route	= route.id;
+
+		for(var i=0; i<routes.count; i++)
+		{
+			if(routes[i].id == route)
+				return i;
+		}
+		return void;
+	}
+
+	//	IDでオブジェクトを取得
+	function getObjectByID(id)
+	{
+		return owner.owner.getObjectByID(id);
+	}
+}
+
+@endif

@@ -1,0 +1,519 @@
+﻿// KAGTagData.tjs - KAGタグを保持するクラス
+@if(__KAG_TAG_DATA_DEFINED__!=1)
+@set(__KAG_TAG_DATA_DEFINED__=1)
+
+var	numericRule	= /^[-+]?[\.0-9]+$/;
+
+class KAGTagData
+{
+	var	name;	// タグ名
+	var	values;	// 属性名と値
+	var	keys;	// 属性名のリスト
+	var	cmdLine;//	読込元が行コマンド(@から始まる)だった
+	var	__LINE__;//	読み込んだ時の行番号
+
+	function KAGTagData(data = void)
+	{
+//		dm("str = "+str);
+		values	= %[];
+		keys	= [];
+		if(data != void)
+		{
+			if(typeof data == "String")
+				text	= data;
+			else if(typeof data == "Object")
+			{
+				if(data instanceof "Dictionary")
+				{
+					if(data.name != void)
+					{
+						name	= data.name;
+						delete data.name;
+					}
+					var	ks	= [];
+					ks.assign(data);
+					for(var i=0; i<ks.count; i+=2)
+						set(ks[i], ks[i+1]);
+				}
+				else if(data instanceof "KAGTagData")
+					assign(data);
+			}
+		}
+	}
+
+	function assign(tag)
+	{
+		with(tag)
+		{
+			name	= .name;
+			keys.assign(.keys);
+			(Dictionary.clear incontextof values)();
+			for(var i=0; i<keys.count; i++)
+				values[keys[i]]	= .values[keys[i]];
+		}
+	}
+
+	function display()
+	{
+		dm("TAG: "+name);
+		for(var i=0; i<keys.count; i++)
+			dm("  "+keys[i]+" = "+values[keys[i]]);
+	}
+
+	property text
+	{
+		setter(str)
+		{
+			invalidate values if values != void;
+			invalidate keys if keys != void;
+			values	= %[];
+			keys	= [];
+
+			// 余計な文字を取り除く
+//			if(str[str.length - 1] == "\n")
+//				str	= str.substr(0, str.length - 1);
+			if(str[0] == "[")
+				str	= str.substr(1, str.length - (str[str.length-1] == "]" ? 2 : 1));
+			else if(str[0] == "@")
+				str	= str.substr(1);
+			else if(str[0] == ";")
+			{
+				// コメントの場合
+				name	= "comment";
+				keys.add("text");
+				values["text"]	= str.substr(1);
+				return;
+			}
+/*			else if(str[0] == "*")
+			{
+				// ラベルの場合
+				name	= "label";
+				keys.add("text");
+				values["text"]	= str.substr(1);
+				return;
+			}
+*/
+			// 解析
+			var	data	= str.split(" ");
+			name	= data[0];
+			for(var i=1; i<data.count; i++)
+			{
+				var	pos		= data[i].indexOf("=");
+				var	key, value;
+				if(pos >= 0)
+				{
+					key		= data[i].substr(0, pos);
+					value	= data[i].substr(pos + 1);
+				}
+				else
+				{
+					// "属性名=値"の形を取っていない
+//					throw new Exception("\"属性名=値\"の形を取っていない");
+					continue;
+				}
+
+				if(value != "")
+				{
+					var	chkquot	= [ '"', "'" ];
+					for(var j=0; j<chkquot.count; j++)
+					{
+						var	quot	= chkquot[j];
+						if(value[0] == quot)
+						{
+//							dm("key = "+key+" / value = "+value);
+							value	= value.substr(1);
+							if(value.length == 0 || value[value.length - 1] != quot)
+							{
+								for(i++; i<data.count; i++)
+								{
+//									dm("value = "+value+" / length = "+value.length);
+									value	+= " " + data[i];
+									if(value[value.length - 1] == quot)
+										break;
+								}
+							}
+							value	= value.substr(0, value.length - 1);
+//							dm("value = "+value);
+						}
+					}
+				}
+				keys.add(key) if keys.find(key) < 0;
+				if(numericRule.test(value))
+					value	= +value;
+				values[key]	= value;
+			}
+		}
+		getter
+		{
+			//	コメントの場合
+			if(name == "comment")
+				return ";" + values.text;
+
+			//	ラベルの場合
+			else if(name == "label")
+				return "*" + values.text + (isset("title") ? "|" + values.title : "");
+
+//			dm("tag name = "+name);
+			var	str	= name;
+			var	nqc = %[ "=" => 1, " " => 1, '"' => 2, "'" => 4, "\\" => 1, "　" => 1 ];
+			for(var i=0; i<keys.count; i++)
+			{
+				var	key	= keys[i];
+				var	value	= values[key];
+				var	st	= 0;
+//				dm(key+"="+value);
+				if(typeof value == "String")
+				{
+					for(var p=0; p<value.length; p++)
+					{
+						st	|= nqc[value[p]];
+					}
+					if(st == 1 || st & 6 == 4)
+						value	= '"' + value + '"';
+					else if(st & 6 == 6)
+						value	= '"' + value.replace(/"/, "\\\"") + '"';
+					else if(st & 6 == 2)
+						value	= "'" + value + "'";
+				}
+				else if(typeof value == "Object")
+				{
+					if(value instanceof "Array")
+					{
+						if(value[0] instanceof "Array")
+						{
+							var	val	= [];
+							for(var i=0; i<value.count; i++)
+								val[i]	= value[i].join(",");
+							value	= "(" + val.join(")(") + ")";
+						}
+						else
+							value	= value.join(",");
+					}
+				}
+				else if(typeof value == "Real")
+					value	= +("%4.3f".sprintf(value));	//	ある程度丸める
+
+				str	+= " "+key+"="+value;
+			}
+			return str;
+		}
+	}
+
+	// 値を設定する
+	//	ins で挿入位置(=textにしたときの表示順)を指定できる
+	function set(key, value, ins)
+	{
+		if(typeof values[key] == "undefined")
+		{
+			if(ins === void || ins >= keys.count)
+				keys.add(key);
+			else
+				keys.insert(ins, key);
+		}
+		values[key]	= value;
+	}
+
+	// 値を取得する
+	function get(key)
+	{
+		return key != "" ? values[key] : void;
+	}
+
+	// 値を破棄する
+	function reset(key)
+	{
+		if(isset(key))
+		{
+			keys.remove(key);
+			delete values[key];
+		}
+	}
+
+	// 値が設定されているか
+	function isset(key)
+	{
+		return typeof values[key] != "undefined";
+	}
+
+	//	値の名前を入れ替える
+	function rename(oldkey, newkey)
+	{
+		if(typeof values[oldkey] != "undefined")
+		{
+			values[newkey]	= values[oldkey];
+			delete values[oldkey];
+			var	idx	= keys.find(oldkey);
+			if(idx >= 0)
+				keys[idx]	= newkey;
+			else
+				keys.add(newkey);
+		}
+	}
+
+	//	整数にする
+	function toInteger(key)
+	{
+		if(isset(key))
+			values[key]	= int values[key];
+	}
+
+	// 文字タグとして文字列を指定する
+	function setCh(text)
+	{
+		values	= %[text:text];
+		keys	= [ "text" ];
+		name	= "ch";
+	}
+
+	//	タブ区切りで出力
+	property tsv
+	{
+		getter
+		{
+			var	data	= "tagname\t"+name;
+			for(var i=0; i<keys.count; i++)
+				data	+= "\t" + keys[i] + "\t" + values[key];
+			return data;
+		}
+	}
+
+	//	属性名の変更
+	function renameList(list)
+	{
+		for(var i=0; i<list.count; i+=2)
+		{
+			var	lk	= list[i];
+			var	pos	= keys.find(lk);
+			if(pos >= 0)
+			{
+				var	nk	= list[i+1];
+				keys[pos]	= nk;
+				values[nk]	= values[lk];
+				delete values[lk];
+			}
+		}
+	}
+
+	//	属性が存在すれば値を設定する
+	function setAsExist(key, value)
+	{
+		if(typeof values[key] !== "undefined")
+			values[key]	= value;
+	}
+}
+
+//	スクリプトを解析して、KAGTagDataの配列を返します。
+//	※ 文字列は"[ch text=〜]"というタグとして読み込みます
+function getKAGTagDatas(text)
+{
+	var	tags	= [], tag;
+	var	lines;
+	if(typeof text == "String")
+		lines	= text.split("\r\n|\r|\n",, true);
+	else
+		lines	= text;
+	var	addCh	= function(tags, line, lno)
+	{
+		if(line == void)
+			return;	//	空行は無視
+		var	last	= tags[tags.count - 1];
+		if(last != void && last.name == "ch")
+			last.set("text", last.get("text") + line);	//	只の改行文字は無視する
+		else
+		{
+			var	tag	= new KAGTagData();
+			tag.setCh(line);
+			tags.add(tag);
+			tag.__LINE__	= lno;
+		}
+	};
+	var	iscript	= void;
+	for(var i=0; i<lines.count; i++)
+	{
+		var	line	= lines[i];
+		var	st		= 0;
+
+		//	iscript 〜 endscript の中の処理
+		if(iscript !== void)
+		{
+			if(line[0] == "@" && line.substr(1, 9) == "endscript")
+			{
+				tags[tags.count-1].set("script", iscript);
+				iscript	= void;
+				continue;
+			}
+			var	pos	= line.indexOf("[endscript");
+			if(pos >= 0)
+			{
+				tags[tags.count-1].set("script", iscript + line.substr(0, pos));
+				st		= pos;
+				iscript	= void;
+			}
+			else
+			{
+				iscript	+= line;
+				continue;
+			}
+		}
+
+		//	行単位の処理
+		if(line[0] == "@" || line[0] == ";")
+		{
+			tags.add(tag = new KAGTagData(line));
+			tag.__LINE__	= i;
+			tag.cmdLine		= true;	//	一行データ
+			iscript			= "" if tag.name == "iscript";	//	iscript に入った
+			continue;
+		}
+		else if(line[0] == "*")
+		{
+			with(tag = new KAGTagData())
+			{
+				.name	= "label";
+				var	p	= line.indexOf("|");
+				if(p >= 0)
+				{
+					.values.text	= line.substr(1, p - 1);
+					.values.title	= line.substr(p + 1);
+				}
+				else
+					.values.text	= line.substr(1);
+				.__LINE__	= i;
+				.cmdLine	= true;
+				tags.add(tag);
+			}
+			continue;
+		}
+
+		//	タグを検知
+		var	dqpos	= line.indexOf('"', st);
+		var	sqpos	= line.indexOf("'", st);
+		var	bkpos	= line.indexOf("[", st);
+		if(bkpos < 0)
+		{//	文字列のみ
+			addCh(tags, line, i);
+		}
+		else if(dqpos < 0 && sqpos < 0)
+		{//	大括弧のみ
+			do
+			{
+				//	文字列があるので、文字タグを追加
+				addCh(tags, line.substr(0, bkpos), i) if bkpos > 0;
+
+				//	タグを部分([〜])を取り出す
+				var	pos	= line.indexOf("]") + 1;
+				tags.add(tag = new KAGTagData(line.substr(bkpos, pos - bkpos)));
+				tag.__LINE__	= i;
+				if(tag.name == "iscript")
+				{
+					iscript	= line.substr(pos);
+					line	= "";
+					bkpos	= -1;
+					break;
+				}
+
+				//	次のタグを探す
+				line	= line.substr(pos);
+				bkpos	= line.indexOf("[");
+			}
+			while(bkpos >= 0);
+			addCh(tags, line, i) if line.length > 0;	//	残った文字列があれば、文字タグを追加
+		}
+		else
+		{//	大括弧とシングル/ダブルクォーテーションが混在している
+			//	文字列があるので、文字タグを追加
+			addCh(tags, line.substr(0, bkpos), i) if bkpos > 0;
+
+			var	state	= 1;	//	"大括弧開く"が見つかっている
+			var	pos, lno = i;
+			for(var i=bkpos+1; i<line.length; i++)
+			{
+				switch(state)
+				{
+				case 0:	//	通常の文字列中
+					if(line[i] == "[")
+					{//	"大括弧開く"が見つかったら、タグの中
+						bkpos	= i;
+						addCh(tags, line.substr(pos, bkpos - pos), lno) if bkpos > pos;	//	途中に文字列があれば追加
+						state	= 1;
+					}
+					break;
+
+				case 1:	//	タグの中
+					if(line[i] == "]")
+					{//	"大括弧閉じる"が見つかったら、タグを登録
+						pos	= i + 1;
+						tags.add(tag = new KAGTagData(line.substr(bkpos, pos - bkpos)));
+						tag.__LINE__	= lno;
+						state	= 0;
+						if(tag.name == "iscript")
+						{
+							iscript	= line.substr(pos);
+							line	= "";
+							break;
+						}
+					}
+					else if(line[i] == '"')
+						state	= 2;
+					else if(line[i] == "'")
+						state	= 3;
+					break;
+
+				case 2:	if(line[i] == '"') state = 1;	break;
+				case 3:	if(line[i] == "'") state = 1;	break;
+				}
+			}
+			addCh(tags, line.substr(pos, line.length - pos), lno) if pos < line.length;	//	残った文字列があれば、文字タグを追加
+		}
+	}
+	return tags;
+}
+
+//	タグリストの保存
+if(typeof Array.save2 == "undefined" && Storages.isExistentStorage("saveStruct.dll"))
+	Plugins.link("saveStruct.dll");
+function saveKAGTagDatas(tags, storage)
+{
+	var	lines	= [], lno = 0;
+	for(var i=0; i<tags.count; i++)
+	{
+		var	tag	= tags[i];
+		var	text= tag.text;
+//		dm(i+": "+text);
+		if(tag.cmdLine)
+		{
+			text	= "@" + text if tag.name != "comment" && tag.name != "label";
+			lno++ if lines[lno] != "";
+		}
+		else
+		{
+			if(tag.name == "ch")
+			{
+				text	= tag.get("text");
+				if(text != void)
+				{
+					//	"―"を[line〜]に変換
+					var	pos;
+					while((pos = text.indexOf("―")) >= 0)
+					{
+						var	r	= text.substr(0, pos);
+						var	i;
+						for(i=pos+1; text[i] == "―" && i<text.length; i++);
+						text	= r + "[line"+(i-pos)+"]" + text.substr(i);
+					}
+				}
+			}
+			else
+				text	= "[" + text + "]";
+		}
+		lines[lno]	+= text;
+		if(tag.cmdLine || tag.name == "r" || tag.name == "lr")
+			lno++;
+	}
+	if(typeof lines.save2 != "undefined")
+		lines.save2(storage);
+	else
+		lines.save(storage);
+}
+
+@endif

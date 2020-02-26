@@ -1,0 +1,176 @@
+﻿@if(__QUICKLOADMENU_DEFINED__==0)
+@set(__QUICKLOADMENU_DEFINED__=1)
+
+/*
+ *	クイックセーブ/ロード
+ */
+function setQuickMenuTimeline(name2pos, creates, list, enabled=true)
+{
+	for(var i=0; i<list.count; i++)
+	{
+		var	date	= list[i][1];
+		var	no		= i + 1;
+		var	visible	= date != 0;
+		var	c	= creates[name2pos["ロード"+no]];
+		setCreateProp(c, "visible", visible);
+		if(visible)
+		{
+			setCreateProp(c, "itemMode", imParts);
+			c	= creates[name2pos["パネル"+no]];
+			if(enabled)
+			{
+				setCreateProp(c, "mouseEnter", "QLcmd(\"enter\","+no+")");
+				setCreateProp(c, "mouseLeave", "QLcmd(\"leave\","+no+")");
+				setCreateProp(c, "mouseDown", "QLcmd(\"press\","+no+")");
+				setCreateProp(c, "mouseUp", "loadQuickMenu("+i+");");
+			}
+			else
+			{
+				setCreateProp(c, "mouseEnter", void);
+				setCreateProp(c, "mouseLeave", void);
+				setCreateProp(c, "mouseDown", void);
+				setCreateProp(c, "mouseUp", void);
+			}
+			setCreateProp(c, "itemMode", imLessarButton);
+			setCreateProp(c, "focusable", true);
+			setCreateProp(c, "mute", true);
+		}
+	}
+	setCreateProp(creates[name2pos["Backボタン"]], "pressse", "");
+}
+function openQuickMenu()
+{
+	if(tf.qm_opened)// || !kag.inStable || kag.transCount > 0)
+		return;
+	tf.qm_opened	= true;
+
+	//	自動再生、メッセージ早送りをキャンセル
+	kag.cancelAutoMode();
+	kag.cancelSkip();
+
+	inMenu("quickload");
+
+	//	QuickSaveのリストを得る
+	var	list = tf.qm_list = kag.getQuickList();
+
+	Scripts.execStorage("qsaveload.ttd");
+	var	tdata	= __get_qsaveload_timelinedata(7);
+	var	name2pos= tdata[0], creates = tdata[1], actions = tdata[2];
+	var	ignore	= setQuickMenuTimeline(name2pos, creates, list);
+	muteAllMenuItem(tdata, false);	//	効果音ON(素早くメニュー間の移動を行うと、レイヤーが残っていて再利用される可能性があるので)
+	Menu_object.playTimeline(PRIMARY, creates, actions, %[absolute:1100000], ignore,,, false);
+
+	//	パネルにテキストやサムネイルを描画
+	var	find	= Menu_object.find;
+	var	color	= 0xCDEFFF;
+	for(var i=0; i<list.count; i++)
+	{
+		var	dt	= list[i];
+		if(dt[1] != 0)
+		{
+			var	no	= i + 1;
+			var	fn	= kag.getQuickFile(dt[0]);
+			var	panel	= find("パネル"+no, PRIMARY);
+			if(panel != void)
+			{
+				for(var p=0; p<=420; p+=420)
+				{
+					panel.drawImage2Area(p+11, 12, 80, 45, fn);
+					panel.drawText2Area(p+99, 13, 305, 20, kag.getQuickPage(dt[0]), 20, color);
+					panel.drawText2Area(p+155, 46, 161, 18, kag.getFormatDate(dt[1]), 18, color, "lc");
+				}
+			}
+@if(DEBUG)
+			else
+				throw new Exception("必要なパーツ(パネル"+no+")が存在していません。");
+@endif
+		}
+	}
+	//	クリック時処理設定
+	Menu_object.setClick(, "closeQuickMenu()");
+
+	//	キー対応
+	kag.addHook("keyDown", onQuickMenuKeyDown);
+	Menu_object.keyDownCallback	= onQuickMenuKeyDown;
+}
+function onQuickMenuKeyDown(key, shift)
+{
+	if(tf.do_askyesno || tf.do_hidesystemmenu)
+		return false;
+	if(key == VK_Q || key == VK_F9)
+	{
+		closeQuickMenu();
+		return true;
+	}
+	return false;
+}
+function eraseQuickMenu(no)
+{
+	var	no		= tf.qm_list[no][0];
+	var	pgname	= kag.getQuickPage(no);
+	askYesNo("「"+pgname+"」のデータを[r]削除してもよろしいですか？",, doEraseQuickMenu,, no);
+}
+function doEraseQuickMenu(no)
+{
+	kag.eraseQuick(no);
+	var	find	= Menu_object.find;
+	no++;
+	find("パネル"+no, PRIMARY).viewareaNo= 1;
+	find("ロード"+no, PRIMARY).visible	= false;
+}
+function loadQuickMenu(no)
+{
+	var	no		= tf.qm_list[no][0];
+	var	pgname	= kag.getQuickPage(no);
+	askYesNo("「"+pgname+"」を[r]ロードしてもよろしいですか？",, doLoadQuickMenu,, no);
+	QLcmd("release", no);
+}
+function QLcmd(cmd, no)
+{
+	var	item	= Menu_object.find("ロード"+no, PRIMARY);
+	item[cmd]() if item != void;
+	item		= Menu_object.find("パネル"+no, PRIMARY);
+	item[cmd]() if item != void;
+}
+function doLoadQuickMenu(no)
+{
+	closeQuickMenu(, no);
+}
+function closeQuickMenu(saveno, loadno)
+{
+	if(!tf.qm_opened)
+		return;
+	tf.qm_opened	= false;
+	var	list	= tf.qm_list;
+	outMenu("quickload");
+
+	//	閉じる効果音
+	Menu_object.playSE(closese);
+
+	//	クリック設定を元にもどす
+	Menu_object.resetClick();
+
+	//	キー解除
+	kag.removeHook("keyDown", onQuickMenuKeyDown);
+	delete Menu_object.keyDownCallback;
+
+	//	saveno, loadno が void 以外なら、それぞれ処理を行う
+	if(saveno !== void)
+		kag.saveQuick(list[saveno][0]);
+	else if(loadno !== void)
+	{
+		//	黒へフェードしていき、ロード開始
+		tf.load_no	= loadno + kag.normalBookMarks;
+		kag.process("call.ks", "*load");
+//		return;
+	}
+
+	//	メニューを閉じる
+	var	tdata	= __get_qsaveload_timelinedata(8);
+	var	name2pos= tdata[0], creates = tdata[1], actions = tdata[2];
+	var	ignore	= setQuickMenuTimeline(name2pos, creates, list, false);	//	操作無効の状態に設定
+	muteAllMenuItem(tdata);		//	すべて効果音mute
+	Menu_object.playTimeline(PRIMARY, creates, actions, %[absolute:1100000], ignore, true,, false);
+}
+
+@endif

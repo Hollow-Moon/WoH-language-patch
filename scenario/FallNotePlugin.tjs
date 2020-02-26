@@ -1,0 +1,519 @@
+﻿//	お札が降ってくるプラグイン
+class FallNotePlugin extends KAGPlugin
+{
+	var	owner;
+	var	bases;
+	var	area;
+	var	animations	= [
+		[
+			"im15木乃実銀行券(吹雪1枚舞)", 24,
+			[ 0, 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1, 0, 13, 14, 15, 16, 17, 18, 17, 16, 15, 14, 13 ],
+			0.1, 0.001, 600, 0.5	//	fallSpeed, fallAccel, stopInterval, stopVelocity
+		],
+		[
+			"im15木乃実銀行券(吹雪1枚回転A)", 20,
+			,
+			0.1, 0.0002, 10000, 0.0
+		],
+		[
+			"im15木乃実銀行券(吹雪1枚回転B)", 16,
+			,
+			0.1, 0.0015, 400, 0.5
+		]
+	];
+	var	flowSpeed	= 0.4;	//	振れ幅なので、実際は半分
+	var	minFlowSpeed= 0.1;
+	var	rate		= 150 / 1000;
+//	var	maxCount	= 20;
+	var	animInterval= 50;
+	var	index;
+
+	function FallNotePlugin(owner)
+	{
+		super.KAGPlugin(...);
+		this.owner	= owner;
+	}
+
+	function finalize()
+	{
+		stop();
+		super.finalize(...);
+	}
+
+	function init()
+	{
+		if(bases == void)
+		{
+			bases	= [];
+			for(var i=0; i<animations.count; i++)
+			{
+				var	anim	= animations[i];
+				var	base;
+				with(base = new Layer(kag, kag.primaryLayer))
+				{
+					.loadImages(anim[0]);
+					.setSize(.imageWidth \ anim[1], .imageHeight);
+				}
+				bases[i]	= base;
+				if(anim[2] == void)
+				{
+					anim[2]	= [];
+					for(var i=0; i<anim[1]; i++)
+						anim[2][i]	= i;
+				}
+			}
+		}
+		if(kag.fore.notes == void)
+		{
+			kag.fore.notes	= [];
+			kag.back.notes	= [];
+		}
+		if(timer == void)
+			(timer = new Timer(onAnimate, "")).interval = 16;
+		if(area == void) with(kag.fore.base)
+		{
+			area	= %[];
+			area.left	= -.width * 0.2;
+			area.right	= .width * 1.2;
+			area.top	= -.height * 0.6;
+			area.bottom	= .height;
+		}
+	}
+
+	var	falling, timer;
+	var	lasttick;
+	function begin(elm)
+	{
+		index	= elm.index == void ? 20000 : +elm.index;
+
+		init();	//	レイヤーの準備
+
+		//	裏ページから開始なら、ある程度ばらまいておく
+		page	= elm.page == void ? "all" : elm.page;
+		if(page == "back")
+		{
+		}
+
+		//	アニメーション開始
+		timer.enabled	= true;
+		lasttick	= System.getTickCount();
+
+		//	振らせるのも開始
+		falling	= true;
+	}
+
+	function end(elm)
+	{
+		falling	= false;	//	新たに降らせないようにする
+
+		//	直ぐにトランジションするかもしれないので、裏のレイヤーは破棄する
+		clearNotes(kag.back.notes);
+	}
+
+	function stop()
+	{
+		timer.enabled	= false if timer != void;	//	アニメーションを停止
+		falling			= false;	//	降るのは当然停止
+		clearNotes(kag.fore.notes);	//	全てのレイヤーを破棄
+		clearNotes(kag.back.notes);
+		clearNotes(pool);
+		if(bases != void)
+		{
+			for(var i=0; i<bases.count; i++)
+				invalidate bases[i] if bases[i] != void;
+			bases	= void;
+		}
+	}
+
+	//	紙幣レイヤーを得る
+	var	total	= 0;
+	function get(parent, ano)
+	{
+		var	note;
+		if(pool.count > 0)
+		{
+			note	= pool[0];
+			pool.erase(0);
+			note.parent	= parent;
+		}
+		else
+		{
+			note	= new NoteLayer(kag, parent, this);
+			ano		= int(Math.random() * animations.count) if ano === void;
+			var	base= bases[ano], anim = animations[ano];
+			with(note)
+			{
+				.assignImages(base);
+				.setSize(base.width, base.height);
+				.patterns	= anim[2];
+				.fallSpeed	= anim[3];
+				.fallAccel	= anim[4];
+				.stopInterval	= anim[5];
+				.stopVelocity	= anim[6];
+				.animationNo	= ano;
+			}
+			total++;
+		}
+		note.absolute	= index;	//	parent が変更されたときも absolute が設定されなおされるので
+		return note;
+	}
+
+	function getNote(ano)
+	{
+		var	fnote, bnote;
+		kag.fore.notes.add(fnote = get(kag.fore.base, ano));
+		kag.back.notes.add(bnote = get(kag.back.base, fnote.animationNo));
+		bnote.comp	= fnote;
+		fnote.comp	= bnote;
+		return fnote;
+	}
+
+	//	紙幣レイヤーを追加
+	function add(cx, cy)
+	{
+		var	note	= getNote();
+		note.init(cx, cy);
+		note.main	= true;
+		note.copyComp();
+
+		note.visible		= page != "back";
+		note.comp.visible	= page != "fore";
+	}
+
+	var	_page;	//	all, fore, back
+	property page
+	{
+		setter(v)
+		{
+			if(page !== v)
+			{
+				_page	= v;
+
+				var	fv	= v != "back";
+				for(var i=0; i<kag.fore.notes.count; i++)
+					kag.fore.notes[i].visible	= fv;
+				var	bv	= v != "fore";
+				for(var i=0; i<kag.back.notes.count; i++)
+					kag.back.notes[i].visible	= bv;
+			}
+		}
+		getter	{ return _page; }
+	}
+
+	function onAnimate()
+	{
+		if(falling && Math.random() < rate)
+			add(Math.random() * kag.scWidth, Math.random() * 200 - 300);
+
+		var	tick	= System.getTickCount();
+		var	past	= tick - lasttick;
+		var	pages	= [ kag.fore.notes, kag.back.notes ];
+		for(var i=0; i<pages.count; i++)
+		{
+			var	notes	= pages[i];
+			for(var i=0; i<notes.count; i++)
+				notes[i].past(past) if notes[i].main;
+		}
+		lasttick	= tick;
+	}
+
+	var	pool	= [];
+	function onNoteFalled(note)
+	{
+		//	一旦プールへ
+		if(note.parent == kag.fore.base)
+			kag.fore.notes.remove(note);
+		else
+			kag.back.notes.remove(note);
+		pool.add(note);
+		note.visible = note.main = false;
+		note.comp = void;
+
+		//	全てのお札が落ちたら、
+		if(!falling && kag.fore.notes.count == 0 && kag.back.notes.count == 0)
+			stop();	//	完全停止
+	}
+
+	function clearNotes(notes)
+	{
+		if(notes != void)
+		{
+			for(var i=0; i<notes.count; i++) with(notes[i])
+			{
+				if(notes[i] != void)
+				{
+					if(.comp != void)
+					{
+						if(.main)
+						{
+							.comp.main	= true;
+							.comp.assignComp();
+						}
+						.comp.comp	= void;
+					}
+					invalidate notes[i];
+				}
+			}
+			notes.clear();
+		}
+	}
+
+	function onStore(f, elm)
+	{
+		// 栞を保存する際に呼ばれる
+		// f = 保存先の栞データ ( Dictionary クラスのオブジェクト )
+		// elm = tempsave 時のオプション ( 現在は常に void )
+		if(timer.enabled)
+		{
+			f.notesAnimating= true;
+			f.notesFalling	= falling;
+			f.notesTick		= lasttick - System.getTickCount();
+			f.notesPage		= page;
+			f.notesIndex	= index;
+			f.notes	= [];
+			var	pages	= [ "fore", "back" ];
+			for(var i=0; i<pages.count; i++)
+			{
+				var	page	= pages[i];
+				for(var i=0; i<kag[page].notes.count; i++) with(kag[page].notes[i])
+				{
+					if(.main)
+					{
+						var	dic	= .store();
+						dic.page= page;
+						f.notes.add(dic);
+					}
+				}
+			}
+		}
+	}
+
+	function onRestore(f, clear, elm)
+	{
+		// 栞を読み出すときに呼ばれる
+		// f = 読み込む栞データ ( Dictionary クラスのオブジェクト )
+		// clear = メッセージレイヤをクリアするか ( tempload の時のみ false )
+		// elm = tempload 時のオプション ( tempload でない場合は 常に void,
+		//                                 tempload の時は Dictionary クラスのオブジェクト )
+		stop();
+		if(f.notesAnimating)
+		{
+			init();
+			page	= f.notesPage;
+			index	= f.notesIndex;
+			for(var i=0; i<f.notes.count; i++)
+			{
+				var	note	= getNote(f.notes[i].animationNo);
+				note	= note.comp if f.notes[i].page == "back";
+
+				note.main	= true;
+				note.restore(f.notes[i]);
+				note.copyComp();
+				note.visible		= page != "back";
+				note.comp.visible	= page != "fore";
+			}
+			falling	= f.notesFalling;
+			lasttick= lasttick + System.getTickCount();
+			timer.enabled	= true;
+		}
+	}
+
+/*	function onStableStateChanged(stable)
+	{
+		// 安定 ( s l p タグで停止中 ) または 走行中 ( それ以外 )
+		// の状態が変化したときに呼ばれる
+		// stable = 安定の状態に true, それ以外の場合に false
+	}*/
+
+	function onMessageHiddenStateChanged(hidden)
+	{
+		// 右クリックなどでメッセージレイヤが隠されたり、または
+		// その状態から抜ける時に呼ばれる
+		// hidden = メッセージが隠された場合に true, 現れた場合に false
+	}
+
+/*	常に裏と表が同じなので、意味がない
+	function onCopyLayer(toback)
+	{
+		// backlay タグ / forelay タグがすべてのレイヤに対して実行される時、
+		// あるいは layer=base chidlren=true exchange=false のトランジションの終了時に、
+		// 裏画面の内容を表画面にコピーする
+		// 必要が発生すると呼び出される
+		// toback = 表画面の内容を裏画面にコピーする時に true,
+		//          裏画面の内容を表画面にコピーするときに false
+		// layer=base children=true のトランジション終了時には toback = false で呼ばれる。
+	}*/
+
+	function onExchangeForeBack()
+	{
+		// layer=base children=true のトランジションの終了時に呼ばれ、
+		// 表レイヤと裏レイヤの情報を交換する目的で呼ばれる
+		// この時点ですでにレイヤのツリー構造は入れ替わっているので、
+		// 通常、ここでは、ツリー構造の入れ替えを行うと情報が矛盾するもの
+		// ( レイヤの名前とか、レイヤへの参照とか ) を裏画面と面画面の間で入れ替える
+		// トランジション終了時の onCopyLayer はこのイベントより前に呼ばれるので
+		// 注意
+		if(falling)
+		{
+			if(page == "back")
+				page	= "all";	//	裏だけに表示していたら、トランジションした時点で両方に表示を開始
+			else if(page == "fore")
+				stop();				//	表だけに表示していたら、トランジション後に停止
+		}
+	}
+
+/*	function onSaveSystemVariables()
+	{
+		// システム変数に情報が保存され時に呼ばれる
+		// このタイミングで kag.scflags に情報を書き込めば
+		// 確実にシステム変数に情報を書くことができる
+	}*/
+}
+kag.addPlugin(global.fallnote_object = new FallNotePlugin(kag));
+
+class NoteLayer extends Layer
+{
+	var	plugin;
+
+	var	comp;
+	var	patterns, fallSpeed, fallAccel, stopInterval, stopVelocity;
+	var	_left, _top;
+	var	sx, sy;
+	var	main;
+	var	pastTime, lastAnimTime, animPos, lastStopTime;
+
+	function NoteLayer(win, par, plugin)
+	{
+		super.Layer(...);
+		name			= "お札";
+		this.plugin		= plugin;
+		hitThreshold	= 256;
+	}
+
+	function init(cx, cy)
+	{
+		sx	= (Math.random() - 0.5) * plugin.flowSpeed;
+		sy	= fallSpeed;
+		setPos(_left = cx - width * 0.5, _top = cy - height * 0.5);
+		pastTime = lastAnimTime = lastStopTime = 0;
+		animPos = int(Math.random() * patterns.count);
+	}
+
+	function setImageLeft()
+	{
+	}
+
+	function past(tick)
+	{
+		pastTime	+= tick;
+
+		while(pastTime >= lastAnimTime + plugin.animInterval)
+		{
+			lastAnimTime	+= plugin.animInterval;
+			animPos++;
+			while(animPos >= patterns.count)
+				animPos	-= patterns.count;
+		}
+		var	ano	= patterns[animPos];
+		imageLeft	= -width * ano;
+
+		_left	+= sx * tick;
+		_top	+= sy * tick;
+		sy	+= fallAccel * tick;
+		while(pastTime >= lastStopTime + stopInterval)
+		{
+			lastStopTime	+= stopInterval;
+			sy	-= stopVelocity;
+		}
+/*		var	offs= plugin.offsets[ano];
+		setPos(_left + offs[0], _top + offs[1]);
+*/		setPos(_left, _top);
+
+		with(plugin.area)
+		{
+			if(left+width < .left || top+height < .top || left > .right || top > .bottom)
+			{
+				plugin.onNoteFalled(comp) if comp != void;
+				plugin.onNoteFalled(this);
+			}
+			else
+				copyComp();
+		}
+	}
+
+	function copyComp()
+	{
+		if(comp != void) with(comp)
+		{
+			.left		= left;
+			.top		= top;
+			.imageLeft	= imageLeft;
+		}
+	}
+
+	function assignComp()
+	{
+		restore(comp.store()) if comp != void;
+	}
+
+	function store()
+	{
+		var	dic	= %[];
+		if(main) with(dic)
+		{
+			.left	= _left;
+			.top	= _top;
+			.sx		= sx;
+			.sy		= sy;
+			.pastTime		= pastTime;
+			.lastAnimTime	= lastAnimTime;
+			.animPos		= animPos;
+			.lastStopTime	= lastStopTime;
+			.animationNo	= animationNo;
+		}
+		return dic;
+	}
+
+	function restore(dic)
+	{
+		if(dic != void) with(dic)
+		{
+			setPos(_left = .left, _top = .top);
+			sx	= .sx;
+			sy	= .sy;
+			pastTime	= .pastTime;
+			lastAnimTime= .lastAnimTime;
+			animPos		= .animPos;
+			imageLeft	= -width * patterns[animPos];
+			lastStopTime= .lastStopTime;
+		}
+	}
+}
+
+with(kag.tagHandlers)
+{
+//	お札が降り始める
+.beginfallnote	= function(elm)
+{
+	fallnote_object.begin(...);
+	return 0;
+} incontextof kag;
+//	お札が降り止む
+.endfallnote	= function(elm)
+{
+	fallnote_object.end(...);
+	return 0;
+} incontextof kag;
+//	お札を消す
+.stopfallnote	= function(elm)
+{
+	fallnote_object.stop();
+	return 0;
+} incontextof kag;
+//	お札の設定を変える
+.fallnoteopt	= function(elm)
+{
+	fallnote_object.rate	= +elm.rate;
+	return 0;
+} incontextof kag;
+}

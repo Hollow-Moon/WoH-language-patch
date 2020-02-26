@@ -1,0 +1,197 @@
+﻿/*-----------------------------------------------------------------------------
+/	Copyright (C) TYPE-MOON All Rights Reserved.
+/		フローチャートデータ - チャート(一つのゲーム/流れを制御する)
+/----------------------------------------------------------------------------*/
+@if(__NFECHARTDATA_DEFINED__==0)
+@set(__NFECHARTDATA_DEFINED__=1)
+
+Scripts.execStorage("NFEPageData.tjs");
+Scripts.execStorage("NFECategoryData.tjs");
+
+//	データ処理クラス(フローチャート実行時使用)
+class NFEChartData
+{
+	var	title;		//	タイトル
+	var	pages;		//	ページ
+	var	categories;	//	シーンのカテゴリ
+	var	flags;		//	フラグ一覧
+	var	first;		//	最初のブロックのID
+
+	var	storage;	//	ファイル名
+	var	subscript;	//	サブルーチン集
+
+	var	objects;	//	全てのページ、ブロック、ルート、屈曲点、ポップアップのID→参照(保存しない)
+
+	function NFEChartData()
+	{
+		pages		= [];
+		categories	= void;
+		flags		= %[];
+		storage		= "";
+		title		= "";
+		subscript	= "";
+
+		objects	= %[];
+	}
+
+	function finalize()
+	{
+		if(pages != void)
+		{
+			for(var i=0; i<pages.count; i++)
+				invalidate pages[i] if pages[i] != void;
+			invalidate pages;
+		}
+		invalidate categories if categories != void;
+		invalidate flags if flags != void;
+	}
+
+	function init()
+	{
+	}
+
+	function clear()
+	{
+		//	各オブジェクト間の連結を破棄
+		for(var i=0; i<pages.count; i++)
+			pages[i].clear();
+		pages.clear();
+		if(categories != void)
+		{
+			categories.clear();
+			invalidate(categories);
+			categories	= void;
+		}
+		(Dictionary.clear incontextof flags)();
+		(Dictionary.clear incontextof objects)();
+
+		storage		= "";
+		title		= "";
+		first		= void;
+	}
+
+
+	function save(storage=this.storage)
+	{
+		var	data	= getSaveData();
+		var	backup;
+		//	万一に備えて、現在のファイルをバックアップ
+		if(Storages.isExistentStorage(storage))
+		{
+			backup	= storage + ".bak";
+			DeleteFile(backup) if Storages.isExistentStorage(backup);	//	今あるファイルは削除
+			MoveFile(storage, backup);
+		}
+		try
+		{
+			//	現在存在する storage を削除してから書き込みを行うので、data に問題があると storage が消えてしまう
+			(Dictionary.saveStruct incontextof data)(storage, saveMode);
+		}
+		catch
+		{
+			//	保存に失敗したら、元に戻す
+			MoveFile(backup, storage) if backup != void && !Storages.isExistentStorage(storage);
+		}
+		this.storage	= storage;
+
+		return true;
+	}
+
+	function getSaveData()
+	{
+		var	data	= %[];
+		with(data)
+		{
+			.title		= title;
+			.pages	= [];
+			for(var i=0; i<pages.count; i++)
+				.pages.add(pages[i].getSaveData());
+			.categories	= categories.getSaveData() if categories != void;
+			.flags		= flags;
+			.first		= first;
+			.subscript	= subscript;
+		}
+		return data;
+	}
+
+	function load(storage)
+	{
+		if(!Storages.isExistentStorage(storage))
+			return false;
+
+		var	data	= Scripts.evalStorage(storage);
+		setLoadData(data);
+		this.storage	= storage;
+	}
+
+	function setLoadData(data)
+	{
+		clear();
+
+		with(data)
+		{
+			title		= .title;
+			pages		= [];
+			for(var i=0; i<.pages.count; i++)
+			{
+				pages[i]	= createPage(this, .pages[i].id);
+				pages[i].setLoadData(.pages[i]);
+			}
+			if(.categories != void)
+			{
+				categories	= createCategory(this, .categories.id);
+				categories.setLoadData(.categories);
+			}
+			flags		= .flags;
+			first		= .first;
+			subscript	= .subscript;
+		}
+	}
+
+	function createPage()
+	{
+		return new NFEPageData(...);
+	}
+
+	function createCategory()
+	{
+		return new NFECategoryData(...);
+	}
+
+	//	オブジェクト管理
+
+	//	オブジェクト生成時にIDで登録
+	function registObject(obj)
+	{
+		if(obj == void)
+			return;
+
+//		dm("regist: "+obj.id+" = "+obj);
+		objects[obj.id]	= obj;
+	}
+
+	//	オブジェクトの登録を解除する
+	function unregistObject(obj)
+	{
+		if(obj == void || objects[obj.id] == void)
+			return;
+
+//		dm("unregist: "+obj.id+" = "+obj);
+		delete objects[obj.id];
+//		dm("objects["+obj.id+"] = "+objects[obj.id]);
+	}
+
+	//	IDでオブジェクトを取得
+	function getObjectByID(id)
+	{
+		if(id === void)
+			return void;
+		else
+		{
+//			dm("get object by id: "+id+" = "+objects[id]);
+			return objects[id];
+		}
+	}
+}
+
+@endif

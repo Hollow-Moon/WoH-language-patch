@@ -1,0 +1,131 @@
+﻿//	ゲーム固有のマクロ
+@if(__MACRO_DEFINED__==0)
+@set(__MACRO_DEFINED__=1)
+
+//	macro タグで実装しようとしたが、先読みで mp が読み取れないため、タグとして実装した
+
+/**
+ *	時計表示.
+ *	@param h	時
+ *	@param m	分
+ *	@param left	背景の位置(X座標)
+ *	@param top	背景の位置(Y座標)
+ */
+kag.tagHandlers.dispclock	= function(elm)
+{
+	with(elm)
+	{
+		.h	%= 12;
+		.m	%= 60;
+		var	zoomx	= .zoomx !== void ? +.zoomx : .zoom !== void ? +.zoom : 100;
+		var	zoomy	= .zoomy !== void ? +.zoomy : .zoom !== void ? +.zoom : 100;
+		var	ratex	= zoomx / 100;
+		var	ratey	= zoomy / 100;
+		f.lastHour	= .h;
+		f.lastMinute= .m;
+		var	hhand	= (+.m + .h * 60) * -0.5;
+		var	mhand	= +.m * -6.0;
+		if(zoomx < 0)
+		{
+			hhand	= -hhand;
+			mhand	= -mhand;
+		}
+		tagHandlers.fg(%[storage:"im03lロビー時計(短針x2)", center:+.left+1748, vcenter:+.top+1050,
+			index:1200, afx:69, afy:621, effect:.effect, zoomx:zoomx, zoomy:zoomy, rotate:hhand, id:"clock1"]);
+		tagHandlers.fg(%[storage:"im03lロビー時計(長針x2)", center:+.left+1750, vcenter:+.top+954,
+			index:1300, afx:62, afy:817, effect:.effect, zoomx:zoomx, zoomy:zoomy, rotate:mhand, id:"clock2"]);
+		tagHandlers.fg(%[storage:"im03lロビー時計(短針x2)", center:+.left+1748+ratex*9, vcenter:+.top+1050+ratey*13,
+			index:1000, afx:69, afy:621, effect:.effect, zoomx:zoomx, zoomy:zoomy, blur:2, opacity:64, rotate:hhand, id:"clock3", effect:"mono000000"]);
+		tagHandlers.fg(%[storage:"im03lロビー時計(長針x2)", center:+.left+1750+ratex*9, vcenter:+.top+954+ratey*13,
+			index:1100, afx:62, afy:817, effect:.effect, zoomx:zoomx, zoomy:zoomy, blur:2, opacity:64, rotate:mhand, id:"clock4", effect:"mono000000"]);
+		delete .h;
+		delete .m;
+		.storage	= "im03lロビー時計(x2)";
+		.noclear	= 1;
+		return tagHandlers.bg(elm);
+	}
+} incontextof kag;
+
+/**
+ *	時計刻時.
+ *	@param h	時
+ *	@param m	分
+ */
+kag.tagHandlers.tickclock	= function(elm)
+{
+	with(elm)
+	{
+		.h	%= 12;
+		.m	%= 60;
+		var	hhand	= (+.m + (.h + (.h < f.lastHour ? 12 : 0)) * 60) * -0.5;
+		var	mhand	= +(.m + (.m < f.lastMinute ? 60 : 0)) * -6.0;
+		var	lhhand	= (+f.lastMinute + f.lastHour * 60) * -0.5;
+		var	lmhand	= +f.lastMinute * -6.0;
+		if(fore.base.zoomx < 0)
+		{
+			hhand	= -hhand;
+			mhand	= -mhand;
+			lhhand	= -lhhand;
+			lmhand	= -lmhand;
+		}
+		var	over	= 0.3;
+		var	ohhand	= hhand + (hhand - lhhand) * over;
+		var	omhand	= mhand + (mhand - lmhand) * over;
+		f.lastHour	= .h;
+		f.lastMinute= .m;
+		var	aelm	= %[
+			tagname:"fgact",
+			page:"fore",
+			props:"-storage,rotate,center,vcenter,opacity,effect,zoomx,zoomy,,blur,absolute,afx,afy,-visible",
+			keys:"(0,0,l,im03lロビー時計(短針x2),<,<,<,<,<,<,<,<,<,<,<,1)(100,7,,,"+ohhand+",,,,,,,,,,,)(300,0,,,"+hhand+",,,,,,,,,,,)",
+			id:"clock1",
+			textoff:.textoff
+		];
+		with(aelm)
+		{
+			tagHandlers.fgact(aelm);
+			.target	= void;	//	target に clock1 が入っているので、リセットする
+			.id	= "clock3";
+			tagHandlers.fgact(aelm);
+			.target	= void;
+			.id	= "clock2";
+			.keys	= "(0,0,l,im03lロビー時計(長針x2),<,<,<,<,<,<,<,<,<,<,<,1)(100,7,,,"+omhand+",,,,,,,,,,,)(300,0,,,"+mhand+",,,,,,,,,,,)";
+			tagHandlers.fgact(aelm);
+			.target	= void;
+			.id	= "clock4";
+			tagHandlers.fgact(aelm);
+		}
+		.nowait	= .wait if .wait !== void;
+		dm("tickcount done.");
+		if(!.nowait)
+			return tagHandlers.wact(%[]);
+	}
+	return 0;
+} incontextof kag;
+
+{//	特殊文字、絵文字マクロの追加
+	var	exCharTags	= [
+		[ "heart",	"heart",		"(ハート)" ],
+		[ "ageage",	"アゲアゲ",		"↑" ],
+		[ "ansz",	"アンサズ",		"ANSZ" ],
+		[ "ingz",	"イングズ",		"INGZ" ],
+		[ "eywz",	"エイワズ",		"EYWZ" ],
+		[ "swel",	"ソウェル",		"SWEL" ]
+	];
+	var	macros	= kag.mainConductor.macros;
+	for(var i=0; i<exCharTags.count; i++)
+	{
+		var	e	= exCharTags[i];
+		if(e == void)
+			continue;
+		//	特殊文字
+		if(typeof e[1] == "Integer")
+			macros[e[0]] = macros[e[0].toLowerCase()] = "[ch text=&($"+e[1]+")]";
+
+		//	絵文字
+		else if(typeof e[1] == "String")
+			macros[e[0]] = macros[e[0].toLowerCase()] = "[graph storage=&('"+e[1]+"'+kag.current.fontSize) alt=\""+e[2]+"\"]";
+	}
+}
+
+@endif

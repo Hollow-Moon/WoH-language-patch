@@ -1,0 +1,721 @@
+﻿// Initialize.tjs - システムの初期化
+// Copyright (C)2001-2008, W.Dee and contributors  改変・配布は自由です
+
+// システムバージョン
+var kagVersion = "3.29-dev.20071022";
+
+@set(LOG_COPY_TO_EXCHANGE=1)	//	for DEBUG : エラーログを受け渡しに入れるかどうか
+
+@if(DEBUG==1)
+
+//プラグインへのイベント配信時にエラー停止しないよう暫定的にトラップさせる=1 / させない=0
+@set(__PLUGIN_EVENT_ERROR_TRAP__=0)
+
+//開発時トレース用
+function getDebugStringFromElm( elm, str="", maxdepth=3, depth=0 )
+{
+	var tmp = [];
+	var ret = "";
+
+	if( elm instanceof "Dictionary" ){
+		ret = str + "%[";
+		tmp.assign(elm);
+		for(var i=0; i<tmp.count; i+=2 ){
+			ret += (string)tmp[i] + "=>";
+			if( maxdepth == depth || typeof tmp[i+1] != "Object" ){
+				ret += (string)tmp[i+1] + ",";
+			}else{
+				ret += getDebugStringFromElm(tmp[i+1], "", maxdepth, depth+1) + ",";
+			}
+		}
+		ret += "]";
+	}else if( elm instanceof "Array" ){
+		ret = str;
+		for(var i=0; i<elm.count; i++){
+			if( maxdepth == depth || typeof elm[i] != "Object" ){
+				ret += (string)i + ":" + (string)elm[i] + ",";
+			}else{
+				ret += getDebugStringFromElm(elm[i], "(array["+i+"])", maxdepth, depth+1) + ",";
+			}
+//		//再帰処理で長々と出しても仕方ないので２次元配列まで
+//			if( elm[i] instanceof "Array" ){
+//				for(var j=0; j<elm[i].count; j++){
+//					ret += "[" + (string)i + "][" + (string)j + "]=" + (string)elm[i][j] + ",";
+//				}
+//			}else{
+//				ret += (string)i + ":" + (string)elm[i] + ",";
+//			}
+		}
+	}
+
+	return ret;
+}
+//	実行時間出力
+var	__lasttick	= [];
+function resetTick(no=0) { __lasttick[no] = System.getTickCount(); }
+function dispTick(msg="past", no=0, cnt=0)
+{
+	var	t	= System.getTickCount();
+	var	past= t - __lasttick[no];
+	Debug.message(" ".repeat(no) + "[%d]%s: %4d (ms)%s".sprintf(no, msg, past, cnt > 0 ? "[%6.3f (ms)]".sprintf(past/cnt) : ""));
+	__lasttick[no] = t;
+	return past;
+}
+if(Storages.isExistentStorage("debug/microcount.dll"))
+{
+	try
+	{
+		Plugins.link("debug/microcount.dll");
+		global.__lastmicro	= [];
+		global.initMicro	= function(no=0, msg="-- init micro --")
+		{
+			msg <-> no if typeof msg == "Integer" && typeof no == "String";
+			__lastmicro[no] = startMicroCount();
+			Debug.message(" ".repeat(no) + "<%d>%s".sprintf(no, msg)) if msg != "";
+		};
+		global.dispMicro	= function(msg="past", no=0)
+		{
+			msg <-> no if typeof msg == "Integer" && typeof no == "String";
+//			__lastmicro[no]	= __lastmicro[0] if __lastmicro[no] === void;
+			if(__lastmicro[no] !== void)
+			{
+				var	ms	= endMicroCount(__lastmicro[no]) * 0.001;
+				Debug.message(" ".repeat(no) + "<%d>%s: %6.3f (ms)".sprintf(no, msg, ms));
+				initMicro(no, "");
+				return ms;
+			}
+			return 0;
+		};
+	}
+	catch(e)
+		Debug.message("can't link micro count");
+}
+if(typeof global.initMicro == "undefined")
+{
+	Debug.message("none micro count");
+	global.initMicro	= function (){};
+	global.dispMicro	= function (){/* Debug.message("none func: getMicroCount"); */};
+}
+@endif
+@if(DEBUG==0)
+function getDebugStringFromElm(){ return ""; }
+function initMicro() {}
+function dispMicro() {}
+@endif
+
+/*
+	Debug.message へのショートカット
+*/
+
+var dm = Debug.message; // これで dm("message"); でコンソールに message を表示できる
+function dmt(msg*) { Debug.message(msg.join(", ")+": "+Scripts.getTraceString()); }
+/*
+function dm
+{
+	Debug.message(...);
+	Debug.message(Scripts.getTraceString());
+}
+*/
+
+/*
+	実行オプションのチェック
+*/
+if(typeof global.Plugins.cxdec != "undefined" && typeof global.Plugins.cxdec.embedOptions != "undefined")
+{
+	var emb = global.Plugins.cxdec.embedOptions.split("\n");
+	var opt, ep, tag, val, now;
+	for(var i=0; i<emb.count; i++)
+	{
+		if((opt = emb[i]) == "" || (ep=opt.indexOf("=")) < 0) continue;
+		tag = opt.substr(0,ep);
+		val = opt.substr(ep+1);
+		now = System.getArgument("-"+tag);
+		if(now != (val!))
+		{
+			System.inform(@"不正なオプションです: ${tag}");
+			System.exit();
+		}
+	}
+}
+
+/*
+	ClassName の獲得関数
+*/
+//※あとで適切な場所に移動(krkrirc 2008/04/22 log よりHALO氏の情報)
+function getClassName( obj )
+{
+	var tmp = [];
+	var ret = [];
+	if( typeof obj == "Object" ){
+		ret = Scripts.getClassNames(obj);
+		if( ret instanceof "Array" ){
+			tmp.assign( ret );
+
+			//for( var i=0; i<tmp.count; i++ )	dm("class: [" + i + "] = " + tmp[i]);
+			if( tmp.count > 0 )
+				return tmp[0];
+		}
+	}
+	return "is not class object";
+}
+
+
+
+/*
+	デフォルトの「捕捉されない例外」ハンドラ
+*/
+var exceptionOccured	= false;	//	例外が発生したか？
+System.exceptionHandler = function (e)
+{
+@if(!DEBUG)
+	Debug.logAsError();	//	ログ出力
+	kag.saveQuickToEmpty(, false);	//	クイックセーブする
+
+	var	msg;
+	msg	=  "下記の例外が発生しました。\n\n";
+	msg	+= e.message+"\n\n";
+	msg	+= "※ 現在の進行状況をクイックセーブしましたので、問題が\n";
+	msg	+= "　　取り除かれた後にクイックロードしてください。\n";
+	msg	+= "※ 問題の状況を知らせる場合、セーブデータフォルダにある\n";
+	msg	+= "　　krkr.console.log,savedatasc.ksd,savedatasu.ksd ファイルを\n";
+	msg	+= "　　添えて、サポート掲示板へご投稿ください。\n";
+	msg	+= "-- trace --\n"+e.trace if e.trace != "";
+	var event_disabled = System.eventDisabled;
+	System.eventDisabled = true;
+		// エラーの理由を表示させている間にイベントが発生すると
+		// やっかいなのでいったんイベント発生を停止させる
+	dm(msg);
+	System.inform(msg);
+	System.eventDisabled = event_disabled;	// イベントを発生するかどうかを元の状態に
+	return true; // true を返すと本体側で例外の処理は行わなくなる
+@endif
+@if(DEBUG)
+	var	msg	= e.message;
+@endif
+
+	//	フルスクリーンモードで実行中だったら、ウィンドウモードに切り替える
+	if(typeof global.kag != "undefined" && isvalid kag && kag.fullScreened)	//kag実体生成前に例外トラップした場合の措置
+		kag.onWindowedMenuItemClick();
+
+	//	"script exception"が発生したら、処理しない
+	dm("exception: "+e+"\""+e.message+"\"");
+	if(e instanceof "ConductorException" && kag == kag.mainWindow)
+		return false;
+
+@if(DEBUG)
+	//	例外が発生したら終了する
+	if(except2exit)
+	{
+		System.terminate();
+		return true;
+	}
+@endif
+
+	//	例外が発生しているので、終了時点での確認を行わない
+	exceptionOccured	= true;
+
+	// どこにも捕捉されない例外がシステム側で捕捉された場合、この関数が
+	// 呼ばれる。e は例外オブジェクト。
+	if(
+@if(DEBUG && CAPTURE_EXCEPTION)
+	//	ここで例外をキャプチャすると、メソッドのトレースが正常に表示できないため、原因の追求ができない
+	//	コンダクタの例外と同じく、ここで処理しておかないとアドレス違反ダイアログが
+	//	永久に出続けてしまう場合がある
+	System.getArgument("-debug") !== void ||
+@endif
+		e instanceof "ConductorException"
+	)
+	{
+		// コンダクタの投げた例外の場合
+		Debug.logAsError(); // ログのファイルへの書き出し動作の開始など
+@if(DEBUG && CAPTURE_EXCEPTION)
+		Debug.notice("∴EXCEPTION_ERROR_SAFEMODE 通常の例外処理を行わずにトラップしました");
+@endif
+		var event_disabled = System.eventDisabled;
+		System.eventDisabled = true;
+			// エラーの理由を表示させている間にイベントが発生すると
+			// やっかいなのでいったんイベント発生を停止させる
+		System.inform(msg);
+		System.eventDisabled = event_disabled;	// イベントを発生するかどうかを元の状態に
+@if(DEBUG)
+		//	エラーログのコピーを予約
+		asyncCaller.call(saveLogToExchange);
+@endif
+		return true; // true を返すと本体側で例外の処理は行わなくなる
+	}
+@if(DEBUG)
+	//	エラーログのコピーを予約
+	System.eventDisabled	= false;
+	if(typeof global.asyncCaller == "undefined")
+		Scripts.execStorage(System.exePath+"data/scenario/plugin/sub/asyncCaller.tjs");
+	asyncCaller.call(saveLogToExchange);
+@endif
+	return false; // false を返すと通常の例外処理
+};
+
+@if(LOG_COPY_TO_EXCHANGE)
+function getLayerInfo()
+{
+	var	func	= function(children, indent, func)
+	{
+		var	text;
+		for(var i=0; i<children.count; i++)
+		{
+			with(children[i])
+			{
+				if(.parent == kag.primaryLayer && .name == "Menuitem[pool]")
+					continue;
+				if(children[i] instanceof "MessageCharLayer")
+					continue;
+				text	+= indent + (.visible ? "■" : "□")+" "+.name+(typeof .layerID != "undefined" ? "/"+.layerID : "")+
+					(typeof .storage != "undefined" ? " <"+Storages.extractStorageName(.storage)+">" : "")+
+					"["+.type+"]"+
+//					"["+(isbase ? ._effect +"/in:"+.childEffect : (typeof ._effect != "undefined" ? (._effect != "" ? ._effect : (typeof .parent.childEffect != "undefined" ? .parent.childEffect : "")): ""))+"]"+
+					" ("+.left+", "+.top+(typeof .realLeft != "undefined" ? "/"+.realLeft+","+.realTop+"/"+.realImageLeft+","+.realImageTop : "")+")-"+
+					(typeof .center != "undefined" ? ("(C:"+.center+", "+.vcenter+")-") : "")+
+					"("+.width+", "+.height+") opac="+.opacity+
+					(typeof .zoomx != "undefined" ? " zoom="+(.zoomx == .zoomy ? "%4.2f".sprintf(.zoomx) : "(%4.2f, %4.2f)".sprintf(.zoomx, .zoomy)) : "")+
+					(typeof .rotate != "undefined" ? " rot=%4.2f".sprintf(.rotate) : "")+
+					(typeof .afx != "undefined" ? " af=(%d, %d)".sprintf(.afx, .afy) : "")+
+					(typeof .srcleft != "undefined" ? " (%4.2f, %4.2f)[%4.2f/%4.2f](%d, %d)".sprintf(.srcleft, .srctop, .srczoomx, .srcrotate, .srcafx, .srcafy): "")+
+					(typeof .notuse != "undefined" ? " use=%d".sprintf(!.notuse) : "")+"\r\n";
+				text	+= func(.children, indent + "  ", func);
+			}
+		}
+		return text;
+	};
+	return func(kag.primaryLayer.children, "", func);
+}
+var	sharelogdir		= "file://192.168.101.232/exchange/WoHエラーログ/";
+function saveLogToExchange()
+{
+	if(Storages.isExistentStorage(System.exePath+"savedata/NoSendExchange.txt"))
+	{
+		dm("saveLogToExchange処理は savedata/NoSendExchange.txt が存在するため中断しました。");
+		return;
+	}
+
+	var	logfn	= "krkr.console.log";
+	var	date	= new Date();
+	var	datestr;
+	with(date)
+		datestr	= "%02d%02d%02d-%02d%02d%02d".sprintf(.getYear() % 100, .getMonth()+1, .getDate(), .getHours(), .getMinutes(), .getSeconds());
+	var	linfo	= getLayerInfo();
+	dm(linfo);	//	レイヤー構成をログ
+	var	savefn	= datestr+".bmp";
+	var	savedir	= System.dataPath + "excpdata/";
+	Storages.createDirectory(savedir) if !Storages.isExistentDirectory(savedir);
+	kag.saveBookMarkToFile(savedir+savefn);	//	セーブ可能ならデータを保存する
+	var	copied	= false;
+	if(Storages.isExistentDirectory(sharelogdir))
+	{
+		Storages.copyFile(System.dataPath+logfn, sharelogdir+datestr+"."+logfn, false);
+		Storages.copyFile(savedir+savefn, sharelogdir+savefn, false);
+		copied	= true;
+	}
+
+	//	クリップボードに参照情報を書き込み、念のためテキストにも出力
+	var	text;
+	with(date)
+		text	+= "error date: %d年%d月%d日 %02d:%02d:%02d\r\n".sprintf(.getYear(), .getMonth()+1, .getDate(), .getHours(), .getMinutes(), .getSeconds());
+	text	+= "error log : "+datestr+"."+logfn+"\r\n";
+	text	+= "save data : "+savefn+"\r\n";
+	text	+= "layer info: \r\n" + linfo;
+	Clipboard.asText	= text;
+	var	lines	= [ text ];
+	lines.save(System.dataPath+"lasterrorinfo.txt");
+	var	msg	= "現在の情報をクリップボードへコピーしました。\n問題の発生を伝えるときに、この情報も渡してください。\n(念の為 savedata/lasterrorinfo.txt にも同じ情報を記録しています)";
+	msg	+= "(対応するエラーログ・セーブデータも提出してください)" if !copied;
+	System.inform(msg);
+}
+@endif
+
+/*
+	パスの設定
+	後に指定した物が、より優先されて使用される
+*/
+
+
+function useArchiveIfExists(name)
+{
+	// name が存在していたらそのアーカイブを使う
+	var arcname;
+	if(Storages.isExistentStorage(arcname = System.exePath + name))
+	{
+		Storages.addAutoPath(arcname + ">");
+		return true;
+	}
+	return false;
+}
+
+/*
+if(Storages.isExistentStorage("KUtils.tjs"))
+	Scripts.execStorage("KUtils.tjs");
+else if(Storages.isExistentStorage("kwidgets/KUtils.tjs"))
+	Scripts.execStorage("kwidgets/KUtils.tjs");
+else
+	throw new Exception("kwidgets/KUtils.tjs が見つかりません。");
+*/
+/*
+// kwidget の初期化
+Storages.addAutoPath("kwidgets/");
+Scripts.execStorage("KInitialize.tjs");
+
+// パネル処理の初期化
+Storages.addAutoPath("panel/");
+Scripts.execStorage("PanelInitialize.tjs");
+*/
+/*Storages.addAutoPath(System.exePath + "video/"); // exePath 以下の video/
+Storages.addAutoPath("video/"); // video フォルダ
+Storages.addAutoPath("others/"); // その他
+Storages.addAutoPath("rule/"); // ルール画像フォルダ
+Storages.addAutoPath("sound/"); // 効果音フォルダ
+Storages.addAutoPath("bgm/"); // BGM フォルダ
+Storages.addAutoPath("fgimage/"); // 前景画像フォルダ
+Storages.addAutoPath("bgimage/"); // 背景画像フォルダ
+Storages.addAutoPath("scenario/"); // シナリオフォルダ
+Storages.addAutoPath("image/"); // そのほかの画像フォルダ
+//Storages.addAutoPath("system/"); // システムフォルダ
+
+// パッチアーカイブの検索と使用
+// もしこれらの名前を持ったアーカイブが実行可能ファイルと
+// 同じ場所にあった場合、それを優先して使う
+useArchiveIfExists("video.xp3");
+useArchiveIfExists("others.xp3");
+useArchiveIfExists("rule.xp3");
+useArchiveIfExists("sound.xp3");
+useArchiveIfExists("bgm.xp3");
+useArchiveIfExists("fgimage.xp3");
+useArchiveIfExists("bgimage.xp3");
+useArchiveIfExists("scenario.xp3");
+useArchiveIfExists("image.xp3");
+useArchiveIfExists("system.xp3");
+*/
+if(Storages.isExistentStorage("Storages.tjs"))
+	KAGLoadScript("Storages.tjs");
+/*
+useArchiveIfExists("patch.xp3");
+
+// 追加のパッチ用アーカイブの検索
+for(var i = 2; ; i++)
+{
+	// パッチ用アーカイブ patch2.xp3, patch3.xp3 ... がある場合はそちらを
+	// 優先して読み込むように
+	if(Storages.isExistentStorage(System.exePath + "patch" + i + ".xp3"))
+		Storages.addAutoPath(System.exePath + "patch" + i + ".xp3>");
+	else
+		break;
+}
+*/
+delete useArchiveIfExists; // useArchiveIfExists は使い終わったので一応消しておく
+
+/*
+	システムバージョン
+*/
+Debug.notice("OS : " + System.osName + " (" + System.platformName + ")");
+Debug.notice("KAG : " + kagVersion);
+Debug.notice("Kirikiri : " + System.versionString);
+
+/*
+	( デバッグ ) 時間計測
+*/
+
+var parseStartTick = System.getTickCount();
+
+
+/*
+	スクリプト読み込みラッパー
+*/
+
+function KAGLoadScript(name)
+{
+	var start = System.getTickCount();
+	Scripts.execStorage(name);
+	dm(name + " を読み込みました(" + (System.getTickCount() - start) + "ms)");
+}
+
+var loaded_scripts = %[];
+
+function KAGLoadScriptOnce(name)
+{
+	// 指定したスクリプトを読み込むが、一回しか読み込まない
+	if(global.loaded_scripts[name] === true) return; // 既に読み込んでいる
+	global.KAGLoadScript(name);
+	global.loaded_scripts[name] = true;
+}
+
+/*
+	AppConfig.tjs 読み込み
+*/
+if(Storages.isExistentStorage("AppConfig.tjs"))
+{
+	KAGLoadScript("AppConfig.tjs");
+}
+
+/*
+	Config.tjs 読み込み
+*/
+if(Storages.isExistentStorage("Config.tjs"))
+{
+	KAGLoadScript("Config.tjs");
+}
+else if(Storages.isExistentStorage("Config.~new"))
+{
+	System.inform("Config.tjs が見つかりません。\nsystem フォルダにある "
+		"Config.~new ファイルを Config.tjs に改名してください。");
+	System.exit();
+}
+else
+{
+	throw new Exception("Config.tjs が見つかりません。");
+}
+
+if (typeof global.ENV_GameName != "undefined") {
+	System.title = global.ENV_GameName;
+}
+
+/*
+	Config.tjs バージョンチェック
+*/
+
+if(typeof global.config_version == "undefined" || config_version != kagVersion)
+{
+	KAGLoadScript("UpdateConfig.tjs");
+}
+
+/*
+	二重起動のチェック
+*/
+
+// 実行可能ファイルのパスをキーにしてロックを行う
+if(!System.createAppLock(System.exePath.replace(/[^A-Za-z]/g, '_')))
+{
+	// すでに起動している
+@if(!DEBUG)
+	System.inform(System.title + "はすでに起動しています");
+@endif
+	System.exit();
+}
+
+
+/*
+	オン・デマンド・ローディングを行うための定義
+*/
+
+
+property askYesNo { getter() { KAGLoadScript("YesNoDialog.tjs"); return global.askYesNo; } }
+property CheckBoxLayer { getter() { KAGLoadScript("CheckBoxLayer.tjs"); return global.CheckBoxLayer; } }
+property ButtonLayer { getter() { KAGLoadScript("ButtonLayer.tjs"); return global.ButtonLayer; } }
+property EditLayer { getter() { KAGLoadScript("EditLayer.tjs"); KAGLoadScript("EditLayer.override.tjs"); return global.EditLayer; } }
+property KAGPlugin { getter() { KAGLoadScript("Plugin.tjs"); return global.KAGPlugin; } }
+
+/*
+	各システム読み込み
+*/
+dm("KAG System スクリプトを読み込んでいます...");
+
+KAGLoadScript("LayerEx.tjs");
+KAGLoadScript("Utils.tjs");
+if(Storages.isExistentStorage("Layer.override.tjs"))
+	KAGLoadScript("Layer.override.tjs");
+KAGLoadScript("KAGLayer.tjs");
+//	KAGLayer のオーバーライド		layopt で storage, effect, contrast, blur 等のプロパティ指定可能
+if(Storages.isExistentStorage("KAGLayer.override.tjs")){
+	KAGLoadScript("KAGLayer.override.tjs");
+}
+KAGLoadScript("HistoryLayer.tjs");
+KAGLoadScript("BGM.tjs");
+//	BGM のオーバーライド
+if(Storages.isExistentStorage("BGM.override.tjs")){
+	KAGLoadScript("BGM.override.tjs");
+}
+KAGLoadScript("SE.tjs");
+//	SESoundBuffer のオーバーライド
+if(Storages.isExistentStorage("SE.override.tjs")){
+	KAGLoadScript("SE.override.tjs");
+}
+KAGLoadScript("Movie.tjs");
+KAGLoadScript("Conductor.tjs");
+KAGLoadScript("AnimationLayer.tjs");
+//	AnimationLayer のオーバーライド		storage, effect, contrast, blur 等のプロパティを追加
+if(Storages.isExistentStorage("AnimationLayer.override.tjs")){
+	KAGLoadScript("AnimationLayer.override.tjs");
+}
+KAGLoadScript("GraphicLayer.tjs");
+//	GraphicLayer, BaseLayer, CharacterLayer のオーバーライド	前景レイヤー指定変更など
+if(Storages.isExistentStorage("GraphicLayer.override.tjs")){
+	KAGLoadScript("GraphicLayer.override.tjs");
+}
+KAGLoadScript("MessageLayer.tjs");
+KAGLoadScript("Menus.tjs");
+KAGLoadScript("DefaultMover.tjs");
+KAGLoadScript("BitmapFont.tjs") if Storages.isExistentStorage("BitmapFont.tjs");
+KAGLoadScript("MainWindow.tjs");
+if(Storages.isExistentStorage("Override.tjs"))
+	KAGLoadScript("Override.tjs");
+if(Storages.isExistentStorage(System.exePath + "Override2.tjs"))
+	KAGLoadScript(System.exePath + "Override2.tjs");
+
+
+/*
+	( デバッグ ) 時間計測
+*/
+dm("スクリプトの読み込みに " + (System.getTickCount() - parseStartTick) + "ms かかりました");
+parseStartTick = System.getTickCount();
+
+/*
+	( デバッグ ) VM コードのダンプ
+*/
+
+// Scripts.dump();
+
+/*
+	( デバッグ ) 時間計測
+*/
+
+parseStartTick = System.getTickCount();
+
+
+/*
+	KAG メインウィンドウの作成
+	グローバルメンバ kag が存在しなければ KAGWindow クラスの
+	オブジェクトを作成して入れる
+*/
+
+global.kag = new KAGWindow() if typeof global.kag == "undefined";
+
+
+
+
+/*
+	グローバルから簡単にアクセスできるように、いくつかの
+	変数の別名を作成
+*/
+
+var f = kag.flags;   // ユーザ変数 (フラグ)
+var sf = kag.sflags; // システム変数 (システム)
+var cf = kag.scflags; // システム変数 (システムコア)
+var tf = kag.tflags; // 一時変数 (一時フラグ)
+
+property mp
+{
+	getter { return kag.conductor.macroParams; }
+}
+
+/*
+	( デバッグ ) 時間計測
+*/
+dm("KAGMainWindow のコンストラクタで " + (System.getTickCount() - parseStartTick) + "ms かかりました");
+delete parseStartTick;
+
+
+/*
+	AfterInit.tjs が存在すれば実行
+*/
+if(Storages.isExistentStorage("AfterInit.tjs"))
+	KAGLoadScript("AfterInit.tjs");
+if(Storages.isExistentStorage(System.exePath + "AfterInit2.tjs"))
+	KAGLoadScript(System.exePath + "AfterInit2.tjs");
+
+/*
+	コマンドラインパラメータとして -ovr が指定されていれば
+	そのパラメータを TJS 式として実行
+*/
+{
+	var ovr = System.getArgument('-ovr');
+	if(ovr !== void && ovr != 'yes') Scripts.eval(ovr);
+}
+
+@if(DEBUG)
+/*
+	デバッグ表示の準備
+ */
+Scripts.execStorage("DispStatePlugin.tjs");
+addDisplay(-4, 4, 200, 100, function() {
+	var	array	= [];
+	/*
+	 *	KAGコンダクタの状態
+	 */
+	with(kag.conductor)
+	{
+		var	keys	= [];
+		keys.assign(.waitUntil);
+		var	triggers= [];
+		for(var i=0; i<keys.count; i+=2)
+			triggers.add(keys[i]);
+		array.add("conductor: inProcessing="+.inProcessing+"/interrupted="+.interrupted+"/timer="+.timer.enabled+", "+.timer.interval+"/triggers="+triggers.join(", "));
+		keys.clear();
+		for(var i=0; i<.pendings.count; i++)
+			keys.add(.pendings[i].tagname);
+		array.add("  pendings = "+keys.join(", ")) if keys.count > 0;
+
+	}
+
+	//	最後に受け取ったメッセージ
+	var	maxlen	= 32;
+	array.add("last message: "+kag.lastMessageKey+"("+(kag.lastMessageText.length > maxlen ? kag.lastMessageText.substr(0, maxlen-2)+"..." : kag.lastMessageText)+")") if typeof kag.lastMessageKey != "undefined" && kag.lastMessageKey != void;
+
+	//	タイムラインの状態
+	array.add("timeline: last scene="+timeline_object.scene+", time="+timeline_object.time+(timeline_object.next !== void ? "["+timeline_object.next+"]" : "")+"(ms)") if typeof this.timeline_object != "undefined" && timeline_object.scene !== void && typeof timeline_object.timeline_object.scene != "undefined";
+
+	return array;
+});
+addDisplay(4, -4, 300, 300, function() {
+	/*
+	 *	レイヤーの現在状態を表示する
+	 */
+	var	formatfunc	= function(layer, isbase=false)
+	{
+		with(layer)
+			return (.visible ? "■" : "□")+" "+.name+(typeof .layerID != "undefined" ? "/"+.layerID : "")+
+				(typeof .storage != "undefined" ? " <"+Storages.extractStorageName(.storage)+">" : "")+
+				"["+(isbase ? ._effect +"/in:"+.childEffect : (typeof ._effect != "undefined" ? (._effect != "" ? ._effect : (typeof .parent.childEffect != "undefined" ? .parent.childEffect : "")): ""))+"]"+
+				" ("+.left+", "+.top+/*(typeof .realLeft != "undefined" ? "/"+.realLeft+","+.realTop+"/"+.realImageLeft+","+.realImageTop : "")+*/")-"+
+				(typeof .center != "undefined" ? ("(C:"+.center+", "+.vcenter+")-") : "")+
+				"("+.width+", "+.height+") opac="+.opacity+
+				(typeof .zoomx != "undefined" ? " zoom="+(.zoomx == .zoomy ? "%4.2f".sprintf(.zoomx) : "(%4.2f, %4.2f)".sprintf(.zoomx, .zoomy)) : "")+
+				(typeof .rotate != "undefined" ? " rot=%4.2f".sprintf(.rotate) : "")+
+				(typeof .afx != "undefined" ? " af=(%d, %d)".sprintf(.afx, .afy) : "")+
+				(typeof .srcleft != "undefined" ? " (%4.2f, %4.2f)[%4.2f/%4.2f](%d, %d)".sprintf(.srcleft, .srctop, .srczoomx, .srcrotate, .srcafx, .srcafy): "")+
+				(typeof .notuse != "undefined" ? " use=%d".sprintf(!.notuse) : "");
+	};
+	var	func	= function(layers, array, indent="", func, ffunc, isbase)
+	{
+		indent	+= "  ";
+		for(var i=0; i<layers.count; i++)
+		{
+			var	layer	= layers[i];
+			if(layer instanceof "CompositionLayer" || layer instanceof "MessageCharLayer" || layer instanceof "HistoryLayer" || typeof layer.free != "undefined" || layer.name == "MenuItem[pool]")
+				continue;
+			array.add(indent+ffunc(layer, isbase));
+			func(layer.children, array, indent, func, ffunc, isbase);
+		}
+	};
+	var	array	= [];
+	array.add(formatfunc(kag.fore.base, true));
+	func(kag.fore.base.children, array,, func, formatfunc);
+	array.add(formatfunc(kag.back.base, true));
+	func(kag.back.base.children, array,, func, formatfunc);
+	return array;
+});
+addDisplay(4, 4, 200, 200, kag.actmgr.getActionList);
+//visibleDisplay();	//	最初から表示する
+invisibleDisplay();	//	表示しないで開始(描画が遅くなるので)
+
+/*
+ *	レイヤーの状態を別ウィンドウで開く
+ */
+Scripts.execStorage("LayerStatePlugin.tjs");
+
+/*
+ *	レイヤー状態を記録する
+ */
+Scripts.execStorage("LayerHistoryPlugin.tjs");
+
+@endif
+
+/*
+	first.ks の実行
+*/
+
+kag.process("first.ks");

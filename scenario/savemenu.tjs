@@ -1,0 +1,718 @@
+﻿@if(__SAVEMENU_DEFINED__==0)
+@set(__SAVEMENU_DEFINED__=1)
+
+//	セーブメニュータイムラインデータ
+Scripts.execStorage("save.ttd");	//	読み込みに20msぐらい掛かる
+
+/*
+ *	セーブメニュー
+ */
+var	sv_textlayer;
+function loadSaveTextLayer()
+{
+	if(sv_textlayer == void)
+	{
+		sv_textlayer	= new Layer(kag, kag.fore.base);
+		sv_textlayer.loadImages("save_textwindow");
+	}
+	return sv_textlayer;
+}
+function eraseSaveTextLayer()
+{
+	if(sv_textlayer != void)
+	{
+		invalidate sv_textlayer;
+		sv_textlayer	= void;
+	}
+}
+function cmdSaveMenuData(item, cmd, no, trg="ウィンドウ")
+{
+//	dmt("cmdSaveMenuData("+item.name+", "+cmd+", "+no+", "+trg+")");
+	var	trgitem	= Menu_object.find("Save"+trg+no, PRIMARY);
+	trgitem[cmd]() if trgitem != void && trgitem.enabled;
+	item	= Menu_object.find("Save"+item+no, PRIMARY) if typeof item == "String";
+	item[cmd]() if item != void;
+}
+function setSaveMenuTimeline(name2pos, creates, pgno, isclose=false)
+{
+	var	dno	= pgno * kag.pageBookMarks;
+	for(var i=0; i<kag.pageBookMarks; i++, dno++)
+	{
+		var	exist	= kag.existBookMark(dno);
+		var	locked	= sf.svldLocked[dno];
+		var	no		= i + 1;
+
+		//	Lockとテキストは、データが存在するときのみ表示する
+		var	target	= creates[name2pos["Saveテキスト"+no]];
+		setCreateProp(target, "visible", exist);
+		setCreateProp(target, "itemMode", imParts);
+
+		target	= creates[name2pos["SaveLock"+no]];
+		setCreateProp(target, "visible", exist);
+		if(!isclose)
+			setCreateProp(target, "on", +locked);
+		setCreateProp(target, "mouseUp", isclose ? ";" : "changeLockSaveMenu("+i+");release();");
+		setCreateProp(target, "mouseEnter", isclose ? ";" : "cmdSaveMenuData(this,'enter',"+no+")");
+		setCreateProp(target, "mouseLeave", isclose ? ";" : "cmdSaveMenuData(this,'leave',"+no+")");
+
+		target	= creates[name2pos["SaveDelete"+no]];
+		setCreateProp(target, "visible", exist);
+		setCreateProp(target, "enabled", !locked);
+		setCreateProp(target, "mouseUp", isclose ? ";" : "askDeleteBySaveMenu("+i+");release();");
+		setCreateProp(target, "mouseEnter", isclose ? ";" : "cmdSaveMenuData(this,'enter',"+no+")");
+		setCreateProp(target, "mouseLeave", isclose ? ";" : "cmdSaveMenuData(this,'leave',"+no+")");
+
+		target	= creates[name2pos["SaveSave"+no]];
+		setCreateProp(target, "visible", exist);
+		setCreateProp(target, "enabled", !locked);
+		setCreateProp(target, "itemMode", imParts);
+
+		//	ウィンドウ自体の状態設定
+		target	= creates[name2pos["Saveウィンドウ"+no]];
+//		setCreateProp(target, "mouseEnter", "cmdSaveMenuData(this,'enter',"+no+",'Save');");
+		setCreateProp(target, "mouseLeave", "cmdSaveMenuData(this,'leave',"+no+",'Save');");
+//		setCreateProp(target, "mouseDown", "cmdSaveMenuData(this,'press',"+no+",'Save');");
+		setCreateProp(target, "itemMode", imLessarButton);
+		setCreateProp(target, "focusable", true);
+		setCreateProp(target, "enabled", !locked);
+		setCreateProp(target, "viewareaNo", 0);
+		setCreateProp(target, "mute", exist);	//	データが存在すれば効果音を鳴らさない
+	}
+	//	ページ設定を行う
+	for(var i=0; i<kag.bookMarkPages; i++)
+	{
+		var	target	= creates[name2pos["Saveページ"+(i+1)]];
+		setCreateProp(target, "mouseUp", isclose ? ";" : "changePageSaveMenu("+i+");release();");
+		setCreateProp(target, "on", i == pgno);
+	}
+
+	//	背景(右クリックメニューから呼ばれたら、背景/Backは表示しない)
+	if(tf.do_systemmenu)
+		return %[save背景:1, SaveBack:1];
+	else
+		setCreateProp(creates[name2pos["SaveBack"]], "pressse", "");	//	Back の時は効果音を再生しない
+
+	return void;
+}
+function openSaveMenu(snapwithmenuitem=false)
+{
+	if(tf.sv_opened)
+	{
+		closeSaveMenu();
+		return;
+	}
+	if( kag === void || ! isvalid kag )
+		return;
+
+	if(kag.snapshotLockCount == 0)
+	{
+		if(snapwithmenuitem)
+		{//	隠さないけど、アクションは停止する
+			var	list	= Menu_object.getMenuItems(PRIMARY);
+			for(var i=0; i<list.count; i++)
+				list[i].stopAction() if list[i] != void;
+			kag.lockSnapshot();
+		}
+		else
+		{//	スナップショットを取るため、表に出ているメニューアイテムを一時的に隠す
+			var	list	= Menu_object.getMenuItems(PRIMARY);
+			var	vis		= [];
+			for(var i=0; i<list.count; i++)
+				list[i].visible <-> vis[i] if list[i] != void && list[i] isvalid;
+			kag.lockSnapshot();
+			for(var i=0; i<list.count; i++)
+				list[i].visible <-> vis[i] if list[i] != void && list[i] isvalid;
+		}
+		tf.sv_locksnapshot	= true;
+	}
+
+	tf.sv_opened	= true;
+	if(tf.ld_opened)
+		closeLoadMenu();	//	inMenu で pauseAction されるので、このタイミング
+	inMenu("save");
+
+	//	保存ページ名がトップに戻る動作の直後など正しく格納されていない場合を考慮
+	kag.pcflags.currentPageName = kag._lastPageName if kag.pcflags.currentPageName == "";
+	kag.pflags.scripttitle = kag._lastPageName if kag.pflags.scripttitle == "";
+
+	//	前回開いていたページ
+	var	pg	= int sf.last_svld_pageno;
+
+	//	TeaTimeメニューから開いたときは、TeaTimeメニューの項目を無効化する
+	Menu_object.setDisfocusableAll() if tf.ttm_opened;
+
+	//	ロック状態を初期化
+	sf.svldLocked	= [] if sf.svldLocked == void;
+
+//initMicro();
+	var	tdata	= __get_save_timelinedata(9);	//	展開に15msぐらい掛かる
+//dispMicro("load savemenu timeline");
+	var	name2pos= tdata[0], creates = tdata[1], actions = tdata[2];
+	var	ignore	= setSaveMenuTimeline(name2pos, creates, pg, false);
+	muteAllMenuItem(tdata, false);	//	効果音ON(素早くメニュー間の移動を行うと、レイヤーが残っていて再利用される可能性があるので)
+//dispMicro("setSaveMenuTimeline");
+	//	開くときだけキーボード操作を設定
+	var	none			= [ void ];
+	var	lastdownsearch	= function { return find("Saveページ"+int(sf.last_svld_pageno+1), PRIMARY); };
+	for(var i=1; i<=4; i++)
+		setCreateProp(creates[name2pos["SaveLock"+i]], "leftItems", none);
+	for(var i=4; i<=8; i+=4)
+	{
+		setCreateProp(creates[name2pos["Saveウィンドウ"+i]], "searchDown", lastdownsearch);
+		setCreateProp(creates[name2pos["SaveLock"+i]], "searchDown", lastdownsearch);
+		setCreateProp(creates[name2pos["SaveDelete"+i]], "searchDown", lastdownsearch);
+	}
+	var	rightitems	= [ , "configmenu", "graphic", "exitgame", "rclick_back" ];
+	for(var i=1; i<=8; i++)
+	{
+		var	mi	= i + (i <= 4 ? 4 : -4);
+		var	di	= i % 4;
+		var	trg	= creates[name2pos["Saveウィンドウ"+i]];
+		setCreateProp(trg, "leftItems", [ "SaveDelete"+i, "SaveLock"+i ]);
+		setCreateProp(trg, "rightItems", i<=4 ? [ "SaveLock"+mi, "Saveウィンドウ"+mi ] : [ rightitems[i-4] ]);
+		setCreateProp(trg, "upItems", [ di==1 ? void : "Saveウィンドウ"+(i-1), "SaveLock"+(i-1) ]);
+		setCreateProp(trg, "downItems", [ i==4 ? "Saveページ7" : (i==8 ? "Saveページ15" : "Saveウィンドウ"+(i+1)) ]);
+
+		trg	= creates[name2pos["SaveDelete"+i]];
+		setCreateProp(trg, "leftItems", [ "SaveLock"+i ]);
+		setCreateProp(trg, "rightItems", [ "Saveウィンドウ"+i ]);
+		setCreateProp(trg, "upItems", [ di==1 ? void : "SaveDelete"+(i-1), "SaveLock"+(i-1) ]);
+		setCreateProp(trg, "downItems", [ i==4 ? "Saveページ5" : (i==8 ? "Saveページ15" : "SaveDelete"+(i+1)) ]);
+
+		trg	= creates[name2pos["SaveLock"+i]];
+		setCreateProp(trg, "leftItems", [ i<=4 ? void : "Saveウィンドウ"+mi, "SaveLock"+mi ]);
+		setCreateProp(trg, "rightItems", [ "SaveDelete"+i, "SaveLock"+mi ]);
+		setCreateProp(trg, "upItems", [ di==1 ? void : "SaveLock"+(i-1) ]);
+		setCreateProp(trg, "downItems", [ i==4 ? "Saveページ2" : (i==8 ? "Saveページ11" : "SaveLock"+(i+1)) ]);
+	}
+	var four	= [ "SaveSave4", "SaveLock4", "Saveウィンドウ4" ], eight = [ "SaveSave8", "SaveLock8", "Saveウィンドウ8" ];
+	for(var i=1; i<=15; i++)
+	{
+		var	trg	= creates[name2pos["Saveページ"+i]];
+		setCreateProp(trg, "upItems", i < 8 ? four : eight);
+		setCreateProp(trg, "downItems", none);
+	}
+//dispMicro("set keyboard assign");
+	Menu_object.playTimeline(PRIMARY, creates, actions, %[absolute:1100000], ignore,, true, false);
+//dispMicro("start savemenu timeline");
+
+	with(Menu_object)
+	{
+		for(var i=0; i<kag.pageBookMarks; i++)
+		{
+			var	tmp	= .find("Saveテキスト"+(i+1), PRIMARY);
+			tmp.noNormalMenuItem= true;		//	メソッドを置き換える等、通常の MenuItemLayer としては使えない
+			tmp.no	= i;
+			tmp.onEditClose		= function(edit)
+			{
+				if(this isvalid && edit isvalid)
+				{
+					kag.setBookMarkComment(int(no + sf.last_svld_pageno * kag.pageBookMarks), edit.text);
+					edit.target		= void;
+					updateContent() if typeof this.updateContent != "undefined";
+					edit.visible	= false;
+				}
+			} incontextof tmp;
+			tmp.updateContent	= function(pgno=sf.last_svld_pageno, doFocus=false)
+			{
+				var	dno		= int(no + pgno * kag.pageBookMarks);
+				var	layer	= global.loadSaveTextLayer();
+				copyRect(0, 0, layer, 0, 0, layer.imageWidth, layer.imageHeight);
+				clearDrawText();
+				var	pagename= kag.getBookMarkPageName(dno);
+//				dm("pagename: "+pagename);
+				var	l	= 5;
+				if(pagename[0] == "[")
+				{
+					var	pos	= pagename.indexOf("]");
+					var	icon= int(pagename.substr(1, pos-1));
+					icon	= 1 if icon == 0;
+					pagename= pagename.substr(pos+1);
+					drawImage2Area(l, 2, 13, 17, "archive_本アイコン",, 21 * (icon-1), 0, 21, 24);
+					l	+= 14;
+				}
+				drawText2Area(l, 1, 238, 18, pagename, 18, 0xFFFFFF, "lc",,,false);	//１行のみ
+				drawText2Area(5, 21, 238, 18, kag.getBookMarkDate(dno), 18, 0xFFFFFF, "lc");
+				var	edit	= Menu_object.find("コメント編集", PRIMARY);
+				var	cmt	= kag.getBookMarkComment(dno);
+				if(edit != void && edit.target == this)
+					edit.text	= cmt;
+				else
+				{
+					cmt = cmt.replace(/\n/, "[r]") if cmt != void;
+					drawText2Area(5, 41, 238, 35, cmt, 17, 0xFFFFFF, "lt",, 1, true, 2);
+				}
+				//	doFocus=true で呼び出されるのが閉じるときだけで、意味がなかったのでコメントアウト
+//				find("Saveウィンドウ"+(no+1), PRIMARY).focus() if doFocus;	//コメントの編集が破棄されて更新される時だけフォーカス処理を行う
+			} incontextof tmp;
+
+			tmp	= .find("Saveウィンドウ"+(i+1), PRIMARY);
+			tmp.noNormalMenuItem	= true;
+			tmp.no	= i;
+			tmp.pageno	= sf.last_svld_pageno;
+			tmp.afy	-= 20;	//	完全に中心だとコメント編集ウィンドウに乗ってしまい、フォーカスが外れてしまうので
+			tmp.inEditArea		= function
+			{
+				return cursorX >= 153 && cursorY >= 50 && cursorX < 148+243 && cursorY < 91;
+			} incontextof tmp;
+			tmp.dispCommentEdit	= function
+			{
+			} incontextof tmp;
+			tmp.onMouseEnter	= function
+			{
+				var	text	= find("Saveテキスト"+(no+1), PRIMARY);
+				if(text != void && text.visible)
+				{
+					var	edit	= Menu_object.find("コメント編集", PRIMARY);
+					if(edit == void || !(edit isvalid))
+						return;
+					if(edit.target != this) with(edit)
+					{
+						if(.visible)
+							.Edit_onClose(edit);
+						.setImageSize(238, 35);
+						.setSizeToImageSize();
+						.setPos(left + 153, top + 50);
+						.text	= kag.getBookMarkComment(int(no + pageno * kag.pageBookMarks));
+						.font.height	= 17;
+						.Edit_onChange	= void;
+						.Edit_onClose	= .Edit_onBlur	= text.onEditClose;
+						.visible	= true;
+
+						.target		= text;
+						text.updateContent();
+						.absolute	= text.absolute + 10;
+						.cont		= kag.transCount > 0;
+					}
+				}
+				cmdSaveMenuData(this, 'enter', no+1, 'Save');
+				focus();
+			} incontextof tmp;
+			tmp.onMouseDown		= function(x, y, button, shift)
+			{
+				if(button == mbLeft)
+					cmdSaveMenuData(this, 'press', no+1, 'Save') if !inEditArea();
+				else if(button == mbRight)
+					closeSaveMenu();
+			} incontextof tmp;
+			tmp.onMouseUp		= function(x, y, button, shift)
+			{
+				if(button == mbLeft)
+				{
+					if(kag.existBookMark(no + pageno * kag.pageBookMarks))
+						askSaveBySaveMenu(no);
+					else
+						saveBySaveMenu([no, pageno]);
+				}
+			} incontextof tmp;
+			tmp.onFocus	= function { cmdSaveMenuData(this, 'enter', no+1, 'Save'); } incontextof tmp;
+			tmp.onBlur	= function { cmdSaveMenuData(this, 'leave', no+1, 'Save'); } incontextof tmp;
+
+			subscribeSaveData(i,, "Save");	//	必要なパネルにセーブ情報を表示する
+		}
+
+		//	コメント編集用のメニューアイテムを追加
+		var	item	= .addMenuItem(%[
+			page:PRIMARY, "class"=>"EditMenuItemLayer", textColor:0xD0FFFF, color:0x000000,
+			name:"コメント編集", bgOpacity:0, margin:0, spacing:1, ibv:false, enabled:true, visible:false,
+			target:void
+		]);
+		item.font.height	= 17;
+
+		//	クリック時処理設定
+		.setClick(, "closeSaveMenu()");
+
+		//	右クリックメニューを開いているとき
+		if(tf.do_systemmenu)
+		{
+			with(.find("rclick_back", PRIMARY))
+			{
+				tf.sv_back_script	= .mouseUp;
+				.mouseUp	= "closeSaveMenu();release();";	//	back ボタンでセーブメニューを閉じる
+			}
+		}
+	}
+
+	//	マウスホイール対応
+	kag.addHook("mouseWheel", onSaveMenuMouseWheel);
+
+	//	キー対応
+	kag.addHook("keyDown", onSaveMenuKeyDown);
+	Menu_object.keyDownCallback	= onSaveMenuKeyDown;
+//dispMicro("add text object");
+}
+function onSaveMenuMouseWheel(shift, delta, x, y)
+{
+	if(!tf.sv_opened || tf.do_hidesystemmenu)
+		return;
+	var	no	= Math.max(0, Math.min(kag.bookMarkPages-1, int sf.last_svld_pageno + (delta > 0 ? -1 : 1)));
+	changePageSaveMenu(no);
+}
+function onSaveMenuKeyDown(key, shift)
+{
+	if(tf.do_askyesno || tf.do_hidesystemmenu)
+		return false;
+	if(key == VK_S || key == VK_F2)
+	{
+		closeSaveMenu();
+		return true;
+	}
+	return false;
+}
+//	保存するか確認する
+function askSaveBySaveMenu(no)
+{
+	if(!tf.sv_opened)
+		return;
+	if(sf.svldLocked[int(no + sf.last_svld_pageno * kag.pageBookMarks)])
+		return;	//	ロックされているので確認もしない
+	var	item	= Menu_object.find("SaveSave"+(no+1), PRIMARY);
+	if(item == void || !item.visible)
+		return;
+	//	存在するか確認する
+	var	datano	= int(no + sf.last_svld_pageno * kag.pageBookMarks);
+	if(kag.existBookMark(datano) && !sf.svldLocked[datano])
+	{
+		var	pgname	= kag.getBookMarkPageName(int(no + sf.last_svld_pageno * kag.pageBookMarks));
+		var	place	= "";
+		if(pgname[0] == "[")
+		{
+			pgname	= pgname.substr(pgname.indexOf("]")+1);	//	先頭の [*] は削除する
+			place	= "archive";
+		}
+		askYesNo("現在の状態を"+place+"「"+pgname+"」へ[r]上書き保存してもよろしいですか？",, saveBySaveMenu,, [no, sf.last_svld_pageno], );
+	}
+	else
+		saveBySaveMenu([no, sf.last_svld_pageno]);
+}
+//	指定の場所に保存する
+function saveBySaveMenu(param)
+{
+	//	保存
+	kag.saveBookMark(sf.lastsaveno = int(param[0] + param[1] * kag.pageBookMarks));
+
+	//	コメントをリセット
+	kag.setBookMarkComment(sf.lastsaveno, "");
+
+	//	表示を更新
+	updateSaveMenuAtNum(param[0],, "Save");
+}
+//	ページを切り替える
+function changePageSaveMenu(pgno, prefix="Save")
+{
+	if(sf.last_svld_pageno == +pgno)
+		return;
+
+	//	ページを切り替える前に、コメント編集を終了
+	var	edit	= Menu_object.find("コメント編集", PRIMARY);
+	if(edit != void && edit isvalid && edit.target != void && edit.target isvalid)
+		edit.target.onEditClose(edit);
+
+//	dm("changePage: "+sf.last_svld_pageno+" → "+pgno);
+	sf.last_svld_pageno	= +pgno;
+
+	for(var i=0; i<kag.bookMarkPages; i++)
+		Menu_object.find(prefix+"ページ"+(i+1), PRIMARY).on	= i == pgno;
+	var	names	= [ "ウィンドウ", "Delete", prefix, "Lock", "テキスト" ];
+	var	delay	= 0;
+	var	down	= 7;
+	var	invtime	= 120;	//	消える時間
+	var	vistime	= 120;	//	現れる時間
+	var	orgelm	= %[
+		time:invtime+vistime,
+		props:"opacity",
+		keys:[ [0, 255, 0, "l"], [invtime, 0, 0, "l"], [invtime+vistime, 255, 0, "n"] ],
+		module:KeyFrameActionModule,
+	];
+	var	storages	= [];
+	var	no	= int(sf.last_svld_pageno * kag.pageBookMarks);
+	for(var i=1; i<=kag.pageBookMarks; i++, no++)
+	{
+		var	exist	= kag.existBookMark(no);
+		if(exist)
+			storages.add(kag.getBookMarkFileNameAtNum(no));
+		if(cf.effectSkip)
+			updateSaveMenuAtNum(i-1, sf.last_svld_pageno, prefix);	//	スキップ状態だと updateSaveMenuAtNum が実行されず、書き換えが起こらないので
+		else
+		{
+			var	item;
+			var	elm	= %[];
+			(Dictionary.assignStruct incontextof elm)(orgelm);
+			for(var	j=0; j<names.count; j++)
+			{
+				with(item = Menu_object.find(prefix+names[j]+i, PRIMARY))
+				{
+					.actionInfo.stopAction();
+					.beginAction(elm);
+					var	vcelm	= %[];
+					(Dictionary.assignStruct incontextof vcelm)(orgelm);
+					vcelm.props	= "vcenter";
+					vcelm.keys[0][1]	= .vcenter;
+					vcelm.keys[1][1]	= .vcenter + down;
+					vcelm.keys.insert(2, [vcelm.keys[1][0]+1, .vcenter-down, 0, "l"]);
+					vcelm.keys[3][1]	= .vcenter;
+					.beginAction(vcelm);
+				}
+			}
+			item.ssexec(elm.keys[1][0], "updateSaveMenuAtNum("+(i-1)+", "+sf.last_svld_pageno+", '"+prefix+"')");
+			orgelm.time			+= delay;
+			orgelm.keys[0][0]	+= delay;
+			orgelm.keys[1][0]	+= delay;
+			orgelm.keys[2][0]	+= delay;
+		}
+	}
+	System.touchImages(storages);	//	touchImages しなくても十分かも
+	Menu_object.find(prefix+"ページ"+(pgno+1), PRIMARY).focus();
+}
+//	指定のSaveウィンドウを更新する
+function updateSaveMenuAtNum(no, pgno, prefix)
+{
+//	dmt("updateSaveMenuAtNum("+no, pgno, prefix+")");
+	var	item= Menu_object.find(prefix+"ウィンドウ"+(no+1), PRIMARY);
+	pgno	= sf.last_svld_pageno if pgno === void;
+	var	dno	= int(no + pgno * kag.pageBookMarks);
+//	dm(dno+" is exist: "+kag.existBookMark(dno));
+	if(kag.existBookMark(dno))
+	{
+		subscribeSaveData(no, pgno, prefix, true);
+		updateLockSaveMenu(no,,, prefix);
+		item.focusable	= true;
+	}
+	else
+	{
+		drawNoneSaveData(no, prefix);
+		item.enabled	= prefix == "Save";
+		item.focusable	= false if prefix == "Load";
+	}
+	item.pageno	= pgno;
+}
+//	セーブ情報を描画予約する
+function subscribeSaveData(no, pgno, prefix, vis=false)
+{
+	pgno		= sf.last_svld_pageno if pgno === void;
+	var	dno		= int(no + pgno * kag.pageBookMarks);
+	var	color	= 0xFFFFFF;
+	if(kag.existBookMark(dno))
+	{
+//		dmt("exist: "+dno+" / "+no+", "+pgno);
+		var	tx	= Menu_object.find(prefix+"テキスト"+(no + 1), PRIMARY);
+		if(tx != void)
+		{
+			tx.visible	= true if vis;
+			tx.updateContent(pgno) if typeof tx.updateContent != "undefined";
+		}
+
+		var	win	= Menu_object.find(prefix+"ウィンドウ"+(no + 1), PRIMARY);
+		with(win)
+		{
+			if(typeof .drawed != "undefined" && .drawed)
+				.reload();
+			var	fn	= kag.getBookMarkFileNameAtNum(dno);
+			.drawImage2Area(12, 11, 130, 73, fn);
+			.drawImage2Area(405+12, 11, 130, 73, fn);
+			.viewareaNo	= 0;
+//			.mouseUp	= ";";
+			.mouseUp	= (prefix == "Save" ? "askSaveBySaveMenu("+no+");" : "loadByLoadMenu("+no+");")+"release();";
+			.drawed	= true;
+			//	ロックされておらず、マウスカーソルが内部にあるとき、
+			if(!sf.svldLocked[dno] && .cursorX >= 0 && .cursorY >= 0 && .cursorX < .width && .cursorY < .height)
+				asyncCaller.call(.onMouseEnter);	//	コメント編集するために、マウスが乗ったことにする
+		}
+	}
+}
+//	ロック状態の変更
+function changeLockSaveMenu(no, lock, prefix="Save")
+{
+	var	dno		= int(no + sf.last_svld_pageno * kag.pageBookMarks);
+	lock	= !sf.svldLocked[dno] if lock === void;
+	sf.svldLocked[dno] = lock;
+
+	updateLockSaveMenu(no, lock, !lock, prefix);
+}
+//	ロック状態の更新
+function updateLockSaveMenu(no, lock, unlock=false, prefix="Save")
+{
+//	dm("updateLockSaveMenu("+no, lock, unlock, prefix+")");
+	lock	= sf.svldLocked[int(no + sf.last_svld_pageno * kag.pageBookMarks)] if lock === void;
+	no++;
+	with(Menu_object)
+	{
+		with(.find(prefix+"Delete"+no, PRIMARY))
+			.enabled = !lock, .visible = true, .leave();
+		with(.find(prefix+prefix+no, PRIMARY))
+			.enabled = prefix == "Save" ? !lock : true, .visible = true, .leave();
+		with(.find(prefix+"ウィンドウ"+no, PRIMARY))
+		{
+			.enabled = prefix == "Save" ? !lock : true, .visible = true;
+			.viewareaNo = unlock ? 1 : 0;	//	ボタンでロックが解除された時のみ、乗った状態にする
+		}
+		with(.find(prefix+"Lock"+no, PRIMARY))
+			.visible = true, .on	= lock;
+	}
+}
+//	セーブデータが削除された状態にする
+function drawNoneSaveData(no, prefix)
+{
+	no++;
+	with(Menu_object)
+	{
+		var	item	= .find(prefix+"ウィンドウ"+no, PRIMARY);
+		if(item != void) with(item)
+		{
+			.reload();	//	書き込みしているので消去する
+			if(prefix == "Save")
+			{
+				.mouseUp	= "saveBySaveMenu(["+(no-1)+","+sf.last_svld_pageno+"]);release();";
+				.mute		= false;
+			}
+			else
+				.focusable = .enabled = false;
+		}
+		item	= .find(prefix+"テキスト"+no, PRIMARY);
+		if(item != void) with(item)
+		{
+			.reload();
+			.visible	= false;
+		}
+		.setProp(prefix+"Lock"+no, "visible", false, PRIMARY);
+		.setProp(prefix+"Delete"+no, "visible", false, PRIMARY);
+		.setProp(prefix+prefix+no, "visible", false, PRIMARY);
+		var	edit	= Menu_object.find("コメント編集", PRIMARY);
+		edit.visible= false if edit != void && edit isvalid;
+	}
+}
+//	セーブデータを削除してもよいか確認する
+function askDeleteBySaveMenu(no, prefix="Save")
+{
+	if(!(tf.sv_opened || tf.ld_opened))	//	いずれかが開いている
+		return;
+	var	item	= Menu_object.find(prefix+"Delete"+(no+1), PRIMARY);
+	if(item == void || !item.visible)
+		return;
+	//	存在するか確認する
+	var	datano	= int(no + sf.last_svld_pageno * kag.pageBookMarks);
+	if(!kag.existBookMark(datano) || sf.svldLocked[datano])
+		return;
+	var	pgname	= kag.getBookMarkPageName(datano);
+	var	place	= "";
+	if(pgname[0] == "[")
+	{
+		pgname	= pgname.substr(pgname.indexOf("]")+1);	//	先頭の [*] は削除する
+		place	= "archive";
+	}
+	askYesNo(place+"「"+pgname+"」を[r]削除してもよろしいですか？",, deleteBySaveMenu,, [no, prefix]);
+}
+//	セーブデータを削除する
+function deleteBySaveMenu(param)
+{
+	//	削除
+	var	dno	= int(param[0] + sf.last_svld_pageno * kag.pageBookMarks);
+	kag.eraseBookMark(dno);
+	sf.svldLocked[dno]	= false;
+	sf.lastsaveno	= void if sf.lastsaveno == dno;
+
+	//	表示を更新
+	drawNoneSaveData(param[0], param[1]);
+}
+//	セーブメニューを閉じる
+function closeSaveMenu(quick=false)
+{
+//resetTick();
+	if(!tf.sv_opened)
+		return;
+//	dmt("closeSaveMenu()");
+	delete tf.sv_opened;
+	if(tf.sv_locksnapshot)
+	{
+		kag.unlockSnapshot();
+		delete tf.sv_locksnapshot;
+	}
+	outMenu("save");
+
+	//	閉じる効果音
+	Menu_object.playSE(closese);
+
+	//	クリック設定を元にもどす
+	Menu_object.resetClick();
+
+	//	右クリックメニューを開いているとき
+	if(tf.do_systemmenu)
+	{
+		Menu_object.find("rclick_back", PRIMARY).mouseUp	= tf.sv_back_script;
+		delete tf.sv_back_script;
+	}
+
+	//	TeaTimeメニューを開いているとき、無効化を解除
+	Menu_object.revertDisfocusable() if tf.ttm_opened;
+
+	//	特殊レイヤーを破棄
+	eraseSaveTextLayer();	//	テキスト消去用レイヤーを破棄する
+	var	edit	= Menu_object.find("コメント編集", PRIMARY);
+	if(edit != void && edit isvalid)
+	{
+		if(edit.target != void)
+		{
+			var	trg	= edit.target;
+			edit.target	= void;
+			trg.updateContent();
+		}
+		edit.visible	= false;
+		edit.doInvalidate();
+	}
+
+	//	テキスト/ウィンドウレイヤーに設定したメソッドを破棄
+	for(var i=0; i<kag.pageBookMarks; i++)
+	{
+		var	tmp	= Menu_object.find("Saveテキスト"+(i+1), PRIMARY);
+		if(tmp != void)
+		{
+			tmp.hitThreshold	= 0;
+			delete tmp.onEditClose;
+			delete tmp.updateContent;
+		}
+		var	tmp	= Menu_object.find("Saveウィンドウ"+(i+1), PRIMARY);
+		if(tmp != void)
+		{
+			tmp.hitThreshold	= 0;
+			delete tmp.inEditArea;
+			var	events	= [ "onMouseEnter", "onMouseUp", "onMouseDown", "onFocus", "onBlur" ];
+			for(var i=0; i<events.count; i++)
+				tmp[events[i]]	= MenuItemLayer[events[i]] incontextof tmp;
+		}
+	}
+
+	//	マウスホイール解除
+	kag.removeHook("mouseWheel", onSaveMenuMouseWheel);
+
+	//	キー解除
+	kag.removeHook("keyDown", onSaveMenuKeyDown);
+	delete Menu_object.keyDownCallback;
+
+	//	メニューを閉じる
+	var	tdata	= __get_save_timelinedata(quick ? 13 : 12);
+	var	name2pos= tdata[0], creates = tdata[1], actions = tdata[2];
+	var	ignore	= setSaveMenuTimeline(name2pos, creates, int sf.last_svld_pageno, true);
+	muteAllMenuItem(tdata);		//	すべて効果音mute
+	Menu_object.playTimeline(PRIMARY, creates, actions, %[absolute:1100000], ignore, true,, false);
+
+	//	セーブメニューが閉じたことを知らせる
+	if(tf.closeSaveMenuCaller)
+	{
+		tf.closeSaveMenuCaller();
+		delete tf.closeSaveMenuCaller;
+	}
+//dispTick("close save menu");
+}
+//	セーブコメント用のエディットレイヤーを設定
+Scripts.execStorage("EditLayer.override.tjs");
+function closeSaveCommentEdit()
+{
+	var	item	= Menu_object.find("コメント編集", PRIMARY);
+	item.Edit_onClose(item) if item != void && item isvalid && item.Edit_onClose != void;
+}
+function onCloseSaveCommentEdit(edit)
+{
+	edit.visible	= false;
+}
+
+@endif

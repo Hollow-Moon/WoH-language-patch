@@ -1,0 +1,165 @@
+﻿/*----------------------------------------------------------------------------/
+/	フラグ一覧を表示するウィンドウ
+/	※	TracerPlugin.tjs から呼び出されることを前提とする
+/----------------------------------------------------------------------------*/
+@if(__FLAGLISTWINDOW_DEFINED__==0)
+@set(__FLAGLISTWINDOW_DEFINED__=1)
+
+class FlagListWindow extends Window
+{
+	var	owner;
+	var	flags		= %[];
+	var	flagnames	= [];
+	var	_start		= 0;
+
+	var	bgcolor		= 0xFFFFFFFF;
+	var	textcolor	= 0x000000;
+	var	updatetextcolor	= 0xFF0000;
+	var	bordercolor	= 0xFF000000;
+	var	fontheight	= 16;
+	var	spacing		= 2;
+	var borderwidth	= 1;
+	var	valuewidth	= 48;
+
+	property	lineHeight	{ getter { return fontheight + spacing * 2 + borderwidth; } }
+	property	lineCount	{ getter { return (innerHeight + borderwidth) \ lineHeight; } }
+
+	function FlagListWindow(owner)
+	{
+		super.Window();
+
+		this.owner	= owner;	//	TracerPlugin をオーナーとする
+
+		var	l, t;
+		var	w = 320, h = 480;
+		if(typeof global.sf != "undefined" && typeof .sf.flaglistwindowsetting != "undefined")
+		{
+			with(.sf.flaglistwindowsetting)
+			{
+				l	= .left;
+				t	= .top;
+				w	= .width;
+				h	= .height;
+			}
+		}
+		else
+		{
+			l	= kag.left + (kag.width - w) \ 2;
+			t	= kag.top + (kag.height - h) \ 2;
+		}
+		setSize(w, h);
+		setPos(l, t);
+
+		with(new global.Layer(this, null))
+		{
+			.setSize(innerWidth, innerHeight);
+			.setPos(0, 0);
+			.fillRect(0, 0, .width, .height, bgcolor);
+			.font.height	= fontheight;
+			.cursor			= "mwheel.cur";
+			.visible		= true;
+			add(primaryLayer);
+		}
+
+		caption	= "フラグ一覧";
+		visible	= true;
+	}
+
+	function finalize()
+	{
+		super.finalize();
+	}
+
+	function saveSetting()
+	{
+		if(typeof global.sf != "undefined")
+		{
+			if(typeof .sf.flaglistwindowsetting == "undefined")
+				.sf.flaglistwindowsetting	= %[];
+			with(.sf.flaglistwindowsetting)
+			{
+				.left	= left;
+				.top	= top;
+				.width	= width;
+				.height	= height;
+			}
+		}
+	}
+
+	function initFlag(flags)
+	{
+		//	初期状態を記録
+		(Dictionary.assign incontextof this.flags)(flags);
+
+		//	フラグ名をソートして記録
+		flagnames.clear();
+		flagnames.assign(flags);
+		for(var i=1; i<flagnames.count; i++)
+			flagnames.erase(i);
+		flagnames.sort("a");
+	}
+
+	function drawFlag(flags)
+	{
+		var	assignflag;
+		if(flags == void)
+			flags	= this.flags;
+		else
+			assignflag	= true;
+
+		with(primaryLayer)
+		{
+			.fillRect(0, 0, .width, .height, bgcolor);
+			.fillRect(.width - valuewidth, 0, borderwidth, .height, bordercolor);
+
+			var	t	= spacing;
+			for(var i=start; i<flagnames.count; i++)
+			{
+				var	fn	= flagnames[i];
+				.drawText(spacing, t, fn, textcolor,, false);
+
+				var	val	= flags[fn];
+				var	col	= val !== this.flags[fn] ? updatetextcolor : textcolor;
+				val	= "0" if val == void;
+				var	fw	= .font.getTextWidth(val);
+				.drawText(.width - fw - spacing, t, val, col,, false);
+
+				t	+= fontheight + spacing + borderwidth;
+				.fillRect(0, t - 1, .width, 1, bordercolor);
+				t	+= spacing;
+			}
+		}
+
+		if(assignflag)
+			(Dictionary.assign incontextof this.flags)(flags);
+	}
+
+	function onResize()
+	{
+		primaryLayer.setSize(innerWidth, innerHeight);
+		start	= start;
+
+		drawFlag();
+	}
+
+	function onMouseWheel(shift, delta, x, y)
+	{
+		start	-= delta \ 120;
+		drawFlag();
+	}
+
+	property start
+	{
+		setter(s)
+		{
+			var	max	= flagnames.count - lineCount;
+			s	= max if s > max;
+			s	= 0 if s < 0;
+			_start	= s;
+		}
+		getter	{ return _start; }
+	}
+}
+
+/*---------------------------------------------------------------------------*/
+@endif

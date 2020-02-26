@@ -1,0 +1,419 @@
+﻿/*-----------------------------------------------------------------------------/
+/	Copyright (C) TYPE-MOON All Rights Reserved.
+/		押すだけボタンのレイヤー
+/-----------------------------------------------------------------------------*/
+@if(__PUSHBUTTONLAYER_DEFINED__==0)
+@set(__PUSHBUTTONLAYER_DEFINED__=1)
+
+//	KAG3 の button タグと同じボタン形式を使うなら 1 にする
+@set(USE_KRKR_BUTTON=0)
+
+//	カーソルキーによるフォーカスの移動を、レイヤー順ではなく、カーソルキーの方向に合わせて行なうなら 1 にする
+@set(CHANGE_FOCUS_BY_CURSORKEY=1)
+
+@if(USE_KRKR_BUTTON==0)
+var	BUTTON_leave	= 0;	//	カーソルがボタン上にないとき
+var	BUTTON_enter	= 1;	//	　　　　〃　　　　にあるとき
+var	BUTTON_push		= 2;	//	ボタンを押しているとき
+@endif
+@if(USE_KRKR_BUTTON!=0)
+var	BUTTON_leave	= 0;	//	カーソルがボタン上にないとき
+var	BUTTON_enter	= 2;	//	　　　　〃　　　　にあるとき
+var	BUTTON_push		= 1;	//	ボタンを押しているとき
+@endif
+
+@if(CHANGE_FOCUS_BY_CURSORKEY!=0)
+var	BUTTON_orthogonal_influence	= 1;//	カーソルキーによるフォーカスの移動で、指定方向と直交する方向成分の影響度
+									//	(0〜:大きくすると、ちょっと直線上からずれてしまうだけで引っかからなくなる)
+//	focusable なレイヤーが少ないときは小さく、多いときは大きくした方が、それらしく動作する(かも？)
+@endif
+
+class PushButtonLayer extends Layer
+{
+	var	owner;		//	メッセージの送り先
+
+	var _state;
+	var imagesept;	//	画像の分割数(総 state 数に同じ)
+
+	var _enabled;
+	var entered;
+
+	var	enterse;	//	enter 時の効果音ファイル
+	var	pressse;	//	press
+	var	pushse;		//	push
+	var	playsound_method;	//	効果音ファイルを再生するメソッド
+
+@if(USE_KRKR_BUTTON==0)
+	property BUTTON_disable	{ getter { return imagesept - 1; } }	//	ボタンが無効なとき
+@endif
+@if(USE_KRKR_BUTTON!=0)
+	property BUTTON_disable	{ getter { return BUTTON_leave; } }	//	ボタンが無効なとき
+@endif
+
+	var	byCursorKey	= false;	//	カーソルキーの方向に合わせたフォーカスの移動
+
+	function PushButtonLayer(win, par, storage, is)
+	{
+		name	= storage;
+		super.Layer(...);
+
+@if(USE_KRKR_BUTTON==0)
+		imagesept	= is === void ? 4 : is;
+@endif
+@if(USE_KRKR_BUTTON!=0)
+		imagesept	= is === void ? 3 : is;
+@endif
+
+		hitThreshold= 0;
+
+		loadImages(storage);
+		enabled		= true;
+		focusable	= true;
+
+		owner	= par;
+	}
+
+	function finalize()
+	{
+		super.finalize(...);
+	}
+
+	//	ボタン画像を読み込む
+	function loadImages(storage)
+	{
+		if(storage != "")
+		{
+			super.loadImages(storage);
+			setSize(imageWidth \ imagesept, imageHeight);
+		}
+	}
+
+	//	ボタン画像を形成する
+	function createButton(text, w, h, bgcolor=0xFFA0A0A0, textcolor=0x404040, lightbordercolor=0xFFE0E0E0, darkenbordercolor=0xFF404040)
+	{
+@if(USE_KRKR_BUTTON==0)
+		var	ltbcs	= [ 0x00000000, lightbordercolor, darkenbordercolor ];
+		var	rbbcs	= [ 0x00000000, darkenbordercolor, lightbordercolor ];
+@endif
+@if(USE_KRKR_BUTTON!=0)
+		var	ltbcs	= [ 0x00000000, darkenbordercolor, lightbordercolor ];
+		var	rbbcs	= [ 0x00000000, lightbordercolor, darkenbordercolor ];
+@endif
+
+		setImageSize(w * imagesept, h);
+		setSize(w, h);
+		for(var i=0; i<imagesept; i++)
+			drawButtonImage(i, text, w, h, bgcolor, textcolor, ltbcs[i], rbbcs[i]);
+	}
+
+	//	ボタン画像を描画する
+	function drawButtonImage(pos, text, w, h, bgcolor, textcolor, lt_bordercolor, rb_bordercolor)
+	{
+//		dm("drawButtonImage("+pos+", "+text+", "+w+", "+h+", "+bgcolor+", "+textcolor+", "+lt_bordercolor+", "+rb_bordercolor+")");
+		var	l	= pos * w;
+		fillRect(l, 0, w, h, bgcolor);
+
+		drawButtonText(l, text, textcolor);
+
+		if((lt_bordercolor & 0xFF000000) != 0)
+		{
+			fillRect(l, 0, w, 1, lt_bordercolor);		//	border=1
+			fillRect(l, 1, w-1, 1, lt_bordercolor);		//	border=2
+			fillRect(l, 2, 1, h - 2, lt_bordercolor);	//	border=1
+			fillRect(l+1, 2, 1, h - 3, lt_bordercolor);	//	border=2
+		}
+		if((rb_bordercolor & 0xFF000000) != 0)
+		{
+			fillRect(l + w - 2, 2, 1, h - 2, rb_bordercolor);	//	border=2
+			fillRect(l + w - 1, 1, 1, h - 1, rb_bordercolor);	//	border=1
+			fillRect(l + 2, h - 2, w - 3, 1, rb_bordercolor);	//	border=2
+			fillRect(l + 1, h - 1, w - 2, 1, rb_bordercolor);	//	border=1
+		}
+	}
+
+	//	ボタンの文字を描画
+	function drawButtonText(l, text, textcolor)
+	{
+		var	fw	= font.getTextWidth(text);
+		var	fh	= font.getTextHeight(text);
+		if(fw < width)
+			drawText(l + (width - fw) \ 2, (height - fh) \ 2, text, textcolor,, false);
+		else
+		{
+			//	ボタンからはみ出す文字列なら、省略記号(...)をつけてボタン内に入る文字数にする
+			var	omit= "...";
+			var	nt	= text;
+			var	tmp	= text;
+			var	len;
+			while(1)
+			{
+				if(font.getTextWidth(tmp+omit) > width)
+				{
+					nt	= tmp;
+					tmp	= tmp.substr(0, tmp.length \ 2);
+				}
+				else if((len = nt.length - tmp.length) > 1)
+				{
+					tmp	+= nt.substr(tmp.length, len \ 2);
+				}
+				else
+					break;
+			}
+			fw	= font.getTextWidth(tmp);
+			drawText(l + (width - fw) \ 2, (height - fh) \ 2, tmp, textcolor,, false);
+		}
+	}
+
+	//	描画し直し
+	function draw()
+	{
+		imageLeft	= - width * state;
+	}
+
+	//	ボタン上にカーソルがない
+	function leave()
+	{
+		if(enabled && state != BUTTON_leave)
+		{
+			state	= BUTTON_leave;
+			if(typeof owner.onButtonLeave != "undefined")
+				owner.onButtonLeave(this);
+		}
+		entered	= false;	//	有効無効に関係なく、カーソルが上にないことを記憶
+	}
+
+	//	ボタン上にカーソルがある
+	function enter()
+	{
+		if(enabled && state != BUTTON_enter)
+		{
+			state	= BUTTON_enter;
+			playsound_method(enterse) if playsound_method != void;
+			if(typeof owner.onButtonEnter != "undefined")
+				owner.onButtonEnter(this);
+		}
+		entered	= true;	//	有効無効に関係なく、カーソルが上にあることを記憶
+	}
+
+	//	ボタンが押し込まれた状態
+	function press()
+	{
+		if(enabled)
+		{
+			state	= BUTTON_push;
+			playsound_method(pressse) if playsound_method != void;
+		}
+	}
+
+	//	ボタンが押し込まれた後、離された状態
+	function push()
+	{
+		if(enabled && state == BUTTON_push)
+		{
+			state	= entered ? BUTTON_enter : BUTTON_leave;
+			playsound_method(pushse) if playsound_method != void;
+			if(typeof owner.onButtonDown != "undefined")
+				owner.onButtonDown(this);
+		}
+	}
+
+	function onFocus()		{	enter();	}
+	function onBlur()		{	leave();	}
+	function onMouseEnter()	{	if(focusable && window.focusedLayer != this) focus(); else enter();	}
+	function onMouseLeave()	{	if(focusable && window.focusedLayer == this) window.focusedLayer = null; else leave();	}
+
+	function onMouseDown(x, y, button, shift)
+	{
+		global.button	= this;
+		if(button == mbLeft)
+			press();
+		else if(typeof owner.onMouseDown != "undefined")
+			owner.onMouseDown(...);
+	}
+
+	function onMouseUp(x, y, button, shift)
+	{
+		if(button == mbLeft)
+			push();
+		else if(typeof owner.onMouseUp != "undefined")
+			owner.onMouseUp(...);
+	}
+
+	function onKeyDown(key, shift)
+	{
+		switch(key)
+		{
+		case VK_RETURN:
+		case VK_SPACE:
+			press();	//	ボタンを押し込んだ
+			return;
+
+		case VK_ESCAPE:
+		case VK_DELETE:
+		case VK_BACK:
+			onMouseDown(0, 0, mbRight, 0);
+			return;
+
+		//	カーソルキーの方向に合わせたフォーカスの移動
+		case VK_LEFT:
+		case VK_RIGHT:
+		case VK_UP:
+		case VK_DOWN:
+@if(CHANGE_FOCUS_BY_CURSORKEY!=0)
+			if(byCursorKey)
+			{
+				var	near	= searchNearestFocusableBrother(key);
+				if(near != void)
+				{
+//					dm("focus: "+near.name);
+					near.focus();
+				}
+				return;
+			}
+			else
+@endif
+				return super.onKeyDown(key, shift, true);
+			break;
+		}
+		super.onKeyDown(key, shift, true);
+		kag.internalOnKeyDown(key, shift);	//	ウィンドウへも返す
+	}
+
+	function onKeyUp(key, shift)
+	{
+		switch(key)
+		{
+		case VK_RETURN:
+		case VK_SPACE:
+			push();
+			return;
+
+		case VK_ESCAPE:
+		case VK_DELETE:
+		case VK_BACK:
+			onMouseUp(,, mbRight);
+			return;
+		}
+		return super.onKeyUp(key, shift, true);
+	}
+
+	//	ボタンの有効無効
+	property enabled
+	{
+		setter(e)
+		{
+			if(e)
+			{
+				state	= entered ? BUTTON_enter : BUTTON_leave;
+				playsound_method(enterse) if entered && playsound_method != void;
+			}
+			else
+				state	= BUTTON_disable;
+			_enabled	= focusable = e;
+		}
+		getter	{ return _enabled; }
+	}
+
+	//	ボタンの状態
+	property state
+	{
+		setter(s)
+		{
+			if(state != s)
+			{
+				_state	= s;
+				draw(s);
+			}
+		}
+		getter	{ return _state; }
+	}
+
+	//	focusable=true な兄弟レイヤーを探す
+@if(CHANGE_FOCUS_BY_CURSORKEY!=0)
+	function searchNearestFocusableBrother(dir)
+	{
+		//	方向による距離の補正を行なうメソッド
+		var	chkf, rxf, ryf;
+		switch(dir)
+		{
+		case VK_LEFT:
+//			chkf= function(dx,dy) { return dx > 0 || Math.abs(dx) >= Math.abs(dy); };	//	←これなら、逆方向にあるものも許容する
+			chkf= function(dx,dy) { return dx < 0 && Math.abs(dx) >= Math.abs(dy); };
+			rxf	= function(dx, w) { return dx < 0 ? -dx : (w << 8) - dx; };
+			ryf	= function(dy, h) { return dy * BUTTON_orthogonal_influence; };
+			break;
+		case VK_RIGHT:
+			chkf= function(dx,dy) { return dx > 0 && Math.abs(dx) >= Math.abs(dy); };
+			rxf	= function(dx, w) { return dx > 0 ? dx : (w << 8) + dx; };
+			ryf	= function(dy, h) { return dy * BUTTON_orthogonal_influence; };
+			break;
+		case VK_UP:
+			chkf= function(dx,dy) { return dy < 0 && Math.abs(dy) >= Math.abs(dx); };
+			rxf	= function(dx, w) { return dx * BUTTON_orthogonal_influence; };
+			ryf	= function(dy, h) { return dy < 0 ? -dy : (h << 8) - dy; };
+			break;
+		case VK_DOWN:
+			chkf= function(dx,dy) { return dy > 0 && Math.abs(dy) >= Math.abs(dx); };
+			rxf	= function(dx, w) { return dx * BUTTON_orthogonal_influence; };
+			ryf	= function(dy, h) { return dy > 0 ? dy : (h << 8) + dy; };
+			break;
+		}
+
+		//	このレイヤーの中心座標と親レイヤーの大きさ
+		var	cx	= left + width \ 2;
+		var	cy	= top + height \ 2;
+		var	w	= parent.width;
+		var	h	= parent.height;
+
+		//	親レイヤーの子配列 = 兄弟レイヤーず
+//		var	bros	= parent.children;
+		var	near;
+		var	mindist	= 0x7FFFFFFF;
+		var	bros;
+		dm(@"---- ${mindist} ----");
+		for(var i=0; (bros = getBros(i)) != void; i++)
+		{
+			for(var i=0; i<bros.count; i++)
+			{
+				with(bros[i])
+				{
+					if(.focusable && bros[i] != this)
+					{
+						//	対象となりえないレイヤーを排除
+						//		いくら近くても、指定方向と直角の方向にあるもの
+						//		逆方向にあるもの
+						var	dx	= (.left + .width \ 2) - cx;
+						var	dy	= (.top + .height \ 2) - cy;
+//						var	d2d	= %[VK_LEFT=>"VK_LEFT",VK_RIGHT=>"VK_RIGHT",VK_UP=>"VK_UP",VK_DOWN=>"VK_DOWN"];
+//						dm(@"${d2d[dir]}: ${i}: ${dx}, ${dy} => ${chkf(dx,dy)}");
+						if(!chkf(dx, dy))
+							continue;
+
+						//	方向と距離を一つの値に換算して、近いものを探す
+						dx	= rxf(dx, w);
+						dy	= ryf(dy, h);
+						var	dist= dx * dx + dy * dy;
+						dm(@"${.name}: ${dx}, ${dy}, ${dist}");
+						if(dist < mindist)
+						{
+							mindist	= dist;
+							near	= bros[i];
+						}
+					}
+				}
+			}
+		}
+		dm(@"---- ${near == void ? 'not found' : near.name} ----");
+		return near;
+	}
+
+	//	方向キーで検索の対象となるレイヤーの一覧を返す
+	function getBros(no)
+	{
+		return no == 0 ? parent.children : void;
+	}
+@endif
+
+}
+
+@endif

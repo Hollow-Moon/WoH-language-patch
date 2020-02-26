@@ -1,0 +1,316 @@
+﻿@if(__LOADMENU_DEFINED__==0)
+@set(__LOADMENU_DEFINED__=1)
+
+//	ロードメニュータイムラインデータ
+Scripts.execStorage("load.ttd");	//	読み込みに20msぐらい掛かる
+
+/*
+ *	ロードメニュー
+ */
+function cmdLoadMenuData(item, cmd, no, trg="ウィンドウ")
+{
+	var	trgitem	= Menu_object.find("Load"+trg+no, PRIMARY);
+	trgitem[cmd]() if trgitem != void;
+	item[cmd]() if item != void;
+}
+function setLoadMenuTimeline(name2pos, creates, pgno, isclose=false)
+{
+	var	dno	= pgno * kag.pageBookMarks;
+	for(var i=0; i<kag.pageBookMarks; i++, dno++)
+	{
+		var	exist	= kag.existBookMark(dno);
+		var	no		= i + 1;
+		var	target	= creates[name2pos["Loadテキスト"+no]];
+		setCreateProp(target, "visible", exist);
+
+		target	= creates[name2pos["LoadLock"+no]];
+		setCreateProp(target, "visible", exist);
+		if(!isclose)
+			setCreateProp(target, "on", +sf.svldLocked[dno]);
+		setCreateProp(target, "mouseUp", isclose ? ";" : "changeLockSaveMenu("+i+",,\"Load\");release();");
+		setCreateProp(target, "mouseEnter", isclose ? ";" : "cmdLoadMenuData(this,\"enter\","+no+")");
+		setCreateProp(target, "mouseLeave", isclose ? ";" : "cmdLoadMenuData(this,\"leave\","+no+")");
+
+		target	= creates[name2pos["LoadDelete"+no]];
+		setCreateProp(target, "visible", exist);
+		setCreateProp(target, "enabled", !sf.svldLocked[dno]);
+		setCreateProp(target, "mouseUp", isclose ? ";" : "askDeleteBySaveMenu("+i+",\"Load\");release();");
+		setCreateProp(target, "mouseEnter", isclose ? ";" : "cmdLoadMenuData(this,\"enter\","+no+")");
+		setCreateProp(target, "mouseLeave", isclose ? ";" : "cmdLoadMenuData(this,\"leave\","+no+")");
+
+		target	= creates[name2pos["LoadLoad"+no]];
+		setCreateProp(target, "visible", exist);
+		setCreateProp(target, "itemMode", imParts);
+
+		target	= creates[name2pos["Loadウィンドウ"+no]];
+		setCreateProp(target, "mouseEnter", isclose ? ";" : "cmdLoadMenuData(this,\"enter\","+no+",\"Load\")");
+		setCreateProp(target, "mouseLeave", isclose ? ";" : "cmdLoadMenuData(this,\"leave\","+no+",\"Load\")");
+		setCreateProp(target, "itemMode", imLessarButton);
+		setCreateProp(target, "focusable", exist);
+		setCreateProp(target, "enabled", exist);
+		setCreateProp(target, "mouseDown", isclose ? ";" : "cmdLoadMenuData(this,\"press\","+no+",\"Load\")");
+		setCreateProp(target, "mouseUp", (!exist || isclose) ? ";" : "loadByLoadMenu("+i+");release();");
+		setCreateProp(target, "mute", true);	//	効果音を鳴らさない
+	}
+	for(var i=0; i<kag.bookMarkPages; i++)
+	{
+		var	target	= creates[name2pos["Loadページ"+(i+1)]];
+		setCreateProp(target, "on", i == pgno);
+		setCreateProp(target, "mouseUp", isclose ? ";" : "changePageSaveMenu("+i+", \"Load\");release();");
+	}
+	if(tf.do_systemmenu)
+		return %[load背景:1, LoadBack:1];
+	else
+		setCreateProp(creates[name2pos["LoadBack"]], "pressse", "");	//	Back の時は効果音を再生しない
+	return void;
+}
+function openLoadMenu()
+{
+//	dm("openLoadMenu(): save: "+tf.sv_opened+" / load: "+tf.ld_opened);
+	if(tf.ld_opened)
+	{
+		closeLoadMenu();
+		return;
+	}
+	tf.ld_opened	= true;
+	if(tf.sv_opened)
+		closeSaveMenu();	//	inMenu で pauseAction されるので、このタイミング
+	inMenu("load");
+	if(tf.tt_opened)
+		Menu_object.setDisfocusableAll();	//	フォーカスを無効にする
+
+	//	ロック状態
+	sf.svldLocked	= [] if sf.svldLocked == void;
+
+	//	前回開いていたページ
+//initMicro();
+	var	tdata	= __get_load_timelinedata(9);
+	var	name2pos= tdata[0], creates = tdata[1], actions = tdata[2];
+	var	ignore	= setLoadMenuTimeline(name2pos, creates, int sf.last_svld_pageno);
+	muteAllMenuItem(tdata, false);	//	効果音ON(素早くメニュー間の移動を行うと、レイヤーが残っていて再利用される可能性があるので)
+
+	//	開くときだけキーボード操作を設定
+	var	none			= [ void ];
+	var	lastdownsearch	= function { return find("Loadページ"+int(sf.last_svld_pageno+1), PRIMARY); };
+	for(var i=1; i<=4; i++)
+		setCreateProp(creates[name2pos["LoadLock"+i]], "leftItems", none);
+	for(var i=4; i<=8; i+=4)
+	{
+		setCreateProp(creates[name2pos["Loadウィンドウ"+i]], "searchDown", lastdownsearch);
+		setCreateProp(creates[name2pos["LoadLock"+i]], "searchDown", lastdownsearch);
+		setCreateProp(creates[name2pos["LoadDelete"+i]], "searchDown", lastdownsearch);
+	}
+	var	rightitems	= [ , "configmenu", "graphic", "exitgame", "rclick_back" ];
+	for(var i=1; i<=8; i++)
+	{
+		var	mi	= i + (i <= 4 ? 4 : -4);
+		var	di	= i % 4;
+		var	trg	= creates[name2pos["Loadウィンドウ"+i]];
+		setCreateProp(trg, "leftItems", [ "LoadDelete"+i, "LoadLock"+i ]);
+		setCreateProp(trg, "rightItems", i<=4 ? [ "LoadLock"+mi, "Loadウィンドウ"+mi ] : [ rightitems[i-4] ]);
+		setCreateProp(trg, "upItems", [ di==1 ? void : "Loadウィンドウ"+(i-1) ]);
+		setCreateProp(trg, "downItems", [ i==4 ? "Loadページ7" : (i==8 ? "Loadページ15" : "Loadウィンドウ"+(i+1)) ]);
+
+		trg	= creates[name2pos["LoadDelete"+i]];
+		setCreateProp(trg, "leftItems", [ "LoadLock"+i ]);
+		setCreateProp(trg, "rightItems", [ "Loadウィンドウ"+i ]);
+		setCreateProp(trg, "upItems", [ di==1 ? void : "LoadDelete"+(i-1), "Loadウィンドウ"+(i-1) ]);
+		setCreateProp(trg, "downItems", [ i==4 ? "Loadページ5" : (i==8 ? "Loadページ15" : "LoadDelete"+(i+1)) ]);
+
+		trg	= creates[name2pos["LoadLock"+i]];
+		setCreateProp(trg, "leftItems", [ i<=4 ? void : "Loadウィンドウ"+mi ]);
+		setCreateProp(trg, "rightItems", [ "LoadDelete"+i, "Loadウィンドウ"+i ]);
+		setCreateProp(trg, "upItems", [ di==1 ? void : "LoadLock"+(i-1) ]);
+		setCreateProp(trg, "downItems", [ i==4 ? "Loadページ2" : (i==8 ? "Loadページ11" : "LoadLock"+(i+1)) ]);
+	}
+	var four	= [ "LoadLoad4", "LoadLock4", "Loadウィンドウ4" ], eight = [ "LoadLoad8", "LoadLock8", "Loadウィンドウ8" ];
+	for(var i=1; i<=15; i++)
+	{
+		var	trg	= creates[name2pos["Loadページ"+i]];
+		setCreateProp(trg, "upItems", i < 8 ? four : eight);
+		setCreateProp(trg, "downItems", none);
+	}
+
+	Menu_object.playTimeline(PRIMARY, tdata[1], tdata[2], %[absolute:1100000], ignore,, true, false);
+
+	with(Menu_object)
+	{
+		for(var i=0; i<kag.pageBookMarks; i++)
+		{
+			var	tmp	= .find("Loadテキスト"+(i+1), PRIMARY);
+			tmp.noNormalMenuItem= true;		//	メソッドを置き換える等、通常の MenuItemLayer としては使えない
+			tmp.no	= i;
+			tmp.updateContent	= function(pgno=sf.last_svld_pageno)
+			{
+				var	dno	= int(no + pgno * kag.pageBookMarks);
+				var	layer	= global.loadSaveTextLayer();
+				copyRect(0, 0, layer, 0, 0, layer.imageWidth, layer.imageHeight);
+				var	pagename= kag.getBookMarkPageName(dno);
+//				dm("pagename: "+pagename);
+				var	l	= 5;
+				if(pagename[0] == "[")
+				{
+					var	pos	= pagename.indexOf("]");
+					var	icon= int(pagename.substr(1, pos-1));
+					icon	= 1 if icon == 0;
+					pagename= pagename.substr(pos+1);
+					drawImage2Area(l, 2, 13, 17, "archive_本アイコン",, 21 * (icon-1), 0, 21, 24);
+					l	+= 14;
+				}
+				drawText2Area(l, 1, 238, 18, pagename, 18, 0xFFFFFF, "lc",,,false);	//１行のみ
+				drawText2Area(5, 21, 238, 18, kag.getBookMarkDate(dno), 18, 0xFFFFFF, "lc");
+				var	cmt	= kag.getBookMarkComment(dno);
+				cmt = cmt.replace(/\n/, "[r]") if cmt != void;
+				drawText2Area(5, 41, 238, 35, cmt, 17, 0xFFFFFF, "lt",, 1, true, 2);
+			} incontextof tmp;
+
+			subscribeSaveData(i,, "Load");	//	パネルにセーブ情報を表示する
+		}
+
+		//	クリック時処理設定
+		.setClick(, "closeLoadMenu()");
+
+		//	右クリックメニューを開いているとき
+		if(tf.do_systemmenu)
+		{
+			with(.find("rclick_back", PRIMARY))
+			{
+				tf.sv_back_script	= .mouseUp;
+				.mouseUp	= "closeLoadMenu();release();";	//	back ボタンでロードメニューを閉じる
+			}
+		}
+
+		//	自動移動が有効なら、最後にセーブしたデータへカーソルを移動させる
+		if(cf.autoMouseMove && sf.lastsaveno !== void && (sf.lastsaveno \ kag.pageBookMarks) == int sf.last_svld_pageno)
+			moveCursor(.find("LoadLoad"+(sf.lastsaveno - int sf.last_svld_pageno * kag.pageBookMarks + 1), PRIMARY));
+	}
+
+	//	マウスホイール対応
+	kag.addHook("mouseWheel", onLoadMenuMouseWheel);
+	dm(kag.hookMap["mouseWheel"].count);
+
+	//	キー対応
+	kag.addHook("keyDown", onLoadMenuKeyDown);
+	Menu_object.keyDownCallback	= onLoadMenuKeyDown;
+
+//dispMicro("open load menu");
+}
+function onLoadMenuMouseWheel(shift, delta, x, y)
+{
+	if(!tf.ld_opened || tf.do_hidesystemmenu)
+		return;
+	var	no	= Math.max(0, Math.min(kag.bookMarkPages-1, int sf.last_svld_pageno + (delta > 0 ? -1 : 1)));
+	changePageSaveMenu(no, "Load");
+}
+function onLoadMenuKeyDown(key, shift)
+{
+	if(tf.do_askyesno || tf.do_hidesystemmenu)
+		return false;
+	if(key == VK_L || key == VK_F3)
+	{
+		closeLoadMenu();
+		return true;
+	}
+	return false;
+}
+function loadByLoadMenu(no)
+{
+//	dm("loadByLoadMenu("+no+") / page = "+sf.last_svld_pageno);
+	//	確認する
+	no	+= int(sf.last_svld_pageno * kag.pageBookMarks);
+	if(!kag.existBookMark(no))
+		return;
+	var	pgname	= kag.getBookMarkPageName(no);
+	var	place	= "";
+	if(pgname[0] == "[")
+	{
+		pgname	= pgname.substr(pgname.indexOf("]")+1);	//	先頭の [*] は削除する
+		place	= "archive";
+	}
+	askYesNo(place+"「"+pgname+"」を[r]ロードしてもよろしいですか？",, doLoadByLoadMenu,, no);
+}
+function doLoadByLoadMenu(no)
+{
+	//	メニューを閉じる
+	closeLoadMenu();
+	delete tf.tt_opened;	//	タイトルメニューから開いていたら、閉じたことにする
+	closeRClickMenu();	//	右クリックメニューから開いていたら、閉じる
+
+	//	メッセージレイヤーを非表示に
+	var pages = ["fore","back"];
+	for( var i=0; i<pages.count; i++ )
+	{
+		var pg = kag[pages[i]];
+		for( var j=0; j<pg.messages.count; j++ )
+			pg.messages[j].visible = false;
+	}
+
+	//	アイテムが反応しないようにする
+	var	menuitems	= Menu_object.getMenuItems(PRIMARY);
+	for(var i=0; i<menuitems.count; i++)
+	{
+		if(menuitems[i] == void)
+			continue;
+		//dm(menuitems[i]);
+		with(menuitems[i])
+			.mouseDown = .mouseMove = .mouseUp = .mouseEnter = .mouseLeave = "";
+	}
+
+	//	右クリック処理をリセット
+	Menu_object.clearClick();
+
+	//	マウスホイール解除
+	kag.removeHook("mouseWheel", onLoadMenuMouseWheel);
+	dm(kag.hookMap["mouseWheel"].count);
+
+	//	キー解除
+	kag.removeHook("keyDown", onLoadMenuKeyDown);
+	delete Menu_object.keyDownCallback;
+
+	//	一度 black にフェードさせて、指定のデータをロードする
+	tf.load_no	= no;
+	kag.process("call.ks", "*load");
+}
+//	Loadメニューを閉じる
+function closeLoadMenu(quick=false)
+{
+	if(!tf.ld_opened)
+		return;
+//	dmt("closeLoadMenu()");
+	delete tf.ld_opened;
+	outMenu("load");
+	if(tf.tt_opened)
+		Menu_object.revertDisfocusable();	//	フォーカスを有効にする
+
+	//	閉じる効果音
+	Menu_object.playSE(closese);
+
+	//	クリック設定を元にもどす
+	Menu_object.resetClick();
+
+	//	右クリックメニューを開いているとき
+	if(tf.do_systemmenu)
+	{
+		Menu_object.find("rclick_back", PRIMARY).mouseUp	= tf.sv_back_script;
+		delete tf.sv_back_script;
+	}
+
+	//	マウスホイール解除
+	kag.removeHook("mouseWheel", onLoadMenuMouseWheel);
+
+	//	キー解除
+	kag.removeHook("keyDown", onLoadMenuKeyDown);
+	delete Menu_object.keyDownCallback;
+
+	eraseSaveTextLayer();	//	テキスト消去用レイヤーを破棄する
+
+	//	メニューを閉じる
+//initMicro();
+	var	tdata	= __get_load_timelinedata(quick ? 13 : 12);
+	var	ignore	= setLoadMenuTimeline(tdata[0], tdata[1], int sf.last_svld_pageno, true);
+	muteAllMenuItem(tdata);		//	すべて効果音mute
+	Menu_object.playTimeline(PRIMARY, tdata[1], tdata[2], %[absolute:1100000], ignore, true,, false);
+//dispMicro("close load menu");
+}
+
+@endif

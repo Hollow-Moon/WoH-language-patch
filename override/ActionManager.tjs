@@ -1,0 +1,735 @@
+﻿/*----------------------------------------------------------------------------/
+/	アクションの管理機構をKAGWindowから分離
+/----------------------------------------------------------------------------*/
+@if(__ACTION_MANAGER_DEFINED__==0)
+@set(__ACTION_MANAGER_DEFINED__=1)
+
+//Plugins.link("microcount.dll");
+
+class ActionManager
+{
+	var	window;
+
+	var	actionDict	= %[];
+	var	actionList	= [];
+//	var	count		= 0;	//	アクションを実行中のオブジェクト数
+	var waitStackByType = [];	//	タイプ指定されたwaitの終了待ち配列
+
+	var	flipping;	//	flip 中かどうか
+
+//	var	interval	= 0;	//	アクションの実行頻度(0なら最大限)
+	var	interval	= 16;
+
+	function ActionManager(window)
+	{
+		this.window	= window;
+	}
+
+	function finalize()
+	{
+		stopFlip();
+		invalidate actionDict if actionDict != void;
+		if(actionList != void)
+		{
+			for(var i=0; i<actionList.count; i++)
+				invalidate actionList[i] if actionList[i] != void;
+			invalidate actionList;
+		}
+		invalidate waitStackByType if waitStackByType != void;
+	}
+
+	property count
+	{
+		getter
+		{
+			var	cnt	= 0;
+			for(var i=0; i<actionList.count; i++)
+				cnt++ if !actionList[i].isDone;
+			return cnt;
+		}
+	}
+
+	//	アクションが実行中かどうか
+	function isInAction(object)
+	{
+		return actionDict[object] != void && !actionDict[object].isDone;
+	}
+	function inAction()
+	{
+		for(var i=0; i<actionList.count; i++)
+		{
+			if(!actionList[i].isDone)
+				return true;
+		}
+		return false;
+	}
+
+	function getInfo(target)
+	{
+		return registInfo(target);
+	}
+
+	//	ActionInfo とオブジェクトを関連付ける
+	function registInfo(target, action=void)
+	{
+		if(actionDict[target] != void)
+			return actionDict[target];
+
+//		dm("ActionManager.registInfo("+(typeof target.name != "undefined" ? target.name : target)+", "+action+")");//: "+Scripts.getTraceString());
+		if(action == void)
+			action	= new ActionInfo(target);
+		actionDict[target]	= action;
+		actionList.add(action);
+
+		return action;
+	}
+
+	/**
+	 *	アクション情報のコピー
+	 *	@param src コピー元オブジェクト
+	 *	@param dest コピー先オブジェクト
+	 */
+	function copy(src, dest, completed)
+	{
+		stop(dest);
+
+		var	srcAction	= actionDict[src];
+		if(srcAction != void)
+		{
+			var	destAction		= srcAction.clone();
+			destAction.target	= dest;
+			if(completed)
+				destAction.onActionCompleted	= completed;
+			registInfo(dest, destAction);
+		}
+	}
+
+	/**
+	 *	アクション実行結果を返す
+	 *	@param target ターゲットオブジェクト
+	 */
+	function getResult(target)
+	{
+		var info = actionDict[target];
+		return info !== void ? info.getResultValue() : void;
+	}
+
+	/**
+	 *	アクションの登録
+	 *	@param target ターゲットオブジェクト
+	 *	@param action アクション情報
+	 *	@param completed 終了ハンドラ
+	 *	@param nowait 待たない
+	 *	@param canpause 一時停止を許可するかどうか
+	 */
+	function begin(target, action, completed, nowait, canpause=true)
+	{
+//		dm("ActionManager.begin("+target+", "+action+", "+completed+", "+nowait+", "+canpause+")");//: "+Scripts.getTraceString());
+		var	info	= actionDict[target];
+		if(info == void)
+			info	= registInfo(target,, canpause);
+		info.canPause	= canpause;
+
+		if(completed != void)
+			info.onActionCompleted	= completed;
+
+		action	= action! if typeof action == "String";
+		if(typeof action == "Object")
+		{
+			if(action instanceof "Dictionary")
+			{
+				if(typeof action.module == "Object")
+					action.module(info, action);
+
+				else if(typeof action.module == "String")
+				{
+					var	module	= (action.module)!;
+					module(info, action) if module != void;
+				}
+				else if(typeof action.moduleName == "String")
+				{
+					var	module	= (action.moduleName)!;
+					module(info, action) if module != void;
+				}
+				else
+					info.addActions(action);
+				info.next(target);
+				info.nowait	= action.nowait if action.nowait !== void;
+			}
+			else if(action instanceof "Array")
+				return;	//	アクションハンドラを連続して実行するシーケンスには対応していない
+		}
+		info.nowait	= nowait if nowait !== void;
+
+		startFlip();
+
+		return info.getResultValue();
+	}
+
+	/**
+	 *	アクションの一時停止
+	 *	@param force 一停止の可否に関わらず停止
+	 *	@param target 個別指定
+	 */
+	function pause(force=false, target)
+	{
+		var	now		= System.getTickCount();
+		if(target == void)
+		{
+			for(var i=0; i<actionList.count; i++)
+			{
+				var	info	= actionList[i];
+				if(force || info.canPause)
+					info.pauseAction(now);
+			}
+		}
+		else
+		{
+			var	info	= actionDict[target];
+			if(info != void && (force || info.canPause))
+				info.pauseAction(now);
+		}
+	}
+
+	/**
+	 *	アクションの再開
+	 *	@param target 個別指定
+	 */
+	function resume(target)
+	{
+		var	now		= System.getTickCount();
+		if(target == void)
+		{
+			for(var i=0; i<actionList.count; i++)
+				actionList[i].resumeAction(now);
+		}
+		else
+		{
+			var	info	= actionDict[target];
+			if(info != void)
+				info.resumeAction(now);
+		}
+	}
+
+	//	個別プロパティ、ハンドラの終了は、ActionInfo, PropActionInfo 内で行われる
+
+	//	オブジェクトのアクションが終了した時
+	function internalActionCompleted(info, stop)
+	{
+		var	target;
+		with(info)
+		{
+			target	= .target;
+			.stopAction() if stop;
+			.onActionCompleted(target) if typeof .onActionCompleted == "Object";
+			if(.isDone)
+				removeInfo(info);
+		}
+//		dm("internalActionCompleted: "+target.name);
+		window.conductor.trigger("action_"+(string)target);
+	}
+
+	//	全てのオブジェクトのアクションが終了した時
+@if(DEBUG)
+	var	actionStartTick;
+@endif
+	function internalAllActionCompleted()
+	{
+//		dm("internalAllActionCompleted");
+		window.conductor.trigger("action");
+		window.actionCompletedHandler() if typeof window.actionCompletedHandler == "Object";
+@if(DEBUG)
+		actionStartTick	= void;
+@endif
+	}
+
+	function removeInfo(info, nocheck=false)
+	{
+//		dm("removeInfo("+info.target+")");
+		actionList.remove(info);
+		delete actionDict[info.target];
+		invalidate info;
+		internalAllActionCompleted() if !nocheck && !count;
+	}
+
+	/**
+	 *	アクションを停止
+	 *	@param target ターゲットオブジェクト
+	 *	@param name アクション個別停止のための名称
+	 */
+	function stop(target, propName, handler)
+	{
+		if(target == void)
+			return;
+		var	info	= actionDict[target];
+		if(info != void)
+		{
+//			dm("ActionManager.stop("+target.name+", "+propName+", "+handler+")");
+			var	cnt	= info.stopAction(propName, handler);
+			if(cnt == 0)
+				removeInfo(info);	//	オブジェクトの全てのアクションが停止したので
+		}
+//		dm("ActionManager.stop("+target.parent.name+"/"+target.name+"): last = "+count);
+	}
+
+	/**
+	 *	アクションを破棄
+	 *	@param target ターゲットオブジェクト
+	 */
+	function remove(target)
+	{
+		if(target == void)
+			return false;
+		var	info	= actionDict[target];
+		if(info != void)
+			removeInfo(info, true);
+		return true;
+	}
+
+	/**
+	 *	全アクションを停止
+	 *	@param all すべて停止するかどうか
+	 *	@memo nowait=true か、isPause=true の時は、all=true でないと停止しない(本編を一時停止して、メニューを開いているときのために)
+	 */
+	function stopAll(all=false, cond=void)
+	{
+		var	hasAction	= count > 0;
+		var	nowaitCount	= 0;
+		for(var i=0; i<actionList.count; i++)
+		{
+			var	info	= actionList[i];
+			if((all || (!info.nowait && !info.isPause)) &&	// すべて無条件に停止するか、nowait も isPause でもない時
+				(cond == void || cond(info)))
+			{
+//				dm("stop action: "+info.target.name);
+				internalActionCompleted(info, true);
+				i--;
+			}
+			else
+			{
+//				dm("non stop action: "+info.target.name);
+				nowaitCount++;
+			}
+		}
+
+//		if(!window.skipNoDisp && count > 0)
+		if(count > 0)
+			update();
+		if(hasAction && (!count || count == nowaitCount))
+			internalAllActionCompleted();	//	nowait なアクションは残っているが、全停止が指定されたので
+
+//		stopActionHandler(all) if typeof this.stopActionHandler == "Object";
+	}
+
+	/**
+	 * 種別指定アクション停止
+	 */
+	function stopAllActionsByType(acttype)
+	{
+		//dm("stopAllActionsByType: " + acttype);
+		var	hasAction	= count > 0;
+		for(var i=0; i<actionList.count; i++)
+		{
+			var	info = actionList[i];
+			var cnt = info.stopActionByType(acttype);
+			if( cnt == 0 )
+			{
+				internalActionCompleted(info, true);
+				i--;
+			}
+		}
+		if(hasAction && !count)
+			internalAllActionCompleted();
+//		dm("stopAllActionsByType: " + acttype + " " + countActionByType(acttype));
+	}
+
+	/*
+	 * 種別をもったアクションの動作数を獲得
+	 */
+	function countActionByType(acttype)
+	{
+		var cnt = 0;
+		for(var i=0; i<actionList.count; i++)
+		{
+			var	info = actionList[i];
+			cnt += info.countActionByType(acttype);
+		}
+		return cnt;
+	}
+
+	/**
+	 * fore側のアクションを全て停止
+	 */
+	function stopAllFore(all=false)
+	{
+		stopAll(all, function(info) { return info.target == window.fore.base || info.target.parent == window.fore.base; } incontextof this);
+	}
+
+	/**
+	 * back側のアクションを全て停止
+	 */
+	function stopAllBack(all=false)
+	{
+		stopAll(all, function(info) { return info.target == window.back.base || info.target.parent == window.back.base; } incontextof this);
+	}
+
+	/**
+	 *	アクション状態更新
+	 *	システム全体から呼び出す
+	 *	@param now 現在時刻
+	 */
+	function update(now=System.getTickCount())
+	{
+//		window.caption	= caption + "<%7.3f ms>".sprintf(getMicroCount() * 0.001);
+@if(0)
+		if(actionStartTick === void)
+			dm("action start : "+(actionStartTick = now));
+		else
+			dm("action update: "+(now - actionStartTick), now);
+@endif
+		var	hasAction	= count > 0;
+		var	nowaitCount	= 0;
+		var	pauseCount	= 0;
+		var	loopCount	= 0;
+		for(var i=0; i<actionList.count; i++)
+		{
+			var	info	= actionList[i];
+//			dm((typeof info.target.name != "undefined" ? info.target.name : info.target)+": "+info.actionList.count) if info.actionList;
+			if(!(info.target isvalid))
+			{
+//				throw new Exception(info.target+" はすでに無効化されています。");
+				dm("無効化されているオブジェクト("+info.target+")に対するアクションが存在していたため削除しました。");
+				removeInfo(info);
+				i--;
+			}
+			else if(info.doAction(now, false))
+			{
+				internalActionCompleted(info, false);
+				i--;
+			}
+			else if(info.nowait)
+				nowaitCount++;
+			else if(info.isPause)
+				pauseCount++;
+			else if(info.isLoop)
+				loopCount++;
+		}
+		//種別を指定したアクションが全て終了していたらトリガ
+		for( var i=0; i<waitStackByType.count; i++ )
+		{
+			var acttype = string(waitStackByType[i]);
+			if( ! countActionByType(acttype) || ! count )
+			{
+				dm("action_TYPE_"+acttype+" trigger!");
+				window.conductor.trigger("action_TYPE_"+acttype);
+				waitStackByType.erase(i);
+				i--;
+//			}else{
+//				dm("waiting action_TYPE_"+acttype);
+			}
+		}
+
+		//	nowait/一時停止中以外のアクションが停止しているなら
+//		dm("ActionManager.update: "+nowaitCount+", "+pauseCount+", "+loopCount);
+		if(hasAction && (!count || count == nowaitCount + pauseCount + loopCount))
+			internalAllActionCompleted();
+	}
+
+	/**
+	 *	アクションを探す
+	 *	@param target   ターゲットオブジェクト
+	 *	@param propname プロパティ名称
+	 *	@param handler  アクションハンドラ名
+	 *	@return ActionInfo
+	 */
+	function find(target, propName, handler)
+	{
+		if(target == void || propName == void || handler == void)
+			return void;
+		var	info	= actionDict[target];
+		if(info != void)
+			return info.findAction(propName, handler);
+		return void;
+	}
+
+	/**
+	 *	アクションの設定を変える
+	 *	@param target	ターゲットオブジェクト
+	 *	@param propname	プロパティ名称
+	 *	@param handler	アクションハンドラ名
+	 *	@param elm		引数
+	 */
+	function set(target, propName, handler, elm)
+	{
+		var	info	= find(target, propName, handler);
+		if(info != void)
+		{
+			info.setAction(propName, handler, elm);
+			return 0;
+		}
+		return -1;
+	}
+
+	/**
+	 *	アクションの終了を待つ
+	 */
+	function wait(target, propName, handler, canskip)
+	{
+		if(target == void || !isInAction(target))
+			return 0;
+
+		var	wt = %[], kw;
+		var	nextfunc	= function
+		{
+			window.updateBeforeCh	= 1;
+		} incontextof this;
+		wt[kw="action_"+string target]	= nextfunc;
+		wt[kw=kw+"_"+string propName]	= nextfunc if propName != void;
+		wt[kw=kw+"_"+string handler]	= nextfunc if handler != void;
+
+		if((canskip === void || +canskip) && window.clickSkipEnabled)
+		{
+			if(window.skipMode)
+			{
+				stop(target);
+				return 0;
+			}
+			wt["click"]	= function(target)
+			{
+				window.updateBeforeCh	= 1;
+				stop(target);
+			} incontextof this;
+			wt["click_arg"]	= target;
+		}
+		window.conductor.wait(wt);
+		return -2;
+	}
+
+	/**
+	 *	全てのアクションの終了を待つ
+	 */
+	function waitAll(canskip)
+	{
+		if(count == 0)
+			return 0;
+		if((canskip === void || +canskip) && window.clickSkipEnabled)
+		{
+			if(window.skipMode)
+			{
+				stopAll(false);	//	nowait 以外を停止
+				return 0;
+			}
+			window.conductor.wait(%[
+				click: function(target)
+				{
+					window.updateBeforeCh	= 1;
+					stopAll(false);
+				} incontextof this,
+				action: function()
+				{
+					window.updateBeforeCh	= 1;
+				} incontextof this
+				]);
+		}
+		else
+		{
+			window.conductor.wait(%[
+				action: function
+				{
+					window.updateBeforeCh	= 1;
+				} incontextof this
+			]);
+		}
+		return -2;
+	}
+
+	/**
+	 *	種別指定でアクション終了を待つ
+	 */
+	function waitAllByType(acttype, canskip)
+	{
+		if(acttype == void)
+			return 0;
+
+		var	wt = %[], kw;
+		var	nextfunc	= function
+		{
+			window.updateBeforeCh	= 1;
+		} incontextof this;
+		wt[kw="action_TYPE_"+acttype]	= nextfunc;
+
+		if((canskip === void || +canskip) && window.clickSkipEnabled)
+		{
+			if(window.skipMode)
+			{
+				stopAllActionsByType(acttype);
+				return 0;
+			}
+			wt["click"]	= function(acttype)
+			{
+				window.updateBeforeCh	= 1;
+				stopAllActionsByType(acttype);
+			} incontextof this;
+			wt["click_arg"]	= acttype;
+		}
+		//動作していないような状態ではwaitしない
+		if( countActionByType(acttype) && count && waitStackByType.find(acttype)==-1 ){
+			window.conductor.wait(wt);
+			waitStackByType.add( acttype );
+			//dm("waitStack: " + acttype);
+			return -2;
+		}else{
+			//dm("waitStackしません、既にアクションは終了しています: " + acttype);
+		}
+		return 0;
+	}
+
+	function store(f)
+	{
+		with(f)
+		{
+			.actionList	= [];
+			for(var i=0; i<actionList.count; i++)
+			{
+				var dat = actionList[i].store();
+				.actionList.add(dat) if dat !== void;
+			}
+		}
+	}
+
+	function restore(f, clear=true, elm=void)
+	{
+		if(f.actionList == void)
+			return;
+
+		//現在のアクション情報を全て破棄
+		waitStackByType.clear();
+		for(var i=actionList.count-1; actionList.count; i--)
+			removeInfo(actionList[i], true);
+
+		actionList.clear();
+		(Dictionary.clear incontextof actionDict)();
+		with(f)
+		{
+			for(var i=0; i<.actionList.count; i++)
+			{
+				var	info	= new ActionInfo();
+				info.restore(.actionList[i]);
+				if(info.target != void)
+				{
+					actionList.add(info);
+					actionDict[info.target]	= info;
+				}
+				else
+				{
+@if(DEBUG)
+					//	文字に対するアクション等がこうなる模様
+//					throw new Exception("ActionManager.restore: target is void.");
+					dm("ActionManager.restore: target is void.("+.actionList[i]+")");
+@endif
+					invalidate info;
+				}
+			}
+		}
+		startFlip() if count > 0;
+	}
+
+	/*
+	 *	アクションループ処理
+	 */
+	var	timer;
+	var	caption;
+	function startFlip()
+	{
+		if(!flipping)
+		{
+			timer	= new Timer(onFlipTimerInterval, "");
+			timer.interval	= int(Math.max(3, interval - 3));
+			timer.capacity	= 1;
+			timer.enabled	= true;
+//			initMicroCount(); caption = window.caption;
+			flipping	= true;
+@if(DEBUG)
+//			dm("startFilp: "+System.getTickCount());
+			initTickCallback() if initTickCallback != void;
+@endif
+		}
+	}
+
+	function stopFlip()
+	{
+		if(flipping)
+		{
+			if(timer != void)
+			{
+				timer.enabled	= false;
+				invalidate timer;
+				timer	= void;
+			}
+//			window.caption	= caption;
+			flipping	= false;
+@if(DEBUG)
+			endTickCallback() if endTickCallback != void;
+@endif
+		}
+	}
+@if(DEBUG)
+	var	tickCallback;
+	var	initTickCallback;
+	var	endTickCallback;
+@endif
+	var	lasttick;
+	function onFlipTimerInterval()
+	{
+		var	tick= System.getTickCount();
+@if(DEBUG)
+		tick= tickCallback(tick) if tickCallback != void;
+@endif
+		var	past= tick - lasttick;
+@if(DEBUG)
+		if(Math.abs(tick - lasttick) > interval)
+@endif
+@if(!DEBUG)
+		if(tick - lasttick >= interval)
+@endif
+		{
+@if(DEBUG)
+//			dm("onFlipTimerInterval("+past+"/"+tick+")");
+@endif
+			update(tick);
+			lasttick	= tick;
+			timer.interval	= interval - 3;
+		}
+		else
+			timer.interval	= 1;
+
+		if(count == 0)
+			stopFlip();
+	}
+
+@if(DEBUG)
+	function getActionList(target)
+	{
+		var	array	= [];
+		if(target == void)
+		{
+			for(var i=0; i<actionList.count; i++)
+			{
+				array.add(typeof actionList[i].target.name != "undefined" ? actionList[i].target.name : "no name");
+				array.add("  "+actionList[i].getActionList());
+			}
+		}
+		else if(actionDict[target])
+		{
+			array.add(typeof target.name != "undefined" ? target.name : "no name");
+			array.add("  "+actionDict[target].getActionList());
+		}
+		else
+			array.add("no actions");
+		return array;
+	}
+@endif
+}
+
+
+@endif

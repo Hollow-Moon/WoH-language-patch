@@ -1,0 +1,113 @@
+﻿//	遅延呼び出しを行う
+//	KUtils.tjs より借用
+@if(__ASYNCCALLER_DEFINED__==0)
+@set(__ASYNCCALLER_DEFINED__=1)
+
+//	遅延呼び出しが実行されたとき、その呼び出しを依頼した場所を表示するように(=1)
+@if(DEBUG)
+@set(__DEBUGMESSAGE_ASYNC_CALL_FROM__=0)
+@endif
+
+// 構造体の比較
+function equalStruct(s1, s2) {
+  if (s1 instanceof "Array"
+      && s2 instanceof "Array"
+      && s1.count == s2.count) {
+    var i;
+
+    for (i = 0; i < s1.count; i++) {
+      if (s1[i] instanceof "Array"
+          || s1[i] instanceof "Dictionary") {
+        if (! equalStruct(s1[i], s2[i]))
+          return false;
+      } else {
+        if (s1[i] !== s2[i]) {
+          return false;
+        }
+      }
+    }
+  } else if (s1 instanceof "Dictionary"
+             && s2 instanceof "Dictionary") {
+    var key1, key2;
+    (key1 = []).assign(s1);
+    (key2 = []).assign(s2);
+
+    if (key1.count != key2.count)
+      return false;
+    var i;
+    for (i = 0; i < key1.count; i+= 2) {
+      var key = key1[i];
+      if (s1[key] instanceof "Array"
+          || s1[key] instanceof "Dictionary") {
+        if (! equalStruct(s1[key], s2[key]))
+          return false;
+      } else {
+        if (s1[key] !== s2[key]) {
+          return false;
+        }
+      }
+    }
+  } else {
+    return false;
+  }
+
+  return true;
+}
+
+// 遅延呼出し
+class AsyncCaller
+{
+  var funcs = [];
+  var trigger;
+
+  function AsyncCaller {
+    trigger = new AsyncTrigger(this);
+  }
+
+  function finalize {
+    invalidate trigger;
+  }
+
+  function call(func, args*) {
+@if(__DEBUGMESSAGE_ASYNC_CALL_FROM__)
+	funcs.add([ func, args, Scripts.getTraceString() ]);
+@endif
+@if(!__DEBUGMESSAGE_ASYNC_CALL_FROM__)
+    funcs.add([ func, args ]);
+@endif
+    trigger.trigger();
+  }
+
+  function callOnce(func, args*) {
+    // 同じ内容の呼び出しが存在すれば、登録しない
+    for (var i = 0; i < funcs.count; i++)
+      if (funcs[i][0] === func && equalStruct(funcs[i][1], args))
+        return;
+    call(func, args*);
+  }
+
+  function cancel(func, args*) {
+    for (var i = 0; i < funcs.count; i++)
+      if (funcs[i][0] === func && equalStruct(funcs[i][1], args)) {
+        funcs.erase(i);
+        return;
+      }
+  }
+
+  function action {
+    var func, args;
+    while (funcs.count != 0) {
+      func = funcs[0][0];
+      args = funcs[0][1];
+@if(__DEBUGMESSAGE_ASYNC_CALL_FROM__)
+      dm("action["+funcs.count+"]: call "+func+" from "+funcs[0][2]);
+@endif
+      funcs.erase(0);
+      func(args*);
+    }
+  }
+}
+
+global.asyncCaller = new AsyncCaller();
+
+@endif

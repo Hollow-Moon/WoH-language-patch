@@ -1,0 +1,3823 @@
+﻿// AnimationLayer.override.tjs - AnimationLayer のオーバーライド
+@if(__ANIMATIONLAYER_OVERRIDE_DEFINED__==0)
+@set(__ANIMATIONLAYER_OVERRIDE_DEFINED__=1)
+
+//	プロパティのアクションについて詳細を出力する
+@set(ANIMATIONLAYER_ACTION_VERVOSE=0)
+
+//	ノイズを最終表示レイヤーに描画するかどうか(0 = 転送元レイヤーに描画する)
+//	→	回転や拡大をしながらノイズを掛けるときは、指定した周期より頻繁にノイズが掛かってしまう
+@set(NOISE_WRITE_FINALLAYER=1)
+
+//	画像の読み込み時間を計測
+@set(IMAGE_LOADTIME_COUNT=0)
+
+//	画像の領域分割情報が存在する場合、それぞれの領域を個別のレイヤーへ描画する
+//	→	高速化のために実装したが、レイヤーの準備や合成に時間が掛かりすぎる(表示領域を制限すればよいかも)
+@set(DRAW_DIVIDELAYERS=0)
+
+//	レイヤーのガンマ値を指定できるようにするか
+@set(USE_GAMMA=0)
+
+//Plugins.link("../../../krkrPlugins/layerExFilter/Debug/layerExFilter.dll");
+//Plugins.link("../../../krkrPlugins/layerExFilter/Release/layerExFilter.dll");
+Plugins.link("layerExFilter.dll");
+Plugins.link("filter.dll");	//	contrast(-127〜0〜127)
+Plugins.link("layerExParticle.dll");
+var	maxParticleCount	= 200;
+
+//	更新矩形制御
+Scripts.execStorage("UpdateRegion.tjs");
+//	Affine描画元画像レイヤー
+Scripts.execStorage("AffineSourceLayer.tjs");
+
+//	背景用画像であろうファイル名の先頭2文字
+var	isBGStorageHead	= %[bg:1, ev:1, ef:1, im:1];
+
+//	effectリストの読み込み
+var	Layer_effect_list	= Scripts.evalStorage("envcolor.ksc");
+{
+	//	デフォルト値の設定
+	var	default_effect_list	= [
+		[ "monocro",void, void, void,  void, void, void,  void, void, void, true ],	//	モノクロ/グレイスケール
+		[ "sepia",	0.941,void, void,  0.784,void, void,  0.569,void, void, true ],	//	セピア
+		[ "nega",	void,  255,    0,  void,  255,    0,  void,  255,    0, false ],	//	色反転
+		[ "red",	  1.0,void, void,   0.0, void, void,   0.0, void, void, true ],
+		[ "green",	  0.0,void, void,   1.0, void, void,   0.0, void, void, true ],
+		[ "blue",	  0.0,void, void,   0.0, void, void,   1.0, void, void, true ]
+	];
+	for(var i=0; i<default_effect_list.count; i++)
+	{
+		if(default_effect_list[i] != void)
+		{
+			var	name	= default_effect_list[i][0];
+			default_effect_list[i].erase(0);
+			Layer_effect_list[name]	= default_effect_list[i] if Layer_effect_list[name] === void;
+		}
+	}
+	Layer_effect_list["monochrome"]	= Layer_effect_list["monocro"];
+}
+
+//	アクションの設定
+var	_quake_h_prop	= "_act_x", _quake_v_prop = "_act_y";
+var	_quake_handler	= "RandomAction";
+var	_shake_h_prop	= "_act_x", _shake_v_prop = "_act_y";
+var	_shake_handler	= "SinAction";
+var	_rel_h_prop 	= "_act_x", _rel_v_prop = "_act_y";	//	縦横方向の相対変化プロパティ
+var	_shock_handler	= "AttenuateSinAction";
+var	_swing_handler	= "RandomSinAction";
+var	_particle_prop	= "particleTick";
+var	_particle_handler	= "ParticleProgressAction";
+
+var	AnimationLayerStatuses	= [
+	"quake", "quakeHMax", "quakeVMax", "quakeInterval", "quakeTime",
+	"shake", "shakeHMax", "shakeVMax", "shakeCycle", "shakeTime",
+	"swing", "swingMinCycle", "swingMaxCycle", "swingMinVibration", "swingMaxVibration", "swingRate", "swingTime",
+	"haze", "hazeContinue", "hazePower", "hazeDelta", "hazeOmega", "hazeWaves", "hazeLineWaves", "hazePowers", "hazeInterval", "hazeTick",
+	"noise", "noiseMonocro", "noiseUnder", "noiseUpper", "noiseInterval"
+];
+var	AnimationLayerStatusInits	= [
+	false, 10, 10, 50, void,
+	false, 0, 10, 300, void,
+	false, 1000, 2000, 5, 10, 1, void,
+	false, false, 10, 7, 1, void, void, void, 50, void,
+	false, true, 0, 255, 50,
+	false, void
+];
+
+//	背景画像サイズと実際の画面との差(WoH:上下左右に48pxずつ大きい)
+var	screen_plus_alpha	= 48;
+
+//	特定の画像が読み込まれた時、読み込まれたとフラグを立てる画像
+var	displayedLinks	= Scripts.evalStorage("displink.txt");
+
+class AnimationLayer extends AnimationLayerOriginal
+{
+	var	images	= [];
+
+	var	_image	= void;		//	現在処理の対象となっているレイヤー
+	var _expsize = false;	//	画像読み込み時にhaze用の余白を画像につけるモード
+
+	var	trans	= void;		//	画像切り替えのため、トランジションに使用するレイヤー(CharacterLayerのみ使用/KeyFrameActionがアクセスするのでここで定義)
+	var attach = void;		//	旧方式の連動変化プロパティに使用するレイヤー
+
+	var	timeRate	= 1.0;	//	アクションの時間経過率(1.0なら等速/>1.0なら早送り/<1.0ならスロー)
+
+	//コンストラクタ
+	function AnimationLayer(win, par, name, no, screensizelayer=true)
+	{
+		super.AnimationLayerOriginal(...);
+		cached	= true;	//	重ね合わせの再描画を極力行わない
+		with(this)
+		{
+			._afn_offx = AFFINEOFFSET_CENTER;
+			._afn_offy = AFFINEOFFSET_CENTER;
+			._doAffine = false;
+			._doOffset = false;
+			._rotate = 0;
+			._zoomx = 100;
+			._zoomy = 100;
+			._aorder = "";
+			.__act_x = 0;
+			.__act_y = 0;
+		}
+		screenSizeLayer = screensizelayer;	//	常に画面と同じサイズのレイヤー
+		hazeReset();
+	}
+
+	//ファイナライザ
+	function finalize()
+	{
+		if(updateTimer != void)
+		{
+			updateTimer.enabled	= false;
+			invalidate updateTimer;
+		}
+		clearImages(true);
+		super.finalize();
+	}
+@if(DEBUG)
+	property className
+	{
+		getter
+		{
+			var	list	= Scripts.getClassNames(this);
+			return list.count > 0 ? list[0] : "Layer";
+		}
+	}
+@endif
+	//	アフィンコピーの元となるレイヤー
+	property affineSource
+	{
+		getter	{ return images[images.count-1]; }
+	}
+
+	//	画像を読み込むレイヤー
+	property _orgimage
+	{
+		getter	{ return images[0]; }
+	}
+
+	//	レイヤーの追加
+	function addImage(no=0, force=false)
+	{
+		if(images[no] == void || force)
+		{
+			images[no]	= new global.AffineSourceLayer(window, this);
+			images[no].name	= "source layer["+no+"]";
+@if(DEBUG)
+			images[no].owner= this;
+@endif
+		}
+		return _image = images[no];
+	}
+
+	//	レイヤーの破棄
+	function removeImage(no)
+	{
+		if(images[no] != void)
+		{
+			_image	= _orgimage if images[no] == _image;
+			invalidate images[no];
+			images.erase(no);
+		}
+	}
+
+	//	レイヤーの破棄
+	function clearImages(all=false)
+	{
+		var	st	= all ? 0 : 1;
+		for(var i=st; i<images.count; i++)
+			invalidate images[i] if images[i] != void && images[i] != this;
+		images.count	= st;
+		_image	= _orgimage;
+	}
+
+	//	レイヤー間のコピー
+	function copyImage(from, to)
+	{
+		if(images[to] != void && images[from] != void)
+		{
+			with(images[to])
+			{
+				.assignImages(images[from],,,,, false);	//	画面に描画していないレイヤーから画面に描画するレイヤーにコピーするので、_clearRegion はコピーしない
+				.setSizeToImageSize();
+				if(expsize && .imageWidth == storageImageWidth && .imageHeight == storageImageHeight)
+					.expandImage(images[from], screen_plus_alpha);
+			}
+		}
+	}
+
+	function clearImage(process = true)
+	{
+		super.clearImage(...);
+		callOnPaint	= false;	//	clearImage で fillRect を呼んでいるので
+
+		//	表示レイヤーを消去
+		if(screenSizeLayer)
+			affineSource.clear(this);
+		else
+			global.KAGLayer.fillRect(0, 0, width, height, 0);
+	}
+
+	function freeImage()
+	{
+		super.freeImage();
+		_effect = _proceedingEffect = _holdeffect	= "";
+		_contrast = _proceedingContrast = _holdcontrast	= 0;
+@if(USE_GAMMA)
+		_gamma = _proceedingGamma = void;
+@endif
+		_brightness = _proceedingBrightness = void;
+		_xblur = _yblur	= 0;
+		_proceedingBlur = _holdblur	= "";
+		__act_x = __act_y	= 0;
+		haze = noise	= false;
+		_quakeHMax = _quakeVMax	= 10;
+		_quakeInterval	= 16;
+		_quakeTime	= void;
+		_shakeHMax	= 0;
+		_shakeVMax	= 10;
+		_shakeCycle	= 300;
+		_shakeTime	= void;
+		_swingMinCycle	= 1000;
+		_swingMaxCycle	= 2000;
+		_swingMinVibration	= 5;
+		_swingMaxVibration	= 10;
+		_swingRate	= 1;
+		_swingTime	= void;
+		hazeReset();
+		updateExpSize();
+		_rotate	= 0;
+		_zoomx = _zoomy	= 100;
+		_aorder = "";
+		_afn_offx = _afn_offy	= AFFINEOFFSET_CENTER;
+		_ax = _ay	= 0;
+
+		uninitParticle();	//	パーティクル解除
+
+		_orgimage.freeImage() if _orgimage != this;
+		_storage	= "";
+		clearImages();
+		_proceedingEffect = _proceedingBrightness = _proceedingContrast = _proceedingBlur = _proceedingNoise = _proceedingHaze =
+@if(USE_GAMMA)
+		_proceedingGamma =
+@endif
+		void;	//	状態リセット
+		actionInfo.stopAction() if window isvalid && window.actmgr isvalid && window.isInAction(this);	//	アクションも停止
+	}
+
+	//	画面サイズのレイヤーを用意するか否か(現KAGEX方式なら true)
+	var	_screenSizeLayer;
+	var _ax = 0;	//	screenSizeLayer = false の時の、座標補正
+	var _ay = 0;
+	property screenSizeLayer
+	{
+		setter(v)
+		{
+			if(screenSizeLayer !== v)
+			{
+				_screenSizeLayer	= v;
+				if(v)
+				{
+					addImage();
+					_orgimage.storage	= _storage;
+					setScreenSize();
+				}
+				else if(_orgimage != this)
+					invalidateOrgimage();
+				updateHorizontalMargin();
+				updateVerticalMargin();
+			}
+		}
+		getter	{ return _screenSizeLayer; }
+	}
+
+	function invalidateOrgimage()
+	{
+		if(_orgimage != void && _orgimage != this)
+		{
+			_storage	= _orgimage.storage;
+			invalidate _orgimage;
+		}
+		images[0] = _image = this;
+	}
+
+	function setScreenSize(w = window.scWidth, h = window.scHeight)
+	{
+		with(global.KAGLayer)
+		{
+			var	spa2	= screen_plus_alpha * 2;
+//			dm(parent.name+"."+name+".setScreenSize("+w+", "+h+"): "+.imageWidth+", "+.imageHeight);
+//			dm(Scripts.getTraceString());
+			if(w + spa2 != .imageWidth || h + spa2 != .imageHeight)
+			{
+				.setImageSize(w + spa2, h + spa2);
+				.setSize(w, h);
+				.setImagePos(-screen_plus_alpha, -screen_plus_alpha);
+				.setPos(0, 0);
+@if(DRAW_DIVIDELAYERS)
+				if(!hasImage)
+				{
+					for(var i=0; i<divideLayers.count; i++) with(divideLayers[i])
+					{
+						.setImageSize(realImageWidth, realImageHeight);
+						.setSize(realWidth, realHeight);
+						.setImagePos(realImageLeft, realImageTop);
+						.setPos(realLeft, realTop);
+					}
+				}
+@endif
+			}
+		}
+	}
+
+	//	アフィン変換での描画が必要かどうか
+	property needAffine	{ getter { return Math.abs(zoomx) != 100 || Math.abs(zoomy) != 100 || rotate != 0; } }
+
+	function copyThis2orgimage()
+	{
+		addImage(, true);
+		with(_orgimage)
+		{
+			.assignImages(this);
+			.storage		= _storage;
+			.left			= global.KAGLayer.left;
+			.top			= global.KAGLayer.top;
+			.width			= global.KAGLayer.width;
+			.height			= global.KAGLayer.height;
+			.imageWidth		= global.KAGLayer.imageWidth;
+			.imageHeight	= global.KAGLayer.imageHeight;
+			.realImageWidth	= realImageWidth;
+			.realImageHeight= realImageHeight;
+			.imageLeft		= global.KAGLayer.imageLeft;
+			.imageTop		= global.KAGLayer.imageTop;
+			.neutralColor	= global.KAGLayer.neutralColor;
+			.holdAlpha		= global.KAGLayer.holdAlpha;
+			.face			= global.KAGLayer.face;
+		}
+	}
+
+	function checkNeedAffine()
+	{
+		if((needAffine || screenSizeLayer) && (_orgimage == this || _orgimage == void))
+		{
+			copyThis2orgimage();
+//			dm("convert affine type: "+name+" / _orgimage = "+_orgimage);
+		}
+	}
+
+@if(DRAW_DIVIDELAYERS)
+	var	divideLayers;
+@endif
+	function loadImages(elm)
+	{
+@if(IMAGE_LOADTIME_COUNT)
+initMicro(6, "");
+@endif
+		if( elm === void ) return;
+		//	property storage からだけでなく、loadImages を直接呼ばれることがある(image タグ)ので、
+		//	ここで位置の記録をとっておく
+		var	pos	= internalStorePos();	//	読み込み前位置を取得
+//		dm(name+".loadImages: "+storage+" → "+elm.storage);
+		_image	= _orgimage;
+		extend_loadImages(...);			//(AffineLayer→AnimationLayer移植対応)
+//dispMicro(name+".extend_loadImages("+elm.storage+")", 6);
+		AfterloadImage(...);
+//dispMicro(name+".AfterloadImage("+elm.storage+")", 6);
+		internalRestorePos(pos);		//	位置を復元
+		//	パーティクル用に利用されていたら、
+		if(initializedParticle)
+		{
+			if(particle)
+				uninitParticle();	//	既にパーティクル描画していたので、終了する
+			else
+				particleImage	= _orgimage;	//	画像の再設定を行う(矩形情報を更新するため)
+		}
+
+@if(DRAW_DIVIDELAYERS)
+		//	分割描画先のレイヤーを準備
+		if(typeof _orgimage.orgTag == "undefined")
+			return;
+		var	tag	= _orgimage.orgTag;
+		if(tag != null && tag != void && tag.divideArea)
+		{
+			if(!hasImage)
+			{
+				hasImage	= true;
+				with(divideLayers[0])
+				{
+					global.Layer.setImageSize(.imageWidth, .imageHeight);
+					global.Layer.setImagePos(.imageLeft, .imageTop);
+					global.Layer.type	= .type;
+				}
+				for(var i=0; i<divideLayers.count; i++)
+					invalidate divideLayers[i];
+			}
+			divideLayers= [];
+			var	da	= typeof tag.divideArea == "String" ? tag.divideArea.split("/") : tag.divideArea;
+			for(var i=0; i<da.count; i++)
+			{
+				da[i]	= da[i].split(",") if typeof da[i] == "String";
+				var	layer	= new global.Layer(window, parent);
+				with(layer)
+				{
+					.type	= type;
+					.setImageSize(realImageWidth, realImageHeight);
+					.setSize(realWidth, realHeight);
+					.setImagePos(realImageLeft, realImageTop);
+					.setPos(realLeft, realTop);
+					.absolute	= absolute;
+				}
+				divideLayers.add(layer);
+			}
+			tag.divideArea	= da;
+			hasImage	= false;
+		}
+		else if(!hasImage)
+		{
+			hasImage	= true;
+			with(divideLayers[0])
+			{
+				global.Layer.setImageSize(.imageWidth, .imageHeight);
+				global.Layer.setImagePos(.imageLeft, .imageTop);
+				global.Layer.type	= .type;
+			}
+			for(var i=0; i<divideLayers.count; i++)
+				invalidate divideLayers[i];
+			divideLayers	= void;
+		}
+@endif
+@if(IMAGE_LOADTIME_COUNT)
+dispMicro(name+".loadImages("+elm.storage+")", 6);
+@endif
+	}
+@if(DRAW_DIVIDELAYERS)
+	property type
+	{
+		setter(v)
+		{
+			if(hasImage)
+				super.type	= v;
+			else
+				for(var i=0; i<divideLayers.count; i++) divideLayers[i].type = v;
+		}
+		getter	{ return super.type; }
+	}
+@endif
+	//kag3プレーンのsystem/AnimationLayer.tjs loadImagesから複製し変更
+	function extend_loadImages(elm)
+	{
+		// loadImages オーバーライド
+		// elm は読み込み情報
+		if(elm === void)
+		{
+			freeImage();
+			return;
+		}
+
+		Anim_loadParams = %[];
+		(Dictionary.assign incontextof Anim_loadParams)(elm);
+			// パラメータを待避
+
+		// アニメーション情報をクリア
+		clearAnim();
+
+		// 追加画像読み込みの情報をクリア
+		Anim_partialImageInfo = void;
+
+		// 画像を読み込む
+		var taginfo = AffineLayer_loadImages(elm);
+
+		// 画像のタグ情報をデフォルト値として採用
+		if(taginfo)
+		{
+			//	taginfo を書き換えてしまうと同じ画像が使われている間設定が無用に反映されてしまうので、別の配列を用意する
+			var	tmp	= %[];
+			(Dictionary.assign incontextof tmp)(taginfo, false);
+			(Dictionary.assign incontextof tmp)(elm, false);
+			elm	= tmp;
+		}
+
+		// フリップ
+		var ud, lr;
+		if(elm.flipud !== void && +elm.flipud)
+		{
+			// 上下反転
+			flipUD();
+			ud = true;
+		}
+		else
+		{
+			ud = false;
+		}
+
+		if(elm.fliplr !== void && +elm.fliplr)
+		{
+			// 左右反転
+			flipLR();
+			lr = true;
+		}
+		else
+		{
+			lr = false;
+		}
+
+		// クリッピング
+		if(elm.clipleft !== void)
+		{
+			// クリッピングが指定されている
+			width = +elm.clipwidth;
+			height = +elm.clipheight;
+			var cl = elm.clipleft;
+			if(lr) cl = imageWidth - cl - width;
+			var ct = elm.cliptop;
+			if(ud) ct = imageHeight - ct - height;
+			imageLeft = -cl;
+			imageTop = -ct;
+		}
+		else
+		{
+			setSizeToImageSize();
+		}
+
+		// レイヤモード
+		{
+			var mode = ltAlpha;
+
+			if(elm.mode !== void)
+			{
+				var layertypeinfo = imageTagLayerType[elm.mode];
+				if(layertypeinfo !== void)
+					mode = layertypeinfo.type;
+			}
+
+			type = mode;
+		}
+
+		// 色補正
+		face = dfAuto;
+		applyColorCorrection(this, elm);
+
+		// 可視不可視、位置、不透明度、インデックス
+		if ( elm !== void && elm.pos !== void ) {
+			// ポジションに従って位置を決定
+			left= window.scPositionX[elm.pos] - width \ 2;
+			top = window.scHeight - height;
+		}
+		else
+		{
+			if(elm.left !== void) left = +elm.left;
+			if(elm.top !== void) top = +elm.top;
+		}
+		if(elm.visible !== void) visible = +elm.visible;
+		if(elm.opacity !== void) opacity = +elm.opacity;
+		if(elm.index !== void)
+		{
+			absolute = +elm.index;
+			delete elm.index;	//	taginfo に設定されたままだと問題があるので
+		}
+
+		// アニメーション情報があれば、読み込む
+		Anim_storageName =
+			Storages.getPlacedPath(
+				Storages.chopStorageExt(elm.storage) + ".asd");
+		if(Anim_storageName != '')
+		{
+			// アニメーション情報があった!
+			// アニメーション情報をデフォルトのコンダクタに読み込む
+			loadAnimInfo(0, ''); // ついでにアニメーション開始(もし開始できれば)
+		}
+	}
+
+	//kag3ex/AffineLayer.tjs loadImagesから複製
+	var	_initOpacity= 255;
+	var	_initType	= ltAlpha;
+	function AffineLayer_loadImages(elm)
+	{
+		//	消去範囲をリセット
+//		affineSource._clearRegion.update(0, 0, global.Layer.imageWidth, global.Layer.imageHeight) if screenSizeLayer;
+//initMicro(7, "");
+		//	読込
+		var	ret;
+		if(_orgimage != this)
+		{
+			ret	= _orgimage.loadImages(elm.storage, elm.key);
+			_orgimage.setSizeToImageSize();
+//			dm(name+".AffineLayer_loadImages: storage = "+elm.storage+"("+imageWidth+", "+imageHeight+") → "+_orgimage.storage);
+			_storage	= _orgimage.storage;
+		}
+		else
+		{
+			global.KAGLayer.loadImages(_storage = elm.storage, elm.key);
+			global.KAGLayer.setSizeToImageSize();
+		}
+		if(ret != null && ret !== void)
+		{
+			_initType = ret.mode !== void ? global.imageTagLayerType[ret.mode].type : ltAlpha;
+			_initOpacity = ret.opacity !== void ? ret.opacity : 255;
+
+			var	st	= Storages.chopStorageExt(Storages.extractStorageName(elm.storage)).toLowerCase();
+			if(isBGStorageHead[st.substr(0, 2)])
+			{
+				sf.displayedPictures[st]++;
+				var	link	= displayedLinks[st];
+				sf.displayedPictures[link]++ if link != void;
+			}
+		}
+		else
+		{
+			_initType = ltAlpha;
+			_initOpacity = 255;
+		}
+		if( typeof elm.needreset != "undefined" && elm.needreset == true )
+			reset();
+		else
+			calcAffine();
+//dispMicro("AffineLayer_loadImages("+elm.storage+")", 7);
+		return ret;
+	}
+
+	function AfterloadImage(elm)
+	{
+		effect	= elm.effect if elm.effect !== void;
+@if(USE_GAMMA)
+		gamma	= +elm.gamma if elm.gamma !== void;
+@endif
+		brightness	= +elm.brightness if elm.brightness !== void;
+		contrast= +elm.contrast if elm.contrast !== void;
+		xblur	= +elm.xblur if elm.xblur !== void;
+		yblur	= +elm.yblur if elm.yblur !== void;
+		_proceedingEffect = _proceedingBrightness = _proceedingContrast = _proceedingBlur = _proceedingNoise = _proceedingHaze =
+@if(USE_GAMMA)
+		_proceedingGamma =
+@endif
+		void;	//	状態をリセット
+	}
+
+	property expsize
+	{
+		setter(v)
+		{
+			if(_expsize != v)
+				_expsize	= v;
+		}
+		getter	{ return _expsize; }
+	}
+
+	/*----------------------------------------------------------------------------/
+	/	画像ファイルを変更するアクションのため、storage プロパティを追加
+	/----------------------------------------------------------------------------*/
+	var	_storage	= "";
+	property storage
+	{
+		setter(v)
+		{
+			if(storage != v)
+			{
+//				dm(name+".storage = "+storage+" → "+v+": "+_storage+", "+(_orgimage != void ? _orgimage.storage : ""));
+				if(v != "")
+				{
+					loadImages(%[storage:v, visible:visible]);	//	読み込む
+				}
+				else
+				{
+					freeImage();
+					calcAffine();
+				}
+			}
+		}
+		getter	{ return _orgimage != this ? _orgimage.storage : _storage; }
+	}
+
+	//	画像読み込み前の位置を取得
+	function internalStorePos()
+	{
+		return [ center, vcenter ];
+	}
+
+	//	画像読み込み前の位置に復帰
+	function internalRestorePos(pos)
+	{
+		center	= pos[0];
+		vcenter	= pos[1];
+	}
+
+	property centerCorrect	{ getter { return 0; } }
+	property verticalCorrect{ getter { return 0; } }
+
+	/*----------------------------------------------------------------------------/
+	/	レイヤーの色変え(元画像を直接変更する)
+	/		ガンマ値系(monochrome,sepia,nega,red,blue,green,0xFFFFFFFF)
+	/		塗りつぶし系(monoFFFFFFFF)
+	/----------------------------------------------------------------------------*/
+	//	effect
+	var _effect	= "";				//	指定されている effect
+	var _proceedingEffect	= "";	//	実際に処置されている effect
+	var _holdeffect		= "";	//	旧タグによって効果開始タグ〜効果終了タグまで永続する効果
+
+	property effect
+	{
+		setter(v)
+		{
+			v	= v.toLowerCase() if typeof v == "String";
+			if(effect != v)
+			{
+//				dm(name+".effect "+effect+" → "+v+" / "+Scripts.getTraceString());
+				_effect	= v;	//	※ storage と effect が同時に変更されたら、二重に読み込みを行なうことに？
+				update(0,0,1,1);		//	→ それを回避するため、applyColorCorrection の処理は onPaint で行なうように変更
+			}
+		}
+		getter	{ return _effect; }
+	}
+
+	//	effect プロパティにより、レイヤーにかける効果を選ぶ
+	function getLayerEffect()
+	{
+//		dm(name+".getLayerEffect: "+_effect+", "+holdeffect+" / "+(holdeffect != "")+" && "+(holdeffect != "" && Layer_effect_list[holdeffect] != void));
+		if(holdeffect != "" && Layer_effect_list[holdeffect] != void)
+			return Layer_effect_list[holdeffect];
+		else if(_effect != "" && Layer_effect_list[_effect] != void)
+			return Layer_effect_list[_effect];
+		return _effect;
+	}
+
+	property holdeffect
+	{
+		setter(v)
+		{
+			v	= v.toLowerCase() if typeof v == "String";
+			if( _holdeffect != v )
+				effect	= _holdeffect = v;
+		}
+		getter	{ return _holdeffect; }
+	}
+@if(USE_GAMMA)
+	//	gamma
+	var	_gamma	= 1.0;
+	var	_proceedingGamma	= 1.0;
+
+	property gamma
+	{
+		setter(v)
+		{
+			v	= 1.0 if v < 0;
+			if(gamma !== v)
+			{
+				_gamma	= v;
+				update(0,0,1,1);
+			}
+		}
+		getter	{ return _gamma; }
+	}
+@endif
+	//	brightness
+	var	_brightness	= 0;
+	var	_proceedingBrightness	= 0;
+
+	property brightness
+	{
+		setter(v)
+		{
+			if(brightness != v)
+			{
+//				dmt(name+".brightness = "+brightness+" → "+v, typeof v);
+				_brightness	= v;
+				update(0,0,1,1);
+			}
+		}
+		getter	{ return _brightness; }
+	}
+
+	//	contrast
+	var _contrast	= 0;
+	var _proceedingContrast	= 0;
+	var _holdcontrast	= 0;	//	旧タグによって効果開始タグ〜効果終了タグまで永続する効果
+
+	property contrast
+	{
+		setter(v)
+		{
+			v	= int(v);
+			if(v < -127)		v	= -127;
+			else if(v > 127)	v	= 127;
+			if(contrast != v)
+			{
+				_contrast	= v;
+				update(0,0,1,1);
+			}
+		}
+		getter
+		{
+			var c = _contrast + _holdcontrast;
+			if(c < -127)		c	= -127;
+			else if(c > 127)	c	= 127;
+			return c;
+		}
+	}
+
+	property holdcontrast
+	{
+		setter(v)
+		{
+			v	= +v < -127 ? -127 : +v > 127 ? 127 : +v;
+			if( _holdcontrast != v )
+				contrast	= _holdcontrast = v;
+		}
+		getter
+		{
+			return _holdcontrast;
+		}
+	}
+
+	function updateExpSize()
+	{
+		expsize	= xblur != 0 || yblur != 0 || haze != 0;
+	}
+
+	//	blur(xblur,yblur)
+	//	※ 前景画像にかけるときは、画像のサイズにブラーのサイズを織り込んでおくこと
+	var _xblur	= 0;
+	var _yblur	= 0;
+	var _proceedingBlur	= "";	//	"1x1"の形式で保存
+	var _holdblur	= "";	//	旧タグによって効果開始タグ〜効果終了タグまで永続する効果
+
+	property blur
+	{
+		setter(v)
+		{
+			v	= int(v);
+			if(v < 0)	v	= 0;
+			if(xblur != v || yblur != v)
+			{
+				_xblur	= v;
+				_yblur	= v;
+				updateExpSize();
+				update(0,0,1,1);
+			}
+		}
+		getter
+		{
+			if( _holdblur != void ){
+				var b = string(( _xblur > _holdblur ) ? _xblur : _holdblur);
+				b += "x";
+				b += string(( _yblur > _holdblur ) ? _yblur : _holdblur);
+				return b;
+			}
+			return _xblur + "x" + _yblur;
+		}
+	}
+
+	property xblur
+	{
+		setter(v)
+		{
+			v	= int(v);
+			if(v < 0)	v	= 0;
+			if(xblur != v)
+			{
+//				dm(name+".xblur = "+xblur+" → "+v+" / "+Scripts.getTraceString());
+				_xblur	= v;
+				updateExpSize();
+				update(0,0,1,1);
+			}
+		}
+		getter
+		{
+			if( _holdblur != void ){
+				return ( _xblur > _holdblur ) ? _xblur : _holdblur;
+			}
+			return _xblur;
+		}
+	}
+
+	property yblur
+	{
+		setter(v)
+		{
+			v	= int(v);
+			if(v < 0)	v	= 0;
+			if(yblur != v)
+			{
+				_yblur	= v;
+				updateExpSize();
+				update(0,0,1,1);
+			}
+		}
+		getter
+		{
+			if( _holdblur != void )
+				return ( _yblur > _holdblur ) ? _yblur : _holdblur;
+			return _yblur;
+		}
+	}
+
+	property holdblur
+	{
+		setter(v)
+		{
+			v	= +v < 0 ? 0 : +v;
+			if( _holdblur != v )
+				blur	= _holdblur = v;
+		}
+		getter	{ return _holdblur; }
+	}
+
+	var __act_x = 0;		//アクション用の座標調整
+	var __act_y = 0;
+
+	property _act_x
+	{
+		setter(v)
+		{
+			if(__act_x !== v)
+			{
+//				dm(name+"._act_x: "+_act_x+" → "+v);
+				__act_x = v;
+				calcOffset();
+			}
+		}
+		getter	{ return __act_x; }
+	}
+
+	property _act_y
+	{
+		setter(v)
+		{
+			if(__act_y !== v)
+			{
+//				dm(name+"._act_y: "+_act_y+" → "+v);
+				__act_y = v;
+				calcOffset();
+			}
+		}
+		getter	{ return __act_y; }
+	}
+
+	//	loadImages の時には、色補正は行なわない
+	function applyColorCorrection(){};	//	何もしない
+
+	//	onPaint の時に色補正を行なう
+	//	※	onPaint が呼び出されないときは、CharacterLayer.override.tjs の onPaint に原因があるかも
+	function onPaint(force=false)
+	{
+		var	elm	= %[];
+		(Dictionary.assign incontextof elm)(Anim_loadParams) if Anim_loadParams != void;
+		applyColorCorrection_in_onPaint(this, elm);	//	画像処理(単色、コントラスト、ブラー、揺らぎ、ノイズ等)
+		super.onPaint();
+		AffineLayer_onPaint();	//AffineLayerにてオーバーライドされている内容の機能移植(Affine計算系)
+
+@if(DEBUG)
+		if( this instanceof "BaseLayer" )
+		{
+			if(load_by_ss && window.fnSaveFilesBySS.count)
+			{
+				if( window.waitForAfterLoad && window.waitForOnPaint )
+				{
+					if( ! waitForChildPaint() )
+						return;
+
+					window.waitForAfterLoad = false;
+					window.waitForOnPaint = false;
+					window.tagHandlers.wait(%[time:100/window.drawspeed,canskip:0]);
+					resetPhaseChildLayers();
+					window.astl.trigger();
+//					tmrAstl.enabled = true;
+				}
+				return;
+			}
+			if(ss_by_label)
+			{
+				if( window.waitForBeforeSave && window.waitForOnPaint )
+				{
+					if( ! waitForChildPaint() )
+						return;
+
+					window.waitForBeforeSave = false;
+					window.waitForOnPaint = false;
+					window.tagHandlers.wait(%[time:100/window.drawspeed,canskip:0]);
+					resetPhaseChildLayers();
+					window.asts.trigger();
+//					tmrAsts.enabled = true;
+				}
+			}
+		}
+		else
+		{
+			if( window.waitForOnPaint )
+				if( ! waitForChildPaint() )
+					return;
+		}
+@endif
+	}
+
+	//	トランジションを開始した直後に描画が行われて、指定のトランジション時間が確保されないことがないように、先に描画
+	function forcePaint()
+	{
+		onPaint(true);
+		callOnPaint	= false;
+	}
+
+@if(DEBUG)
+	var waitForOnPaintPhase = 0;
+
+	//子レイヤーの更新待ち
+	function waitForChildPaint()
+	{
+/*
+		if( inTransition || isChildInTransition() )
+		{
+			dm("＠＠＠ onPaint トランジション中なので再度待ち" + name);
+			calcAffine();
+			return false;
+		}
+
+		if( ! waitForOnPaintPhase )
+		{
+			dm("＠＠＠ onPaint 子レイヤーの更新待ち1 " + name);
+			updateChildLayers();
+			calcAffine();
+			return false;
+		}
+		else if( ! checkPhaseChildLayers() )
+		{
+			dm("＠＠＠ onPaint 子レイヤーの更新待ち2 " + name);
+			calcAffine();
+			return false;
+		}
+*/
+		if( inTransition )
+			return false;
+
+		return true;
+	}
+
+
+	//子レイヤーを再帰的に強制更新する
+	function updateChildLayers()
+	{
+		if( children.count )
+		{
+			for( var i=0; i<children.count; i++ )
+			{
+				if( typeof children[i].updateChildLayers == "undefined" )
+					continue;
+				children[i].updateChildLayers();
+			}
+		}
+		if( typeof this.calcAffine == "undefined" )
+			update(0,0,1,1);
+		else
+			calcAffine();
+		if( typeof this.waitForOnPaintPhase != "undefined" )
+			if( ! waitForOnPaintPhase )
+				waitForOnPaintPhase = 1;
+	}
+
+	//子レイヤーを再帰的に更新待ち状態を初期化する
+	function resetPhaseChildLayers()
+	{
+		if( children.count )
+		{
+			for( var i=0; i<children.count; i++ )
+			{
+				if( typeof children[i].resetPhaseChildLayers == "undefined" )
+					continue;
+				children[i].resetPhaseChildLayers();
+			}
+		}
+		if( typeof this.waitForOnPaintPhase != "undefined" )
+			if( ! waitForOnPaintPhase )
+				waitForOnPaintPhase = 0;
+	}
+
+	//子レイヤーの更新状態を再帰的に獲得する
+	function checkPhaseChildLayers()
+	{
+		//非表示になっていたら更新完了と見なす
+		if( ! visible || ! opacity )
+		{
+			waitForOnPaintPhase = true;
+			return true;
+		}
+
+		var ret = true;
+		if( children.count )
+		{
+			for( var i=0; i<children.count; i++ )
+			{
+				if( typeof children[i].checkPhaseChildLayers == "undefined" )
+					continue;
+				if( ! children[i].checkPhaseChildLayers() )
+				{
+					ret = false;
+					break;
+				}
+			}
+		}
+		return ret;
+	}
+
+	//子レイヤーが個別トランジションの最中かどうか再帰的に獲得する
+	function isChildInTransition()
+	{
+		if( children.count )
+		{
+			for( var i=0; i<children.count; i++ )
+			{
+				if( typeof children[i].isChildInTransition == "undefined" )
+					continue;
+				if( children[i].isChildInTransition() )
+					return true;
+			}
+		}
+		return inTransition;
+	}
+/*
+	//AsyncTriggerを少々時間を置いてから実施する
+	var tmrAstl = new Timer(onTimeOutAstl, "");
+	tmrAstl.enabled = false;
+	tmrAstl.interval = 100;
+	var tmrAsts = new Timer(onTimeOutAsts, "");
+	tmrAsts.enabled = false;
+	tmrAsts.interval = 100;
+
+	function onTimeOutAstl()
+	{
+		tmrAstl.enabled = false;
+		window.waitForAfterLoad = false;
+		window.waitForOnPaint = false;
+		resetPhaseChildLayers();
+		window.astl.trigger();
+	}
+
+	function onTimeOutAsts()
+	{
+		tmrAsts.enabled = false;
+		window.waitForBeforeSave = false;
+		window.waitForOnPaint = false;
+		resetPhaseChildLayers();
+		window.asts.trigger();
+	}
+*/
+@endif
+
+	//効果をかける要素があるかどうかを返す
+	function isExistCollect()
+	{
+		if(	noise != void || haze != void /* || reloadImageByAction*/)
+			return true;
+		else
+			return false;
+	}
+
+	//noise更新の必要があるかどうかを返す(１回だけ実施するモードでの動作をサポート)
+	function checkNoiseInterval(tick)
+	{
+		if( tick > _proceedingNoise + noiseInterval )
+		{
+			if( _noiseOnce )
+			{
+				if( ! _noiseOnceDone )
+				{
+					_noiseOnceDone = true;
+					dm("AnimationLayer: noiseOnceDone cf.speffect==true のため１回だけノイズ処理します");
+					return true;
+				}
+				else
+					return false;
+			}
+			else
+				return true;
+		}
+		else
+			return false;
+	}
+
+	//haze更新の必要があるかどうかを返す(１回だけ実施するモードでの動作をサポート)
+	function checkHazeInterval(tick)
+	{
+		if( tick > _proceedingHaze + hazeInterval )
+		{
+			if( _hazeOnce )
+			{
+				if( ! _hazeOnceDone )
+				{
+					_hazeOnceDone = true;
+					dm("AnimationLayer: hazeOnceDone cf.speffect==true のため１回だけヘイズ処理します");
+					return true;
+				}
+				else
+					return false;
+			}
+			else
+				return true;
+		}
+		else
+			return false;
+	}
+
+	function applyColorCorrection_in_onPaint(layer, param)
+	{
+		//	効果等が掛かっていたら、処理対象はコピーしたものにする
+		var	ef		= getLayerEffect();
+		if(ef != void || brightness != 0 || contrast != 0 || blur != "0x0" ||
+@if(USE_GAMMA)
+		gamma != 1 ||
+@endif
+		noise)
+			addImage(1);
+		else
+		{
+			removeImage(1);
+			_image	= _orgimage;
+		}
+
+		//	画像を読み込みなおす必要があるかチェック
+		var	tick	= System.getTickCount();
+		var	onload	= false;	//	画像の読み込みを行なったかどうか
+		if( (_proceedingEffect != ef) ||		//	effect が前回掛けたものと違う
+@if(USE_GAMMA)
+			(_proceedingGamma != gamma) ||		//	gamma が　〃
+@endif
+			(_proceedingBrightness != brightness) ||	//	brightness が　〃
+			(_proceedingContrast != contrast) ||//	contrast が　〃
+			(_proceedingBlur != blur)			//	blur が　〃
+@if(!NOISE_WRITE_FINALLAYER)
+			|| (noise && checkNoiseInterval(tick))	//	noise が有効で、更新の必要がある
+@endif
+		)
+		{
+			param.needreset	= false;	//	読み込み時、リセットを行なわない
+			copyImage(0, 1);		//	読み込んだレイヤーから効果を掛けるレイヤーへコピー
+			onload	= true;
+			_proceedingEffect = _proceedingBrightness = _proceedingContrast = _proceedingBlur = _proceedingNoise = void;	//	読み込みなおしたので、効果が掛かっていない
+@if(USE_GAMMA)
+			_proceedingGamma = 1.0;
+@endif
+		}
+
+		//	effect プロパティ
+		if(_proceedingEffect != ef)	//	effect が変化していたり、効果の内容が変わっていたら
+		{
+			if(ef instanceof "Array")
+			{
+				//	規定の処理を行なう
+				param.rgamma = ef[0]; param.rfloor = ef[1]; param.rceil = ef[2];
+				param.ggamma = ef[3]; param.gfloor = ef[4]; param.gceil = ef[5];
+				param.bgamma = ef[6]; param.bfloor = ef[7]; param.bceil = ef[8];
+				param.grayscale	= ef[9];
+				for(var i=10; i<ef.count; i+=5)
+				{
+					param.blends	= [] if param.blends == void;
+					param.blends.add([ ef[i], ef[i+1], ef[i+2], ef[i+3], ef[i+4] ]);	//	r g b a layertype
+				}
+				onload	= true;
+			}
+			else if(ef.substr(0, 2) == "0x")
+			{
+				//	ガンマ値の直接指定
+				param.rfloor = param.rceil = param.gfloor = param.gceil = param.bfloor = param.bceil = void;
+				var	tmp	= ef!;
+				param.rgamma	= ((tmp >> 16) & 0xFF) / 0xFF;
+				param.ggamma	= ((tmp >>  8) & 0xFF) / 0xFF;
+				param.bgamma	= ( tmp        & 0xFF) / 0xFF;
+				onload	= true;
+			}
+			else if(ef.substr(0, 4) == "mono")
+			{
+				//	単色表示(半透明にするなら、直接 opacity を設定する)
+				var	tmp	= ("0x"+ef.substr(4))!;
+				var	lastface	= face;
+				face		= dfOpaque;
+				holdAlpha	= true;
+				fillRect(0, 0, _image.imageWidth, _image.imageHeight, tmp & 0xFFFFFF);
+				face		= lastface;
+			}
+			_proceedingEffect	= ef;
+		}
+@if(USE_GAMMA)
+		//	gamma プロパティ
+		if(_proceedingGamma != gamma) with(param)
+		{
+			if(.rgamma === void)
+				.rgamma = .ggamma = .bgamma = gamma;
+			else if(gamma !== void)
+			{
+				.rgamma	*= gamma;
+				.ggamma	*= gamma;
+				.bgamma	*= gamma;
+			}
+			_proceedingGamma	= gamma;
+			onload	= true;
+		}
+@endif
+		//	元の処理を実施
+		if(onload)
+		{
+			super.applyColorCorrection(layer, param);
+
+			//	カラーブレンド、覆い焼きなど
+			if(param.blends != void)
+			{
+				for(var i=0; i<param.blends.count; i++)
+				{
+					var	bl	= param.blends[i];
+					if(bl[3] == 0)
+						continue;
+					var	color	= (bl[0] << 16) | (bl[1] << 8) | bl[2];
+					if(bl[4] == ltAlpha)
+					{
+						var	lastface	= face;
+						face	= dfOpaque;	//	画素にのみ書き込む
+						colorRect(0, 0, _image.imageWidth, _image.imageHeight, color, bl[3]);
+						face	= lastface;	//	元に戻す
+					}
+					else
+					{
+						var	w	= _image.imageWidth;
+						var	h	= w >= 320 ? 8 : (w >= 160 ? 16 : 32);
+						var	layer	= new global.Layer(window, this);
+						var	orgmodes	= %[ltOpaque=>1,ltAlpha=>1,ltAddAlpha=>1,ltAdditive=>1,ltSubtractive=>1,ltMultiplicative=>1,ltDodge=>1,ltLighten=>1,ltDarken=>1,ltScreen=>1];
+						layer.setSize(w, h);
+						var	lastface = face, lastha = holdAlpha;
+						layer.fillRect(0, 0, w, h, color | 0xFF000000);
+						var	opac= bl[3];
+						face	= dfOpaque;
+						holdAlpha	= true if !isPrimary;
+						var	y	= 0;
+						while(y < _image.imageHeight)
+						{
+							operateRect(0, y, layer, 0, 0, w, h, bl[4], opac);
+							y	+= h;
+						}
+						face = lastface, holdAlpha = lastha;
+						invalidate layer;
+					}
+				}
+			}
+		}
+
+		//	brightness プロパティ
+		if(_proceedingBrightness != brightness)
+		{
+			_image.light(brightness, 0) if brightness != 0;
+			_proceedingBrightness	= brightness;
+		}
+
+		//	contrast プロパティ
+		if(_proceedingContrast != contrast)
+		{
+			if(contrast != 0)
+				_image.doContrast(contrast);
+			_proceedingContrast	= contrast;
+		}
+
+		//	blur,xblur,yblur プロパティ
+		if(_proceedingBlur != blur)
+		{
+			if(xblur != 0 || yblur != 0)	//片軸だけのブラーがかけられるよう修正
+			{
+//				dm("do blur: "+xblur+", "+yblur+": "+_proceedingBlur+" != "+blur);
+				_image.doBoxBlur(xblur, yblur);
+
+				//	box blur を2重に掛けると、縦横の縞が見えづらくなるらしい(http://www.kaede-software.com/2008/03/post_525.html)
+				//	なので綺麗なブラーを掛けるため、目的のブラーを行なった後に1のブラーを行うようにする
+				_image.doBoxBlur((xblur != 0)?1:0, (yblur != 0)?1:0);	//片軸だけのブラーがかけられるよう修正
+			}
+			_proceedingBlur	= blur;
+		}
+
+		//	表のレイヤーかトランジション中
+		var	needUpdate	= this == window.fore.base ||
+			(parent != null && parent == window.fore.base) ||
+			(parent.parent != null && parent.parent == window.fore.base) ||
+			window.transCount > 0;
+
+		//	noise プロパティ
+@if(!NOISE_WRITE_FINALLAYER)
+		if(noise && needUpdate)
+		{
+			if(checkNoiseInterval(tick))
+			{
+				drawNoise(noiseMonocro, noiseUnder, noiseUpper, tick);
+				_doAffine	= _doOffset	= true;
+				_proceedingNoise	= tick;
+			}
+		}
+@endif
+		//	haze プロパティ
+		if(haze && needUpdate)
+		{
+			if(checkHazeInterval(tick))
+			{
+				var	src	= _image;
+				if(images.count == 1)
+				{
+					addImage(1);		//	haze を掛けるレイヤー
+					copyImage(0, 1);
+				}
+				else
+				{
+					addImage(2);
+					copyImage(1, 2);
+				}
+				updateWaveTable();	//	状態が変わっていたら、計算しなおす
+				fillRect(0, 0, _image.imageWidth, _image.imageHeight, 0);
+				hazeValue	+= (tick - _proceedingHaze) * 2 * hazeOmega;
+//				dm(name+"["+this+"].hazeCopy("+src.name+", "+0+", "+0+", "+hazeValue+", "+hazeDelta+", "+hazePower+", "+true+", "+0+", "+0+", "+_image.imageWidth+", "+_image.imageHeight+", "+realImageWidth+", "+realImageHeight+");");
+/*				if(src.imageWidth < _image.imageWidth || src.imageHeight < _image.imageHeight)
+					throw new Exception("haze の転送元画像("+src.imageWidth+", "+src.imageHeight+")が転送先("+_image.imageWidth+", "+_image.imageHeight+")より小さいため、処理できません。");
+*//*				hazeCopy(waveinfono, src, 0, 0, hazeValue, hazeDelta, hazePower, true,
+					0, 0, _image.imageWidth, _image.imageHeight);
+*/				doHazeCopy(src);
+				_doAffine = _doOffset = true;
+				_proceedingHaze	= tick;
+			}
+		}
+		else
+			removeImage(_image == _orgimage ? 1 : 2);
+
+		callOnPaint	= false;	//	この中での処理はすぐに反映されるので、再度の描画は不要
+	}
+
+	function doHazeCopy(src)
+	{
+		hazeCopy(waveinfono, src, 0, 0, hazeValue, hazeDelta, hazePower, true, 0, 0, _image.imageWidth, _image.imageHeight);
+	}
+
+	function calcDrawPos(mx=0, my=0)
+	{
+		mx	+= screen_plus_alpha;
+		my	+= screen_plus_alpha;
+		return [ mx, my ];
+	}
+
+	//AffineLayerにてオーバーライドされている内容の機能移植
+	function AffineLayer_onPaint(mx=0, my=0)
+	{
+		if(particle)
+		{//	パーティクルの描画
+			if(particleTick > 0)
+			{
+				updateParticle(particleTick);
+				particleTick	= 0;
+			}
+		}
+		else if(screenSizeLayer)
+		{
+			//	画面サイズの描画の場合、描画が必要ならすべて描きかえる
+			if(_doAffine)
+			{
+@if(!DRAW_DIVIDELAYERS)
+				var	pos	= calcDrawPos(mx, my);
+				setClip(maxHorizontalMargin, maxVerticalMargin, global.KAGLayer.imageWidth - (maxHorizontalMargin << 1), global.KAGLayer.imageHeight - (maxVerticalMargin << 1));
+				affineSource.drawAffine(this, left + pos[0], top + pos[1], affineSource.width, affineSource.height,
+					afx, afy, _rotate, _zoomx, _zoomy, _aorder);
+@endif
+@if(DRAW_DIVIDELAYERS)
+				//	1対1の描画
+				if(hasImage)
+				{
+					affineSource.drawAffine(this, left + pos[0], top + pos[1], affineSource.width, affineSource.height,
+						afx, afy, _rotate, _zoomx, _zoomy, _aorder);
+				}
+				//	分割描画を行う
+				else
+				{
+					var	l	= left + pos[0], t = top + pos[1];
+					affineSource.init();
+					var	pos	= calcDrawPos(mx, my);
+					var	da	= _orgimage.orgTag.divideArea;
+					var	rgs	= affineSource._regions;
+					for(var i=0; i<da.count; i++) with(divideLayers[i])
+					{
+						affineSource.draw(divideLayers[i], l + +da[i][0], t + +da[i][1], +da[i][0], +da[i][1], +da[i][2], +da[i][3], afx, afy, _rotate, _zoomx, _zoomy, _aorder);
+
+						//	描画先がレイヤー外なら、表示しない
+						var	lr	= rgs[i];
+//						dm(i+": "+lr.left+", "+lr.top+" - "+lr.width+", "+lr.height);
+						.visible	= !(lr.left > .imageLeft + .imageWidth || lr.top > .imageTop + .imageHeight || lr.left + lr.width < .imageLeft || lr.top + lr.height < .imageTop);
+					}
+				}
+@endif
+			}
+@if(NOISE_WRITE_FINALLAYER)
+			var	tick	= System.getTickCount();
+			if(noise && (_doAffine || checkNoiseInterval(tick)))
+			{
+				var	rect	= affineSource._clearRegion;
+				var	l		= Math.max(0, rect.left);
+				var	t		= Math.max(0, rect.top);
+				//	描画対象となる領域全体を最大サイズとみなす(partbg よりも中の fg の方が多い場合のため)
+				var	w		= Math.min(realImageWidth - (l > 0 ? l : 0), rect.width);
+				var	h		= Math.min(realImageHeight - (t > 0 ? t : 0), rect.height);
+//				dm(rect.left+", "+rect.right+", "+rect.width+" = "+w+" / "+parent);
+//				dm("drawNoise("+noiseMonocro+", "+noiseUnder+", "+noiseUpper+", "+tick+", "+l+", "+t+", "+w+", "+h+") / "+clipLeft+", "+clipTop+", "+clipWidth+", "+clipHeight);
+				drawNoise(noiseMonocro, noiseUnder, noiseUpper, tick, l, t, w, h);
+				callOnPaint	= false;
+				_proceedingNoise	= tick;
+			}
+@endif
+			_doAffine = false;
+		}
+		else
+		{
+			//	最小サイズの描画の場合、移動とアフィンコピーは分けて考える
+			if(_doAffine)
+			{
+				_doAffine = false;
+//				dm(name+": "+zoomx+", "+zoomy+", "+rotate+", "+needAffine);
+				if(!needAffine)
+				{
+					_ax = 0;
+					_ay = 0;
+					with(global.KAGLayer)
+					{
+						.assignImages(affineSource);
+						.setSize(width, height);
+						.setImagePos(imageLeft, imageTop);
+						if(_zoomx == -100)
+							.flipLR();
+						if(_zoomy == -100)
+							.flipUD();
+					}
+				}
+				else
+				{
+					var rad, sn, cs, rad, stepx, stepy;
+					rad = (Math.PI * rotate) * 1.0 / 180.0;
+					sn = Math.sin(rad);
+					cs = Math.cos(rad);
+					stepx = zoomx * 1.0 / 100.0;
+					stepy = zoomy * 1.0 / 100.0;
+
+					var	dxh, dxv, dyh, dyv;
+					if(aorder == "rm")
+					{
+						dxh = stepx * cs;
+						dxv = stepx * sn;
+						dyh = -stepy * sn;
+						dyv = stepy * cs;
+					}
+					else
+					{
+						dxh = stepx*cs;
+						dxv = stepy*sn;
+						dyh = -stepx*sn;
+						dyv = stepy*cs;
+					}
+
+					var	_afx	= afx;
+					var	_afy	= afy;
+
+					var lx = -(afx + affineSource.margin);
+					var ly = -(afy + affineSource.margin);
+					var rx = width  + lx;
+					var ry = height + ly;
+
+					// 更新エリア4隅の座標を求める
+					var x = [], x0;
+					var y = [], y0;
+					x.add(x0 = Math.round(lx*dxh+ly*dxv + afx));
+					y.add(y0 = Math.round(lx*dyh+ly*dyv + afy));
+					x.add(Math.round(rx*dxh+ly*dxv + afx));
+					y.add(Math.round(rx*dyh+ly*dyv + afy));
+					x.add(Math.round(lx*dxh+ry*dxv + afx));
+					y.add(Math.round(lx*dyh+ry*dyv + afy));
+					x.add(Math.round(rx*dxh+ry*dxv + afx));
+					y.add(Math.round(rx*dyh+ry*dyv + afy));
+
+					//	最大最小値を得る
+					x.sort();
+					y.sort();
+
+					//	座標補正
+					_ax	= x[0];
+					_ay	= y[0];
+
+					//	サイズ補正
+					var	w	= x[3] - x[0];
+					var	h	= y[3] - y[0];
+					if(w == 0 || h == 0)
+					{
+						with(global.KAGLayer)
+							.fillRect(0, 0, .width, .height, neutralColor);
+					}
+					else
+						doAffine(x0, y0, x[0], y[0], dxh, dxv, dyh, dyv, w, h);
+				}
+			}
+		}
+		if(_doOffset)
+		{
+			_doOffset	= false;
+			doOffset(mx, my);
+		}
+	}
+
+	function doAffine(ltx, lty, ax, ay, dxh, dxv, dyh, dyv, w, h)
+	{
+//		dm(@"${storage}.doAffine(${ltx}, ${lty}, ${ax}, ${ay}, ${dxh}, ${dxv}, ${dyh}, ${dyv}, ${w}, ${h})");
+		with(global.KAGLayer)
+		{
+			.setImageSize(w, h);
+			.setSizeToImageSize();
+			var tx = ltx - ax;
+			var ty = lty - ay;
+			.affineCopy(affineSource, -imageLeft, -imageTop, width, height, true,
+						dxh, dyh, dxv, dyv, tx, ty, stCubic|stRefNoClip, true);
+		}
+	}
+
+	//	_act_x, _act_y を積算する
+	function calcAct(mx, my)
+	{
+//	quake や shock を、それぞれにレイヤーに対して処理するようになったため
+		mx	+= _ax + _act_x;
+		my	+= _ay + _act_y;
+@if(0)
+		var	par	= parent;
+		while(par != null)
+		{
+			if(typeof par._act_x != "undefined")
+			{
+				mx	+= par._act_x;
+				my	+= par._act_y;
+			}
+			par	= par.parent;
+		}
+@endif
+		return [ mx, my ];
+	}
+
+	function doOffset(mx, my)
+	{
+//		dm(@"${parent.name}.${name}[${storage}].doOffset() = setPos(${left} + ${_ax} + ${_act_x}, ${top} + ${_ay} + ${_act_y})");
+
+//	サブピクセルでレイヤーの配置は行えないので
+//		if(parent instanceof "PartBgLayer")
+//			mx	+= parent.left - int parent.left, my += parent.top - int parent.top;
+		if(screenSizeLayer)
+		{
+			//	_act_x, _act_y の影響のみ受ける
+//			dm(realWidth+", "+realHeight+" / "+realImageWidth+", "+realImageHeight);
+			if(realWidth == realImageWidth || realHeight == realImageHeight)
+			{
+				//	正しく表示する準備が整っていないので、とりあえず中央を表示する
+				setRealImagePos(
+					-(realImageWidth - realWidth) * 0.5,
+					-(realImageHeight - realHeight) * 0.5
+				);
+			}
+			else
+			{
+				var	pos	= calcAct(-screen_plus_alpha, -screen_plus_alpha);
+				setRealImagePos(
+					Math.max(Math.min(pos[0], 0), -screen_plus_alpha * 2),
+					Math.max(Math.min(pos[1], 0), -screen_plus_alpha * 2)
+				);
+			}
+		}
+		else
+		{
+			var	pos	= calcAct(mx, my);
+			setRealPos(int left + pos[0], int top + pos[1]);
+		}
+	}
+
+	function assign(src)
+	{
+		if(src instanceof "AnimationLayer")
+		{
+//			dm(name+".assign("+src.name+")");
+			screenSizeLayer	= src.screenSizeLayer;
+			if(_orgimage != this)
+			{
+				_orgimage.assignImages(src._orgimage);
+				_orgimage.setSizeToImageSize();
+			}
+			else
+			{
+				global.KAGLayer.assignImages(src);
+				global.KAGLayer.setSizeToImageSize();
+			}
+			for(var i=1; i<src.images.count; i++)
+			{
+				var	layer	= addImage(i);
+				layer.assignImages(src.images[i]);
+				layer.setSizeToImageSize();
+			}
+			for(var i=src.images.count; i<images.count; i++)
+				invalidate images[i] if images[i] != void;
+			images.count	= src.images.count;
+			_image			= images[images.count-1];
+
+			realWidth	= src.realWidth;
+			realHeight	= src.realHeight;
+			center		= src.center;
+			vcenter		= src.vcenter;
+			_expsize	= src._expsize;
+			_effect		= src._effect;
+			_brightness	= src.brightness;
+			_contrast	= src._contrast;
+			_xblur		= src._xblur;
+			_yblur		= src._yblur;
+			_rotate		= src._rotate;
+			_zoomx		= src._zoomx;
+			_zoomy		= src._zoomy;
+			_aorder		= src._aorder;
+			_afn_offx	= src._afn_offx;
+			_afn_offy	= src._afn_offy;
+//			__act_x		= src.__act_x;
+//			__act_y		= src.__act_y;
+			_ax			= src._ax;
+			_ay			= src._ay;
+			setStatus(src);
+			_proceedingEffect	= src._proceedingEffect;
+@if(USE_GAMMA)
+			_proceedingGamma	= src._proceedingGamma;
+@endif
+			_proceedingBrightness	= src._proceedingBrightness;
+			_proceedingContrast	= src._proceedingContrast;
+			_proceedingBlur		= src._proceedingBlur;
+			_holdeffect		= src._holdeffect;
+			_holdcontrast	= src._holdcontrast;
+			timeRate	= src.timeRate;
+/*
+			particle	= src.particle;
+			assignParticle(src);
+			particleImage	= _orgimage if initializedParticle;
+*/			uninitParticle();	//	assignParticle が invalid instance type 問題を解決できないので、パーティクルをコピーしない
+		}
+		super.assign(...);
+		callOnPaint	= false;	//	描画は不要(丸ごとコピーされているので)
+	}
+
+	function setOptions(elm)
+	{
+		with(elm)
+		{
+			storage	= .storage if .storage !== void;
+			left	= .left !== void ? +.left : (.x !== void ? +.x : left);
+			top		= .top !== void ? +.top : (.y !== void ? +.y : top);
+			center	= +.center if .center !== void;
+			vcenter	= +.vcenter if .vcenter !== void;
+			afx		= .afx !== void ? +.afx : (.cx !== void ? +.cx : afx);
+			afy		= .afy !== void ? +.afy : (.cy !== void ? +.cy : afy);
+			if(.mag !== void)
+				zoomx = zoomy = +.mag;
+			else if(.zoom !== void)
+				zoomx = zoomy = +.zoom;
+			else
+			{
+				zoomx	= .zoomx !== void ? +.zoomx : (.zx !== void ? +.zx : zoomx);
+				zoomy	= .zoomy !== void ? +.zoomy : (.zy !== void ? +.zy : zoomy);
+			}
+			rotate	= .rotate !== void ? +.rotate : (.rot !== void ? -.rot : rotate);
+			aorder	= .aorder !== void ? .aorder : aorder;
+			type	= +.type if .type !== void;
+			if(.blur !== void)
+				xblur = yblur = +.blur;
+			else
+			{
+				xblur	= .xblur !== void ? +.xblur : xblur;
+				yblur	= .yblur !== void ? +.yblur : yblur;
+			}
+			effect	= .effect !== void ? .effect : effect;
+@if(USE_GAMMA)
+			gamma	= .gamma !== void ? +.gamma : gamma;
+@endif
+			brightness	= .brightness !== void ? +.brightness : brightness;
+			contrast= .contrast !== void ? +.contrast : contrast;
+			noise	= .noise if .noise !== void;
+			noiseInterval	= .noiseInterval !== void ? .noiseInterval : (.noiseinterval !== void ? .noiseinterval : noiseInterval);
+			noiseMonocro	= .noiseMonocro !== void ? .noiseMonocro : (.noisemonocro !== void ? .noisemonocro : noiseMonocro);
+			timeRate		= .timerate if .timerate !== void;
+		}
+		super.setOptions(...);
+	}
+
+	/**
+	 *	レイヤーのアクション状態に関するプロパティを設定する.
+	 *	@param elm パラメータの設定されたオブジェクト
+	 *	@param init パラメータがないとき、初期化するかどうか
+	 */
+	function setStatus(elm, init=false)
+	{
+		for(var i=0; i<AnimationLayerStatuses.count; i++)
+		{
+			var	prop	= AnimationLayerStatuses[i];
+			if(typeof elm[prop] != "undefined")
+				this[prop]	= elm[prop];
+			else if(init)
+				this[prop]	= AnimationLayerStatusInits[i];
+		}
+	}
+
+	/**
+	 *	初期化.
+	 */
+	function initStatus()
+	{
+		for(var i=0; i<AnimationLayerStatuses.count; i++)
+			this[AnimationLayerStatuses[i]]	= AnimationLayerStatusInits[i];
+	}
+
+	function store()
+	{
+		var	dic	= super.store();
+		with(dic)
+		{
+			delete .loadParams if .loadParams === void;
+			delete .partialImageInfo if .partialImageInfo === void;
+			delete .opacity if .opacity == 255;
+			delete .segments if .segments === void || ! .segments.count;
+
+			.storage		= storage if storage !== void && storage != "";
+			.effect			= effect if effect != "";
+@if(USE_GAMMA)
+			.gamma			= gamma if gamma != 1.0;
+@endif
+			.brightness		= brightness if brightness != 0;
+			.contrast		= contrast if contrast != 0;
+			._rotate		= _rotate if _rotate != 0;
+			._zoomx			= _zoomx if _zoomx != 100;
+			._zoomy			= _zoomy if _zoomy != 100;
+			._aorder		= _aorder if _aorder != "";
+			._afn_offx		= _afn_offx if _afn_offx != AFFINEOFFSET_CENTER;
+			._afn_offy		= _afn_offy if _afn_offy != AFFINEOFFSET_CENTER;
+			.xblur			= xblur if xblur != 0;
+			.yblur			= yblur if yblur != 0;
+//			.__act_x		= __act_x if __act_x != 0;
+//			.__act_y		= __act_y if __act_y != 0;
+			.screenSizeLayer= screenSizeLayer if ! screenSizeLayer;
+			._ax			= _ax if _ax != 0;
+			._ay			= _ay if _ay != 0;
+			._holdeffect	= _holdeffect if _holdeffect != void;
+			._holdcontrast	= _holdcontrast if _holdcontrast != 0;
+			.timeRate		= timeRate if timeRate != 1.0;
+
+			if( quake )
+			{
+				.quake			= quake;
+				.quakeHMax		= quakeHMax;
+				.quakeVMax		= quakeVMax;
+				.quakeInterval	= quakeInterval;
+			}
+			if( shake )
+			{
+				.shake			= shake;
+				.shakeHMax		= shakeHMax;
+				.shakeVMax		= shakeVMax;
+				.shakeCycle		= shakeCycle;
+			}
+			if( haze )
+			{
+				.haze			= haze;
+				.hazePower		= hazePower;
+				.hazeDelta		= hazeDelta;
+				.hazeOmega		= hazeOmega;
+				.hazeWaves		= hazeWaves;
+				.hazeLineWaves	= hazeLineWaves;
+				.hazePowers		= hazePowers;
+				.hazeInterval	= hazeInterval;
+			}
+			if( noise )
+			{
+				.noise			= noise;
+				.noiseMonocro	= noiseMonocro;
+				.noiseUnder		= noiseUnder;
+				.noiseUpper		= noiseUpper;
+				.noiseInterval	= noiseInterval;
+			}
+		}
+		return dic;
+	}
+
+	function restore(dic)
+	{
+		//初期化し直しになるのでクリアする
+		reset();
+
+		with(dic)
+		{
+			_orgimage.storage	= "";	//	初期化のために再読込をする必要があるので
+			storage		= (.storage !== void) ? .storage : "";
+			effect		= .effect if .effect !== void;
+@if(USE_GAMMA)
+			gamma		= .gamma if .gamma !== void;
+@endif
+			brightness	= .brightness if .brightness !== void;
+			contrast	= .contrast if .contrast !== void;
+			_rotate		= ._rotate if ._rotate !== void;
+			_zoomx		= ._zoomx if ._zoomx !== void;
+			_zoomy		= ._zoomy if ._zoomy !== void;
+			_aorder		= ._aorder if ._aorder !== void;
+			_afn_offx	= ._afn_offx if ._afn_offx !== void;
+			_afn_offy	= ._afn_offy if ._afn_offy !== void;
+//			__act_x		= .__act_x if .__act_x !== void;
+//			__act_y		= .__act_y if .__act_y !== void;
+			screenSizeLayer	= (.screenSizeLayer !== void) ? .screenSizeLayer : true;
+			_ax			= ._ax if ._ax !== void;
+			_ay			= ._ay if ._ay !== void;
+			_holdeffect	= ._holdeffect;				//保存レコードになければvoid初期化
+			_holdcontrast	= (._holdcontrast !== void) ? ._holdcontrast : 0;	//無ければ0初期化
+			timeRate	= .timeRate if .timeRate != void;
+
+			if( .quake )
+			{
+				quakeHMax		= .quakeHMax if .quakeHMax !== void;
+				quakeVMax		= .quakeVMax if .quakeVMax !== void;
+				quakeInterval	= .quakeInterval if .quakeInterval !== void;
+				quake			= .quake;
+			}
+			if( .shake )
+			{
+				shakeHMax		= .shakeHMax if .shakeHMax !== void;
+				shakeVMax		= .shakeVMax if .shakeVMax !== void;
+				shakeCycle		= .shakeCycle if .shakeCycle !== void;
+				shake			= .shake;
+			}
+			if( .haze )
+			{
+				hazePower		= .hazePower if .hazePower !== void;
+				hazeDelta		= .hazeDelta if .hazeDelta !== void;
+				hazeOmega		= .hazeOmega if .hazeOmega !== void;
+				hazeWaves		= .hazeWaves if .hazeWaves !== void;
+				hazeLineWaves	= .hazeLineWaves if .hazeLineWaves !== void;
+				hazePowers		= .hazePowers if .hazePowers !== void;
+				hazeInterval	= .hazeInterval if .hazeInterval !== void;
+				haze			= .haze;
+			}
+			if( .noise )
+			{
+				noiseMonocro	= .noiseMonocro if .noiseMonocro !== void;
+				noiseUnder		= .noiseUnder if .noiseUnder !== void;
+				noiseUpper		= .noiseUpper if .noiseUpper !== void;
+				noiseInterval	= .noiseInterval if .noiseInterval !== void;
+				noise			= .noise;
+			}
+			.opacity = 255 if .opacity === void;
+			.segments = [] if .segments === void;
+			super.restore(dic);
+
+			xblur		= .xblur if .xblur !== void;		//最後に戻す
+			yblur		= .yblur if .yblur !== void;		//最後に戻す
+		}
+	}
+
+	//##############################################################################
+	// AffineLayer機能
+	// 以下、KAG3EXのAffineLayer機能をプレーンなKAG3のAnmationLayerに移植
+	// 　※KAG3EX: class AffineLayer extends KAGLayer
+	// 　　KAG3EX: class AnimationLayer extends AffineLayer
+	// 　　KAG3:   class AnimationLayer extends KAGLayer ←処理対象
+
+@if(DEBUG)
+	function update()
+	{
+		if(window == null)
+			return;
+		super.update(...);
+	}
+@endif
+
+	//アフィンの再計算指示
+	function calcAffine()
+	{
+		_doAffine = true;
+		doOffset();
+		_doOffset = true;	//	描画された後にも処理が必要なので
+		update(0,0,1,1);
+	}
+
+	//	オフセット位置の再計算指示
+	function calcOffset()
+	{
+//		_doOffset = true;
+//		update(0,0,1,1);
+		doOffset();	//	一々 onPaint を実行する必要がないので
+	}
+
+	//初期化処理 登録済み画像の状態に戻す
+	function reset()
+	{
+		invalidate Anim_loadParams if Anim_loadParams !== void;
+		Anim_loadParams = void;
+		freeImage();
+		left = 0;
+		top = 0;
+		opacity = _initOpacity if _initOpacity !== void;
+		type    = _initType    if _initType    !== void;
+		_afn_offx = AFFINEOFFSET_CENTER;
+		_afn_offy = AFFINEOFFSET_CENTER;
+		_rotate = 0;
+		_zoomx = 100;
+		_zoomy = 100;
+		_aorder = "";
+		__act_x = 0;
+		__act_y = 0;
+		effect	= "";
+@if(USE_GAMMA)
+		gamma	= 1.0;
+@endif
+		brightness	= 0;
+		contrast= 0;
+		xblur	= 0;
+		yblur	= 0;
+		initStatus();	//	初期化
+
+		calcAffine();
+	}
+
+	//アフィン変換のオフセット基準を指定
+	// @param x オフセット位置X
+	// @param y オフセット位置Y
+	// AFFINEOFFSET_CENTER/TOP/BOTTOM/RIGHT/LEFT が指定可能。デフォルトは AFFINEOFFSET_CENTER
+	function setAffineOffset(x,y)
+	{
+		afx = x;
+		afy = y;
+	}
+
+	//ペイント前処理
+	//AnimationLayer.onPaint ※本ソース上方にて色補正機能拡張あり、そちらに移植コードも記述
+
+	//回転量（度）
+	property rotate
+	{
+		setter(v) {	_rotate = v;	checkNeedAffine();	calcAffine();	}
+		getter()  {	return _rotate;	}
+	}
+
+	/// ズームX（％指定）
+	property zoomx
+	{
+		setter(v) {	_zoomx = v;	checkNeedAffine();	calcAffine();	}
+		getter()  {	return _zoomx;	}
+	}
+
+	/// ズームY（％指定）
+	property zoomy
+	{
+		setter(v) {	_zoomy = v;	checkNeedAffine();	calcAffine();	}
+		getter()  {	return _zoomy;	}
+	}
+
+	// ズーム（％指定）
+	property zoom
+	{
+		setter(v) {
+			_zoomx = v;
+			_zoomy = v;
+			checkNeedAffine();
+			calcAffine();
+		}
+		getter() {
+			return _zoomx;
+		}
+	}
+
+	//	Affine変換順序
+	property aorder	{ setter(v) { _aorder = v; } getter { return _aorder; } }
+
+	property realCenterAfx	{ getter { return _orgimage.width\2 + _orgimage.centerCorrect; } }
+	property realCenterAfy	{ getter { return _orgimage.height\2 + _orgimage.verticalCorrect; } }
+
+	//	KeyFrameAction.doAction で afx, afy を正しい値に変換するために使用
+	function calcAfx(v)
+	{
+		switch (v)
+		{
+			case AFFINEOFFSET_CENTER:	return realCenterAfx;
+			case AFFINEOFFSET_LEFT:		return 0;
+			case AFFINEOFFSET_RIGHT:	return _orgimage.width;
+		}
+		return v;
+	}
+
+	function calcAfy(v)
+	{
+		switch (v)
+		{
+			case AFFINEOFFSET_CENTER:	return realCenterAfy;
+			case AFFINEOFFSET_TOP:		return 0;
+			case AFFINEOFFSET_BOTTOM:	return _orgimage.height;
+		}
+		return v;
+	}
+
+	// 拡大縮小回転中心軸Ｘ
+	property afx
+	{
+		setter(v)
+		{
+			if (typeof v == "String")
+			{
+				if (v == "center" || v == "void")
+					_afn_offx = AFFINEOFFSET_CENTER;
+				else if (v == "left" || v == "top")
+					_afn_offx = AFFINEOFFSET_LEFT;
+				else if (v == "right" || v == "bottom")
+					_afn_offx = AFFINEOFFSET_RIGHT;
+				else
+					_afn_offx = v;
+			}
+			else if (typeof v == "void")
+				_afn_offx = AFFINEOFFSET_CENTER;
+			else
+				_afn_offx = v;
+			calcAffine();
+		}
+		getter()
+		{
+			return calcAfx(_afn_offx);
+		}
+	}
+
+	// 拡大縮小回転中心軸Ｙ
+	property afy
+	{
+		setter(v)
+		{
+			if (typeof v == "String")
+			{
+				if (v == "center" || v == "void")
+					_afn_offy = AFFINEOFFSET_CENTER;
+				else if (v == "left" || v == "top")
+					_afn_offy = AFFINEOFFSET_LEFT;
+				else if (v == "right" || v == "bottom")
+					_afn_offy = AFFINEOFFSET_RIGHT;
+				else
+					_afn_offy = v;
+			}
+			else if (typeof v == "void")
+				_afn_offy = AFFINEOFFSET_CENTER;
+			else
+				_afn_offy = v;
+			calcAffine();
+		}
+		getter()
+		{
+			return calcAfy(_afn_offy);
+		}
+	}
+
+	// ズーム量を指定する
+	// @param zx 横ズーム
+	// @parma zy 縦ズーム。省略すると横と同じ値
+	function setZoom(zx, zy=void)
+	{
+		//Debug.message("setZoom:" + zx + ":" + zy);
+		if (zy == void) {
+			zy = zx;
+		}
+		_zoomx = zx;
+		_zoomy = zy;
+		calcAffine();
+	}
+
+	// restore時など完全にクリアした状態から開始させるための画像クリア処理
+	function clearSuperImg(fillColor=0xFF000000)
+	{
+		if(_orgimage != this) with(_orgimage)
+		{
+			.mode = ltAlpha;
+			.fillRect(.imageLeft,.imageTop,.imageWidth,.imageHeight,fillColor);
+		}
+		clearImages();
+		with(global.KAGLayer)
+		{
+			.mode = ltAlpha;
+			.fillRect(.imageLeft,.imageTop,.imageWidth,.imageHeight,fillColor);
+		}
+	}
+
+	// アクション用移動差分指定
+	// @param x アクション移動差分X方向
+	// @param y アクション移動差分Y方向
+	function setActionOffset(x, y)
+	{
+		this.__act_x = x;
+		this.__act_y = y;
+		calcOffset();
+	}
+
+	function adjustGamma(rgamma=1.0, rfloor=0, rceil=255, ggamma=1.0, gfloor=0, gceil=255, bgamma=1.0, bfloor=0, bceil=255)
+	{
+		if(_image != this)
+		{
+			_image.adjustGamma(...);
+			calcAffine();
+		}
+		else
+			global.KAGLayer.adjustGamma(...);
+	}
+
+	function affineBlend(src, sleft, stop, swidth, sheight, affine, A, B, C, D, E, F, opa=255, type=stNearest)
+	{
+		if(_image != this)
+		{
+			_image.affineBlend(...);
+			calcAffine();
+		}
+		else
+			global.KAGLayer.affineBlend(...);
+	}
+
+	function affineCopy(src, sleft, stop, swidth, sheight, affine, A, B, C, D, E, F, type=stNearest, clear=false)
+	{
+		if(_image != this)
+		{
+			_image.affineCopy(...);
+			calcAffine();
+		}
+		else
+			global.KAGLayer.affineCopy(...);
+	}
+
+	function affinePile(src, sleft, stop, swidth, sheight, affine, A, B, C, D, E, F, opa=255, type=stNearest)
+	{
+		if(_image != this)
+		{
+			_image.affinePile(...);
+			calcAffine();
+		}
+		else
+			global.KAGLayer.affinePile(...);
+	}
+
+	function blendRect(dleft, dtop, src, sleft, stop, swidth, sheight, opa=255)
+	{
+		if(_image != this)
+		{
+			_image.blendRect(...);
+			calcAffine();
+		}
+		else
+			global.KAGLayer.blendRect(...);
+	}
+
+	// 画像のコピー(Layerの機能をオーバライド)
+	// @param src コピー元のレイヤ
+	function assignImages(src)
+	{
+		dm(name+".assignImages("+src+")");
+		if (src instanceof "AnimationLayer")
+		{
+			if(_orgimage != this)
+				_orgimage.assignImages(src._orgimage);
+			else
+				global.KAGLayer.assignImages(src);
+			for(var i=1; i<src.images.count; i++)
+			{
+				var	layer	= addImage(i);
+				layer.assignImages(src.images[i]);
+			}
+			for(var i=src.images.count; i<images.count; i++)
+				invalidate images[i] if images[i] != void;
+			images.count	= src.images.count;
+			_image			= images[images.count-1];
+
+			_initOpacity = src._initOpacity;
+			_initType    = src._initType;
+			_rotate = src._rotate;
+			_zoomx  = src._zoomx;
+			_zoomy  = src._zoomy;
+			_aorder = src._aorder;
+//			__act_x  = src.__act_x;
+//			__act_y  = src.__act_y;
+			_afn_offx = src._afn_offx;
+			_afn_offy = src._afn_offy;
+			_expsize = src._expsize;
+		}
+		else
+		{
+			if(_orgimage != this)
+				_orgimage.assignImages(src);
+			else
+				global.KAGLayer.assignImages(src);
+			_initOpacity = void;
+			_initType    = void;
+		}
+		calcAffine();
+	}
+
+	// ムービー用
+	function assignImagesForMovie(src)
+	{
+		_image.assignImages(src);
+		calcAffine();
+	}
+
+	function colorRect(left, top, width, height, value, opa=255)
+	{
+		if(_image != this)
+		{
+			_image.colorRect(...);
+			calcAffine();
+		}
+		else
+			global.KAGLayer.colorRect(...);
+	}
+
+	function copyRect(dleft, dtop, src, sleft, stop, swidth, sheight)
+	{
+		if(_image != this)
+		{
+			calcAffine();
+			_image.copyRect(...);
+		}
+		else
+			global.KAGLayer.copyRect(...);
+	}
+
+	function doBoxBlur(xblur=1, yblur=1)
+	{
+		if(_image != this)
+		{
+			_image.doBoxBlur(...);
+			calcAffine();
+		}
+		else
+			global.KAGLayer.doBoxBlur(...);
+	}
+
+	function doGrayScale()
+	{
+		if(_image != this)
+		{
+			_image.doGrayScale(...);
+			calcAffine();
+		}
+		else
+			global.KAGLayer.doGrayScale(...);
+	}
+
+	function drawText(x, y, text, color, opa=255, aa=true, shadowlevel=0, shadowcolor=0x000000, shadowwidth=0, shadowofsx=0, shadowofsy=0)
+	{
+		if(_image != this)
+		{
+			_image.drawText(...);
+			calcAffine();
+		}
+		else
+			global.KAGLayer.drawText(...);
+	}
+
+	function fillRect(left, top, width, height, value)
+	{
+		if(_image != this)
+		{
+			_image.fillRect(...);
+			calcAffine();
+		}
+		else
+			global.KAGLayer.fillRect(...);
+	}
+
+	function flipLR()
+	{
+		if(_image != this)
+		{
+			_image.flipLR(...);
+			calcAffine();
+		}
+		else
+			global.KAGLayer.flipLR(...);
+	}
+
+	function flipUD()
+	{
+		if(_image != this)
+		{
+			_image.flipUD(...);
+			calcAffine();
+		}
+		else
+			global.KAGLayer.flipUD(...);
+	}
+
+	function independMainImage()
+	{
+		if(_image != this)
+			_image.independMainImage(...);
+		else
+			global.KAGLayer.independMainImage(...);
+	}
+
+	function independProvinceImage()
+	{
+		if(_image != this)
+			_image.independProvinceImage(...);
+		else
+			global.KAGLayer.independProvinceImage(...);
+	}
+
+	function loadProvinceImage()
+	{
+		onPaint();
+		KAGLayer.loadProvinceImage(...);
+	}
+
+	function operateAffine(src, sleft, stop, swidth, sheight, affine, A, B, C, D, E, F, mode=omAuto, opa=255, type=stNearest)
+	{
+		if(_image != this)
+		{
+			_image.operateAffine(...);
+			calcAffine();
+		}
+		else
+			global.KAGLayer.operateAffine(...);
+	}
+
+	function operateRect(dleft, dtop, src, sleft, stop, swidth, sheight, mode=omAuto, opa=255)
+	{
+		if(_image != this)
+		{
+			_image.operateRect(...);
+			calcAffine();
+		}
+		else
+			global.KAGLayer.operateRect(...);
+	}
+
+	function operateStretch(dleft, dtop, dwidth, dheight, src, sleft, stop, swidth, sheight, mode=omAuto, opa=255, type=stNearest)
+	{
+		if(_image != this)
+		{
+			_image.operateStretch(...);
+			calcAffine();
+		}
+		else
+			global.KAGLayer.operateStretch(...);
+	}
+
+	function pileRect(dleft, dtop, src, sleft, stop, swidth, sheight, opa=255)
+	{
+		if(_image != this)
+		{
+			_image.pileRect(...);
+			calcAffine();
+		}
+		else
+			global.KAGLayer.pileRect(...);
+	}
+
+	function piledCopy(dleft, dtop, src, sleft, stop, swidth, sheight)
+	{
+		if(_image != this)
+		{
+			_image.piledCopy(...);
+			calcAffine();
+		}
+		else
+			global.KAGLayer.piledCopy(...);
+	}
+
+	// 配置位置指定
+	function setImagePos(l, t, w, h)
+	{
+		if( l === void || t === void ) return;
+		if(_orgimage != this)
+		{
+			_orgimage.setImagePos(...);
+			calcAffine();
+		}
+		else
+			global.KAGLayer.setImagePos(...);
+	}
+
+	// サイズの指定(Layerの機能をオーバライド)
+	// @param w 横幅
+	// @param h 縦幅
+	function setImageSize(w, h)
+	{
+		if( w === void || h === void ) return;
+		if(_orgimage != this)
+			_orgimage.setImageSize(...);
+		else
+			global.KAGLayer.setImageSize(...);
+		calcAffine();
+	}
+
+	// 配置位置指定
+	function setPos(l, t, w, h)
+	{
+		_orgimage.left = l;
+		_orgimage.top  = t;
+		if(w !== void && h !== void)
+		{
+			if(_orgimage != this)
+				_orgimage.setSize(w, h);
+			else
+				global.KAGLayer.setSize(w, h);
+		}
+		calcAffine();
+	}
+
+	// サイズの指定(Layerの機能をオーバライド)
+	// @param w 横幅
+	// @param h 縦幅
+	function setSize(w, h)
+	{
+		if(_orgimage != this)
+		{
+			_orgimage.setSize(...);
+			calcAffine();
+		}
+		else
+			global.KAGLayer.setSize(...);
+	}
+
+	// サイズをイメージにあわせる(Layerの機能をオーバライド)
+	function setSizeToImageSize()
+	{
+		if(_orgimage != this)
+		{
+			_orgimage.setSizeToImageSize(...);
+			calcAffine();
+		}
+		else
+			global.KAGLayer.setSizeToImageSize(...);
+	}
+
+	function stretchBlend(dleft, dtop, dwidth, dheight, src, sleft, stop, swidth, sheight, opa=255, type=stNearest)
+	{
+		if(_image != this)
+		{
+			_image.stretchBlend(...);
+			calcAffine();
+		}
+		else
+			global.KAGLayer.stretchBlend(...);
+	}
+
+	function stretchCopy(dleft, dtop, dwidth, dheight, src, sleft, stop, swidth, sheight, type=stNearest)
+	{
+		if(_image != this)
+		{
+			_image.stretchCopy(...);
+			calcAffine();
+		}
+		else
+			global.KAGLayer.stretchCopy(...);
+	}
+
+	function stretchPile(dleft, dtop, dwidth, dheight, src, sleft, stop, swidth, sheight, opa=255, type=stNearest)
+	{
+		if(_image != this)
+		{
+			_image.stretchPile(...);
+			calcAffine();
+		}
+		else
+			global.KAGLayer.stretchPile(...);
+	}
+@if(DRAW_DIVIDELAYERS)
+	property realLeft
+	{
+		setter(v)	{ super.left = v; if(!hasImage){for(var i=0; i<divideLayers.count; i++) divideLayers[i].left = v;} }
+		getter		{ return super.left; }
+	}
+
+	property realTop
+	{
+		setter(v)	{ super.top = v; if(!hasImage){for(var i=0; i<divideLayers.count; i++) divideLayers[i].top = v;} }
+		getter		{ return super.top; }
+	}
+
+	property realWidth
+	{
+		setter(v)	{ super.width = v; if(!hasImage){for(var i=0; i<divideLayers.count; i++) divideLayers[i].width = v;} }
+		getter		{ return super.width; }
+	}
+
+	property realHeight
+	{
+		setter(v)	{ super.height = v; if(!hasImage){for(var i=0; i<divideLayers.count; i++) divideLayers[i].height = v;} }
+		getter		{ return super.height; }
+	}
+
+	property realImageLeft
+	{
+		getter		{ return hasImage ? global.Layer.imageLeft : divideLayers[0].imageLeft; }
+		setter(v)	{ if(hasImage){global.Layer.imageLeft = v;}else{for(var i=0; i<divideLayers.count; i++) divideLayers[i].imageLeft = v;} }
+	}
+
+	property realImageTop
+	{
+		getter		{ return hasImage ? global.Layer.imageTop : divideLayers[0].imageTop; }
+		setter(v)	{ if(hasImage){global.Layer.imageTop = v;}else{for(var i=0; i<divideLayers.count; i++) divideLayers[i].imageTop = v;} }
+	}
+
+	property realImageWidth
+	{
+		getter		{ return hasImage ? global.Layer.imageWidth : divideLayers[0].imageWidth; }
+		setter(v)	{ if(hasImage){global.Layer.imageWidth = v;}else{for(var i=0; i<divideLayers.count; i++) divideLayers[i].imageWidth = v;} }
+	}
+
+	property realImageHeight
+	{
+		getter		{ return hasImage ? global.Layer.imageHeight : divideLayers[0].imageHeight; }
+		setter(v)	{ if(hasImage){global.Layer.imageHeight = v;}else{for(var i=0; i<divideLayers.count; i++) divideLayers[i].imageHeight = v;} }
+	}
+
+	function setRealPos(l, t)
+	{
+		super.setPos(l, t);
+
+		if(!hasImage)
+		{
+			for(var i=0; i<divideLayers.count; i++) with(divideLayers[i])
+				.setPos(l, t);
+		}
+	}
+
+	function setRealImagePos(l, t)
+	{
+		if(hasImage)
+			super.setImagePos(l, t);
+		else
+		{
+			for(var i=0; i<divideLayers.count; i++) with(divideLayers[i])
+				.setImagePos(l, t);
+		}
+	}
+@endif
+@if(!DRAW_DIVIDELAYERS)
+	property realLeft
+	{
+		setter(v)	{ super.left = v; }
+		getter		{ return super.left; }
+	}
+
+	property realTop
+	{
+		setter(v)	{ super.top = v; }
+		getter		{ return super.top; }
+	}
+
+	property realWidth
+	{
+		setter(v)	{ super.width = v; }
+		getter		{ return super.width; }
+	}
+
+	property realHeight
+	{
+		setter(v)	{ super.height = v; }
+		getter		{ return super.height; }
+	}
+
+	property realImageLeft
+	{
+		getter		{ return global.KAGLayer.imageLeft; }
+		setter(v)	{ global.KAGLayer.imageLeft = v; }
+	}
+
+	property realImageTop
+	{
+		getter		{ return global.KAGLayer.imageTop; }
+		setter(v)	{ global.KAGLayer.imageTop = v; }
+	}
+
+	property realImageWidth
+	{
+		getter		{ return global.KAGLayer.imageWidth; }
+		setter(v)	{ global.KAGLayer.imageWidth = v; }
+	}
+
+	property realImageHeight
+	{
+		getter		{ return global.KAGLayer.imageHeight; }
+		setter(v)	{ global.KAGLayer.imageHeight = v; }
+	}
+
+	function setRealPos(l, t)
+	{
+		super.setPos(l, t);
+	}
+
+	function setRealImagePos(l, t)
+	{
+		super.setImagePos(l, t);
+	}
+@endif
+	property left
+	{
+		setter(v)
+		{
+//			dm(name+".left = "+left+" → "+v);
+			if(_orgimage != this)
+				_orgimage.left = v;
+			else
+				global.KAGLayer.left	= v;
+			if(screenSizeLayer)
+				calcAffine();
+			else
+				calcOffset();
+		}
+		getter()
+		{
+			return _orgimage != this ? _orgimage.left : global.KAGLayer.left;
+		}
+	}
+
+	property top
+	{
+		setter(v)
+		{
+			if(_orgimage != this)
+				_orgimage.top = v;
+			else
+				global.KAGLayer.top	= v;
+			if(screenSizeLayer)
+				calcAffine();
+			else
+				calcOffset();
+		}
+		getter()
+		{
+			return _orgimage != this ? _orgimage.top : global.KAGLayer.top;
+		}
+	}
+
+	property center
+	{
+		setter(v)
+		{
+//			dm(name+".center = "+center+" → "+v+"("+(_orgimage.width\2)+" + "+_orgimage.centerCorrect+")");
+			left	= v - realCenterAfx;
+		}
+		getter
+		{
+			return left + realCenterAfx;
+		}
+	}
+
+	property vcenter
+	{
+		setter(v)
+		{
+			top	= v - realCenterAfy;
+		}
+		getter
+		{
+			return top + realCenterAfy;
+		}
+	}
+
+	property ground
+	{
+		getter	{ return parent != void && typeof parent._orgimage != "undefined" && typeof parent._orgimage.groundBase != "undefined" ? +parent._orgimage.groundBase : window.primaryLayer.height; }
+	}
+
+	property width
+	{
+		setter(v)
+		{
+			var	last	= center;	//	サイズの変化に中心位置が影響を受けないようにするため
+			if(_orgimage != this)
+				_orgimage.width = v;
+			else
+				global.KAGLayer.width	= v;
+			calcAffine();
+			center		= last;
+		}
+		getter()	{ return _orgimage != this ? _orgimage.width : global.KAGLayer.width; }
+	}
+
+	property height
+	{
+		setter(v)
+		{
+			var	last	= vcenter;	//	サイズの変化に中心位置が影響を受けないようにするため
+			if(_orgimage != this)
+				_orgimage.height = v;
+			else
+				global.KAGLayer.height	= v;
+			calcAffine();
+			vcenter		= last;
+		}
+		getter()	{ return _orgimage != this ? _orgimage.height : global.KAGLayer.height; }
+	}
+
+	property imageLeft
+	{
+		setter(v)
+		{
+			if(_orgimage != this)
+				_orgimage.imageLeft = v;
+			else
+				global.KAGLayer.imageLeft	= v;
+			calcAffine();
+		}
+		getter()	{ return _orgimage != this ? _orgimage.imageLeft : global.KAGLayer.imageLeft; }
+	}
+
+	property imageTop
+	{
+		setter(v)
+		{
+			if(_orgimage != this)
+				_orgimage.imageTop = v;
+			else
+				global.KAGLayer.imageTop	= v;
+			calcAffine();
+		}
+		getter()	{ return _orgimage != this ? _orgimage.imageTop : global.KAGLayer.imageTop; }
+	}
+
+	property imageWidth
+	{
+		setter(v)
+		{
+			if(_orgimage != this)
+				_orgimage.imageWidth = v;
+			else
+				global.KAGLayer.imageWidth	= v;
+			calcAffine();
+		}
+		getter()	{ return _orgimage != this ? _orgimage.imageWidth : global.KAGLayer.imageWidth; }
+	}
+
+	property imageHeight
+	{
+		setter(v)
+		{
+			if(_orgimage != this)
+				_orgimage.imageHeight = v;
+			else
+				global.KAGLayer.imageHeight	= v;
+			calcAffine();
+		}
+		getter()	{ return _orgimage != this ? _orgimage.imageHeight : global.KAGLayer.imageHeight; }
+	}
+
+	//	読み込んでいる画像のサイズ
+	property storageImageWidth
+	{
+		getter()	{ return _orgimage != this ? _orgimage.imageWidth : global.KAGLayer.imageWidth; }
+	}
+
+	property storageImageHeight
+	{
+		getter()	{ return _orgimage != this ? _orgimage.imageHeight : global.KAGLayer.imageHeight; }
+	}
+
+	property face
+	{
+		setter(v)	{ if(_image != this) _image.face = v; else global.KAGLayer.face = v; }
+		getter()	{ return _image != this ? _image.face : global.KAGLayer.face; }
+	}
+
+	property font
+	{
+		setter(v)	{ if(_orgimage != this) _orgimage.font = v; else global.KAGLayer.font = v; }
+		getter()
+		{
+			if(_orgimage === void || _orgimage == this) return global.Layer.font;
+			return _orgimage.font;
+		}
+	}
+
+	property holdAlpha
+	{
+		setter(v)	{ if(_image != this) _image.holdAlpha = v; else global.KAGLayer.holdAlpha = v; }
+		getter()	{ return _image != this ? _image.holdAlpha : global.KAGLayer.face; }
+	}
+
+	property neutralColor
+	{
+		setter(v)
+		{
+			if(_orgimage != this)
+				_orgimage.neutralColor = v;
+			else
+				global.KAGLayer.neutralColor	= v;
+		}
+		getter
+		{
+			return _orgimage != this ? _orgimage.neutralColor : global.KAGLayer.neutralColor;
+		}
+	}
+
+	// ----------------------------------------------------------------
+	// LayerEx 対応
+
+	function light(brightness, contrast)
+	{
+		if(_image != this)
+		{
+			_image.light(...);
+			calcAffine();
+		}
+		else
+			global.KAGLayer.light(...);
+	}
+
+	function colorize(hue, sat, blend)
+	{
+		if(_image != this)
+		{
+			_image.colorize(...);
+			calcAffine();
+		}
+		else
+			global.KAGLayer.colorize(...);
+	}
+
+	function doDropShadow(dx=10, dy=10, blur=3, shadowColor=0x000000, shadowOpacity=200)
+	{
+		if(_image != this)
+		{
+			_image.doDropShadow(...);
+			calcAffine();
+		}
+		else
+			global.KAGLayer.doDropShadow(...);
+	}
+
+	function doBlurLight(blur=10, blurOpacity=128, lightOpacity=200, lightType=ltPsHardLight)
+	{
+		if(_image != this)
+		{
+			_image.doBlurLight(...);
+			calcAffine();
+		}
+		else
+			global.KAGLayer.doBlurLight(...);
+	}
+
+	function tileRect(left, top, width, height, tile, x=0, y=0)
+	{
+		if(_image != this)
+		{
+			_image.tileRect(...);
+			calcAffine();
+		}
+		else
+			global.KAGLayer.tileRect(...);
+	}
+
+	function fillOperateRect(left, top, width, height, color, mode)
+	{
+		if(_image != this)
+		{
+			_image.fillOperateRect(...);
+			calcAffine();
+		}
+		else
+			global.KAGLayer.fillOperateRect(...);
+	}
+@if(!NOISE_WRITE_FINALLAYER)
+	function drawNoise(monocro=true, under=0, upper=255, seed=System.getTickCount(), holdalpha=0)
+	{
+		if(_image != this)
+			_image.drawNoise(monocro, under, upper, seed, 0, 0, _image.imageWidth, _image.imageHeight, holdalpha);
+		else
+			global.KAGLayer.drawNoise(monocro, under, upper, seed, 0, 0, _image.imageWidth, _image.imageHeight, holdalpha);
+	}
+@endif
+/*
+	function array2string(array)
+	{
+		if(array == void)
+			return "void";
+
+		var	text	= " [ ";
+		var	sept	= "";
+		for(var i=0; i<array.count; i++)
+		{
+			if(array[i] instanceof "Array")
+				text	+= sept + array2string(array[i]);
+			else
+				text	+= sept + array[i];
+			sept	= ", ";
+		}
+		return text + " ] ";
+	}
+*/
+	function initHazeCopy(waves, lwaves, powers)
+	{
+		try
+		{
+			if(_image != this)
+				this.waveinfono	= _image.initHazeCopy(typeof this.waveinfono != "undefined" ? waveinfono : void, waves, lwaves, powers);
+			else
+				this.waveinfono	= global.KAGLayer.initHazeCopy(typeof this.waveinfono != "undefined" ? waveinfono : void, waves, lwaves, powers);
+		}
+		catch(e)
+			dm("initHazeCopy.exception: "+e.message);
+//		dmt(name+".initHazeCopy() = "+this.waveinfono);
+	}
+
+	function uninitHazeCopy()
+	{
+//		dmt(name+".uninitHazeCopy() = "+(typeof this.waveinfono != "undefined" ? this.waveinfono : "undefined"));
+		if(typeof this.waveinfono == "undefined")
+			return;
+		try
+		{
+			if(_image != this)
+				_image.uninitHazeCopy(this.waveinfono);
+			else
+				global.KAGLayer.uninitHazeCopy(this.waveinfono);
+		}
+		catch(e)
+			dm("uninitHazeCopy.exception: "+e.message);
+		delete this.waveinfono;
+	}
+
+	function hazeCopy(waveinfono, srcLayer, left, top, rad, delta, per, alphablend, destLeft, destTop, destWidth, destHeight)
+	{
+		if(_image != this)
+		{
+			_image.hazeCopy(waveinfono, srcLayer, left, top, rad, delta, per, alphablend,
+				destLeft, destTop, destWidth, destHeight, _image.imageWidth, _image.imageHeight);
+		}
+		else
+			global.KAGLayer.hazeCopy(waveinfono, srcLayer, left, top, rad, delta, per, alphablend,
+				destLeft, destTop, destWidth, destHeight, realImageWidth, realImageHeight);
+	}
+
+	// ----------------------------------------
+	//	相対アクションを実行するためのメンバー
+	var relact	= void;	//	relact を対象プロパティとして、相対アクションの状態を変更する
+
+	//	レイヤーに対応するアクション管理オブジェクト(ActionInfo)を取得
+	property actionInfo
+	{
+		getter	{ return window.getActionInfo(this); }
+	}
+
+	/*
+	 *	相対アクションプロパティ
+	 */
+
+	//プロパティによるアクションの全停止処理
+	function stopPropActions()
+	{
+		//dm("stopPropActions");
+		quake = false;
+		shake = false;
+		haze = false;
+		noise = false;
+	}
+
+	//	振動(quake)
+	property quake
+	{
+		setter(v)
+		{
+			if(+v === quake)
+				return;
+//			dm(name+".quake = "+quake+" → "+v);
+			if(+v)
+			{
+				//	アクション開始
+@if(ANIMATIONLAYER_ACTION_VERVOSE)
+				dmv("quake_property: quake start");
+@endif
+				var doForce = (typeof this["_quakeForce"]!="undefined")? true: false;
+				delete _quakeForce;
+				var	info	= actionInfo;
+				var elm = %[waittime:quakeInterval, force:doForce, acttype:"quake", time:quakeTime];
+				elm.vibration = quakeHMax;
+				info.addAction(_quake_h_prop, _quake_handler, elm );
+				elm.vibration = quakeVMax;
+				info.addAction(_quake_v_prop,  _quake_handler, elm );
+				updateHorizontalMargin();
+				updateVerticalMargin();
+			}
+			else
+			{
+				//	アクション終了
+				var	info	= actionInfo;
+@if(ANIMATIONLAYER_ACTION_VERVOSE)
+				dmv("quake_property: quake stop...");
+@endif
+				info.stopAction(_quake_h_prop, _quake_handler);
+				info.stopAction(_quake_v_prop, _quake_handler);
+				//	関連するプロパティのアクションが存在すれば、それも停止する
+				info.stopAction("quakeHMax");
+				info.stopAction("quakeVMax");
+				info.stopAction("quakeInterval");
+				info.stopAction("quakeTime");
+			}
+		}
+		getter
+		{
+			var	info	= actionInfo;
+			return info.isAction(_quake_h_prop, _quake_handler) || info.isAction(_quake_v_prop, _quake_handler);
+		}
+	}
+
+	//	揺れ(shake)
+	property shake
+	{
+		setter(v)
+		{
+			if(+v === shake)
+				return;
+			if(v)
+			{
+				//	アクション開始
+@if(ANIMATIONLAYER_ACTION_VERVOSE)
+				dmv("shake_property: shake start");
+@endif
+				var doForce	= (typeof this["_shakeForce"] != "undefined") ? true : false;
+				delete _shakeForce;
+				var	info	= actionInfo;
+				var elm = %[cycle:shakeCycle, force:doForce, acttype:"shake", time:shakeTime];
+				elm.vibration = shakeHMax;
+				info.addAction(_shake_h_prop, _shake_handler, elm );
+				elm.vibration = shakeVMax;
+				info.addAction(_shake_v_prop,  _shake_handler, elm );
+				updateHorizontalMargin();
+				updateVerticalMargin();
+			}
+			else
+			{
+				//	アクション終了
+@if(ANIMATIONLAYER_ACTION_VERVOSE)
+				dmv("shake_property: shake stop");
+@endif
+				stopShock();
+			}
+		}
+		getter
+		{
+			var	info	= actionInfo;
+			return info.isAction(_shake_h_prop, _shake_handler) || info.isAction(_shake_v_prop, _shake_handler);
+		}
+	}
+
+	/**
+	 *	減衰する揺れ(shock)
+	 *	@param cycle	周期
+	 *	@param hv		横方向の振幅
+	 *	@param vv		縦方向の振幅
+	 *	@param count	何周するか
+	 */
+	function startShock(cycle=300, hv=0, vv=10, count=3)
+	{
+		var	elm	= %[cycle:cycle, acttype:"shock", count:count];
+		var	info= actionInfo;
+		if(hv != 0)
+		{
+			elm.vibration	= hv;
+			info.addAction(_rel_h_prop, _shock_handler, elm);
+			updateHorizontalMargin(hv);
+		}
+		if(vv != 0)
+		{
+			elm.vibration	= vv;
+			info.addAction(_rel_v_prop, _shock_handler, elm);
+			updateVerticalMargin(vv);
+		}
+	}
+
+	/**
+	 *	減衰する揺れを停止させる(shock)
+	 */
+	function stopShock()
+	{
+		var	info	= actionInfo;
+		info.stopAction(_shake_h_prop, _shake_handler);
+		info.stopAction(_shake_v_prop, _shake_handler);
+		//	関連するプロパティのアクションが存在すれば、それも停止する
+		info.stopAction("shakeHMax");
+		info.stopAction("shakeVMax");
+		info.stopAction("shakeCycle");
+		info.stopAction("shakeTime");
+	}
+
+	//	ランダムな揺れ
+	var	swingXYRate	= .3;	//	縦より横の方が揺れる
+	property swing
+	{
+		setter(v)
+		{
+			if(+v === swing)
+				return;
+			if(+v)
+			{//	開始
+				var	elm	= %[mincycle:swingMinCycle, maxcycle:swingMaxCycle,
+							minvibration:swingMinVibration, maxvibration:swingMaxVibration,
+							rate:swingRate, acttype:"swing", time:swingTime];
+				var	info	= actionInfo;
+				info.addAction(_rel_h_prop, _swing_handler, elm);
+				elm.minvibration	*= swingXYRate;
+				elm.maxvibration	*= swingXYRate;
+				info.addAction(_rel_v_prop, _swing_handler, elm);
+				updateHorizontalMargin();
+				updateVerticalMargin();
+			}
+			else
+			{//	終了
+				var	info	= actionInfo;
+				info.stopAction(_rel_h_prop, _swing_handler);
+				info.stopAction(_rel_v_prop, _swing_handler);
+				//	関連するプロパティのアクションが存在すれば、それも停止する
+				info.stopAction("swingMaxCycle");
+				info.stopAction("swingMinCycle");
+				info.stopAction("swingMaxVibration");
+				info.stopAction("swingMinVibration");
+				info.stopAction("swingRate");
+				info.stopAction("swingTime");
+				info.stopAction("swingXYRate");
+			}
+		}
+		getter
+		{
+			var	info	= actionInfo;
+			return info.isAction(_rel_h_prop, _swing_handler) || info.isAction(_rel_v_prop, _swing_handler);
+		}
+	}
+
+	//	揺らぎ(haze)
+	var	_proceedingHaze	= void;		//	処置されている hazeのtick(基準位置)
+	var	_haze	= false;
+	var _hazeOnce		= false;	//	特殊効果表示OFFの時は１回だけしか実施しない
+	var _hazeOnceDone	= false;	//	１回だけの実施が終了した
+	property haze
+	{
+		setter(v)
+		{
+			if(+v === haze)
+				return;
+//			dm(name+".haze = "+haze+" → "+v);
+
+			_proceedingHaze = void;
+			calcAffine();
+			_haze	= +v;
+			hazeValue		= 0;
+			updateExpSize();
+			updateUpdateTimer();
+
+			//	元画像が拡張されていなければ、再作成する
+			if(haze && images[1] != void && images[1].imageWidth == imageWidth)
+				_proceedingEffect = _proceedingBrightness = _proceedingContrast = _proceedingBlur = _proceedingNoise =
+@if(USE_GAMMA)
+				_proceedingGamma =
+@endif
+				void;
+			if(!haze)
+			{
+				uninitHazeCopy();
+				_needUpdateWaveTable	= true;	//	パラメータを変更せずに haze が実行されたとき、テーブルを作り直すため
+			}
+
+			_hazeOnce = ( _haze && ! cf.speffect );
+			_hazeOnceDone = false;
+		}
+		getter	{ return _haze; }
+	}
+
+	//	ノイズ(noise)
+	var _noise	= false;			//	指定されている noise
+	var	_noiseOnce		= false;	//	特殊効果表示OFFの時は１回だけしか実施しない
+	var _noiseOnceDone	= false;	//	１回だけの実施が終了した
+	var	_proceedingNoise = false;	//	処置されている noise
+	var	lastNoiseTick;				//	前回ノイズが描画された時刻
+	property noise
+	{
+		setter(v)
+		{
+			v = (v == 1 || v == 0) ? v : _noise;
+			if(v == _noise)
+				return;
+			_noise	= v;
+			_proceedingNoise	= void;
+			updateUpdateTimer();
+			update(0,0,1,1);	//	状態が変わったので、再描画が必要
+
+			_noiseOnce = ( _noise && ! cf.speffect );
+			_noiseOnceDone = false;
+		}
+		getter { return _noise; }
+	}
+
+	//	振動している間のため、描画範囲を広くする
+	var	maxHorizontalMargin, maxVerticalMargin;
+	function setHorizontalMargin(m)
+	{
+		if(m !== maxHorizontalMargin)
+		{
+			maxHorizontalMargin	= int(Math.max(0, m - 1));
+			calcAffine();
+		}
+	}
+	function setVerticalMargin(m)
+	{
+		if(m !== maxVerticalMargin)
+		{
+			maxVerticalMargin	= int(Math.max(0, m - 1));
+			calcAffine();
+		}
+	}
+
+	function updateHorizontalMargin(h)
+	{
+		//	shakeHMax 等が正数であるとは限らないので
+		if(h === void)
+			h	= screen_plus_alpha - int((quake ? Math.abs(quakeHMax) : 0) + (shake ? Math.abs(shakeHMax) : 0) + (swing ? Math.abs(swingMaxVibration) : 0)) * 2;
+		else
+			h	= screen_plus_alpha - Math.abs(h) * 2;
+			//	※ 2倍しているのは、ミスして元々の2倍振動するようになってしまったため
+			//	   既にその量で演出しているので、今回はそのまま2倍で計算するようにした
+			//	→	次のバージョンでは修正する！！
+		setHorizontalMargin(h);
+	}
+	function updateVerticalMargin(v)
+	{
+		if(v === void)
+			v	= screen_plus_alpha - int((quake ? Math.abs(quakeVMax) : 0) + (shake ? Math.abs(shakeVMax) : 0) + (swing ? Math.abs(swingMaxVibration) : 0)) * 2;
+		else
+			v	= screen_plus_alpha - Math.abs(v) * 2;
+			//	※ 2倍しているのは、ミスして元々の2倍振動するようになってしまったため
+			//	   既にその量で演出しているので、今回はそのまま2倍で計算するようにした
+			//	→	次のバージョンでは修正する！！
+		setVerticalMargin(v);
+	}
+
+	//	振動(quake)関連
+	var _quakeHMax		= 10;	//	振動の幅
+	var _quakeVMax		= 10;	//	振動の高さ
+	var _quakeInterval	= 16;	//	振動の発生周期
+	var _quakeTime		= void;	//	振動の継続時間
+
+	property quakeHMax
+	{
+		setter(v) { if(v != quakeHMax) { _quakeHMax = v !== void ? Math.abs(+v) : 10; updateQuakeAction(); updateHorizontalMargin(); } }
+		getter    { return _quakeHMax; }
+	}
+
+	property quakeVMax
+	{
+		setter(v) { if(v != quakeVMax) { _quakeVMax = v !== void ? Math.abs(+v) : 10; updateQuakeAction(); updateVerticalMargin(); } }
+		getter    { return _quakeVMax; }
+	}
+
+	property quakeInterval
+	{
+		setter(v) { if(v != _quakeInterval) { _quakeInterval = v !== void ? Math.abs(+v) : 16; updateQuakeAction(); } }
+		getter    { return _quakeInterval; }
+	}
+
+	property quakeTime
+	{
+		setter(v) { if(v != _quakeTime) { _quakeTime = v !== void ? Math.abs(+v) : void; updateQuakeAction(); } }
+		getter    { return _quakeTime; }
+	}
+
+	function updateQuakeAction()
+	{
+		var	info	= actionInfo;
+		var	act		= info.findAction(_quake_h_prop, _quake_handler);
+		if(act != void)
+		{
+			act.vibration	= quakeHMax;
+			act.waittime	= quakeInterval;
+			act.time		= quakeTime;
+		}
+		act	= info.findAction(_quake_v_prop, _quake_handler);
+		if(act != void)
+		{
+			act.vibration	= quakeVMax;
+			act.waittime	= quakeInterval;
+			act.time		= quakeTime;
+		}
+	}
+
+	//	揺れ(shake)関連
+	var _shakeHMax	= 0;
+	var _shakeVMax	= 10;
+	var _shakeCycle	= 300;	//	揺れの周期
+	var _shakeTime	= void;	//	揺れの継続時間
+
+	property shakeHMax
+	{
+		setter(v) { if(v != shakeHMax) { _shakeHMax = v !== void ? +v : 0; updateShakeAction(); updateHorizontalMargin(); } }
+		getter    { return _shakeHMax; }
+	}
+
+	property shakeVMax
+	{
+		setter(v) { if(v != shakeVMax) { _shakeVMax = v !== void ? +v : 10; updateShakeAction(); updateVerticalMargin(); } }
+		getter    { return _shakeVMax; }
+	}
+
+	property shakeCycle
+	{
+		setter(v) { if(v != _shakeCycle) { _shakeCycle = v !== void ? Math.abs(+v) : 300; updateShakeAction(); } }
+		getter    { return _shakeCycle; }
+	}
+
+	property shakeTime
+	{
+		setter(v) { if(v != _shakeTime) { _shakeTime = v !== void ? Math.abs(+v) : void; updateShakeAction(); } }
+		getter    { return _shakeTime; }
+	}
+
+	function updateShakeAction()
+	{
+		var	info	= actionInfo;
+		var	act		= info.findAction(_shake_h_prop, _shake_handler);
+		if(act != void)
+		{
+			act.vibration	= shakeHMax;
+			act.cycle		= shakeCycle;
+			act.time		= shakeTime;
+		}
+		act	= info.findAction(_shake_v_prop, _shake_handler);
+		if(act != void)
+		{
+			act.vibration	= shakeVMax;
+			act.cycle		= shakeCycle;
+			act.time		= shakeTime;
+		}
+	}
+
+	//	ランダムな揺れ(swing)関連
+	var	_swingMinCycle	= 1000;
+	var	_swingMaxCycle	= 2000;
+	var	_swingMinVibration	= 5;
+	var	_swingMaxVibration	= 10;
+	var	_swingRate	= 1;
+	var	_swingTime	= void;
+
+	property swingMinCycle
+	{
+		setter(v)	{ if(v != swingMinCycle) { _swingMinCycle = v !== void ? Math.abs(+v) : 1000; updateSwingAction(); } }
+		getter		{ return _swingMinCycle; }
+	}
+
+	property swingMaxCycle
+	{
+		setter(v)	{ if(v != swingMaxCycle) { _swingMaxCycle = v !== void ? Math.abs(+v) : 2000; updateSwingAction(); } }
+		getter		{ return _swingMaxCycle; }
+	}
+
+	property swingMinVibration
+	{
+		setter(v)	{ if(v != swingMinVibration) { _swingMinVibration = v !== void ? Math.abs(+v) : 5; updateSwingAction(); } }
+		getter		{ return _swingMinVibration; }
+	}
+
+	property swingMaxVibration
+	{
+		setter(v)	{ if(v != swingMaxVibration) { _swingMaxVibration = v !== void ? Math.abs(+v) : 10; updateSwingAction(); updateVerticalMargin(); updateHorizontalMargin(); } }
+		getter		{ return _swingMaxVibration; }
+	}
+
+	property swingRate
+	{
+		setter(v)	{ if(v != swingRate) { _swingRate = v !== void ? Math.abs(+v) : 1; updateSwingAction(); } }
+		getter		{ return _swingRate; }
+	}
+
+	property swingTime
+	{
+		setter(v) { if(v != _swingTime) { _swingTime = v !== void ? Math.abs(+v) : void; updateShakeAction(); } }
+		getter    { return _swingTime; }
+	}
+
+	function updateSwingAction()
+	{
+		var	info	= actionInfo;
+		var	act;
+		if((act = info.findAction(_rel_h_prop, _swing_handler)) != void)
+		{
+			act.minCycle	= swingMinCycle;
+			act.maxCycle	= swingMaxCycle;
+			act.minVibration= swingMinVibration;
+			act.maxVibration= swingMaxVibration;
+			act.rate		= swingRate;
+			act.time		= swingTime;
+		}
+		if((act = info.findAction(_rel_v_prop, _swing_handler)) != void)
+		{
+			act.minCycle	= swingMinCycle;
+			act.maxCycle	= swingMaxCycle;
+			act.minVibration= swingMinVibration * swingXYRate;
+			act.maxVibration= swingMaxVibration * swingXYRate;
+			act.rate		= swingRate;
+			act.time		= swingTime;
+		}
+	}
+
+	//	揺らぎ関連
+	var hazeContinue;	//	トランジション後も継続させる
+	var hazePower;		//	振幅への乗算値
+	var hazeDelta;		//	1ラインごとの角度変化(大きいとギザギザ、小さいと滑らかな波の形になる)
+	var hazeOmega;		//	1ミリ秒ごとの角度変化(大きいと早く、小さいと遅く流れる)
+	var	hazeValue;		//	現在の角度
+	var _hazeWaves;		//	波定義([ [a, b, c], [d, e, f ] ] = cos(theta * a + b) * c) + cos(theta * d + e) * f
+	var	_hazeLineWaves;//	縦方向の波定義
+	var _hazePowers;	//	特定ラインでの、波の強さの定義([ [ line, per ] ])
+	var hazeInterval;	//	揺らぎの描画間隔
+	var	hazeTick;		//	経過時間
+	var lastHazeTick;
+
+	//	hazeの各パラメータを初期化する
+	function hazeReset()
+	{
+		hazeContinue	= false;
+		hazePower		= 10;
+		hazeDelta		= 7;
+		hazeValue		= 0;
+		hazeOmega		= 1;
+		_hazeWaves		= void;
+		_hazeLineWaves	= void;
+		_hazePowers		= void;
+		hazeInterval	= 50;
+		hazeTick		= void;
+	}
+
+@if(DEBUG)
+	//	haze のパラメータで EAccessViolation 発生の恐れがないかチェックする
+	var	hazeChecked	= false;
+	function checkHazeParams()
+	{
+/*		if(hazeChecked || ss_by_label || load_by_ss)
+			return;
+		var	ws	= 0;
+		if(hazeWaves != void)
+		{
+			for(var i=0; i<hazeWaves.count; i++)
+				ws	+= Math.abs(hazeWaves[i][2]);
+			ws	*= hazePower;
+		}
+		var	size;
+		if(hazePowers != void)
+		{
+			for(var i=0; i<hazePowers.count; i++)
+			{
+				var	sz	= Math.abs(ws * hazePowers[i][1]);
+				size	= sz if sz > size;
+			}
+		}
+		else
+			size	= ws;
+
+		if(size >= screen_plus_alpha)
+		{
+			var	st	= storage != "" ? Storages.extractStorageName(storage) : "unknown";
+			System.inform(parent.name+"."+name+"("+st+") に対する haze 処理で予想される最大振幅("+size+")が"+
+				screen_plus_alpha+"を超えるため、EAccessViolation例外が発生する恐れがあります。\n"+
+				"waves の第三要素を小さくするか、power(default:10)を小さな値にして、掛けて"+screen_plus_alpha+"以下になるように調整してください。");
+		}
+		hazeChecked	= true;
+*/	}
+@endif
+	//	波テーブルのパラメータ
+	property hazeWaves
+	{
+		setter(v)
+		{
+			if(!(v instanceof "Array"))
+				v	= convertArgumentToArray(v);
+			if(!compareArray(v, hazeWaves))
+			{
+				_hazeWaves	= v;
+				_needUpdateWaveTable	= true;
+@if(DEBUG)
+				hazeChecked	= false;
+@endif
+			}
+		}
+		getter	{ return _hazeWaves; }
+	}
+
+	property hazeLineWaves
+	{
+		setter(v)
+		{
+			if(!(v instanceof "Array"))
+				v	= convertArgumentToArray(v);
+			if(!compareArray(v, hazeLineWaves))
+			{
+				_hazeLineWaves	= v;
+				_needUpdateWaveTable	= true;
+			}
+		}
+		getter	{ return _hazeLineWaves; }
+	}
+
+	property hazePowers
+	{
+		setter(v)
+		{
+			if(!(v instanceof "Array"))
+				v	= convertArgumentToArray(v);
+			if(!compareArray(v, hazePowers))
+			{
+				_hazePowers	= v;
+				_needUpdateWaveTable	= true;
+@if(DEBUG)
+				hazeChecked	= false;
+@endif
+			}
+		}
+		getter	{ return _hazePowers; }
+	}
+
+	//	波テーブルを更新する
+	var _needUpdateWaveTable	= true;
+	function updateWaveTable()
+	{
+		if(_needUpdateWaveTable)
+		{
+			initHazeCopy(hazeWaves, hazeLineWaves, hazePowers);
+			//dm("　 updateWaveTable: " + getDebugStringFromElm(hazeWaves,"hazeWaves:") + getDebugStringFromElm(hazePowers," hazePowers:"));
+			_needUpdateWaveTable	= false;
+		}
+	}
+
+	//	配列を比較
+	function compareArray(a, b)
+	{
+		if( a === void && b === void ) return true;
+		if( a === void || b === void ) return false;
+		//	配列を文字列へ
+		this.func = function(array, func)
+		{
+			var	str	= "";
+			for(var i=0; i<array.count; i++)
+				str	+= (array[i] instanceof "Array" ? func(array[i]) : string(array[i])) + ",";
+			return "["+str+"]";
+		};
+		return (func(a, func) == func(b, func));
+	}
+
+	//	"[a,b,c]"のような配列の文字列表記を配列形式に直す
+	var PAI = Math.PI;	// out! パースでPAI表記の解決
+	var PI = Math.PI;	// out! パースでPI表記の解決
+	function convertArgumentToArray(strArg)
+	{
+		if( strArg===void || strArg=="" ) return void;
+		var ws = [].split("()", strArg,, true);
+		var out = "[";
+		var dc = 0;
+		for( var i=0; i<ws.count; i++ )
+		{
+			if( ws[i] != "" )
+			{
+				if( i )	out += ",[";
+				else	out += "[";
+				out += ws[i] + "]";
+			}
+		}
+		if( out != "[" ) out += "]";
+		else			 return void;
+
+		//dm("convertArgumentToArray:" + out);
+
+		return out!;
+	}
+
+	var	updateTimer;
+	function updateUpdateTimer()
+	{
+		if(haze || noise)
+		{
+			updateTimer	= new Timer(onUpdateTimeout, "") if updateTimer == void;
+			var	iv	= Math.min(haze ? hazeInterval : 1000, noise ? noiseInterval : 1000);
+			iv	= 16 if iv < 16;
+			updateTimer.interval	= iv;
+			updateTimer.enabled		= true;
+			updateTimer.capacity	= 1;
+		}
+		else
+			updateTimer.enabled		= false;
+	}
+
+	function cancelUpdateTimer()
+	{
+		updateTimer.enabled	= false if updateTimer != void;
+	}
+
+	function onUpdateTimeout()
+	{
+		var	tick	= System.getTickCount();
+		if(	(haze && tick > lastHazeTick + hazeInterval) ||
+			(noise && tick > lastNoiseTick + noiseInterval))
+		{
+			update(0,0,1,1);
+		}
+	}
+
+	//	ノイズ関連
+	var noiseMonocro		= true;	//	モノクロノイズを描画するか
+	var noiseUnder			= 0;	//	ノイズピクセルの下限値
+	var noiseUpper			= 255;	//	ノイズピクセルの上限値
+	var noiseInterval		= 50;	//	ノイズの描画間隔
+
+	var	_doNoise;
+	property doNoise
+	{
+		setter(v)
+		{
+			_doNoise	= v;
+			update(0,0,1,1) if v !== void;
+		}
+		getter	{ return _doNoise; }
+	}
+
+	//	パーティクル処理
+	function initVectorParticle(mc=maxParticleCount, gr=0.01, l=afx, t=afy, w=1, h=1)
+	{
+		super.initVectorParticle(0, mc, gr, l, t, w, h);
+		particleImage	= _orgimage;
+	}
+
+	function initRotateParticle(mc=maxParticleCount, gr=maxParticleCount, cx=afx, cy=afy)
+	{
+		super.initRotateParticle(0, mc, gr, cx, cy);
+		particleImage	= _orgimage;
+	}
+
+	function initAccelRotateParticle(mc=maxParticleCount, gr=maxParticleCount, cx=afx, cy=afy)
+	{
+		super.initAccelRotateParticle(0, mc, gr, cx, cy);
+		particleImage	= _orgimage;
+	}
+
+	function initBlinkParticle(mc=maxParticleCount, gr=0.01, l=0, t=0, w=imageWidth, h=imageHeight)
+	{
+		super.initBlinkParticle(0, mc, gr, l, t, w, h);
+		particleImage	= _orgimage;
+	}
+
+	function uninitParticle()
+	{
+		super.uninitParticle(...);
+		particle	= false;
+	}
+
+	property particle
+	{
+		setter(v)
+		{
+//			dm(name+".particle = "+particle+" → "+v);
+			if(particle !== v)
+			{
+				if(v)
+				{
+					if(!initializedParticle)
+						return;
+					particleTick	= 0;
+					actionInfo.addAction(_particle_prop, _particle_handler, %[time:void]);
+				}
+				else
+					actionInfo.stopAction(_particle_prop, _particle_handler);
+			}
+		}
+		//	actionInfo に問い合わせするために余計に作成してしまうので、先にアクション実行中か確認する
+		getter	{ return window.isInAction(this) && actionInfo.isAction(_particle_prop, _particle_handler); }
+	}
+
+	var	_particleTick;	//	ParticleProgressAction が、経過時間を積算していく
+	property particleTick
+	{
+		setter(v)
+		{
+			_particleTick	= v;
+			update(0,0,1,1) if v > 0;
+		}
+		getter	{ return _particleTick; }
+	}
+
+@if(ANIMATIONLAYER_ACTION_VERVOSE==1)
+	function dmv(msg)
+	{
+		dm("★" + msg);
+	}
+@endif
+@if(ANIMATIONLAYER_ACTION_VERVOSE==0)
+	function dmv{return;}
+@endif
+
+}
+
+// 定数定義
+AnimationLayer.AFFINEOFFSET_CENTER = -100000;
+AnimationLayer.AFFINEOFFSET_TOP    = -100001;
+AnimationLayer.AFFINEOFFSET_BOTTOM = -100002;
+AnimationLayer.AFFINEOFFSET_LEFT   = -100001;
+AnimationLayer.AFFINEOFFSET_RIGHT  = -100002;
+
+if( typeof global.AffineLayer == "undefined" ){
+	global.AffineLayer = %[];
+	AffineLayer.AFFINEOFFSET_CENTER = +AnimationLayer.AFFINEOFFSET_CENTER;
+	AffineLayer.AFFINEOFFSET_TOP    = +AnimationLayer.AFFINEOFFSET_TOP;
+	AffineLayer.AFFINEOFFSET_BOTTOM = +AnimationLayer.AFFINEOFFSET_BOTTOM;
+	AffineLayer.AFFINEOFFSET_LEFT   = +AnimationLayer.AFFINEOFFSET_LEFT;
+	AffineLayer.AFFINEOFFSET_RIGHT  = +AnimationLayer.AFFINEOFFSET_RIGHT;
+}
+
+@endif

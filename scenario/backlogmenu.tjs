@@ -1,0 +1,291 @@
+﻿@if(__BACKLOG_DEFINED__==0)
+@set(__BACKLOG_DEFINED__=1)
+
+/*
+ *	テキスト履歴のボタン類
+ */
+var	BLignoreItem	= %[BLスクロールスライダー:1, BLquickjump:0];	//	無効にするアイテム
+//	開く
+function showBacklogMenuItem()
+{
+	if(f.bl_opened)
+		return;
+	f.bl_opened	= true;
+	inMenu("backlog");
+	kag.historyEnabled	= true;
+
+	var	time	= 750;
+	with(Menu_object)
+	{
+		.setClick(, "kag.hideHistory()");
+
+		Scripts.execStorage("backlog.ttd");
+		var	tdata	= __get_backlog_timelinedata(5);
+		var	creates	= tdata[1], name2pos = tdata[0];
+		muteAllMenuItem(tdata, false);	//	効果音ON(素早くメニュー間の移動を行うと、レイヤーが残っていて再利用される可能性があるので)
+		setCreateProp(creates[name2pos["BL背景"]], "absolute", -200000);	//	背景をテキスト履歴より奥に
+
+		//	スクロールバーのクリック位置にあわせてスライダーを移動させる
+		setCreateProps(creates[name2pos["BLスクロールバー"]], %[
+			itemMode:imLessarButton,
+			mouseDown:"setProp(\"BLスクロールスライダー\", \"pos\", parent.cursorY-vcenter+32, PRIMARY)",
+			focusable:true,
+			keyDown:"BLonKeyDown(key,shift)",
+		], 3);
+
+		//	連続して押下するページ移動ボタンは、押下時のSEを再生しない
+		setCreateProp(creates[name2pos["BLnext"]], "pressse", "");
+		setCreateProp(creates[name2pos["BLprev"]], "pressse", "");
+		setCreateProp(creates[name2pos["BLback"]], "pressse", "");	//	閉じるときのSEを設定するので、back も
+
+		//	カーソルが中に入っているかどうかチェックしない
+		setCreateProp(creates[name2pos["BLnext"]], "checkincursor", false);
+		setCreateProp(creates[name2pos["BLprev"]], "checkincursor", false);
+
+		//	QJボタン設定
+		if(typeof global.quickjump_object != "undefined")
+		{
+			setCreateProps(creates[name2pos["BLquickjump"]], %[
+				mouseUp:"kag.goBackHistory(true,kag.historyLayer.qjumpIndex)if kag.historyLayer.qjumpIndex>=0",
+				hint:"現在表示しているページへ戻ります",
+			], 2);
+		}
+		else
+			BLignoreItem["BLquickjump"]	= true;
+
+		//	タイムライン開始
+		.playTimeline(PRIMARY, creates, tdata[2], %[absolute:2100000], BLignoreItem,, true, false);
+		kag.historyLayer.quickJumpButton	= .find("BLquickjump", PRIMARY);
+
+		//	kagのキーボードフックを占有
+		kag.keyDownHook.insert(0, BLonKeyDown);	//	kag.preProcessKeys で keyDownHook が直接指定されているので
+		Menu_object.keyDownCallback	= BLonKeyDown;
+
+		//	テキスト履歴の更新を横取り
+		kag.historyLayer.updateButtonState	= onChangeBacklogPage;
+
+		//	スクロールスライダーを作成
+		var	bar	= .find("BLスクロールバー", PRIMARY);
+		var	pgs	= Math.max(0, kag.historyLayer.dataPages-1);
+		var	layer	= .addMenuItem(%[page:PRIMARY, "class" => "ScrollSliderMenuItemLayer", name:"BLスクロールスライダー",
+			storage:"backlog_カーソル", center:922, vcenter:294, vertical:true, target:kag.historyLayer, cont:true,
+			targetprop:"dispPage", viewarea:"0/0/24/56", viewareaNo:0, itemMode:imImageButton, absolute:2200000,
+			visible:true, ibv:false, opacity:0, min:0, max:pgs, range:bar.height-16, area:1, stopaction:true]);
+/*		layer.onMouseDown	= function(x, y, button, shift)
+		{
+			if(button === mbLeft)
+			{
+				lastbutton	= button;
+				diff	= parent.cursorY - vcenter - pos - (Math.max(areasize, _orgimage.imageHeight) * 0.5);
+				executeString(mousedown) if typeof this.mousedown != "undefined";	//elm経由で渡されるのでイベント名は全て小文字で
+			}
+		} incontextof layer;
+*/		//	カーソルの位置にあわせてスライダーが移動する
+		layer.onMouseDown	= function(x, y, button, shift)
+		{
+	 		if(button === mbLeft && System.getKeyState(VK_RBUTTON) ||
+	 		   button === mbRight && System.getKeyState(VK_LBUTTON) )
+				return;			//同時押しになっているので無効操作とする
+
+			if(button === mbLeft)
+			{
+				lastbutton	= button;
+				executeString(mousedown) if typeof this.mousedown != "undefined";	//elm経由で渡されるのでイベント名は全て小文字で
+			}
+			else if(button == mbRight)
+				kag.onPrimaryRightClick() if kag !== void && isvalid kag;
+		} incontextof layer;
+		layer.onMouseMove	= function()
+		{
+			if(lastbutton === mbLeft)
+			{
+				pos		= parent.cursorY - top;// - (areasize == _orgimage.imageHeight ? (_orgimage.imageHeight >> 1) : 0);
+				executeString(mousemove) if typeof this.mousemove != "undefined";	//elm経由で渡されるのでイベント名は全て小文字で
+			}
+		} incontextof layer;
+		layer.onMouseUp	= function(x, y, button, shift)
+		{
+	 		if(button === mbLeft && System.getKeyState(VK_RBUTTON) ||
+	 		   button === mbRight && System.getKeyState(VK_LBUTTON) )
+				return;			//同時押しになっているので無効操作とする
+
+			if(button === lastbutton)
+			{
+				executeString(mouseup) if typeof this.mouseup != "undefined";	//elm経由で渡されるのでイベント名は全て小文字で
+				lastbutton	= void;
+			}
+		} incontextof layer;
+		layer.layerScroll	= false;
+		layer.ssact(time, "opacity", 255);
+	}
+	return time;
+}
+//	キーボードでのダイレクトジャンプ
+function BLonKeyDown(key, shift)
+{
+	if(f.bl_opened)
+	{
+		switch(key)
+		{
+		case VK_UP:
+			with(kag.historyLayer)
+			{
+				var	item	= Menu_object.find("BLスクロールバー", PRIMARY);
+				if(item != void && item isvalid && !item.focused)
+					item.focus();
+				else if(.dispStart < 1)
+					Menu_object.execMethod("BLback", "focus",, PRIMARY);
+				else
+					.prevPage();
+			}
+			return true;
+		case VK_DOWN:
+			with(kag.historyLayer)
+			{
+				var	item	= Menu_object.find("BLスクロールバー", PRIMARY);
+				if(item != void && item isvalid && !item.focused)
+					item.focus();
+				else if(.dispStart >= .dataPages-1)
+					Menu_object.execMethod("BLback", "focus",, PRIMARY);
+				else
+					.nextPage();
+			}
+			return true;
+		case #'J':
+			if(typeof global.quickjump_object != "undefined")
+			{
+				kag.goBackHistory(true, kag.historyLayer.qjumpIndex) if kag.historyLayer.qjumpIndex >= 0;
+				return true;
+			}
+			break;
+		}
+	}
+	return false;
+}
+
+//	ボタンを押下
+function BLonButtonDown(btn)
+{
+//	dm("BLonButtonDown("+btn.name+")");
+	var	stt	= 200, rep = 50;
+	if(btn.name == "BLnext")
+	{
+		kag.historyLayer.next();	//	初回実行
+		btn.startRepeat(stt, rep, kag.historyLayer.next);
+	}
+	else if(btn.name == "BLprev")
+	{
+		kag.historyLayer.prev();	//	初回実行
+		btn.startRepeat(stt, rep, kag.historyLayer.prev);
+	}
+	btn.press();
+}
+//	ボタンを離した
+function BLonButtonUp(btn)
+{
+//	dm("BLonButtonUp("+btn.name+")");
+	btn.stopRepeat();
+	btn.release();
+}
+//	ページ切替した
+function onChangeBacklogPage()
+{
+	if(!f.bl_opened)
+		return;
+
+	with(Menu_object)
+	{
+		.find("BLスクロールスライダー", PRIMARY).updatePos();
+		asyncCaller.call(function {
+			with(Menu_object)
+			{
+				var	pg	= kag.historyLayer.dispPage;
+				var	pgs	= Math.max(0, kag.historyLayer.dataPages-1);
+				.find("BLprev", PRIMARY).enabled	= pg > 0;
+				.find("BLnext", PRIMARY).enabled	= pg < pgs;
+				if(typeof global.quickjump_object != "undefined")
+				{
+					if( typeof kag.historyLayer.qjumpIndex == "undefined" )
+						kag.historyLayer.qjumpIndex = -1;
+					.find("BLquickjump", PRIMARY).enabled = (kag.historyLayer.qjumpIndex>=0)?true:false;
+				}
+			}
+		});
+@if(_BACKLOG_TITLE_DISP_)
+		if( typeof global.quickjump_object != "undefined" )
+		{
+			var leftpos = 350;
+			var obj = .find("BL背景", PRIMARY);
+			if( obj === void || ! isvalid obj )
+				return;
+			obj.reload();
+			var title = global.quickjump_object.currentInf;
+			if( title !== void && title != "" && title.indexOf("/") > -1 )
+				obj.drawText2Area(leftpos, 30, obj.width-leftpos, 18, title, 18, 0x7F7F7F, "lc",,,false);	//１行のみ
+			else
+				obj.drawText2Area(leftpos, 30, obj.width-leftpos, 18, "", 18, 0x7F7F7F, "lc",,,false);
+		}
+@endif
+	}
+}
+//	閉じる
+function hideBacklogMenuItem(playse=true)
+{
+	if(!f.bl_opened)
+		return;
+	delete f.bl_opened;
+	outMenu("backlog");
+	kag.historyEnabled	= true;
+
+	var	time	= 600;
+	with(Menu_object)
+	{
+		.playSE(closese) if playse;	//	QuickJumpするときは決定の効果音が再生されるので、閉じる効果音は不要
+
+		var	tdata	= __get_backlog_timelinedata(6);
+		var	item;
+		setCreateProp(tdata[1][tdata[0]["BL背景"]], "absolute", -200000);	//	背景をテキスト履歴より奥に
+		setCreateProps(tdata[1][tdata[0]["BLprev"]], %[
+			enabled:.find("BLprev", PRIMARY).enabled,
+			mouseUp:"",
+			mouseDown:"",
+		], 3);
+		setCreateProps(tdata[1][tdata[0]["BLnext"]], %[
+			enabled:.find("BLnext", PRIMARY).enabled,
+			mouseUp:"",
+			mouseDown:"",
+		], 3);
+		if(!BLignoreItem["BLquickjump"])
+		{
+			setCreateProps(tdata[1][tdata[0]["BLquickjump"]], %[
+				enabled:.find("BLquickjump", PRIMARY).enabled,
+				mouseUp:"",
+				mouseDown:"",
+			], 3);
+		}
+		muteAllMenuItem(tdata);		//	すべて効果音mute
+
+		//	キーボードフックを復帰
+		kag.keyDownHook.erase(0);
+		delete Menu_object.keyDownCallback;
+
+		.playTimeline(PRIMARY, tdata[1], tdata[2], %[absolute:2100000], BLignoreItem, true,, false);
+
+		//	スクロールスライダーを隠す
+		with(.find("BLスクロールスライダー", PRIMARY))
+			.ibv = true, .opacity=255, .ssact(time, "opacity", 0,,, false);	//	閉じる最中なので、pauseできない
+
+		.resetClick();
+	}
+
+	//メニュー→バックログの経路できていてオート既読スキップがONの場合は閉じた時に開始
+	if(typeof global.startSkipAtOutMenu != "undefined" && global.startSkipAtOutMenu)
+	{
+		kag.skipToStop() if kag.getCurrentRead();
+		delete global.startSkipAtOutMenu;
+	}
+
+	return time;
+}
+
+@endif

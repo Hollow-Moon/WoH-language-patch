@@ -1,0 +1,548 @@
+﻿/*-----------------------------------------------------------------------------/
+/	Copyright (C) TYPE-MOON All Rights Reserved.
+/		マップ表示プラグイン
+/	※	画面上の任意の位置にボタンを配置し、それを押すことで選択肢の代わりとする
+/
+/	○利用方法
+/	・準備
+/		表示したい背景と押下させたいボタンを準備する。
+/		@eval exp=Scripts.execStorage('MapPlugin.tjs') でプラグインを読み込んでおく。
+/	・使い方
+/		ex.)
+/			@initmap bgimage=街全図
+/			@addmapbutton left=587 top=243 image=myhome target=*myhome hint=自宅
+/			@addmapbutton left=312 top=432 image=school target=*school hint=学校
+/			@addmapbutton left=13 top=34 image=town target=*town hint=街
+/			@addmapbutton left=345 top=46 image=park target=*park hint=公園
+/			@addmapparts id=arrow storage=arrow left=341 top=128 opacity=255 absolute=1000 animlabel="" visible=true
+/			@showmap method=crossfade time=800
+/			@s
+/		上記のスクリプトで、自宅・学校・街・公園のボタンが表示された街の全図が
+/		表示される。何れかのボタンを押下すると、指定されたラベルへ移動する。
+/	・注意点
+/		ボタンを押下後もマップは表示されたままとなるので、任意にマップを消去する
+/		必要がある。例えば次のようなスクリプトが必要になる。
+/		ex.)
+/			*myhome
+/			@image page=back layer=base storage=玄関
+/			@hidemap method=crossfade time=800
+/		hidemap タグが、トランジションの開始とトランジション終了後の後片付けを行う。
+/		もしももっと複雑に画面を切り替えたい場合は、afterhidemap タグを使用できる。
+/		ex.)
+/			*myhome
+/			@image page=back layer=base storage=black
+/			@trans method=crossfade time=800
+/			@wt
+/			@afterhidemap
+/			@image page=back layer=base storage=玄関
+/			@trans method=crossfade time=800
+/			@wt
+/		こうすると、一旦黒にフェードした後に玄関が表示される。ここで黒にフェード
+/		した後 afterhidemap タグを呼び出しているが、必ず一度表裏の画面を切り替えた
+/		ときに afterhidemap タグを実行しなければならない。怠ると、玄関が表示される
+/		時にマップのボタンが表示されてしまう。
+/	(未実装)
+/		画面より大きいサイズの背景への対応
+/-----------------------------------------------------------------------------*/
+if(typeof global.map_object == 'undefined')
+{
+Scripts.execStorage("PushButtonLayer.tjs");
+Scripts.execStorage("FadeLayer.tjs");
+
+class MapPlugin extends KAGPlugin
+{
+	var	options		= %[
+		"new" => "alt_new",
+		"exclamation" => "alt_ex",
+	];
+	var	defaultalign	= "center-vcenter";
+	var	defaultoptalign	= "center-top";
+
+	var base;		//	現在の背景レイヤー(kag.fore.base もしくは kag.back.base)
+	var buttons;	//	ボタン
+	var	parts;		//	パーツ
+
+	var	initialized;	//	初期化済みかどうか()
+
+	var	_enabled;
+	var	showed;			//	表示しているか
+
+	var	goStorage, goLabel;	//	移動先ストレージ、ラベル
+
+	var	decide_se	= "";	//	決定の効果音
+	var	playsound_method;	//	効果音を再生させるメソッド
+
+	function MapPlugin()
+	{
+		super.KAGPlugin();
+
+		buttons	= [];
+		parts	= [];
+	}
+
+	function finalize()
+	{
+		//	buttons, parts を破棄
+		var arrays	= [ buttons, parts ];
+		for(var i=0; i<arrays.count; i++)
+		{
+			var	array = arrays[i];
+			if(array != void)
+			{
+				for(var i=0; i<array.count; i++)
+					invalidate array[i] if array[i] != void;
+				invalidate array;
+			}
+		}
+
+		super.finalize(...);
+	}
+
+	//	背景の準備
+	function initBG(mp)
+	{
+		//	現在の裏画面に読み込む
+//		dm("MapPlugin.initBG("+mp.bgimage+")");
+		with(kag.back.base)
+		{
+			.loadImages(%[storage:mp.bgimage]);
+			.setSize(kag.fore.base.width, kag.fore.base.height);	//	表画面のサイズに合わせる(画面より大きな画像を読み込んだときのため)
+		}
+	}
+
+	//	直前で使用されたボタンを無効にする
+	function disableButtons()
+	{
+//		dm("MapPlugin.disableButtons()");
+		for(var i=0; i<buttons.count; i++)
+			buttons[i].enabled	= false;
+	}
+
+	//	現在存在するボタンを破棄する
+	function clearButtons()
+	{
+//		dm("MapPlugin.clearButtons()");
+		for(var i=0; i<buttons.count; i++)
+			invalidate buttons[i] if buttons[i] != void;
+		buttons.clear();
+	}
+
+	//	ボタンの追加
+	function addButton(mp)
+	{
+		var	btn;
+//		dm("MapPlugin.addButton("+mp.image, mp.left, mp.top, mp.align, mp.absolute, mp.exp+")");
+		with(btn = new PushButtonLayer(kag, kag.back.base, mp.image))
+		{
+			.name		= "ボタン: "+mp.image;
+			.owner		= this;	//	メッセージはプラグインへ
+			//	KAGEXのイベント、level4前景レイヤーより手前に配置
+			.absolute	= +mp.absolute + 450000;
+			.byCursorKey= true;	//	カーソルキーの方向に合わせたフォーカスの移動を行なう(ボタンに限らず)
+
+			var	keys	= [ "storage", "target", "exp", "enabled", "hint", "onenter", "onleave" ];
+			for(var i=0; i<keys.count; i++)
+				btn[keys[i]]	= mp[keys[i]];
+			if(!.enabled)
+				.hint	= "選択不可";
+
+			var	l = mp.left, t = mp.top;
+			mp.align	= defaultalign if mp.align == void;
+			var	aligns	= mp.align.split("-");
+			for(var i=0; i<aligns.count; i++)
+			{
+				switch(aligns[i])
+				{
+				case "left":	l	= mp.left;				break;
+				case "center":	l	= mp.left - .width \ 2;	break;
+				case "right":	l	= mp.left - .width;		break;
+				case "top":		t	= mp.top;				break;
+				case "vcenter":	t	= mp.top - .height \ 2;	break;
+				case "bottom":	t	= mp.top - .height;		break;
+				}
+			}
+			.setPos(l, t);
+			.visible	= true;
+		}
+		buttons.add(btn);
+
+		//	パーツが必要であれば作る
+		if(mp.opt != "" && options[mp.opt])
+		{
+			var	elm	= %[
+				id:mp.image+"-"+options[mp.opt],
+				storage:options[mp.opt],	//	対応する画像
+				opacity:255,
+				absolute:btn.absolute + 1,	//	選択肢ボタンより手前
+				visible:true,
+			];
+			with(addParts(elm))
+			{
+				var	aligns	= (mp.optalign !== void ? mp.optalign : defaultoptalign).split("-");
+				var	l, t;
+				for(var i=0; i<aligns.count; i++)
+				{
+					switch(aligns[i])
+					{
+					case "left":	l	= btn.left - (.width >> 1);				break;
+					case "center":	l	= btn.left + ((btn.width - .width)>>1);	break;
+					case "right":	l	= btn.left + btn.width - (.width >> 1);	break;
+					case "top":		t	= btn.top - (.height >> 1);				break;
+					case "vcenter":	t	= btn.top + ((btn.height - .height)>>1);break;
+					case "bottom":	t	= btn.top + btn.height - (.height >> 1);break;
+					}
+				}
+				.setPos(l, t);
+			}
+		}
+	}
+
+	//	パーツの追加
+	function addParts(mp)
+	{
+		var	part;
+		with(part = new AnimationLayer(kag, kag.back.base))
+		{
+			.id			= mp.id;
+			.loadImages(%[storage:mp.storage]);
+			.setSizeToImageSize();
+			.hitThreshold	= 256;
+			.absolute	= +mp.absolute + 450000;
+			.opacity	= +mp.opacity;
+			if(Storages.getPlacedPath(Storages.chopStorageExt(mp.storage) + ".asd") != "" &&
+				mp.animlabel != "")
+			{
+				.loadAnimInfo(0, mp.animlabel);
+			}
+			.setPos(+mp.left, +mp.top);
+			.visible	= +mp.visible;
+		}
+		parts.add(part);
+		return part;
+	}
+
+	//	パーツの取得
+	function getParts(id)
+	{
+		for(var i=0; i<parts.count; i++)
+		{
+			if(parts[i].id == id)
+				return parts[i];
+		}
+		throw new Exception("指定のIDを持つパーツレイヤーは見つかりませんでした。\n指定ID: \""+id+"\"");
+		return void;
+	}
+
+	//	マップの表示、切替
+	function showMap(mp)
+	{
+//		dm("showMap("+mp.method, mp.time+"): showed = "+showed);
+		if(showed)
+			return;
+
+		//	メッセージレイヤーを非表示にする
+
+		//	トランジションの実施
+		with(mp)
+		{
+			.layer	= "base";
+			.method	= "crossfade" if .method == void;
+			.time	= 800 if .time === void;
+			.vague	= 64 if .vague === void;
+		}
+		with(kag.conductor.pendings)
+		{
+			mp.tagname	= "trans";
+			.insert(0, mp);
+			.insert(1, %[tagname:"wt",canskip:true]);
+		}
+
+		//	トランジション終了後、後処理を呼び出す
+//		kag.conductor.pendings.insert(0, %[tagname:"aftershowmap"]);	→ タグ内で記述済み
+
+		showed	= true;
+	}
+
+	//	マップの消去
+	function hideMap(mp)
+	{
+		if(!showed)
+			return;
+
+		//	背景の読込
+		with(kag.back.base)
+		{
+			if(mp.bgimage != "")
+			{
+				.loadImages(%[storage:.bgimage]);
+				.setSize(kag.fore.base.width, kag.fore.base.height);
+			}
+			else
+			{
+				var	bgcolor	= 0xFF000000;
+				.setSize(kag.fore.base.width, kag.fore.base.height);
+				.fillRect(0, 0, .width, .height, bgcolor);
+			}
+		}
+
+		//	トランジションの実施
+		with(mp)
+		{
+			.layer	= "base";
+			.method	= "crossfade" if .method == void;
+			.time	= 800 if .time === void;
+			.vague	= 64 if .vague === void;
+			with(kag.conductor.pendings)
+			{
+				mp.tagname	= "trans";
+				.insert(0, mp);
+				.insert(1, %[tagname:"wt",canskip:true]);
+			}
+		}
+
+		showed	= false;
+	}
+
+	//	有効/無効
+	property enabled
+	{
+		setter(e)
+		{
+			_enabled	= e;
+		}
+		getter	{ return _enabled; }
+	}
+
+	//	マップの表示、切替終了後
+	function onEndOfShowMap()
+	{
+		//	現在の裏画面に属する buttons, parts を破棄
+		dmt("MapPlugin.onEndOfShowMap()");
+		var	itemss	= [ buttons, parts ];
+		for(var i=0; i<itemss.count; i++)
+		{
+			var	items	= itemss[i];
+			for(var i=items.count-1; i>=0; i--)
+			{
+				if(items[i].parent == kag.back.base)
+				{
+					invalidate items[i];
+					items.erase(i);
+				}
+			}
+		}
+
+		//	マップを有効にする
+		enabled	= true;
+	}
+
+	//	マップの消去後の処理
+	function onEndOfHideMap()
+	{
+		onEndOfShowMap();	//	buttons, parts は裏画面に全てあるはずなので、これでも同じ
+/*		//	buttons, parts をすべて破棄
+		var	itemss	= [ buttons, parts ];
+		for(var i=0; i<itemss.count; i++)
+		{
+			var	items	= itemss[i];
+			for(var i=items.count; i>=0; i--)
+				invalidate items[i];
+			items.clear();
+		}
+*/
+		//	マップを無効にする
+		enabled	= false;
+	}
+
+	function onMouseDown(x, y, button, shift) { /* 特に何もしない */ }
+	function onMouseUp(x, y, button, shift) { /* 特に何もしない */ }
+
+	function onButtonEnter(button)
+	{
+		if(enabled && button.onenter != "")
+		{
+			dm("onenter: \""+button.onenter+"\"");
+			global.button	= button;	//	ボタンレイヤーに onenter スクリプトからアクセスできるように。
+			global.getParts	= getParts;	//	パーツレイヤーに onenter スクリプトからアクセスできるように。
+			Scripts.eval(button.onenter);
+		}
+	}
+
+	function onButtonLeave(button)
+	{
+		if(enabled && button.onleave != "")
+		{
+			dm("onleave: \""+button.onleave+"\"");
+			global.button	= button;	//	ボタンレイヤーに onleave スクリプトからアクセスできるように。
+			global.getParts	= getParts;	//	パーツレイヤーに onleave スクリプトからアクセスできるように。
+			Scripts.eval(button.onleave);
+		}
+	}
+
+	function onButtonDown(button)
+	{
+		if(enabled)
+		{
+			//	決定音再生
+			playsound_method(decide_se) if decide_se == "" && playsound_method != void;
+
+			//	押下時実行
+			if(button.exp != "")
+			{
+				dm("exp: \""+button.exp+"\"");
+				global.button	= button;	//	ボタンレイヤーに exp スクリプトからアクセスできるように。
+				global.getParts	= getParts;	//	パーツレイヤーに exp スクリプトからアクセスできるように。
+				Scripts.eval(button.exp);
+			}
+
+			//	移動
+			dm("goto: "+button.storage+" / "+button.target);
+			kag.process(button.storage, button.target);
+			//	→	連続してマップを表示しないのなら、移動先で hidemap する必要がある。
+		}
+	}
+
+	// 栞を読み出すとき
+	function onRestore()
+	{
+		//	表示中のマップを消去する
+		hideMap(%[]);
+	}
+}
+kag.addPlugin(global.map_object = new MapPlugin(kag));
+
+/*-----------------------------------------------------------------------------/
+/	タグの追加
+/-----------------------------------------------------------------------------*/
+/*-----------------------------------------------------------------------------/
+/	マップの背景準備
+/	in	: storage	背景の準備にKAGスクリプトを使用する場合の、KAGスクリプトファイル名
+/		: initlabel	　〃　の、ラベル名
+/		: ---------------------------------------------------------------------
+/		: bgimage	背景とする画像ファイル名
+/-----------------------------------------------------------------------------*/
+kag.tagHandlers.initmap	= function(mp)
+{
+	if(mp.storage != "" && mp.initlabel != "")
+		kag.processCall(mp.storage, mp.initlabel);	//	背景の準備をKAGスクリプトで行う
+	else
+		map_object.initBG(mp);	//	MAPプラグインで行う
+//	map_object.disableButtons();//	ボタンをすべて無効にする
+	map_object.clearButtons();	//	ボタンを全て破棄する
+
+	return 0;
+} incontextof kag;
+
+/*-----------------------------------------------------------------------------/
+/	ボタンの追加
+/	in	: left, top	表示座標
+/		: align		ボタンの表示位置(left,top で指定された座標をボタンのどの位置にするか)
+/					(left,center,right と top,vcenter,bottom の組み合わせ: "left-center"等)
+/		: image		表示画像
+/		: hint		ヒント表示
+/		: storage	移動先のスクリプトファイル名
+/		: target	移動先のラベル名
+/		: exp		押されたときに処理されるTJS文
+/		: enabled	有効かどうか
+/		: opt		ボタンの上に追加するイメージ(AlternativePlugin.options で定義)
+/		: optalign	追加イメージの表示位置(left,center,right と top,vcenter,bottom の組み合わせ: "left-center"等)
+/-----------------------------------------------------------------------------*/
+kag.tagHandlers.addmapbutton = function(mp)
+{
+	with(mp)
+	{
+		.storage	= conductor.curStorage if .storage == void;
+		map_object.addButton(mp);
+	}
+	return 0;
+} incontextof kag;
+
+/*-----------------------------------------------------------------------------/
+/	パーツの追加
+/	in	: id		識別名
+/		: left, top	表示座標
+/		: storage	表示画像
+/		: absolute	前後位置
+/		: opacity	不透明度
+/		: visible	表示するか
+/		: animlabel	アニメーション開始ラベル
+/-----------------------------------------------------------------------------*/
+kag.tagHandlers.addmapparts	= function(mp)
+{
+	map_object.addParts(mp);
+	return 0;
+} incontextof kag;
+
+/*-----------------------------------------------------------------------------/
+/	マップの表示/切替
+/	in	: storage	マップの表示/切替にKAGスクリプトを使用する場合の、KAGスクリプトファイル名
+/		: showlabel	　〃　の、ラベル名
+/		: ---------------------------------------------------------------------
+/		: method, rule, time, vague 等、trans タグへの引数が使用可能
+/-----------------------------------------------------------------------------*/
+kag.tagHandlers.showmap = function(mp)
+{
+	if(mp.storage != "" && mp.showlabel != "")
+		kag.processCall(mp.storage, mp.showlabel);	//	背景の切替をKAGスクリプトで行う
+	else
+		map_object.showMap(mp);
+	kag.conductor.pendings.add(%[tagname:"aftershowmap"]);	//	切替終了後、後処理を呼び出す(呼び出し先のKAGスクリプトで呼び出しても良い)
+
+	return 0;
+} incontextof kag;
+
+/*-----------------------------------------------------------------------------/
+/	マップの消去
+/	in	: storage	マップの消去にKAGスクリプトを使用する場合の、KAGスクリプトファイル名
+/		: hidelabel	　〃　の、ラベル名
+/		: ---------------------------------------------------------------------
+/		: bgimage	一時的に切り替える画像(default: 黒背景)
+/		: method, rule, time, vague 等、trans タグへの引数が使用可能
+/-----------------------------------------------------------------------------*/
+kag.tagHandlers.hidemap = function(mp)
+{
+	//	消去を行わない(フローチャートを利用したときで、マップからの移動先が背景の切替と後片付けを行うときに指定する)
+	if(mp.nohide)
+		return 0;
+
+	//	表示していないなら、何もしない
+	if(!map_object.showed)
+		return 0;
+
+	if(mp.storage != "" && mp.hidelabel != "")
+		kag.processCall(mp.storage, mp.hidelabel);	//	背景の切替をKAGスクリプトで行う
+	else
+		map_object.hideMap(mp);
+	kag.conductor.pendings.add(%[tagname:"afterhidemap"]);	//	切替終了後、後処理を呼び出す(呼び出し先のKAGスクリプトで呼び出しても良い)
+
+	return 0;
+} incontextof kag;
+
+/*-----------------------------------------------------------------------------/
+/	マップ表示/切替後の処理
+/-----------------------------------------------------------------------------*/
+kag.tagHandlers.aftershowmap	= function(mp)
+{
+	map_object.onEndOfShowMap();
+
+	return 0;
+} incontextof kag;
+
+/*-----------------------------------------------------------------------------/
+/	マップ消去の後処理
+/-----------------------------------------------------------------------------*/
+kag.tagHandlers.afterhidemap	= function(mp)
+{
+	with(map_object)
+	{
+		.showed	= false;	//	独自にトランジションを行い、マップを消去すると showed=true のままなので、
+		.onEndOfHideMap();	//	後片付けと同時に showed=false とする
+	}
+
+	return 0;
+} incontextof kag;
+
+/*-----------------------------------------------------------------------------/
+/	End of File
+/-----------------------------------------------------------------------------*/
+}

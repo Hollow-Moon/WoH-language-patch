@@ -1,0 +1,579 @@
+﻿/*-----------------------------------------------------------------------------/
+/	Copyright (C) TYPE-MOON All Rights Reserved.
+/		履歴のページ先頭からページ毎に戻れるクイックジャンプを追加するプラグイン
+/-----------------------------------------------------------------------------*/
+@if(__QUICK_JUMP_PLUGIN__==0)
+@set(__QUICK_JUMP_PLUGIN__=1)
+dm("load QuickJumpPlugin.tjs");
+KAGLoadScript("ExButtonLayer.tjs");
+
+@set(USE_OTHER_QUICKJUMP_BUTTON=1)
+@set(__QUICK_JUMP_VERBOSE__=0)			//デバッグ用の詳細トレースを表示する
+
+class QuickJumpPlugin extends KAGPlugin
+{
+	var QUICK_HEADS = %["*tladata"=>1,"*play"=>1,"*play2"=>1,"*scenarioplay"=>1];
+	var win;	//window(kag)
+
+	function QuickJumpPlugin()
+	{
+		super.KAGPlugin();
+
+		this.win = kag;
+
+		win.historyLayer.quickJumpButton = void;
+@if(!USE_OTHER_QUICKJUMP_BUTTON)
+		// 履歴表示開始のところで未生成ならボタンを追加
+		win.org__showHistory = win.showHistory;
+		win.showHistory = function()
+		{
+			if( historyLayer.quickJumpButton === void )
+			{
+
+				//historyWindowにダイレクトジャンプボタン追加
+				var xpos = historyLayer.width - historyLayer.controlWidth*3;	//座標は適当、システムデザイン後に再配置
+				var ypos = 30;													//座標は適当、システムデザイン後に再配置
+				historyLayer.quickJumpButton = new global.ExButtonLayer(
+							this, historyLayer, "qjump", xpos, ypos, "qjumpbtn",
+							"このページから再開します。(ボタン画像[qjumpbtn.png]ダミーなので差し替えて！)");
+				with(historyLayer.quickJumpButton)
+				{
+					.mode		= 3;
+					.readyVisible();
+				}
+
+				//ボタンが押下された場合の処理分岐部拡張
+				if( typeof historyLayer.onButtonDown != "undefined" ){
+
+					historyLayer.qjumpIndex = -1;									//通過記録のインデックス
+					historyLayer.qjump = function(){} incontextof historyLayer;		//先行ダミー定義
+					historyLayer.org__onButtonDown = historyLayer.onButtonDown;
+					historyLayer.onButtonDown = function(btn)
+					{
+						org__onButtonDown(...);
+						switch(btn.id)
+						{
+						case "qjump":
+							qjump();
+							break;
+						}
+					} incontextof historyLayer;
+
+					//クイックジャンプボタン押下処理
+					historyLayer.qjump = function()
+					{
+						//dm("qjump clicked!");
+						if( qjumpIndex != -1 )
+							window.goBackHistory( true, qjumpIndex );
+
+					} incontextof historyLayer;
+				}
+
+
+			}
+			org__showHistory(...);
+
+		} incontextof win;
+@endif
+		//通過記録の拡張
+
+		//冗長データの削除対象(ラベル情報をもとに操作するため最初にhistoryInfoを設定の事)
+		win.DEL_HIST_PARAM = ["historyInfo", "data", "historyFontSize", "historyLineSpacing", "historyRuby",
+							  "lineStart", "actionInfo"/*, "dataPage", "dataPages", "dataStart", "dataPos",
+							  "currentAction", "currentLine", "lastAction", "lastLine"*/];
+
+		win.org__isHistoryOfStoreAlive = win.isHistoryOfStoreAlive;
+		win.isHistoryOfStoreAlive = function(pageIdx=0)
+		{
+			//dmt(".... historyOfStore start");
+			if( pageIdx != -1 )
+			{
+				// 通過記録が利用可能かどうかを返す
+				if( historyOfStore.count <= pageIdx )
+				{
+@if(__QUICK_JUMP_VERBOSE__)
+					dm("////// historyOfStore.count=" + historyOfStore.count + " pageIdx=" + pageIdx);
+@endif
+					return false;
+				}
+			}
+			if( historyLayer === void || ! isvalid historyLayer )
+			{
+@if(__QUICK_JUMP_VERBOSE__)
+				dm("////// historyLayer is empty!");
+@endif
+				return false;
+			}
+			if( historyLayer.dataPages == void || ! isvalid historyLayer.dataPages || ! historyLayer.dataPages )
+			{
+@if(__QUICK_JUMP_VERBOSE__)
+				dm("////// historyLayer.dataPages is empty!");
+@endif
+				return false;
+			}
+			//dm(".... historyLayer.dataPages=" + historyLayer.dataPages );
+
+			return historyLayer.dataPages;
+
+		} incontextof win;
+
+		win.org__goBackYes = win.goBackYes;
+		win.goBackYes = function(pageIdx=0)
+		{
+			//dm("goBackYes: pageIdx = " + pageIdx);
+			//クイックジャンプ後はオート既読スキップが解除される
+			if(typeof global.startSkipAtOutMenu != "undefined" && global.startSkipAtOutMenu)
+				delete global.startSkipAtOutMenu;
+
+			if( scflags.ch2ndSkip )
+			{
+				cancelSkip(true);
+				scflags.ch2ndSkip = false;
+			}
+
+			var label = historyOfStore[pageIdx].core.lastLabel;
+			var pname = historyOfStore[pageIdx].core.lastPageName;
+			dm("※QuickJumpPlugin.goBackYes: ダイレクトジャンプしました。ラベル["
+				+ label + " / "
+				+ pname + "] pageIdx=" + pageIdx);
+			hideHistory(false);
+
+			//待避
+/* no compress
+			var backup = %[];
+			if( pcflags.historyData !== void )
+			{
+				for( var j=0; j<DEL_HIST_PARAM.count; j++ )
+				{
+					var src = pcflags.historyData[DEL_HIST_PARAM[j]];
+					if( src instanceof "Dictionary" )
+					{
+						backup[DEL_HIST_PARAM[j]] = %[];
+						var dst = backup[DEL_HIST_PARAM[j]];
+						(Dictionary.assignStruct incontextof dst)(src);
+						//dm("goBackYes: Dictionary[" + DEL_HIST_PARAM[j] + "]を待避しました");
+					}
+					else if( src instanceof "Array" )
+					{
+						backup[DEL_HIST_PARAM[j]] = [];
+						var dst = backup[DEL_HIST_PARAM[j]];
+						dst.assignStruct(src);
+						//dm("goBackYes: Array[" + DEL_HIST_PARAM[j] + "]を待避しました");
+					}
+					else
+					{
+						backup[DEL_HIST_PARAM[j]] = src;
+					}
+				}
+			}
+*/
+
+			// user と core を pflags, pcflags に戻す
+			(Dictionary.assignStruct incontextof pflags)(historyOfStore[pageIdx].user);
+			(Dictionary.assignStruct incontextof pcflags)(historyOfStore[pageIdx].core);
+
+/* no compress
+			//復元
+			//dm("backup: " + getDebugStringFromElm(backup));
+			if( pcflags.historyData !== void )
+			{
+				for( var j=0; j<DEL_HIST_PARAM.count; j++ )
+				{
+					var src = backup[DEL_HIST_PARAM[j]];
+
+					if( src instanceof "Dictionary" )
+					{
+						pcflags.historyData[DEL_HIST_PARAM[j]] = %[];
+						var dst = pcflags.historyData[DEL_HIST_PARAM[j]];
+						(Dictionary.assignStruct incontextof dst)(src);
+						//dm("goBackYes: Dictionary[" + DEL_HIST_PARAM[j] + "]を復元しました");
+					}
+					else if( src instanceof "Array" )
+					{
+						pcflags.historyData[DEL_HIST_PARAM[j]] = [];
+						var dst = pcflags.historyData[DEL_HIST_PARAM[j]];
+						dst.assignStruct(src);
+						//dm("goBackYes: Array[" + DEL_HIST_PARAM[j] + "]を復元しました");
+					}
+					else
+					{
+						pcflags.historyData[DEL_HIST_PARAM[j]] = src;
+					}
+				}
+			}
+			invalidate backup;
+*/
+
+			// 記録の先頭から読み込み指定インデックスまでのレコードを全て削除する
+			for( var i=0; i<=pageIdx; i++ )
+			{
+				historyOfStore.erase(0);
+			}
+
+			if(historyWriteEnabled)
+				historyLayer.clearAction();
+
+			nextRecordHistory = false;
+
+			// アクションの全停止
+			stopAllActions(true);
+
+@if(__QUICK_JUMP_VERBOSE__)
+			//
+			with(pcflags)
+			{
+				dm("▲tracer_object: storage=" + .chart_storage +
+								 " current=" + .chart_current +
+								 " lastplay=" + .chart_lastplay +
+								 " currentcategory=" + .chart_currentcategory +
+								 " script=" + .script );
+				dm("▲tracer_object: currentLabel=" + .currentLabel +
+								 " newLabel=" + label +
+								 " lastplay=" + .chart_lastplay +
+								 " currentPageName=" + .currentPageName +
+								 " newPageName=" + pname );
+			}
+			with(pcflags.mainConductor)
+			{
+				dm("▲mainconductor: storageShortName=" + .storageShortName +
+									" storageName=" + .storageName +
+									" currentLabel=" + pcflags.currentLabel);
+			}
+@endif
+
+			if(pflags.scripttitle == "" )
+				pflags.scripttitle = pname;
+
+			// データを元に、栞をたどる動作をする
+			restoreFlags();
+
+			//表示中ページがずれるので１ページ減らす
+			var hist = historyLayer;
+			with(hist)
+			{
+/* no compress
+				if( historyOfStore.count && historyOfStore[0].historyInfo !== void &&
+					.historyInfo[.dataPage] == historyOfStore[0].historyInfo[.dataPage] )
+*/
+				{
+@if(__QUICK_JUMP_VERBOSE__)
+					dm("▼0 dataPage=" + .dataPage + " / dataPages=" + .dataPages + " , dataStart=" + .dataStart);
+@endif
+
+					if( .dataPage || .dataPages || .dataStart )
+					{
+/* no compress
+						if( .dataPage === void )		.dataPage = +.dataPages;	//省略形で保存されていない場合複製
+						if( .dataPage == .dataStart)	.dataStart--;
+						.dataPage--;
+						if( .dataPage < 0 )				.dataPage = .maxPages;
+						if( .dataStart < 0 )			.dataStart = .maxPages;
+						if( .dataPages < .maxPages-1)	.dataPages--;
+*/
+						//丁度サイクリックしきったところでは初期状態ではありえない相対値になっているので補正する
+						if( .dataPages == .maxPages-1 && .dataPages == .dataPage && .dataStart == 1)
+						{
+							.dataPage = 0;
+@if(__QUICK_JUMP_VERBOSE__)
+							dm("▼FIX!!!");
+@endif
+						}
+					}
+
+@if(__QUICK_JUMP_VERBOSE__)
+					dm("▼1 dataPage=" + .dataPage + " / dataPages=" + .dataPages + " , dataStart=" + .dataStart);
+@endif
+
+					//改ページ直後と同じ状態にしておく
+					.dataPos = 0;
+					.currentAction = void;
+					.currentLine = '';
+					.lastLine	= '';
+					.lastAction = void;
+					.lineStart[.dataPage]	= [];
+					.lineStart[.dataPage][.dataPos]	= .indentPos;
+					if(.everypage)
+					{
+						//	新しい入れ物を作る
+						.historyFontSize[.dataPage]	= [];
+						.historyLineSpacing[.dataPage]= [];
+						.historyRuby[.dataPage]		= void;
+						.historyInfo[.dataPage]		= "";
+					}
+				}
+
+				.visible = false;
+			}
+			historyLayer.visible = false;
+			historyLayer.wheelEnabled	= true;	//	ホイールを有効に戻す
+			currentPageName = pname;	//ページ名を復元
+			pcflags.currentPageName = _lastPageName if pcflags.currentPageName == "";
+
+		} incontextof win;
+
+		win.org__goBackHistory = win.goBackHistory;
+		win.goBackHistory = function(ask = true, pageIdx=-1)
+		{
+			// 通過記録をたどり、戻る
+
+			if(!isHistoryOfStoreAlive(pageIdx))
+				return false;
+
+			var result;
+			if(ask)
+			{
+				var prompt;
+				if(pageIdx >= 0)
+				{
+					//prompt = "「"+ historyOfStore[pageIdx].core.lastPageName + "」まで戻りますか？";
+					//prompt = "このページまで戻りますか？" if historyOfStore[pageIdx].core.lastPageName == "" || historyOfStore[pageIdx].core.currentPageName == currentPageName;
+					//デバッグ表示以外でシーン名称がどこにも表示されないのにシーン名を出して確認はおかしい。
+					prompt = "このページまで戻りますか？";
+				}
+				else
+				{
+					prompt	= "直前のページへ戻りますか？";
+					pageIdx	= 0;
+
+					var cur = _lastLabel + "/" + _lastPageName;
+					//dm( "current: " + cur );
+					for( var i=0; i<3; i++ )
+					{
+						if( historyOfStore[i] === void || historyOfStore[i].core === void )
+							continue;
+						with(historyOfStore[i].core)
+						{
+							var lb = .currentLabel;
+							var heads = quickjump_object.QUICK_HEADS;
+							lb	= "*page0" if lb == "" || heads[lb];
+							var pn = .currentPageName;
+							//var sc = .mainConductor.curStorage;
+							var tmp = lb + "/" + pn;
+							//dm( i + " : " + tmp);
+							//現在ページよりも前に飛ぶため直前の通過履歴より1ページ前へ
+							if( tmp != cur )
+							{
+								pageIdx = i;
+								break;
+							}
+						}
+					}
+
+					if(!isHistoryOfStoreAlive(pageIdx))
+						return false;
+				}
+				historyLayer.wheelEnabled	= false;	//	マウスホイールを一時的に無効化
+				result = askYesNo(prompt, "確認", goBackYes, function() { global.kag.historyLayer.wheelEnabled	= true; /* ホイールを有効に戻す */ }, pageIdx);
+			}
+			else
+			{
+				goBackYes(pageIdx);
+			}
+		} incontextof win;
+
+		win.org__clearLayers = win.clearLayers;
+		win.clearLayers = function()
+		{
+			_lastPageName = "";
+			_lastLabel = "";
+			_lastScript = "";
+@if(__QUICK_JUMP_VERBOSE__)
+			dm("■clearLayers: lastPageName,lastLabel,lastScript CLEAR");
+@endif
+			org__clearLayers();
+
+		} incontextof win;
+
+		win.org__pushHistoryOfStore = win.pushHistoryOfStore;
+		win.pushHistoryOfStore = function()
+		{
+			// 通過記録を行う
+			// pflags, pcflags に情報を格納した後に呼ぶこと
+			var heads = quickjump_object.QUICK_HEADS;
+
+			if(nextRecordHistory)
+			{
+				if(stablePosibility)
+				{
+					// stablePosibility が false の場合は、
+					// そこのラベルで通過記録を行っても
+					// そこよりも前に戻るすべがないので通過記録をしない
+
+					// 辞書配列を作成
+					var dic = %[];
+
+					// user と core を記録
+					dic.user = %[];
+					(Dictionary.assignStruct incontextof dic.user)(pflags);
+					dic.core = %[];
+					(Dictionary.assignStruct incontextof dic.core)(pcflags);
+
+					// ラベル・ページタイトルを別途保持
+					dic.core.lastPageName = _lastPageName;
+					dic.core.lastLabel = _lastLabel;
+					dic.core.lastScript = _lastScript;
+
+					//dm("pushHistoryOfStore: historyOfStore.count=" + historyOfStore.count);
+
+/* no compress
+					// 機能追加(通過記録をそのまま保存すると１ページ分だけ違うデータが大量に重複するので
+					// 大きなサイズの配列データを削除する)
+					for( var j=0; j<DEL_HIST_PARAM.count; j++ )
+					{
+						var tgt = dic.core.historyData;
+						if( tgt !== void )
+						{
+							if( typeof tgt[DEL_HIST_PARAM[j]] == "Object" )
+							{
+								invalidate tgt[DEL_HIST_PARAM[j]];
+								//dm("pushHistoryOfStore: Object[" + DEL_HIST_PARAM[j] + "]をinvalidateしました");
+							}
+							tgt[DEL_HIST_PARAM[j]] = void;
+							delete tgt[DEL_HIST_PARAM[j]];
+//							dm("pushHistoryOfStore: Object[" + DEL_HIST_PARAM[j] + "]を消去しました");
+						}
+					}
+*/
+
+					// dic を historyOfStore の先頭に挿入
+					var findRec = false;
+
+					if( historyOfStore.count )
+					{
+						var cl	= _lastLabel;
+						var pn	= _lastPageName;
+						var sc	= _lastScript;
+						var hcl	= historyOfStore[0].core.lastLabel;
+						var hpn	= historyOfStore[0].core.lastPageName;
+						var hsc	= historyOfStore[0].core.lastScript;
+						cl	= "*page0" if cl == "" || heads[cl];
+						hcl	= "*page0" if hcl == "" || heads[hcl];
+						if( cl == hcl && pn == hpn && sc == hsc )
+							findRec = true;
+					}
+
+					//何も履歴が吐き出されていない状態では出力しない
+					if( (_lastLabel != "" || _lastPageName != "") && historyLayer.chkHistEmpty() )
+					{
+						if( findRec )
+						{
+							(Dictionary.assignStruct incontextof historyOfStore[0])(dic);
+@if(__QUICK_JUMP_VERBOSE__)
+							dm("    pushHistoryOfStore: overwrite historyOfStore[0]");
+@endif
+						}
+						else
+						{
+							historyOfStore.insert(0, dic);
+						}
+@if(__QUICK_JUMP_VERBOSE__)
+	dm("-".repeat(80));
+	for(var i=0; i<historyOfStore.count; i++)
+		dm(i+": "+historyOfStore[i].core.mainConductor.curLabel+" / "+historyOfStore[i].core.currentLabel);
+	dm("-".repeat(80));
+						dm("pushHistoryOfStore: write " + _lastLabel + "/" + _lastPageName);
+@endif
+
+						// はみ出た分を削除
+						if(historyOfStore.count > maxHistoryOfStore)
+							historyOfStore.count = maxHistoryOfStore;
+					}
+				}
+
+				nextRecordHistory = false;
+			}
+		} incontextof win;
+	}
+
+	function finalize()
+	{
+		super.finalize(...);
+	}
+
+	function onStore(f, elm)
+	{
+		// 栞を保存する際に呼ばれる
+		// f = 保存先の栞データ ( Dictionary クラスのオブジェクト )
+		// elm = tempsave 時のオプション ( 現在は常に void )
+		f.lastPageName = win._lastPageName;
+		f.lastLabel = win._lastLabel;
+		f.lastScript = win._lastScript;
+	}
+
+	function onRestore(f, clear, elm)
+	{
+		// 栞を読み出すときに呼ばれる
+		// f = 読み込む栞データ ( Dictionary クラスのオブジェクト )
+		// clear = テキストレイヤをクリアするか ( tempload の時のみ false )
+		// elm = tempload 時のオプション ( tempload でない場合は 常に void,
+		//                                 tempload の時は Dictionary クラスのオブジェクト )
+		this.win = kag;
+		win._lastPageName = f.lastPageName;
+		win._lastLabel = f.lastLabel;
+		win._lastScript = f.lastScript;
+	}
+
+	var currentInf = "";
+
+	//ジャンプ可否を調べる
+	function checkExistHistoryOfStore(inf)
+	{
+@if(__QUICK_JUMP_VERBOSE__)
+		dm("checkExistHistoryOfStore inf:" + inf);
+@endif
+		//アーカイブメニューから飛んできている場合はクイックジャンプ無効
+		if( f.doArchiveMenu )
+		{
+@if(__QUICK_JUMP_VERBOSE__)
+			dm("checkExistHistoryOfStore: Cannot jump from Archive");
+@endif
+			return -1;
+		}
+
+		//同じページ名・ラベルで保存されていた場合先頭に飛ぶよう逆順サーチ
+		for( var i=win.historyOfStore.count-1 ; i>=0; i-- )
+		{
+			var lb = win.historyOfStore[i].core.lastLabel;
+			var nm = win.historyOfStore[i].core.lastPageName;
+			var sc = win.historyOfStore[i].core.lastScript;
+@if(__QUICK_JUMP_VERBOSE__)
+			dm("    → [" + i + "] " + (string)lb + "/" + (string)nm + "/" + (string)sc );
+@endif
+
+			//タイムライン記述型ks先頭の整合処理
+			lb	= "*page0" if lb == "" || QUICK_HEADS[lb];
+
+			if( (string)lb + "/" + (string)nm + "/" + (string)sc == (string)inf )
+			{
+@if(__QUICK_JUMP_VERBOSE__)
+				dm("    → FOUND");
+@endif
+				return i;
+			}
+		}
+		return -1;
+	}
+
+	//ボタンが押されたら飛ぶ位置を設定する(先に上のcheckExistHistoryOfStoreで判定すること)
+	function jumpHistoryOfStore(idx)
+	{
+		with(win.historyLayer)
+		{
+			if(.quickJumpButton != void && .quickJumpButton isvalid)
+			{
+				//dm("jumpHistoryOfStore:" + idx);
+				if( idx == -1 ){
+					.quickJumpButton.enabled = false;
+					.qjumpIndex = -1;
+				}else{
+					.quickJumpButton.enabled = true;
+					.qjumpIndex = idx;
+				}
+			}
+		}
+	}
+}
+// プラグインオブジェクトを作成し、登録する
+kag.addPlugin(global.quickjump_object = new QuickJumpPlugin());
+
+@endif

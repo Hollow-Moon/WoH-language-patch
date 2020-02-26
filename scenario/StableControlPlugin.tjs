@@ -1,0 +1,268 @@
+﻿// FG, BG, PARTBG などの連続処理中にキー入力が挟まるのを抑制するプラグイン
+// kag.inStable 値が変化を繰り返している最中はキー割り込みをさせない
+@if(__STABLECONTROL_PLUGIN_DEFINED__==0)
+@set(__STABLECONTROL_PLUGIN_DEFINED__=1)
+
+class StableControlPlugin extends KAGPlugin
+{
+
+	var MARGIN_TIME = 1000;	//充分に経過したTick時間の経過
+	var STABLE_TIME = 100;	//kag.inStableからこの時間経過していれば安定状態になったと判定する
+	var _lastChgTick;		//onStableStateChangedイベントが発生した時のTick
+	var _lastStable;
+
+	function StableControlPlugin()
+	{
+		super.KAGPlugin(...);
+		_lastChgTick = System.getTickCount() - MARGIN_TIME;	//初回必ずイベント配信で更新をかける
+		_lastStable = -1;									//初回必ず更新がかかるようにする
+	}
+
+	function updateTick()
+	{
+		_lastChgTick = System.getTickCount();
+		_lastStable = -1;	//次回必ずイベント配信で更新がかかるようにする
+	}
+
+	property inStable
+	{
+		getter
+		{
+			//メモ：
+			// kag.inStableだけをみて判定しようとすると、右クリックシステムメニューが押された
+			// パターンではコンダクターが走行しており、kag.inStable=falseとなる。従ってスタック
+			// 状態とスキップ状態、inStable変更が生じてからの経過時間などを加味して判定する
+			// 必要がある。
+			var ret;
+			var tick = System.getTickCount();
+			var tickSub = +(tick - _lastChgTick);
+
+			//スキップ動作中は割り込み不可
+			if( kag.skipMode )
+			{
+@if(__STABLE_VERBOSE__)
+				dm("■■ StableControlPlugin: return false / kag.skipMode = " + kag.skipMode);
+@endif
+				return false;
+			}
+
+			/*
+			//カット禁止指定時は割り込み不可
+			if( ! kag.clickSkipEnabled )
+			{
+				dm("■■ StableControlPlugin: return false / kag.clickSkipEnabled = " + kag.clickSkipEnabled);
+				return false;
+			}
+			*/
+
+			//kag.inStableがfalseでもlockTick状態(右クリックから呼ばれた場合)は次に進む
+			if( ! kag.inStable && ! lockTick )
+			{
+@if(__STABLE_VERBOSE__)
+				dm("■■ StableControlPlugin: return false / kag.inStable = " + kag.inStable);
+@endif
+				return false;
+			}
+
+			//トランジション中は割り込ませない
+			if( kag.transCount )
+			{
+@if(__STABLE_VERBOSE__)
+				dm("■■ StableControlPlugin: return false / kag.transCount = " + kag.transCount);
+@endif
+				return false;
+			}
+
+			//直近に停止・入力待ちタグより先にトランジションが実施される予定がある場合割り込み抑止
+			if( ! checkPendings() )
+			{
+				if( tickSub < STABLE_TIME || ! kag.inStable )
+				{
+@if(__STABLE_VERBOSE__)
+					dm("■■ StableControlPlugin: return false / kag.inStable = " + kag.inStable + " tickSub = " + tickSub );
+@endif
+					return false;
+				}
+			}
+
+			//kag.inStable状態が変化してから少し経ったら割り込める
+			ret = ( tickSub > STABLE_TIME );
+@if(__STABLE_VERBOSE__)
+			dm((ret?"□□":"■■") + " StableControlPlugin: return " + (ret?"true":"false") +
+				" / tickPast: " + +(tick - _lastChgTick));
+@endif
+			return ret;
+		}
+	}
+
+	function finalize()
+	{
+		super.finalize();
+	}
+
+	// タグハンドラのスタック状態から判断
+	function checkPendings()
+	{
+		for( var i=0; i<kag.conductor.pendings.count; i++ )
+		{
+			var p = kag.conductor.pendings[i];
+			with(p)
+			{
+				var waitStable = false;
+@if(__STABLE_VERBOSE__)
+				dm("　　 StableControlPlugin: kag.conductor.pendings["+i+"] = " + .tagname);
+@endif
+				switch( .tagname )
+				{
+				case "s":
+				case "l":
+				case "p":
+					//すぐ後に入力待ちになる
+					waitStable = true;
+					break;
+				case "wait":
+					if( (.canskip === void || .canskip) && ! kag.isEffectCut )
+						waitStable = true;
+					break;
+				case "trans":
+				case "dotrans":
+					//トランジションが実施される
+@if(__STABLE_VERBOSE__)
+					dm("■■ StableControlPlugin: return false / kag.conductor.pendings["+i+"] = " + .tagname);
+@endif
+					return false;
+					break;
+				case "bg":
+					//トランジションが実施される
+					if( .stop || (!.nonstop && (.rule != "" || .time != void || .vague != void)) )
+					{
+@if(__STABLE_VERBOSE__)
+						dm("■■ StableControlPlugin: return false / kag.conductor.pendings["+i+"] = " + .tagname);
+@endif
+						return false;
+					}
+					break;
+				case "fg":
+				case "partbg":
+				case "clpartbg":
+				case "chgpartbg":
+				case "monocro":
+				case "red":
+				case "green":
+				case "blue":
+				case "sepia":
+				case "nega":
+				case "contrast":
+				case "blur":
+				case "bluroff":
+					//タグのパラメータによってトランジションが実施される
+					if( .rule != "" || .time != void || .vague != void )
+					{
+@if(__STABLE_VERBOSE__)
+						dm("■■ StableControlPlugin: return false / kag.conductor.pendings["+i+"] = " + .tagname);
+@endif
+						return false;
+					}
+					break;
+				}
+				if( waitStable )
+					break;
+			}
+		}
+		return true;
+	}
+
+
+	//onStableStateChangedイベントが来ても最終Tickの更新を行わないフラグ(右クリックは常にラベルジャンプのインタラプトで来る)
+	var _lockTick = false;
+	property lockTick
+	{
+		setter(v)
+		{
+			if(v)	//ロックしてRMenuが出た直後は必ずTickの期間が満了した状態にしておく
+				_lastChgTick = System.getTickCount() - MARGIN_TIME;
+			_lockTick = v;
+		}
+		getter()
+		{
+			return _lockTick;
+		}
+	}
+
+	function onStableStateChanged(stable)
+	{
+		// 安定 ( s l p タグで停止中 ) または 走行中 ( それ以外 )
+		// の状態が変化したときに呼ばれる
+		// stable = 安定の状態に true, それ以外の場合に false
+
+		//dm("○ onStableStateChanged: " + stable + " / " + Scripts.getTraceString());
+		//RClick割り込みはinterruptタグ発行によって割り込み処理されるのでそれによる変化だけは除外
+		if( _lastStable !== stable
+			&& kag.conductor.lastTagName != ""
+			&& kag.conductor.lastTagName != "interrupt"
+			&& kag.conductor.lastTagName != "eval" )
+		{
+			_lastChgTick = System.getTickCount() if ! lockTick;	//右クリックから来た場合はlockTickが立っているので更新させない
+			_lastStable = stable;
+@if(__STABLE_VERBOSE__)
+			dm("● onStableStateChanged: " + stable + " / " + kag.conductor.lastTagName);
+@endif
+		}
+	}
+
+	function onStore(f, elm)
+	{
+	}
+
+	function onRestore(f, clear, elm)
+	{
+		// 栞を読み出すときに呼ばれる
+		// f = 読み込む栞データ ( Dictionary クラスのオブジェクト )
+		// clear = メッセージレイヤをクリアするか ( tempload の時のみ false )
+		// elm = tempload 時のオプション ( tempload でない場合は 常に void,
+		//                                 tempload の時は Dictionary クラスのオブジェクト )
+		_lastChgTick = System.getTickCount() - MARGIN_TIME;	//初回必ずイベント配信で更新をかける
+		_lastStable = -1;									//初回必ず更新がかかるようにする
+		_lockTick = false;
+	}
+
+}
+
+//	オブジェクトを生成
+//kag.addPlugin(global.stablecontrol_object = new StableControlPlugin(kag));
+
+if(typeof global.stablecontrol_object != "undefined")
+{
+	kag.usestc_org_doRapidCut	= kag.doRapidCut;
+	kag.doRapidCut	= function(keyCode = 0)
+	{
+		stablecontrol_object.updateTick();	//内部Tickを更新してクリック直後の操作を抑止
+		return usestc_org_doRapidCut(...);
+	} incontextof kag;
+
+	kag.usestc_org_doRapidAct	= kag.doRapidAct;
+	kag.doRapidAct	= function(keyCode = 0)
+	{
+		stablecontrol_object.updateTick();	//内部Tickを更新してクリック直後の操作を抑止
+		return usestc_org_doRapidAct(...);
+	} incontextof kag;
+
+	kag.usestc_org_notifyStable	= kag.notifyStable;
+	kag.notifyStable	= function()
+	{
+		//右クリックが終わったのでtick更新のロックを解除する
+		if( stablecontrol_object.lockTick )
+			stablecontrol_object.lockTick = false;
+		return usestc_org_notifyStable(...);
+	} incontextof kag;
+
+	kag.usestc_org_processCall	= kag.processCall;
+	kag.processCall	= function(file, label)
+	{
+		if( file == "first.ks" && label == "*rclick" )
+			stablecontrol_object.lockTick = true;
+		return usestc_org_processCall(...);
+	} incontextof kag;
+}
+
+@endif

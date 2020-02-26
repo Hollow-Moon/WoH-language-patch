@@ -1,0 +1,277 @@
+﻿/*-----------------------------------------------------------------------------/
+/	Copyright (C) TYPE-MOON All Rights Reserved.
+/		標準的なメニュープラグインクラス
+/	※ このプラグインを継承して、各種メニュープラグインを作成する
+/
+/	○機能
+/		KAGからの呼び出し、KAGへの復帰
+/
+/	○key hook
+/       initBG を行なうと、key hook を開始します。ただし、close は行なえません。
+/       この後、トランジションして initBG した画像が表示されると、close が行なえるようになります。
+/       close すると、指定されたスクリプトへ jump します。このとき重ねて close は行なえません。
+/       指定されたスクリプトで "トランジションしメニューが裏に移動すると" 、key hook が解除されます。
+/                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 重要
+/	○メニュー呼び出し手順
+/		1. initBG でメニュー用の背景を準備
+/		2. その他、メニューで使用するオブジェクトを配置
+/		3. メニュー呼び出しのスクリプト側で、トランジションを実行
+/		4. トランジション終了後、メニュールーチンへ処理移行
+/		5. メニューで決定/終了となると、指定のスクリプトへ移行
+/		6. スクリプト側でトランジションし、メニューが裏へ移動すると全てのオブジェクトを破棄
+//-----------------------------------------------------------------------------*/
+@if(__BASICMENUPLUGIN_DEFINED__==0)
+@set(__BASICMENUPLUGIN_DEFINED__=1)
+
+class BasicMenuPlugin extends KAGPlugin
+{
+	var	showed	= false;	//	メニューが表示されているか否か
+
+	var	objects	= [];		//	ボタン等のメニューパーツ
+
+	var	return_storage, return_target;	//	戻り先のスクリプト
+	var	bgimage;			//	背景画像
+
+	var	open;	//	このメニュー自体、開かれているかどうか
+	/*
+		void			: 完全に閉じている			(key hook: off)
+		TOBEPREPARED(2)	: 開く準備をしている途中	(key hook: on/close: off)
+		true(1)			: 開いている				(key hook: on/close: on)
+		false(0)		: 閉じているが、オブジェクトが残っている(key hook: on/close: off)
+	*/
+	var	TOBEPREPARED	= 2;	//	準備中(page=backに画像を準備した)
+
+	function BasicMenuPlugin()
+	{
+		super.KAGPlugin();
+	}
+
+	function finalize()
+	{
+		if(objects != void)
+		{
+			for(var i=0; i<objects.count; i++)
+				invalidate objects[i] if objects[i] != void;
+			invalidate objects;
+		}
+
+		super.finalize();
+	}
+
+	//	メニューパーツをリストへ追加
+	//		リストへ追加されていると、終了時自動的に破棄する
+	function add(obj)
+	{
+		for(var i=0; i<objects.count; i++)
+			if(objects[i] == obj) return;
+
+		objects.add(obj);
+	}
+
+	//	裏面に存在する objects を削除
+	function eraseBack()
+	{
+		for(var i=objects.count-1; i>=0; i--)
+		{
+			if(objects[i].parent == kag.back.base)
+			{
+				invalidate objects[i];
+				objects.erase(i);
+			}
+		}
+	}
+
+	//	全ての objects を削除
+	function clear()
+	{
+		for(var i=0; i<objects.count; i++)
+			invalidate objects[i] if objects[i] != void;
+		objects.clear();
+	}
+
+	//	背景画像の変更
+	function initBG(storage=bgimage)
+	{
+		//	現在の裏画面に背景を読み込む
+		with(kag.back.base)
+		{
+			.loadImages(%[storage:storage]);
+			.setSize(kag.fore.base.width, kag.fore.base.height);	//	表画面のサイズに合わせる(画面より大きな画像を読み込んだときのため)
+		}
+
+		//	背景画像を読み込んだ時点では、準備中
+		open	= TOBEPREPARED;
+
+		enableHook(true);	//	ボタン、キーのhookを開始
+	}
+
+	//	キー/右クリックをプラグインがHookできるようにする
+	//	in	: enabled	true ならhookする
+	function enableHook(enabled=true)
+	{
+		//	各 hook array に一つだけ追加する
+		var	hooks	= [
+		//	hook array			func
+			kag.leftClickHook,	onLeftClickDown,
+			kag.rightClickHook,	onRightClickDown,
+			kag.keyDownHook,	onKeyDown
+		];
+		for(var i=0; i<hooks.count; i+=2)
+		{
+			var	hook	= hooks[i];
+			var	func	= hooks[i+1];
+			var	j;
+			if(enabled)
+			{
+				for(j=0; j<hook.count; j++)
+					if(hook[j] == func) break;
+				if(j == hook.count)
+					hook.add(func);
+			}
+			else
+			{
+				for(j=0; j<hook.count; j++)
+				{
+					if(hook[j] == func)
+					{
+						hook.erase(j);
+						break;
+					}
+				}
+			}
+		}
+	}
+
+	//	メニューを閉じて、戻る
+	function close()
+	{
+		if(open === true)
+		{
+			eraseBack();		//	裏のオブジェクトを破棄
+			kag.process(return_storage, return_target);	//	戻り先で背景の変更、トランジションを行なってもらう
+
+			open	= false;	//	閉じられている
+		}
+	}
+
+	//	左クリックされた
+	function onLeftClickDown()
+	{
+		//	座標は kag.fore.base.cursorX, kag.fore.base.cursorY から取得
+		return true;	//	true を返すと、これ以降の処理を行なわない
+	}
+
+	//	右クリックされた
+	function onRightClickDown()
+	{
+		//	メニューを隠して、元に戻る
+		close();
+
+		return true;	//	true を返すと、これ以降の処理を行なわない
+	}
+
+	//	キーが押された
+	function onKeyDown(key, shift)
+	{
+		if(key == VK_ESCAPE)
+			close();
+
+		return true;	//	true を返すと、これ以降の処理を行なわない
+	}
+
+	//	戻り先のスクリプト、ラベルを指定
+	function setReturnPotision(mp)
+	{
+		with(mp)
+		{
+			return_storage	= .storage;
+			return_target	= .target;
+		}
+	}
+
+	//	メニュー用の各種設定を行なう
+	function setMenuParam(mp)
+	{
+		with(mp)
+		{
+			bgimage		= .bgimage;
+		}
+	}
+
+	/*-- プラグインのイベント -----------------------------------------------*/
+	function onStore(f, elm)
+	{
+		// 栞を保存する際に呼ばれる
+		// f = 保存先の栞データ ( Dictionary クラスのオブジェクト )
+		// elm = tempsave 時のオプション ( 現在は常に void )
+	}
+
+	function onRestore(f, clear, elm)
+	{
+		// 栞を読み出すときに呼ばれる
+		// f = 読み込む栞データ ( Dictionary クラスのオブジェクト )
+		// clear = メッセージレイヤをクリアするか ( tempload の時のみ false )
+		// elm = tempload 時のオプション ( tempload でない場合は 常に void,
+		//                                 tempload の時は Dictionary クラスのオブジェクト )
+	}
+
+	function onStableStateChanged(stable)
+	{
+		// 安定 ( s l p タグで停止中 ) または 走行中 ( それ以外 )
+		// の状態が変化したときに呼ばれる
+		// stable = 安定の状態に true, それ以外の場合に false
+	}
+
+	function onMessageHiddenStateChanged(hidden)
+	{
+		// 右クリックなどでメッセージレイヤが隠されたり、または
+		// その状態から抜ける時に呼ばれる
+		// hidden = メッセージが隠された場合に true, 現れた場合に false
+	}
+
+	function onCopyLayer(toback)
+	{
+		// backlay タグ / forelay タグがすべてのレイヤに対して実行される時、
+		// あるいは layer=base chidlren=true exchange=false のトランジションの終了時に、
+		// 裏画面の内容を表画面にコピーする
+		// 必要が発生すると呼び出される
+		// toback = 表画面の内容を裏画面にコピーする時に true,
+		//          裏画面の内容を表画面にコピーするときに false
+		// layer=base children=true のトランジション終了時には toback = false で呼ばれる。
+	}
+
+	function onExchangeForeBack()
+	{
+		// layer=base children=true のトランジションの終了時に呼ばれ、
+		// 表レイヤと裏レイヤの情報を交換する目的で呼ばれる
+		// この時点ですでにレイヤのツリー構造は入れ替わっているので、
+		// 通常、ここでは、ツリー構造の入れ替えを行うと情報が矛盾するもの
+		// ( レイヤの名前とか、レイヤへの参照とか ) を裏画面と面画面の間で入れ替える
+		// トランジション終了時の onCopyLayer はこのイベントより前に呼ばれるので
+		// 注意
+
+		//	メニューが閉じられた直後のトランジションが終わったら、裏のオブジェクトを破棄する
+		if(open === false)
+		{
+			eraseBack();		//	裏画面のオブジェクトを破棄
+			enableHook(false);	//	マウス、キーを hook しない
+			open	= void;		//	完全に閉じている状態
+		}
+		else if(open == TOBEPREPARED)
+		{
+			open	= true;		//	メニューが完全に開いた状態
+		}
+	}
+
+	function onSaveSystemVariables()
+	{
+		// システム変数に情報が保存され時に呼ばれる
+		// このタイミングで kag.scflags に情報を書き込めば
+		// 確実にシステム変数に情報を書くことができる
+	}
+}
+
+/*-----------------------------------------------------------------------------/
+/	End of File
+/-----------------------------------------------------------------------------*/
+@endif

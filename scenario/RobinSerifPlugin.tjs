@@ -1,0 +1,143 @@
+﻿@if(__ROBINSERIF_PLUGIN_DEFINED__==0)
+@set(__ROBINSERIF_PLUGIN_DEFINED__=1)
+
+/*
+	cf.visibileRobinSerifButton	: 「駒鳥のセリフを表示するか」というボタンを表示するか(ゲーム進行上、↑のボタンを表示しても良くなったかどうか)
+	cf.dispRobinSerif			: 駒鳥のセリフを表示するか
+
+	ボタンはコンフィグに表示するが、タイトルのコンフィグには表示しない
+	→	ロードしなければ、ゲームがそこまで進んでいるか不明な為
+ */
+
+//	フラグ設定
+cf.dispRobinSerif			= false if cf.dispRobinSerif === void;
+cf.visibileRobinSerifButton	= false if cf.visibileRobinSerifButton === void;
+
+//	マクロ追加
+with(kag.conductor.macros)
+{
+	//	if〜endif を使うので、マクロでないと処理できない
+	//(endifはマクロ内に記述があってもfalseのパターンではマクロ展開までして探してくれないので
+	//endcockrobinのあとにendifを入れる必要がある)
+	//
+	// 使用例：
+	//		[cockrobin]やばいっす！[l][endcockrobin][endif][r]
+	//
+	.cockrobin		= "[if exp='cf.visibileRobinSerifButton&&cf.dispRobinSerif'][robinmode *][trans textoff=0 time=%time|300][macropop]";
+	.endcockrobin	= "[backlay][position page=back layer=message1 visible=false][clfg preback=0 page=back id=robin time=%time|300 textoff=0][endrobinmode][macropop]";
+}
+
+//	タグ追加
+with(kag.tagHandlers)
+{
+	//	駒鳥のセリフモード
+	.robinmode	= function(elm)
+	{
+		//	メッセージレイヤー
+		allocateMessageLayers(2);
+		elm.frame	= "balloon01" if elm.frame == void;
+		var	msg	= back.messages[1];
+		with(msg)
+		{
+			.setPosition(%[
+				left:71,
+				top:79,
+				marginl:90,		//	435, 244
+				margint:52,
+				marginr:104,
+				marginb:52,
+				frame:elm.frame,
+				visible:true
+			]);
+			.setFont(%[
+				color:0x000000,	//	黒
+				edge:false		//	縁取りなし
+			]);
+		}
+		setCurrentMessageLayer(%[layer:"message1"]);
+
+		//	フェイス
+		var	id	= "robin";
+		elm.face	= "robinface01" if elm.face == void;
+		tagHandlers.fg(%[
+			page:"back",
+			id:id,
+			center:823,
+			vcenter:289,
+			storage:elm.face,
+			index:1000900,	//	message0より手前、message1より奥
+			visible:true,
+		]);
+
+		//	アクション
+		if(elm.quake)
+		{//	揺らす
+			elm.qtime	= 600 if elm.qtime === void;
+			msg.quake(elm.hmax, elm.vmax, elm.qtime, elm.interval);
+			tagHandlers.quake(%[
+				page:"back",
+				id:id,
+				hmax:elm.hmax,
+				vmax:elm.vmax,
+				interval:elm.interval,
+				time:elm.qtime
+			]);
+		}
+
+		return 0;
+	} incontextof kag;
+
+	//	駒鳥のセリフ解除
+	.endrobinmode	= function(elm)
+	{
+		setCurrentMessageLayer(%[layer:"message0"]);
+		allocateMessageLayers(1);
+		return 0;
+	} incontextof kag;
+
+	//	吹き出しを揺らす
+	.quakeballoon	= function(elm)
+	{
+		elm.page	= "fore" if elm.page == void;
+		elm.time	= 600 if elm.time === void;
+		this[elm.page].messages[1].quake(elm.hmax, elm.vmax, elm.time, elm.interval);
+		return 0;
+	} incontextof kag;
+
+	//	駒鳥のフェイス変更
+	.chgrobin	= function(elm)
+	{
+		elm.id	= "robin";
+		return tagHandlers.chgfg(elm);
+	} incontextof kag;
+
+	//	駒鳥のフェイスを揺らす
+	.quakerobin	= function(elm)
+	{
+		elm.page= "fore" if elm.page == void;
+		elm.id	= "robin";
+		return tagHandlers.quake(elm);
+	} incontextof kag;
+}
+
+@if(DEBUG)
+function testCockRobin()
+{
+	kag.process("testcodes.ks", "*cockrobin");
+}
+
+function switchVisibleCockRobin()
+{
+	cf.visibileRobinSerifButton = ! cf.visibileRobinSerifButton;
+	System.inform("コンフィグの駒鳥台詞設定表示を" + ((cf.visibileRobinSerifButton)?"可視":"不可視") + "状態に変更しました","cf.visibileRobinSerifButton");
+}
+
+with(kag.debugMenu)
+{
+	.add(new MenuItem(kag, "-"));
+	.add(new KAGMenuItem(kag, "駒鳥セリフテスト", 0, testCockRobin, false));
+	.add(new KAGMenuItem(kag, "駒鳥セリフ表示許可切替", 0, switchVisibleCockRobin, false));
+}
+@endif
+
+@endif

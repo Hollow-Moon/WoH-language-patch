@@ -1,0 +1,234 @@
+﻿@if(__LASTMESSAGEEFFECT_PLUGIN_DEFINED__==0)
+@set(__LASTMESSAGEEFFECT_PLUGIN_DEFINED__=1)
+
+class LastMessageEffectPlugin extends KAGPlugin
+{
+	// クリック待ち後に、既に表示されている文字に対して処理を行うプラグイン
+
+	var	groups	= [ "cur", "def" ];		//	処理対象のグループ(cur → def → 固定 と変化するので、cur,def が対象)
+
+	var	doNext	= false;	//	次回実行するかどうか
+
+	function LastMessageEffectPlugin()
+	{
+		super.KAGPlugin(...);
+
+		if(typeof cf.lme_opacity == "undefined")
+			cf.lme_opacity	= int(256 * 0.4);	//	半透明にするときの不透明度
+		if(typeof cf.lme_time == "undefined")
+			cf.lme_time		= 20;				//	半透明にするときの時間を何文字表示される時間かで指定
+	}
+
+	function finalize()
+	{
+		super.finalize();
+	}
+
+	var	_enabled = true;
+	property enabled
+	{
+		setter(v)	{ _enabled = +v; }
+		getter		{ return _enabled && !cf.lme_disable && cf.lme_opacity < 255; }
+	}
+
+	property time
+	{
+		setter(v)	{ cf.lme_time	= +v; }
+	}
+
+	function addGroup(group)
+	{
+		if(groups.find(group) < 0)
+			groups.add(group);
+	}
+
+	function eraseGroup(group)
+	{
+		var	index	= groups.find(group);
+		if(index >= 0)
+			groups.erase(index);
+	}
+
+	function resetGroup()
+	{
+		groups.clear();
+		groups[0]	= "cur";
+		groups[1]	= "def";
+	}
+
+	function messageEffect(delay=0, target)
+	{
+		//	メッセージ表示が再開されたら、現在表示されている文字は半透明にする
+		var	elm	= %[
+			opacity:%[
+				handler:MoveAction,
+				value:cf.lme_opacity,
+				delay:delay,
+				acttype:'char',
+			],
+		];
+		var	time	= cf.lme_time;
+		var	targets	= [];
+		if(target == void)
+		{
+			var	pages	= [ "fore" ];
+			pages.add("back") if kag.currentWithBack;
+			for(var i=0; i<pages.count; i++)
+				targets.add(kag.getMessageLayerObjectFromElm(%[page:pages[i]]));
+		}
+		else
+			targets.add(target);
+		var	func	= function(layer, elm, time)
+		{
+//			dm(layer.parent.name+"/"+layer.name+": start last message effect");
+//			dm("start lme: "+layer.name, layer.opacity, elm.opacity.value);
+			stopActionChar(layer);	//	アクションを停止(layer.opacity == elm.opacity.value でも、アクションが開始されていないだけかもしれないので)
+			//	↑文字に後付けのアクションを設定するときは、アクションの種類を見極めて停止しないといけないかも
+			if(layer.opacity != elm.opacity.value)
+			{
+				elm.opacity.start	= layer.opacity;
+				actionChar(layer, elm, time);
+			}
+		};
+		for(var i=0; i<targets.count; i++)
+		{
+			var	layer	= targets[i];
+			for(var i=0; i<groups.count; i++)
+				layer.executeCharGroup(groups[i], func incontextof layer, elm, time);
+		}
+	}
+
+	function onStore(f, elm)
+	{
+		// 栞を保存する際に呼ばれる
+		// f = 保存先の栞データ ( Dictionary クラスのオブジェクト )
+		// elm = tempsave 時のオプション ( 現在は常に void )
+	}
+
+	function onRestore(f, clear, elm)
+	{
+		// 栞を読み出すときに呼ばれる
+		// f = 読み込む栞データ ( Dictionary クラスのオブジェクト )
+		// clear = メッセージレイヤをクリアするか ( tempload の時のみ false )
+		// elm = tempload 時のオプション ( tempload でない場合は 常に void,
+		//                                 tempload の時は Dictionary クラスのオブジェクト )
+	}
+
+	function onStableStateChanged(stable)
+	{
+		// 安定 ( s l p タグで停止中 ) または 走行中 ( それ以外 )
+		// の状態が変化したときに呼ばれる
+		// stable = 安定の状態に true, それ以外の場合に false
+		if(!stable && kag.skipMode == 0 && enabled)
+			doNext	= true;
+	}
+
+	function onMessageHiddenStateChanged(hidden)
+	{
+		// 右クリックなどでメッセージレイヤが隠されたり、または
+		// その状態から抜ける時に呼ばれる
+		// hidden = メッセージが隠された場合に true, 現れた場合に false
+	}
+
+	function onCopyLayer(toback)
+	{
+		// backlay タグ / forelay タグがすべてのレイヤに対して実行される時、
+		// あるいは layer=base chidlren=true exchange=false のトランジションの終了時に、
+		// 裏画面の内容を表画面にコピーする
+		// 必要が発生すると呼び出される
+		// toback = 表画面の内容を裏画面にコピーする時に true,
+		//          裏画面の内容を表画面にコピーするときに false
+		// layer=base children=true のトランジション終了時には toback = false で呼ばれる。
+	}
+
+	function onExchangeForeBack()
+	{
+		// layer=base children=true のトランジションの終了時に呼ばれ、
+		// 表レイヤと裏レイヤの情報を交換する目的で呼ばれる
+		// この時点ですでにレイヤのツリー構造は入れ替わっているので、
+		// 通常、ここでは、ツリー構造の入れ替えを行うと情報が矛盾するもの
+		// ( レイヤの名前とか、レイヤへの参照とか ) を裏画面と面画面の間で入れ替える
+		// トランジション終了時の onCopyLayer はこのイベントより前に呼ばれるので
+		// 注意
+	}
+
+	function onSaveSystemVariables()
+	{
+		// システム変数に情報が保存され時に呼ばれる
+		// このタイミングで kag.scflags に情報を書き込めば
+		// 確実にシステム変数に情報を書くことができる
+	}
+
+	function onShowLineBreak(ret)
+	{
+		// クリック待ち記号を表示するよう命令されたときに呼ばれる
+		// ret にはどう処理されたかが入る(タグの返り値と同じ)
+		if((ret >= 0 || (kag.autoMode && ret <= kag.autoModeLineWait) )&& kag.skipMode == 0 && enabled)
+			doNext	= true;
+	}
+
+	function onShowPageBreak(ret)
+	{
+		// 改ページ待ち記号を表示するよう命令されたときに呼ばれる
+		// ret にはどう処理されたかが入る(タグの返り値と同じ)
+	}
+}
+
+//	オブジェクトを生成
+kag.addPlugin(global.lastmessageeffect_object = new LastMessageEffectPlugin(kag));
+
+//	右クリックから戻ったときは、enabled を設定する
+function setLastMessageEffect(enabled)
+{
+	global.lastmessageeffect_object.enabled	= enabled;
+}
+
+//	フェードアウトを実施する
+function fadeoutLastMessage()
+{
+	with(.lastmessageeffect_object)
+	{
+		if(.doNext && .enabled)
+		{
+			.messageEffect();
+			.doNext	= false;
+		}
+	}
+}
+
+{
+	//	タグ定義
+	var	kt	= kag.tagHandlers;
+
+	/**TAG
+	 *	LastMessageEffect の対象となる文字グループを追加
+	 *	@param group 文字グループ名
+	 */
+	kt.lme_addgroup	= function(elm)
+	{
+		lastmessageeffect_object.addGroup(elm.group);
+		return 0;
+	} incontextof kag;
+
+	/**TAG
+	 *	LastMessageEffect の対象となる文字グループを削除
+	 *	@param group 文字グループ名
+	 */
+	kt.lme_erasegroup	= function(elm)
+	{
+		lastmessageeffect_object.eraseGroup(elm.group);
+		return 0;
+	} incontextof kag;
+
+	/**TAG
+	 *	LastMessageEffect の対象となる文字グループをリセット.
+	 *	通常のグループである"cur""def"のみにする
+	 */
+	kt.lme_resetgroup	= function(elm)
+	{
+		lastmessageeffect_object.resetGroup();
+		return 0;
+	} incontextof kag;
+}
+
+@endif

@@ -1,0 +1,513 @@
+﻿// SE.override.tjs - SEのオーバーライド
+@if(__SE_OVERRIDE_DEFINED__==0)
+@set(__SE_OVERRIDE_DEFINED__=1)
+
+@set(SE_DELAY_VERBOSE=0)
+
+class SESoundBuffer extends SESoundBufferOriginal
+{
+	// 時間で pan が変化する機能を追加
+	var panTimer		= void;
+	var pan1st		= void;
+	var pan2nd		= void;
+	var panStartTick	= void;
+	var panTime		= void;
+	var panAccel		= void;
+/*	var _playingStorage	= "";		//保持しておいて@seタグからのstorageを元にした検索に対応(currentStorage はloop時しか記憶しないので)
+	property playingStorage
+	{
+		setter(v)
+		{
+			if(playingStorage !== v)
+			{
+				dmt("se["+id+"].playingStorage = "+playingStorage+" -> "+v);
+				_playingStorage	= v;
+			}
+		}
+		getter	{ return _playingStorage; }
+	}
+*/	var	playingStorage	= "";	//	実際に再生中の storage(currentStorage はloop時しか記憶しないので)
+	var	delayTimer	= void;
+
+	function SESoundBuffer(owner, id)
+	{
+		super.SESoundBufferOriginal(...);
+	}
+
+	function finalize()
+	{
+		if(panTimer != void)
+		{
+			panTimer.enabled	= false;
+			invalidate panTimer;
+		}
+		if(delayTimer != void)
+		{
+			delayTimer.enabled	= false;
+			invalidate delayTimer;
+		}
+		super.finalize();
+	}
+
+	property isDelaying	{ getter { return delayTimer !== void && delayTimer.enabled; } }
+
+	//	複数回呼び出されても、指定された時間に遅延実行できる
+	function doDelay(func, elm)
+	{
+		if(delayTimer == void)
+		{
+			delayTimer		= new Timer(onDelayed, "");
+			delayTimer.funcs= [];
+		}
+
+		var	funcs	= delayTimer.funcs;
+		var	tick	= System.getTickCount();
+		var	time	= tick + +elm.delay;
+
+		var	tmp	= [ time, func, %[] ];
+		(Dictionary.assignStruct incontextof tmp[2])(elm);
+		delete tmp[2].delay;
+
+		for(var i=0; i<funcs.count; i++)
+		{
+			if(funcs[i][0] > time)
+			{
+				funcs.insert(i, tmp);
+				func	= void;
+				break;
+			}
+		}
+		funcs.add(tmp) if func != void;
+
+@if(SE_DELAY_VERBOSE)
+		dm("se.doDelay("+func, elm.delay+")", tick);
+		for(var i=0; i<funcs.count; i++)
+			dm(i+": "+funcs[i][1]+"()", funcs[i][0], (funcs[i][0] - tick));
+@endif
+
+		delayTimer.enabled	= false;
+		delayTimer.interval	= funcs[0][0] - tick;
+		delayTimer.enabled	= true;
+	}
+
+	//	全ての遅延実行をキャンセル
+	function cancelDelay()
+	{
+		if(delayTimer != void && delayTimer.enabled)
+		{
+			delayTimer.enabled	= false;
+			delayTimer.funcs.clear();
+		}
+	}
+
+	function isReservedStorage(storage)
+	{
+		if(delayTimer !== void)
+		{
+			storage		= Storages.chopStorageExt(storage);
+			var	funcs	= delayTimer.funcs;
+			for(var i=0; i<funcs.count; i++)
+				if(funcs[i] != void && Storages.chopStorageExt(funcs[i][2].storage) == storage)
+					return true;
+		}
+		return false;
+	}
+
+	function onDelayed()
+	{
+		if(delayTimer == void)
+			return;
+		var	funcs	= delayTimer.funcs;
+		var	tick	= System.getTickCount();
+//		dm("onDelayed: "+funcs.count, tick);
+		while(funcs.count)
+		{
+@if(SE_DELAY_VERBOSE)
+			dm("onDelayed: "+funcs[0][1]+"()", (tick - funcs[0][0]));
+@endif
+			if(tick > funcs[0][0])
+			{
+				var	func	= funcs[0];
+				funcs.erase(0);
+				this[func[1]](func[2]);
+			}
+			else
+				break;
+		}
+		delayTimer.enabled	= false;
+		if(funcs.count > 0)
+		{
+			delayTimer.interval	= funcs[0][0] - tick;
+			delayTimer.enabled	= true;
+		}
+	}
+
+	function play(elm, resetvolume = true)
+	{
+		if(+elm.delay > 0)
+		{
+			doDelay("play", elm);
+			return;
+		}
+@if(SE_DELAY_VERBOSE)
+		dm("se play: "+playingStorage);
+@endif
+		chgloop = void;
+		super.play(...);
+		playingStorage = Storages.chopStorageExt(elm.storage);
+	}
+
+	function fade(elm)
+	{
+		if(+elm.delay > 0)
+		{
+			doDelay("fade", elm);
+			return;
+		}
+		if(elm.chgloop !== void)
+			chgloop = elm.chgloop;
+		super.fade(...);
+	}
+
+	function fadeIn(elm)
+	{
+		if(+elm.delay > 0)
+		{
+			doDelay("fadeIn", elm);
+			return;
+		}
+		play(...);
+		fade(...);
+		playingStorage = Storages.chopStorageExt(elm.storage);	//	再生を予定している場合にもバッファのリストへ載るように
+	}
+
+	function fadeOut(elm)
+	{
+		if(+elm.delay > 0)
+		{
+			doDelay("fadeOut", elm);
+			return;
+		}
+		cancelDelay();	//	止めるので、それ以前の遅延処理をキャンセル
+		super.fadeOut(...);
+	}
+
+	function stop(delay)
+	{
+		if(+delay > 0)
+		{
+			doDelay("stop");
+			return;
+		}
+
+@if(SE_DELAY_VERBOSE)
+		dm("se stop: "+playingStorage);
+@endif
+		chgloop = void;
+		try
+		{
+			cancelDelay();	//	止めるので、それ以前の遅延処理をキャンセル
+			stopPan();		//	パン値の変更を終了
+			super.stop();
+			playingStorage = void;
+		}
+		catch(e)
+		{
+			dm("効果音の停止に失敗しました(実行は続行できます) : " + e.message);
+		}
+	}
+
+	//フェードアウト後に呼ばれる明示停止処理
+	function onFadeCompleted()
+	{
+		super.onFadeCompleted(...);
+		playingStorage	= void if status != "play";
+		if( chgloop !== void )
+		{
+			//dm(" SE onFadeCompleted: looping=" + looping + " → chgloop=" + chgloop);
+			looping = chgloop;
+			chgloop = void;
+		}
+	}
+@if(0)
+	property volume2
+	{
+		setter(v)
+		{
+			if(volume2 != v)
+			{
+				dmt("volume2 = "+volume2+" → "+v) if id == 0;
+				super.volume2	= v;
+			}
+		}
+		getter	{ return super.volume2; }
+	}
+@endif
+	function onStatusChanged()
+	{
+		if(prevstatus == "play" && status == "stop")
+		{
+			volume2			= owner.seVolume * 1000;	//	効果音の再生が終了したら、音量を元に戻す
+			playingStorage	= void;		//	再生中の storage もリセット
+			stopPan();		//	パン値の変更を停止
+			//	pan の動的な変化を行っていた場合、次の再生時にポップノイズが発生するので、一度無音wavを再生する
+			if(paned) with(global.WaveSoundBuffer)
+			{
+				.open("none.wav");
+				.play();
+				paned	= false;
+			}
+		}
+		super.onStatusChanged(...);
+	}
+/*
+	function stop()
+	{
+		super.stop();
+		playingStorage = void;
+	}
+
+	function onFadeCompleted()
+	{
+		if( ! volume )
+		{
+			playingStorage = void;
+		}
+		super.onFadeCompleted();
+	}
+
+	function onStatusChanged()
+	{
+		// onStatusChanged オーバーライド
+		// ステータスが変更された
+		super.onStatusChanged(...);
+		var ps = prevstatus;
+		var cs = status;
+		prevstatus = cs;
+		if(ps == "play" && cs == "stop")
+		{
+			playingStorage = "";
+			owner.onSESoundBufferStop(id); // play => stop : 演奏が停止した
+		}
+	}
+*/
+
+/*	property volume
+	{
+		setter(x)
+		{
+			if( x === void ) return;
+			if( x == "" ) return;
+			super.volume	= +x;
+		}
+		getter
+		{
+			return super.volume;
+		}
+	}
+
+	property pan
+	{
+		setter(x)
+		{
+			if( x === void ) return;
+			if( x == "" ) return;
+			super.pan = x;
+		}
+		getter
+		{
+			return super.pan;
+		}
+	}
+*/
+	//KeyFrameActionHandlerからのpanパラメータ更新
+	function panning(elm)
+	{
+//		if( elm.time !== void && elm.time != "" ){
+//			dm("SE.panning time=" + elm.time + " が指定されましたがここでは使用していません");
+//		}
+		if( elm.pan !== void && elm.pan != "" ){
+			pan = elm.pan;
+			dm("SE.panning pan=" + elm.pan + " が指定されました");
+		}
+	}
+
+	var chgloop = void;		//フェード後やパン完了時にループ状態を変更する場合の変更値
+	var	paned;
+	function startPan(elm)
+	{
+		if(+elm.delay > 0)
+		{
+			doDelay("startPan", elm);
+			return;
+		}
+
+		stopPan();
+
+		if( elm.chgloop !== void )
+			chgloop = elm.chgloop;
+
+		if(panTimer == void)
+		{
+			panTimer	= new Timer(continuePan, "");
+			panTimer.capacity	= 1;
+			panTimer.interval	= 16;
+		}
+
+		panStartTick= System.getTickCount();
+		panTime		= elm.time === void ? 1000 : +elm.time;
+		panAccel	= +elm.accel;
+		pan1st		= elm.firstpan === void ? pan : +elm.firstpan;
+		pan2nd		= elm.pan === void ? -pan : +elm.pan;
+
+		panTimer.enabled	= true;
+		//dm(" SE startPan: pan1st=" + pan1st + " time=" + panTime + " pan2nd=" + pan2nd + " chgloop=" + chgloop);
+	}
+
+	function continuePan()
+	{
+		var	tick	= System.getTickCount();
+		var	past	= tick - panStartTick;
+		if(past > panTime)
+			stopPan();
+		else
+		{
+			var	per	= past / panTime;
+			per	= panAccel > 0 ? Math.pow(per, panAccel) : (panAccel < 0 ? (1.0 - Math.pow(1.0 - per, -panAccel)) : per);
+			pan	= pan1st + (pan2nd - pan1st) * per;
+		}
+	}
+
+	function stopPan()
+	{
+		if( chgloop !== void )
+		{
+			//dm(" SE stopPan: looping=" + looping + " → chgloop=" + chgloop);
+			looping = chgloop;
+			chgloop = void;
+		}
+
+		if(panTimer == void || !panTimer.enabled)
+			return;
+
+		pan		= pan2nd;
+		panTimer.enabled	= false;
+		paned	= true;
+		owner.onSESoundBufferPanStop(id);	// パンの停止を通知
+	}
+
+	function store()
+	{
+		// 辞書配列に現在の状態を記録する
+		if( currentStorage != "" || currentVolume != 100 || pan != 0 || (delayTimer != void && delayTimer.funcs.count > 0))
+		{
+			var dic = %[];
+			dic.currentStorage = currentStorage if currentStorage !== void && currentStorage != "";
+			dic.volume = currentVolume if currentVolume != 100;
+			dic.pan = pan if pan;
+			if(delayTimer != void)
+			{
+				var	list	= [], tick = System.getTickCount();
+				list.assignStruct(delayTimer.funcs);
+				for(var i=0; i<list.count; i++)
+				{
+					list[i][2].delay	= list[i][0] - tick;
+					list[i].erase(0);
+				}
+				dic.delayFuncs	= list;
+			}
+			return dic;
+		}
+		else
+			return void;	//デフォルト状態のレコードは保存しない
+	}
+
+	function restore(dic)
+	{
+		stop();	//	再生を停止
+
+		// 辞書配列から状態を読み出し、復帰する
+		if( dic === void )
+		{
+			//デフォルト状態のレコードは保存しないためデフォルトに置き換える
+			currentStorage = "";
+			currentVolume = 100;
+			pan = 0;
+			if(delayTimer != void)
+			{
+				delayTimer.enabled	= false;
+				delayTimer.funcs.clear();
+			}
+		}
+		else
+		{
+			currentVolume = (dic.volume !== void) ? dic.volume : 100;
+			pan = (dic.pan !== void) ? pan : false;
+			dic.currentStorage = "" if dic.currentStorage === void;
+			if(dic.currentStorage != "")
+				play(%[storage : dic.currentStorage, loop : true]);
+			if(dic.delayFuncs != void)
+			{//	遅延実行が記録されていたらそれも復元
+				var	list	= dic.delayFuncs;
+				for(var i=0; i<list.count; i++)
+					doDelay(list[i][0], list[i][1]);
+			}
+		}
+	}
+
+	//アクションの対象オブジェクトを特定するための情報を格納
+	function getActionTargetInfo()
+	{
+		var dic = %[];
+		dic.targetstring = "SE" + id;
+		return dic;
+	}
+
+
+	//アクション系拡張
+	function onActionCompleted(trigger)
+	{
+		if (hide) {
+			visible = false;
+		}
+		//dm("SE: onActionCompleted " + string(trigger));
+		if( trigger !== void ){
+			//トリガ文字列を伴う終了通知(個別にwact指定しているものなど)
+			owner.onActionCompleted(trigger);
+			if( typeof this.trigger != "undefined" ){
+				for(var i=0; i<this.trigger.count; i++ ){
+					if( this.trigger[i] == trigger ){
+						this.trigger.erase(i);
+						//通知の終わったトリガ文字列を消去
+						dm("SE: onActionCompleted: erase: " + trigger );
+						break;
+					}
+				}
+			}
+		}else{
+			//従来の終了通知
+			owner.onActionCompleted(this);
+			if( typeof this.trigger != "undefined" ){
+				//オブジェクト全体のアクション終了のため個別通知トリガ文字列をまるごと削除
+				invalidate this.trigger;
+				delete this.trigger;
+			}
+		}
+	}
+
+	//シーケンスIDを振ったハンドラの増加を受け付け
+	function onSequenseAdded(seqid)
+	{
+		//dm("SE.onSequenseAdded: " + seqid);
+		owner.onSequenseAdded(...);
+	}
+
+	//シーケンスIDを振ったハンドラの終了を受け付け
+	function onSequenseDone(seqid)
+	{
+		owner.onSequenseDone(...);
+	}
+
+}
+
+@endif

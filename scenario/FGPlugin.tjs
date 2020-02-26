@@ -1,0 +1,1075 @@
+﻿/*----------------------------------------------------------------------------/
+/	FGPlugin
+/		KAGの前景レイヤーから独立した、立ち絵表示専用のレイヤー管理プラグイン
+/		魔法使いの夜仕様：kag.fore.layers[]を対象として旧機能を実現する
+/----------------------------------------------------------------------------*/
+@if(__FG_PLUGIN__==0)
+@set(__FG_PLUGIN__=1)
+
+///Scripts.execStorage("YALayerPlugin.tjs");
+//Scripts.execStorage("CompositionLayer.tjs");	//	中央座標 → 左上座標のために必要。もっと早く読み込まないと意味が無い
+
+class FGPlugin extends KAGPlugin
+{
+	var	name	= "fg";
+
+	var	defaultTime	= 300;
+	var	defaultAccel= 0;
+
+	var	invertImageTagLayerType	= [];
+
+	function FGPlugin()
+	{
+		super.KAGPlugin(...);
+		var	keys	= [];
+		keys.assign(imageTagLayerType);
+		for(var i=0; i<keys.count; i+=2)
+			invertImageTagLayerType[keys[i+1].type]	= keys[i];
+	}
+
+	function finalize()
+	{
+		invalidate invertImageTagLayerType if invertImageTagLayerType != void;
+		super.finalize();
+	}
+
+	/**
+	 * getLayerFromElm のオーバーライド
+	 * @param target 画像ファイル名
+	 * @return 対応するレイヤー
+	 * 画像ファイルに対応するレイヤーがあれば、それを返す機能を追加
+	 */
+	function getLayerFromElm(elm)
+	{
+		return void;	//	このプラグインではレイヤーを管理していないので、何も返さない
+	}
+
+	/**
+	 * 空きレイヤーを探す
+	 * @param page ページ指定
+	 * @return レイヤー番号
+	 */
+	function getFreeLayer(page="back")
+	{
+		return kag.getFreeLayer(...);
+	}
+
+	/**
+	 * 指定の画像ファイルに対応するキャラクターを読み込んでいるレイヤーを探す
+	 * @param storage 画像ファイル名
+	 * @param page ページ指定
+	 * @return レイヤー番号、見つからなかったら void
+	 */
+	function getSameCharacterLayerNo(storage, page = "fore")
+	{
+		var	re	= new RegExp("^([^0-9a-z]+)");	//	先頭からの数字以外の文字をキャラクター名と判断
+		var	res	= re.exec(storage);
+//		dm("chara: "+res[1]);
+		var	lnos= [];
+		if(res.count > 0)
+		{
+			var	cn	= res[1];	//	キャラクター名
+			var	layers = page == "fore" ? kag.fore.layers : kag.back.layers, p, n;
+			for(var i=0; i<layers.count; i++)
+			{
+				if(	(p = layers[i].Anim_loadParams) != void &&
+					layers[i].visible &&
+					(n = Storages.chopStorageExt(Storages.extractStorageName(p.storage))) != void &&
+					n.indexOf(cn) == 0)		//	同じキャラクターなら
+				{
+					lnos.add([i, p.storage, p.visible]);
+				}
+			}
+		}
+		if(lnos.count == 0)
+			return void;		//	見つからなかった
+		else if(lnos.count == 1)
+			return lnos[0][0];	//	一つだけ見つかった
+
+		//	複数見つかったので、距離で判断する
+		var	dre	= /(\([^)]\))/;	//	()で挟まれた部分を距離と見なす
+		var	dist= dre.exec(storage);		//	距離
+//		dm("distance = "+dist[1]);
+		var	lno	= void;
+		for(var i=0; i<lnos.count; i++)
+		{
+			if(lnos[i][1].indexOf(dist[1]) > 0)
+			{
+				if(lno === void)
+					lno	= i;
+				else
+				{
+					//	表示非表示でもチェックする
+					if(!lnos[lno][2])
+						lno	= i;	//	先に選んでいたのが非表示だったので
+					else
+					{
+						throw new Exception("同じキャラクターが複数存在するため、レイヤーを特定できません。\n特定する為に必要な情報を指定してください。");
+						return void;
+					}
+				}
+			}
+		}
+//		dm("layer no = "+lno+(lno !== void ? "("+lnos[lno][0]+", "+lnos[lno][1]+", "+lnos[lno][2]+")" : ""));
+		return lno !== void ? lnos[lno][0] : void;
+	}
+
+	/**
+	 * 指定の位置に立っているレイヤーを探す
+	 * @param pos 位置
+	 * @param page ページ
+	 */
+	function getLayerNoByPos(pos, page = "back")
+	{
+		var	layers = page == "fore" ? kag.fore.layers : kag.back.layers, p, nums = [];
+		for(var i=0; i<layers.count; i++)
+		{
+			if(layers[i].visible && (p = layers[i].Anim_loadParams) != void && p.pos == .pos)
+				nums.add(i);
+		}
+		return nums;
+	}
+	function getLayerByPos(pos, page="back")
+	{
+		var	layers = page == "fore" ? kag.fore.layers : kag.back.layers, p, nums = [];
+		for(var i=0; i<layers.count; i++)
+		{
+			if(layers[i].visible && (p = layers[i].Anim_loadParams) != void && p.pos == .pos)
+				nums.add(layers[i]);
+		}
+		return nums;
+	}
+
+
+	/**
+	 * トランジションするパラメータかどうか
+	 */
+	function isDoTrans(elm)
+	{
+		with(elm)
+			return .rule != "" || .time != void || .vague != void;
+	}
+
+	/**
+	 *	パラメータによってトランジションしたりしなかったり
+	 *	@param rule ルール画像
+	 *	@param vague 滑らかさ
+	 *	@param time トランジション時間
+	 */
+	function doTrans(elm)
+	{
+		with(elm)
+		{
+			if(isDoTrans(elm))
+			{
+				.layer	= "base";
+				if(.rule === void || .rule == "crossfade")
+					.method	= "crossfade";
+				else
+					.method	= "universal";
+				.time	= defaultTime if .time === void;
+				.vague	= 256 if .vague === void;
+
+				.id		= void;	//	base でトランジションさせるため
+				.storage= void;
+
+				return kag.tagHandlers.trans(elm);
+			}
+			else
+				return 0;
+		}
+	}
+
+	/**
+	 *	パーティクルのパラメータを設定
+	 */
+	var	particleParams	= [
+		"maxParticleAngle",			"pmaxangle",
+		"minParticleAngle",			"pminangle",
+		"maxParticleAngleOmega",	"pmaxangomg",
+		"minParticleAngleOmega",	"pminangomg",
+		"rotateReverse",			"pangrev",
+		"maxParticleMagnify",		"pmaxmag",
+		"minParticleMagnify",		"pminmag",
+		"maxParticleMagnifyVardation",	"pmaxmagvar",
+		"minParticleMagnifyVardation",	"pminmagvar",
+		"maxParticleOpacity",		"pmaxopac",
+		"minParticleOpacity",		"pminopac",
+		"maxParticleOpacityVaridation",	"pmaxopacvar",
+		"minParticleOpacityVaridation",	"pminopacvar",
+		"particleAppearLeft",		"pleft",
+		"particleAppearTop",		"ptop",
+		"particleAppearWidth",		"pwidth",
+		"particleAppearHeight",		"pheight",
+		"maxParticleSpeed",			"pmaxspd",
+		"minParticleSpeed",			"pminspd",
+		"maxParticleAccel",			"pmaxacl",
+		"minParticleAccel",			"pminacl",
+		"maxParticleVectorAngle",	"pmaxvecang",
+		"minParticleVectorAngle",	"pminvecang",
+		"maxParticleVectorRotate",	"pmaxvecrot",
+		"minParticleVectorRotate",	"pminvecrot",
+		"particleRotateCenterX",	"protcx",
+		"particleRotateCenterY",	"protcy",
+		"maxParticleRotateRadius",	"pmaxradius",
+		"minParticleRotateRadius",	"pminradius",
+		"maxParticleRotateRadiusVaridation",	"pmaxradvar",
+		"minParticleRotateRadiusVaridation",	"pminradvar",
+		"maxParticleRotateOmega",	"pmaxrotomg",
+		"minParticleRotateOmega",	"pminrotomg",
+		"particleRotateReverse",	"protrev",
+		"maxParticleBlinkMax",		"pmaxblink",
+		"minParticleBlinkMax",		"pminblink",
+		"maxParticleBlinkTime",		"pmaxbtime",
+		"minParticleBlinkTime",		"pminbtime",
+		"maxParticleBlinkCount",	"pmaxbcnt",
+		"minParticleBlinkCount",	"pminbcnt",
+		"maxParticleRotateOmegaTime",	"pmaxomgtime",
+		"minParticleRotateOmegaTime",	"pminomgtime"
+	];
+	function setParticle(elm)
+	{
+		with(elm)
+		{
+			var	layer	= .__layer !== void ? .__layer : kag.getLayerFromElm(elm);
+
+			for(var i=0; i<particleParams.count; i+=2)
+				layer[particleParams[i]]	= +elm[particleParams[i+1]] if elm[particleParams[i+1]] !== void;
+		}
+	}
+
+	/**
+	 * 前景レイヤーの表示
+	 */
+	function fg(elm)
+	{
+		with(elm)
+		{
+			//	画像を読み込む
+			.page	= "back" if .page === void;
+			if(.page == "back" && (.preback || .preback===void) && (.rule != "" || .time != void || .vague != void))
+				kag.backupLayer(%[], true);
+			if(.pos !== void)
+				.pos	= correctPosName[.pos];
+			else if(.center !== void || .vcenter !== void)
+			{
+				.center	= 0 if .center === void;
+				.vcenter= 0 if .vcenter === void;
+			}
+			.opacity= 255 if .opacity === void;
+			.index	= .absolute if .absolute !== void;
+			.index	= (+.layer + 1) * 1000 if .index === void;
+			.visible= true if .visible === void;
+			.needlayer	= true;
+			kag.tagHandlers.image(elm);
+			.needlayer	= false;
+
+			//	パーティクル設定
+			if(.__layer.particle)
+			{//	とりあえず解除
+				.__layer.particle	= false;
+				.__layer.uninitParticle();
+			}
+			if(.pmode != void)
+			{//	初期化
+				.pmode	= .pmode.toLowerCase();
+				var	mc	= .pmax == void ? void : +.pmax;
+				var	gr	= .genrate == void ? void : +.genrate;
+				switch(.pmode)
+				{
+				case "rotate":
+				case "accelrotate":
+					var	x, y;
+					x	= +.pcx if .pcx !== void;
+					y	= +.pcy if .pcy !== void;
+					if(.pmode == "rotate")
+						.__layer.initRotateParticle(mc, gr, x, y);
+					else
+						.__layer.initAccelRotateParticle(mc, gr, x, y);
+					break;
+
+				case "blink":
+				case "vector":
+				default:
+					var	l, t, w, h;
+					l	= +.pleft if .pleft !== void;
+					t	= +.ptop if .ptop !== void;
+					w	= +.pwidth if .pwidth !== void;
+					h	= +.pheight if .pheight !== void;
+					if(.pmode == "blink")
+						.__layer.initBlinkParticle(mc, gr, l, t, w, h);
+					else
+						.__layer.initVectorParticle(mc, gr, l, t, w, h);
+					break;
+				}
+				.__layer.particle	= true;
+			}
+			if(.__layer.particle)
+				setParticle(elm);	//	各種設定
+
+			if(elm.offsetx !== void || elm.offsety !== void)
+			{
+				throw new Exception("fg: offsetx, offsety は使用できません。PGに確認してください。");
+				return 0;
+			}
+		}
+		return doTrans(elm);	//	パラメータによってトランジションしたりしなかったり
+	}
+
+	/**
+	 * 前景レイヤーの消去
+	 */
+	function clfg(elm)
+	{
+		with(elm)
+		{
+			//	消去するレイヤーを探す
+			.page	= "back" if .page == void;
+			if(.page == "back" && (.preback || .preback===void) && (.rule != "" || .time != void || .vague != void))
+				kag.backupLayer(%[], true);
+			var	layers	= [];
+			if(.pos !== void)
+			{//	立ち位置指定
+				layers	= getLayerByPos(.pos, .page);
+			}
+			var	layer	= kag.getLayerFromElm(elm);
+			if(layer != void)
+			{
+				layers.add(layer);
+			}
+			if(.pos === void && .storage === void && .id === void)
+			{//	全て消去
+				var	pagelayers	= .page == "fore" ? kag.fore.layers : kag.back.layers;
+				for(var i=0; i<pagelayers.count; i++)
+					layers.add(pagelayers[i]) if pagelayers[i].visible;
+			}
+@if(DEBUG)
+			if(layers.count == 0)
+			{
+				dm("clfg: 消去対象となるレイヤーは見つかりませんでした。");
+				return 0;
+			}
+@endif
+			//	消去実行
+			for(var i=0; i<layers.count; i++)
+			{
+				with(layers[i])
+				{
+					.visible	= false;
+					.freeImage();	//	念のため
+				}
+			}
+		}
+		return doTrans(elm);	//	トランジションしたり
+	}
+
+	/**
+	 * 透明レイヤーの消去(トランジションはしない)
+	 * @param page 消去するページ(指定が無ければ両方)
+	 */
+	function cltransparent(elm)
+	{
+		with(elm)
+		{
+			if(.page == void || .page == "all")
+			{
+				cltransparent(%[page:"fore"]);
+				cltransparent(%[page:"back"]);
+			}
+			else
+			{
+				.page	= "fore" if .page === void;
+				var	layers	= .page === "fore" ? kag.fore.layers : kag.back.layers;
+				for(var i=0; i<layers.count; i++)
+					layers[i].visible = false if layers[i].visible && layers[i].opacity == 0;
+//					kag.tagHandlers.freeimage(%[page:.page, layer:i]) if layers[i].visible && layers[i].opacity == 0;
+			}
+		}
+		return 0;
+	}
+@if(0)
+	function copyLayerParams(elm, from, to)
+	{
+		with(elm)
+		{
+			if(.pos === void)
+			{
+				.center	= from.center if .center === void;
+				.vcenter= from.vcenter if .vcenter === void;	//	立ち絵の表示方法により検討
+			}
+			.opacity= .opacity === void ? from.opacity : 255;
+			.type	= from.type if .type === void;
+			.afx	= from._afn_offx if .afx === void;
+			.afy	= from._afn_offy if .afy === void;
+			.zoomx	= from.zoomx if .zoomx === void;
+			.zoomy	= from.zoomy if .zoomy === void;
+			.rotate	= from.rotate if .rotate === void;
+			if(.xblur !== void || .yblur !== void)
+			{
+				.xblur	= from.xblur if .xblur === void;
+				.yblur	= from.yblur if .yblur === void;
+			}
+			else
+				.blur	= from.blur if .blur === void;
+			.effect	= from.effect if .effect === void;
+			.contrast= from.contrast if .contrast === void;
+			.index	= .index === void ? from.absolute : (+.layer + 1) * 1000;
+			.visible= true if .visible === void;
+
+			to.setStatus(from);	//	quake等の状態を先に渡す
+		}
+	}
+@endif
+	/**
+	 * レイヤーの変更
+	 */
+	function chgfg(elm)
+	{
+		with(elm)
+		{
+			.page	= "back" if .page === void;	//	まとめてトランジションすることもあるので、裏を変える
+			if(.page == "back" && (.preback || .preback===void) && (.rule != "" || .time != void || .vague != void))
+				kag.backupLayer(%[], true);
+
+			var	searchpage	= .page == "back" ? "fore" : "back";
+			var	page	= .page;
+			elm.page	= searchpage;
+			var	layer	= kag.getLayerFromElm(elm);
+			elm.page	= page;
+			var	copy_param	= function(elm, layer)
+			{
+				//	image タグで初期化されてしまうパラメータも継続する必要があるので設定する
+				with(elm)
+				{
+/*					if(.pos === void)
+					{
+						.center	= layer.center if .center === void;
+						.vcenter= layer.vcenter if .vcenter === void;	//	立ち絵の表示方法により検討
+					}
+					.opacity= layer.opacity if .opacity === void;
+*/					.mode	= invertImageTagLayerType[layer.type] if .mode === void;
+					.visible = layer.visible if .visible === void;
+					.effect	= layer.effect if .effect === void;
+					.afx	= layer._afn_offx if .afx === void;
+					.afy	= layer._afn_offy if .afy === void;
+					.zoomx	= layer.zoomx if .zoomx === void;
+					.zoomy	= layer.zoomy if .zoomy === void;
+					.rotate	= layer.rotate if .rotate === void;
+					if(.xblur !== void || .yblur !== void)
+					{
+						.xblur	= layer.xblur if .xblur === void;
+						.yblur	= layer.yblur if .yblur === void;
+					}
+					else
+						.blur	= +layer.blur if .blur === void;
+					.contrast= layer.contrast if .contrast === void;
+				}
+			};
+			var	ltype	= ltAlpha;
+//			dm("chgfg layer = "+(layer != void ? layer.name : "void"));
+			if(layer != void && (.layer = kag[searchpage].layers.find(layer)) < 0)
+			{//	kag.fore/back.layers 以外のレイヤー
+				copy_param(elm, layer);	//	一部のパラメータのみコピー
+			}
+			else
+			{
+				if(.layer !== void)
+					;
+				else if(.pos !== void)
+				{//	位置指定
+					var	nums	= getLayerNoByPos(.pos, searchpage);
+					if(nums.count > 1)
+					{
+						dm(getDebugStringFromElm(elm,"chgfg: elm="));
+						throw new Exception("\""+.pos+"\" に表示されているレイヤーが2つ以上あるため、レイヤーを特定できません");
+						return 0;
+					}
+					else if(nums.count < 1)
+					{
+						dm(getDebugStringFromElm(elm,"chgfg: elm="));
+						throw new Exception("\""+.pos+"\" にはレイヤーが表示されていません。");
+						return 0;
+					}
+					.layer	= nums[0];
+				}
+				else if(.target !== void)	//	直前の画像指定
+					.layer	= getLayerNoByStorage(.target, searchpage);
+				else if(.id !== void)		//	ID で指定
+					.layer	= getLayerNoById(.id, searchpage);
+				else	//	同じキャラクター指定
+					.layer	= getSameCharacterLayerNo(.storage, searchpage);
+				if(.layer === void)
+				{
+					dm(getDebugStringFromElm(elm,"chgfg: elm="));
+					throw new Exception("対応するレイヤーが見つかりません。("+.storage+"/"+.last+")");
+					return 0;
+				}
+				copy_param(elm, kag[searchpage].layers[.layer]);	//	一部のパラメータのみコピー
+			}
+
+			kag.tagHandlers.image(elm);
+			return doTrans(elm);
+		}
+	}
+
+	/**
+	 * レイヤーを移動する.
+	 * トランジションの場合はデフォルトで終了を待つ、moveの場合はデフォルトで待たない
+	 */
+	function movefg(elm)
+	{
+		with(elm)
+		{
+			//	準備
+			var	dotrans	= .rule != "";
+			.page	= dotrans ? "back" : "fore" if .page === void;	//	トランジションするならデフォルトは back
+			if(.page == "back" && (.preback || .preback===void) && .rule != "")
+				kag.backupLayer(%[], true);
+			if(.layer === void)		//	id で調べて
+				.layer	= getLayerNoById(.id, .page) if .id !== void;
+			if(.layer === void)		//	storage で調べて
+				.layer	= getLayerNoByStorage(.storage, .page) if .storage !== void;
+			if(.layer === void)		//	キャラクター名で調べる
+				.layer	= getSameCharacterLayerNo(.storage, .page);
+			var	layer	= kag.getLayerFromElm(elm);
+			if(layer === void)
+			{
+				dm(getDebugStringFromElm(elm,"movefg: elm="));
+				throw new Exception("対象となるレイヤー("+(.storage != "" ? "storage="+.storage : (.layer !== void ? "layer="+.layer : "no arg"))+"/"+.page+")が存在しません。");
+				return 0;
+			}
+			if(.pos !== void)
+			{//	位置指定
+				.pos	= correctPosName[.pos];
+				.center	= kag.scPositionX[.pos];	//	pos に対応する座標
+//				.bottom	= this[.page].base.height;	//	画面下端
+				layer.Anim_loadParams.pos	= .pos if layer.Anim_loadParams != void;
+			}
+			if(.center !== void)
+				.left	= layer.center2left(.center);
+			if(.vcenter !== void)
+				.top	= layer.center2top(.vcenter);
+
+			//	移動
+			if(dotrans)
+			{//	トランジションで移動
+				//	画像を所定の位置へ移動させ
+				layer.left		= .left if .left !== void;
+				layer.top		= .top if .top !== void;
+				layer.opacity	= .opacity if .opacity !== void;
+				return doTrans(elm);	//	トランジション実行
+			}
+			else if(.time !== void || .accel !== void)
+			{//	move で移動
+				.time	= .time === void ? defaultTime : +.time;
+				.accel	= .accel === void ? defaultAccel : +.accel;
+
+				//	action で move する
+				var	accel	= 0;
+				if(.accel == 0)		accel	= 0;
+				else if(.accel > 4)	accel	= 14;
+				else if(.accel > 3)	accel	= 10;
+				else if(.accel > 2)	accel	= 6;
+				else if(.accel > 1)	accel	= 2;
+				else if(.accel < -4)accel	= 15;
+				else if(.accel < -3)accel	= 11;
+				else if(.accel < -2)accel	= 7;
+				else if(.accel < -1)accel	= 3;
+
+				//	変化のあるもののみactionに追加する
+				var	names	= [ "center", "vcenter", "opacity" ];
+				var	props	= [];
+				var	keys	= [[0, accel, "l"], [.time, accel, void]];
+				for(var i=0; i<names.count; i++)
+				{
+					var	prop	= names[i];
+					var	value	= +elm[prop];
+					if(value !== void)
+					{
+						var	initval	= elm["init"+prop] !== void ? elm["init"+prop] : layer[prop];
+						if(value != initval)
+						{
+							props.add(prop);
+							keys[0].add(initval);
+							keys[1].add(value);
+//							dm(layer.name+"."+names[i]+" = "+initval+" → "+value);
+						}
+					}
+				}
+
+				var	mp	= %[
+					tagname:"action",
+					target:layer,
+					module:MixedKeyFrameActionModule,
+					startTime:System.getTickCount(),	//	必ず指定が必要(前回のmoveが継続してしまうので)
+					acttype:"move",
+					noinit:true,
+					textoff:.textoff,
+					texton:.texton,
+					props:props,
+					keys:keys,
+				];
+				kag.tagHandlers.action(mp);
+				if(.both)
+				{
+					//	both=表裏両面で同じ処理を実行
+					.page	= .page == "back" ? "fore" : "back";
+					.both	= void;
+					.initcenter	= layer.center;
+					.initvcenter= layer.vcenter;
+					.initopacity= layer.opacity;
+					return movefg(elm);
+				}
+				if(.wait != void && .nowait===0)
+					return kag.tagHandlers.wact(mp);
+				else
+					return 0;
+			}
+			else
+			{//	即座に指定の位置へ移動
+				layer.left		= .left if .left !== void;
+				layer.top		= .top if .top !== void;
+				layer.opacity	= .opacity if .opacity !== void;
+			}
+		}
+		return 0;
+	}
+
+	/**
+	 * レイヤーを指定位置に置く
+	 */
+	function putfg(elm)
+	{
+		with(elm)
+		{
+			//	透明な状態で配置
+			.time = .rule = .vague = void;	//	トランジションしない
+			.page = "fore" if .page === void;
+			.visible = true if .visible === void;
+			.opacity = 0 if .opacity === void;
+			fg(elm);
+
+			//	逆のレイヤーにも配置
+			.page = .page != "fore" ? "fore" : "back";
+			fg(elm);
+		}
+		return 0;
+	}
+
+	/**
+	 * レイヤーを指定位置へ、移動しながら出現させる.
+	 * 既に同じようなレイヤーが存在しても、再利用はしない
+	 */
+	function infg(elm)
+	{
+		with(elm)
+		{
+			.mx= 24 if .mx === void;
+			.my= 0 if .my === void;
+
+			//	最初の位置へ置く
+			var	opa	= .opacity === void ? 255 : +.opacity;
+			.opacity= void;
+			var	time= .time === void ? defaultTime : +.time;
+			.center	-= +.mx;
+			.vcenter-= +.my;
+			dm("put("+.center+", "+.vcenter+")");
+			putfg(elm);
+
+			//	移動させながら不透明にする
+			.page	= "fore";
+			.center	+= +.mx;
+			.vcenter+= +.my;
+			dm("in("+.center+", "+.vcenter+")");
+			.time	= time;
+			.accel	= .accel === void ? defaultAccel : +.accel;
+			.opacity= opa;
+			return movefg(elm);
+		}
+	}
+
+	/**
+	 * レイヤーを現在の位置からちょっとだけ移動しながら消す
+	 */
+	function outfg(elm)
+	{
+		with(elm)
+		{
+			//	準備
+			.page	= "fore" if .page === void;
+			var	layer	= kag.getLayerFromElm(elm);
+			if(layer === void)
+			{
+				dm(getDebugStringFromElm(elm,"outfg: elm="));
+				throw new Exception("対象となるレイヤーが存在しません。");
+				return 0;
+			}
+
+			//	移動＋消失
+			.mx= 24 if .mx === void;
+			.my= 0 if .my === void;
+			.center	= layer.center + +.mx;
+			.vcenter= layer.vcenter + +.my;
+			.time	= .time === void ? defaultTime : +.time;
+			.accel	= .accel === void ? defaultAccel : +.accel;
+			.opacity= 0;
+			return movefg(elm);
+		}
+	}
+
+	/**
+	 * 条件に当てはまるレイヤーを消去
+	 */
+	function freefg(elm)
+	{
+		var	cond = [];
+		cond.add("opacity");
+		cond.add(elm.opacity === void ? 0 : +elm.opacity);
+
+		var	freeimage	= kag.tagHandlers.freeimage;
+		for(var i=0; i<kag.fore.layers.count; i++)
+		{
+			var	layer	= kag.fore.layers[i];
+			for(var j=0; j<cond.count; j+=2)
+			{
+				if(layer[cond[0]] == cond[1])
+				{
+					//	表も裏も解放する
+					freeimage(%[page:"fore",layer:i]);
+					freeimage(%[page:"back",layer:i]);
+					break;
+				}
+			}
+		}
+		return 0;
+	}
+}
+
+//	オブジェクトを生成
+kag.addPlugin(global.fg_object = new FGPlugin(kag));
+
+//-- タグ宣言 -----------------------------------------------------------------
+var	kt	= kag.tagHandlers;
+
+/**TAG
+ *	fg - 前景レイヤーの表示
+ *	@param storage	画像ファイル名
+ *	@param page		ページ指定(default:back)
+ *	@param id		同一画像を複数表示する場合の識別子
+ *	@param index	前後位置
+ *	@param pos		立ち位置(left/center/right)
+ *	@param left		左上座標
+ *	@param top		左上座標
+ *	@param center	X軸方向の中心座標
+ *	@param vcenter	Y軸方向の中心座標
+ *	@param bottom	下端の高さ
+ *	@param afx		拡大回転中心座標
+ *	@param afy		拡大回転中心座標
+ *	@param color	一色で塗りつぶす時の色指定
+ *	@param zoomx	横方向の拡大率
+ *	@param zoomy	縦方向の拡大率
+ *	@param zoom		縦横同時設定拡大率
+ *	@param rotate	回転角度
+ *	@param xblur	横ぼかし指定
+ *	@param yblur	縦ぼかし指定
+ *	@param blur		ぼかし指定
+ *	@param effect	画像効果指定
+ *	@param contrast	コントラスト指定
+ *	@param type		レイヤー合成タイプ
+ *	@param rule		トランジションするときのルール(default:crossfade)
+ *	@param time		トランジション時間
+ *	@param vague	トランジションの滑らかさ
+ *	@param nowait	トランジションの終了を待つか(default:false)
+ *	@param canskip	トランジションの終了待ちをスキップできるか(default:true)
+ *	@param textoff	トランジションの前にテキストを消去するか(default:設定次第)
+ *	@param preback	トランジションの前にbacklayを実施するか(default:true)
+ *	@param fliplr	左右反転するか(default:false)
+ *	@param flipud	上下反転するか(default:false)
+ *	@param opacity	不透明度(default:255)
+ *	@param visible	表示するか(default:true)
+ *	@param partbg	特殊背景内に表示する場合の対象ストレージ
+ *	@param partbgid	特殊背景内に表示する場合の対象ID
+ *		@memo: rule, time, vague の何れかを設定すると、トランジション(事前のbacklayも)を実行します
+ *		@link: image, dotrans, fg, clfg, cltransparent, chgfg, movefg, find, type
+ *		@group: レイヤ操作
+ */
+kt.fg	= function(mp)
+{
+	mp.storage = mp.target if mp.target !== void;
+	return fg_object.fg(mp);
+} incontextof kag;
+
+/**TAG
+ *	clfg - 前景レイヤーの消去
+ *	@param storage	画像ファイル名
+ *	@param storages	画像ファイル名をカンマ区切りで複数指定
+ *	@param page		ページ指定(default:back)
+ *	@param pos		立ち位置指定
+ *	@param rule		トランジションするときのルール(default:crossfade)
+ *	@param time		トランジション時間
+ *	@param vague	トランジションの滑らかさ
+ *	@param nowait	トランジションの終了を待つか(default:false)
+ *	@param canskip	トランジションの終了待ちをスキップできるか(default:true)
+ *	@param textoff	トランジションの前にテキストを消去するか(default:設定次第)
+ *	@param partbg	特殊背景内に表示する場合の対象ストレージ
+ *	@param partbgid	特殊背景内に表示する場合の対象ID
+ *		@link: freeimage, dortans, fg, clfg, cltransparent, chgfg, movefg, find
+ *		@group: レイヤ操作
+ */
+kt.clfg	= function(mp)
+{
+	return fg_object.clfg(mp);
+} incontextof kag;
+
+/**
+ *	cltransparent - 透明な前景レイヤーを消去する
+ *	@param page	ページ(default:all)
+ *		@link: cltransparent, freefg
+ *		@group: レイヤ操作
+ */
+kt.cltransparent	= function(mp)
+{
+	return fg_object.cltransparent(mp);
+} incontextof kag;
+
+/**TAG
+ *	chgfg - 前景レイヤーを変更する
+ *	@param page		ページ
+ *	@param pos		変更する位置
+ *	@param target	変更する画像
+ *	@param storage	新しい画像
+ *	@param afx		拡大回転中心座標
+ *	@param afy		拡大回転中心座標
+ *	@param center	X軸方向の中心座標
+ *	@param vcenter	Y軸方向の中心座標
+ *	@param mag		拡大率(旧仕様互換)
+ *	@param rotate	回転指定
+ *	@param blur		ぼかし指定
+ *	@param effect	画像効果指定
+ *	@param contrast	コントラスト指定
+ *	@param zoom		拡大率
+ *	@param index	前後位置(指定がなければ変更しない)
+ *	@param visible	表示するか(default:true)
+ *	@param rule		トランジションするときのルール(default:crossfade)
+ *	@param time		トランジション時間
+ *	@param vague	トランジションの滑らかさ
+ *	@param nowait	トランジションの終了を待つか(default:false)
+ *	@param canskip	トランジションの終了待ちをスキップできるか(default:true)
+ *	@param textoff	トランジションの前にテキストを消去するか(default:設定次第)
+ *	@param preback	トランジションの前にbacklayを実施するか(default:true)
+ *	@param partbg	特殊背景内に表示する場合の対象ストレージ
+ *	@param partbgid	特殊背景内に表示する場合の対象ID
+ *		@link: fg, clfg, cltransparent, chgfg, movefg, find
+ *		@group: レイヤ操作
+ */
+kt.chgfg	= function(mp)
+{
+	return fg_object.chgfg(mp);
+} incontextof kag;
+
+/**TAG
+ *	movefg - 前景レイヤーを移動する
+ *	@param page		ページ
+ *	@param storage	画像ファイル名
+ *	@param target	画像名による指定
+ *	@param pos		移動先
+ *	@param left		移動先座標
+ *	@param top		移動先座標
+ *	@param center	X軸方向の中心座標
+ *	@param vcenter	Y軸方向の中心座標
+ *	@param bottom	下端の高さ
+ *	@param afx		拡大回転中心座標
+ *	@param afy		拡大回転中心座標
+ *	@param opacity	不透明度(default:移動元レイヤーのopacity)
+ *	@param rule		トランジションするときのルール(default:crossfade)
+ *	@param time		トランジション、または移動の時間
+ *	@param vague	トランジションの滑らかさ
+ *	@param nowait	トランジションの終了を待つか(default:true)
+ *	@param textoff	トランジションの前にテキストを消去するか(default:設定次第)
+ *	@param accel	move の accel
+ *	@param canskip	トランジション、または移動の終了待ちをスキップできるか(default:true)
+ *	@param both		表と裏を共にmoveさせる(default: true)
+ *	@param partbg	特殊背景内に表示する場合の対象ストレージ
+ *	@param partbgid	特殊背景内に表示する場合の対象ID
+ *		@link: action, dotrans, fg, clfg, cltransparent, chgfg, movefg, find
+ *		@group: レイヤ操作(アクション)
+ */
+kt.movefg	= function(mp)
+{
+	mp.storage = mp.target if mp.target !== void;
+	return fg_object.movefg(mp);
+} incontextof kag;
+
+/**TAG
+ *	putfg - 画像を指定位置に置く
+ *	@param storage	画像ファイル名
+ *	@param page		ページ指定(default:fore)
+ *	@param index	前後位置
+ *	@param pos		立ち位置(left/center/right)
+ *	@param left, top	左上座標
+ *	@param center	X軸方向の中心座標
+ *	@param vcenter	Y軸方向の中心座標
+ *	@param bottom	下端の高さ
+ *	@param afx		拡大回転中心座標
+ *	@param afy		拡大回転中心座標
+ *	@param effect	画像効果指定
+ *	@param color	一色で塗りつぶす時の色指定
+ *	@param fliplr	左右反転するか(default:false)
+ *	@param flipud	上下反転するか(default:false)
+ *	@param opacity	不透明度(default:0)
+ *	@param visible	表示するか(default:true)
+ *	@param partbg	特殊背景内に表示する場合の対象ストレージ
+ *	@param partbgid	特殊背景内に表示する場合の対象ID
+ *		@memo: move 等で移動させるときに使用
+ *		@link: putfg, infg, outfg
+ *		@group: レイヤ操作
+ */
+kt.putfg	= function(mp)
+{
+	return fg_object.putfg(mp);
+} incontextof kag;
+
+/**TAG
+ *	infg - 画像を指定位置へ、移動しながら出現させる
+ *	@param storage	画像ファイル名
+ *	@param page		ページ指定(default:back)
+ *	@param index	前後位置
+ *	@param pos		立ち位置(left/center/right)
+ *	@param left, top	左上座標
+ *	@param center	X軸方向の中心座標
+ *	@param vcenter	Y軸方向の中心座標
+ *	@param bottom	下端の高さ
+ *	@param afx		拡大回転中心座標
+ *	@param afy		拡大回転中心座標
+ *	@param mx		出現を始める最初の位置のX軸方向のオフセット
+ *	@param my		出現を始める最初の位置のY軸方向のオフセット
+ *	@param effect	画像効果指定
+ *	@param color	一色で塗りつぶす時の色指定
+ *	@param fliplr	左右反転するか(default:false)
+ *	@param flipud	上下反転するか(default:false)
+ *	@param opacity	最終の不透明度(default:255)
+ *	@param visible	表示するか(default:true)
+ *	@param time		移動時間
+ *	@param accel	move の accel
+ *	@param partbg	特殊背景内に表示する場合の対象ストレージ
+ *	@param partbgid	特殊背景内に表示する場合の対象ID
+ *		@link: movefg, putfg, infg, outfg
+ *		@group: レイヤ操作(アクション)
+ */
+kt.infg	= function(mp)
+{
+	return fg_object.infg(mp);
+} incontextof kag;
+
+/**TAG
+ *	outfg - 画像を現在の位置からちょっとだけ移動しながら消す
+ *	@param page		ページ(default:fore)
+ *	@param target	画像名による指定
+ *	@param mx		消失する位置へのX軸方向のオフセット
+ *	@param my		消失する位置へのY軸方向のオフセット
+ *	@param time		移動時間
+ *	@param accel	move の accel
+ *		@link: movefg, putfg, infg, outfg
+ *		@group: レイヤ操作(アクション)
+ */
+kt.outfg	= function(mp)
+{
+	mp.storage = mp.target if mp.target !== void;
+	return fg_object.outfg(mp);
+} incontextof kag;
+
+/**TAG
+ *	freefg - 条件に当てはまる前景を消去
+ *	@param opacity	不透明度(default:0)
+ *	@param partbg	特殊背景内に表示する場合の対象ストレージ
+ *	@param partbgid	特殊背景内に表示する場合の対象ID
+ *					基本的に、不透明度が0の前景レイヤーを消去する
+ *		@memo: トランジションなどせず、すぐに消去するので注意
+ *		@link: freeimage, cltransparent, freefg
+ *		@group: レイヤ操作
+ */
+kt.freefg	= function(mp)
+{
+	return fg_object.freefg(mp);
+} incontextof kag;
+
+//FUNC-------------------------------------------------------------------------/
+/**TAG
+ *	find - 指定の画像のレイヤー番号を取得
+ *	@param	storage		前景画像名
+ *	@param	page		fore, back
+ *	@param partbg		特殊背景内に表示する場合の対象ストレージ
+ *	@param partbgid		特殊背景内に表示する場合の対象ID
+ *	@return				レイヤー番号が入る(&noで指定する)
+ *		@memo: 見つからないときは例外
+ *		@group: レイヤ操作
+ */
+//-----------------------------------------------------------------------------/
+kt.find	= function(mp)
+{
+	if(mp.storage == "")
+		throw new Exception("ストレージ名が指定されていません。");
+	var no = getLayerNoByStorage(mp.storage, mp.page);
+	if(no === void)
+		throw new Exception(@"\"${mp.storage}\"は見つかりませんでした。");
+	global.no	= no;
+	return 0;
+} incontextof kag;
+
+/**
+ * 指定の画像ファイルを読み込んでいるレイヤーを探す
+ * @param storage 画像ファイル名
+ * @param page ページ指定
+ * @return レイヤー番号、見つからなかったら void
+ */
+function getLayerNoByStorage(storage, page = "back")
+{
+	if( storage instanceof "Dictionary" ){
+		page	= storage.page;
+		storage	= storage.storage;
+	}
+	var	i, layers = page == "fore" ? kag.fore.layers : kag.back.layers, p;
+	var	lno	= void;
+	for(i=0; i<layers.count; i++)
+	{
+		if((p = layers[i].Anim_loadParams) !== void &&
+			Storages.chopStorageExt(Storages.extractStorageName(p.storage)) == storage)
+		{
+			if(lno === void)
+				lno	= i;
+			else
+			{
+				throw new Exception("同じファイルが複数存在するため、レイヤーを特定できません。\n特定する為に必要な情報を指定してください。");
+				return void;
+			}
+		}
+	}
+	return lno;
+}
+
+/**
+ * 指定のidのレイヤーを探す
+ * @param id
+ * @param page ページ指定
+ */
+function getLayerNoById(id, page = "back")
+{
+	if( id instanceof "Dictionary" )
+	{
+		page	= id.page;
+		id		= id.id;
+	}
+	var	layers	= page == "fore" ? kag.fore.layers : kag.back.layers;
+	for(var i=0; i<layers.count; i++)
+	{
+		if(layers[i].layerID == id)
+			return i;
+	}
+	return void;
+}
+
+
+//	lquake, wlquake, stoplquake はアクションで実装
+
+delete kt;
+@endif

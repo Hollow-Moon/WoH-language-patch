@@ -1,0 +1,922 @@
+﻿/*-----------------------------------------------------------------------------
+/	Copyright (C) TYPE-MOON All Rights Reserved.
+/		タイムラインプラグインを利用したdash, move, fadein 機能の追加モジュール
+/		KeyFrameActionを利用しレイヤーの移動処理及びパラメータコントロールを行う
+/----------------------------------------------------------------------------*/
+@if(__TIMELINE_PLUGIN_DEFINED__==0)
+{
+	throw new Exception("ERROR DashMoveRoutine.tjs: TimeLinePluginが実装されていません");
+}
+@endif	//	__TIMELINE_PLUGIN_DEFINED__
+
+@if(__DASHMOVEROUTINE_DEFINED__==0)
+@set(__DASHMOVEROUTINE_DEFINED__=1)
+
+var	kt	= kag.tagHandlers;
+//#############################################################################/
+//	dash機能のtimeline置き換え
+//#############################################################################/
+//-----------------------------------------------------------------------------/
+//	move(レイヤー移動)の置き換え
+//	in	: both	両面共にmoveさせる(default: false)
+//-----------------------------------------------------------------------------/
+kt.original_move = kt.move;
+kt.move	= function(mp)
+{
+	var lay;
+	var attach;
+
+	with(mp)
+	{
+//		dm("page = "+.page+" / layer = "+.layer+" / storage = "+.storage+" / base = "+.base);
+		.page	= "fore" if .page === void;	//	指定がないときは"fore"
+
+		//	レイヤー番号がなく画像名が指定されているときは、その画像を対象とする
+		if(.layer === void)
+		{
+			if(.storage != void)
+			{
+				.layer	= getLayerNoByStorage(.storage, .page);
+				if(.layer === void)
+				{
+					dm("指定側にレイヤーがないため裏面に変えます" + .page);
+					.page	= .page != "back" ? "back" : "fore";
+					.layer	= getLayerNoByStorage(mp, .page);
+				}
+			}
+			else
+				throw new Exception("レイヤー番号かストレージ名のいずれかを必ず指定する必要があります。");
+		}
+
+		dm("move.layer: "+.layer + " .name=" + getLayerFromElm(mp).name);
+		//	「テキストを消去しない」と明示されているとき以外で、テキストレイヤーが表示されていれば
+		if((+.textoff != false || .textoff === void) && current.visible)
+		{
+			dm("move.layer: textoff "+.layer);
+			//	処理をpendingしておいて
+			.textoff	= false;
+			.tagname	= "move";
+			conductor.pendings.insert(0, mp);
+
+			//	先にテキストレイヤーを消去
+			return tagHandlers.textoff(%[]);
+		}
+		else
+		{
+			lay = kag.getLayerFromElm(%[layer:string .layer, page:.page]);
+
+			//	ターゲットの指定があるとき
+			if(.target !== void && .both !== void && .both)
+			{
+				var trg;
+//				dm(.target+" != "+(int .target)+" = "+(.target != int .target));
+				if(.target instanceof "AnimationLayer")
+					trg	= getLayerNoByStorage(.target.storage, .page);
+				else
+					trg	= int .target;
+				if(trg === void)
+					throw new Exception("target に指定しているレイヤーが存在しません。");
+
+				attach = kag.getLayerFromElm(%[layer:string trg, page:.page]);
+				lay.attach = attach;
+				.target   = lay;
+
+//				dm("page="+.page+" .lay="+.layer+" .trg="+trg+" attach.storage = " + attach.storage + " lay.storage = " + lay.storage);
+//				dm("trace:" + Scripts.getTraceString());
+			}
+
+			//dm("move.layer: texton "+.layer);
+
+			.tagname = "action";
+			.module = "MixedKeyFrameActionModule";
+			.startTime = System.getTickCount();		//現在時を指定しておかないと前回のmove, stopmoveが継続動作してしまう
+			.force = 1;
+			.keepfinal = (.keepfinal === void) ? false : +.keepfinal;
+			.nowait = 1;
+			.acttype = "move";
+			.init = %[];
+			.keys = [];
+@if(!USE_EQUATIONS)
+			.accel = "0" if .accel === void;	//等速
+@endif
+@if(USE_EQUATIONS)
+			if( .accel === void ){
+				.accel = 0; 	//"linear"	//等速
+			}else{
+				if( .accel == 0 )						.accel = 0;	//linear
+				else if( .accel >= 1 && .accel < 2 )	.accel = 2;	//easeInQuad
+				else if( .accel <= -1 && .accel > -2 )	.accel = 3;	//easeOutQuad
+				else if( .accel >= 2 )					.accel = 6;	//easeInCubic
+				else if( .accel <= -2 )					.accel = 7;	//easeOutCubic
+				else
+				{
+					throw new Exception("move: accel=" + .accel + " の指定方式を実装していません");
+					return -1;
+				}
+			}
+@endif
+			var interpval = "l";				//デフォルトではリニア
+			.spline = "0" if .spline === void;
+			interpval = "s" if .spline == "1";	//スプライン指定時
+			var obj = getLayerFromElm(mp);
+			//本関数処理冒頭でチェックしているが念のため評価
+			if( obj === void ){
+				throw new Exception("move: getLayerFromElmがvoidを返しました。指定されたレイヤーが見つかりません");
+				return -1;
+			}
+			var mc = meansCurrent;
+
+			if( .affine === void )
+			{
+				//(path→keys生成
+				.usecurrent = 1;
+				.noinit = true;
+				.props = ["left","top","opacity"];
+				.keys.add(["0", .accel, interpval, mc, mc, mc]);	//先頭キーフレーム
+				var pathes = .path.split(")");
+				var timeval = 0;
+				for( var i=0; i<pathes.count-1; i++ )
+				{
+					var values = pathes[i].split(",");
+					if( values[0].indexOf("(") > -1 ){	//)
+						values[0] = values[0].substr(1);
+					}
+					if( values[0] == "" ) continue;
+					timeval += +.time;
+					.keys.add([timeval, .accel, interpval, values[0], values[1], values[2]]);
+				}
+				.keys.add([timeval + 1, .accel, interpval, mc, mc, mc])	if ! .keepfinal;	//最終状態キーフレーム(強制停止があるため)
+				dm("move path→keys: " + getDebugStringFromElm(mp,"mp→",3));
+			}
+			else
+			{
+				//(affine→keys作成)
+				// px, py 値はそのままleft,topではなくcx,cy値を減算したものに相当する(Affine計算の差異)
+				var sPx = (.px!==void ? +.px : 0 );
+				var sPy = (.py!==void ? +.py : 0 );
+				var sRo = (.deg!==void ? .deg : 0);							//開始フレームの傾き
+				var sZm = int((.mag!==void ? +.mag : 0) * 100 + 0.5);			//開始フレームの倍率
+				var sOp = (.opacity!==void ? +.opcaity : 255);
+				var sCx = (.cx!==void ? +.cx : (obj.imageWidth>>1));
+				var sCy = (.cy!==void ? +.cy : (obj.imageHeight>>1));
+				.left = sPx;	.top = sPy;		.rotate = sRo;		.zoom = sZm;	.afx = sCx;		.afy = sCy;
+				.props = ["left", "top", "rotate", "zoom", "opacity", "afx", "afy"];
+				.keys.add(["0", .accel, interpval,
+					+sPx - +sCx, +sPy - +sCy,
+					+sRo, +sZm, +sOp, +sCx, +sCy]);	//先頭キーフレーム
+				var timeval = 0;
+				var vs = .affine.split("(),");
+				.keys.add([+.time, .accel, interpval,
+					+vs[1] - +vs[6], +vs[2] - +vs[7],
+					+vs[3], int(+vs[4] * 100 + 0.5), +vs[5], +vs[6], +vs[7]]);
+				dm("affine→keys: " + getDebugStringFromElm(mp,"mp→",3));
+			}
+
+
+			var ret = 0;
+			conductor.onTag(mp);			//	KeyFrameActionを呼び出す
+
+			if(.both !== void && .both == 1)
+			{
+				.page	= .page == "fore" ? "back" : "fore";
+				conductor.onTag(mp);
+			}
+			return ret;
+		}
+	}
+} incontextof kag;
+
+
+//-----------------------------------------------------------------------------/
+//	loopmoveの置き換え
+//-----------------------------------------------------------------------------/
+kt.original_loopmove	= kt.loopmove;
+kt.loopmove	= function(mp)
+{
+	var lay;
+	var attach;
+
+	with(mp)
+	{
+		.page	= "fore" if .page === void;	//	指定がないときは"fore"
+
+		//	レイヤー番号がなく画像名が指定されているときは、その画像を対象とする
+		if(.layer === void)
+		{
+			if(.storage != void)
+			{
+				.layer	= getLayerNoByStorage(mp, .page);
+				if(.layer === void)
+				{
+					.page	= .page != "back" ? "back" : "fore";
+					.layer	= getLayerNoByStorage(.storage, .page);
+				}
+			}
+			else
+				throw new Exception("レイヤー番号かストレージ名のいずれかを必ず指定する必要があります。");
+
+		}
+
+		//	「テキストを消去しない」と明示されているとき以外で、テキストレイヤーが表示されていれば
+		if((+.textoff != false || .textoff === void) && current.visible)
+		{
+			//	処理をpendingしておいて
+			.textoff	= false;
+			.tagname	= "loopmove";
+			conductor.pendings.insert(0, mp);
+
+			//	先にテキストレイヤーを消去
+			return tagHandlers.textoff(%[]);
+		}
+		else
+		{
+			lay = kag.getLayerFromElm(%[layer:string .layer, page:.page]);
+
+			//	ターゲットの指定があるとき
+			if(.target !== void && .both !== void && .both)
+			{
+				var trg;
+//				dm(.target+" != "+(int .target)+" = "+(.target != int .target));
+				if(.target instanceof "AnimationLayer")
+					trg	= getLayerNoByStorage(.target.storage, .page);
+				else
+					trg	= int .target;
+				if(trg === void)
+					throw new Exception("target に指定しているレイヤーが存在しません。");
+
+				attach = kag.getLayerFromElm(%[layer:string trg, page:.page]);
+				lay.attach = attach;
+				.target   = lay;
+
+//				dm("page="+.page+" .lay="+.layer+" .trg="+trg+" attach.storage = " + attach.storage + " lay.storage = " + lay.storage);
+//				dm("trace:" + Scripts.getTraceString());
+			}
+
+			.tagname = "action";
+			.module = "MixedKeyFrameActionModule";
+			.startTime = System.getTickCount();		//現在時を指定しておかないと前回のmove, stopmoveが継続動作してしまう
+			.force = 1;
+			.nowait = 1;
+			.acttype = "move";
+			.noinit = true;
+			.init = %[];
+			.loop = 0;
+			.props = ["left","top","opacity", "absolute"];
+			.keys = [];
+@if(!USE_EQUATIONS)
+//			.accel = "0" if .accel === void;
+			throw new Exception("LoopMoveでEquationsを使わない方式は実装されていません。");
+@endif
+@if(USE_EQUATIONS)
+			if( .accel == 1 && .decel == 2 && .frame == 1 ){
+				.accel = 2;	//"easeoutquad"
+//				.accel = 7;	//"easeoutcubic"
+			}else{
+				throw new Exception("LoopMoveで accel=1,decel=2,frame=1 以外の速度変化は実装されていません。");
+			}
+@endif
+			var interpval = "l";				//デフォルトではリニア
+			.spline = "0" if .spline === void;
+			interpval = "s" if .spline == "1";	//スプライン指定時
+			var obj = getLayerFromElm(mp);
+			//本関数処理冒頭でチェックしているが念のため評価
+			if( obj === void ){
+				throw new Exception("loopmove: getLayerFromElmがvoidを返しました。指定されたレイヤーが見つかりません");
+				return -1;
+			}
+			var TIME_BIAS = 1.0;
+			//(path→keys生成
+			.keys.add(["0", .accel, interpval, obj.left, obj.top, obj.opacity, obj.absolute]);	//先頭キーフレーム
+			var pathes = .path.split(")");
+			var timeval = 0;
+			for( var i=0; i<pathes.count; i++ )
+			{
+				var values = pathes[i].split(",");
+				if( values[0].indexOf("(") > -1 ){	//)
+					values[0] = values[0].substr(1);
+				}
+				if( values[0] == "" ) continue;
+				if( values[2] === void ) values[2] = obj.opacity;
+				if( values[3] === void ) values[3] = obj.absolute;
+				timeval += +(+.time * TIME_BIAS / (pathes.count-1));
+				.keys.add([timeval, .accel, interpval, values[0], values[1], values[2], values[3]]);
+			}
+			dm("loopmove path→keys: " + getDebugStringFromElm(mp,"mp→",3));
+
+
+			var ret = 0;
+			conductor.onTag(mp);			//	LoopKeyFrameActionを呼び出す
+
+			if(.both !== void && .both == 1)
+			{
+				.page	= .page == "fore" ? "back" : "fore";
+				conductor.onTag(mp);
+			}
+			return ret;
+		}
+	}
+} incontextof kag;
+
+//-----------------------------------------------------------------------------/
+//	stopmoveの置き換え
+//-----------------------------------------------------------------------------/
+kt.original_stopmove	= kt.stopmove;
+kt.stopmove	= function(mp)
+{
+//	mp.seqid = -1;
+	mp.acttype = "move";
+	return tagHandlers.stopnowait(mp);
+} incontextof kag;
+
+//-----------------------------------------------------------------------------/
+//	wmの置き換え
+//-----------------------------------------------------------------------------/
+kt.original_wm	= kt.wm;
+kt.wm	= function(mp)
+{
+//	mp.seqid = -1;
+	mp.acttype = "move";
+	return tagHandlers.wact(mp);
+} incontextof kag;
+
+
+kag.inDashExecBeforeTransExWaiting = false;		//dash後にtransexが呼ばれたかどうか
+//-----------------------------------------------------------------------------/
+/**TAG
+ *	dash - 連続的に画像を画面に重ね合わせる(2点間移動、拡大縮小回転)
+ *	@param page		処理対象ページ
+ *	@param layer	重ね合わせ元画像となるレイヤー(all=全て,base=背景)
+ *	@param storage	重ね合わせ元画像
+ *	@param fliplr	重ね合わせ元画像を左右反転させるか(default:false)
+ *	@param flipud	重ね合わせ元画像を上下反転させるか(default:false)
+ *	@param cx		初回中心座標('c'で画像中央/default:0, 0)
+ *	@param cy		初回中心座標('c'で画像中央/default:0, 0)
+ *	@param imag		初回拡大率(1.0で等倍/default:1.0)
+ *	@param irot		初回傾き(正で時計回り/1.0で360度/default:0.0=0度)
+ *	@param mx		最終的な中心座標の移動量(cx+mx, cy+my が最終的な中心座標/default:0, 0)
+ *	@param my		最終的な中心座標の移動量(cx+mx, cy+my が最終的な中心座標/default:0, 0)
+ *	@param mag		最終的な拡大率(1.0で等倍/default:1.0)
+ *	@param rot		最終的な傾き(正で時計回り/1.0で360度/default:0.0=0度)
+ *	@param ix		(意味なし)
+ *	@param iy		(意味なし)
+ *	@param opacity	重ね合わせるときの不透明度
+ *	@param time		処理時間
+ *	@param accel	移動・拡大縮小・回転の加速度(〜-2=減速,0=等速,2〜=加速)
+ *	@param wait		初回処理を行なった後、2回目以降の処理を開始するまでの時間
+ *	@param showfg	前景レイヤーを表示したままにする(default:false)
+ *		@memo:	描画先は kag[page].base
+ *				layer と storage は排他(layer優先)
+ *		@link:	dash, splinemove, wdash, wsplinemove, stopdash, stopsplinemove, dashcombo, splinemovecombo
+ *		@group:	ダッシュプラグイン
+ */
+//-----------------------------------------------------------------------------/
+kt.dash	= function(mp)
+{
+	with(mp)
+	{
+		kag.tagHandlers.stopdash(%[]);
+		if( .path !== void )
+		{
+			throw new Exception("dash: path指定の呼び出し方式には対応していません");
+			return -1;
+		}
+//		dm("page = "+.page+" / layer = "+.layer+" / storage = "+.storage+" / base = "+.base);
+		.page	= "fore" if .page === void;	//	指定がないときは"fore"
+
+		//	転送先は常に背景レイヤー
+		var obj = getLayerFromElm(%["page"=>.page,"layer"=>"base"]);
+
+		//背景が見つからないのはありえないが念のため評価
+		if( obj === void ){
+			throw new Exception("dash: getLayerFromElmがvoidを返しました。指定されたレイヤーが見つかりません");
+			return -1;
+		}
+
+		if( .cx === void || .cy === void || .mx === void || .my === void ){
+			throw new Exception("dash: cx,cy,mx,my値が省略された書式には対応していません");
+			return -1;
+		}
+		if( .cx == "c" || .cy == "c" || .mx == "c" || .my == "c" ){
+			throw new Exception("dash: cx,cy,mx,my値に'c'を指定する書式には対応していません");
+			return -1;
+		}
+		if( .imag < 1.0 || .mag < 1.0 ){
+			throw new Exception("dash: imag, mag値は1.0以上の値でなくてはいけません");
+			return -1;
+		}
+
+		var sZm = int(+.imag * 100 + 0.5);							//開始フレームの倍率
+		var eZm = int(+.mag * 100 + 0.5);							//終了フレームの倍率
+		var sRo = ( .irot !== void ) ? -.irot * 360 : obj.rotate;	//開始フレームの傾き
+		var eRo = ( .rot !== void ) ? -.rot * 360 : obj.rotate;		//終了フレームの傾き
+
+		var sLt = .cx;			//開始フレームの中心座標
+		var sTp = .cy;			//開始フレームの中心座標
+		var eLt = +.cx + +.mx;	//終了フレームの中心座標
+		var eTp = +.cy + +.my;	//終了フレームの中心座標
+		var mc = meansCurrent;
+
+		var tgtStorage = "";
+		//	レイヤー指定は重ね合わせ元画像を指し省略時はbaseとなる
+		if(.layer === void)
+		{
+			.layer = "base";
+		}
+		//画像指定時はそれを背景に読み込む
+		if(.storage != void)
+		{
+//			obj.loadImages(%["storage"=>.storage]);
+			var bgelm = %[page:.page, storage:.storage, zoom:+sZm, rotate:+sRo, afx:sLt, afy:sTp];
+			kag.tagHandlers.bg(bgelm);
+			dm(getDebugStringFromElm(bgelm,"bgelm="));
+			obj._doAffine = true;
+			obj.update();
+			tgtStorage = .storage;
+		}
+		else
+		{
+			var visible_other_layer;
+			var target = kag[.page];
+			if(.layer == "all")
+			{
+				//	前景以外を隠す
+				var	fg	= %[];
+				for(var i=0; i<target.layers.count; i++)
+					fg[target.layers[i]]	= true;
+				var	ch	= target.children;
+				for(var i=0; i<ch.count; i++)
+				{
+					if(fg[ch[i]] != true)
+					{
+						visible_other_layer[ch[i]]	= ch[i].visible;
+						ch[i].visible	= false;
+					}
+				}
+				//	全てコピーする
+				obj.piledCopy(0, 0, obj, 0, 0, obj.width, obj.height);
+				//	元に戻す
+				if(visible_other_layer != void)
+				{
+					var	ch	= target.children;
+					for(var i=0; i<ch.count; i++)
+					{
+						if(visible_other_layer[ch[i]] !== void)
+							ch[i].visible	= visible_other_layer[ch[i]];
+					}
+					invalidate visible_other_layer;
+					visible_other_layer	= void;
+				}
+			}
+			else if(.layer == "base")
+			{
+				//背景をそのまま使う
+				obj._doAffine = true;
+				obj.update();
+				tgtStorage = obj.storage;
+			}
+			else
+			{
+				var	src	= target.layers[+.layer];
+
+				obj.storage = src.storage;
+				obj._doAffine = true;
+				obj.update();
+				tgtStorage = src.storage;
+			}
+		}
+
+		obj.flipLR() if .fliplr;
+		obj.flipUD() if .flipud;
+		obj.opacity = ( .opacity !== void ) ? .opacity : 255;
+
+		var hidefg = ( .hidefg !== void ) ? +.hidefg : true;
+		if( hidefg )
+		{
+			var tgt = (.page != "fore")?"back":"fore";
+			//dm("hidefg " + tgt);
+			for( var i=0; i<kag[tgt].layers.count; i++ )
+				kag[tgt].layers[i].visible = false;
+		}
+
+		dm("dash.layer: "+.layer + " .name=" + getLayerFromElm(mp).name);
+		//	「テキストを消去しない」と明示されているとき以外で、テキストレイヤーが表示されていれば
+		if((+.textoff != false || .textoff === void) && current.visible)
+		{
+			dm("dash.layer: textoff "+.layer);
+			//	処理をpendingしておいて
+			.textoff	= false;
+			.tagname	= "dash";
+			conductor.pendings.insert(0, mp);
+
+			//	先にテキストレイヤーを消去
+			return tagHandlers.textoff(%[]);
+		}
+		else
+		{
+			dm("dash.layer: texton "+.layer);
+
+			//変化しない場合はdash処理せずにimageタグで代替えする
+			if( sZm==eZm && sRo==eRo && sLt==eLt && sTp==eTp )
+			{
+				var ret;
+				if( tgtStorage != "" )
+				{
+					//dm("　　　 tgtStorage=" + tgtStorage);
+					var bgelm = %[page:.page, layer:"base",  storage:tgtStorage, zoom:+sZm, rotate:+sRo, afx:sLt, afy:sTp];
+					//dm(getDebugStringFromElm(bgelm," image bgelm=",2));
+					ret = kag.tagHandlers.image(bgelm);
+				}
+				else
+				{
+					//dm("　　　 tgtStorage is null");
+					var loelm = %[page:.page, layer:"base", zoom:+sZm, rotate:+sRo, afx:sLt, afy:sTp];
+					//dm(getDebugStringFromElm(loelm," layopt bgelm=",2));
+					ret = kag.tagHandlers.layopt(loelm);
+				}
+				obj._doAffine = true;
+				obj.AffineLayer_onPaint();
+				obj.flipLR() if .fliplr;
+				obj.flipUD() if .flipud;
+				obj.opacity = ( .opacity !== void ) ? .opacity : 255;
+				kag.inDashExecBeforeTransExWaiting = true;	//trans待ち
+				return ret;
+			}
+
+			.layer = "base";		//コピー元が指定されているので背景を指定しなおす
+			.tagname = "action";
+			.module = "MixedKeyFrameActionModule";
+			.startTime = System.getTickCount();		//現在時を指定しておかないと前回のmove, stopmoveが継続動作してしまう
+			.force = 1;
+			.nowait = 1;
+			.acttype = "dash";
+			if( .time === void ){
+				throw new Exception("dash: timeパラメータ値が指定されていません");
+				return -1;
+			}
+			.init = %[];
+			.props = ["afx","afy","zoom","rotate"];
+			.keys = [];
+@if(!USE_EQUATIONS)
+			.accel = "0" if .accel === void;	//等速
+@endif
+@if(USE_EQUATIONS)
+			if( .accel === void ){
+				.accel = 0; 	//"linear"	//等速
+			}else{
+				if( .accel == 0 )						.accel = 0;	//linear
+				else if( .accel >= 1 && .accel < 2 )	.accel = 2;	//easeInQuad
+				else if( .accel <= -1 && .accel > -2 )	.accel = 3;	//easeOutQuad
+				else if( .accel >= 2 )					.accel = 6;	//easeInCubic
+				else if( .accel <= -2 )					.accel = 7;	//easeOutCubic
+				else
+				{
+					throw new Exception("dash: accel=" + .accel + " の指定方式を実装していません");
+					return -1;
+				}
+			}
+@endif
+			var interpval = "l";				//常に始点と終点指定なのでリニア
+
+			//path→keys生成
+			.keys.add(["0", .accel, interpval, +sLt, +sTp, +sZm, +sRo]);	//先頭キーフレーム
+			.keys.add([+.time, .accel, interpval, +eLt, +eTp, +eZm, +eRo]);	//動作最終キーフレーム
+			.keys.add([+.time + 1, .accel, interpval, mc, mc, mc, mc]);						//最終状態キーフレーム(強制停止があるため)
+			dm("dash path→keys: " + getDebugStringFromElm(mp,"mp→",3));
+
+//System.inform("dash処理を開始します");
+			var ret = 0;
+			conductor.onTag(mp);			//	KeyFrameActionを呼び出す
+
+			/*
+			if(.both !== void && .both == 1)
+			{
+				.page	= .page == "fore" ? "back" : "fore";
+				conductor.onTag(mp);
+				//tagHandlers.original_move(mp);
+			}
+			*/
+			kag.inDashExecBeforeTransExWaiting = true;	//trans待ち
+			return ret;
+		}
+	}
+} incontextof kag;
+
+kt.splinemove	= kt.dash;	//	呼び出し方は dash と同じ
+
+/**TAG
+ *	wdash - dash の終了を待つ
+ *		@link:	dash, splinemove, wdash, wsplinemove, stopdash, stopsplinemove, dashcombo, splinemovecombo
+ *		@group:	ダッシュプラグイン
+ */
+kt.wdash	= function(elm)
+{
+	elm.module = "MixedKeyFrameActionModule";
+	elm.acttype = "dash";
+	return tagHandlers.wact(elm);
+} incontextof kag;
+
+/**TAG
+ *	wsplinemove - splinemove の終了を待つ
+ *		@link:	dash, splinemove, wdash, wsplinemove, stopdash, stopsplinemove, dashcombo, splinemovecombo
+ *		@group:	ダッシュプラグイン
+ */
+kt.wsplinemove	= kt.wdash;
+
+/**TAG
+ *	stopdash - dash を強制終了させる
+ *		@link:	dash, splinemove, wdash, wsplinemove, stopdash, stopsplinemove, dashcombo, splinemovecombo
+ *		@group:	ダッシュプラグイン
+ */
+kt.stopdash	= function(elm)
+{
+	elm.module = "MixedKeyFrameActionModule";
+	elm.acttype = "dash";
+	return tagHandlers.stopaction(elm);
+} incontextof kag;
+
+/**TAG
+ *	stopsplinemove - splinemove を強制終了させる
+ *		@link:	dash, splinemove, wdash, wsplinemove, stopdash, stopsplinemove, dashcombo, splinemovecombo
+ *		@group:	ダッシュプラグイン
+ */
+kt.stopsplinemove	= kt.stopdash;
+
+/**TAG
+ *	dashcombo - dash の後、wdash を実行する
+ *				パラメータは dash タグを参照
+ *		@link:	dash, splinemove, wdash, wsplinemove, stopdash, stopsplinemove, dashcombo, splinemovecombo
+ *		@group:	ダッシュプラグイン
+ */
+kt.dashcombo	= function(elm)
+{
+	//	次に wdash を実行することにして
+	elm.acttype = "dash";
+	elm.module = "MixedKeyFrameActionModule";
+	elm.tagname	= "wdash";
+	conductor.pendings.insert(0, elm);
+
+	return tagHandlers.dash(elm);	//	dash を実行
+} incontextof kag;
+
+/**TAG
+ *	splinemovecombo - splinemove の後、wsplinemove を実行する
+ *		@link:	dash, splinemove, wdash, wsplinemove, stopdash, stopsplinemove, dashcombo, splinemovecombo
+ *		@group:	ダッシュプラグイン
+ */
+kt.splinemovecombo	= function(elm)
+{
+	//	次に wsplinemove を実行することにして
+//	elm.seqid = -1;
+	elm.acttype = "dash";
+	elm.tagname	= "wsplinemove";
+	conductor.pendings.insert(0, elm);
+
+	return tagHandlers.splinemove(elm);	//	splinemove を実行
+} incontextof kag;
+
+//- trans ---------------------------------------------------------------------
+kt._trans_org_by_dash_override_ = kt.trans;
+kt.trans = function(mp)
+{
+	inDashExecBeforeTransExWaiting = false;	//trans実施したのでフラグを初期化
+	return tagHandlers._trans_org_by_dash_override_(mp);
+} incontextof kag;
+
+//- transex -------------------------------------------------------------------
+kt.transex = function(mp)
+{
+	return kt.trans(mp);	//	過去との互換
+} incontextof kag;
+
+
+//- fadein --------------------------------------------------------------------
+kt.fadein = kt.bg;/*function(mp)
+{
+	//	メッセージレイヤーを退避
+	var msgs = fore.messages;
+	for(var i=0; i<msgs.count; i++)
+		msgs[i].assignComp();
+
+	var th = kag.tagHandlers;
+//	dm("mp.noclear = "+mp.noclear+"/"+(!mp.noclear));
+	if(!mp.noclear)
+		th.cl_notrans(%[]);	//	立ち絵はすべて消去
+	//	コンディションが変わったりぼかし状態であれば、立ち絵を描画しなおす
+	var pages	= [ "back", "fore" ];
+	for(var i=0; i<pages.count; i++)
+	{
+//		var layers = kag.fore.layers;	//	noclear = true: 表に表示されている前景レイヤーを裏に読み込みなおす
+		var layers = kag[pages[i]].layers;	//	裏、表の順で読み込みなおす
+		var elm = %[];
+//		var	keys	= ["left", "top", "opacity", "magnify", "magnify2", "cx", "cy", "rotate"];
+		var	keys	= ["left", "top", "opacity", "zoom", "zoomx", "zoomy", "afx", "afy", "rotate" ];
+		for(var j=0; j<layers.count; j++)
+		{
+			var layer	= layers[j];
+			if(layer.visible)
+			{
+//				dm("fadein : layer.visible=true layer=" + j + " page=" + pages[i]);
+				var elm = %[];
+				(Dictionary.assign incontextof elm)(layer.Anim_loadParams);
+				elm.page	= pages[i];
+				elm.pos		= void;
+				for(var k=0; k<keys.count; k++)
+					elm[keys[k]]	= layer[keys[k]];
+
+				elm.layer	= string j;
+				th.ld_notrans(elm);
+			}
+		}
+	}
+
+	with(mp)
+	{
+		.storage	= .file if .storage === void;
+		.layer		= "base";
+		.page		= "back";
+		.horizon	= 0 if .horizon === void;
+		.isbg		= true;		//	背景であることを明記
+		.exchange	= false;	//	交換しない
+
+		//dash後にtransexが呼ばれることなくfadeinが呼ばれた
+		if( .storage == kag.back.base.storage && kag.inDashExecBeforeTransExWaiting )
+		{
+			//dm("　　　 fadein storage=NotChanged:"+.storage+" → layopt-TAG");
+			th.layopt(mp);
+		}
+		else
+		{
+			//dm("　　　 fadein storage="+.storage+" → bg-TAG");
+//
+//	bg は内部でtrans を呼び出しているので、このままでは二重にトランジションを開始してしまう(例外発生)
+//
+			th.bg(mp);
+		}
+	}
+
+	mp.time	= adjustTime(mp.time);	//	遅れている時間分、処理を短くする
+	mp.wait	= false if mp.nowait;
+	//dm("fadein トランジション実施");
+	return th.trans(mp);
+} incontextof kag;
+*/
+/*
+//FUNC-------------------------------------------------------------------------/
+//	立ち絵表示
+//		立ち絵を切り替える。
+//		ただし、トランジションは行なわない
+//	in	: file		立ち絵ファイル名
+//		: no		レイヤー番号(指定が無ければ新規/"last"なら直前)
+//		: index		前後位置
+//		: pos		立ち位置(right/left/center)(Def:center)
+//		: left, top	立ち絵の左上座標
+//		: center	　〃　の中心線の座標
+//		: bottom	　〃　の下端の高さ(horizonと同じか…)
+//		: horizon	地平線の高さ(0で画面下端、プラスで浮き上がりマイナスで沈む)
+//		: color		一色で塗りつぶす時の色指定
+//		: mono		規定の単色立ち絵
+//-----------------------------------------------------------------------------/
+kt.ld_notrans	= function(mp)
+{
+	with(mp)
+	{
+		if(.file == "" && .storage == "")
+			throw new Exception("fileが指定されていません。");
+		.pos	= "center" if .pos == "" && .left === void && .center === void;	//	指定が無ければ中央
+		//	最初から指定されている
+		if(.layer !== void)
+		{
+			.layer	= string .f.lastLayerNo if .layer == "last";	//	"last"なら直前に操作したレイヤー
+		}
+		//	noで指定されている
+		else if(.no !== void)
+		{
+			.layer	= .no;
+		}
+		//	posで指定されている
+		else if(.pos !== void)
+		{
+			.pos	= correctPosName[.pos];	//	シンプルな名前にする
+			.layer	= getFreeLayer();	//	空いているレイヤーを取得
+		}
+		//	何も指定されていない
+		else
+		{
+			.layer	= getFreeLayer();	//	空いているレイヤーへ
+		}
+
+		//	指定の番号を格納するに十分な数のレイヤーが無ければ、
+		if(+.layer >= back.layers.count)
+			allocateCharacterLayersWithoutOrder(+.layer + 1);	//	レイヤーを増やす
+
+//		back.layers[+.layer].opacity	= 255;	//	表示時に必ず255にする
+		.opacity	= 255 if .opacity === void;
+		.storage	= .file if .storage == "";
+		.page		= "back" if .page == "";
+		.index		= (+.layer + 1) * 1000 if .index === void;
+		.visible	= true;
+
+		dm(@"ld_notrans: .page=${.page}, .layer=${.layer}, .storage=${.storage}, .pos=${.pos}, .index=${.index}, .left=${.left}, .visible=${.visible}");
+//				tagHandlers.imageex(mp);
+		kag.tagHandlers.image(mp);
+	}
+//	fgimages[mp.layer]	= mp.storage;
+	//	直前に操作した立ち絵
+	.f.lastLayerNo	= +mp.layer;
+
+	return 0;
+} incontextof kag;
+
+
+//FUNC-------------------------------------------------------------------------/
+//	立ち絵消去
+//		トランジションはしない
+//	in	: no		レイヤー番号(指定が無ければすべて/"last"なら直前)
+//		: pos		消去する位置
+//		: storage	消去する画像
+//-----------------------------------------------------------------------------/
+kt.cl_notrans	= function(mp)
+{
+	with(mp)
+	{
+		//	レイヤー指定アリ
+		if(.layer !== void)
+			.layer	= string global.f.lastLayerNo if .layer == "last";
+		//	レイヤー番号指定アリ
+		else if(.no !== void)
+			.layer	= string .no;
+		//	場所指定アリ
+		else if(.pos !== void)
+		{
+			if(.pos != "all")
+			{
+				var l = kag.fore.layers;
+				for(var i=0; i<l.count; i++)
+				{
+					if(l[i].visible && l[i].Anim_loadParams && l[i].Anim_loadParams.pos == .pos)
+					{
+						.layer	= string i;
+						break;
+					}
+				}
+			}
+		}
+		//	画像名指定アリ
+		else if(.storage !== void)
+		{
+			.layer	= getLayerNoByStorage(mp);
+			if(.layer === void)
+			{//	指定の画像が見つからなかった
+				//	同じキャラの立ち絵を探す
+				var reg = new RegExp("^[^0-9a-z\\.]+", "i");
+				var ch = reg.exec(Storages.extractStorageName(.storage));
+				if(ch.count > 0)
+				{
+					var name = ch[0];
+					var l = kag.fore.layers;
+					for(var i=0; i<l.count; i++)
+					{
+						ch	= reg.exec(Storages.extractStorageName(l[i].storage));
+						if(ch.count > 0 && ch[0] == name)
+						{
+							.layer	= string i;
+							break;
+						}
+					}
+				}
+				invalidate reg;
+			}
+			if(.layer === void)
+			{
+				throw new Exception("\""+.storage+"\"を消去する命令が呼び出されていますが、この立ち絵は表示されていません。");
+				return;
+			}
+		}
+		//	スーパーポーズに使用しているレイヤーは、cl系列では消去できない
+		else if(global.f.superposeLayerNo !== void && .layer === global.f.superposeLayerNo)
+			return 0;
+
+		.page	= "back" if .page === void;
+
+		//	レイヤーの指定が無いか、"all"が指定されているとき
+		if(.layer === void || .layer == "all")
+		{//	すべて消去
+			dm("cl_notrans: all");
+			var l = this[.page].layers;
+			for(var i=l.count - 1; i>=0; i--)
+				tagHandlers.cl_notrans(%[layer:string(i),page:.page]) if l[i].visible;
+			return 0;
+		}
+//		else
+//			dm("cl_notrans: "+.layer);
+
+		.layer	= string .layer;
+		dm(@"cl_notrans: page = ${.page} / layer = ${.layer} / storage = ${this[.page].layers[+.layer].storage}");
+		.invisible = true;
+		tagHandlers.freeimage(mp);	//	非表示かつ画像を破棄
+	}
+	.f.lastLayerNo		= +mp.layer;
+	return 0;
+} incontextof kag;
+*/
+@endif	//__DASHMOVEROUTINE_DEFINED__

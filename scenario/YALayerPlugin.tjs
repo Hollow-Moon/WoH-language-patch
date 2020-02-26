@@ -1,0 +1,161 @@
+﻿/*----------------------------------------------------------------------------/
+/	YALayerPlugin
+/		KAG の前景レイヤー(fore.layers, back.layers)から独立したレイヤーを管理する為のプラグインの原型
+/----------------------------------------------------------------------------*/
+@if(__YETANOTHER_LAYER_PLUGIN__==0)
+@set(__YETANOTHER_LAYER_PLUGIN__=1)
+
+class YALayerPlugin extends KAGPlugin
+{
+	var	name	= "yalayer";	//	小文字推奨
+	var	elmname;
+
+	var	fore = [];	//	表用レイヤー
+	var	back = [];	//	裏用　　〃
+
+	function YALayerPlugin()
+	{
+		super.KAGPlugin(...);
+
+		elmname	= name;
+	}
+
+	function finalize()
+	{
+		for(var i=0; i<fore.count; i++) invalidate fore[i];
+		for(var i=0; i<back.count; i++) invalidate back[i];
+
+		super.finalize();
+	}
+
+	/**
+	 *	新規レイヤーの追加
+	 */
+	function addLayer(level = 0)
+	{
+		var	id	= fore.count;
+		fore[id]	= _createLayer(kag.fore.base, "表"+name+"レイヤー" + id, id, level);
+		back[id]	= _createLayer(kag.back.base, "裏"+name+"レイヤー" + id, id, level);
+		fore[id].setCompLayer(back[id]);
+		back[id].setCompLayer(fore[id]);
+		fore[id].absolute = back[id].absolute = (id + 1) * 1000;
+	}
+
+	//	新規レイヤー
+	function _createLayer(parent, name, id, level=0)
+	{
+		return new BasicCharacterLayer(kag, parent, name, id, level);
+	}
+
+	/**
+	 *	レイヤーの解放
+	 */
+	function freeLayer(id)
+	{
+		if(id < fore.count)
+		{
+			fore[id].freeImage();
+			back[id].freeImage();
+		}
+	}
+
+	//	保存時処理
+	function onStore(f, elm)
+	{
+		with(f.fg_plugin = %[])
+		{
+			.fore	= [];
+			for(var i=0; i<fore.count; i++)	.fore[i]	= fore[i].store();
+			.back	= [];
+			for(var i=0; i<back.count; i++)	.back[i]	= back[i].store();
+		}
+	}
+
+	//	復帰時処理
+	function onRestore(f, clear, elm)
+	{
+		if(f.fg_plugin == void)
+			return;
+
+		with(f.fg_plugin)
+		{
+			if(elm != void && elm.backlay != void && +elm.backlay)
+			{
+				fore.clear();
+				for(var i=0; i<.fore.count; i++)
+				{
+					try { fore[i].restore(.fore[i]); }
+					catch(e) { dm("画像の読み込みに失敗しました(fore["+i+"])"); }
+				}
+			}
+			back.clear();
+			for(var i=0; i<.back.count; i++)
+			{
+				try { back[i].restore(.back[i]); }
+				catch(e) { dm("画像の読み込みに失敗しました(back["+i+"])"); }
+			}
+		}
+	}
+
+	//	指定のレイヤーオブジェクトを指定する場合のパラメータを取得
+	function getLayerFromObject(layer)
+	{
+		var	pages	= [ fore, back ];
+		for(var i=0; i<pages.count; i++)
+		{
+			var	layers	= pages[i];
+			for(var j = 0; j<layers.count; j++)
+			{
+				if(layers[j] == layer)
+					return %[page:(i == 0 ? "fore" : "back"), elmname => j];
+			}
+		}
+		return void;
+	}
+
+	//	指定のパラメータからレイヤーオブジェクトを取得
+	function getLayerFromElm(elm)
+	{
+		var	base	= elm["page"] == "back" ? back : fore;
+		if(elm[elmname] !== void)
+			return base[+elm[elmname]];
+		return void;
+	}
+
+	function getLayerPageFromElm(elm, backlay)
+	{
+		elm["page"]	= backlay ? "back" : "fore";
+		return getLayerFromElm(elm);
+	}
+
+	//	トランジション停止
+	function onStopAllTransitions()
+	{
+		for(var i=fore.count-1; i>=0; i--)	fore[i].stopTransition();
+		for(var i=back.count-1; i>=0; i--)	back[i].stopTransition();
+	}
+
+	//	move 停止
+	function onStopAllMoves()
+	{
+		for(var i=fore.count-1; i>=0; i--)	fore[i].stopMove();
+		for(var i=back.count-1; i>=0; i--)	back[i].stopMove();
+	}
+
+	//	トランジション後のコピー処理
+	function onCopyLayer(toback)
+	{
+		for(var i=fore.count-1; i>=0; i--)	fore[i].assignTransSrc();
+		for(var i=back.count-1; i>=0; i--)	back[i].assignTransSrc();
+	}
+
+	//	表と裏の入れ替え
+	function onExchangeForeBack()
+	{
+		var	tmp	= fore;
+		fore	= back;
+		back	= tmp;
+	}
+}
+
+@endif

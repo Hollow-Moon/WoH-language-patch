@@ -1,0 +1,812 @@
+﻿/*-----------------------------------------------------------------------------
+/	Copyright (C) TYPE-MOON All Rights Reserved.
+/		3次元空間で雪を降らせ、それを2次元に投影するプラグイン
+/----------------------------------------------------------------------------*/
+@if(__SNOW_PLUGIN_DEFINED__==0)
+@set(__SNOW_PLUGIN_DEFINED__=1)
+
+if(Storages.isExistentStorage("snow3d.dll"))
+{
+Plugins.link("snow3d.dll");		//	雪を3次元空間で降らせ、指定の情報で2次元に投影するプラグイン
+Scripts.execStorage("BasePlugin.tjs");
+
+class SnowPlugin extends AsyncAnimationBasePlugin
+{
+	var	name	= "snow";
+@if(IS_TLE)
+	var	title	= "降雪";
+@endif
+
+	var	count	= 0;	//	雪粒の総数
+	var	speed	= 1.0;	//	雪粒の落下速度
+
+	//	オブジェクト
+	var	snowarea;		//	snow3d.dll で生成する雪粒の位置、移動等を管理するオブジェクト
+	var	snowImage;		//	雪粒のレイヤーが参照する雪粒画像レイヤー
+
+	//	設定
+	var	snowStorage	= "雪原型(blur).tlg";	//	雪画像
+	var	boxSize		= 1000;
+
+	//	パラメータ
+	var	params	= [
+//		[ 名称,				規定値,	範囲(配列/型),				説明 ],
+		// 以下は、page の指定によりどちらのページに設定されるかが決まる
+//		[ "page",			void,	void,						"対象のページオブジェクト" ],
+		[ "x",				0.5,	[ -1.0, 1.0 ],				"カメラのX座標" ],
+		[ "y",				0.5,	[ -1.0, 1.0 ],				"カメラのY座標" ],
+		[ "z",				1.0,	[ -1.0, 1.0 ],				"カメラのZ座標" ],
+		[ "ux",				0.0,	[ -1.0, 1.0 ],				"カメラの上方向を示すベクトルのX値" ],
+		[ "uy",				1.0,	[ -1.0, 1.0 ],				"カメラの上方向を示すベクトルのY値" ],
+		[ "uz",				0.0,	[ -1.0, 1.0 ],				"カメラの上方向を示すベクトルのZ値" ],
+		[ "tx",				0.5,	[ -1.0, 1.0 ],				"撮影対象のX座標" ],
+		[ "ty",				0.5,	[ -1.0, 1.0 ],				"撮影対象のY座標" ],
+		[ "tz",				0.0,	[ -1.0, 1.0 ],				"撮影対象のZ座標" ],
+		[ "count",			0,		[ 0, 2000 ],				"雪粒の数" ],			//	全体の設定
+		[ "speed",			1.0,	[ 0.0, 2.0 ],				"落下速度" ],			//	    〃
+		[ "status",			"stop",	[ "play", "pause", "stop" ],"実行中かどうか" ]
+	];
+	var	storeKeys		= [	//	全体の、保存するパラメータ
+		"count", "speed",
+	];
+	var	storePageKeys	= [	//	ページ毎の保存するパラメータ
+		"x", "y", "z", "ux", "uy", "uz", "tx", "ty", "tz", "status",
+		"lastsnowposcount"	//	管理上のデータなので、params には登録していない
+	];
+
+	function SnowPlugin()
+	{
+		super.AsyncAnimationBasePlugin(...);
+
+		//	雪粒の座標管理はプラグイン毎に行う
+		snowarea	= new SnowArea();
+		snowarea.setBoxSize(boxSize);
+
+@if(!IS_TLE)
+		//	実行前に元画像を準備
+		if(snowImage == void)
+		{
+			with(snowImage = new global.Layer(kag, kag.primaryLayer))
+			{
+				.loadImages(snowStorage);
+				.setSizeToImageSize();
+			}
+		}
+@endif
+		count	= 0;		//	雪粒の総数
+		speed	= 1.0;		//	雪粒の落下速度
+	}
+
+	function finalize()
+	{
+		invalidate snowImage if snowImage != void;
+		invalidate snowarea if snowarea != void;
+		snowImage	= snowarea	= void;		//	clear で snowarea を参照しているので、
+		super.finalize();
+	}
+
+	//	ページ毎の状態
+	property snows	{ setter(v) { setprop("snows", v); }getter { return getprop("snows"); } }
+	property x		{ setter(v) { setprop("x", v); }	getter { return getprop("x"); } }
+	property y		{ setter(v) { setprop("y", v); }	getter { return getprop("y"); } }
+	property z		{ setter(v) { setprop("z", v); }	getter { return getprop("z"); } }
+	property ux		{ setter(v) { setprop("ux", v); }	getter { return getprop("ux"); } }
+	property uy		{ setter(v) { setprop("uy", v); }	getter { return getprop("uy"); } }
+	property uz		{ setter(v) { setprop("uz", v); }	getter { return getprop("uz"); } }
+	property tx		{ setter(v) { setprop("tx", v); }	getter { return getprop("tx"); } }
+	property ty		{ setter(v) { setprop("ty", v); }	getter { return getprop("ty"); } }
+	property tz		{ setter(v) { setprop("tz", v); }	getter { return getprop("tz"); } }
+
+	property lastsnowposcount { setter(v) { setprop("lastsnowposcount", v); } getter { return getprop("lastsnowposcount"); } }
+
+	function setOptions(values)
+	{
+		super.setOptions(...);
+@if(IS_TLE)
+		//	実行前に元画像を準備
+		if(snowImage == void)
+		{
+			with(snowImage = new global.Layer(kag, kag.primaryLayer))
+			{
+				.loadImages(snowStorage);
+				.setSizeToImageSize();
+			}
+		}
+@endif
+	}
+
+	//	ページを初期化するためのデータを返す
+	function getInitializedPage()
+	{
+		var	elm	= super.getInitializedPage();
+		with(elm)
+		{
+			.snows				= [];		//	雪粒のレイヤー
+			.lastsnowposcount	= 0;		//	前回、画面に表示した雪粒の数
+		}
+		return elm;
+	}
+
+	property snows		{ setter(v) { setprop("snows", v); }	getter { return getprop("snows"); } }
+
+	//	何れかのページで動作しているかどうか
+	property playEither
+	{
+		getter
+		{
+			var	keys	= getAllItems();
+			for(var i=0; i<keys.count; i+=2)
+			{
+				if(keys[i+1].status == "play")
+					return true;
+			}
+			return false;
+		}
+	}
+
+	var	updated;
+	function preConstruct()
+	{
+		updated	= true;	//	とりあえず、何れか動作している(雪粒が存在する)ことにする
+	}
+
+	function doPlay()
+	{
+//		dm("Snow.doPlay()");
+		if(snows.count > 0)
+		{
+			var	ss	= snows;
+			for(var i=0; i<ss.count; i++)
+				ss[i].update();
+		}
+		else
+			updated = false;	//	表示 & 実行中だけど、雪粒が一つもないので処理を実行できないため、強制的に発生させる
+
+		return true;
+	}
+
+	function doPause()
+	{
+	}
+
+	function doStop()
+	{
+		dm("Snow.doStop()");
+		//	停止したら、レイヤーを片付ける
+		var	ss	= snows;
+		for(var i=0; i<ss.count; i++)
+			invalidate ss[i] if ss[i] != void;	//	破棄
+		snows.clear();
+	}
+
+	function postConstruct()
+	{
+		//	レイヤーが無ければ、すぐに実行
+		if(!updated)
+			updateSnowPosition();
+	}
+
+	var	lastupdatetick;
+	function updateSnowPosition()
+	{
+//		dm("updateSnowPosition: "+lastupdatetick+" == "+curtick+" / playEither = "+playEither);
+@if(!IS_TLE)
+		if(lastupdatetick == curtick)
+			return true;	//	同じ時刻では一度しか処理が必要ない
+@endif
+		starttick = lastupdatetick = curtick if starttick === void;
+		var	past	= curtick - lastupdatetick;
+
+		//	何れのページも一時停止中(何れかのページが実行中でない)なら、雪粒は移動しない
+		if(playEither)
+		{
+			snowarea.setFallVelocity(0, boxSize * -0.0002 * speed, 0);
+
+@if(IS_TLE)
+			//	位置の更新
+			snowarea.distributeSnow(count);
+@endif
+@if(!IS_TLE)
+			//	雪粒の落下
+			snowarea.setSnowCount(count);
+			snowarea.falling(past);
+@endif
+
+			//	一定の確率で移動方向が変化
+			if(Math.random() < 0.001 * past * speed)
+			{
+				var	vx	= (Math.random() - 0.5) * 2 * 0.01 * speed;
+				var	vz	= (Math.random() - 0.5) * 2 * 0.01 * speed;
+				snowarea.addFallVelocity(vx, 0, vz);
+			}
+
+			//	一定の確率で、水平方向の移動速度を低下させる
+			if(Math.random() < 0.0001 * past * speed)
+				snowarea.decelerateHorizontalVelocity(0.75 * speed);
+		}
+
+		//	それぞれのカメラに対して処理を行う
+		var	bsz		= snowarea.getBoxSize();
+		var	_bsz	= 1 / bsz;
+		var	keys	= getAllItems();
+		var	invcnt	= 0;
+		for(var i=0; i<keys.count; i+=2)
+		{
+			page	= keys[i+1].page;
+			if( ! isvalid page )
+				return false;
+//			dm("update snow: "+page.name+"("+curtick+"): visible = "+visible+" / transCount = "+kag.transCount+" / isForePage = "+isForePage);
+			var	layers	= snows;
+			if(!visible)
+			{
+				for(var i=0; i<layers.count; i++)
+					layers[i].visible	= false;	//	画面に表示しない
+				invcnt++;	//	非表示の数
+				continue;
+			}
+@if(!IS_TLE)
+			if(kag.transCount == 0 && !isForePage)
+				continue;	//	トランジション中でなく、表側のページでもない
+@endif
+@if(IS_TLE)
+			//	状態が変わってなければ、計算する必要がない
+			var	changed	= false;
+			laststate[string(page)]	= %[] if laststate[string(page)] == void;
+			for(var i=0; i<params.count; i++)
+			{
+				var	n	= params[i][0];
+				if(this[n] !== laststate[n])
+				{
+					changed	= true;
+					laststate[n]	= this[n];
+				}
+			}
+			if(!changed && lastupdatetick == curtick && !changedPage[string(page)] && laststate["status"] === status)
+				continue;
+			delete changedPage[string(page)];
+@endif
+
+			//	カメラ等の状態を設定
+			snowarea.setTarget(tx * boxSize, ty * boxSize, tz * boxSize);
+			snowarea.setCamera(x * boxSize, y * boxSize, z * boxSize, ux, uy, uz);
+			var	l = 0, t = 0;
+@if(IS_TLE)
+			snowarea.setProjection(Math.PI / 6, page.baseWidth, page.baseHeight);
+			snowarea.setViewport(0, 0, page.baseWidth, page.baseHeight, snowImage.width \ 2);
+//			l	= page.baseLeft;
+//			t	= page.baseTop;
+@endif
+@if(!IS_TLE)
+			snowarea.setProjection(Math.PI / 6, page.width, page.height);
+			snowarea.setViewport(0, 0, page.width, page.height, snowImage.width \ 2);
+@endif
+
+			//	雪粒の位置取得
+			var	snowpos	= [];
+			snowarea.update(snowpos);
+			if(count == 0 && snowpos.count == 0 && lastsnowposcount > 0)
+			{
+				visible	= false;	//	表示すべき雪粒が無い状態になったので、表示終了
+				invcnt++;
+				continue;
+			}
+			lastsnowposcount	= snowpos.count;
+
+			//	レイヤーに反映
+			var	idx	= 0;
+@if(IS_TLE)
+			var	page	= getCanvasLayer("SnowLayer");
+@endif
+@if(!IS_TLE)
+			var	page	= this.page;
+@endif
+			if( ! isvalid page )
+				return false;
+
+			for(var i=0; i<snowpos.count; i+=3)
+			{
+				var	z		= snowpos[i+2];
+				var	dist	= (bsz - z) * _bsz;
+				if(dist > bsz || dist < 0)
+					continue;	//	画面より手前か奥の雪なので
+
+				var	x	= snowpos[i], y = snowpos[i+1];
+				var	size= dist * snowImage.height;
+				if(layers[idx] == void)
+				{
+					with(layers[idx] = new global.SnowGrainLayer(kag, page, snowImage))
+						.plugin	= this;
+				}
+
+				with(layers[idx])
+				{
+					.parent	= page if .parent != page;
+					.size		= size;
+					.absolute	= dist * 10000;
+					.opacity	= 255;
+					.setPos(l + snowpos[i], t + snowpos[i+1]);
+					.visible	= true;
+				}
+				idx++;
+			}
+/*
+@if(IS_TLE)
+			//	雪が降る方向を知るため、空間の中央を上下に貫くライン上にある雪粒を表示する
+			var	pt	= %[x:0.5*bsz, y:bsz, z:0.5*bsz];
+			var	upper	= snowarea.calc(pt);
+			pt.y	= 0;
+			var	lower	= snowarea.calc(pt);
+			var	dvc		= 128;
+			var	dvcp	= 1 / dvc;
+			var	x = upper.x, y = upper.y, z = upper.z;
+			var	mx	= (lower.x - x) * dvcp;
+			var	my	= (lower.y - y) * dvcp;
+			var	mz	= (lower.z - z) * dvcp;
+			for(var i=0; i<dvc; i++)
+			{
+				var	dist	= (bsz - z) * _bsz;
+				var	size	= dist * snowImage.height;
+				if(	dist < bsz && dist >= 0 &&
+					x - size > 0 && x < page.baseWidth && y - size > 0 && y < page.baseHeight &&
+					size > 0 && size < snowImage.height)
+				{
+//					dm(@"${x}, ${y}, ${dist}, ${size}");
+					if(layers[idx] == void)
+					{
+						with(layers[idx] = new global.SnowGrainLayer(kag, page, snowImage))
+							.plugin	= this;
+					}
+					with(layers[idx])
+					{
+						.parent	= page if .parent != page;
+						.size		= size;
+						.absolute	= dist * 10000;
+						.opacity	= int(i * dvcp * 128) + 127;
+						.setPos(l + x, t + y);
+						.visible	= true;
+					}
+					idx++;
+				}
+				x	+= mx;
+				y	+= my;
+				z	+= mz;
+			}
+@endif
+*/
+			for(; idx<layers.count; idx++)
+				layers[idx].visible	= false;	//	未使用のレイヤーが画面に表示されないように
+		}
+
+		lastupdatetick	= curtick;
+@if(IS_TLE)
+		laststate["status"]	= status;
+@endif
+		if(invcnt * 2 == keys.count)
+			stop();		//	すべて非表示なら、動作を停止する
+
+		return true;
+	}
+
+	function clear()
+	{
+		var	keys	= getAllItems();
+		for(var i=0; i<keys.count; i+=2)
+		{
+			var	ss	= keys[i+1].snows;
+			for(var i=0; i<ss.count; i++)
+				invalidate ss[i] if ss[i] != void;
+			invalidate ss;
+		}
+		snowarea.resetSnow() if snowarea != void;	//	雪の位置を初期化
+		super.clear();
+	}
+}
+
+//	雪粒のレイヤー
+class SnowGrainLayer extends Layer
+{
+	var	_size;
+	var	comp;
+	var	plugin;
+
+	function SnowGrainLayer(win, par, image)
+	{
+		super.Layer(win, par);
+		assignImages(image);
+		name	= "snow";
+		hitThreshold	= 256;
+	}
+
+	property size
+	{
+		setter(v)
+		{
+			if(v != size)
+			{
+				_size	= int(v);
+				var	sz	= size + (size & 1);
+				imageLeft	= -(((sz * sz) >> 1) - (size & 1) * sz);
+				setSize(sz, sz);
+			}
+		}
+		getter	{ return _size; }
+	}
+
+	function setPos(l, t)
+	{
+		l	-= (size >> 1) + (size & 1);
+		t	-= (size >> 1) + (size & 1);
+		super.setPos(l, t);
+	}
+
+	function onPaint()
+	{
+		plugin.updateSnowPosition();
+		super.onPaint(...);
+	}
+}
+
+/*----------------------------------------------------------------------------/
+/	編集時、実行時どちらにも必要な定義
+/----------------------------------------------------------------------------*/
+global.sp	= new SnowPlugin();
+var	SnowObjectKeys			= getPluginPropertyKeys(global.sp.params);
+var	SnowObjectKeysInit		= getPluginPropertyInit(global.sp.params);
+var	SnowObjectDefaultValues	= createDefaultValuesFunc(SnowObjectKeys, SnowObjectKeysInit, false);
+var	SnowObjectMiddleProperty	= %[x:true, y:true, z:true, ux:true, uy:true, uz:true, tx:true, ty:true, tz:true,
+	count:true, speed:true, status:false];
+
+/*----------------------------------------------------------------------------/
+/	プラグインのインスタンス作成とTLObjectの定義
+/----------------------------------------------------------------------------*/
+@if(!IS_TLE)
+kag.addPlugin(global.Snow_object = new SnowPlugin(kag));	//	TLE ではTLE側で対応する
+PluginDefaultValues[Snow_object.name]	= SnowObjectDefaultValues;
+
+//	プラグインリストへ登録する
+global.effectPluginList[global.Snow_object.name]	= global.Snow_object;
+
+//	TLオブジェクト
+class TLSnowObject extends TLPluginObject
+{
+	function TLSnowObject()
+	{
+		super.TLPluginObject(...);
+	}
+
+	property keys				{ getter { return SnowObjectKeys; } }
+	property defaultValues		{ getter { return SnowObjectDefaultValues; } }
+	property middleProperties	{ getter { return SnowObjectMiddleProperty; } }
+	property storageProperties	{ getter { return ""; } }
+}
+
+@endif
+
+/*----------------------------------------------------------------------------/
+/	KAGタグの定義
+/----------------------------------------------------------------------------*/
+@if(!IS_TLE)
+/**TAG
+ *	startsnow - 降雪開始.
+ *	@param	page	"fore"/"back" 省略時"fore"
+ *	@param	x		カメラのX座標
+ *	@param	y		カメラのY座標
+ *	@param	z		カメラのZ座標
+ *	@param	ux		カメラの上方向を示すベクトルのX値
+ *	@param	uy		カメラの上方向を示すベクトルのY値
+ *	@param	uz		カメラの上方向を示すベクトルのZ値
+ *	@param	tx		撮影対象のX座標
+ *	@param	ty		撮影対象のY座標
+ *	@param	tz		撮影対象のZ座標
+ *	@param	count	雪粒の数(全体の設定)
+ *	@param	speed	落下速度(    〃   )
+ *	@param	status	"play", "pause", "stop" 実行中かどうか
+ *	@param	time	指定の数に雪粒が増えるまでの時間
+ *	@param	nowait	終了を待たない(default: true)
+ *	@param	canskip	終了を待つとき、クリックでのスキップができるか(default: true)
+ *	@param	both	fore/back同時に処理
+ *		@memo:		短縮表記 snow
+ *		@link:		startsnow, snowopt, stopsnow, snowact, movesnow
+ *		@group:		降雪プラグイン
+ */
+kag.tagHandlers.startsnow	= function(elm)
+{
+	with(elm)
+	{
+		.status	= "play" if .status === void;
+
+		if( .status == "pause" )
+			return kag.tagHandlers.snowopt(elm);
+		if( .status == "stop" )
+			return kag.tagHandlers.stopsnow(elm);
+
+		.textoff= false if .textoff === void;
+		.time	= 0 if .time === void;
+		.count	= 1000 if .count === void;
+		.nowait	= true if .nowait === void;
+		.page	= "fore" if .page === void;
+		Snow_object.simpleaction(elm, SnowObjectMiddleProperty);
+
+		if( .both )
+		{
+			.page = .page == "back" ? "fore" : "back";
+			.both = false;
+			Snow_object.simpleaction(elm, SnowObjectMiddleProperty);
+		}
+		return 0;
+	}
+} incontextof kag;
+kag.tagHandlers.oldstyle_snow = kag.tagHandlers.snow if kag.tagHandlers.snow !== void;
+kag.tagHandlers.snow = kag.tagHandlers.startsnow;
+
+/**TAG
+ *	snowopt - 降雪パラメータ変更.
+ *	@param	page	"fore"/"back" 省略時"fore"
+ *	@param	textoff	メッセージウィンドウ表示を非表示にしない
+ *	@param	time	指定があれば、その時間を掛けて現在の状態から指定の状態へ変化する
+ *	@param	nowait	終了を待たない(default: true)
+ *	@param	canskip	終了を待つとき、クリックでのスキップができるか(default: true)
+ *		@memo:		短縮表記 snow
+ *		@link:		startsnow, snowopt, stopsnow, snowact, movesnow
+ *		@group:		降雪プラグイン
+ */
+kag.tagHandlers.snowopt	= function(elm)
+{
+	with(elm)
+	{
+		.textoff= false if .textoff === void;
+		.nowait	= true if .nowait === void;
+		.page	= "fore" if .page === void;
+		return Snow_object.action(elm, SnowObjectMiddleProperty);
+	}
+} incontextof kag;
+kag.tagHandlers.chgsnow	= kag.tagHandlers.snowopt;
+
+/**TAG
+ *	stopsnow - 降雪終了.
+ *	@param	page	"fore"/"back" 省略時"fore"
+ *	@param	textoff	メッセージウィンドウ表示を非表示にしない
+ *	@param	time	雪粒が0になるまでの時間
+ *	@param	nowait	終了を待たない(default: true)
+ *	@param	canskip	終了を待つとき、クリックでのスキップができるか(default: true)
+ *		@memo:		短縮表記 snow
+ *		@link:		startsnow, snowopt, stopsnow, snowact, movesnow
+ *		@group:		降雪プラグイン
+ */
+kag.tagHandlers.stopsnow	= function(elm)
+{
+	with(elm)
+	{
+		.status	= "stop";
+		.page	= "fore" if .page === void;
+		.time	= 0 if .time === void;
+		.count	= 0;
+		.nowait	= true if .nowait === void;
+		.textoff= false if .textoff === void;
+		return Snow_object.simpleaction(elm, SnowObjectMiddleProperty);
+	}
+} incontextof kag;
+
+/**TAG
+ *	snowact - 降雪パラメータの動的変更.
+ *	@param targetpage	"fore"/"back"
+ *	@param props		変化させるプロパティをカンマ区切りで指定する
+ *						段階的に変化させないものには先頭にハイフンをつける
+ *						プロパティ名については startsnow タグを参照
+ *						ex) props=-visible,count
+ *	@param keys			時間毎の状態(キーフレーム)をカッコで括り列挙する
+ *						内訳は順に(time,accel,interpolation,props[0],props[1]...)
+ *						・time:				ミリ秒
+ *						・accel:			equationを用いた加速度(変化カーブ)指定
+ *						・interpolation: 	n=なし / l:線形補間(デフォルト) / s:スプライン補間
+ *						ex) keys=(0,,l,,10)(1000,,n,5)
+ *		@link:		action, equation, startsnow, snowopt, stopsnow, snowact, movesnow
+ *		@group:		降雪プラグイン
+ */
+kt.snowact		= function(mp)
+{
+	mp.plugin	= Snow_object.name;
+	mp.interval = 50 if mp.interval === void;
+	return tagHandlers.action(mp);
+} incontextof kag;
+
+/**TAG
+ *	movesnow - 降雪表示の設定変更.
+ *	現在の(若しくは_付きで指定した)値から指定の値へ、timeで指定された時間で変化させる
+ *	プロパティについては startsnow タグを参照
+ *	@param	accel	移動加速度(減速-5〜0=等速〜+5増速)
+ *	@param	time	変化に要する時間
+ *	@param	nowait	終了を待たない(default: true)
+ *	@param	textoff	テキスト消去しない
+ *	@param	canskip	終了を待つとき、クリックでのスキップができるか(default: true)
+ *	@param	both	fore/back同時に処理する
+ *		@link:		startsnow, snowopt, stopsnow, snowact, movesnow
+ *		@group:		降雪プラグイン
+ */
+kag.tagHandlers.movesnow	= function(elm)
+{
+	with(elm)
+	{
+		.page	= "fore" if .page === void;
+		.target	= getLayerFromElm(%[page:.page, pluginLayer:Snow_object.name]);
+		.status	= "play" if .status === void;
+
+		Snow_object.action(elm, SnowObjectMiddleProperty);
+
+		if(.both)
+		{
+			//	both=表裏両面で同じ処理を実行
+			.page	= .page == "back" ? "fore" : "back";
+			.both	= void;
+			.nowait	= true;		//!nowaitの時にBasePlugin.action内でwact発行があるので２面目は実施しない
+			return Snow_object.action(elm, SnowObjectMiddleProperty);
+		}
+		return 0;
+	}
+} incontextof kag;
+@endif
+
+/*----------------------------------------------------------------------------/
+/	TLEで編集するためのObject,Layer,Properties登録
+/----------------------------------------------------------------------------*/
+@if(IS_TLE)
+Scripts.execStorage("PluginObject.tjs");
+Scripts.execStorage("PluginLayer.tjs");
+Scripts.execStorage("snow_property.tjs");
+
+var	SnowObjectPropertyType	= getPluginPropertyType(global.sp.params);
+var	SnowObjectPropertyRange	= getPluginPropertyRange(global.sp.params);
+
+class SnowObject extends PluginObject
+{
+	var	staticProperties	= [ "count", "speed" ];	//	全ての SnowObject で同一の値となるプロパティ
+
+	function SnowObject()
+	{
+		super.PluginObject(...);
+		pluginName = name = "snow";
+		plugin = global.pluginManager.get(name);
+	}
+
+	property keys						{ getter { return SnowObjectKeys; } }
+	property initvalues					{ getter { return SnowObjectKeysInit; } }
+	property defaultValues				{ getter { return SnowObjectDefaultValues; } }
+	property storageType				{ getter { return ""; } }
+	property notStateProperties			{ getter { return []; } }
+	property createPropertyMenuMethod	{ getter { return create_snow_property; } }
+	property eventPropertyMenuMethod	{ getter { return onChildValueModified_snow_property; } }
+	property middleProperties			{ getter { return SnowObjectMiddleProperty; } }
+	property propertyTypes				{ getter { return SnowObjectPropertyType; } }
+	property propertyRanges				{ getter { return SnowObjectPropertyRange; } }
+	property isOutputTag				{ getter { return false; } }
+
+	//	状況を再現するタグ
+	function getStateTag(frame, shift)
+	{
+		var	tag	= super.getStateTag(...);
+		var	status	= timeline.getProperty(frame, "status");
+		if(!(shift & ssShift))
+		{
+			tag.name	= "snow";
+		}
+		else
+		{
+			tag.name	= "movesnow";
+			tag.set("time", 1000) if tag.get("time") == 0;
+			tag.reset("status") if tag.get("status") == "play";
+		}
+		return tag;
+	}
+
+	//	アクションタグを取得
+	function getActionTag(st, ed)
+	{
+		//	タグを生成
+		var	tag	= new KAGTagData();
+		tag.name= "snowact";
+		tag.set("targetpage", "fore");	//	eval して実体を示す文字列(fore,backのみkag[x].baseに読み替える)
+
+		var	ks	= [];
+		ks.assign(keys);
+		ks.add("visible");
+		if(timeline.getKeyDataToTag(ks, defaultValues, root.frameRate, st, ed, void, tag))
+		{
+			return tag;
+		}
+		else
+			return void;
+	}
+
+	//	このオブジェクトの状態を示すタグかどうか
+	function isStateTag(tag)
+	{
+		var	tags	= %[
+			snow:[],
+			movesnow:[],
+		];
+		var	params	= tags[tag.name];
+		if(params == void)
+			return false;
+		for(var i=0; i<params.count; i++)
+		{
+			if(tag.get(params[i][0]) != params[i][1])
+				return false;
+		}
+		return true;
+	}
+
+	//	対応できるactionタグかどうか
+	function isActionTag(tag)
+	{
+		return ((tag.name == "action" && tag.get("plugin") == pluginName) || tag.name == "snowact");
+	}
+}
+postProcessOfObject("SnowObject", SnowObjectKeys);
+
+class SnowLayer extends PluginLayer
+{
+	function SnowLayer(win, par, obj)
+	{
+		super.PluginLayer(...);
+
+		neutralColor= 0x00000000;
+		setImageSize(parent.baseWidth, parent.baseHeight);
+		setSizeToImageSize();
+		setPos(parent.baseLeft, parent.baseTop);
+		hasImage	= false;
+	}
+
+	property x { setter(v) { object.x = v; } getter { return object.x; } }
+	property y { setter(v) { object.y = v; } getter { return object.y; } }
+	property z { setter(v) { object.z = v; } getter { return object.z; } }
+	property ux { setter(v) { object.ux = v; } getter { return object.ux; } }
+	property uy { setter(v) { object.uy = v; } getter { return object.uy; } }
+	property uz { setter(v) { object.uz = v; } getter { return object.uz; } }
+	property tx { setter(v) { object.tx = v; } getter { return object.tx; } }
+	property ty { setter(v) { object.ty = v; } getter { return object.ty; } }
+	property tz { setter(v) { object.tz = v; } getter { return object.tz; } }
+	property count { setter(v) { object.count = v; } getter { return object.count; } }
+	property speed { setter(v) { object.speed = v; } getter { return object.speed; } }
+	property status { setter(v) { object.status = v; } getter { return object.status; } }
+}
+
+global.addMethodName	= "addSnow";	//	PluginManager も参照するので、統合しないこと
+CV_object2layer["SnowObject"]	= [ "SnowLayer", void, "layers" ];
+OD_add.add(["addSnow", "SnowObject", true]);
+OD_parentageConsistency["SnowObject"]	= function(parent)
+{
+	if(parent != "BGObject" && parent != "PartBgObject")
+	{
+		popupMessage("降雪プラグインは背景レイヤーの下にのみ配置可能です");
+		return false;
+	}
+	return true;
+};
+//キャンバスへのボタン追加
+CV_addButtons["SnowObject"] = [ [ "snow",, "降雪指定のタグをクリップボードへ"],
+								 "movesnow",
+								 [ "action",, "選択されているオブジェクトの全区間をactionタグにします。" ] ];
+global.CanvasLayer.snow_override_onButtonDown = global.CanvasLayer.onButtonDown;
+global.CanvasLayer.onButtonDown = function(btn)
+{
+	snow_override_onButtonDown(...);
+	switch(btn.name)
+	{
+	case "snow":
+		data.copyState();
+		break;
+
+	case "movesnow":
+		data.copyState(ssShift);
+		break;
+	}
+} incontextof global.CanvasLayer;
+//エディタのタグ解釈部の追加
+__isactiontag["snowact"] = true;
+
+@endif
+
+invalidate global.sp;
+delete global.sp;
+}
+@endif

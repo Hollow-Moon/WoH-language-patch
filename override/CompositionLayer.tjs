@@ -1,0 +1,502 @@
+﻿/*----------------------------------------------------------------------------/
+/	表情などを別に保持した立ち絵等を表示する為のオーバーライド
+/----------------------------------------------------------------------------*/
+@if(__COMPOSITIONLAYER_DEFINED__!=1)
+@set(__COMPOSITIONLAYER_DEFINED__=1)
+
+//	multi パーツを別のレイヤーとして扱うなら1
+//@set(COMPOSITION_PARTS=1)
+
+//	画像を読み込んだときに、自動的に位置補正を行なうなら 1
+//@set(COMPOSITION_AUTO_CORRECT_POSITION=1)
+
+//	※	LayerEx.tjs と同じ位の、早い段階で読み込むこと!!
+
+/*
+	base
+		元となるレイヤー
+	mono パーツ
+		一度に何れか一つが選ばれるパーツ
+		表情など
+	multi パーツ
+		一度に複数表示されるパーツ
+		感情表現(怒りマーク等)に用いる
+
+	※	各パーツは別のファイルとして保存されている
+*/
+var	__Layer_tagSeparateKey	= "@";		//	画像タグの list に入っているデータを分割するためのキー
+var	__Layer_partsSeparateKey= "|";		//	画像ファイル名で表示するパーツを指定する時のキー
+
+@if(FROM_XP3)
+var	__Layer_partsDirectory	= "";
+@endif
+@if(!FROM_XP3)
+var	__Layer_partsDirectory	= ".parts/";
+@endif
+//var	__Layer_individualFormat= ".%s/%s";	//	ベースとなるファイル名のディレクトリに個別のファイルを保存する
+var	__Layer_individualFormat= __Layer_partsDirectory+"%s+%s";	//	.parts ディレクトリへ、ベースとなるファイル名に個別の名称をつけたファイルを保存する
+var	__Layer_monoPartsFormat	= __Layer_partsDirectory+"%s-mono";	//	monoパーツ群はこれ
+
+//	ベースのパラメータ名
+var	__Layer_baseCopyParams	= [ "groundLevel", "centerCorrect", "verticalCorrect", "type", "opacity", "visible", "name" ];
+
+class CompositionLayer extends Layer
+{
+	var	monoList;	//	mono パーツ の名称一覧
+	var	multiList;	//	multi パーツ の名称一覧
+
+	var	monoName;	//	読み込んでいる monopart の名称
+	var	multies;	//	読み込んでいる multiparts のレイヤー(名)一覧
+
+	var	_storage;	//	読み込んでいる画像ファイル名(パーツ指定あり)
+	var	orgstorage;	//	読み込んでいる画像ファイル名(パーツ指定無しのファイル名そのまま)
+
+	var	_horizontalCorrect;	//	中心位置補正値(中央(=width/2)からの差分)
+	var	_verticalCorrect;	//	      〃      (縦方向)
+	var	_groundLevel;		//	地面位置補正値(中央(=height/2)からの差分
+
+	var	orgTag;		//	元々のtag
+
+	function CompositionLayer()
+	{
+		super.Layer(...);
+		monoName	= "";
+		horizontalCorrect	= 0;
+		verticalCorrect		= 0;
+		groundLevel			= 0;
+	}
+
+	function finalize()
+	{
+		invalidate monoList if monoList != void;
+		invalidate multiList if multiList != void;
+		orgTag = void if orgTag === null;
+		invalidate orgTag if orgTag != void;
+		super.finalize();
+	}
+
+	property storage
+	{
+		setter(v)
+		{
+			if(storage !== v)
+			{
+//				dmt(parent.name+".compositionLayer: "+storage+" → "+v);
+				_storage	= v;
+				orgstorage	= v if v == "";	//	初期化するときだけは orgstorage も変更する
+			}
+		}
+		getter	{ return _storage; }
+	}
+
+	//	元のファイル名を取得
+	function getOriginalStorage(storage)
+	{
+		var	partnames	= Storages.extractStorageName(Storages.chopStorageExt(storage)).split(__Layer_partsSeparateKey);
+		return partnames[0];
+	}
+
+	//	monoパーツのファイル名を取得
+	function getMonoPartsStorage(storage)
+	{
+		return __Layer_monoPartsFormat.sprintf(CompositionLayer.getOriginalStorage(storage));
+	}
+
+	//	パーツ名を取得
+	function getPartsNames(storage)
+	{
+		var	partnames	= Storages.extractStorageName(Storages.chopStorageExt(storage)).split(__Layer_partsSeparateKey);
+		partnames.erase(0);
+		return partnames;
+	}
+
+	/**
+	 * レイヤーのコピー(画像データを含む)
+	 */
+	function assignImages(src)
+	{
+		super.assignImages(...);
+		with(src)
+		{
+//			dm(name+".assignImages("+src.name+")");
+			if(typeof .orgTag != "undefined" && .orgTag != void)
+			{
+				orgTag	= %[];
+				(Dictionary.assign incontextof orgTag)(.orgTag);
+			}
+			else
+				orgTag	= void;
+			if(typeof .monoList != "undefined" && .monoList != void)
+			{
+				monoList	= [];
+				monoList.assign(.monoList);
+			}
+			else
+				monoList	= void;
+			if(typeof .multiList != "undefined" && .multiList != void)
+			{
+				multiList	= [];
+				multiList.assign(.multiList);
+			}
+			else
+				multiList	= void;
+			monoName	= .monoName if typeof .monoName != "undefined";
+			if(typeof .multies != "undefined" && .multies != void)
+			{
+				multies	= [];
+@if(COMPOSITION_PARTS==1)
+				for(var i=0; i<.multies.count; i++)
+				{
+					multies[i]	= new global.Layer(window, this);
+					multies[i].assignImages(.multies[i]);
+				}
+@endif
+@if(COMPOSITION_PARTS!=1)
+				multies.assign(.multies);
+@endif
+			}
+			storage		= .storage if typeof .storage != "undefined";
+			if(typeof .orgstorage != "undefined")
+				orgstorage	= .orgstorage;
+			else
+				orgstorage	= storage;
+			this.groundLevel	= .groundLevel if typeof .groundLevel != "undefined";
+			this.centerCorrect	= .centerCorrect if typeof .centerCorrect != "undefined";
+			this.verticalCorrect= .verticalCorrect if typeof .verticalCorrect != "undefined";
+		}
+	}
+
+	/**
+	 * 現在読み込まれているパーツを破棄する
+	 */
+	function clearParts()
+	{
+		if(monoList != void)
+		{
+			invalidate monoList;
+			monoList	= void;
+		}
+		if(multiList != void)
+		{
+			invalidate multiList;
+			multiList	= void;
+		}
+		if(multies != void)
+		{
+@if(COMPOSITION_PARTS==1)
+			while(multies.count > 0)
+			{
+				invalidate multies[0];
+				multies.erase(0);
+			}
+@endif
+			invalidate multies;
+			multies	= void;
+		}
+		monoName	= "";
+	}
+
+	/**
+	 * レイヤー構成を持つファイルも読み込む
+	 * @param storage ファイル名
+	 * ファイル名は、ベースの画像ファイル名を指定するか、ベースの画像名＋複数のパーツ名を"|"で区切ったものを指定
+	 * ベースの画像ファイル名のみであれば、元々のパーツ構造を保持した状態で読み込まれる。
+	 * ベースの画像名＋複数のパーツ名であれば、指定されたパーツを合成されたベース画像が読み込まれる(構造は保持されない)
+	 */
+	function loadImages(storage, colorkey, force=false)
+	{
+		//	対象となるファイル名とパーツ名に分ける
+		var	path		= Storages.extractStoragePath(Storages.getFullPath(storage));
+		var	partnames	= Storages.extractStorageName(Storages.chopStorageExt(storage)).split(__Layer_partsSeparateKey);
+		var	orgstorage	= partnames[0];
+		partnames.erase(0);
+//		dm(name+"("+parent.name+").loadImages("+storage+"|"+partnames.join(",")+")");
+
+		//	指定のファイルが存在しなければ例外
+		if(!Storages.isExistentImage(orgstorage))
+		{
+			setImageSize(32, 32);
+			setSizeToImageSize();
+			fillRect(0, 0, width, height, neutralColor);
+
+			addLoadErrorFiles(storage) if typeof global.addLoadErrorFiles != "undefined";
+			var	msg	= "画像ファイル: \""+storage+"\" は存在しません。";
+@if(POPUP_NOTFOUND)
+			(typeof global.popupMessage != "undefined" ? popupMessage : dm)(msg);
+@endif
+@if(!POPUP_NOTFOUND)
+			dm(msg);
+@endif
+@if(IS_TLE)
+			return %[];
+@endif
+			return void;
+		}
+
+		//	現在読み込んでいる画像と異なるなら、ファイルを読み込む
+		if(orgstorage != this.orgstorage || force)
+		{
+//			dm("\t\tload: last = "+this.orgstorage+" / force = "+force);
+			//	読み込んでいるファイル名を記録
+			this.orgstorage	= orgstorage;
+
+			//	読み込まれているパーツを破棄する
+			clearParts();
+
+@if(COMPOSITION_AUTO_CORRECT_POSITION==1)
+			//	現在の位置を取得
+			var	c	= center, v = vcenter;
+@endif
+
+			//	初期化
+			_horizontalCorrect	= void;
+			_verticalCorrect	= void;
+			groundLevel			= void;
+			delete this.groundBase if typeof this.groundBase != "undefined";
+
+			//	ファイルを読み込む
+//			dm("\t\tloadImages("+orgstorage+", "+colorkey+")");
+			orgTag	= super.loadImages(orgstorage, colorkey);
+			if(orgTag == null || (typeof orgTag.monoList == "undefined" && typeof orgTag.multiList == "undefined"))
+			{
+//				dm("\t\tloadImages("+orgstorage+", "+colorkey+") : "+(orgTag != null ? orgTag.groundBase : ""));
+				this.storage	= storage;
+				this.groundBase		= +orgTag.groundBase if orgTag != null && typeof orgTag.groundBase != "undefined";
+				return orgTag;		//	通常の画像だった
+			}
+
+			with(orgTag)
+			{
+				//	パーツ名称の一覧を取得
+				monoList	= .monoList.split(__Layer_tagSeparateKey,, true);
+				multiList	= .multiList.split(__Layer_tagSeparateKey,, true);
+				for(var i=0; i<monoList.count; i++)	monoList[i]	= monoList[i].trim();	//	レイヤー名の末尾に空白がついていることがあり、パーツ名に反映されてしまうため
+				for(var i=0; i<multiList.count; i++)multiList[i]= multiList[i].trim();
+//				dm("\t\tparts: mono = "+monoList.join(",")+" / multi = "+multiList.join(","));
+
+				//	パラメータを設定
+				groundLevel			= +.groundLevel if typeof .groundLevel != "undefined";
+				_horizontalCorrect	= +.centerCorrect if typeof .centerCorrect != "undefined";
+				_verticalCorrect	= +.verticalCorrect if typeof .verticalCorrect != "undefined";
+				this.groundBase		= +.groundBase if typeof .groundBase != "undefined";
+			}
+
+@if(COMPOSITION_AUTO_CORRECT_POSITION==1)
+			//	直前の画像と同じ位置(中心、地面)に配置
+			center	= c;
+			vcenter	= v;
+@endif
+		}
+@if(COMPOSITION_PARTS!=1)
+		else if(multies != void)
+		{
+			//	読み込まれているパーツのうち、multi パーツの部分を元に戻す
+			var	layer	= new global.Layer(window, this);
+			for(var i=0; i<multies.count; i++)
+			{
+				var	tag	= layer.loadImages(path+__Layer_individualFormat.sprintf(orgstorage, multies[i]));
+				var	w2	= layer.imageWidth \ 2;
+				copyRect(tag.left, tag.top, layer, w2, 0, w2, layer.imageHeight);
+			}
+			invalidate layer;
+		}
+@endif
+		this.storage	= storage;
+
+		//	標準の monoパーツで描画し直す必要があるか
+		var	drawNormalMono	= monoName != "";
+
+		//	パーツ名が指定されていれば、書き込んだり読み込んだりする
+		var	layer	= void;
+@if(COMPOSITION_PARTS!=1)
+		var	partsLayers	= [];
+@endif
+		for(var i=0; i<partnames.count; i++)
+		{
+			var	pn	= partnames[i];
+//			dm("\t\tdraw part = "+pn);
+			var	idx, pfn, tag;
+			if(pn == "")
+			{
+				;	//	パーツ名が空文字列
+			}
+			else if((idx = monoList.find(pn)) >= 0)
+			{
+				layer	= new global.Layer(window, this) if layer == void;
+				pfn		= path + __Layer_monoPartsFormat.sprintf(orgstorage);
+				if(!Storages.isExistentImage(pfn))
+				{
+					dm("画像ファイル: \""+pfn+"\" が存在しません。");
+					addLoadErrorFiles(pfn) if typeof global.addLoadErrorFiles != "undefined";
+					continue;
+				}
+				tag		= layer.loadImages(pfn);
+				if(tag == null)
+					throw new Exception("monoパーツ画像にタグがありません。");
+				copyRect(tag.left, tag.top, layer, (idx + 1) * tag.width, 0, tag.width, tag.height);
+				monoName		= pn;
+				drawNormalMono	= false;	//	monoパーツを描画したので、通常のmonoパーツを描画する必要はない
+//				dm("\t\t\tdraw mono: "+pn);
+			}
+			else if(multiList.find(pn) >= 0)
+			{
+				layer	= new global.Layer(window, this) if layer == void;
+				pfn		= path + __Layer_individualFormat.sprintf(orgstorage, pn);
+				if(!Storages.isExistentImage(pfn))
+				{
+					dm("画像ファイル: \""+pfn+"\" が存在しません。");
+					addLoadErrorFiles(pfn) if typeof global.addLoadErrorFiles != "undefined";
+					continue;
+				}
+				tag		= layer.loadImages(pfn);
+				with(layer)
+				{
+					.setPos(tag.left, tag.top);
+					.setSize(tag.width, tag.height);
+					.name		= tag.name;
+					.type		= tag.type;
+					.opacity	= tag.opacity;
+					.absolute	= tag.absolute;
+					.hitThreshold	= 256;
+				}
+				multies	= [] if multies == void;
+@if(COMPOSITION_PARTS==1)
+				layer.visible	= true;
+				multies.add(layer);
+@endif
+@if(COMPOSITION_PARTS!=1)
+				partsLayers.add(layer);
+				multies.add(pn);
+@endif
+				layer	= void;
+			}
+			else
+				dm("\""+orgstorage+"\" には、パーツ名: \""+pn+"\" に対応する画像が存在しません。");
+		}
+
+		//	標準の monoパーツを書き込む
+		if(drawNormalMono)
+		{
+			var	pfn		= __Layer_monoPartsFormat.sprintf(orgstorage);
+			if(Storages.isExistentImage(pfn))
+			{
+				layer	= new global.Layer(window, this) if layer == void;
+				var	tag	= layer.loadImages(pfn);
+				if(tag == null)
+					throw new Exception("monoパーツ画像にタグがありません。");
+				copyRect(tag.left, tag.top, layer, 0, 0, tag.width, tag.height);
+				monoName	= "";
+			}
+		}
+		invalidate layer if layer != void;
+
+@if(COMPOSITION_PARTS!=1)
+		if(partsLayers.count > 0)
+		{
+			//	absolute 順に partsLayers を並び替える
+			partsLayers.sort(function(a,b){ return a.absolute < b.absolute; }, true);
+
+			//	描画していく
+			for(var i=0; i<partsLayers.count; i++)
+			{
+				with(partsLayers[i])
+				{
+//					dm("\t\tdraw multi parts: "+.name+"("+.left+", "+.top+", "+.width+", "+.height+", "+.opacity+")");
+					operateRect(.left, .top, partsLayers[i], 0, 0, .width, .height,, .opacity);
+				}
+				invalidate partsLayers[i];
+			}
+		}
+		invalidate partsLayers;
+@endif
+
+//		if(!(parent instanceof "CharacterLayer"))
+//			saveLayerImage(System.exePath+"temp/comp"+orgstorage+"-"+partnames.join(",")+"-"+System.getTickCount()+".bmp");
+		return orgTag;
+	}
+
+	property horizontalCorrect
+	{
+		setter(v)
+		{
+@if(COMPOSITION_AUTO_CORRECT_POSITION==1)
+			var c = center;
+@endif
+			_horizontalCorrect = +v;
+@if(COMPOSITION_AUTO_CORRECT_POSITION==1)
+			center = c;
+@endif
+		}
+		getter		{ return _horizontalCorrect; }
+	}
+
+	property verticalCorrect
+	{
+		setter(v)
+		{
+@if(COMPOSITION_AUTO_CORRECT_POSITION==1)
+			var c = vcenter;
+@endif
+			_verticalCorrect = +v;
+@if(COMPOSITION_AUTO_CORRECT_POSITION==1)
+			vcenter = c;
+@endif
+		}
+		getter		{ return _verticalCorrect; }
+	}
+
+	property centerCorrect
+	{
+		setter(v)	{ horizontalCorrect = v; }
+		getter		{ return horizontalCorrect; }
+	}
+
+	property groundLevel
+	{
+		setter(v)	{ _groundLevel = +v; }
+		getter		{ return _groundLevel; }
+	}
+
+	property center
+	{
+		setter(v)	{ left = center2left(v); }
+		getter		{ return left + width \ 2 + centerCorrect; }
+	}
+
+	property vcenter
+	{
+		setter(v)	{ top = center2top(v); }
+		getter		{ return top + height \ 2 + verticalCorrect; }
+	}
+
+	property ground
+	{
+		setter(v)	{ vcenter = +v - groundLevel; }
+		getter		{ return vcenter + groundLevel; }
+	}
+
+	function center2left(c)
+	{
+		return +c - width \ 2 - centerCorrect;
+	}
+
+	function center2top(c)
+	{
+		return +c - height \ 2 - verticalCorrect;
+	}
+}
+
+//	画像系の拡張子を足して、ファイルが存在するかチェックする
+Storages.isExistentImage	= function(storage)
+{
+	storage	= Storages.chopStorageExt(storage);
+	var	imgexts	= [ ".tlg", ".png", ".bmp", ".jpg", ".jpeg" ];
+	for(var i=0; i<imgexts.count; i++)
+	{
+		if(Storages.isExistentStorage(storage + imgexts[i]))
+			return true;
+	}
+	return false;
+} if typeof Storages.isExistentImage == "undefined";
+
+@endif

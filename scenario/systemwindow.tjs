@@ -1,0 +1,174 @@
+﻿@if(__SYSTEMWINDOW_DEFINED__==0)
+@set(__SYSTEMWINDOW_DEFINED__=1)
+
+/*
+ *	YesNoウィンドウ
+ */
+//	automove = 自動移動するか(0:設定どおり[sf.moveCursorToDialog]、1:yesへ、2:noへ)
+function askYesNo(message, caption, yesFunc, noFunc, param, doneFunc, automove=0)
+{
+	if(tf.do_askyesno)
+		return;
+	tf.do_askyesno	= true;	//	一度に一つだけ
+
+	//	止まっていないときは
+	if(!kag.inStable)
+	{
+		//	自動実行、既読スキップを停止
+		kag.cancelAutoMode();
+		kag.cancelSkip();
+
+		//	停止状態にする
+		tf.yn_lastinstable	= kag.inStable;
+		kag.conductor.interrupted	= true;	//	コンダクタの動作に割り込む
+		kag.notifyStable();
+	}
+	inMenu("yesnodialog", true);		//	メッセージレイヤーを隠さない
+
+	if(yesFunc == void)	delete tf.yn_yesfunc  if typeof tf.yn_yesfunc != "undefined";
+	else				tf.yn_yesfunc	= yesFunc;
+	if(noFunc == void)	delete tf.yn_nofunc   if typeof tf.yn_nofunc != "undefined";
+	else				tf.yn_nofunc		= noFunc;
+	if(doneFunc == void)delete tf.yn_donefunc if typeof tf.yn_donefunc != "undefined";
+	else				tf.yn_donefunc	= doneFunc;
+	tf.yn_param		= param;
+
+	//	現在メニューアイテムが表示されていたら、focusable=false にする
+	Menu_object.setDisfocusableAll();
+	kag.historyLayer.focusable <-> tf.yn_historyfocusable;	//	テキスト履歴レイヤーも
+
+	//	直接シーンを呼び出す
+	Scripts.execStorage("system_window.ttd");
+	var	tdata	= __get_system_window_timelinedata(7);
+	var	name2pos= tdata[0], creates = tdata[1], actions = tdata[2];
+	setCreateProp(creates[name2pos["YESボタン"]], "disabled", false);	//	連続して確認ウィンドウが表示されるとき、上の
+	setCreateProps(creates[name2pos["NOボタン"]], %[					//	setDisfocusableAll で disabled=true にされているかも
+		disabled:false,
+		pressse:""
+	], 2);
+	Menu_object.playTimeline(PRIMARY, creates, actions, %[absolute:10000000],,,, false);
+
+	//	メッセージ表示指定
+	with(Menu_object.find("システムウィンドウ", PRIMARY))
+	{
+		.reload();
+		.drawText2Area(32, 27, 269, 50, message != "" ? message : "メッセージ未指定です。", 17,,, true );
+	}
+
+	//	カーソル移動
+	if(cf.autoMouseMove)
+	{
+		if(automove === 0)
+		{
+			switch(sf.moveCursorToDialog)
+			{
+			case "Center":
+				var	btn	= Menu_object.find("YESボタン", PRIMARY);
+				moveCursor(btn, 512 - btn.left, btn.height \ 2);
+				break;
+			case "Yes":
+				moveCursor(Menu_object.find("YESボタン", PRIMARY));
+				break;
+			case "No":
+				moveCursor(Menu_object.find("NOボタン", PRIMARY));
+				break;
+			}
+		}
+		else
+			moveCursor(Menu_object.find(automove == 1 ? "YESボタン" : "NOボタン", PRIMARY));
+	}
+
+	//	クリック時処理設定
+	Menu_object.setClick(, "doneAskYesNo(false)");
+
+	//	設定されているキーダウン/アップフックを退避
+	if(typeof Menu_object.keyDownCallback != "undefined")
+	{
+		tf.lastKeyDownCallback	= Menu_object.keyDownCallback;
+		delete Menu_object.keyDownCallback;
+	}
+	if(typeof Menu_object.keyUpCallback != "undefined")
+	{
+		tf.lastKeyUpCallback	= Menu_object.keyUpCallback;
+		delete Menu_object.keyUpCallback;
+	}
+
+	//	マウスホイールのフックを無効化
+	tf.sw_lastwheelhook	= kag.hookMap["mouseWheel"];
+	kag.hookMap["mouseWheel"]	= void;
+}
+function doneAskYesNo(yes=false)
+{
+	//	マウスホイールのフックを元に戻す
+	kag.hookMap["mouseWheel"]	= tf.sw_lastwheelhook;
+	delete tf.sw_lastwheelhook;
+
+	//	キーダウン/アップフックを戻す
+	if(typeof tf.lastKeyDownCallback != "undefined")
+		Menu_object.keyDownCallback	= tf.lastKeyDownCallback;
+	if(typeof tf.lastKeyUpCallback != "undefined")
+		Menu_object.keyUpCallback	= tf.lastKeyUpCallback;
+
+	//	クリック時処理を元に戻す
+	Menu_object.resetClick();
+	outMenu("yesnodialog",, false);	//	メッセージレイヤーを表示しない
+
+	//	どちらかが選ばれた
+	if(yes)
+		tf.yn_yesfunc(tf.yn_param) if typeof tf.yn_yesfunc != "undefined";
+	else
+	{
+		tf.yn_nofunc(tf.yn_param) if typeof tf.yn_nofunc != "undefined";
+		Menu_object.playSE(cancelse);
+	}
+	if(typeof tf.yn_donefunc != "undefined")
+		tf.yn_donefunc(tf.yn_param);
+	delete tf.do_askyesno;
+	if(typeof tf.yn_lastinstable != "undefined")
+	{
+		kag.notifyRun() if !tf.yn_lastinstable;
+		kag.conductor.interrupted	= false;
+		delete tf.yn_lastinstable;
+	}
+	kag.setMenuAccessibleAll();	//	強制的に停止しているので、状態を元に戻す
+
+	//	直接シーンを呼び出す
+	var	tdata	= __get_system_window_timelinedata(6);
+	var	name2pos= tdata[0], creates = tdata[1], actions = tdata[2];
+	setCreateProp(creates[name2pos["YESボタン"]], "mouseUp", "");	//	ボタン押下時の呼び出しをリセット
+	setCreateProp(creates[name2pos["NOボタン"]], "mouseUp", "");
+	Menu_object.playTimeline(PRIMARY, creates, actions, %[absolute:10000000],, true,, false);
+
+	//	focusable=false を元に戻す
+	Menu_object.revertDisfocusable(!yes);
+	kag.historyLayer.focusable <-> tf.yn_historyfocusable;	//	テキスト履歴レイヤーも
+
+	//	トリガを引く
+	kag.trigger("closeaskyesno");
+}
+
+/**
+ * askyesno タグ - 確認ウィンドウを表示して、選択により分岐する
+ * @param message 表示するメッセージ
+ * @param yes_storage 「はい」を選択したときの移動先シナリオファイル(指定がなければ現在のシナリオファイル内)
+ * @param yes_target 「はい」を選択したときの移動先ラベル(指定がなければ移動先シナリオファイルの先頭)
+ * @param no_storage 「いいえ」を選択したときの移動先シナリオファイル(指定がなければ現在のシナリオファイル内)
+ * @param no_target 「いいえ」を選択したときの移動先ラベル(指定がなければ移動先シナリオファイルの先頭)
+ * @param automove マウスカーソルを自動移動させるときの位置(0:中央、1:はい、2:いいえ)
+ * @param nonstop ダイアログが表示された状態で処理を停止させず、進行させるなら true
+ */
+kag.tagHandlers.askyesno	= function(elm)
+{
+	this.yes_storage= elm.yesstorage;
+	this.yes_target	= elm.yestarget;
+	this.no_storage= elm.nostorage;
+	this.no_target	= elm.notarget;
+	askYesNo(elm.message, "確認",
+		function { process(yes_storage, yes_target); } incontextof this,
+		function { process(no_storage, no_target); } incontextof this,,
+		elm.automove !== void ? +elm.automove : 0);
+	conductor.pendings.insert(0, %[tagname:"s"]) if !elm.nonstop;	//	処理停止
+	return 0;
+} incontextof kag;
+
+@endif

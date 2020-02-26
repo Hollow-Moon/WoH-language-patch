@@ -1,0 +1,1073 @@
+﻿/*-----------------------------------------------------------------------------
+/	Copyright (C) TYPE-MOON All Rights Reserved.
+/		プラグインの原型
+/----------------------------------------------------------------------------*/
+@if(__BASE_PLUGIN_DEFINED__==0)
+@set(__BASE_PLUGIN_DEFINED__=1)
+
+//	IS_TLE は TimelineEditor で呼び出される部分
+
+@if(IS_TLE)
+Scripts.execStorage("PluginObject.tjs");
+Scripts.execStorage("PluginLayer.tjs");
+@endif
+
+/*
+ *	プラグインの原型
+ */
+class BasePlugin extends KAGPlugin
+{
+	var	name	= "xxxx";	//	プラグインの名称(識別に使用)
+@if(IS_TLE)
+	var	title	= "";		//	エディタでの表示名
+@endif
+
+	//	状態
+	var	pages	= %[];		//	ページ毎の状態
+	var	_page	= void;		//	操作対象のページ
+
+	var	params	= [
+//		[ 名称,				規定値,	範囲(配列/型),				説明 ],
+	];
+	var	storeKeys		= [];	//	全体の、保存するパラメータ
+	var	storePageKeys	= [];	//	ページ毎の保存するパラメータ
+
+	function BasePlugin()
+	{
+		super.KAGPlugin(...);
+	}
+
+	function finalize()
+	{
+		clear();
+		invalidate pages if pages != void;
+	}
+
+	property thisName	{ getter { return Scripts.getClassNames(this)[0]; } }
+
+	//	ページ単位で管理する場合
+	property page
+	{
+		setter(v)
+		{
+			_page = v;
+			addPage(_page);
+		}
+		getter { return _page; }
+	}
+
+	function addPage(pg)
+	{
+		if(pages[string(pg)] == void)
+		{
+			pages[string(pg)]	= getInitializedPage();
+//			dmt(this.name+" add new page: "+pg+" = "+pages[string(pg)]);
+		}
+	}
+
+	//	一時的にページを切り替える
+	var	__lastpage;
+	function temporaryPage(pg)
+	{
+		if(__lastpage === void)
+			__lastpage	= page;
+		page	= pg;
+	}
+
+	//	一時的なものを戻す
+	function recoverPage()
+	{
+		if(__lastpage !== void)
+		{
+			page	= __lastpage;
+			__lastpage	= void;
+		}
+	}
+
+	function get(pg=void)
+	{
+		return pages[string(pg === void ? _page : pg)];
+	}
+
+	function setprop(prop, value, pg=void)
+	{
+//		dmt(name+".setprop("+prop+", "+value+", "+pg+")");
+		var	po	= get(pg);
+		if(po != void)
+			po[prop]	= value;
+		else
+//			throw new Exception("存在しないページ("+pg+")のプロパティ("+prop+")に値("+value+")を設定しようとしています。");
+			dmt("存在しないページ("+pg+")のプロパティ("+prop+")に値("+value+")を設定しようとしています。");
+	}
+
+	function getprop(prop, pg=void)
+	{
+		var	po	= get(pg);
+		return po != void ? po[prop] : void;
+	}
+
+	function isAvailablePage(pg)
+	{
+		return pg !== void && pages[string pg] != void;
+	}
+
+	function getAllItems()
+	{
+		var	keys	= [];
+		keys.assign(pages);
+		return keys;
+	}
+
+	function switching(elm)
+	{
+		if(typeof elm.page != "undefined" && elm.page != void)
+			page	= elm.page;
+	}
+
+	property current
+	{
+		getter	{ return string(page); }
+	}
+
+	//	表示されるかどうか
+	property visible { setter(v) { setprop("visible", v); } getter { return getprop("visible"); } }
+
+	//	現在のページが表側かどうか
+	property isForePage
+	{
+		getter
+		{
+			var	par	= page;
+			while(par != void && par != null)
+			{
+				if(par == kag.fore.base)
+					return true;
+				else if(par == kag.back.base)
+					return false;
+				par	= par.parent;
+			}
+			return false;
+		}
+	}
+
+	//	ページ毎の初期状態を示す辞書配列を返す
+	function getInitializedPage()
+	{
+		var	elm	= %[];
+		for(var i=0; i<params.count; i++)
+			elm[params[i][0]]	= params[i][1];
+		elm.visible	= false;	//	表示されるか
+		elm.page	= page;		//	ページ
+		return elm;
+	}
+
+	//	ページ毎の状態を設定するプロパティメソッド
+//	property xxx { setter(v) { setprop("xxx"), v); } getter { return getprop("xxx"); } }
+
+	//	パラメータ設定(paramsを参照して)
+	function setOptions(values)
+	{
+		switching(values);
+		for(var i=0; i<params.count; i++)
+		{
+			var	param	= params[i];
+			var	value	= values[param[0]];
+			if(param[1] === void)
+				this[param[0]]	= value if value !== void;	//	パラメータが指定されていなかったら、現状維持
+			else
+				this[param[0]]	= value !== void ? (typeof param[1] != "String" ? +value : value) : param[1];
+		}
+	}
+
+@if(IS_TLE)
+	//	ページ変更
+	var	changedPage	= %[];	//	変更されたページ
+	function changePage(from, to)
+	{
+		if(pages[string(from)] == void)
+			return false;
+		pages[string(from)] <-> pages[string(to)];
+		pages[string(to)].page	= to;
+		changedPage[string(to)]	= true;
+		if(pages[string(from)] == void)
+			delete pages[string(from)];
+		else
+		{
+			pages[string(from)].page	= from;
+			changedPage[string(from)]	= true;
+		}
+		return true;
+	}
+
+	//	ページ破棄
+	function invalidatePage(pg)
+	{
+		if(pg != void && pages[string(pg)] != void)
+		{
+			invalidate pages[string(pg)];
+			delete pages[string(pg)];
+		}
+	}
+@endif
+
+	function copyParams(from, to, keys)
+	{
+		for(var i=0; i<keys.count; i++)
+			to[keys[i]]	= from[keys[i]] if keys[i] != void;
+	}
+
+	//	情報を破棄
+	function clear()
+	{
+		(Dictionary.clear incontextof pages)();
+	}
+
+	function construct(tick)
+	{
+	}
+@if(!IS_TLE)
+	function onStore(f, elm)
+	{
+		// 栞を保存する際に呼ばれる
+		// f = 保存先の栞データ ( Dictionary クラスのオブジェクト )
+		// elm = tempsave 時のオプション ( 現在は常に void )
+		with(f[name] = %[])
+		{
+			var	keys	= getAllItems();
+			.pages = %[];
+			for(var i=0; i<keys.count; i+=2)
+			{
+				//	page には実体が入っているので、その実体を示すTJS式を取得する
+				var	pg	= getObjectTJSFromLayerObject(keys[i+1].page);
+				if(pg != void)
+					copyParams(keys[i+1], .pages[pg] = %[], storePageKeys);
+			}
+			copyParams(this, f[name], storeKeys);
+		}
+	}
+
+	function onRestore(f, clear, elm)
+	{
+		// 栞を読み出すときに呼ばれる
+		// f = 読み込む栞データ ( Dictionary クラスのオブジェクト )
+		// clear = メッセージレイヤをクリアするか ( tempload の時のみ false )
+		// elm = tempload 時のオプション ( tempload でない場合は 常に void,
+		//                                 tempload の時は Dictionary クラスのオブジェクト )
+		this.clear() if clear;		//	データの破棄と、処理の停止(サブクラスで定義)
+
+		if(f[name] == void)
+			return;
+		with(f[name])
+		{
+			var	keys	= [];
+			keys.assign(.pages);
+			for(var i=0; i<keys.count; i+=2)
+				copyParams(keys[i+1], get((keys[i])!), storePageKeys);
+			copyParams(f[name], this, storeKeys);
+		}
+	}
+
+	function onSaveScreenShotStart()
+	{
+		// スクリーンショットが保存される時に呼ばれる
+		// 必要に応じて表示状態の変更を行う事。
+	}
+
+	function onSaveScreenShotEnd()
+	{
+		// スクリーンショットが保存た後に呼ばれる
+		// 必要に応じて表示状態の復元などを行う事。
+	}
+
+	function onClose()
+	{
+		// kagのファイナライザで super.finalize() より先に呼ばれる。
+		// タイマー処理の中などで kag を参照しているプラグインがある
+		// 場合には例外が発生するのでこのメソッドを受けて先にタイマー
+		// を停止するなどして下さい。
+	}
+
+@endif
+	function onStableStateChanged(stable)
+	{
+		// 安定 ( s l p タグで停止中 ) または 走行中 ( それ以外 )
+		// の状態が変化したときに呼ばれる
+		// stable = 安定の状態に true, それ以外の場合に false
+	}
+
+	function onMessageHiddenStateChanged(hidden)
+	{
+		// 右クリックなどでメッセージレイヤが隠されたり、または
+		// その状態から抜ける時に呼ばれる
+		// hidden = メッセージが隠された場合に true, 現れた場合に false
+	}
+
+	function onCopyLayer(toback)
+	{
+		// backlay タグ / forelay タグがすべてのレイヤに対して実行される時、
+		// あるいは layer=base chidlren=true exchange=false のトランジションの終了時に、
+		// 裏画面の内容を表画面にコピーする
+		// 必要が発生すると呼び出される
+		// toback = 表画面の内容を裏画面にコピーする時に true,
+		//          裏画面の内容を表画面にコピーするときに false
+		// layer=base children=true のトランジション終了時には toback = false で呼ばれる。
+	}
+
+	function onExchangeForeBack()
+	{
+		// layer=base children=true のトランジションの終了時に呼ばれ、
+		// 表レイヤと裏レイヤの情報を交換する目的で呼ばれる
+		// この時点ですでにレイヤのツリー構造は入れ替わっているので、
+		// 通常、ここでは、ツリー構造の入れ替えを行うと情報が矛盾するもの
+		// ( レイヤの名前とか、レイヤへの参照とか ) を裏画面と面画面の間で入れ替える
+		// トランジション終了時の onCopyLayer はこのイベントより前に呼ばれるので
+		// 注意
+
+		//	実体を直接指しているので、入れ替えに伴う処理は発生しない
+	}
+
+	function onSaveSystemVariables()
+	{
+		// システム変数に情報が保存され時に呼ばれる
+		// このタイミングで kag.scflags に情報を書き込めば
+		// 確実にシステム変数に情報を書くことができる
+	}
+
+	function getLayerFromElm(elm, prefix)
+	{
+		//	引数に沿って、プラグイン管理下にあるレイヤーを返す
+		if(elm != void && elm.plugin == name)
+			return this;
+		else
+			return void;
+	}
+
+	function getLayerPageFromElm(elm, backlay)
+	{
+		//	引数に沿って、プラグイン管理下にあるレイヤーのページを返す
+	}
+
+	function getLayerFromObject(object)
+	{
+		//	指定のオブジェクトがプラグイン管理下にあるレイヤーの場合、そのレイヤーを示す引数を返す
+		if(object == this)
+			return %[plugin:name];
+	}
+
+@if(!IS_TLE)
+	//	KAGタグから呼び出される、パラメータを変更するメソッド
+	var	nextelm;
+	var	calltimer;
+	function call(elm)
+	{
+		//	遅延/破壊的に処理するので複製
+		nextelm	= %[];
+		(Dictionary.assign incontextof nextelm)(elm);
+
+		if(elm.delay !== void)
+		{//	遅延実行のため、タイマー開始
+			calltimer	= new Timer(internalCall, "") if calltimer != void;
+			calltimer.interval	= elm.delay;
+			calltimer.enabled	= true;
+
+			delete nextelm.delay;	//	遅延時間は不要なので
+		}
+		else
+			internalCall();
+	}
+
+	//	call で保存されたパラメータをプロパティに入れる
+	function internalCall()
+	{
+		calltimer.enabled	= false if calltimer != void;
+
+		var	trgpages;
+		if(nextelm.page !== void)
+		{
+			trgpages	= [ nextelm.page ];
+			delete nextelm.page;
+		}
+		else
+		{
+			trgpages	= [];
+			trgpages.assign(pages);
+		}
+
+		var	target		= nextelm.target !== void ? nextelm.target : this;
+		delete nextelm.target;
+		delete nextelm.tagname;
+		var	lastpage	= page;
+
+		var	values	= [];
+		values.assign(nextelm);
+		for(var i=0; i<trgpages.count; i+=2)
+		{
+			var	pg	= trgpages[i];
+			pg		= "kag."+pg+".base" if pg == "fore" || pg == "back";
+			dm("page = "+pg);
+			page	= typeof pg == "String" ? pg! : pg;
+			for(var i=0; i<values.count; i+=2)
+			{
+@if(DEBUG)
+				if(typeof target[values[i]] == "undefined")
+				{
+					dm(thisName+"."+values[i]+" は未定義のプロパティです。");
+					continue;
+				}
+				dm(thisName+"."+values[i]+" = "+values[i+1]);
+@endif
+				target[values[i]]	= values[i+1];
+			}
+		}
+		page	= lastpage if lastpage != void;	//	事前のページに戻す
+	}
+
+	//	TLEから呼び出されるのと同じ action を生成し実行するメソッド
+	//	初期データは_(アンダーバー)付のプロパティ名で指定する(なければ現在の値)
+	//	それ以降はプロパティにカンマ区切りで指定する
+	//	time も _time が初期の時刻で、time にカンマ区切りでそれぞれの時刻を設定
+	function action(elm, middleProperties)
+	{
+		with(elm)
+		{
+			//旧move仕様のaccelをMixedKeyFrameActionModule用に読み替える
+			if(.accel == 0)		.accel	= 0;
+			else if(.accel > 4)	.accel	= 14;
+			else if(.accel > 3)	.accel	= 10;
+			else if(.accel > 2)	.accel	= 6;
+			else if(.accel > 1)	.accel	= 2;
+			else if(.accel < -4).accel	= 15;
+			else if(.accel < -3).accel	= 11;
+			else if(.accel < -2).accel	= 7;
+			else if(.accel < -1).accel	= 3;
+
+			if(.interpolate === void )
+				.interpolate = "l";
+		}
+
+		var	mp	= %[
+			tagname:"action",
+			target:elm.target !== void ? elm.target : this,
+			targetpage:elm.page,
+			module:"MixedKeyFrameActionModule4Plugin",	//	プラグイン用
+			acttype:"move",
+			plugin:thisName,
+			usecurrent:true,
+		];
+		delete elm.target;
+
+		with(elm)
+		{
+			mp.texton = .texton if .texton !== void;
+			mp.textoff = .textoff if .textoff !== void;
+			mp.startTime = System.getTickCount() if .startTime !== void;
+			mp.nowait = true if .nowat === void;
+		}
+
+		//	time, accel, interpolate 等の基本のパラメータを入れる
+		var	keys	= [];
+		var	pks		= [ "time", "accel", "interpolate" ];
+		var	defs	= [ 0, elm.accel, elm.interpolate, 1 ];	//	defs[3] == visible
+		var	clonedef= function(defs)
+		{
+			var	array	= [];
+			array.assign(defs);
+			return array;
+		};
+		for(var i=0; i<pks.count; i++)
+		{
+			var	key		= pks[i];
+			var	def		= defs[i];
+			var	init	= elm["_" + key];
+			keys[0]		= clonedef(defs) if keys[0] == void;
+			keys[0][i]	= init !== void ? init : def;
+			var	values	= [];
+			if( elm[key] !== void && typeof elm[key] == "String" )
+				values =  elm[key].split(",");
+			for(var j=0; j<values.count; j++)
+			{
+				keys[j+1]	= clonedef(defs) if keys[j+1] == void;
+				keys[j+1][i]= values[j] if values[j] !== void;
+			}
+		}
+
+		//	プラグイン固有のパラメータを入れる
+		var	props	= [ "-visible" ];
+		var	stprop	= pks.count;
+		delete elm.time if elm.time != void;	//	アクションの時間としての指定なので
+		for(var i=0; i<params.count; i++)
+		{
+			var	param	= params[i];
+			var	prop	= param[0];
+			var	init	= elm["_" + prop];
+			if(init === void && elm[prop] === void)
+			{//	指定がなければ、変化させない
+				continue;
+			}
+			keys[0].add(init !== void ? init : "<");
+			if(elm[prop] !== void)
+			{
+				var	values	= elm[prop].split(",");
+				for(var j=0; j<values.count; j++)
+				{
+					keys[j+1]	= clonedef(defs) if keys[j+1] == void;
+					keys[j+1].add(values[j] != "" ? values[j] : "~");
+				}
+			}
+			props.add((middleProperties[prop] ? "" : "-")+prop);
+		}
+
+		//	空欄を埋める
+		var	cnt	= keys[0].count;
+		for(var i=1; i<keys.count; i++)
+		{
+			var	kd	= keys[i];
+			for(var i=0; i<cnt; i++)
+				kd[i]	= "~" if kd[i] === void;
+		}
+
+		//	タグを実行
+		dm("props = "+props.join(", ")+" / keys = ["+keys[0].join(", ")+"]["+keys[1].join(", ")+"]");
+		mp.props= props;
+		mp.keys	= keys;
+		kag.tagHandlers.action(mp);
+		if(!elm.nowait)
+		{
+			kag.conductor.pendings.insert(0, %[tagname:"wact", canskip:elm.canskip]);
+		}
+		return 0;
+	}
+
+	//	開始/終了のシンプルなアクション
+	function simpleaction(elm, middleProperties)
+	{
+		var	params	= params;
+		var	props	= ["-visible"];
+		var	keys	= [[0, 0, "l", 1], [elm.time, 0, "n", 1]];
+		delete elm.time if elm.time != void;	//	アクションの時間としての指定なので
+		for(var i=0; i<params.count; i++)
+		{
+			var	prop	= params[i][0];
+			if(elm[prop] === void)
+				continue;
+			props.add((middleProperties[prop] ? "" : "-")+prop);
+			keys[0].add(prop == "status" && elm[prop] == "play" ? "play" : "<");
+			keys[1].add(elm[prop]);
+		}
+//		dm("props = "+props.join(", ")+" / keys = ["+keys[0].join(", ")+"]["+keys[1].join(", ")+"]");
+//		dm("targetpage = "+elm.page);
+		kag.tagHandlers.action(%[
+			target:elm.target !== void ? elm.target : this,
+			targetpage:elm.page,
+			props:props, keys:keys,
+			plugin:name,
+			module:"MixedKeyFrameActionModule4Plugin",
+			textoff:(elm.textoff === void || elm.textoff),
+		]);
+		if(!elm.nowait)
+		{
+			kag.conductor.pendings.insert(0, %[tagname:wact, canskip:elm.canskip]);
+		}
+		return 0;
+	}
+@endif
+}
+
+/*
+ *	各ページ非同期にアニメーションを実行するプラグインの原型
+ */
+class AsyncAnimationBasePlugin extends BasePlugin
+{
+	var	timer;
+
+	var	curtick, lasttick;
+
+	function AsyncAnimationBasePlugin()
+	{
+		super.BasePlugin(...);
+	}
+
+	property status
+	{
+		setter(v)
+		{
+//			dm(name+"["+page+"].status = "+status+" → "+v+" / visible = "+visible);//+" / "+Scripts.getTraceString());
+			if(status != v)
+			{
+				if(v == "play")			start();
+				else if(v == "pause")	pause();
+				else					stop();
+			}
+//			dm(name+"["+page+"].status = "+status);
+		}
+		getter	{ return getprop("status"); }
+	}
+	property _status	{ setter(v) { setprop("status", v); } }
+
+	property starttick
+	{
+		setter(v)	{ setprop("starttick", v); }
+		getter		{ return getprop("starttick"); }
+	}
+
+	function start()
+	{
+		if(status == "play")
+			return;
+@if(!IS_TLE)
+		if(status == "pause")
+			starttick	= System.getTickCount() - starttick;	//	一時停止したときに、starttick には経過時間が入るので
+		else
+			starttick	= System.getTickCount();
+		startTimer();
+@endif
+		_status	= "play";
+	}
+
+	function stop()
+	{
+		if(status == "stop")
+			return;
+@if(!IS_TLE)
+		doStop();
+		stopTimer();
+		starttick	= void;
+@endif
+		_status	= "stop";
+	}
+
+	function pause()
+	{
+		if(status != "play")
+			return;
+@if(!IS_TLE)
+		stopTimer();
+		starttick	= System.getTickCount() - starttick;	//	一時停止した時刻を記録するため、経過時間を入れる
+@endif
+		_status	= "pause";
+	}
+
+	function resume() { start(); }
+
+	function startTimer()
+	{
+		if(timer == void)
+		{
+			with(timer = new Timer(onTimer, ""))
+			{
+				.interval	= 3;
+				.capacity	= 1;
+				.refCount	= 0;
+			}
+		}
+		timer.enabled	= true;
+		timer.refCount++;
+	}
+
+	function stopTimer()
+	{
+//		dm(name+".stopTimer = "+Scripts.getTraceString());
+		timer.enabled	= false;
+		timer.refCount--;
+		if(timer.refCount == 0)
+		{
+			invalidate timer;
+			timer	= void;
+		}
+	}
+
+	function onTimer()
+	{
+		construct(System.getTickCount());
+	}
+
+	function construct(tick)
+	{
+		preConstruct(tick);
+		var	keys	= getAllItems();
+		for(var i=0; i<keys.count; i+=2)
+		{
+//			dm(name+"["+page+"]: "+status);
+			switching(keys[i+1]);
+			setVisible(visible);
+			if(!visible)
+				continue;
+@if(!IS_TLE)
+			if(kag.transCount == 0 && !isForePage)
+				continue;	//	トランジション中でなく、表側のページでもない
+@endif
+			if(status == "play")
+			{
+				curtick	= tick;
+				if(!doPlay(tick))
+					stop();		//	時間などの要因で処理が終了
+			}
+			else if(status == "pause")
+				doPause();
+//			else
+//				doStop();	//	status = stop したら、construct 自体呼び出されないので
+		}
+		postConstruct();
+
+		lasttick	= tick;
+@if(IS_TLE)
+		setLastState("status");
+@endif
+	}
+
+	//	construct 開始時
+	function preConstruct(tick)
+	{
+	}
+
+	//	表示状態の変更
+	function setVisible(vis)
+	{
+	}
+
+	//	実行中に行う処理(ページ毎)
+	function doPlay(tick)
+	{
+		return true;
+	}
+
+	//	一時停止中に行う処理(ページ毎)
+	function doPause()
+	{
+		return true;
+	}
+
+	//	停止中に行う処理(ページ毎)
+	function doStop()
+	{
+		return true;
+	}
+
+	//	construct 終了時
+	function postConstruct()
+	{
+	}
+
+	//	情報の破棄と共に、処理を停止する
+	function clear()
+	{
+		if(timer != void)
+		{
+			timer.enabled	= false;
+			invalidate timer;
+			timer	= void;
+		}
+		super.clear();
+	}
+@if(IS_TLE)
+	var	laststate	= %[];
+	function setLastState(prop)
+	{
+		laststate[current]	= %[] if laststate[current] == void;
+		laststate[current][prop]	= this[prop];
+	}
+
+	function getLastState(prop)
+	{
+		laststate[current]	= %[] if laststate[current] == void;
+		return laststate[current][prop];
+	}
+
+	function isChangedState(prop)
+	{
+		return getLastState(prop) !== this[prop];
+	}
+
+	//	現在の設定を取得
+	function getStates(states=%[])
+	{
+		for(var i=0; i<params.count; i++)
+			states[params[i][0]]	= this[params[i][0]];
+		return states;
+	}
+
+	//	現在の設定と比較して、違いが有るかどうかを返す
+	function compareStates(states)
+	{
+		if(states == void)
+			return false;
+		for(var i=0; i<params.count; i++)
+			if(states[params[i][0]] !== this[params[i][0]])
+				return true;
+		return false;
+	}
+
+	//	page に対応するキャンバス上のレイヤーを返す
+	function getCanvasLayer(layerclass)
+	{
+		var	layers	= kag.canvas.layers;
+		for(var i=0; i<layers.count; i++)
+		{
+			if(layers[i].parent == page && layers[i] instanceof layerclass)
+				return layers[i];
+		}
+		return page;
+	}
+
+	function eraseImageLayer(pg, prop="layer")
+	{
+		if(isAvailablePage(pg))
+		{
+			var	layer	= getprop(prop, pg);
+			invalidate layer if layer != void;
+			setprop(prop, void, pg);
+		}
+	}
+
+	function updateImageLayer(pg, prop="layer")
+	{
+		if(isAvailablePage(pg))
+			getprop(prop, pg).update();
+	}
+
+	function visibleImageLayer(pg, vis, prop="layer")
+	{
+		if(isAvailablePage(pg))
+			getprop(prop, pg).visible	= vis;
+	}
+@endif
+}
+
+//----------------------------------------------------------------------------/
+//	オブジェクトやパラメータを定義するのに使う関数
+//----------------------------------------------------------------------------/
+function getPluginPropertyKeys(params)
+{
+	var	array	= [];
+	for(var i=0; i<params.count; i++)
+		array.add(params[i][0]);
+	return array;
+}
+
+function getPluginPropertyInit(params)
+{
+	var	array	= [];
+	for(var i=0; i<params.count; i++)
+		array.add(params[i][1]);
+	return array;
+}
+
+function getPluginPropertyType(params)
+{
+	var	hash	= %[];
+	for(var i=0; i<params.count; i++)
+		hash[params[i][0]]	= typeof params[i][1];
+	return hash;
+}
+
+function getPluginPropertyRange(params)
+{
+	var	hash	= %[];
+	for(var i=0; i<params.count; i++)
+		hash[params[i][0]]	= params[i][2];
+	return hash;
+}
+
+/*
+//----------------------------------------------------------------------------/
+//	編集時、実行時どちらにも必要な定義
+//----------------------------------------------------------------------------/
+var	xxxxObjectKeys			= getPluginPropertyKeys(xxxxPlugin.params);
+var	xxxxObjectKeysInit		= getPluginPropertyInit(xxxxPlugin.params);
+var	xxxxObjectDefaultValues	= createDefaultValuesFunc(xxxxObjectKeys, xxxxObjectKeysInit, false);
+var	xxxxObjectMiddleProperty= %[];
+
+//----------------------------------------------------------------------------/
+//	プラグインのインスタンス作成とKAGタグの定義
+//----------------------------------------------------------------------------/
+@if(!IS_TLE)
+kag.addPlugin(global.xxxx_object = new Snow3DPlugin(kag));
+PluginDefaultValues[xxxx_object.name]	= xxxxObjectDefaultValues;
+
+//	シーンアクションリストへ登録する
+if(typeof global.SceneActionList != "undefined")
+	SceneActionList[xxxx_object.name]	= xxxx_object.setOptions;
+
+//	TLオブジェクト
+class TLxxxxObject extends TLPluginObject
+{
+	function TLxxxxObject()
+	{
+		super.TLPluginObject(...);
+	}
+
+	property keys				{ getter { return xxxxObjectKeys; } }
+	property defaultValues		{ getter { return xxxxObjectDefaultValues; } }
+	property middleProperties	{ getter { return xxxxObjectMiddleProperty; } }
+	property storageProperties	{ getter { return ""; } }
+}
+@endif
+
+//----------------------------------------------------------------------------/
+//	TLEで編集するためのObject,Layer,Properties登録
+//----------------------------------------------------------------------------/
+@if(IS_TLE)
+Scripts.execStorage("xxxx_property.tjs");
+
+var	xxxxObjectPropertyType	= getPluginPropertyType(xxxxPlugin.params);
+var	xxxxObjectPropertyRange	= getPluginPropertyRange(xxxxPlugin.params);
+
+class xxxxObject extends PluginObject
+{
+	function xxxxObject()
+	{
+		super.PluginObject(...);
+		pluginName = name = "xxxx";
+		plugin = global.pluginManager.get(name);
+	}
+
+	property keys						{ getter { return xxxxObjectKeys; } }
+	property initvalues					{ getter { return xxxxObjectKeysInit; } }
+	property defaultValues				{ getter { return xxxxObjectDefaultValues; } }
+	property storageType				{ getter { return ""; } }
+	property notStateProperties			{ getter { return []; } }
+	property createPropertyMenuMethod	{ getter { return create_xxxx_property; } }
+	property eventPropertyMenuMethod	{ getter { return onChildValueModified_xxxx_property; } }
+	property middleProperties			{ getter { return xxxxObjectMiddleProperty; } }
+	property propertyTypes				{ getter { return xxxxObjectPropertyType; } }
+	property propertyRanges				{ getter { return xxxxObjectPropertyRange; } }
+	property isOutputTag				{ getter { return false; } }
+
+	//	状況を再現するタグ
+	function getStateTag(frame, shift)
+	{
+		var	tag	= super.getStateTag(...);
+		//必要に応じてタグ内容の追加・削除・名称変更などを行う
+		//tag.set("status", timeline.getProperty(frame, "status"));
+		//tag.reset("status");
+		//tag.name	= "xxxx";
+		//tag.rename("oldpropname", "newpropname");
+		return tag;
+	}
+
+	//	アクションタグ獲得
+	function getActionTag(st, ed)
+	{
+		//	タグを生成
+		var	tag	= new KAGTagData();
+		tag.name= "xxxxxact";
+		tag.set("targetpage", "fore");	//	eval して実体を示す文字列(fore,backのみkag[x].baseに読み替える)
+
+		var	ks	= [];
+		ks.assign(keys);
+		//必要に応じてタグ内容の追加・削除・名称変更などを行う
+		//ks.add("visible");
+		//tag.rename("oldpropname", "newpropname");
+		if(timeline.getKeyDataToTag(ks, defaultValues, root.frameRate, st, ed, void, tag))
+		{
+			tag.set("plugin", pluginName);
+			tag.set("module", "MixedKeyFrameActionModule4Plugin");
+			return tag;
+		}
+		else
+			return void;
+	}
+
+	//	タグで状況を再現する
+	function setStateTag(frame, tag)
+	{
+		//必要に応じてオーバーライド
+		//if(isStateTag(tag))
+		//{
+		//	timeline.setFrameStateFromTag(frame, tag, keys, defaultValues);
+		//	return true;
+		//}
+		//return false;
+		return super.setStateTag(...);
+	}
+
+	//	action タグを設定
+	function setActionTag(frame, tag)
+	{
+		//必要に応じてオーバーライド
+		//if(isActionTag(tag))
+		//{
+		//	timeline.setKeyData(tag.get("props"), tag.get("keys"), root.mspf, frame);
+		//	return true;
+		//}
+		//return false;
+		return super.setActionTag(...);
+	}
+
+	//	このオブジェクトの状態を示すタグかどうか
+	function isStateTag(tag)
+	{
+		//tag.get(パラメータ名)内容やtag.name名称からこのプラグインに合致するかどうか判定を行う
+		//適合		return true
+		//不適合	return false
+	}
+
+	//	対応できるactionタグかどうか
+	function isActionTag(tag)
+	{
+		//tag.get(パラメータ名)内容やtag.name名称からこのプラグインに合致するかどうか判定を行う
+		//適合		return true
+		//不適合	return false
+	}
+}
+postProcessOfObject("xxxxObject", xxxxObjectKeys);
+
+class xxxxLayer extends PluginLayer
+{
+	function xxxxLayer(win, par, obj)
+	{
+		super.PluginLayer(...);
+	}
+
+//	property xxxx { setter(v) { object.xxxx = v; } getter { return object.xxxx; } }
+}
+
+//	TLEで使用するための登録処理部分
+global.addMethodName	= "addxxxx";	//	PluginManager も参照するので、統合しないこと
+
+// CanvasLayer を参照のこと
+CV_object2layer["xxxxObject"]	= [ "xxxxLayer", void, "layers" ];
+
+//	ObjectData.tjs を参照のこと
+OD_add.add(["addxxxx", "xxxxObject", true]);	//第三パラメータはabsoluteが必要かどうか
+
+OD_parentageConsistency["xxxxObject"]	= function(parent)
+{
+	if(parent != "BGObject")
+	{
+		popupMessage("xxxxプラグインは背景レイヤーの下にのみ配置可能です");
+		return false;
+	}
+	return true;
+};
+
+//キャンバスへのボタン追加
+CV_addButtons["xxxxObject"] = [ [ "xxxXXXxxx",, "xxxXXXxxxのタグをクリップボードへ"],
+								  "movexxxxx",
+								  [ "action",, "選択されているオブジェクトの全区間をactionタグにします。" ] ];
+
+//ボタン判定部処理追加
+global.CanvasLayer.xxxx_override_onButtonDown = global.CanvasLayer.onButtonDown;
+global.CanvasLayer.onButtonDown = function(btn)
+{
+	xxxx_override_onButtonDown(...);
+	switch(btn.name)
+	{
+	case "xxxXXXxxx":
+		data.copyState(ssShift);
+		break;
+
+	case "movexxxxx":
+		global.fgtime = 300;
+		data.setTextToClipboardByChoseObject(function(obj){return obj instanceof "xxxxObject";},
+			function(obj){return [ %[name:"movexxxx", time:global.fgtime, plugin:"xxxx"], %[name:"wm"] ]; });
+		break;
+	}
+} incontextof global.CanvasLayer;
+//エディタのタグ解釈部の追加
+__isactiontag["noiseact"] = true;
+
+@endif
+*/
+
+@endif

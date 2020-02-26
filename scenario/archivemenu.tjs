@@ -1,0 +1,720 @@
+﻿@if(__ARCHIVEMENU_DEFINED__==0)
+@set(__ARCHIVEMENU_DEFINED__=1)
+
+//	全てのシナリオが出るようにしたいときは 1
+//	(ついでに、アーカイブサムネイルが存在するかどうかチェックする)
+@set(DISPLAY_ALL_SCENARIO=0)
+
+//	未読の本は遅延フェードインする
+@set(ARCHIVE_UNREAD_DELAY_APPEAR=0)
+
+//	未読の本には(未)ラベルを付ける
+@set(ARCHIVE_UNREAD_LABEL=1)
+
+/*
+ *	書庫メニュー
+ */
+var	archiveChapterStorages	= [	//	サブウィンドウに表示するタイトル画像
+/*	"1章", "1章EX", "1_5章", "2章", "3章", "4章", "5章前半", "5章後半", "6章", "7章",
+	"8章", "8_5章", "9章", "9_5章", "10章", "11章", "12章", "13章前", "はちみつ", "笑ってはいけない", "13章後"
+*/	"1章", "1章", "1_5章", "2章", "3章", "4章", "5章前半", "5章後半", "6章", "7章",
+	"8章", "8_5章", "9章", "番外編", "10章", "11章", "12章", "13章", "番外編", "番外編", "13章"
+];
+//	既読でなくても、フラグが立っていればリストに出すシナリオ
+var	archiveScript2Flag	= %[
+	"1.5-1"=>"scenario1_5", "1.5-2"=>"scenario1_5", "1.5-3"=>"scenario1_5", "1.5-4"=>"scenario1_5",
+	"8.5"=>"scenario8_5",
+	"1-ex"=>"extra_1", "7-ex"=>"extra_7", "8-ex"=>"extra_8",
+	"nz1"=>"extra_9", "nz2" => "extra_9",
+	"nz3" => [ "extra_9", "cleared" ], "nz4" => [ "extra_9", "cleared" ],
+	"nz5" => [ "extra_9", "sp_end" ], "nz6" => [ "extra_9", "sp_end" ],
+	"sp1"=>"cleared", "sp2"=>[ "scenario1_5_1", "scenario1_5_2", "scenario1_5_3", "scenario1_5_4", "sp_start" ],
+];
+//	読んだら、フラグを立てるシナリオ
+var	archiveFlagByScript	= %[
+	"8-ex.ks"=>"extra_9",
+	"1.5-1.ks"=>"scenario1_5_1",
+	"1.5-2.ks"=>"scenario1_5_2",
+	"1.5-3.ks"=>"scenario1_5_3",
+	"1.5-4.ks"=>"scenario1_5_4",
+	"sp1.ks"=>"sp_start",
+	"sp2.ks"=>"sp_end",
+];
+@if(ARCHIVE_UNREAD_LABEL)
+var	archiveLabelPos	= %[
+	"2-0" => [ 222, 252 ], "2-1" => [ 246, 252 ], "2-2" => [ 277, 252 ], "2-3" => [ 318, 252 ],
+	"9-3" => [ 957, 252 ],
+	"10-4" => [ 199, 498 ],
+	"11-0" => [ 231, 498 ],
+	//	1冊なので、同じ場所に表示
+	"13-0" => [ 443, 498 ], "13-1" => [ 443, 498 ], "13-2" => [ 443, 498 ], "13-3" => [ 443, 498 ], "13-4" => [ 443, 498 ], "13-5" => [ 443, 498 ],
+	"18-0" => [ 883, 498 ],
+	"19-0" => [ 908, 498 ],
+];
+@endif
+var	archiveBookCount	= 21;
+//	読んでいるか、対応するフラグが立っていて読めるようになったスクリプトかどうか
+function __isLoadedOrNewScript(script)
+{
+	script	= Storages.chopStorageExt(script);
+	if(sf.trail[script] > 0)
+		return true;
+	var	flag= archiveScript2Flag[script];
+	if(flag !== void)
+	{
+		var	on;
+		if(typeof flag == "String")
+			on	= sf[flag];
+		else
+		{
+			on	= true;
+			for(var i=0; i<flag.count; i++)
+				on	&= sf[flag[i]] != 0;
+		}
+//		dm(script+": "+(typeof flag == "String" ? flag : flag.join(" && "))+" = "+on);
+		if(on)	//	対応するフラグが立っていれば、読んでなくても表示する
+		{
+			sf.alreadyNotified	= %[] if sf.alreadyNotified == void;
+			if(!sf.alreadyNotified[script])
+				global.addedNewArchives++;
+			sf.alreadyNotified[script]++;
+			return true;
+		}
+	}
+	return false;
+}
+//	読んでいるシーンかどうか
+function __isReadedScript(bookno, sceneno)
+{
+	var	list	= archive_list[bookno][1][sceneno];
+	for(var i=0; i<list.count; i++)
+	{
+		var	script	= Storages.chopStorageExt(list[i]);
+		if(sf.trail[script] < 1)// && sf.alreadyNotified[script] == 1)
+			return false;
+	}
+	return true;
+}
+function AMisLoadedScript(script)
+{
+	if(sf == void || sf.trail == void || script == void)
+		return false;
+	var	readed	= 0;
+	for(var i=0; i<script.count; i++)
+	{
+		if(!__isLoadedOrNewScript(script[i]))
+		{
+@if(DEBUG && DISPLAY_ALL_SCENARIO)
+			//	サムネイルチェック
+			if(!Storages.isExistentStorage(AMgetThumbnailName(script[i])))
+				dm("not found thumbnail: "+script[i]);
+@endif
+		}
+		else
+			readed++;	//	既読のシーン数を数える
+	}
+@if(DEBUG && DISPLAY_ALL_SCENARIO)
+	return true;
+@endif
+	return readed == script.count;	//	全てのシーンが閲覧済み(もしくは新しく読めるようになった)なら、true
+}
+function AMisLoadedScenarios(no)
+{
+	var	list= archive_list[no];
+	if(list == void)
+		return false;
+//	dm("AMisLoadedScenarios("+no+") = "+list[1].count);
+	return list[1].count > 0;
+}
+function getArchiveList()
+{
+	global.addedNewArchives	= 0;	//	新しく読めるようになった本
+	if(tracer_object.chart_storage != "main.gc")
+		tracer_object.load(tracer_object.chart_storage = "main.gc");
+	with(tracer_object.chart)
+	{//	カテゴリーからリストを取得する
+		global.archive_list	= [];
+		var	children	= .categories.children;
+		for(var i=0; i<children.count; i++)
+		{
+			var	cate	= children[i];
+			var	list	= cate.children;
+			var	tlist = [], fnlist = [];
+			for(var i=0; i<list.count; i++)
+			{
+				var	block	= .objects[list[i]];
+				block.script= [ block.script ] if typeof block.script != "Object";
+				if(AMisLoadedScript(block.script))
+				{
+//					tlist.add("■"+Storages.chopStorageExt(block.script)+" "+block.title);
+					tlist.add([block.title, block.subtitle, block.data]);
+					fnlist.add(block.script);
+				}
+			}
+			archive_list.add([tlist, fnlist]);
+		}
+	}
+}
+//	メニューの設定
+function setArchiveMenuTimeline(name2pos, creates, isclose=false)
+{
+	//	フラグと対応するbookを表示/非表示する
+	//	ついでにボタンをおした時の動作(ウィンドウを開く)を設定
+	var	vis	= [];
+	var	ignore	= %[];
+	for(var i=0; i<archiveBookCount; i++)
+	{
+		var	v = vis[i] = AMisLoadedScenarios(i);
+		if(v && i != 1)
+		{
+			var	target	= creates[name2pos["book"+(i+1)]];
+			setCreateProps(target, %[
+				visible:v,
+				mouseUp:(isclose ? ";" : "openArchiveSelectWindow("+i+", this);enter();"),
+				enterse:"sei_ge_book01.wav",
+				pressse:"shu03.wav",
+			], 4);
+		}
+		else
+			ignore["book"+(i+1)]	= true;
+	}
+
+	//	次の本が表示されていない本だけ表示する
+	for(var i=0; i<17; i++)
+	{
+		if(!vis[i] || vis[i+1] || i == 1)
+			ignore["本影"+(i+1)]	= true;
+	}
+
+	//	前の本が表示されていない本だけ表示する
+	for(var i=17; i<archiveBookCount; i++)
+	{
+		if(!vis[i] || vis[i-1])
+			ignore["本影"+(i+1)]	= true;
+	}
+
+	//	back ボタンで閉じる
+	setCreateProps(creates[name2pos["archive_back"]], %[
+		mouseUp:"closeArchiveMenu();release();",
+		pressse:"",
+	], 2);
+
+	return ignore;
+}
+//	開く
+function openArchiveMenu(page="fore")
+{
+	if(tf.av_opened)
+	{
+		closeArchiveMenu();
+		return;
+	}
+	tf.av_opened	= true;
+	f.doArchiveMenu	= true;
+	//	読んだフラグの設定
+	if(f.av_readall)
+	{
+		//	アーカイブでしか読めないシナリオを読んだ時にフラグを立てる
+		var	flag	= archiveFlagByScript[f.av_storage[0]];
+		if(flag != void)
+			sf[flag]	= true;
+		for(var i=0; i<f.av_storage.count; i++)
+			sf.trail[Storages.chopStorageExt(f.av_storage[i])]++;	//	読んだカウント
+		delete f.av_readall;
+	}
+	delete f.av_storage;
+
+	kag.cancelAutoMode();	//	自動再生を停止する
+
+	//	メニュースタックを復帰させる
+	if(f.archiveMenuStack != void)
+	{
+		for(var i=0; i<f.archiveMenuStack.count; i++)
+			inMenu(f.archiveMenuStack[i]);
+		delete f.archiveMenuStack;
+	}
+
+	getArchiveList();	//	アーカイブリストを読み込む
+	with(tf.av_bookicon = new global.Layer(kag, kag.fore.base))
+	{
+		.loadImages("archive_本アイコン");
+		.setSize(.imageWidth \ 10, .imageHeight);
+		.visible	= false;
+	}
+	with(tf.av_unread = new global.Layer(kag, kag.fore.base))
+	{
+		.loadImages("archive_unread");
+		.setSizeToImageSize();
+		.visible	= false;
+	}
+
+	with(Menu_object)
+	{
+		Scripts.execStorage("archive.ttd");
+		var	tdata	= __get_archive_timelinedata(6);
+		var	ignore	= setArchiveMenuTimeline(tdata[0], tdata[1]);
+		muteAllMenuItem(tdata, false);	//	効果音ON(素早くメニュー間の移動を行うと、レイヤーが残っていて再利用される可能性があるので)
+
+		//	開くときだけキーボードの移動先を指定
+		var	searchleft	= function
+		{
+			var	no	= +name.substr(4);
+			var	end	= no > 10 ? 11 : 1;
+			for(var i=no-1; i>=end; i--)
+			{
+				var	item	= find("book"+i);
+				if(item != void)
+					return item;
+			}
+			return this;
+		};
+		var	searchright	= function
+		{
+			var	no	= +name.substr(4);
+			var	end	= no > 10 ? archiveBookCount : 10;
+			for(var i=no+1; i<=end; i++)
+			{
+				var	item	= find("book"+i);
+				if(item != void)
+					return item;
+			}
+			return this;
+		};
+		var	searchup_down	= function
+		{
+			var	no	= +name.substr(4);
+			var	st, ed;
+			if(no > 10)
+				st = 1, ed = 10;
+			else
+				st = 11, ed = archiveBookCount;
+			var	ml = 100000, mit;
+			for(var i=st; i<=ed; i++)
+			{
+				if(no == i)
+					continue;
+				var	item	= find("book"+i);
+				if(item === void)
+					continue;
+				var	l		= Math.abs(item.center - center);
+				if(l < ml)
+				{
+					ml	= l;
+					mit	= item;
+				}
+			}
+			if(mit !== void)
+				return mit;
+			else if(no < 11)	//	bookが上段にしか無い段階で下が押されたら戻るボタンへ
+			{
+				mit = find("archive_back");
+				if( mit !== void )
+					return mit;
+			}
+			return this;
+		};
+		var	back	= [ "archive_back" ], none = [ void ];
+		for(var i=0; i<10; i++)
+		{
+			if(i==1)
+				continue;
+			var	trg	= tdata[1][tdata[0]["book"+(i+1)]];
+			setCreateProp(trg, "searchLeft", searchleft);
+			setCreateProp(trg, "searchRight", searchright);
+			setCreateProp(trg, "upItems", none);
+			setCreateProp(trg, "searchDown", searchup_down);
+		}
+		for(var i=10; i<archiveBookCount; i++)
+		{
+			var	trg	= tdata[1][tdata[0]["book"+(i+1)]];
+			setCreateProp(trg, "searchLeft", searchleft);
+			setCreateProp(trg, "searchRight", searchright);
+			setCreateProp(trg, "searchUp", searchup_down);
+			setCreateProp(trg, "downItems", back);
+		}
+		var	existUnread	= false;
+@if(ARCHIVE_UNREAD_DELAY_APPEAR)
+		//	未読のシーンを含む本アイコンは、遅延表示する
+		var	unreadList	= [];
+		for(var i=0; i<archiveBookCount; i++)
+		{
+			if(i==1)
+				continue;
+			var	scrlist	= archive_list[i][1];
+			var	unread	= false;
+			for(var j=0; j<scrlist.count; j++)
+				unread	|= !__isReadedScript(i, j);
+			if(unread)
+			{//	未読の本はとりあえず非表示
+				var	trg	= tdata[0]["book"+(i+1)];
+				if(trg != void && tdata[2][trg] != void)
+				{
+					setActionLast(tdata[2][trg], "opacity", 0);
+					unreadList.add("book"+(i+1));
+				}
+				trg	= tdata[0]["本影"+(i+1)];
+				if(trg != void && tdata[2][trg] != void)
+				{
+					setActionLast(tdata[2][trg], "opacity", 0);
+					unreadList.add("本影"+(i+1));
+				}
+			}
+		}
+		existUnread	= unreadList.count > 0;
+@endif
+//		.playTimeline(page, tdata[1], tdata[2], %[absolute:1100000], ignore, page!="back", true);
+		.lastTimeline(page, tdata[1], tdata[2], %[absolute:1100000], ignore, page!="back", true);
+
+@if(ARCHIVE_UNREAD_LABEL)
+		//	未読のシーンを含む本アイコンに、(未)ラベルを張る
+		sf.notifiedUnreads	= %[] if sf.notifiedUnreads == void;
+		for(var i=0; i<archiveBookCount; i++)
+		{
+			if(i==1)
+				continue;
+			var	scrlist	= archive_list[i][1];
+			var	unread	= false;
+			for(var j=0; j<scrlist.count; j++)
+			{
+				var	pos;
+				if(!__isReadedScript(i, j) && (pos = archiveLabelPos[i+"-"+j]) != void)
+				{//	ラベルをabsolute=1200000に配置する
+					var	elm	= %[
+						page:page, "class"=>"MenuItemLayer", storage:"archive_unread", absolute:1200000,
+						visible:1, opacity:255, center:pos[0], vcenter:pos[1], name:"未読ラベル("+scrlist[j][0]+")",
+					];
+					.addMenuItem(elm);
+
+					//	未読であることを通知済みでなければ、ポップアップメッセージを表示する
+					if(!sf.notifiedUnreads[i+"-"+j])
+					{
+						sf.notifiedUnreads[i+"-"+j]	= true;
+						existUnread	= true;
+					}
+				}
+			}
+		}
+@endif
+		if(!.restoreClick())					//	シーンの再生から戻ったときはクリック状態をリストアする
+			.setClick(, "closeArchiveMenu()");	//	そうでなけば、通常のクリック追加処理を行う
+
+		//	未読の本があれば、ポップアップメッセージを表示する
+		if(existUnread)
+		{
+			var	transtime	= 800;
+			popupMessage("新しい蔵書が入庫しました。"+(f.chapter==5 ? "是非、ご覧ください。" : "お暇なときに、どうぞ。"),,, transtime+5000);
+@if(ARCHIVE_UNREAD_DELAY_APPEAR)
+			//	あと、トランジション後に「メッセージ表示→未読の本がフェードイン」を行う
+			for(var i=0; i<unreadList.count; i++)
+			{
+				var	item	= .find(unreadList[i], page);
+				item.ssact(500, "opacity", 255, transtime+2000) if item != void;
+			}
+@endif
+		}
+	}
+}
+//	ウィンドウの設定
+function setArchiveSelectWindow(name2pos, creates, no)
+{
+	//	章の画像を変更する
+	setCreateProp(creates[name2pos["archive_chapter"]], "storage", "archive_"+archiveChapterStorages[no]);
+/*
+	//	ボタンの処理を追加
+	setCreateProp(creates[name2pos["archive_ok"]], "mouseUp", "");
+	setCreateProp(creates[name2pos["archive_cancel"]], %[
+		mouseUp:"closeArchiveSelectWindow();release();",
+		pressse:"",
+	], 2);
+*/
+	return %[archivescroll:1];
+}
+//	本のボタンをクリックすると、詳細を表示し、個別に選択出来るウィンドウを開く
+function openArchiveSelectWindow(no, button)
+{
+	//	シーン再生が開始されているか、リストが存在しない場合は開けない
+	if(f.av_storage != "" || archive_list[no] == void)
+		return;
+
+	with(Menu_object)
+	{
+		.setClick(, "closeArchiveSelectWindow()");
+
+		.setDisfocusableAll(true);	//	本棚がフォーカスを得られないようにする。そして本の状態を保持する
+		tf.av_bookno	= no;
+
+		var	tdata	= __get_archive_timelinedata(10);
+		var	name2pos= tdata[0], creates = tdata[1], actions = tdata[2];
+		var	ignore	= setArchiveSelectWindow(name2pos, creates, tf.av_no = no);
+		setCreateProps(creates[name2pos["archive_ok"]], %[
+			mouseUp:"startArchive();release();",
+			pressse:"",
+		], 2);
+		setCreateProps(creates[name2pos["archive_cancel"]], %[
+			mouseUp:"closeArchiveSelectWindow();release();",
+			pressse:"",
+		], 2);
+		muteAllMenuItem(tdata, false);	//	効果音ON(素早くメニュー間の移動を行うと、レイヤーが残っていて再利用される可能性があるので)
+
+		//	選択されたボタンによって、表示位置(上下)を変更する
+		tf.av_offsetx	= 297 - 168;
+		tf.av_offsety	= (button.top < 288 ? 274 : 51) - 162;
+
+		//	シーンを開始
+		.playTimeline("fore", creates, actions, %[absolute:1200000, center:tf.av_offsetx, vcenter:tf.av_offsety], ignore,, true);
+
+		//	フィルターの位置を補正(画面全体を覆うべきだが、相対値の設定でずれてしまうため)
+		with(.find("archiveフィルター"))
+			.center	= 512, .vcenter	= 288;
+
+		//	リストが存在していたら、アクションを停止する
+		var	item= .find("scenariolist");
+		item.stopAction() if item != void;
+		item 	= .find("scenariolistスライダー");
+		item.stopAction() if item != void;
+
+		//	シーンのリストを追加する
+		var	layer	= .addMenuItem(%["class" => "ArchiveListMenuItemLayer", page:"fore", id:8765, name:"scenariolist",
+			width:409, height:127, center:405, vcenter:317, opacity:1, absolute:1210000, visible:1,
+			fontbold:false, fontface:"ＭＳ ゴシック", lineheight:32, mainfontheight:18, subfontheight:11,
+			textcolor:0xFF000000, cursorcolor:0x80FF8000, chosecolor:0x80FF0000,
+			ondoubleclick:"startArchive()",
+			sliderstorage:"archive_windowスクロール", sliderviewarea:"0/0/17/31", slidercenter:626]);
+
+		layer.bookno= no;
+		layer.list	= archive_list[no][0];
+		layer.onChose	= ASWchangeCursor;
+		layer.focus();// if kag.inputDevice == "keyboard";
+		layer.cursorno	= 0 if kag.inputDevice == "keyboard";
+
+		//	リストのアクションを設定
+		var	mv	= 20, mtm = 300, macl = 3;
+		with(.find("scenariolist"))
+		{
+			.center		+= tf.av_offsetx - mv;
+			.vcenter	+= tf.av_offsety;
+			.ssact(mtm, "center", .center + mv,, macl);
+			.ssact(mtm, "opacity", 255,, macl);
+			.ibv	= true;
+		}
+		with(.find("scenariolistスライダー"))
+		{
+			.center	+= tf.av_offsetx - mv;	//	vcener, opacity は scenariolist と同じなので設定しなくてよい
+			.ssact(mtm, "center", .center + mv,, macl);
+			.ibv	= true;
+		}
+
+		//	自動移動が有効なら、リスト先頭の真ん中へ移動
+		moveCursor(.find("scenariolist"),, 13) if cf.autoMouseMove;
+	}
+}
+
+//	サムネイル画像のファイル名
+function AMgetThumbnailName(script)
+{
+	return Storages.chopStorageExt(Storages.extractStorageName(script)) + ".tlg";
+}
+
+//	カーソルの示す項目が変更された
+function ASWchangeCursor(no, item)
+{
+	var	list	= archive_list[tf.av_no][1];
+	if(no >= 0 && no <list.count)
+	{
+		var	target	= Menu_object.find("archivewindow");
+		if(target == void || !(target isvalid))
+			return;
+
+		//	マウスカーソルを"読む"へ
+//		moveCursor(Menu_object.find("archive_ok")) if cf.autoMouseMove;	//	ダブルクリックでも読めるので、要らないかも
+
+		//	対応する画像が存在すれば、それを表示する
+		for(var i=0; i<list[no].count; i++)
+		{
+			var	fn	= AMgetThumbnailName(list[no][i]);
+
+			if(Storages.isExistentStorage(fn))
+			{
+				var	layer	= new Layer(kag, kag.primaryLayer);
+				layer.loadImages(fn);
+				target.copyRect(478, 68, layer, 0, 0, layer.imageWidth, layer.imageHeight);
+				invalidate layer;
+				return;
+			}
+		}
+
+		//	画像がなかったので、なしで表示
+		target.fillRect(478, 68, 184, 104, 0xFF202020);
+		target.drawText2Area(478, 68, 184, 104, "not found", 12);
+	}
+}
+//	選択されたシーンの再生を開始する
+function startArchive()
+{
+	with(Menu_object)
+	{
+		var	list= .find("scenariolist"), no;
+		if(list == void || (no = list.chosenno) === void)
+			return;
+		list.playSE("my01_042.wav");
+		list.ondoubleclick	= "";
+
+		.doInvalidateByInvisible("fore");	//	メニューは、裏に移動したら消えるように、ついでにボタン無効化
+		.resetClick();			//	シーン一覧のウィンドウを閉じる処理は取り除く
+		.storeClick();			//	クリック状態を記憶
+		.clearClick();			//	クリックの処理を完全に元に戻す
+		delete tf.av_opened;		//	メニューを閉じたことにする
+//		outMenu(__menuStack[__menuStack.count-1]);	//	最後に入ったメニューから抜け出る
+		//	全てのメニューから抜け出るので、メニュースタックを保持する
+		f.archiveMenuStack	= [];
+		f.archiveMenuStack.assign(__menuStack);
+		outMenu(, true);	//	force=true で完全に抜け出る
+
+		kag.historyOfStore.clear();	//	履歴の消去
+		kag.historyLayer.clear();	//	通過履歴の消去
+		f.av_storage= archive_list[tf.av_no][1][no];
+		kag.process("call.ks", "*archive");
+	}
+}
+//	ウィンドウを閉じる
+function closeArchiveSelectWindow()
+{
+	with(Menu_object)
+	{
+		.resetClick();
+
+		.revertDisfocusable();	//	本棚のフォーカス可否を元に戻す
+		with(.find("book"+(tf.av_bookno+1)))
+		{
+			.leave();	//	一度外れる
+			.focus();	//	フォーカスされていた本にフォーカスを戻す
+			.playSE("shu03.wav");	//	本を戻すSE
+		}
+		delete tf.av_bookno;
+
+		var	tdata	= __get_archive_timelinedata(11);
+		var	name2pos= tdata[0], creates = tdata[1], actions = tdata[2];
+		var	tdata	= __get_archive_timelinedata(7);
+		var	ignore	= setArchiveSelectWindow(name2pos, creates, tf.av_no);
+		setCreateProp(creates[name2pos["archive_ok"]], "mouseUp", ";");
+		setCreateProp(creates[name2pos["archive_cancel"]], "mouseUp", ";");
+		muteAllMenuItem(tdata,, imParts);		//	すべて効果音mute, itemMode も imParts に
+		.playTimeline("fore", creates, actions, %[absolute:1200000, center:tf.av_offsetx, vcenter:tf.av_offsety], ignore, true, true);
+
+		//	シーンのリストも消去する
+		var	mv	= 24, mtm = 300, macl = 0;
+		with(.find("scenariolist"))
+		{
+			.ondoubleclick	= ";";	//	ダブルクリック無効化
+			.ssact(mtm, "center", .center + mv,, macl);
+			.ssact(mtm, "opacity", 0,, macl);
+		}
+		with(.find("scenariolistスライダー"))
+		{
+			.ssact(mtm, "center", .center + mv,, macl);
+			.ssact(mtm, "opacity", 0,, macl);
+		}
+	}
+}
+//	閉じる
+function closeArchiveMenu()
+{
+	dm("closeArchiveMenu(): "+tf.av_opened);
+	if(!tf.av_opened)
+		return;
+	delete tf.av_opened;
+	delete f.doArchiveMenu;
+	invalidate tf.av_bookicon;	delete tf.av_bookicon;
+	invalidate tf.av_unread;		delete tf.av_unread;
+
+	//	まだエクストラメニューからのトランジション中なら、トランジションを停止する
+	kag.fore.base.stopTransition();
+
+	with(Menu_object)
+	{
+		.playSE(closese);
+		.resetClick();
+
+		var	tdata	= __get_archive_timelinedata(7);
+		var	ignore	= setArchiveMenuTimeline(tdata[0], tdata[1], true);
+		.doMenuItems(, function(item) { item.itemMode = imParts; });	//	itemMode を imParts に
+//		muteAllMenuItem(tdata,, imParts);		//	すべて効果音mute, itemMode も imParts に
+//		.playTimeline("fore", tdata[1], tdata[2], %[absolute:1100000], ignore, true);
+		.doInvalidateByInvisible("fore");	//	未読ラベルも含めて、トランジションが終了したらすべて破棄する
+	}
+	if(f.chapter !== void)
+	{
+//		returnTeatime();	//	ゲーム中ならTeatimeへ戻る
+		kag.process("teatime.ks", "*fromarchive");	//	ゲーム中ならTeatimeへ戻る
+	}
+	else
+		returnExtraMenu();	//	そうでないならExtraへ戻る
+}
+
+class ArchiveListMenuItemLayer extends ListMenuItemLayer
+{
+	var	bordercolor;
+
+	function ArchiveListMenuItemLayer()
+	{
+		super.ListMenuItemLayer(...);
+		itemMode	= imOtherOpaque;
+		bordercolor	= 0xff000000|(152<<16)|(125<<8)|98;
+		this.enterse	= "";	//	音は再生しない
+		this.pressse	= "sei_ge_book01.wav";
+	}
+
+	var	_lineheight;
+	property lineheight
+	{
+		setter(v)	{ _lineheight = +v; updateAreaHeight(); }
+		getter		{ return _lineheight; }
+	}
+
+	function updateAreaHeight()
+	{
+		areaHeight	= list.count * lineheight - 1 if list != void;
+	}
+
+	function drawItem(idx, y, h)
+	{
+		var	avbk	= tf.av_bookicon;
+		var	avur	= tf.av_unread;
+		if(avbk == void || !(avbk isvalid))
+			return;
+		if(idx === chosenno)
+			fillRect(0, y - margint, width, h, chosecolor);
+		else
+			fillRect(0, y - margint, width, h, bgcolor);
+		var	title	= list[idx];
+		var	opac	= (textcolor >> 24) & 0xFF;
+		opac	= 255 if opac == 0;
+		var	l	= marginl + 7;
+		operateRect(l, y + 4, avbk, (title[2]-1) * avbk.width, 0, avbk.width, avbk.height);
+		if(!__isReadedScript(bookno, idx) && tf.av_unread != void && tf.av_unread isvalid)
+		{//	New/Unread アイコンを追加
+			operateRect(l + int((avbk.width - avur.width) * 0.5), y + int((avur.height - avur.height) * 0.5) + 2,
+				avur, 0, 0, avur.width, avur.height);
+		}
+		l	+= avbk.width + 7;
+		font.height	= mainfontheight;
+		drawText(l, y + 1, title[0], textcolor & 0xFFFFFF, opac);
+		font.height	= subfontheight;
+		drawText(l + 1, y + lineheight - font.height - 1, title[1], textcolor & 0xFFFFFF, opac);
+		fillRect(0, y + lineheight - 1, width, 1, bordercolor) if idx < list.count - 1 || (list.count < 4 && idx == list.count - 1);
+		if(entered && idx === cursorno)
+			colorRect(0, y - margint, width, h - 1, cursorcolor & 0xFFFFFF, (cursorcolor >> 24) & 0xFF);
+	}
+
+	function goCursorPos()
+	{
+		var	t	= cursorno * lineheight;
+		var	under	= t + lineheight - height - 1;
+		if(position > t)
+			position	= t;
+		else if(position < under)
+			position	= under;
+	}
+}
+
+@endif

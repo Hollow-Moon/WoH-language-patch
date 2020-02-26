@@ -1,0 +1,536 @@
+﻿/*----------------------------------------------------------------------------/
+/	CharacterLayer のオーバーライド
+/----------------------------------------------------------------------------*/
+@if(__CHARACTERLAYER_OVERRIDE__==0)
+@set(__CHARACTERLAYER_OVERRIDE__=1)
+global.marginValue=0;
+/**
+ *	以前の CharacterLayer　＋makeworld版のAffineLayer機能として単体トランジションが可能なレイヤー
+ */
+class BasicCharacterLayer extends CharacterLayerOriginal
+{
+	function BasicCharacterLayer(win, par, name, id)
+	{
+		super.CharacterLayerOriginal(...);
+		absolute = ( int(id) + 1 ) * 1000;
+	}
+
+	function finalize()
+	{
+		super.finalize();
+	}
+
+	function assign(src)
+	{
+		super.assign(...);
+		with(src)
+		{
+			basis		= .basis;
+		}
+		callOnPaint	= false;	//	描画は不要(丸ごとコピーされているので)
+	}
+
+	function cancelUpdate()
+	{
+//		dm(name+".cancelUpdate()");
+		callOnPaint	= false;
+//		cancelUpdateTimer();	//	noise, haze が掛かっているのにキャンセルされてしまうので、削除
+	}
+
+	function freeImage()
+	{
+		super.freeImage(...);
+		viewarea	= "";
+	}
+
+	function store()
+	{
+		var	dic	= global.GraphicLayer.store();
+		with(dic)
+		{
+			.viewarea	= viewarea if viewarea !== void && viewarea != "";
+			.autoHide	= autoHide if autoHide;
+
+			//デフォルトは保存しない
+			delete .imageLeft if ! .imageLeft;
+			delete .imageTop if ! .imageTop;
+			delete .imageWidth if .imageWidth == .width;
+			delete .imageHeight if .imageHeight == .height;
+			delete .width if .width == 32;
+			delete .height if .height == 32;
+			delete .left if ! .left;
+			delete .top if ! .top;
+			delete .visible if ! .visible;
+			delete .type if .type == 2;
+			delete .layerID if .layerID === void;
+		}
+
+		return dic;
+	}
+
+	function restore(dic)
+	{
+		with(dic)
+		{
+			//デフォルトを戻す
+			.width = 32 if .width === void;
+			.height = 32 if .height === void;
+			.left = 0 if .left === void;
+			.top = 0 if .top === void;
+			.imageLeft = 0 if .imageLeft === void;
+			.imageTop = 0 if .imageTop === void;
+			.imageWidth = .width if .imageWidth === void;
+			.imageHeight = .height if .imageHeight === void;
+			.visible = 0 if .visible === void;
+			.type = 2 if .type === void;
+			.layerID = void if .layerID === void;
+		}
+
+		global.GraphicLayer.restore(dic);
+		viewarea	= (dic.viewarea !== void) ? dic.viewarea : "";
+		autoHide	= (dic.autoHide !== void) ? dic.autoHide : 0;
+	}
+
+	var	_viewarea	= "";
+	property viewarea
+	{
+		setter(v)
+		{
+			if(v !== viewarea)
+			{
+//				dmt(name+".viewarea = "+viewarea+" → "+v);
+				var	pos	= internalStorePos();
+				if(v == "")
+				{
+					imageLeft = imageTop = 0;
+					width = imageWidth;
+					height = imageHeight;
+				}
+				else
+				{
+					var	val	= v.split("/");
+					var	l	= +val[0], t = +val[1], w = +val[2], h = +val[3];
+					width		= w != 0 ? (w < imageWidth ? w : imageWidth) : (imageWidth - l);
+					height		= h != 0 ? (h < imageHeight ? h : imageHeight) : (imageHeight - t);
+					imageLeft	= -l;
+					imageTop	= -t;
+				}
+//				dm(width+", "+height+", "+imageLeft+", "+imageTop);
+				internalRestorePos(pos);
+//				calcOffset();
+				doOffset();
+				_viewarea	= v;
+			}
+		}
+		getter	{ return _viewarea; }
+	}
+	property viewareaWidth	{ getter { var val = viewarea.split("/"); return val[2] != 0 ? +val[2] : (imageWidth - val[0]); } }
+	property viewareaHeight	{ getter { var val = viewarea.split("/"); return val[3] != 0 ? +val[3] : (imageHeight - val[1]); } }
+
+	// ノイズ処理(前景の場合はアルファ成分を保護する)
+	function drawNoise(monocro=true, under=0, upper=255, seed=System.getTickCount(), l, t, w, h, holdalpha=1)
+	{
+//		dm(name+".drawNoise("+monocro+", "+under+", "+upper+", "+seed+") / ("+left+", "+top+"): "+storage);
+		//var dmy = _image.mainImageBufferForWrite;	→DLL内でForWriteに変更
+		// mono, under, upper, seed, top, left, width, height, holdalpha
+		super.drawNoise(monocro, under, upper, seed, l, t, w, h, holdalpha);
+	}
+
+	//	表のレイヤーかどうか
+	property isFore
+	{
+		getter
+		{
+			var	par	= this.parent;
+			if(par == window.primaryLayer)
+				return true;
+			while(par != null)
+			{
+				if(par instanceof "BaseLayer")
+					return par == window.fore.base;
+				par	= par.parent;
+			}
+			return false;
+		}
+	}
+
+	var	useTrans;	//	画像の個別切り替えに使用中かどうか
+	function onPaint(force=false)
+	{
+		//	透明でなく、表のレイヤーか、個別切替に使用中か、トランジション中なら描画する
+//		dm(name+".onPaint: ("+storage, opacity<1, visible+")", force, useTrans);
+		if((storage == "" || opacity < 1 || !visible) && !force && !useTrans)
+		{
+//			dm(name+".onPaint: "+storage+", "+opacity+", "+visible);
+			return;	//	storage, opacity, visible が変更されれば再度 update されるので、この中で update を予約する必要はない
+		}
+//		dm(name+"["+storage+"].onPaint(): "+opacity+" > 0 && "+visible+" && ("+isFore+" || "+useTrans+" || "+window.baseTransCount+")");
+		if(isFore || useTrans || window.baseTransCount || force)	//	ページの前後、トランジションの実行は知らないうちに開始されているので予約が必要
+		{
+@if(CHECKNEEDPERFORMANCE)
+			global.checkneedperformance.countOnPaint(this);
+@endif
+			super.onPaint(...);
+/*
+			if(storage == "im0718電飾化した全景_オブジェh(中間木)")
+			{
+				if(typeof global.stockLayers == "undefined")
+					global.stockLayers	= [];
+				var	layer	= new global.Layer(window, this);
+				layer.setSize(realImageWidth, realImageHeight);
+				layer.copyRect(0, 0, this, 0, 0, realImageWidth, realImageHeight);
+//				layer.saveLayerImageTlg5("file://./z/"+saveno+".tlg");	invalidate layer;
+				stockLayers.add(layer);
+			}
+*/
+@if(PAUSE_TRANSITION)
+			asyncCaller.call(update, 0, 0, 1, 1) if inTransition;	//	トランジション中なら再度 update
+@endif
+		}
+		else
+		{
+//			dm(name+"["+storage+"].onPaint(): "+opacity+" > 0 && "+visible+" && ("+isFore+" || "+useTrans+" || "+window.baseTransCount+")");
+			update(0,0,1,1);	//	次回チャレンジ
+		}
+	}
+/*
+	function update()
+	{
+		dmt(name+"["+storage+"].update()");
+		super.update(0,0,1,1);
+	}
+*/
+
+	//	描画された領域のみを表示領域(imageLeft,imageTop,width,height)とする
+	//	ただし、トランジション中以外
+	function doOffset(mx, my)
+	{
+		if(screenSizeLayer)
+		{
+			//	_act_x, _act_y の影響のみ受ける
+			if(realWidth == realImageWidth || realHeight == realImageHeight)
+			{
+				//	正しく表示する準備が整っていないので、とりあえず中央を表示する
+				setRealImagePos(
+					-(realImageWidth - realWidth) * 0.5,
+					-(realImageHeight - realHeight) * 0.5
+				);
+			}
+			else if(trans != void || useTrans || particle)
+			{//	トランジション中またはパーティクル表示時なら、画面サイズにする
+				global.KAGLayer.setSize(parent.realWidth, parent.realHeight);
+				global.KAGLayer.setPos(0, 0);
+
+				var	pos	= calcAct(-screen_plus_alpha, -screen_plus_alpha);
+				setRealImagePos(
+					Math.max(Math.min(pos[0], 0), -screen_plus_alpha * 2),
+					Math.max(Math.min(pos[1], 0), -screen_plus_alpha * 2)
+				);
+			}
+			else with(affineSource._clearRegion)
+			{//	表示範囲は描画が行われた部分だけにとどめる
+				var	pos	= calcAct();
+				var	l	= int(.left + pos[0]) - screen_plus_alpha;
+				var	t	= int(.top + pos[1]) - screen_plus_alpha;
+				var	rl	= Math.max(0, l);
+				var	rt	= Math.max(0, t);
+				var	w	= Math.max(Math.min(parent.realWidth - rl, int .width + Math.min(l, 0)), 1);
+				var	h	= Math.max(Math.min(parent.realHeight - rt, int .height + Math.min(t, 0)), 1);		//	float -> int の誤差で表示されない部分が発生するので、補正
+
+				global.KAGLayer.setSize(w, h);
+				global.KAGLayer.setPos(rl, rt);
+				var	il, it;
+				if(rl == 0)
+					il	= pos[0] - screen_plus_alpha;	//	左端に接触
+				else
+				{
+					il	= -Math.max(0, int .left - screen_plus_alpha) - screen_plus_alpha;
+					global.KAGLayer.left	+= pos[0];		//	↑	で pos[0] を足さないようにしたので、その分移動するようにした
+					global.KAGLayer.width	+= -pos[0] + 1 if rl + w >= parent.realWidth;	//		本来は間違いだが、既にその量で演出されているので、崩さないように残した
+															//		次のバージョンでは修正する！！
+				}
+				if(rt == 0)
+					it	= pos[1] - screen_plus_alpha;	//	上端に接触
+				else
+				{
+					it	= -Math.max(0, int .top - screen_plus_alpha) - screen_plus_alpha;
+					global.KAGLayer.top		+= pos[1];		//	↑で pos[1] を足さないようにしたので、その分移動するようにした
+					global.KAGLayer.height	+= -pos[1] + 1 if rt + h >= parent.realHeight;	//		本来は間違いだが、既にその量で演出されているので、崩さないように残した
+															//		次のバージョンでは修正する！！
+				}
+				setRealImagePos(
+					Math.max(Math.min(il, 0), realWidth - realImageWidth),
+					Math.max(Math.min(it, 0), realHeight - realImageHeight)
+				);
+			}
+		}
+		else
+		{
+			var	pos	= calcAct(mx, my);
+			setRealPos(int left + pos[0], int top + pos[1]);
+		}
+	}
+
+	//	effect プロパティにより、レイヤーにかける効果を選ぶ
+	//		effect==""で背景に固有の効果が存在すれば、それを返す
+	function getLayerEffect()
+	{
+		if(holdeffect != "" && Layer_effect_list[holdeffect] != void)
+			return Layer_effect_list[holdeffect];
+		else if(_effect == "")
+			return parent.childEffect != "" ? Layer_effect_list[parent.childEffect] : void;
+		else if(_effect == "none")
+			return void;
+		else if(Layer_effect_list[_effect] != void)
+			return Layer_effect_list[_effect];
+		else
+			return _effect;
+	}
+
+	var	_basis;
+	property basis	//	基準となるオブジェクト
+	{
+		setter(v)	{ _basis = v; }
+		getter		{ return _basis; }
+	}
+
+	property basis_center	{ getter { return basis != void ? basis.center : 0; } }
+	property basis_vcenter	{ getter { return basis != void ? basis.vcenter : 0; } }
+
+	property center
+	{
+		setter(v)	{ super.center	= +v + basis_center; }
+		getter		{ return super.center - basis_center; }
+	}
+
+	property vcenter
+	{
+		setter(v)	{ super.vcenter	= +v + basis_vcenter; }
+		getter		{ return super.vcenter - basis_vcenter; }
+	}
+
+	property page
+	{
+		getter	{ return parent == window.fore.base ? "fore" : "back"; }
+	}
+
+	var	_processing;
+	property processing
+	{
+		setter(v)
+		{
+			if(processing === v)
+				return;
+			if(v != void)
+			{
+				switch(v)
+				{
+				case "rain1":	//	降雨の表現その１
+					initBlinkParticle(50, 0.01);
+					setParticleBlinkTime(1600, 800);
+					particle	= true;
+					break;
+				}
+			}
+			else
+			{
+				switch(processing)
+				{
+				case "rain1":	uninitParticle();	break;
+				}
+			}
+//			dmt(name+".processing = "+processing+" → "+v);
+			_processing	= v;
+		}
+		getter		{ return _processing; }
+	}
+
+	function center2left(c)	{ return _image.center2left(c); }
+	function center2top(c)	{ return _image.center2top(c); }
+	property groundLevel	{ getter { return _image.groundLevel; } }
+
+	function loadImages()
+	{
+		var	last	= viewarea;
+		_viewarea	= void;
+		super.loadImages(...);
+		viewarea	= last;
+	}
+}
+
+class CharacterLayer extends BasicCharacterLayer
+{
+	function CharacterLayer()
+	{
+		super.BasicCharacterLayer(...);
+	}
+
+	function finalize()
+	{
+		super.finalize(...);
+	}
+
+//	var	trans	= void;	//	画像切り替えのため、トランジションに使用するレイヤー(→AnimationLayerに移動)
+
+	property visible
+	{
+		setter(v)
+		{
+			if(useTrans)
+				super.visible	= false;	//	トランジション対象となっている間は、必ず非表示にする
+			else if(v !== visible)
+			{
+//				dm(name+".visible("+useTrans+") = "+visible+" → "+v+" / "+Scripts.getTraceString());
+				super.visible	= v;
+				update(0,0,1,1) if v;	//	描画が必要かも
+			}
+		}
+		getter	{ return super.visible; }
+	}
+
+	property opacity
+	{
+		setter(v)
+		{
+			v	= int v;
+			if(opacity !== v)
+			{
+//				dm(name+".opacity = "+opacity+" → "+v+" / "+Scripts.getTraceString()) if useTrans;
+				super.opacity	= v;
+				update(0,0,1,1) if v > 0;	//	描画が必要かも
+			}
+		}
+		getter	{ return super.opacity; }
+	}
+
+	function init_trans()
+	{
+		if(trans == void)
+		{
+			trans	= window.getLayerFromElm(%[page:page, needlayer:true]);
+//			dmt("---- "+name+".init_trans() trans = "+trans.name+" -----");
+			trans.visible	= false;
+			trans.useTrans	= true;
+
+			//	個別トランジション中は共通のサイズにする
+			doOffset();
+			trans.doOffset();
+		}
+	}
+
+	function uninit_trans()
+	{
+		if(trans != void)
+		{
+//			dmt("---- "+name+".uninit_trans() ----");
+			trans.useTrans	= false;
+			trans	= void;
+
+			//	サイズ共通化を解除
+			doOffset();
+		}
+	}
+
+	function stopTransition()
+	{
+//		dm(name+".stopTransition: "+Scripts.getTraceString());
+		super.stopTransition();
+	}
+
+	function beginTransition(elm, src=void)
+	{
+//		dm("---- "+name+".beginTrans("+src.name+") ----");
+		src	= comp if src == void;
+		src.stopTransition();
+		preTransition(elm);	//	beginTransition 前の処理(transition のパラメータ保存等)
+		global.KAGLayer.beginTransition(elm, src);
+	}
+
+	function exchangeInfo(src)
+	{
+		src	= comp if src == void;
+		src.name <-> name;
+		src.cursor <-> cursor;
+	}
+
+	function atEndOfTransition(src, withchildren, exchange)
+	{
+		// atEndOfTransition オーバーライド
+		transElm	= void;
+		global.KAGLayer.atEndOfTransition(...);
+//		dm("---- "+name+".atEndOfTransition("+src.name+", "+withchildren+", "+exchange+") / trans = "+trans+" / comp = "+comp+" ----");
+		if(src == null)
+		{
+			//・メッセージレイヤ、前景レイヤが、srcなしでトランジション (children=true)
+			//　何もしなくてよいが、終了後それらの子レイヤは自動的に非表示になる。
+		}
+		else
+		{
+			//・メッセージレイヤ、前景レイヤが、srcありでトランジション (children=true)
+			//　重要な情報をトランジション元と交換、exchange=false の場合はさらに
+			//　トランジション元の情報をトランジション先にコピー。ただし、このコピーの際に
+			//　ウィンドウの可視・不可視の情報はコピーしない。
+			if(src == trans)
+			{
+				//	個別トランジションの時はレイヤーを取り替えず、元の画像を変えるのみ
+				storage	= src.storage;	//	再読み込みではなくコピーが望ましい
+				visible	= true;
+				src.visible	= false;
+
+				//	トランジションのための時間が無かった場合、処理の順番が変動するので
+				//	アクションが終了したときではなく、トランジションが終了したとき(ココ)に片付ける
+				uninit_trans();
+			}
+			else if(src == comp)
+			{
+				super.assign(src);
+				exchangeInfo(src);
+				window.swapCharacterLayer(id);
+			}
+		}
+	}
+
+	//	基準となるオブジェクト
+	//	getLayerFromElm用の辞書配列で入っていたら、問い合わせて取得する
+	property basis
+	{
+		setter(v)
+		{
+			if(v == void)
+				super.basis	= void;
+			else if(v instanceof "Dictionary")
+			{
+				v.page	= page;	//	このレイヤーと同じページにあるべきなので
+				var	b	= window.getLayerFromElm(v);
+//				dm(name+": "+v.page+" / "+v.storage+": basis = "+b);
+				if(b != void)
+					super.basis	= b;
+				else
+				{
+					super.basis	= void;
+					dm("-------- ※ 基準となるレイヤー(page="+v.page+", storage="+v.storage+")が見つかりませんでした。");
+				}
+			}
+			else
+				super.basis	= v;
+		}
+		getter	{ return super.basis; }
+	}
+}
+
+@if(DEBUG)
+function saveStockLayers()
+{
+	if(typeof global.stockLayers == "undefined")
+		return;
+	for(var i=0; i<stockLayers.count; i++)
+	{
+		stockLayers[i].saveLayerImageTlg5("file://./z/"+i+".tlg");
+		invalidate stockLayers[i];
+	}
+	invalidate stockLayers;
+	delete global.stockLayers;
+}
+@endif
+
+@endif

@@ -1,0 +1,350 @@
+﻿//ソース管理注意：
+//WoH\data\scenario\plugin\sub\EasyAffineTransform.tjs
+//TimeLineEditor\trunk\data\canvas\EasyAffineTransform.tjs
+//
+// に複製あり、本ソースに手を加えた場合には互いに反映・コミットのこと
+
+/*
+	ソースの管理をやっぱり見直して、その他、両方で必要なソースをtimeline以下に配置するようにした。
+	(TLE側が主で実行環境側が従)
+*/
+
+/*-----------------------------------------------------------------------------
+/	アフィン変換描画を簡単に行うためのクラス
+/----------------------------------------------------------------------------*/
+@if(__EASYAFFINETRANSFORM_DEFINED__!=1)
+@set(__EASYAFFINETRANSFORM_DEFINED__=1)
+
+@set(USE_FORMULA_MATRIX=0)
+
+class EasyAffineTransform
+{
+	var matrix;
+@if(USE_FORMULA_MATRIX==1)
+	var	formula_matrix;
+	var	cnt;
+	var	reg	= /[\-\+\*\/ ]/;
+@endif
+
+	function EasyAffineTransform(src=void)
+	{
+		assign(src) if src != void;
+	}
+
+	//	行列の初期化
+	function initProgrammableTransformation()
+	{
+		matrix	= void;
+@if(USE_FORMULA_MATRIX==1)
+		formula_matrix	= void;
+		cnt	= 1;
+@endif
+	}
+
+	function assign(src)
+	{
+		if(src.matrix != void)
+		{
+			matrix	= [] if matrix == void;
+			matrix.assign(src.matrix);
+		}
+		else
+			matrix	= void;
+	}
+
+	function disp(msg)
+	{
+		if(matrix == void)
+			return;
+		dm(msg) if msg != void;
+		dm("[");
+		dm(" [ "+matrix[0]+", "+matrix[1]+", "+matrix[2]+" ]");
+		dm(" [ "+matrix[3]+", "+matrix[4]+", "+matrix[5]+" ]");
+		dm(" [ "+matrix[6]+", "+matrix[7]+", "+matrix[8]+" ]");
+		dm("]");
+	}
+
+@if(USE_FORMULA_MATRIX==1)
+	function brk(v)
+	{
+		if(reg.test(v))
+			return "("+v+")";
+		else
+			return v;
+	}
+
+	function add(v, m)
+	{
+		if(v == 0 && m == 0)
+			return 0;
+		else if(v == 0)
+			return m;
+		else if(m == 0)
+			return v;
+		else
+			return brk(v+" + "+m);
+	}
+
+	function mul(v, m)
+	{
+		if(v == 0 || m == 0)
+			return 0;
+		else if(v == 1)
+			if(m == 1)
+				return 1;
+			else
+				return m;
+		else
+			return brk(v) + " * " + m;
+	}
+@endif
+
+	//	移動させる
+	function addTransferMatrix(x, y)
+	{
+		if(matrix===void)
+		{
+			//	そのまま入れる
+			matrix	= [
+				1, 0, 0,
+				0, 1, 0,
+				x, y, 1
+			];
+@if(USE_FORMULA_MATRIX==1)
+			dm("move to mx"+cnt+", my"+cnt);
+			formula_matrix	= [
+				1, 0, 0,
+				0, 1, 0,
+				"mx"+cnt, "my"+cnt, 1
+			];
+			cnt++;
+@endif
+		}
+		else
+		{
+			//	掛け合わせる
+			matrix[6]	+= x;
+			matrix[7]	+= y;
+@if(USE_FORMULA_MATRIX==1)
+			dm("move to mx"+cnt+", my"+cnt);
+			formula_matrix[6]	= add(formula_matrix[6], "mx"+cnt);
+			formula_matrix[7]	= add(formula_matrix[7], "my"+cnt);
+			cnt++;
+@endif
+		}
+	}
+
+	//	回転させる
+	function addRotateMatrix(theta)
+	{
+		var cs	= Math.cos(theta);
+		var sn	= Math.sin(theta);
+		if(matrix===void)
+		{
+			//	そのまま入れる
+			matrix	= [
+				cs, -sn, 0,
+				sn,  cs, 0,
+				 0,   0, 1
+			];
+@if(USE_FORMULA_MATRIX==1)
+			dm("rotate theta"+cnt);
+			formula_matrix	= [
+				"cos(theta"+cnt+")", "-sin(theta"+cnt+")", 0,
+				"sin(theta"+cnt+")",  "cos(theta"+cnt+")", 0,
+				                  0,                    0, 1
+			];
+			cnt++;
+@endif
+		}
+		else
+		{
+			//	掛ける
+			var	matrix_0_	= matrix[0];
+			var	matrix_3_	= matrix[3];
+			var	matrix_6_	= matrix[6];
+			matrix[0]	=  matrix_0_ * cs + matrix[1] * sn;	//	2重に回転させなければ、
+			matrix[1]	= -matrix_0_ * sn + matrix[1] * cs;	//	二つ目の掛け算は不要
+			matrix[3]	=  matrix_3_ * cs + matrix[4] * sn;	//					不要
+			matrix[4]	= -matrix_3_ * sn + matrix[4] * cs;	//					不要
+			matrix[6]	=  matrix_6_ * cs + matrix[7] * sn;	//	ココは移動で関係するので
+			matrix[7]	= -matrix_6_ * sn + matrix[7] * cs;	//	必要
+@if(USE_FORMULA_MATRIX==1)
+			dm("rotate theta"+cnt);
+			matrix_0_	= formula_matrix[0];
+			matrix_3_	= formula_matrix[3];
+			matrix_6_	= formula_matrix[6];
+			formula_matrix[0]	= add(mul(matrix_0_,  "cos(theta"+cnt+")"), mul(formula_matrix[1], "sin(theta"+cnt+")"));
+			formula_matrix[1]	= add(mul(matrix_0_, "-sin(theta"+cnt+")"), mul(formula_matrix[1], "cos(theta"+cnt+")"));
+			formula_matrix[3]	= add(mul(matrix_3_,  "cos(theta"+cnt+")"), mul(formula_matrix[4], "sin(theta"+cnt+")"));
+			formula_matrix[4]	= add(mul(matrix_3_, "-sin(theta"+cnt+")"), mul(formula_matrix[4], "cos(theta"+cnt+")"));
+			formula_matrix[6]	= add(mul(matrix_6_,  "cos(theta"+cnt+")"), mul(formula_matrix[7], "sin(theta"+cnt+")"));
+			formula_matrix[7]	= add(mul(matrix_6_, "-sin(theta"+cnt+")"), mul(formula_matrix[7], "cos(theta"+cnt+")"));
+			cnt++;
+@endif
+		}
+	}
+
+	//	拡縮させる
+	function addMagnifyMatrix(zx, zy)
+	{
+		if(matrix===void)
+		{
+			//	そのまま入れる
+			matrix	= [
+				zx,  0, 0,
+				 0, zy, 0,
+				 0,  0, 1
+			];
+@if(USE_FORMULA_MATRIX==1)
+			dm("magnify zx"+cnt+", zy"+cnt);
+			matrix	= [
+				"zx"+cnt,        0, 0,
+				       0, "zy"+cnt, 0,
+				       0,        0, 1
+			];
+			cnt++;
+@endif
+		}
+		else
+		{
+			//	掛ける
+			matrix[0]	*= zx;
+			matrix[1]	*= zy;
+			matrix[3]	*= zx;
+			matrix[4]	*= zy;
+			matrix[6]	*= zx;
+			matrix[7]	*= zy;
+@if(USE_FORMULA_MATRIX==1)
+			dm("magnify zx"+cnt+", zy"+cnt);
+			formula_matrix[0]	= mul(formula_matrix[0], "zx"+cnt);
+			formula_matrix[1]	= mul(formula_matrix[1], "zy"+cnt);
+			formula_matrix[3]	= mul(formula_matrix[3], "zx"+cnt);
+			formula_matrix[4]	= mul(formula_matrix[4], "zy"+cnt);
+			formula_matrix[6]	= mul(formula_matrix[6], "zx"+cnt);
+			formula_matrix[7]	= mul(formula_matrix[7], "zy"+cnt);
+			cnt++;
+@endif
+		}
+	}
+
+	//	左右反転させる
+	function addMirrorLRMatrix()
+	{
+		if(matrix===void)
+		{
+			matrix	= [
+				-1, 0, 0,
+				 0, 1, 0,
+				 0, 0, 1
+				];
+		}
+		else
+		{
+			matrix[0]	*= -1;
+		}
+	}
+
+	//	上下反転させる
+	function addMirrorUDMatrix()
+	{
+		if(matrix===void)
+		{
+			matrix	= [
+				1,  0, 0,
+				0, -1, 0,
+				0,  0, 1
+				];
+		}
+		else
+		{
+			matrix[4]	*= -1;
+		}
+	}
+
+	//	実際にコピー
+	function transformByProgram(dest, src, sleft, stop, swidth, sheight, mode=stNearest, opac=255)
+	{
+		if(matrix!=void)
+		{
+			with(dest)
+			{
+				var lastface= .face;
+/*				if(src.type == ltAlpha || src.type == ltAddAlpha)
+					.face	= dfAlpha;	//	描画できるのはdfAlphaのみ
+				else
+*/					.face	= dfOpaque,	.holdAlpha	= false;
+				.operateAffine(src, sleft, stop, swidth, sheight, true,
+					matrix[0], matrix[1], matrix[3], matrix[4], matrix[6], matrix[7], omOpaque, opac, mode);
+				.face	= lastface;	//	元に戻す
+			}
+		}
+	}
+
+	//	アフィン行列のクリア
+	function clear()
+	{
+		matrix	= void;
+	}
+
+	//	アフィン行列と座標の積
+	function calc(x, y)
+	{
+		var m = matrix;
+		if(typeof x == "Object")
+		{
+			if(x instanceof "Array")
+			{
+				var	pt	= [];
+				if(typeof x[0] == "Integer" || typeof x[0] == "Real")
+				{
+					for(var i=0; i<x.count; i+=2)
+					{
+						var	px = x[i], py = x[i+1];
+						pt[i]	= m[0] * px + m[3] * py + m[6];
+						pt[i+1]	= m[1] * px + m[4] * py + m[7];
+					}
+					return pt;
+				}
+				else if(typeof x[0] == "Object")
+				{
+					if(x[0] instanceof "Array")
+					{
+						for(var i=0; i<x.count; i++)
+						{
+							var	px = x[i][0], py = x[i][1];
+							pt.add([ m[0]*px + m[3]*py + m[6], m[1]*px + m[4]*py + m[7] ]);
+						}
+						return pt;
+					}
+				}
+			}
+		}
+		else
+		{
+@if(USE_FORMULA_MATRIX==1)
+			var fm = formula_matrix;
+			dm("affineCopy("+fm[0]+", "+fm[1]+", "+fm[3]+", "+fm[4]+", "+fm[6]+", "+fm[7]+")");
+@endif
+			return [ m[0]*x + m[3]*y + m[6], m[1]*x + m[4]*y + m[7] ];
+		}
+	}
+
+	//	矩形(left, top, width, height)を与えると、変形後の座標[left,top,right,bottom]を返す
+	function calcCorner(l, t, w, h)
+	{
+		var m = matrix;
+		var	pos	= [ l, t, l+w, t, l+w, t+h, l, t+h ];
+		var	xs = [], ys = [];
+		for(var i=0; i<pos.count; i+=2)
+		{
+			xs.add(m[0]*pos[i] + m[3]*pos[i+1] + m[6]);
+			ys.add(m[1]*pos[i] + m[4]*pos[i+1] + m[7]);
+		}
+		xs.sort();
+		ys.sort();
+		return [ xs[0], ys[0], xs[3], ys[3] ];
+	}
+}
+
+@endif

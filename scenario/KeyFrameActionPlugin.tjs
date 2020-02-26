@@ -1,0 +1,326 @@
+﻿@if(__KEYFRAMEACTIONPLUGIN_DEFINED__==0)
+@set(__KEYFRAMEACTIONPLUGIN_DEFINED__=1)
+/*-----------------------------------------------------------------------------/
+/	Copyright (C) TYPE-MOON All Rights Reserved.
+/		キーフレームでの演出を行なうタグを追加する
+/-----------------------------------------------------------------------------*/
+dm("load: KeyFrameActionPlugin.tjs");
+
+// キーフレーム処理を行なうアクションハンドラ
+Scripts.execStorage("KeyFrameActionHandler.tjs");
+
+//	演出プラグインの参照
+global.effectPluginList	= %[];
+
+/*FUNC-------------------------------------------------------------------------/
+/	オブジェクトを探す
+/	in	: mp.page		ページ(fore優先)
+/		: mp.layer		レイヤー番号
+/		: mp.storage	画像ファイル / サウンドファイル
+/		: mp.sound		サウンドバッファ番号
+/-----------------------------------------------------------------------------*/
+function setTargetObject(mp)
+{
+	with(mp)
+	{
+		//	sound でサウンドバッファが指定されている
+		if(.sound !== void)
+		{
+			if(+.sound < kag.se.count)
+				return kag.se[+.sound];
+			else
+			{
+				throw new Exception("サウンドバッファ番号 "+.sound+" は範囲外です。");
+				return void;
+			}
+		}
+
+		//	指定のリストをクロールする
+		var	crawlfunc	= function(list, chkfunc, mp)
+		{
+			for(var i=0; i<list.count; i++)
+			{
+				if(chkfunc(list[i], mp))
+					return list[i];
+			}
+			return void;
+		} incontextof this;
+
+		//	サウンドバッファから探す
+		if(typeof .se != "undefined")
+		{
+			if(.se >= 0)
+				return kag.se[.se];
+			var	se	= 0;
+			//	同じ音声ファイルを読み込んでいて、アクションが実行されておらず、delay中でもない
+			if(.storage != void && (se = crawlfunc(kag.se, function(s, elm) { return s.storage == elm.storage && !s.isDelaying && !kag.isInAction(s); }, mp)) != void)
+				return se;
+			//	音声が再生されておらず、アクションが実行されておらず、delay中でもない
+			if((se = crawlfunc(kag.se, function(s, elm) { return s.status != "play" && s.status != "pause" && s.playingStorage == "" && !s.isDelaying && !kag.isInAction(s); }, mp)) != void)
+				return se;
+			//	ループ再生されてなくて、再生完了率(=現再生時間/総再生時間)のもっとも高い
+			var	finishrate = 0;
+			for(var i=0; i<kag.se.count; i++) with(kag.se[i])
+			{
+				if(.looping || .status == "unload")
+					continue;
+				var	fr	= .position / .totalTime;
+				if(fr > finishrate)
+				{
+					se	= i;
+					finishrate	= fr;
+				}
+			}
+			if(se !== void)
+				return kag.se[se];
+			else
+			{
+@if(0)
+				System.inform("効果音バッファが不足しています。");
+@endif
+				dm("効果音バッファが不足しています。");
+				return null;	//	バッファ不足
+			}
+		}
+
+		//	bgm とだけある
+		if(typeof .bgm != "undefined")
+			return kag.bgm;
+
+		//	plugin の場合(プラグイン自体/プラグインのレイヤーの場合は、pluginLayer)
+		if(typeof .pluginModule != "undefined")
+			return effectPluginList[.pluginModule];
+
+		return void;
+	}
+}
+
+//-- タグ宣言 -----------------------------------------------------------------
+global.kt = kag.tagHandlers;
+//-----------------------------------------------------------------------------
+/**TAG
+ *	action(EX) - アクション開始
+ *	@param page			ページ(default:fore)
+ *	@param layer		レイヤー番号
+ *	@param target		レイヤーオブジェクトもしくはレイヤーオブジェクトを示すTJS式
+ *	@param storage		画像ファイル名
+ *	@param action		アクション構造を示すTJS式
+ *	@param module		アクションの種類を示すモジュール
+ *	@param time			アクションの時間
+ *	@param delay		アクション開始の遅延時間
+ *	@param hide			アクション終了後、対象を非表示にするか(default:false)
+ *	@param keys			propsと併せてKeyFrameActionで使用するキー値の列挙
+ *	@param props		keysと併せてKeyFrameActionで使用するプロパティ名の列挙
+ *	@param noinit		規定プロパティ値に初期化をするか
+ *	@param texton		メッセージウィンドウを残したアクション指定
+ *	@param textoff		textonの逆
+ *	@param init			初期化指定
+ *	@param startTime	開始時刻
+ *	@param usecurrent	初期値に現在のオブジェクト状態をそのまま使う
+ *	@param acttype		特定の動作をするアクションで個別に振る判別名称
+ *	@param ispart		対象が特殊背景の場合に指定
+ *		@memo:	レイヤーを指定して、アクションを開始する。
+ *				KAGEX の action タグを拡張して、画像ファイル名からレイヤーを識別できるようにした。
+ *				パラメータには上記のほか、それぞれのモジュールに沿った値を指定する必要がある。
+ *				keys の指定がある場合に module の指定がなければ、KeyFrameActionModule が自動的に設定される
+ *				module の指定がなくて plugin 指定もある場合は、KeyFrameActionModule4Plugin が自動的に設定される
+ *		@link:	action, stopaction, wact
+ *		@group:	レイヤ操作(アクション)
+ */
+kt.action_org	= kt.action;
+kt.action	= function(mp)
+{
+	with(mp)
+	{
+//		.page	= "fore" if .page === void && .target == void;
+		//	.target が指定されていないなら、
+		.target	= setTargetObject(mp) if .target == void;	//	独自に調べて
+		if(.target == null)
+			return 0;	//	効果音バッファ不足なので、何も出来ない
+//		dm("KeyFrameActionPlugin.action: setTargetObject = "+.target);
+		if(.target == void)
+			.target	= getLayerFromElm(mp);
+//		dm("KeyFrameActionPlugin.action: getLayerFromElm = "+.target);
+		if(.target == void)
+		{//	それでもなければレイヤーを調べる
+			mp.needlayer	= true;
+			.target	= getLayerFromElm(mp);	//	target が指定されていないなら、分かる範囲で target を確定する
+		}
+//		dm("KeyFrameActionPlugin.action: getLayerFromElm(need) = "+.target+" / "+Scripts.getTraceString());
+
+		if(.keys !== void)	//	keys があるなら
+		{
+			if(.module === void)
+			{
+				if(.props !== void)
+				{
+					if( .plugin === void )
+						.module	= MixedKeyFrameActionModule;//	props もあるなら MixedKeyFrameActionModule
+					else
+						.module	= MixedKeyFrameActionModule4Plugin;//	plugin 指定もあるなら MixedKeyFrameActionModule4Plugin
+				}
+				else
+					.module	= KeyFrameActionModule;		//	module に KeyFrameActionModule を設定
+			}
+
+			//	init が指定されていなければ、target に応じて適切な初期値を指定する
+			if(.init == void)
+			{
+//				dm("target = "+.target);
+				if(.target instanceof "BaseLayer")
+					.init	= TLBGObject.defaultValues;
+				else if(.target == primaryLayer)
+					.init	= TLPageObject.defaultValues;
+				else if(.target instanceof "SESoundBuffer")
+					.init	= TLSEObject.defaultValues;
+				else if(.target instanceof "BGM")
+					.init	= TLBGMObject.defaultValues;
+				else if(.target instanceof "PartBgLayer")
+					.init	= TLPartBgObject.defaultValues;
+				else if(.target instanceof "KAGPlugin")
+				{
+					dm("KAGPlugin("+.target.name+"): "+.target);
+					.init	= PluginDefaultValues[.target.name];
+				}
+				else if(.target instanceof "BasicCharacterLayer")
+					.init	= TLLayerObject.defaultValues;
+			}
+		}
+	}
+	return tagHandlers.action_org(mp);
+} incontextof kag;
+
+//-----------------------------------------------------------------------------
+/**TAG
+ *	stopaction(EX) - アクション停止
+ *	@param page		ページ(default:fore)
+ *	@param layer		レイヤー番号
+ *	@param target	レイヤーオブジェクトもしくはレイヤーオブジェクトを示すTJS式
+ *	@param storage	画像ファイル名
+ *		@memo: レイヤーを指定して、アクションを停止する。
+ *			   レイヤーの指定がなければ、全てのアクションを停止する。
+ *			   画像ファイル名からレイヤーを識別できるようにした。
+ *		@link: action, stopaction, wact
+ *		@group:	レイヤ操作(アクション)
+ */
+kt.stopaction_org	= kt.stopaction;
+kt.stopaction	= function(mp)
+{
+	with(mp)
+	{
+//		.page	= "fore" if .page === void && .target == void;
+		.target	= setTargetObject(mp) if .target == void;
+	}
+	return tagHandlers.stopaction_org(mp);
+} incontextof kag;
+
+//-----------------------------------------------------------------------------
+/**TAG
+ *	wact(EX) - アクションの終了を待つ
+ *	@param page		ページ(default:fore)
+ *	@param layer		レイヤー番号
+ *	@param target	レイヤーオブジェクトもしくはレイヤーオブジェクトを示すTJS式
+ *	@param storage	画像ファイル名
+ *		@memo: レイヤーを指定して、アクションの終了を待つ。
+ *				レイヤーの指定がなければ、全てのアクションの終了を待つ。
+ *				画像ファイル名からレイヤーを識別できるようにした。
+ *		@link: action, stopaction, wact
+ *		@group:	レイヤ操作(アクション)
+ */
+kt.wact_org	= kt.wact;
+kt.wact	= function(mp)
+{
+	with(mp)
+	{
+//		.page	= "fore" if .page === void && .target == void;
+		.target	= setTargetObject(mp) if .target == void;
+	}
+	return tagHandlers.wact_org(mp);
+} incontextof kag;
+
+//-----------------------------------------------------------------------------
+/**TAG
+ *	stopallplugin - プラグインの全停止
+ *		@group:	レイヤ操作(アクション)
+ */
+kt.stopallplugin	= function(mp)
+{
+	var	keys	= [];
+	keys.assign(effectPluginList);
+	for(var i=0; i<keys.count; i+=2)
+	{
+		if(typeof keys[i+1].clear != "undefined")
+			keys[i+1].clear();
+	}
+	return 0;
+} incontextof kag;
+
+//	オブジェクト用の短縮タグ
+/**TAG
+ *	bgact - 背景用のアクション短縮形
+ *	@param page			ページ(default:fore)
+ *	@param layer		レイヤー番号
+ *	@param target		レイヤーオブジェクトもしくはレイヤーオブジェクトを示すTJS式
+ *	@param storage		画像ファイル名
+ *	@param action		アクション構造を示すTJS式
+ *	@param module		アクションの種類を示すモジュール
+ *	@param time			アクションの時間
+ *	@param delay		アクション開始の遅延時間
+ *	@param hide			アクション終了後、対象を非表示にするか(default:false)
+ *	@param keys			propsと併せてKeyFrameActionで使用するキー値の列挙
+ *	@param props		keysと併せてKeyFrameActionで使用するプロパティ名の列挙
+ *	@param noinit		規定プロパティ値に初期化をするか
+ *	@param texton		メッセージウィンドウを残したアクション指定
+ *	@param textoff		textonの逆
+ *	@param init			初期化指定
+ *	@param startTime	開始時刻
+ *	@param usecurrent	初期値に現在のオブジェクト状態をそのまま使う
+ *	@param acttype		特定の動作をするアクションで個別に振る判別名称
+ *	@param bind			子レイヤーも同じように動かすかどうか
+ *		@link action
+ *		@group:	レイヤ操作(アクション)
+ */
+kt.bgact	= function(mp)
+{
+	mp.layer= "base";
+	mp.id	= void;	//	id は不要というかあると困る(→別のレイヤーを指し示すため)
+//	tagHandlers.bindbg(%[page:mp.page, enabled:true]) if mp.bind;	//	設定
+	var	ret	= tagHandlers.action(mp);
+//	kag.conductor.pendings.insert(0, %[tagname:bindbg, page:mp.page, enabled:false]) if ret != 0 && mp.bind;	//	解除
+	return ret;
+} incontextof kag;
+
+/**TAG
+ *	fgact - 前景用のアクション短縮形
+ *	@param page			ページ(default:fore)
+ *	@param layer		レイヤー番号
+ *	@param target		レイヤーオブジェクトもしくはレイヤーオブジェクトを示すTJS式
+ *	@param storage		画像ファイル名
+ *	@param id			同一画像を複数表示する場合の識別子
+ *	@param action		アクション構造を示すTJS式
+ *	@param module		アクションの種類を示すモジュール
+ *	@param time			アクションの時間
+ *	@param delay		アクション開始の遅延時間
+ *	@param hide			アクション終了後、対象を非表示にするか(default:false)
+ *	@param keys			propsと併せてKeyFrameActionで使用するキー値の列挙
+ *	@param props		keysと併せてKeyFrameActionで使用するプロパティ名の列挙
+ *	@param noinit		規定プロパティ値に初期化をするか
+ *	@param texton		メッセージウィンドウを残したアクション指定
+ *	@param textoff		textonの逆
+ *	@param init			初期化指定
+ *	@param startTime	開始時刻
+ *	@param usecurrent	初期値に現在のオブジェクト状態をそのまま使う
+ *	@param acttype		特定の動作をするアクションで個別に振る判別名称
+ *	@param partbg		特殊背景内に表示する場合の対象ストレージ
+ *	@param partbgid		特殊背景内に表示する場合の対象ID
+ *		@link action
+ *		@group:	レイヤ操作(アクション)
+ */
+kt.fgact	= function(mp)
+{
+	return tagHandlers.action(mp);
+} incontextof kag;
+
+//-----------------------------------------------------------------------------
+//
+@endif

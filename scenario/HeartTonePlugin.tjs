@@ -1,0 +1,555 @@
+﻿/*-----------------------------------------------------------------------------
+/	Copyright (C) TYPE-MOON All Rights Reserved.
+/		心音効果プラグイン
+/----------------------------------------------------------------------------*/
+@if(__HEARTTONE_PLUGIN_DEFINED__==0)
+@set(__HEARTTONE_PLUGIN_DEFINED__=1)
+
+Scripts.execStorage("BasePlugin.tjs");
+
+class HeartTonePlugin extends AsyncAnimationBasePlugin
+{
+	var	name = "hearttone";	//	アクションの名称
+@if(IS_TLE)
+	var	title= "心音効果";	//	TLEのプロパティメニューに表示するタイトル
+@endif
+
+	//	設定
+	var	setable	= [	//	実行時間と効果音の対応
+		1000,	"se029",
+		1500,	"se028",
+		9999,	"se030"
+	];
+
+	//	パラメータ
+	var	params	= [
+//		[ 名称,				規定値,			範囲(配列/型),				説明 ],
+		[ "time",			1000,			[ 1, 10000 ],				"一拍の長さ" ],
+		[ "count",			1,				[ 1, 99 ],					"拍動回数" ],
+//		[ "maccel",			"easeinquart",	equations.functions,		"加速度" ],
+		[ "magnify",		105,			[ 100, 200 ],				"最大拡大率" ],
+		[ "opacity",		128,			[ 1, 255 ],					"不透明度" ],
+		[ "color",			0xFF0000,		"color",					"掛け合わせる色" ],
+		[ "coloropacity",	64,				[ 0, 255 ],					"色の濃さ" ],
+		[ "addtime",		0,				[ 0, 100 ],					"一拍毎に変動する時間(+なら次第にゆっくり、-なら次第に早く)" ],
+		[ "mintime",		60000 / 200,	[ 100, 1000 ],				"一拍の最小限の長さ" ],
+		[ "status",			"stop",			[ "play", "stop" ],			"実行中かどうか" ]
+	];
+
+	//	単発で実行されるので、状態は保存しない(storeKeys, storePageKeys = [])
+
+	function HeartTonePlugin()
+	{
+		super.AsyncAnimationBasePlugin(...);
+	}
+
+	//	ページ毎の状態
+	property time { setter(v) { setprop("time", v); } getter { return getprop("time"); } }
+//	property maccel { setter(v) { setprop("maccel", v); } getter { return getprop("maccel"); } }
+	property magnify { setter(v) { setprop("magnify", v); } getter { return getprop("magnify"); } }
+	property opacity { setter(v) { setprop("opacity", v); } getter { return getprop("opacity"); } }
+	property count { setter(v) { setprop("count", v); } getter { return getprop("count"); } }
+	property color { setter(v) { setprop("color", v); } getter { return getprop("color"); } }
+	property coloropacity { setter(v) { setprop("coloropacity", v); } getter { return getprop("coloropacity"); } }
+	property addtime { setter(v) { setprop("addtime", v); } getter { return getprop("addtime"); } }
+	property mintime { setter(v) { setprop("mintime", v); } getter { return getprop("mintime"); } }
+
+	property imageLayer { setter(v) { setprop("layer", v); } getter { return getprop("layer"); } }
+
+	//	ページを初期化するためのデータを返す
+	function getInitializedPage()
+	{
+		var	elm	= super.getInitializedPage();
+
+		elm.layer	= void;		//	使用するレイヤー
+
+		return elm;
+	}
+
+	function setVisible(vis)
+	{
+		imageLayer.visible	= vis if imageLayer != void;
+	}
+
+	function doPlay(tick)
+	{
+//		dm("HeartTone.doPlay("+tick+"/"+starttick+")["+(tick - starttick)+"]: "+page.name);
+		var	past	= tick - starttick;
+		var	interval= time;
+		var	cnt		= count;
+		while(past > interval)
+		{
+			past	-= interval;
+			if(addtime != 0 && addtime < 2.0)
+				interval	*= addtime;	//	比率で変化
+			else
+				interval	+= addtime;	//	決まった値で変化
+			if(interval < mintime)
+				interval	= mintime;	//	下限値
+
+			cnt--;
+			if(cnt < 1)
+			{
+				stop();
+				return false;
+			}
+		}
+
+		//	状態を計算する
+		var	half_interval	= interval \ 2;
+		past= interval - past if past > half_interval;
+		var	per	= global.equations.calc(10, past, 0.0, 1.0, half_interval);	//	easeInQuart
+//		dm("  per = "+per+" / past = "+past+" / interval = "+interval);
+
+		//	レイヤーが存在しなければ、作成する
+		if(imageLayer == void)
+		{
+@if(IS_TLE)
+			imageLayer	= new HeartToneImageLayer(kag, getCanvasLayer("HeartToneLayer"), page);
+@endif
+@if(!IS_TLE)
+			imageLayer	= new HeartToneImageLayer(kag, page);
+@endif
+			imageLayer.init(color, coloropacity);
+		}
+
+		//	レイヤーの状態を更新する
+		with(imageLayer)
+		{
+@if(!IS_TLE)
+			.parent	= page if .parent != page;
+@endif
+			.setPos(0, 0);
+			.opacity	= per * opacity;
+			.zoomx = .zoomy = (magnify - 100) * per + 100;
+		}
+		return true;
+	}
+
+	function doStop()
+	{
+//		dm("HeartTone.doStop(): "+page);
+		if(imageLayer != void)
+		{
+			invalidate imageLayer;
+			imageLayer	= void;
+		}
+	}
+
+	function clear()
+	{
+		var	keys	= getAllItems();
+		for(var i=0; i<keys.count; i+=2)
+			invalidate keys[i+1].layer if keys[i+1].layer != void;
+		super.clear();
+	}
+}
+
+/*
+ *	心音を示す表示を行なうレイヤー
+ *		画面いっぱいに表示されるので、BaseLayer と同じように処理する
+ */
+@if(IS_TLE)
+class HeartToneImageLayer extends AffineLayer
+@endif
+@if(!IS_TLE)
+class HeartToneImageLayer extends GraphicLayer
+@endif
+{
+	function HeartToneImageLayer(win, par, page)
+	{
+@if(IS_TLE)
+		super.AffineLayer(...);
+		this.page	= page;			//	表示先のページ(parent とは異なるので)
+@endif
+@if(!IS_TLE)
+		super.GraphicLayer(...);
+@endif
+		name	= "HeartToneImage";
+
+		hitThreshold= 256;
+		absolute	= 1000000 - 1;	//	メッセージレイヤーより奥
+		visible		= false;		//	false でないと正常動作しない
+//		name	+= Scripts.getTraceString();
+	}
+
+	function init(color, coloropacity)
+	{
+		//	現在画面上に表示されている内容(除、メッセージレイヤー等)を _image にコピー
+		if(!visible)
+		{
+@if(IS_TLE)
+			if(!page.hasImage)
+				return;
+			var	w = page.baseWidth, h = page.baseHeight;
+			setSize(w, h);
+			setSizeToImageSize();
+			var	l = page.baseLeft, t = page.baseTop;
+			var	pw	= l + w > page.imageWidth ? page.imageWidth - l : w;
+			var	ph	= t + h > page.imageHeight ? page.imageHeight - t : h;
+			piledCopy(0, 0, page, l, t, pw, ph);
+@endif
+@if(!IS_TLE)
+			var	w = parent.width, h = parent.height;
+			setSize(w, h);
+			setSizeToImageSize();
+			//	piledCopy すると、なぜかベースの画像が取得できないので、地道に合成する
+			operateRect(0, 0, parent, 0, 0, w, h, omOpaque, 255);
+			var	layers	= parent == kag.fore.base ? kag.fore.layers : kag.back.layers;
+			var dspLays = kag.forEachGetToPileLayers( parent == kag.fore.base ? "fore" : "back" );
+			for(var i=0; i<layers.count; i++)
+			{
+				with(layers[i])
+				{
+					if( layers[i] === void ) continue;
+					if(.visible && .opacity > 0)
+						dspLays.add(layers[i]);
+				}
+			}
+			//absolute順にソート
+			for( var i=0; i<dspLays.count-1; i++ )
+			{
+				for( var j=dspLays.count-1; j > i; j-- )
+				{
+					if( dspLays[j-1].absolute > dspLays[j].absolute )
+						dspLays[j-1] <-> dspLays[j];
+				}
+			}
+			for( var i=0; i<dspLays.count; i++ )
+			{
+				with(dspLays[i])
+				{
+					if(.visible && .opacity > 0)
+					{
+						dm("dspLays[" + i + "].absolute = " + .absolute + " name=" + .name + " obj=" + dspLays[i]);
+						if( typeof .screenSizeLayer != "undefined" && .screenSizeLayer )
+						{
+							pileRect(0, 0, dspLays[i], 0, 0, w, h, .opacity);
+						}
+						else
+						{
+							pileRect(.left, .top, dspLays[i], 0, 0, .width, .height, .opacity);
+						}
+					}
+				}
+			}
+			//_image.saveLayerImage("HT.bmp","bmp24");
+/*			var	vischg	= function(kag, vis)
+			{
+				for(var i=0; i<kag.fore.messages.count; i++)
+					kag.fore.messages[i].visible <-> vis[i];
+			};
+			var	vis	= [];
+			vischg(kag, vis);
+			piledCopy(0, 0, parent, 0, 0, w, h);
+			vischg(kag, vis);
+*/
+@endif
+			if(coloropacity > 0)
+			{
+				face	= dfOpaque;
+				colorRect(0, 0, w, h, color & 0xFFFFFF, coloropacity & 0xFF);
+				face	= dfAlpha;
+			}
+			visible	= true;
+		}
+	}
+}
+
+/*----------------------------------------------------------------------------/
+/	編集時、実行時どちらにも必要な定義
+/----------------------------------------------------------------------------*/
+global.htp	= new HeartTonePlugin();
+var	HeartToneObjectKeys			= getPluginPropertyKeys(global.htp.params);
+var	HeartToneObjectKeysInit		= getPluginPropertyInit(global.htp.params);
+var	HeartToneObjectDefaultValues	= createDefaultValuesFunc(HeartToneObjectKeys, HeartToneObjectKeysInit, false);
+var	HeartToneObjectMiddleProperty	= %[time:true, /*maccel:true, */magnify:true, opacity:true, count:true, color:true,
+	coloropacity:true, addtime:true, mintime:true];
+
+/*----------------------------------------------------------------------------/
+/	プラグインのインスタンス作成とTLObjectの定義
+/----------------------------------------------------------------------------*/
+@if(!IS_TLE)
+kag.addPlugin(global.HeartTone_object = new HeartTonePlugin(kag));	//	TLE ではTLE側で対応する
+PluginDefaultValues[HeartTone_object.name]	= HeartToneObjectDefaultValues;
+
+//	プラグインリストへ登録する
+global.effectPluginList[global.HeartTone_object.name]	= global.HeartTone_object;
+
+//	TLオブジェクト
+class TLHeartToneObject extends TLPluginObject
+{
+	function TLHeartToneObject()
+	{
+		super.TLPluginObject(...);
+	}
+
+	property keys				{ getter { return HeartToneObjectKeys; } }
+	property defaultValues		{ getter { return HeartToneObjectDefaultValues; } }
+	property middleProperties	{ getter { return HeartToneObjectMiddleProperty; } }
+	property storageProperties	{ getter { return ""; } }
+}
+
+@endif
+
+/*----------------------------------------------------------------------------/
+/	KAGタグの定義
+/----------------------------------------------------------------------------*/
+@if(!IS_TLE)
+/**TAG
+ *	hearttone - 心拍実行.
+ *	@param	page	"fore"/"back" 省略時"fore"
+ *	@param	time			一拍の長さ
+ *	@param	count			拍動回数
+ *	@param	magnify			最大拡大率
+ *	@param	opacity			不透明度
+ *	@param	color			掛け合わせる色
+ *	@param	coloropacity	色の濃さ
+ *	@param	addtime			一拍毎に変動する時間(+なら次第にゆっくり、-なら次第に早く)
+ *	@param	mintime			一拍の最小限の長さ
+ *	@param	status			"play", "stop" 実行中かどうか
+ *	@param 	delay			動作開始遅延時間
+ *	@param	nowait			終了を待たない(default: false)
+ *	@param	canskip			終了を待つとき、クリックでのスキップができるか(default: true)
+ *		@link:				hearttone, hearttoneact
+ *		@group:				心音効果プラグイン
+ */
+kag.tagHandlers.hearttone	= function(elm)
+{
+	with(elm)
+	{
+		.status	= "play" if .status === void;
+		.visible= true;
+		.page	= "fore" if .page === void;
+		.time	= HeartTone_object.params[0][1] if .time === void;	//	時間の設定がなければ、規定値にする
+		HeartTone_object.call(elm);
+		if(.nowait)
+			return 0;
+		else
+		{
+			.time	*= .count if .count !== void;	//	回数分だけ時間を待つ
+			return doWait(elm);
+		}
+	}
+} incontextof kag;
+
+/**TAG
+ *	hearttoneact - 心拍の動的実行.
+ *	@param targetpage	"fore"/"back"
+ *	@param props		変化させるプロパティをカンマ区切りで指定する
+ *						段階的に変化させないものには先頭にハイフンをつける
+ *						プロパティ名については hearttone タグを参照
+ *						ex) props=-visible,count
+ *	@param keys			時間毎の状態(キーフレーム)をカッコで括り列挙する
+ *						内訳は順に(time,accel,interpolation,props[0],props[1]...)
+ *						・time:				ミリ秒
+ *						・accel:			equationを用いた加速度(変化カーブ)指定
+ *						・interpolation: 	n=なし / l:線形補間(デフォルト) / s:スプライン補間
+ *						ex) keys=(0,,l,,10)(1000,,n,5)
+ *		@link:				action, equation, hearttone, hearttoneact
+ *		@group:				心音効果プラグイン
+ */
+kt.hearttoneact		= function(mp)
+{
+	mp.plugin	= HeartTone_object.name;
+	mp.interval = 50 if mp.interval === void;
+	return tagHandlers.action(mp);
+} incontextof kag;
+kag.tagHandlers.htact	= kag.tagHandlers.hearttoneact;	//	別名
+
+@endif
+
+/*----------------------------------------------------------------------------/
+/	TLEで編集するためのObject,Layer,Properties登録
+/----------------------------------------------------------------------------*/
+@if(IS_TLE)
+Scripts.execStorage("PluginObject.tjs");
+Scripts.execStorage("PluginLayer.tjs");
+Scripts.execStorage("hearttone_property.tjs");
+
+var	HeartToneObjectPropertyType	= getPluginPropertyType(global.htp.params);
+var	HeartToneObjectPropertyRange	= getPluginPropertyRange(global.htp.params);
+
+class HeartToneObject extends PluginObject
+{
+	var	staticProperties	= [];	//	全ての HeartToneObject で同一の値となるプロパティ
+
+	function HeartToneObject()
+	{
+		super.PluginObject(...);
+		pluginName = name = "hearttone";
+		plugin = global.pluginManager.get(name);
+	}
+
+	property keys						{ getter { return HeartToneObjectKeys; } }
+	property initvalues					{ getter { return HeartToneObjectKeysInit; } }
+	property defaultValues				{ getter { return HeartToneObjectDefaultValues; } }
+	property storageType				{ getter { return ""; } }
+	property notStateProperties			{ getter { return []; } }
+	property createPropertyMenuMethod	{ getter { return create_hearttone_property; } }
+	property eventPropertyMenuMethod	{ getter { return onChildValueModified_hearttone_property; } }
+	property middleProperties			{ getter { return HeartToneObjectMiddleProperty; } }
+	property propertyTypes				{ getter { return HeartToneObjectPropertyType; } }
+	property propertyRanges				{ getter { return HeartToneObjectPropertyRange; } }
+	property isOutputTag				{ getter { return false; } }
+
+	//	状況を再現するタグ
+	function getStateTag(frame, shift)
+	{
+		var	tag	= super.getStateTag(...);
+		tag.name	= "hearttone";
+		tag.reset("status") if tag.get("status") == "play";
+		return tag;
+	}
+
+	//	タグで状況を再現する(statusが無指定時playのためオーバーライド)
+	function setStateTag(frame, tag)
+	{
+		if(isStateTag(tag))
+		{
+			tag.set("status", "play") if tag.get("status") == void;
+			timeline.setFrameStateFromTag(frame, tag, keys, defaultValues);
+			return true;
+		}
+		return false;
+	}
+
+	//	アクションタグを取得
+	function getActionTag(st, ed)
+	{
+		//	タグを生成
+		var	tag	= new KAGTagData();
+		tag.name= "hearttoneact";
+		tag.set("targetpage", "fore");	//	eval して実体を示す文字列(fore,backのみkag[x].baseに読み替える)
+
+		var	ks	= [];
+		ks.assign(keys);
+		ks.add("visible");
+		if(timeline.getKeyDataToTag(ks, defaultValues, root.frameRate, st, ed, void, tag))
+		{
+			return tag;
+		}
+		else
+			return void;
+	}
+
+	//	このオブジェクトの状態を示すタグかどうか
+	function isStateTag(tag)
+	{
+		var	tags	= %[
+			hearttone:[],				//状態変更タグ
+		];
+		var	params	= tags[tag.name];
+		if(params == void)
+			return false;
+		for(var i=0; i<params.count; i++)
+		{
+			if(tag.get(params[i][0]) != params[i][1])
+				return false;
+		}
+		return true;
+	}
+
+	//	対応できるactionタグかどうか
+	function isActionTag(tag)
+	{
+		return ((tag.name == "action" && tag.get("plugin") == pluginName) || tag.name == "hearttoneact" || tag.name == "htact");
+	}
+}
+postProcessOfObject("HeartToneObject", HeartToneObjectKeys);
+
+class HeartToneLayer extends PluginLayer
+{
+	var	plugin;
+
+	function HeartToneLayer(win, par, obj)
+	{
+		super.PluginLayer(...);
+
+		neutralColor= 0x00000000;
+		setImageSize(parent.baseWidth, parent.baseHeight);
+		setSizeToImageSize();
+		setPos(parent.baseLeft, parent.baseTop);
+		plugin		= obj.plugin;
+		hasImage	= false;
+	}
+
+	function finalize()
+	{
+		plugin.eraseImageLayer(parent);	//	対応するレイヤーを破棄する
+		super.finalize(...);
+	}
+
+	property time { setter(v) { object.time = v; } getter { return object.time; } }
+//	property maccel { setter(v) { object.maccel = v; } getter { return object.maccel; } }
+	property magnify { setter(v) { object.magnify = v; } getter { return object.magnify; } }
+	property opacity { setter(v) { object.opacity = v; } getter { return object.opacity; } }
+	property count { setter(v) { object.count = v; } getter { return object.count; } }
+	property color { setter(v) { object.color = v; } getter { return object.color; } }
+	property coloropacity { setter(v) { object.coloropacity = v; } getter { return object.coloropacity; } }
+	property addtime { setter(v) { object.addtime = v; } getter { return object.addtime; } }
+	property mintime { setter(v) { object.mintime = v; } getter { return object.mintime; } }
+
+	property status { setter(v) { object.status = v; } getter { return object.status; } }
+
+	function moveBase(bl, bt)
+	{
+		setPos(bl, bt);
+	}
+
+	function updateCurrentState()
+	{
+		//	一番近いキーフレームを探す
+		var	kf	= object.prevKeyFrame(1, current+1);	//	current のままだと、現在のフレームにキーフレームがあったとき取得できない
+
+		//	starttick をそのキーフレームにあわせる
+		with(object.plugin)
+		{
+			.page	= parent;	//	starttick の書き込み先を指定するため
+			if(kf != void)
+				.starttick	= int(kf.frame * data.mspf);
+			else
+				.starttick	= 0;
+		}
+
+		super.updateCurrentState();
+	}
+}
+
+global.addMethodName	= "addHeartTone";	//	PluginManager も参照するので、統合しないこと
+CV_object2layer["HeartToneObject"]	= [ "HeartToneLayer", void, "layers" ];
+OD_add.add(["addHeartTone", "HeartToneObject", true]);
+OD_parentageConsistency["HeartToneObject"]	= function(parent)
+{
+	if(parent != "BGObject" && parent != "PartBgObject")
+	{
+		popupMessage("心音効果プラグインは背景レイヤーの下にのみ配置可能です");
+		return false;
+	}
+	return true;
+};
+
+//キャンバスへのボタン追加
+CV_addButtons["HeartToneObject"] = [ [ "hearttone",, "心音効果のタグをクリップボードへ"],
+									 [ "action",, "選択されているオブジェクトの全区間をactionタグにします。" ] ];
+global.CanvasLayer.hearttone_override_onButtonDown = global.CanvasLayer.onButtonDown;
+global.CanvasLayer.onButtonDown = function(btn)
+{
+	hearttone_override_onButtonDown(...);
+	switch(btn.name)
+	{
+	case "hearttone":
+		data.copyState();
+		break;
+	}
+} incontextof global.CanvasLayer;
+//エディタのタグ解釈部の追加
+__isactiontag["htact"] = true;
+__isactiontag["hearttoneact"] = true;
+
+@endif
+
+invalidate global.htp;
+delete global.htp;
+
+@endif

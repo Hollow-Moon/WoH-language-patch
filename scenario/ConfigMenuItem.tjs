@@ -1,0 +1,2207 @@
+﻿/*-----------------------------------------------------------------------------
+/	Copyright (C) TYPE-MOON All Rights Reserved.
+/		コンフィグ用のメニューアイテム
+/----------------------------------------------------------------------------*/
+@if(__CONFIGMENUITEM_DEFINED__==0)
+@set(__CONFIGMENUITEM_DEFINED__=1)
+
+//	数値を表示するメニューアイテム
+class NumberMenuItemLayer extends MenuItemLayer
+{
+	var	spacing	= 3;
+	var	max, min;	//	値の範囲
+	var aligncenter = false;
+
+	function NumberMenuItemLayer()
+	{
+		super.MenuItemLayer(...);
+		addImage(, true) if _orgimage == this;
+	}
+
+	function finalize()
+	{
+		super.finalize();
+	}
+
+	property useTimeline	{ getter { return false; } }
+
+	//	対象となるオブジェクト
+	var	_target, _targetObject;
+	property target
+	{
+		setter(v)
+		{
+			_target	= void;
+			if(typeof v == "Object")
+				_targetObject	= v;
+			else if(typeof v == "String")
+			{
+				_targetObject	= find(v);
+				_target			= v;
+			}
+		}
+		getter
+		{
+			if(_targetObject != void && _targetObject isvalid)
+				return _targetObject;
+			var	obj;
+			if(_target != void && typeof _target == "String" && (obj = find(_target)) != void)
+				return _targetObject = obj;
+			return void;
+		}
+	}
+
+	//	桁数
+	var	changed	= false;
+	var	_digit;
+	property digit
+	{
+		setter(v)
+		{
+			v	= +v;
+			if(digit !== v)
+			{
+				_digit	= v;
+				changed	= true;
+				update();
+			}
+		}
+		getter	{ return _digit; }
+	}
+
+	//	値
+	var	_value;
+	property value
+	{
+		setter(v)
+		{
+			v	= Math.min(max, +v) if max !== void;
+			v	= Math.max(min, +v) if min !== void;
+			if(v !== value)
+			{
+				_value	= v;
+				if(target != void && target instanceof "SliderMenuItemLayer")
+					target.updatePos();
+				changed	= true;
+				update();
+			}
+		}
+		getter	{ return _value; }
+	}
+
+	var lastofs;
+	function onPaint()
+	{
+		//	数字部分を再描画
+		if(changed)
+		{
+			_image	= addImage(1);	//	数字を並べるレイヤーを追加(_orgimage には0〜9までの数字画像)
+
+			//	桁数、数字画像に合わせたレイヤーサイズにする
+			//	負の値を認める場合は0〜9と-の11パターンを持っている必要がある
+			var	c	= center, vc = vcenter;	//	記憶
+			var	v	= string (int(+value));
+			var	iw	= _orgimage.imageWidth \ ((min<0)?11:10), ih = _orgimage.imageHeight;
+			_image.setImageSize((iw + spacing) * digit - spacing, ih);
+			_image.setSizeToImageSize();
+			_orgimage.setSize(_image.width, _image.height);
+			center	= c, vcenter = vc;	//	復元
+
+			//	値を描画
+			var	l	= (iw + spacing) * (digit - 1), d = v.length - 1;
+			var ofs = 0;
+
+			//センタリング指定がある場合
+			if( aligncenter )
+			{
+				var diff = v.length - digit;
+				ofs = diff * (iw + spacing) / 2;
+				if( lastofs != ofs )	//描画幅に変更があったら領域全体をクリア
+					_image.fillRect(0, 0, (iw + spacing) * digit, ih, 0);
+				lastofs = ofs;
+			}
+			for(var i=0; i<digit; i++)
+			{
+				//dm("v=" + v + " d=" + d + " dec=" + ((d>-1)?v[d]:"") );
+				if(d >= 0 && v[d] != "")
+				{
+					//dm("copyRect [" + l + "] " + v[d]);
+					_image.copyRect(ofs+l, 0, _orgimage, iw * ((v[d]!="-") ? +v[d] : 10), 0, iw, ih);
+					_image.fillRect(ofs+l-spacing, 0, spacing, ih, 0) if l >= iw;
+				}
+				else
+					_image.fillRect(ofs+l-spacing, 0, iw+spacing, ih, 0);
+				l	-= iw + spacing;
+				d--;
+			}
+			changed	= false;
+			_doAffine	= _doOffset	= true;	//	_image の変更を反映させる
+		}
+//		var	doa	= _doAffine, doo = _doOffset;
+/*		//	拡大縮小回転に対応しない場合
+		with(global.KAGLayer)
+		{
+			//	桁数、数字画像に合わせたレイヤーサイズにする
+			var	iw	= _image.imageWidth \ 10, ih = _image.imageHeight;
+			.setImageSize((iw + spacing) * digit - spacing, ih);
+			.setSizeToImageSize();
+
+			//	値を描画
+			var	v	= string (+value);
+			var	l	= (iw + spacing) * (digit - 1), d = v.length - 1;
+			for(var i=0; i<digit; i++)
+			{
+				if(v[d] != "")
+				{
+					.copyRect(l, 0, _image, iw * +v[d], 0, iw, ih);
+					.fillRect(l-spacing, 0, spacing, ih, 0) if l >= iw;
+				}
+				else
+					.fillRect(l-spacing, 0, iw+spacing, ih, 0);
+				l	-= iw + spacing;
+				d--;
+				if(d < 0)
+					break;
+			}
+		}
+		_doAffine	= false;
+*/		super.onPaint();
+//		copy2Contrary(doa, doo);
+	}
+}
+
+//	BGM再生時間(99:59:999)を表示するメニューアイテム
+class PlayTimeMenuItemLayer extends MenuItemLayer
+{
+	var	digit	= 9;	//	--:--.--- = 9桁(固定) → 5桁には変更可能
+	var	chrpat	= 13;	//	文字の種類は0〜9と" "(スペース)、":"(コロン)と"."(カンマ)の13種類
+	var	spacing	= 0;
+	var	markWidth;		//	コロンとカンマのサイズが異なる場合の幅指定
+
+	function PlayTimeMenuItemLayer()
+	{
+		super.MenuItemLayer(...);
+		time	= 0;
+		addImage(, true) if _orgimage == this;
+	}
+
+	function finalize()
+	{
+		continuous	= false;
+		super.finalize();
+	}
+
+	property useTimeline	{ getter { return false; } }
+
+	//	continuousHandler を時間が空いたら実行させるかどうか
+	var	_continuous	= false;
+	property continuous
+	{
+		setter(v)
+		{
+			if(v !== continuous)
+			{
+				_continuous	= v;
+				if(v)
+					System.addContinuousHandler(continuousHandler) if continuousHandler != void;
+				else
+					System.removeContinuousHandler(continuousHandler) if continuousHandler != void;
+			}
+		}
+		getter	{ return _continuous; }
+	}
+
+	//	このメニューアイテムに対応する ContinuousHandler
+	//	通常は function { time = kag.bgm.currentBuffer.position; } が設定されるものと思われる
+	var	_continuousHandler	= void;
+	property continuousHandler
+	{
+		setter(v)
+		{
+			if(v !== continuousHandler)
+			{
+				System.removeContinuousHandler(continuousHandler) if continuousHandler != void && continuous;
+				_continuousHandler	= v;
+				System.addContinuousHandler(continuousHandler) if continuousHandler != void && continuous;
+			}
+		}
+		getter	{ return _continuousHandler; }
+	}
+
+	//	時間(ミリ秒単位)
+	var	_time;
+	var	changed	= false;
+	property time
+	{
+		setter(v)
+		{
+			if(v !== time)
+			{
+				_time	= +v;
+				changed	= true;
+				update();
+			}
+		}
+		getter	{ return _time; }
+	}
+
+	property millisecond{ getter { return time % 1000; } }
+	property second		{ getter { return (time \ 1000) % 60; } }
+	property minute		{ getter { return time \ 60000; } }
+
+	var	chr2idx	= %[" " => 10, ":" => 11, "." => 12];
+	function onPaint()
+	{
+		if(changed)
+		{
+			_image	= addImage(1);	//	数字を並べるレイヤーを追加(_orgimage には0〜9までの数字画像)
+
+			//	レイヤーサイズの調整
+			var	iw, w;
+			var	ih	= _orgimage.imageHeight;
+			if(markWidth == void)
+			{
+				iw	= _orgimage.imageWidth \ chrpat;
+				w	= (iw + spacing) * digit - spacing;
+			}
+			else
+			{
+				var	mc	= digit > 5 ? 2 : 1;	//	記号の数(ミリ秒を表示しないなら、記号はコロンの一つだけ)
+				iw	= (_orgimage.imageWidth - markWidth) \ (chrpat - 2);
+				w	= (iw + spacing) * (digit - mc) + (markWidth + spacing) * mc - spacing;
+			}
+			var	c = center, vc = vcenter;
+			_image.setImageSize(w, ih);
+			_image.setSizeToImageSize();
+			_orgimage.setSize(_image.width, _image.height);
+			center	= c, vcenter = vc;
+
+			//	描画
+			var	l	= 0;
+			var	str	= "%2d:%02d.%03d".sprintf(minute, second, millisecond);
+			_image.fillRect(0, 0, _image.width, _image.height, neutralColor) if spacing < 0;
+			for(var i=0; i<digit; i++)
+			{
+				var	chr	= str[i];
+				var	idx	= chr2idx[chr];
+				idx	= +chr if idx === void;
+				var	w = iw, sl = iw * idx;
+				if(markWidth != void && idx > 10)
+				{
+					w	= markWidth;
+					sl	-= (idx - 11) * (iw - markWidth);
+				}
+				if(spacing >= 0)
+				{
+					_image.copyRect(l, 0, _orgimage, sl, 0, w, ih);
+					_image.fillRect(l+iw, 0, spacing, ih, neutralColor) if spacing > 0;
+				}
+				else
+					_image.operateRect(l, 0, _orgimage, sl, 0, w, ih, omAlpha);
+				l	+= w + spacing;
+			}
+			changed	= false;
+			_doAffine = _doOffset	= true;
+		}
+//		var	doa	= _doAffine, doo = _doOffset;
+		super.onPaint(...);
+//		copy2Contrary(doa, doo);
+	}
+}
+
+//	スライドして値を設定するメニューアイテム
+class SliderMenuItemLayer extends MenuItemLayer
+{
+	var	targetprop;
+
+	function SliderMenuItemLayer()
+	{
+		super.MenuItemLayer(...);
+		this.pressse	= "";	//	押下したときは効果音を再生しない
+	}
+
+	function finalize()
+	{
+		super.finalize();
+	}
+
+	property useTimeline	{ getter { return false; } }
+
+	function updatePos()
+	{
+		_doOffset	= true;
+		update();
+	}
+
+	//	対象となるオブジェクト
+	var	_target, _targetObject;
+	property target
+	{
+		setter(v)
+		{
+			_target	= void;
+			if(typeof v == "Object")
+				_targetObject	= v;
+			else if(typeof v == "String")
+			{
+				_targetObject	= find(v);
+				_target			= v;
+			}
+		}
+		getter
+		{
+			if(_targetObject != void && _targetObject isvalid)
+				return _targetObject;
+			var	obj;
+			if(_target != void && typeof _target == "String" && (obj = find(_target)) != void)
+				return _targetObject = obj;
+			return void;
+		}
+	}
+
+	//	スライド方向(trueなら縦)
+	var	_vertical	= false;
+	property vertical
+	{
+		setter(v)
+		{
+			if(vertical !== v)
+			{
+				_vertical	= v;
+				updatePos();	//	位置更新
+			}
+		}
+		getter	{ return _vertical; }
+	}
+
+	//	スライドが逆(大<->小ならtrue)
+	var	_invert	= false;
+	property invert
+	{
+		setter(v)
+		{
+			if(invert !== v)
+			{
+				var	val	= value;
+				_invert	= v;
+				value	= val;
+				updatePos();
+			}
+		}
+		getter	{ return _invert; }
+	}
+
+	//	値の範囲
+	var	valueRange, _1_valueRange;
+	var	_min;
+	property min
+	{
+		setter(v)
+		{
+			v	= +v;
+			if(min !== v)
+			{
+				_min	= v;
+				_value	= Math.max(value, min);
+				valueRange	= max - min;
+				_1_valueRange= 1 / valueRange;
+				updatePos();	//	位置更新
+			}
+		}
+		getter	{ return _min; }
+	}
+	var	_max;
+	property max
+	{
+		setter(v)
+		{
+			v	= +v;
+			if(max !== v)
+			{
+				_max	= v;
+				_value	= Math.min(value, max);
+				valueRange	= max - min;
+				_1_valueRange= 1 / valueRange;
+				updatePos();	//	位置更新
+			}
+		}
+		getter	{ return _max; }
+	}
+
+	function setTargetValue(v)
+	{
+		var	trg	= target;
+		if(trg != void)
+			trg[targetprop]	= v;
+		else
+			_value	= v;
+	}
+
+	//	値
+	var	_value;
+	property value
+	{
+		setter(v)
+		{
+			v	= Math.max(min, +v) if min !== void;
+			v	= Math.min(max, +v) if max !== void;
+			if(value !== v)
+			{
+				setTargetValue(v);
+				updatePos();	//	位置更新
+			}
+		}
+		getter
+		{
+			var	trg	= target;
+			return trg != void && targetprop != void ? trg[targetprop] : _value;
+		}
+	}
+
+	//	center/vcenterが中央の位置で、この値の範囲で移動する
+	var	_range, _1_range;
+	property range
+	{
+		setter(v)
+		{
+			v	= +v;
+			if(range !== v)
+			{
+				_range	= v;
+				_1_range	= 1 / range;
+				updatePos();
+			}
+		}
+		getter	{ return _range * (vertical ? zoomy : zoomx) * 0.01; }
+	}
+
+	property pos
+	{
+		setter(v)
+		{
+			if(invert)
+				value = ((range - v + (0.5 * range * _1_valueRange)) * _1_range + 0.5) * valueRange + min;
+			else
+				value = ((v + (0.5 * range * _1_valueRange)) * _1_range + 0.5) * valueRange + min;
+		}
+		getter
+		{
+			if(invert)
+				return int(range - (((value - min) * _1_valueRange) - 0.5) * range);
+			else
+				return int((((value - min) * _1_valueRange) - 0.5) * range);
+		}
+	}
+
+	var	updateCursor;	//	位置を調整したときにマウスカーソルを追随させるか
+	function doOffset(mx, my)
+	{
+		var	ll = realLeft, lt = realTop;
+		if(vertical)
+			super.doOffset(mx, my + pos - (invert ? range : 0));
+		else
+			super.doOffset(mx + pos - (invert ? range : 0), my);
+		if(updateCursor && (ll != realLeft || lt != realTop))
+		{
+			setCursorPos(afx, afy);
+			window.mouseMoveByKeyboard	= true;	//	カーソルを移動させることで"mouse"に変化しないように
+			window.hideMouseCursor();
+			updateCursor	= false;
+		}
+	}
+
+	var	lastbutton, diff;
+	function onMouseDown(x, y, button, shift)
+	{
+ 		if(button === mbLeft && System.getKeyState(VK_RBUTTON) ||
+ 		   button === mbRight && System.getKeyState(VK_LBUTTON) )
+			return;			//同時押しになっているので無効操作とする
+
+		super.onMouseDown(...);
+		if(button === mbLeft)
+		{
+			lastbutton	= button;
+			diff	= (vertical ? (parent.cursorY - vcenter) : (parent.cursorX - center)) - pos;
+			executeString(mousedown) if typeof this.mousedown != "undefined";	//elm経由で渡されるのでイベント名は全て小文字で
+		}
+	}
+
+	function onMouseMove(x, y)
+	{
+		super.onMouseMove(...);
+		if(lastbutton === mbLeft)
+		{
+			pos		= (vertical ? (parent.cursorY - vcenter) : (parent.cursorX - center)) - diff;
+			executeString(mousemove) if typeof this.mousemove != "undefined";	//elm経由で渡されるのでイベント名は全て小文字で
+		}
+	}
+
+	function onMouseUp(x, y, button, shift)
+	{
+		super.onMouseUp(...);
+		if(button === lastbutton)
+		{
+			executeString(mouseup) if typeof this.mouseup != "undefined";	//elm経由で渡されるのでイベント名は全て小文字で
+			lastbutton	= void;
+		}
+	}
+
+	//	指定のキー方向で値を変更する
+	var	step	= 1;
+	function onKeyDown(key, shift)
+	{
+		if(key == (vertical ? VK_DOWN : VK_RIGHT))
+		{
+			value	+= (invert ? -step : step) * (shift & ssCtrl ? 10 : 1);
+			press();
+			executeString(keydown) if typeof this.keydown != "undefined";	//elm経由で渡されるのでイベント名は全て小文字で
+			updateCursor	= true;
+		}
+		else if(key == (vertical ? VK_UP : VK_LEFT))
+		{
+			value	+= (invert ? step : -step) * (shift & ssCtrl ? 10 : 1);
+			press();
+			executeString(keydown) if typeof this.keydown != "undefined";	//elm経由で渡されるのでイベント名は全て小文字で
+			updateCursor	= true;
+		}
+		else
+			return super.onKeyDown(...);
+	}
+
+	function onKeyUp(key, shift)
+	{
+		if(key == VK_UP || key == VK_RIGHT || key == VK_DOWN || key == VK_LEFT)
+		{
+			release();
+			updateCursor	= true;
+		}
+		else
+			return super.onKeyUp(...);
+	}
+
+	//	フォーカスを得たら、マウスカーソルの位置を調整
+	function onFocus()
+	{
+		super.onFocus(...);
+		updateCursor	= true if window.inputDevice == "keyboard";
+	}
+
+	var	_left, _top;
+	property left
+	{
+		setter(v)
+		{
+			_left	= v;
+			if(screenSizeLayer)
+				calcAffine();
+			else
+				calcOffset();
+		}
+		getter	{ return _left; }
+	}
+
+	property top
+	{
+		setter(v)
+		{
+			_top	= v;
+			if(screenSizeLayer)
+				calcAffine();
+			else
+				calcOffset();
+		}
+		getter	{ return _top; }
+	}
+}
+
+//	スクロールバー用のスライダー
+class ScrollSliderMenuItemLayer extends SliderMenuItemLayer
+{
+	var	layerScroll	= true;	//	target のレイヤー内で、target より大きな範囲の為にスクロールする場合
+
+	function ScrollSliderMenuItemLayer()
+	{
+		super.SliderMenuItemLayer(...);
+		addImage(, true) if _orgimage == this;
+	}
+
+	function finalize()
+	{
+		super.finalize();
+	}
+
+	property focusable	{ setter(v){ super.focusable = false; } getter { return super.focusable; } }
+
+	var	changeSize	= true;	//	スライダーのサイズを変更
+
+	//	表示範囲の占める大きさ
+	var	_area;
+	property area
+	{
+		setter(v)
+		{
+			v	= +v;
+			if(area !== v)
+			{
+				_area	= v;
+				changeSize	= true;
+				updatePos();
+			}
+		}
+		getter	{ return _area; }
+	}
+	property areasize
+	{
+		getter
+		{
+			var	size	= int(range * area / (max + area - min));
+			var vaw = _orgimage.imageWidth;
+			vaw = viewareaWidth if viewarea != "";	//viewarea未設定時はviewareaWidth参照がエラーになる
+			return Math.max(vertical ? _orgimage.imageHeight : vaw, size);
+		}
+	}
+
+	//	移動範囲
+	property pos
+	{
+		setter(v)	{ var as = areasize; value = int(((v + (as >> 1) - (vertical ? afy : afx)) / (range - as) + 0.5) * (max - min) + min); }
+		getter		{ var as = areasize; return int(((value - min) / (max - min) - 0.5) * (range - as)) - (as >> 1) + (vertical ? afy : afx); }
+	}
+
+	function onPaint()
+	{
+		if(changeSize)
+		{//	max, min, area と range の比にあわせて、スライダーのサイズを変更
+			if(layerScroll)
+			{
+//				dmt(name+".onPaint()");
+				//	現在の状態を取得
+				if(vertical)
+				{
+					_area		= target.height;
+					_range		= target.height;
+				}
+				else
+				{
+					_area		= target.width;
+					_range		= target.width;
+				}
+				_max	= Math.max(min, target.areaHeight - area);
+			}
+
+			//	サイズ変更
+			with(_orgimage)
+				.setImageSize(.realImageWidth, .realImageHeight);	//	元画像のサイズに戻す
+			with(_image = addImage(1))
+			{
+				var	as	= areasize;
+				var	vaw	= _orgimage.imageWidth;
+				vaw = viewareaWidth if viewarea != "";	//viewarea未設定時はviewareaWidth参照がエラーになる
+				var	vac	= _orgimage.imageWidth \ vaw;
+				if(vertical)
+				{
+					.setImageSize(_orgimage.imageWidth, as);
+					.setSize(_orgimage.width, as);
+				}
+				else
+				{
+					.setImageSize(as * vac, _orgimage.imageHeight);
+					.setSize(as, _orgimage.imageHeight);
+				}
+//				_orgimage.setSize(.width, .height);
+
+				//	状態毎に描画
+				var	ow = _orgimage.imageWidth, oh = _orgimage.imageHeight;
+				if(vertical)
+				{
+					var	upsz	= (oh - 1) \ 2;
+					if(as >= oh)
+					{
+						.copyRect(0, 0, _orgimage, 0, 0, ow, upsz);
+						.stretchCopy(0, upsz, .imageWidth, .imageHeight - upsz * 2, _orgimage, 0, upsz, ow, 1, stNearest);
+						.copyRect(0, .imageHeight - upsz, _orgimage, 0, oh - upsz, ow, upsz);
+					}
+					else
+					{//	元画像より小さいので、上下部分も含めて縮小
+						var	hsz	= .imageHeight \ 2;
+						.stretchCopy(0, 0, .imageWidth, hsz, _orgimage, 0, 0, ow, upsz);
+						.copyRect(0, hsz, _orgimage, 0, upsz, .imageWidth, 1);
+						.stretchCopy(0, .imageHeight-hsz, .imageWidth, .imageHeight-hsz-1, _orgimage, 0, oh - upsz, ow, upsz);
+					}
+				}
+				else
+				{
+					var	sdsz	= (vaw - 1) \ 2;
+					.copyRect(0, 0, _orgimage, 0, 0, sdsz, oh);
+					var	l	= sdsz, w = vaw - sdsz * 2;
+					var	ws	= _orgimage._imageWidth \ vac;
+					var	ls	= (ws - 1) \ 2;
+					for(var i=0; i<vac; i++)
+					{
+						.stretchCopy(l, 0, w, oh, _orgimage, ls, 0, 1, oh);
+						.copyRect(l+w, 0, _orgimage, ls+1, 0, ws * 2, oh);
+						l	+= w + sdsz * 2;
+						ls	+= 1 + ws * 2;
+					}
+				}
+				setImageSize(.imageWidth, .imageHeight);	//	実際のサイズに合わせる
+			}
+
+			_doAffine	= true;
+			changeSize	= false;
+		}
+//		var	doa	= _doAffine, doo = _doOffset;
+		super.onPaint();
+//		copy2Contrary(doa, doo);
+	}
+
+	//	focusable=false にしたので、onFocus を呼び出すよう変更
+	function onMouseEnter()
+	{
+		if(!enabled || !isButton)
+			return;
+		onFocus();
+	}
+
+	property width
+	{
+		setter(v)
+		{
+			var	last	= center;	//	サイズの変化に中心位置が影響を受けないようにするため
+			if(_image != this)
+				_image.width = v;
+			else
+				global.KAGLayer.width	= v;
+			calcAffine();
+			center		= last;
+		}
+		getter		{ return _image != this ? _image.width : global.KAGLayer.width; }
+	}
+	property height
+	{
+		setter(v)
+		{
+			var	last	= vcenter;	//	サイズの変化に中心位置が影響を受けないようにするため
+			if(_image != this)
+				_image.height = v;
+			else
+				global.KAGLayer.height	= v;
+			calcAffine();
+			vcenter		= last;
+		}
+		getter		{ return _image != this ? _image.height : global.KAGLayer.height; }
+	}
+	property imageLeft
+	{
+		setter(v)	{ if(_image != this) _image.imageLeft = v; else global.KAGLayer.imageLeft = v; calcAffine(); }
+		getter		{ return _image != this ? _image.imageLeft : global.KAGLayer.imageLeft; }
+	}
+	property imageTop
+	{
+		setter(v)	{ if(_image != this) _image.imageTop = v; else global.KAGLayer.imageTop = v; calcAffine(); }
+		getter		{ return _image != this ? _image.imageTop : global.KAGLayer.imageTop; }
+	}
+
+/*	property vcenter
+	{
+		setter(v)
+		{
+			if(v !== vcenter)
+			{
+				dm(name+".vcenter = "+vcenter+" → "+v+" / "+Scripts.getTraceString());
+				super.vcenter	= v;
+			}
+		}
+		getter	{ return super.vcenter; }
+	}
+*/
+}
+
+//	内部をスクロールするメニューアイテム
+//	※継承して、機能を追加するべし
+class ScrollMenuItemLayer extends MenuItemLayer
+{
+	var	areaHeight;	//	必要な表示サイズ
+	var	maxpos;		//	表示位置の最大
+
+	var	slider;
+
+	function ScrollMenuItemLayer()
+	{
+		super.MenuItemLayer(...);
+		itemMode	= imOtherOpaque;
+
+		slider	= Menu_object.addMenuItem(%[
+			"class" => "ScrollSliderMenuItemLayer", page:page, target:this, targetprop:"position",
+			vertical:1, value:0, itemMode:3, absolute:absolute, visible:visible, id:(id+1)
+		]);
+
+		hitThreshold= 0;
+		focusable	= true;
+		type		= ltAlpha;
+	}
+
+	function finalize()
+	{
+		invalidate slider if slider != void;
+		slider	= void;
+		super.finalize();
+	}
+
+	property useTimeline	{ getter { return false; } }
+
+	function redraw()
+	{
+		update();
+	}
+
+	property name
+	{
+		setter(v)	{ super.name = v; slider.name = v + "スライダー" if slider != void && slider isvalid; }
+		getter		{ return super.name; }
+	}
+
+	property absolute
+	{
+		setter(v)	{ super.absolute = v; slider.absolute = v if slider != void && slider isvalid; }
+		getter		{ return super.absolute; }
+	}
+
+	property opacity
+	{
+		setter(v)	{ super.opacity = v; slider.opacity = v if slider != void && slider isvalid; update() if v > 0; }
+		getter		{ return super.opacity; }
+	}
+
+	property visible
+	{
+		setter(v)	{ super.visible = v; slider.visible = v if slider != void && slider isvalid; update() if v; }
+		getter		{ return super.visible; }
+	}
+
+	property vcenter
+	{
+		setter(v)	{ super.vcenter = v; slider.vcenter = v if slider != void && slider isvalid; }
+		getter		{ return super.vcenter; }
+	}
+
+	property sliderstorage	{ setter(v) { slider.storage	= v if slider != void && slider isvalid; } }
+	property sliderviewarea	{ setter(v) { slider.viewarea	= v if slider != void && slider isvalid; } }
+	property slidercenter	{ setter(v) { slider.center		= v if slider != void && slider isvalid; } }
+
+	function calc()
+	{
+		//	表示位置の最大を計算
+		maxpos	= Math.max(0, areaHeight - height);
+		_position	= Math.min(position, maxpos);	//	範囲内になるよう表示位置を補正
+	}
+
+	//	表示位置
+	var	_position	= 0;
+	property position
+	{
+		setter(v)
+		{
+			if( ! isvalid this )
+				return;
+
+			v	= Math.max(0, +v);
+			v	= Math.min(maxpos, v) if maxpos !== void;	//	maxpos が未設定ならとりあえず入れておく
+			if(position !== v)
+			{
+				_position	= v;
+				slider.updatePos() if slider != void && slider isvalid;
+				redraw();
+			}
+		}
+		getter	{ return _position; }
+	}
+
+	//	カーソルが乗っているか
+	var	_entered;
+	property entered
+	{
+		setter(v)	{ _entered = v; }
+		getter		{ return _entered; }
+	}
+
+	function onMouseEnter()
+	{
+		if(window.focusedLayer != this)
+			focus();
+		else
+			onFocus();
+	}
+
+	function onMouseLeave()
+	{
+		if(window.focusedLayer == this)
+			window.focusedLayer	= null;
+		else
+			onBlur();
+	}
+
+	function onFocus()
+	{
+		entered	= true;
+	}
+
+	function onBlur()
+	{
+		entered	= false;
+	}
+}
+
+//	リストを表示するメニューアイテム
+class ListMenuItemLayer extends ScrollMenuItemLayer
+{
+	var	chosecolor	= 0xA00080A0;	//	選択色
+	var	cursorcolor	= 0x8000FF80;	//	カーソル色
+	var	textcolor	= 0xFFFFFFFF;	//	文字色
+	var	bgcolor		= 0x00000000;	//	背景色
+
+	var	onCursor;	//	カーソルが示す項目が変更されたときに呼ばれるメソッド(function(項目の番号, 項目の内容))
+	var	onChose;	//	選択されたときに呼ばれるメソッド(function(選ばれた項目の番号, 選ばれた項目の内容))
+
+	function ListMenuItemLayer()
+	{
+		super.ScrollMenuItemLayer(...);
+
+		font.height	= int(Math.abs(kag.current.fontSize));
+		font.face	= kag.current.fontFace;
+		font.bold	= kag.current.bold;
+	}
+
+	property hspacing	{ getter { return margint + marginb; } }
+	property wspacing	{ getter { return marginl + marginr; } }
+	property lineheight	{ getter { return font.height + hspacing; } }
+
+	property fontheight	{ setter(v) { font.height = int(Math.abs(v)); updateAreaHeight(); } }
+	property fontbold	{ setter(v) { font.bold = +v; } }
+	property fontface	{ setter(v) { font.face = v; } }
+
+	function updateAreaHeight()
+	{
+		areaHeight	= list.count * lineheight if list != void;
+	}
+
+	function analyze(text)
+	{
+		return text.split(",");
+	}
+
+	//	storage="" だと描画されないので、固定の値を返すようにする
+	property storage{ setter(v){} getter { return "listmenu"; } }
+
+	var	_list;
+	property list
+	{
+		setter(v)
+		{
+			if(list !== v)
+			{
+				if(typeof v == "Object" && v instanceof "Array")
+					_list	= v;
+				else if(typeof v == "String")
+					_list	= analyze(v);
+				updateAreaHeight();
+			}
+		}
+		getter	{ return _list; }
+	}
+
+	var	_margint, _marginb, marginl, marginr;
+	property margint
+	{
+		setter(v)	{ _margint = v; updateAreaHeight(); }
+		getter		{ return _margint; }
+	}
+	property marginb
+	{
+		setter(v)	{ _marginb = v; updateAreaHeight(); }
+		getter		{ return _marginb; }
+	}
+
+	var	changed	= true;
+	var	changes;
+	function redraw(nums*)
+	{
+		if(!changed)
+		{
+			changed	= true;
+			changes	= %[];
+			for(var i=0; i<nums.count; i++)
+				changes[nums[i]]	= 1 if nums[i] !== void;
+			update();
+		}
+		if(nums[0] == void)
+			changes	= void;
+		else if(changes != void)
+		{
+			for(var i=0; i<nums.count; i++)
+				changes[nums[i]]	= 1 if nums[i] !== void;
+		}
+	}
+
+	//	カーソルが乗っているかどうか
+	property entered
+	{
+		setter(v)
+		{
+			if(entered !== v)
+			{
+				super.entered	= v;
+				redraw(cursorno);
+			}
+		}
+		getter	{ return super.entered; }
+	}
+
+	//	現在カーソルが合っている項目
+	var	_cursorno;
+	property cursorno
+	{
+		setter(v)
+		{
+			v	= +v;
+			if(v < 0 || v >= list.count)
+				return;
+			if(cursorno !== v)
+			{
+				redraw(v, cursorno);	//	再描画対象
+				_cursorno	= v;
+				onCursor(cursorno, list[cursorno]) if onCursor != void;
+				playEnterSE();
+			}
+		}
+		getter	{ return _cursorno; }
+	}
+
+	//	現在選択している項目の番号
+	var	_chosenno;
+	property chosenno
+	{
+		setter(v)
+		{
+			v	= int Math.max(0, Math.min(list.count - 1, +v));
+			if(v >= 0)
+			{
+//				dmt(name+".chosenno = "+chosenno+" → "+v);
+				if(chosenno !== v)
+				{
+					redraw(v, chosenno);	//	再描画対象
+					_chosenno	= v;
+					onChose(chosenno, list[chosenno]) if onChose != void;
+					playPressSE();
+				}
+				else if(window.inputDevice == "keyboard" && ondoubleclick != "")
+				{
+					ondoubleclick!;
+					playPressSE();
+				}
+			}
+		}
+		getter	{ return _chosenno; }
+	}
+
+	//	現在選択している項目
+	property choseitem
+	{
+		setter(v)	{ var no = list.find(v); chosenno = cursorno = no if no >= 0; }
+		getter 		{ return chosenno !== void ? list[chosenno] : ""; }
+	}
+
+	//	個々の項目を描画
+	function drawItem(idx, y, h)
+	{
+		if(idx === chosenno)
+			fillRect(0, y - margint, width, h, chosecolor);
+		else
+			fillRect(0, y - margint, width, h, bgcolor);
+		var	opac	= (textcolor >> 24) & 0xFF;
+		opac	= 255 if opac == 0;
+		drawText(marginl, y, list[idx], textcolor & 0xFFFFFF, opac);
+		if(entered && idx === cursorno)
+			colorRect(0, y - margint, width, h, cursorcolor & 0xFFFFFF, (cursorcolor >> 24) & 0xFF);
+	}
+
+	function onPaint()
+	{
+		if(changed)
+		{
+			//	サイズ設定
+			setImageSize(width, height);
+			calc();
+
+			//	範囲内を描画
+			var	t	= -position + margint;
+			var	h	= lineheight;
+			for(var i=0; i<list.count; i++)
+			{
+				if(t > height)
+					break;
+				if(t >= -lineheight && (changes == void || changes[i]))
+					drawItem(i, t, h);
+				t	+= h;
+			}
+			if(t < height && changes == void)
+				fillRect(0, t, width, height - t, bgcolor);
+			_doAffine = _doOffset	= true;
+			changed	= false;
+			changes	= void;
+		}
+//		var	doa	= _doAffine, doo = _doOffset;
+		super.onPaint();
+//		copy2Contrary(doa, doo);
+	}
+
+	function setCursorNo(x, y)
+	{
+		y		= (y - afy * zoomy * 0.01) * 100 / zoomy + afy;	//	拡大率によるカーソル座標の補正
+		cursorno= (y + position - margint) \ (lineheight);
+	}
+
+	function onMouseMove(x, y)
+	{
+		if(entered)
+			setCursorNo(x, y);
+	}
+
+	function onMouseUp(x, y, button, shift)
+	{
+		if(button === mbLeft)
+			chosenno	= cursorno;
+	}
+
+	//	cursorno が見える位置までスクロールさせる
+	function goCursorPos()
+	{
+		var	t	= cursorno * lineheight;
+		if(position > t)
+			position	= t;
+		else if(position + height < t + lineheight)
+			position	= t + lineheight - height;
+	}
+
+	function onKeyDown(key, shift)
+	{
+		if(key == VK_UP)
+		{
+			if(cursorno === void)
+			{
+				cursorno	= 0;
+				redraw();
+				goCursorPos();
+			}
+			else if(cursorno > 0)
+			{
+				cursorno--;
+				redraw();
+				goCursorPos();
+			}
+		}
+		else if(key == VK_DOWN)
+		{
+			if(cursorno === void)
+			{
+				cursorno	= 0;
+				redraw();
+				goCursorPos();
+			}
+			else if(cursorno < list.count - 1)
+			{
+				cursorno++;
+				redraw();
+				goCursorPos();
+			}
+		}
+		else if(key == VK_SPACE || key == VK_RETURN || key == VK_Z)
+		{
+//			chosenno	= cursorno;
+		}
+		else
+			return super.onKeyDown(...);
+	}
+
+	var	ondoubleclick;
+	function onDoubleClick(x, y)
+	{
+		if(ondoubleclick != "")
+			ondoubleclick!;
+	}
+
+	function onMouseWheel(shift, delta, x, y)
+	{
+		var	lastpos	= position;
+		position	-= delta \ 120 * lineheight;
+		setCursorNo(cursorX, cursorY) if lastpos != position;
+	}
+}
+
+//	フォントを表示するメニューアイテム
+class FontListMenuItemLayer extends ListMenuItemLayer
+{
+	function FontListMenuItemLayer()
+	{
+		super.ListMenuItemLayer(...);
+		if(typeof this.getFontList != "undefined")
+			list	= getFontList();	//	bitmapfonts.tjs で定義
+		else
+			list		= font.getList(fsfSameCharSet | fsfNoVertical);
+		var	removes	= [ "FixedSys", "System", "Terminal", "メイリオ", "Meiryo UI", "Arial Unicode MS", ];
+		for(var i=0; i<removes.count; i++)
+			list.remove(removes[i]) if removes[i] != void;
+		textcolor	= kag.current.chColor | 0xFF000000;
+	}
+
+	function finalize()
+	{
+		super.finalize();
+	}
+
+	//	現在選択しているフォント
+	property fontface
+	{
+		setter(v)	{ choseitem = v; }
+		getter		{ return choseitem; }
+	}
+
+	//	フォントを変更して描画する
+	function drawItem(idx, x, y)
+	{
+		if(typeof this.setFontFace != "undefined")
+			setFontFace(list[idx]);
+		else
+			font.face	= list[idx];
+		super.drawItem(...);
+	}
+}
+
+//	メッセージを表示するメニューアイテム
+class MessageMenuItemLayer extends MessageLayer
+{
+	var	id;
+	var	plugin;
+	var	menuitems;
+
+	var	invalidateTimer;
+
+	var	usecurrent, storage;	//	参照されることがあるので
+
+	function MessageMenuItemLayer(win, par, name, id)
+	{
+		super.MessageLayer(win, par);
+		this.name	= name;
+		this.id		= id;
+		ibv = false;			//assignの中でvisible=1が実行されてしまい消去処理が走ってしまう
+		assign(kag.current);
+		ibv = true;
+		clear();
+	}
+
+	function finalize()
+	{
+		//dm("MessageItemLayer["+name+"].finalize() act=" + kag.isInAction(this));
+		for( var i=0; i<children.count; i++ )
+			if( kag.isInAction(children[i]) )
+				kag.removeAction(children[i]);
+
+		if( kag.isInAction(this) )
+			kag.removeAction(this);
+
+		invalidate msgTimer if msgTimer != void;
+		invalidate msgDelayTimer if msgDelayTimer != void;
+		invalidate invalidateTimer if invalidateTimer != void;
+		cont	= false;
+		menuitems[id]	= void if menuitems[id] == this;
+		super.finalize();
+	}
+
+	//	ここから MenuItemLayer 互換のため
+
+	//	裏面レイヤー
+	var	_cont;
+	var	lastcopy;
+	property cont
+	{
+		setter(v)
+		{
+			v	&= 1;
+			if(v == (_cont != void))
+				return;
+			if(v)
+			{
+				_cont	= new global.Layer(window, kag[parent == kag.fore.base ? "back" : "fore"].base);
+				System.addContinuousHandler(callCopy2Contrary);	//	onPaint はほとんど発生しないので、自ら更新
+				lastcopy= System.getTickCount();
+				copy2Contrary();
+			}
+			else
+			{
+				invalidate _cont;
+				_cont	= void;
+				System.removeContinuousHandler(callCopy2Contrary);
+			}
+		}
+		getter { return _cont; }
+	}
+
+	function copy2Contrary()
+	{
+		if(cont != void && kag.transCount > 0) with(cont)
+		{
+			.setImageSize(imageWidth, imageHeight);
+			.piledCopy(0, 0, this, 0, 0, imageWidth, imageHeight);	//	文字レイヤーも含めてでは大がかり過ぎるので
+			.setSize(width, height);
+			.setImagePos(imageLeft, imageTop);
+			.setPos(left, top);
+			.name		= "裏: "+name;
+			.absolute	= absolute;
+			.type		= type;
+			.visible	= visible;
+			.opacity	= opacity;
+		}
+	}
+
+	function callCopy2Contrary()
+	{
+		var	tick	= System.getTickCount();
+		if(tick > lastcopy)
+		{
+			copy2Contrary();
+			lastcopy	= tick;
+		}
+	}
+
+	//	変化しても onPaint が呼ばれないプロパティ
+//	opacity と visible は↓に
+	property absolute
+	{
+		setter(v)	{ super.absolute = v; cont.absolute = +v if cont != void; }
+		getter		{ return super.absolute; }
+	}
+	property type
+	{
+		setter(v)	{ super.type = v; cont.type = +v if cont != void; }
+		getter		{ return super.type; }
+	}
+
+	function onPaint()
+	{
+		super.onPaint(...);
+		copy2Contrary();
+	}
+
+	property useTimeline	{ getter { return false; } }
+	property itemMode		{ getter { return imParts; } setter(v){ ; } }
+	property isButton		{ getter { return false; } }
+
+	//	破棄の時期をずらすためのフラグ
+	property invalidateByInvisible
+	{
+		setter(v)
+		{
+			if(invalidateByInvisible != v)
+			{
+				if(v)
+				{
+					if(invalidateTimer == void)
+					{
+						invalidateTimer	= new Timer(invalidateTimeOut, "");
+						invalidateTimer.interval	= 500;
+						invalidateTimer.capacity	= 1;
+					}
+					invalidateTimer.enabled	= true;
+					invalidateTimeOut();	//	とりあえず初回
+				}
+				else
+					invalidateTimer.enabled	= false if invalidateTimer != void;
+				//dm(name+".invalidateByInvisible = "+v+"/"+Scripts.getTraceString());
+			}
+		}
+		getter	{ return invalidateTimer != void && invalidateTimer.enabled; }
+	}
+
+	//	表示されるべき子かどうか(親が kag.back.base 自体、もしくは所属している親なら表示されない)
+	property visibleChild
+	{
+		getter
+		{
+			var	p	= parent;
+			do
+			{
+				if(!p.visible)
+					return false;
+				p	= p.parent;
+			}
+			while(p != null);
+			return true;
+		}
+	}
+
+	function invalidateTimeOut()
+	{
+		//	非表示になったり透明になったり、裏画面に移動したら自分を破棄
+		if(this isvalid && kag isvalid && (!visible || opacity == 0 || !visibleChild))
+			doInvalidate();
+	}
+
+	function doInvalidate()
+	{
+		invalidateTimer.enabled	= false if invalidateTimer != void;
+		menuitems[id]	= void if menuitems !== void && menuitems[id] == this;
+		asyncCaller.call(invalidateIt, this);
+	}
+
+	property visible
+	{
+		setter(v)
+		{
+			if(visible !== v)
+			{
+				super.visible	= v;
+				cont.visible	= v if cont != void;
+				doInvalidate() if visible === 0 && invalidateByInvisible;
+				invalidateByInvisible	= true if ibv && visible && opacity > 0;	//	一度レイヤーが表示されたら、次に非表示になったとき削除できる
+				update() if v;
+			}
+		}
+		getter	{ return super.visible; }
+	}
+
+	property opacity
+	{
+		setter(v)
+		{
+			if(opacity !== v)
+			{
+				super.opacity	= v;
+				cont.opacity	= v if cont != void;
+				doInvalidate() if opacity === 0 && invalidateByInvisible;
+				invalidateByInvisible	= true if ibv && visible && opacity > 0;	//	一度レイヤーが表示されたら、次に非表示になったとき削除できる
+				update() if v > 0;
+			}
+		}
+		getter	{ return super.opacity; }
+	}
+
+	//	シンプルなアクション(メニューのmouse〜から呼び出すためのもの)
+	function ssact(time, prop, value, delay=0, accel=0, canpause=true)
+	{
+		var	elm	= %[time:time, start:this[prop], value:value];
+		if(time == void)
+		{
+			elm.handler	= SetAction;	//	値を指定の時間後に設定
+			elm.time	= delay;
+		}
+		else
+		{//	キーフレームで処理
+			elm.props	= prop;
+			elm.keys	= [ [delay, this[prop], accel, "l"], [time + delay, value, 0, "n"] ];
+			elm.module	= KeyFrameActionModule;
+			beginAction(elm,,, canpause);
+			return;
+		}
+		beginAction(%[prop => elm],,, canpause);
+	}
+
+	//	指定時間後に隠す
+	function vanish(time)
+	{
+		name= "no name(vanish): last = " + name;
+		ssact(time, "opacity", 0,,, false);
+		invalidateByInvisible	= true;
+	}
+
+	//	オブジェクトの検索
+	function find() { return Menu_object.find(...); }
+
+	//	カーソルがレイヤー内にあるか.
+	//	レイヤー内なら、レイヤー上のカーソル座標を返す
+	function inCursor()
+	{
+		var	x = cursorX, y = cursorY;
+		if(x < 0 || x >= width || y < 0 || y >= height)
+			return void;
+		if(hitThreshold > 255 || getMaskPixel(x, y) >= hitThreshold)
+			return [ x, y ];
+		return void;
+	}
+
+	//	状態更新
+	function updateState()
+	{
+		//	マウスが乗っていれば enter、乗っていなければ leave
+		if(this isvalid)
+		{
+			if(inCursor())
+				onMouseEnter();
+			else
+				onMouseLeave();
+		}
+	}
+
+	// ここまで MenuItemLayer 互換のため
+
+	property margin
+	{
+		setter(v)
+		{
+			if(typeof v == "Integer")
+				marginL = marginT = marginR = marginB = +v;
+			else if(typeof v == "String")
+			{
+				v	= v.split("/");
+				marginL	= +v[0];
+				marginT	= +v[1];
+				marginR	= +v[2];
+				marginB	= +v[3];
+			}
+			clear();
+		}
+	}
+
+	property framecolor		{ setter(v) { frameColor = +v; frameGraphic = ""; imageModified = true; clearLayer(); } }
+	property frameopacity	{ setter(v) { frameOpacity = +v; frameGraphic = ""; imageModified = true; clearLayer(); } }
+	property linespacing	{ setter(v) { lineSpacing = defaultLineSpacing = +v; } }
+
+	//	設定にあわせて指定のメッセージを表示し続ける
+	var	_text	= [];
+	var _text_org;
+	property text
+	{
+		setter(v)
+		{
+			if( v === void )
+				v = "";
+			_text.clear();
+			_text_org = v;
+			for(var i=0; i<v.length; i++)
+			{
+				if(v[i] == "<")
+				{
+					i++;
+					var	kw	= "";
+					while(i < v.length && v[i] != ">")
+					{
+						kw	+= v[i];
+						i++;
+					}
+					switch(kw[0].toLowerCase())
+					{
+					case "r": _text.add(reline);			break;
+					case "w": _text.add(int kw.substr(1));	break;
+					case "c": _text.add(clear);				break;
+					case "e": _text.add(doMessageEffect);	break;	//	既読メッセージを半透明にするなどの処理を行う
+					case "s": _text.add(stopMessage);		break;
+					}
+				}
+				else
+					_text.add(v[i]);
+			}
+			clear();
+			if( msgdelay )
+			{
+				msgDelayTimer = new Timer(messageDelayTimeout, "");
+				msgDelayTimer.interval	= +msgdelay;
+				msgDelayTimer.enabled	= true;
+			}
+			else
+				playMessage();
+		}
+		getter
+		{
+			return _text_org;
+		}
+	}
+
+	function beginAction(elm, hide, nowait, canpause=true)
+	{
+		//dm("GraphicLayer: beginAction " + getDebugStringFromElm(elm));
+		this.hide = hide if hide !== void;
+		return window.beginAction(this, elm, onActionCompleted, nowait, canpause);
+	}
+
+	function onActionCompleted()
+	{
+		if( ! isvalid this ) return;
+		//dm("Menu_onActionCompleted: lay="+name+" rest="+kag.actionCount);
+		//	アクションが終了したら、いつでも破棄できる
+		invalidateByInvisible	= true if ibv;
+	}
+
+	//	表示されたとき、invalidateByInvisible を true にするかどうか
+	var	_ibv	= false;
+	property ibv
+	{
+		setter(v)
+		{
+//			dm(name+".ibv = "+v);
+			_ibv	= v;
+			if(v)
+				invalidateByInvisible	= true if visible && opacity > 0 && visibleChild;
+			else
+				invalidateByInvisible	= false;
+//			dm("→ invalidateByInvisible = "+invalidateByInvisible);
+		}
+		getter	{ return _ibv; }
+	}
+
+	var msgDelayTimer;	//初期表示開始タイマー
+	var msgdelay = 0;	//初期の表示までのタイムラグ指定
+	function messageDelayTimeout()
+	{
+		msgDelayTimer.enabled	= false if msgDelayTimer !== void;
+		invalidate msgDelayTimer;
+		msgDelayTimer = void;
+		playMessage();
+	}
+
+	var	msgTimer;
+	var	_msgpos;
+	function playMessage()
+	{
+		msgTimer= new Timer(messageTimeout, "") if msgTimer == void;
+		msgTimer.interval	= (kag.userChSpeed)?kag.userChSpeed:1;
+		kag.actualChSpeed	= kag.userChSpeed;
+		msgTimer.enabled	= true;
+		_msgpos	= 0;
+	}
+	property nextText	{ getter { return _text[_msgpos]; } }
+
+	function stopMessage()
+	{
+		if(msgDelayTimer != void && msgDelayTimer.enabled)
+		{
+			invalidate msgDelayTimer;
+			msgDelayTimer = void;
+		}
+		if(msgTimer != void && msgTimer.enabled)
+			msgTimer.enabled	= false;
+	}
+
+	var holdFont = false;
+	function updateFontSetting()
+	{
+		if( holdFont )
+			return;
+
+		userFace = fontFace = defaultFace = kag.chDefaultFace;
+		defaultBold = kag.chDefaultBold;
+		defaultRubyBold = kag.chDefaultRubyBold;
+	}
+
+	function resetMessage()
+	{
+		clear();
+		_msgpos	= 0;
+		updateFontSetting();
+	}
+
+	function messageTimeout()
+	{
+		if(_msgpos >= _text.count)
+			resetMessage();
+
+		var	wait	= 0;
+		do
+		{
+			updateFontSetting();
+			var	next	= nextText;
+			if(typeof next == "Integer")
+				wait	= next;
+			else if(typeof next == "Object")
+				next();
+			else if(typeof next == "String")
+			{
+				processCh(next);
+				wait	= int kag.userChSpeed;
+			}
+			_msgpos++;
+		}
+		while(wait == 0 && _msgpos < _text.count);
+		msgTimer.interval	= wait == 0 ? ((kag.userChSpeed)?kag.userChSpeed:1) : wait;
+		kag.actualChSpeed	= kag.userChSpeed;	//	フェードアクションなどは、現在の実際の表示時間を参照するので
+	}
+
+	function doMessageEffect()
+	{
+		if(typeof global.lastmessageeffect_object != "undefined")
+			lastmessageeffect_object.messageEffect(, this);
+	}
+
+	function onStore()
+	{
+	}
+
+	function onRestore()
+	{
+	}
+
+	function store()
+	{
+	}
+
+	function restore()
+	{
+	}
+
+}
+
+//	シナリオの一覧
+class ScenarioListMenuItemLayer extends ListMenuItemLayer
+{
+	function ScenarioListMenuItemLayer()
+	{
+		super.ListMenuItemLayer(...);
+	}
+
+	function drawItem(idx, x, y)
+	{
+		super.drawItem(...);
+	}
+
+	var	lastbutton;
+	function onMouseDown(x, y, button, shift)
+	{
+		lastbutton	= button;
+		super.onMouseDown(...);
+	}
+
+	function onDoubleClick()
+	{
+		if(lastbutton === mbLeft)
+		{//	シナリオを開始する
+
+		}
+	}
+}
+
+//	テキストを編集するメニューアイテム
+class EditMenuItemLayer extends MultiLineEditLayer
+{
+	var	id;
+	var	plugin;
+	var	menuitems;
+
+	var	invalidateTimer;
+
+	var	usecurrent, storage;	//	参照されることがあるので
+
+	function EditMenuItemLayer(win, par, name, id)
+	{
+		super.MultiLineEditLayer(win, par);
+		this.name	= name;
+		this.id		= id;
+	}
+
+	function finalize()
+	{
+		//dm("EditMenuItemLayer["+name+"].finalize() act=" + kag.isInAction(this));
+		if( kag.isInAction(this) )
+			kag.removeAction(this);
+
+		invalidate invalidateTimer if invalidateTimer != void;
+		cont	= false;
+		menuitems[id]	= void if menuitems[id] == this;
+		super.finalize();
+	}
+
+	//	ここから MenuItemLayer 互換のため
+
+	//	裏面レイヤー
+	var	_cont;
+	var	lastcopy;
+	property cont
+	{
+		setter(v)
+		{
+			v	&= 1;
+			if(v == (_cont != void))
+				return;
+			if(v)
+			{
+				_cont	= new global.Layer(window, kag[parent == kag.fore.base ? "back" : "fore"].base);
+				System.addContinuousHandler(callCopy2Contrary);	//	onPaint はほとんど発生しないので、自ら更新
+				lastcopy= System.getTickCount();
+				copy2Contrary();
+			}
+			else
+			{
+				invalidate _cont;
+				_cont	= void;
+				System.removeContinuousHandler(callCopy2Contrary);
+			}
+		}
+		getter { return _cont; }
+	}
+
+	function copy2Contrary()
+	{
+		if(cont != void && kag.transCount > 0) with(cont)
+		{
+			.setImageSize(imageWidth, imageHeight);
+			.piledCopy(0, 0, this, 0, 0, imageWidth, imageHeight);	//	キャレットレイヤーがあるので
+			.setSize(width, height);
+			.setImagePos(imageLeft, imageTop);
+			.setPos(left, top);
+			.name		= "裏: "+name;
+			.absolute	= absolute;
+			.type		= type;
+			.visible	= visible;
+			.opacity	= opacity;
+		}
+	}
+
+	function callCopy2Contrary()
+	{
+		var	tick	= System.getTickCount();
+		if(tick > lastcopy)
+		{
+			copy2Contrary();
+			lastcopy	= tick;
+		}
+	}
+
+	//	変化しても onPaint が呼ばれないプロパティ
+//	opacity と visible は↓に
+	property absolute
+	{
+		setter(v)	{ super.absolute = v; cont.absolute = +v if cont != void; }
+		getter		{ return super.absolute; }
+	}
+	property type
+	{
+		setter(v)	{ super.type = v; cont.type = +v if cont != void; }
+		getter		{ return super.type; }
+	}
+
+	property centerLeft	{ getter { return left + (width >> 1); } }
+	property centerTop	{ getter { return top + (height >> 1); } }
+
+	function onPaint()
+	{
+		super.onPaint(...);
+		copy2Contrary();
+	}
+
+	function onMouseDown(x, y, button, shift)
+	{
+		if(button == mbRight)
+		{
+			if(System.getKeyState(VK_LBUTTON))
+				return;	//	左ボタンも押されていたら、処理は行わない
+			else if(kag isvalid)
+				kag.onPrimaryRightClick();
+			this.RButtonDown	= true;
+		}
+		else
+			super.onMouseDown(...);
+	}
+
+	function onMouseUp(x, y, button, shift)
+	{
+		if(button == mbRight)
+			delete this.RButtonDown;
+		else
+			super.onMouseUp(...);
+	}
+
+	property useTimeline	{ getter { return false; } }
+	property itemMode		{ getter { return imParts; } setter(v){ ; } }
+	property isButton		{ getter { return false; } }
+
+	//	破棄の時期をずらすためのフラグ
+	property invalidateByInvisible
+	{
+		setter(v)
+		{
+			if(invalidateByInvisible != v)
+			{
+				if(v)
+				{
+					if(invalidateTimer == void)
+					{
+						invalidateTimer	= new Timer(invalidateTimeOut, "");
+						invalidateTimer.interval	= 500;
+						invalidateTimer.capacity	= 1;
+					}
+					invalidateTimer.enabled	= true;
+					invalidateTimeOut();	//	とりあえず初回
+				}
+				else
+					invalidateTimer.enabled	= false if invalidateTimer != void;
+				//dm(name+".invalidateByInvisible = "+v);
+			}
+		}
+		getter	{ return invalidateTimer != void && invalidateTimer.enabled; }
+	}
+
+	function invalidateTimeOut()
+	{
+		//	非表示になったり透明になったり、裏画面に移動したら自分を破棄
+		if(this isvalid && kag isvalid && (!visible || opacity == 0 || !visibleChild))
+			doInvalidate();
+	}
+
+	function doInvalidate()
+	{
+		invalidateTimer.enabled	= false if invalidateTimer != void;
+		menuitems[id]	= void if menuitems !== void && menuitems[id] == this;
+		asyncCaller.call(invalidateIt, this);
+	}
+
+	//	表示されたとき、invalidateByInvisible を true にするかどうか
+	var	_ibv	= true;
+	property ibv
+	{
+		setter(v)
+		{
+//			dm(name+".ibv = "+v);
+			_ibv	= v;
+			if(v)
+				invalidateByInvisible	= true if visible && opacity > 0 && visibleChild;
+			else
+				invalidateByInvisible	= false;
+//			dm("→ invalidateByInvisible = "+invalidateByInvisible);
+		}
+		getter	{ return _ibv; }
+	}
+
+	property visible
+	{
+		setter(v)
+		{
+			if(visible !== v)
+			{
+				super.visible	= v;
+				cont.visible	= v if cont != void;
+				doInvalidate() if visible === 0 && invalidateByInvisible;
+				invalidateByInvisible	= true if ibv && visible && opacity > 0;	//	一度レイヤーが表示されたら、次に非表示になったとき削除できる
+				update() if v;
+			}
+		}
+		getter	{ return super.visible; }
+	}
+
+	property opacity
+	{
+		setter(v)
+		{
+			if(opacity !== v)
+			{
+				super.opacity	= v;
+				cont.opacity	= v if cont != void;
+				doInvalidate() if opacity === 0 && invalidateByInvisible;
+				invalidateByInvisible	= true if ibv && visible && opacity > 0;	//	一度レイヤーが表示されたら、次に非表示になったとき削除できる
+				update() if v > 0;
+			}
+		}
+		getter	{ return super.opacity; }
+	}
+
+	//	シンプルなアクション(メニューのmouse〜から呼び出すためのもの)
+	function ssact(time, prop, value, delay=0, accel=0, canpause=true)
+	{
+		var	elm	= %[time:time, start:this[prop], value:value];
+		if(time === void)
+		{
+			elm.handler	= SetAction;	//	値を指定の時間後に設定
+			elm.time	= delay;
+		}
+		else
+		{//	キーフレームで処理
+			elm.props	= prop;
+			elm.keys	= [ [delay, this[prop], accel, "l"], [time + delay, value, 0, "n"] ];
+			elm.module	= KeyFrameActionModule;
+			window.beginAction(this, elm,,, canpause);
+			return;
+		}
+		window.beginAction(this, %[prop => elm],,, canpause);
+	}
+
+	//	オブジェクトの検索
+	function find() { return Menu_object.find(...); }
+
+	//	カーソルがレイヤー内にあるか.
+	//	レイヤー内なら、レイヤー上のカーソル座標を返す
+	function inCursor()
+	{
+		var	x = cursorX, y = cursorY;
+		if(x < 0 || x >= width || y < 0 || y >= height)
+			return void;
+		if(hitThreshold > 255 || getMaskPixel(x, y) >= hitThreshold)
+			return [ x, y ];
+		return void;
+	}
+
+	//	状態更新
+	function updateState()
+	{
+		//	マウスが乗っていれば enter、乗っていなければ leave
+		if(this isvalid)
+		{
+			if(inCursor())
+				onMouseEnter();
+			else
+				onMouseLeave();
+		}
+	}
+
+	// ここまで MenuItemLayer 互換のため
+
+	//	前の行を設定すると、前の行の次として、自分が設定される
+	property prev
+	{
+		setter(v)
+		{
+			if(prev !== v)
+			{
+				if(typeof v == "Object")
+					super.prev	= v;
+				else if(typeof v == "String")
+					super.prev	= find(v);
+				next		= prev.next;
+				prev.next	= this;
+			}
+		}
+		getter	{ return super.prev; }
+	}
+
+	function stopAction()	{}
+	function onStore()	{}
+	function onRestore(){}
+	function store()	{}
+	function restore()	{}
+}
+
+//	進行状況をバーで表示するメニューアイテム
+class ProgressBarMenuItemLayer extends MenuItemLayer
+{
+	function ProgressBarMenuItemLayer()
+	{
+		super.MenuItemLayer(...);
+		addImage(, true) if _orgimage == this;
+		per	= 0;
+	}
+
+	function finalize()
+	{
+		invalidate barlayer if barlayer != void;
+		super.finalize();
+	}
+
+	property useTimeline	{ getter { return false; } }
+
+	//	進行度(0〜1)
+	var	_per, lastper;
+	var	changed	= false;
+	var firstdraw = false;
+	property per
+	{
+		setter(v)
+		{
+			if(v !== per)
+			{
+				if( ! per )
+					firstdraw = true;
+				lastper	= per;	//	直前の per を記憶
+				_per	= +v;
+				changed	= true;
+				update();
+			}
+		}
+		getter	{ return _per; }
+	}
+
+	//	バー自体の画像(storage にはバーの枠が読み込まれている)
+	var	_barstorage, barlayer;
+	property barstorage
+	{
+		setter(v)
+		{
+			if(v !== barstorage)
+			{
+				_barstorage	= v;
+				lastper		= void;	//	全部修正する必要があるので
+				changed		= true;
+				update();
+			}
+		}
+		getter	{ return _barstorage; }
+	}
+
+	//	バーの表示位置
+	var	barLeft, barTop, barWidth, barHeight;
+
+	function onPaint()
+	{
+		if(changed)
+		{
+			if(images[1] == void)
+			{
+				_image	= addImage(1);	//	枠を残したまま、書き込み用のレイヤーを用意する
+				_image.assignImages(_orgimage);
+			}
+			else if(per == 0 || firstdraw)
+			{
+				_image.assignImages(_orgimage);
+				firstdraw = false;					//per=0でonPaintが発生しなかった場合初回描画を強制する
+			}
+
+			//	バー画像を確保
+			if(barlayer == void)
+			{
+				barlayer= new global.Layer(window, this);
+				barlayer.name	= "bar layer";
+				barlayer.storage= "";
+			}
+			if(barlayer.storage != barstorage)
+			{
+				barlayer.loadImages(barlayer.storage = barstorage);
+				barWidth	= barlayer.imageWidth;
+				barHeight	= barlayer.imageHeight;
+			}
+
+			//	変化する部分を消去
+			var	nl = per * barWidth, ll = int(lastper * barWidth);
+			if(lastper === void)
+				_image.copyRect(barLeft, barTop, _orgimage, barLeft, barTop, barWidth, barHeight);	//	画像が変わったので、全消去
+			else if(nl < ll + 1)
+				_image.copyRect(barLeft + int(nl), barTop, _orgimage, barLeft + int(nl), barTop, ll+1 - int(nl), barHeight);	//	小さくなったので、その部分を消去
+
+			//	比率に合わせてバーを描画
+			if(nl > ll)
+				_image.copyRect(barLeft + ll, barTop, barlayer, ll, 0, int(nl) - ll, barHeight);
+			_image.operateRect(barLeft + int(nl), barTop, barlayer, int(nl), 0, 1, barHeight,, int(255 * (nl - int(nl))));
+
+			changed	= false;
+			_doAffine = _doOffset	= true;
+		}
+		super.onPaint(...);
+	}
+
+	var	onchangeper;
+	function onMouseDown(x, y, button, shift)
+	{
+		if(button == mbLeft && onchangeper != void)
+		{
+			var	p	= (x - barLeft) / barWidth;
+			dm(name+".per = "+p);
+			onchangeper(Math.min(1, Math.max(0, p)));
+		}
+		else
+			super.onMouseDown(...);
+	}
+}
+
+/* サンプルスクリプト
+
+@addmenuitem page=fore class=NumberMenuItemLayer center=699 vcenter=258 digit=3 value=30 storage=c_フェードイン用数字 absolute=4300 visible=1 name=既読フェードアウト時間表示 target=既読フェードアウト時間変更
+@addmenuitem page=fore class=SliderMenuItemLayer center=500 vcenter=200 range=400 min=0 max=100 value=50 storage=c_バーカーソル viewarea=0/0/19/19 viewaeaNo=0 itemMode=3 absolute=4300 visible=1 name=既読フェードアウト時間変更 target=既読フェードアウト時間表示 targetprop=value
+@addmenuitem page=fore class=FontListMenuItemLayer width=200 height=100 center=200 vcenter=288 fontface="ＭＳ 明朝"  name=フォント選択 visible=1 absolute=4300 zoom=100
+@addmenuitem page=fore class=ScrollSliderMenuItemLayer vertical=1 center=317 vcenter=208 target=フォント選択 targetprop=position value=0 storage=font_スクロール viewarea=0/0/17/11 viewareaNo=0 itemMode=3 absolute=4300 visible=1 name=フォントスクロール
+@addmenuitem page=fore class=MessageMenuItemLayer left=461 top=284 width=488 height=78 opacity=255 visible=1 name=テキスト表示 margin=2 framecolor=0 linespacing=9 text=あいうえおかきくけこ<w500><r><e>さしすせそたちつてとなにぬねの<w500>
+
+*/
+@endif

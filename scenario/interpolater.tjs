@@ -1,0 +1,213 @@
+﻿/*-----------------------------------------------------------------------------
+/	補間クラス
+/		MoverEx.tjs から呼び出されている
+/	※ 注意！！
+/		path には文字列として数値が入っていることがあるので、使うときには数値化する(+を付ける)こと！！
+/----------------------------------------------------------------------------*/
+/*-CLASS-----------------------------------------------------------------------
+/	線形補間クラス
+/----------------------------------------------------------------------------*/
+class LinearInterpolater
+{
+	var	path;
+	var	valuecnt;
+
+	/*-FUNC--------------------------------------------------------------------
+	/	CONSTRUCTOR
+	/	in	: path		各位置の情報が入った配列
+	/		:			[ [ x, y, z ], [ x, y, z ], ... ] のような形になっていること。
+	/		: valuecnt	一つの位置がいくつの要素で構成されているか/いくつ単位で移動すればよいか
+	/		:			[ [ x, y, z ], ... ] の場合、3となる。
+	/------------------------------------------------------------------------*/
+	function LinearInterpolater(path, valuecnt)
+	{
+		this.path		= path;
+		this.valuecnt	= valuecnt;
+	}
+
+	/*-FUNC--------------------------------------------------------------------
+	/	calc - 進行度から計算された各要素の値を配列で返す
+	/	in	: per	進行度(0.0〜1.0)
+	/	out	: 各要素の値
+	/------------------------------------------------------------------------*/
+	function calc(per)
+	{
+		var	values	= [];
+
+		var	pos		= getPos(...);
+		var	curp	= path[pos[0]];		//	現在の位置
+		var	nextp	= path[pos[0]+1];	//	次の位置
+		var	ratio	= pos[1];			//	比率
+		for(var i=0; i<valuecnt; i++)
+			values[i]	= (nextp[i] - curp[i]) * ratio + curp[i] if curp[i] !== void;
+
+		return values;
+	}
+
+	/*-FUNC--------------------------------------------------------------------
+	/	getPos - 進行度から計算された現在の位置と、その比率
+	/	in	: per	進行度(0.0〜1.0)
+	/	out	: 位置の番号とその比率を収めた配列
+	/------------------------------------------------------------------------*/
+	function getPos(per)
+	{
+		if(per < 1.0)
+		{
+			var	d	= (path.count - 1) * per;
+			var	idx	= int(d);
+			return [ idx, d - idx ];
+		}
+		else
+			return [ path.count - 2, 1.0 ];
+	}
+}
+
+/*-CLASS-----------------------------------------------------------------------
+/	スプライン補間クラス
+/----------------------------------------------------------------------------*/
+class SplineInterpolater extends LinearInterpolater
+{
+	var zx = []; // スプラインワーク
+	var zy = []; // スプラインワーク
+
+	/*-FUNC--------------------------------------------------------------------
+	/	CONSTRUCTOR
+	/	in	: path		各位置の情報が入った配列
+	/		:			[ [ x, y, z ], [ x, y, z ], ... ] のような形になっていること。
+	/		: valuecnt	一つの位置がいくつの要素で構成されているか/いくつ単位で移動すればよいか
+	/		:			[ [ x, y, z ], ... ] の場合、3となる。
+	/	memo: スプライン補間されるのは、最初の2要素(x, y)のみ
+	/------------------------------------------------------------------------*/
+	function SplineInterpolater(path, valuecnt)
+	{
+		super.LinearInterpolater(...);
+
+		var	points	= path.count;
+		var tmpx = [], tmpy = [];
+		var tx = zx, ty = zy;
+		tx[0] = 0;
+		ty[0] = 0;
+		tx[points-1] = 0;
+		ty[points-1] = 0;
+
+		for(var i = points-2; i >= 0; i--)
+		{
+			tmpx[i+1] = (path[i+1][0] - path[i][0]);
+			tmpy[i+1] = (path[i+1][1] - path[i][1]);
+		}
+
+		tx[1] = tmpx[2] - tmpx[1] - tx[0];
+		ty[1] = tmpy[2] - tmpy[1] - ty[0];
+
+		tmpx[1] = 4;
+		tmpy[1] = 4;
+
+		var lim = points - 2;
+		for(var i = 1; i < lim; i++)
+		{
+			var x = 1 / tmpx[i];
+			var y = 1 / tmpy[i];
+			tx[i+1] = tmpx[i+2] - tmpx[i+1] - tmpx[i] * x;
+			ty[i+1] = tmpy[i+2] - tmpy[i+1] - tmpy[i] * y;
+			tmpx[i+1] = 4 - x;
+			tmpy[i+1] = 4 - y;
+		}
+
+		tx[points-2] -= tx[points-1];
+		ty[points-2] -= ty[points-1];
+
+		for(var i = points-2; i>0; i--)
+		{
+			tx[i] = (tx[i] - tx[i+1]) / tmpx[i];
+			ty[i] = (ty[i] - ty[i+1]) / tmpy[i];
+		}
+	}
+
+	/*-FUNC--------------------------------------------------------------------
+	/	calc - 進行度から計算された各要素の値を配列で返す
+	/	in	: per	進行度(0.0〜1.0)
+	/	out	: 各要素の値
+	/------------------------------------------------------------------------*/
+	function calc(per)
+	{
+		var	values	= [];
+
+		var	pos		= getPos(...);
+		var	index	= pos[0];
+		var	curp	= path[index];	//	現在の位置
+		var	nextp	= path[index+1];//	次の位置
+		var	ratio	= pos[1];		//	比率
+
+		//	最初の2要素のみスプライン補間
+		values[0] = (((zx[index+1] - zx[index])*ratio + zx[index]*3)*ratio +
+					((nextp[0] - curp[0]) - (zx[index]*2 + zx[index+1]))) * ratio + curp[0];
+		values[1] = (((zy[index+1] - zy[index])*ratio + zy[index]*3)*ratio +
+					((nextp[1] - curp[1]) - (zy[index]*2 + zy[index+1]))) * ratio + curp[1];
+
+		//	それ以外は線形補間
+		for(var i=2; i<valuecnt; i++)
+			values[i]	= (nextp[i] - curp[i]) * ratio + curp[i] if curp[i] !== void;
+
+		return values;
+	}
+}
+
+/*-CLASS-----------------------------------------------------------------------
+/	拡張線形補間クラス
+/		ステップの計算に、各区間ごとの時間情報を用いる
+/----------------------------------------------------------------------------*/
+class LinearInterpolaterEx extends LinearInterpolater
+{
+	function LinearInterpolaterEx()
+	{
+		super.LinearInterpolater(...);
+	}
+
+	/*-FUNC--------------------------------------------------------------------
+	/	getPos - 各区間の時間と経過時間から現在の位置と比率を計算
+	/	in	: time	区間ごとの時間
+	/		: tick	経過時間
+	/	out	: 位置の番号とその比率を収めた配列
+	/------------------------------------------------------------------------*/
+	function getPos(time, tick)
+	{
+		for(var i=0; i<time.count; i++)
+		{
+			if(time[i] > tick)
+				return [ i, tick / time[i] ];	//	現在の区間が見つかった
+
+			tick	-= time[i];
+		}
+		return [ time.count - 1, 1.0 ];	//	既に終了
+	}
+}
+
+/*-CLASS-----------------------------------------------------------------------
+/	拡張スプライン補間クラス
+/		LinearInterpolaterEx と同様
+/----------------------------------------------------------------------------*/
+class SplineInterpolaterEx extends SplineInterpolater
+{
+	function SplineInterpolaterEx()
+	{
+		super.SplineInterpolater(...);
+	}
+
+	/*-FUNC--------------------------------------------------------------------
+	/	getPos - 各区間の時間と経過時間から現在の位置と比率を計算
+	/	in	: time	区間ごとの時間
+	/		: tick	経過時間
+	/	out	: 位置の番号とその比率を収めた配列
+	/------------------------------------------------------------------------*/
+	function getPos(time, tick)
+	{
+		for(var i=0; i<time.count; i++)
+		{
+			if(time[i] > tick)
+				return [ i, tick / time[i] ];	//	現在の区間が見つかった
+
+			tick	-= time[i];
+		}
+		return [ time.count - 1, 1.0 ];	//	既に終了
+	}
+}

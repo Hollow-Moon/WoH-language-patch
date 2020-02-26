@@ -1,0 +1,143 @@
+﻿/*-----------------------------------------------------------------------------
+/	Copyright (C) status-MOON All Rights Reserved.
+/		フローチャートデータ - ルートデータ
+/----------------------------------------------------------------------------*/
+@if(__NFEROUTEDATA_DEFINED__==0)
+@set(__NFEROUTEDATA_DEFINED__=1)
+
+with(global)
+{
+//	.NFE_RSTATUS_
+}
+
+//	データ処理クラス(フローチャート実行時使用)
+class NFERouteData
+{
+	var	id;			//	ルートID
+//	var	name;		//	ルート名
+	var	_condition;	//	分岐条件
+	var	status;		//	ルート設定
+	var	alternative;//	選択肢データ(旧式は選択肢表示文/又はデータ)
+	var	arrival;	//	移動先のブロックID
+//	var	arrivalpage;//	移動先のページID(voidなら移動元と同一ページ)
+	var	_owner;		//	オーナー(=移動元ブロック)
+
+//	function NFERouteData(owner, id, arrival, arrivalpage, condition, alternative)
+	function NFERouteData(owner, id, arrival, condition, alternative)
+	{
+		this.id			= id;
+		this._owner		= owner;	//	_ownerの直接変更は最初だけ
+		this.arrival	= arrival;
+//		this.arrivalpage= arrivalpage;
+		this.condition	= condition;
+		this.alternative= alternative != void ? alternative : %[];
+
+//		name			= "";
+		status			= void;
+
+		chart.registObject(this);
+	}
+
+	function finalize()
+	{
+		chart.unregistObject(this);
+	}
+
+	property priority	//	処理の優先順位
+	{
+		getter		{ return owner.getPriority(this); }
+	}
+
+	property departure		//	移動元のブロックID
+	{
+		getter		{ return owner.id; }	//	=オーナー
+	}
+
+	property owner	{ getter { return _owner; } }
+	property block	{ getter { return _owner; } }
+	property page	{ getter { return _owner.page; } }
+	property chart	{ getter { return _owner.chart; } }
+
+	property condition
+	{
+		setter(c)	{ _condition = c; }
+		getter		{ return _condition; }
+	}
+
+	//	ファイル保存用データの取得
+	function getSaveData()
+	{
+		var	data	= %[];
+		with(data)
+		{
+			.id			= id;
+//			.name		= name;
+			.condition	= condition;
+			.status		= status;
+			if(typeof alternative == "String")
+			{
+				if(alternative == "")
+					.alternative= %[];	//	選択肢ではない(通常の分岐)
+				else
+					.alternative= %[text:alternative];	//	旧バージョンのデータ形式(alternativeにStringとDictionaryが混在)から新バージョンへ
+			}
+			else if(alternative instanceof "Dictionary")
+			{
+				if(alternative.text == "" && alternative.image == "")
+					.alternative	= "";	//	選択肢ではない(通常の分岐)
+				else
+				{
+					.alternative= %[];
+					(Dictionary.assignStruct incontextof .alternative)(alternative);
+				}
+			}
+			.arrival	= arrival;
+//			.arrivalpage= arrivalpage;
+		}
+		return data;
+	}
+
+	//	ファイル保存のデータから復帰
+	function setLoadData(data)
+	{
+		with(data)
+		{
+			id			= .id;
+//			name		= .name;
+			condition	= .condition;
+			status		= .status;
+			if(typeof .alternative == "String")
+			{
+				if(.alternative == "")
+					alternative	= %[];	//	選択肢ではない(通常の分岐)
+				else
+					alternative	= %[text:.alternative];	//	旧バージョンのデータ形式(alternativeにStringとDictionaryが混在)から新バージョンへ
+			}
+			else if(.alternative instanceof "Dictionary")
+			{
+				if(.alternative.text == "" && .alternative.image == "")
+					alternative	= "";	//	選択肢ではない(通常の分岐)
+				else
+				{
+					alternative= %[];
+					(Dictionary.assignStruct incontextof alternative)(.alternative);
+				}
+			}
+			arrival		= .arrival;
+//			arrivalpage	= .arrivalpage;
+		}
+	}
+
+	function clear()
+	{
+		invalidate this;
+	}
+
+	//	IDでオブジェクトを取得
+	function getObjectByID(id)
+	{
+		return chart.getObjectByID(id);
+	}
+}
+
+@endif

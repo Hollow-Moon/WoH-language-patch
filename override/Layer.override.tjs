@@ -1,0 +1,79 @@
+﻿// Layer.override.tjs - Layer のオーバーライド
+@if(__LAYER_OVERRIDE_DEFINED__==0)
+@set(__LAYER_OVERRIDE_DEFINED__=1)
+/*
+//	レイヤーの拡張
+//		読み込み時に、一つのベースと複数のパーツを組み合わせて描画される
+Layer.Layer_original_loadImages	= Layer.loadImages;
+Layer.loadImages	= function(storage, colorkey)
+{
+	if( storage == null ) return null;
+	//	そのままのファイル名でファイルが見つかったら、通常通り処理する
+	if(getExistImageName(storage) != void)
+	{
+		var	tag	= Layer_original_loadImages(...);
+//		dm(storage+": "+imageWidth+", "+imageHeight);
+		return tag;
+	}
+
+	//	"|"区切りで分割
+	var	parts	= storage.split("|");
+	storage	= getExistImageName(parts[0]);
+	var	tag	= Layer_original_loadImages(parts[0]);
+	if(tag.format == "picture")
+	{
+		var	layer	= new Layer(window, this);
+		var	img		= parts[0]+".parts";
+		storage	= getExistImageName(img);
+		if(storage == void)
+		{
+			//	パーツ個別ファイル
+			for(var i=1; i<parts.count; i++)
+			{
+				img	= parts[0]+"."+parts[i];
+				storage	= getExistImageName(img);
+				if(storage == void)
+					throw new Exception(parts[0]+"のパーツ\""+parts[i]+"\"が見つかりません。");
+				var	ptag	= layer.loadImages(img);	//	ファイルを読み込んで
+				layer.type	= ptag.type if ptag.type !== void;
+				operateRect(+ptag.left, +ptag.top, layer, 0, 0, layer.imageWidth, layer.imageHeight,
+					omAuto, ptag.opacity !== void ? +ptag.opacity : 255);	//	コピーする
+			}
+		}
+		else
+		{
+			//	パーツ一括ファイル
+			var	ptags	= layer.loadImages(img);
+			for(var i=1; i<parts.count; i++)
+			{
+				var	ptag	= %[];
+				(Dictionary.assign incontextof ptag)(ptags[parts[i]].split("@"));
+				layer.type	= ptag.type !== void ? ptag.type : ltAlpha;
+				operateRect(+ptag.left, +ptag.top, layer, +ptag.imageLeft, +ptag.imageTop,	//	コピーする
+					+ptag.imageWidth, +ptag.imageHeight, omAuto, ptag.opacity !== void ? +ptag.opacity : 255);
+			}
+		}
+		invalidate layer;
+	}
+	else
+	{
+		//	対応するフォーマットでなければ、処理しない
+		tag.partsparams	= parts;
+	}
+	return tag;
+};
+*/
+Layer.clearEdge	= function(size=1, w, h)
+{
+	with(global.Layer)
+	{
+		w	= .width if w === void;
+		h	= .height if h === void;
+		.fillRect(0, 0, w, size, 0);
+		.fillRect(0, size, size, h-(size << 1), 0);
+		.fillRect(w-size, size, size, h-(size << 1), 0);
+		.fillRect(0, h-size, w, size, 0);
+	}
+};
+
+@endif

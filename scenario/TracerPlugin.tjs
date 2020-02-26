@@ -1,0 +1,993 @@
+﻿/*----------------------------------------------------------------------------/
+/	*.gc ファイルを読み込んで、チャートを実行するプラグイン
+/	※	KAGに組み込むことを前提とする
+/----------------------------------------------------------------------------*/
+@if(__TRACERPLUGIN_DEFINED__==0)
+@set(__TRACERPLUGIN_DEFINED__=1)
+
+//	フラグ一覧ウィンドウを使用可能にする(=1)
+@set(__USE_FLAGLISTWINDOW__=1)
+
+//	askYesNo が同期(確認待ちする)かどうか(=1)
+@set(__SYNC_ASK__=0)
+
+//	テスト用に既読でなくても飛ばす(=1)
+@set(__SKIP_NO_READ__=0)
+
+//	DEBUG 時、global.autoselect = %[] に選択肢の文字列を追加すると、自動的に選択させることができる
+
+//	NFEChartData.tjs, NFEPageData.tjs, NFEBlockData.tjs, NFERouteData.tjs が必要
+Scripts.execStorage("NFEChartData.tjs");
+@if(__USE_FLAGLISTWINDOW__!=0)
+@set(__USE_SUBWINDOWS__=1)
+Scripts.execStorage("FlagListWindow.tjs");
+@endif
+
+with(global)
+{
+	.TRC_GO		= 1;	//	次へ進む
+	.TRC_STOP	= 2;	//	選択処理を待つ
+	.TRC_END	= 0;	//	フローチャート終了→タイトルへ
+}
+
+//	使用フラグの初期化
+with(cf)
+{
+	.scene2ndSkip			= false if .scene2ndSkip === void;			//	既読シーンをスキップするか
+	.skipWithoutCheck		= false if .skipWithoutCheck === void;		//	↑スキップするとき、確認をしないか
+	.stopSkipAtAlternative	= true if .stopSkipAtAlternative === void;	//	選択肢でスキップを解除するか
+	.ch2ndSkip				= false if .ch2ndSkip === void;				//	シーンの先頭で既読メッセージスキップを開始するか
+}
+
+class TracerPlugin extends KAGPlugin
+{
+	var	chart;		//	チャートデータ
+	var	current;	//	現在のブロック
+/*	var	_current;
+	property current
+	{
+		getter		{ return _current; }
+		setter(v)	{ dmt("Tracer.current = "+current+" → "+v); _current = v; }
+	}
+*/
+	//	行先定義
+	var	title_storage, title_target;	//	タイトルへ戻るときの戻り先
+	var	chart_storage;					//	読み込むチャートファイル
+
+	//	テスト用
+	var	skipScript;		//	スクリプトをスキップするか
+
+	//	状態保存
+	var	scriptExecute;	//	スクリプト実行中
+//	var	moveToAnother;	//	「任意のシーンへ移動」フラグ
+
+	//	処理設定
+	var	playWaittime;	//	スクリプト開始前に待つ時間
+
+	//	節目の処理
+	var	pre_execscript;	//	スクリプト再生前の処理
+	var	post_execscript;//	スクリプト再生後の処理
+
+	/*
+		テキストで選択肢を表示する場合のフォーマット
+		* は必須
+			  <no>		: 選択肢の番号(半角)
+			  <no_z>	:      〃     (全角)
+			* <link>	: link タグ挿入位置
+			* <endlink>	: endlink タグ挿入位置
+			* <text>	: 選択肢の文章
+
+		"　<no>. <link><text><endlink>" というフォーマットなら、
+
+			|　1. [link target=.. exp=..]登校する[endlink][r]
+			|　2. [link target=.. exp=..]街へ出かける[endlink][r]
+
+		というスクリプトで選択肢が表示される。
+
+		※ フォーマットにタグを記入しても、処理されません。
+	*/
+	var	alternative_format	= "　　<no_z>．<link><text><endlink>";
+	var	ltgt_pattern = /<>/;
+
+	//	選択肢の先をどれだけ調べるか
+	var	alternative_search_count	= 1;	//	1 なら選択肢を選んだかどうか。2 以上なら、選択肢の先に未読のブロックがあるかどうか
+
+	//	シーン再生
+	var	lastplay;			//	最後に再生したブロック
+	var	currentcategory;	//	現在開いているカテゴリー
+	var	scripts;			//	ブロックのスクリプト一覧
+	var	scriptNo;			//	次に再生するスクリプト
+
+	//	タイトル表示形式
+	var	title_format;		//	f.scripttitle に入れるときのフォーマット
+
+	var	SYSTEMFLAG_FIRST_CHARACTER	= "_";
+
+@if(__SYNC_ASK__)
+	var	syncask	= true;
+@endif
+@if(!__SYNC_ASK__)
+	var	syncask	= false;
+@endif
+
+	function TracerPlugin(window)
+	{
+		super.KAGPlugin();
+		this.window	= window;
+
+		chart	= new NFEChartData();
+
+		playWaittime	= 0;
+
+		globalflags["trail"]	= %[] if globalflags["trail"] == void;
+	}
+
+	function finalize()
+	{
+		invalidate chart if chart != void;
+
+		//	サブウィンドウの破棄
+@if(__USE_SUBWINDOWS__!=0)
+		var	keys	= [];
+		keys.assign(subwindows);
+		for(var i=0; i<keys.count; i+=2)
+			invalidate keys[i+1] if keys[i+1] != void;
+@endif
+
+		super.finalize();
+	}
+
+	//	既読情報などを記録するフラグ
+	property globalflags
+	{
+		getter	{ return kag.sflags; }
+	}
+
+	//	ゲーム進行などを記録するフラグ
+	property flags
+	{
+		getter	{ return kag.flags; }
+	}
+
+	//	フローチャートファイルの読み込み
+	function load(storage)
+	{
+		chart.load(storage);
+		if(chart.subscript != "")
+		{
+			if(Storages.isExistentStorage(chart.subscript))
+				Scripts.execStorage(chart.subscript);
+			else
+				throw new Exception("サブルーチン集: \""+chart.subscript+"\"がプロジェクト内に存在しません。");
+		}
+	}
+
+	//	現在のブロックを設定
+	function init(cur)
+	{
+		current	= cur;
+	}
+
+	//	現ブロックのスクリプトファイル名を取得
+	function getScript()
+	{
+		var	block	= chart.getObjectByID(current);
+		if(block.script != void)
+		{
+			if(typeof block.script == "Object")
+			{
+				if(block.script instanceof "Array")
+					return block.script;
+			}
+			else if(Storages.isExistentStorage(block.script))
+				return [ block.script ];
+		}
+		return void;
+	}
+
+	//	既読スクリプトのラベル
+	function getTrailLabel(storage)
+	{
+		return Storages.chopStorageExt(Storages.extractStorageName(storage));
+	}
+
+	//	最初から
+	function start(blockid, clearflag=true)
+	{
+		load(chart_storage);
+		blockid	= chart.first if blockid === void;
+		if(blockid === void)
+			throw new Exception("開始ブロックが指定されていません。");
+
+		//	ゲームフラグをクリア
+		if(typeof clearflag == "Object" && clearflag instanceof "Dictionary")
+			(Dictionary.assignStruct incontextof flags)(clearflag);	//	指定のフラグで初期化
+		else if(clearflag)
+			(Dictionary.clear incontextof flags)();	//	クリアする
+
+		//	フラグ一覧を更新
+@if(__USE_FLAGLISTWINDOW__!=0)
+		var	key	= "flaglist";
+		if(subwindows[key])
+			subwindows[key].drawFlag(flags);
+@endif
+
+		init(blockid);
+	}
+
+	//	現在のブロックを実行する
+	function exec()
+	{
+		var	pendings= kag.conductor.pendings;
+		var	pi		= 0;
+
+		var	scripts	= getScript();
+//		dm("TracerPlugin.exec(): scripts = "+scripts);
+		if(scripts == void)
+		{
+@if(!__SYNC_ASK__)
+			asyncCaller.call(gotonext);
+@endif
+			return false;	//	実行するスクリプトが見つからない
+		}
+//		dm("exec scenario: "+scripts.join(", "));
+
+		if(skipScript)	//	スクリプトをスキップするモード
+		{
+@if(!__SYNC_ASK__)
+			asyncCaller.call(skipscene);
+@endif
+			return false;
+		}
+
+		//	既読スクリプトかどうか
+		var	block	= chart.getObjectByID(current);
+//		dm("\r\n"+("=".repeat(80))+"\r\n\t\t"+global.f.scripttitle+" → "+(title_format == "" ? block.title : title_format.sprintf(block.title))+"\r\n"+("=".repeat(80)));
+		global.f.scripttitle	= title_format == "" ? block.title : title_format.sprintf(block.title);	//	global.f に記録する
+		if(cf.scene2ndSkip
+@if(!DEBUG||!__SKIP_NO_READ__)
+			&& globalflags["trail"][getTrailLabel(scripts[0])]>0
+@endif
+		)
+		{
+			switch(block.force)
+			{
+			case NFE_FORCE_SKIP:	//	既読時は、強制的にスキップするブロック
+				asyncCaller.call(skipscene);
+				return false;
+
+			case NFE_FORCE_PLAY:	//	既読時は、強制的に再生するブロック
+				break;
+
+			default:
+				if(cf.skipWithoutCheck)	//	既読は自動的にスキップ
+				{
+					if(typeof global.popupMessage != "undefined")
+						popupMessage("「"+block.title+"」をスキップしました");
+@if(!__SYNC_ASK__)
+					asyncCaller.call(skipscene);
+@endif
+					return false;
+				}
+				else
+				{
+					var	msg		= "シーン「"+block.title+"」は、既に再生しています。\nスキップしますか？";
+					var	title	= "既読スキップ";
+@if(__SYNC_ASK__)
+					if(askYesNo(msg, title))
+						return false;
+					break;
+@endif
+@if(!__SYNC_ASK__)
+					askYesNo(msg, title, skipscene, initscript, scripts);
+					return false;
+@endif
+				}
+			}
+		}
+		return initscript(scripts, pendings);
+	}
+
+	property script
+	{
+		getter	{ dm("script["+scriptNo+"] = "+scripts[scriptNo]); return scripts[scriptNo++]; }
+	}
+
+	property isRemainScript
+	{
+		getter	{ return scripts.count > scriptNo; }
+	}
+
+	function initscript(scripts, pendings= kag.conductor.pendings)
+	{
+		//	既読ではないので、シーンを再生する
+		scriptExecute	= true;		//	スクリプト再生中
+//		moveToAnother	= false;	//	任意のシーンへは移動しない
+		if(playWaittime > 0)
+		{
+			//	シーン再生前に、ちょっとだけ待つか？
+			pendings.insert(pi++, %[tagname:"wait",time:playWaittime]);
+			playWaittime	= 0;
+		}
+		this.scripts	= scripts;
+		this.scriptNo	= 0;
+
+		//	スクリプト再生前の処理が定義されていれば行う
+		pre_execscript(this) if pre_execscript != void;
+
+		//	既読メッセージのスキップを開始する
+		kag.skipToNextStopByKey() if cf.ch2ndSkip && kag.skipMode != 3;
+
+@if(!__SYNC_ASK__)
+		kag.process("tracerplugin.ks", "*play2");
+@endif
+//		for(var i=0; i<pendings.count; i++) dm(@"pendings[${i}].tagname = ${pendings[i].tagname}");
+		return true;
+	}
+
+	function gotonext()
+	{
+		kag.process("tracerplugin.ks", "*next");
+	}
+
+	function skipscene()
+	{
+		kag.process("tracerplugin.ks", "*skipscene");
+	}
+
+	//	実行終了時の処理
+	function endofexec()
+	{
+//		dm("endofexec");
+		scriptExecute	= false;	//	スクリプト再生終了
+
+		//	既読フラグを立てる
+		var	block	= chart.getObjectByID(current);
+		var	label;
+		if(typeof block.script == "Object")
+		{
+			label = getTrailLabel(block.script[0]);
+			for(var i=0; i<block.script.count; i++)
+				globalflags.trail[getTrailLabel(block.script[i])]++;
+		}
+		else
+		{
+			label	= getTrailLabel(block.script);
+			globalflags.trail[label]++;
+		}
+
+		//	他に既読フラグを立てるべきスクリプトがあれば、立てる
+		if(block.readblocks != void)
+		{
+			for(var i=0; i<block.readblocks.count; i++)
+			{
+				var	b	= chart.getObjectByID(block.readblocks[i]);
+				var	scr	= typeof block.script == "Object" ? block.script[0] : block.script;
+				if(scr != "" && Storages.isExistentStorage(scr))
+					globalflags.trail[getTrailLabel(scr)]++;
+				else
+					dm("warnning: 「"+block.title+"」で定義されている既読化ブロック「"+b.title+"」には、スクリプトが存在しません。");
+			}
+		}
+
+		//	これまでに再生されたスクリプトの数をカウント
+		globalflags.trailcount++ if globalflags.trail[label] == 1;
+
+		//	このスクリプトをはじめて再生した日時を記録
+		globalflags.traildate	= %[] if globalflags["traildate"] == void;
+		if(globalflags.traildate[label] == void)
+		{
+			with(new Date())
+				globalflags.traildate[label]	= "%4d/%2d/%2d %2d:%02d:%02d".sprintf(.getYear(), .getMonth()+1, .getDate(), .getHours(), .getMinutes(), .getSeconds());
+		}
+
+		//	スクリプト再生後の処理が定義されていれば行う
+		post_execscript(this) if post_execscript != void;
+	}
+
+	//	次のブロックへ移動する
+	function next()
+	{
+		//	ブロックに処理が記載されていれば、先にその処理を行う
+		var	block	= chart.getObjectByID(current);
+		if(block.operate != "")
+			operateflag(block.operate);
+
+		//	フラグ一覧を更新
+@if(__USE_FLAGLISTWINDOW__!=0)
+		var	key	= "flaglist";
+		if(subwindows[key])
+			subwindows[key].drawFlag(flags);
+@endif
+
+		//	分岐処理を行う
+		var	alternatives	= [];
+		for(var i=0; i<block.routes.count; i++)
+		{
+			var	route	= block.routes[i];
+
+			//	分岐条件が存在しないか、分岐条件をクリアしている場合に分岐可能
+			if(route.condition == "" || checkcondition(route.condition))
+			{
+				if(typeof route.alternative.text != "undefined" || typeof route.alternative.image != "undefined")
+				{
+					//	選択肢の場合
+					alternatives.add([route.alternative, route.arrival]);	//	選択肢表示と行先を記録
+				}
+				else
+				{
+					//	通常の分岐の場合
+					current	= route.arrival;	//	そちらへ
+					return TRC_GO;
+				}
+			}
+		}
+
+		//	選択肢を表示する必要がある場合
+		if(alternatives.count > 0)
+		{
+			//	スキップを解除する
+			kag.cancelSkip() if sf.stopSkipAtAlternative;
+
+			//	マッププラグインを使用する
+			//	→	選択肢より柔軟にボタンを配置できる
+			if(block.diverge == "map")
+			{
+				//	初回、マッププラグインを読み込む
+				Scripts.execStorage("MapPlugin.tjs") if Storages.isExistentStorage("MapPlugin.tjs");
+				if(typeof kag.tagHandlers.initmap == "undefined")
+				{
+					throw new Exception("マッププラグインが存在しません。");
+					return TRC_STOP;	//	スクリプトの進行は停止する
+				}
+
+				//	マップ背景の準備を行う
+				var	handlers	= kag.tagHandlers;
+				handlers.initmap(block.divergedata);
+
+				//	マップ前景(ボタン)の準備を行う
+				for(var i=0; i<alternatives.count; i++)
+				{
+					var	alter	= alternatives[i];
+
+					//	マップ上のボタンが選択済み(=この先のスクリプトを読んでいる)かどうか調べる
+					var	res	= checkRead(alter[1], alternative_search_count);
+					var	opt	= "";
+					if(res == void)
+					{
+						opt	= "new";	//	未読ブロックあり
+						//	ボタンの属性に応じて opt を変化させるなら、ここに記述
+					}
+
+					//	マップ上にボタンを追加
+					//		ボタンの表示には PushButtonLayer が使用される
+					var	tmp	= %[];
+					(Dictionary.assign incontextof tmp)(alter[0]);
+					with(tmp)
+					{
+						.target		= "*choicealternative";
+						.exp		+= ";with(global.tracer_object){.current="+alter[1]+";}",
+						.enabled	= true;
+						.opt		= opt;
+					}
+					handlers.addmapbutton(tmp);
+				}
+
+				//	マップ前景(パーツ)の準備を行なう
+				var	parts	= block.divergedata.parts;
+				if(parts != void)
+				{
+					for(var i=0; i<parts.count; i++)
+					{
+						//	マップ上にパーツを追加
+						handlers.addmapparts(parts[i]);
+					}
+				}
+
+				//	マップの表示(マップが表示されていなかった場合)もしくはマップの切替(既にマップが表示されていた場合)を行う
+				handlers.showmap(block.divergedata);
+			}
+
+			//	選択肢プラグインを使用する
+			else
+			{
+				//	選択肢プラグインの読み込み、もしくはタグの再定義
+				var	pluginfile	= block.diverge;
+				if(pluginfile == "" || pluginfile == "alternative")	//	Ver.0.17までの定義なら、
+					pluginfile	= "AlternativePlugin.tjs";			//	基本プラグインを使用
+				Scripts.execStorage(pluginfile) if Storages.isExistentStorage(pluginfile);
+
+				//	プラグインの読み込み/タグの再定義に成功
+				var	handlers	= kag.tagHandlers;
+				if(typeof handlers.addalter != "undefined")
+				{
+					for(var i=0; i<alternatives.count; i++)
+					{
+						var	alter	= alternatives[i];
+@if(DEBUG)
+						dm(alter[0].text+" = "+global.autoselect[alter[0].text]) if typeof global.autoselect != "undefined";
+						if(typeof global.autoselect != "undefined" && global.autoselect[alter[0].text])
+						{
+							current	= alter[1];
+							handlers.resetalter();
+							return TRC_GO;
+						}
+@endif
+						//	選択肢が選択済み(=この先のスクリプトを読んでいる)かどうか調べる
+						var	res	= checkRead(alter[1], alternative_search_count);
+						var	opt	= "";
+						if(res == void)
+						{
+							opt	= "new";	//	未読ブロックあり
+							//	選択肢のテキストに応じて opt を変化させるなら、ここに記述
+						}
+
+						//	選択肢を追加する
+						var	tmp	= %[];
+						if(typeof alter[0] == "String")
+						{//	旧バージョン用(alter[0] == "String")
+							tmp.text= alter[0];	//	文字列を選択肢表示名にコピー
+						}
+						else if(alter[0] instanceof "Dictionary")
+						{//	新バージョン用(alter[0] == "Dictionary")
+							(Dictionary.assign incontextof tmp)(alter[0]);	//	全てのパラメータをコピー
+						}
+						with(tmp)
+						{
+							if(.text.substr(0,4).toUpperCase() == "IMG:")
+							{//	画像選択肢の指定
+								var	data	= .text.split(",");
+								.vcenter	= +(data[data.count-1].replace(ltgt_pattern, ""));
+								.center		= +(data[data.count-2].replace(ltgt_pattern, ""));
+								.image		= data[0].substr(4).replace(ltgt_pattern, "");
+								.text		= void;
+							}
+							.target	= "*choicealternative";
+							.exp	+= ";with(global.tracer_object){.current="+alter[1]+";}";	//	expを追加
+							.enabled= true;
+							.opt	= opt;			//	付加表示(基本的には、選択肢を未読かどうか)
+						}
+						var	keys	= [];
+						keys.assign(tmp);
+						for(var i=0; i<keys.count; i+=2)
+							dm("addalter: "+keys[i]+" = "+keys[i+1]);
+						handlers.addalter(tmp);
+					}
+					//	選択肢を表示する
+					handlers.showalter(block.divergedata == void ? %[] : block.divergedata);
+				}
+
+				//	"addalter"タグが存在しない
+				else
+				{
+					//	通常の選択肢表示
+					handlers.r(%[]);	//	空行を挿入
+					for(var i=0; i<alternatives.count; i++)
+					{
+						//	データの置換
+						var	fmt	= alternative_format;
+//						dm("fmt = \""+fmt+"\"");
+						var	ptn	= [ "<no>", i + 1, "<no_z>", $(#"０" + i + 1), "<text>", alternatives[i][0] ];
+						var	pos, key;
+						for(var i=0; i<ptn.count; i+=2)
+						{
+							key	= ptn[i];
+							pos	= fmt.indexOf(key);
+							if(pos >= 0)
+							{
+//								dm(key+" = "+pos+"/"+key.length);
+								fmt	= fmt.substr(0, pos) + ptn[i+1] + fmt.substr(pos + key.length);
+							}
+						}
+//						dm("fmt = \""+fmt+"\"");
+
+						//	〜[link] まで
+						key	= "<link>";
+						pos	= fmt.indexOf(key);
+						handlers.ch(%[text:fmt.substr(0, pos)]);
+						handlers.link(%[target:"*choicealternative",exp:"with(global.tracer_object){.current="+alternatives[i][1]+";}"]);
+						fmt	= fmt.substr(pos + key.length);
+
+						//	〜[endlink]〜 まで
+						key	= "<endlink>";
+						pos	= fmt.indexOf(key);
+						handlers.ch(%[text:fmt.substr(0, pos)]);
+						handlers.endlink(%[]);
+						handlers.ch(%[text:fmt.substr(pos + key.length)]);
+
+						//	改行
+						handlers.r(%[]);
+					}
+					//	メッセージレイヤーを表示
+					if(typeof handlers.texton != "undefined")
+						handlers.texton(%[]);
+				}
+			}
+			return TRC_STOP;	//	スクリプトの進行は停止する
+		}
+
+		//	処理が定まらなければ、タイトルへ戻る
+		return TRC_END;
+	}
+
+	//	タイトルへ戻る
+	function returntitle()
+	{
+		//	戻る処理を登録
+//		dm("return to "+title_storage, title_target);
+//		kag.conductor.pendings.add(%[
+		kag.conductor.pendings.insert(0, %[
+			tagname	: "jumptag",
+			storage	: title_storage,
+			target	: title_target,
+		]);
+	}
+
+	//	セーブ時の処理
+	function onStore(f, elm)
+	{
+		f["chart_storage"]	= chart.storage;
+		f["chart_current"]	= current;
+
+		f["title_storage"]	= title_storage;
+		f["title_target"]	= title_target;
+
+		f["chart_lastplay"]	= lastplay;
+		f["chart_currentcategory"]	= currentcategory;
+
+		//	*scenarioplay (ページの先頭)で保存したときのため
+		f["scripts"]		= scripts;
+		f["scriptno"]		= scriptNo;
+
+		f["title_format"]	= title_format;
+	}
+
+	//	ロード時の処理
+	function onRestore(f, clear, elm)
+	{
+		load(f["chart_storage"]);
+		init(f["chart_current"]);
+
+		title_storage	= f["title_storage"];
+		title_target	= f["title_target"];
+		lastplay		= f["chart_lastplay"];
+		currentcategory	= f["chart_currentcategory"];
+		scripts			= f["scripts"];
+		scriptNo		= f["scriptno"];
+		title_format	= f["title_format"];
+	}
+
+	//	システム変数保存時の処理
+	function onSaveSystemVariables()
+	{
+		//	サブウィンドウの状態を記録
+@if(__USE_SUBWINDOWS__!=0)
+		var	keys	= [];
+		keys.assign(subwindows);
+		for(var i=0; i<keys.count; i+=2)
+			keys[i+1].saveSetting() if keys[i+1] != void && typeof keys[i+1].saveSetting != "undefined";
+@endif
+	}
+
+	//	フラグの処理を実行する
+	function operateflag(op, f=flags, sf=globalflags)
+	{
+		var	names	= op.split("+-*/=,<>?: ",, true);
+		var	numreg	= /^[0-9\.-]+$/;
+		var	updateglobalflag	= false;
+		for(var i=0; i<names.count; i++)
+		{
+//			dm(i+": "+names[i]);
+			var	pos	= op.indexOf(names[i]);
+			if(!numreg.test(names[i]))
+			{
+				//	変数名にメンバ選択演算子を付加
+				if(op[pos] == SYSTEMFLAG_FIRST_CHARACTER)
+				{
+					op	= op.substr(0, pos) + "sf." + op.substr(pos+1);	//	変数名の先頭が"_"なら、システム変数
+					updateglobalflag	= true;
+				}
+				else
+					op	= op.substr(0, pos) + "f." + op.substr(pos);
+			}
+		}
+//		dm("operateflag: "+op);
+		op!;		//	ゲーム進行フラグ上で、式を実行する
+		kag.saveSystemVariables() if updateglobalflag;	//	システム変数が更新されたら記録する
+	}
+
+	//	分岐条件をチェックする
+	function checkcondition(cond, f=flags, sf=globalflags)
+	{
+		var	names	= cond.split("!()|&<>=",, true);
+		var	numreg	= /^[0-9\.-]+$/;
+		for(var i=0; i<names.count; i++)
+		{
+			var	name	= names[i];
+			if(numreg.test(name))	//	数値はわざわざ置換しない
+				continue;
+
+			//	name を現在の値に置換する
+			var	pos	= cond.indexOf(name);
+			cond	= cond.substr(0, pos) + ((name[0] == SYSTEMFLAG_FIRST_CHARACTER ? sf[name.substr(1)] : f[name]) - 0) + cond.substr(pos + name.length);
+		}
+//		dm("checkcondition: "+cond);
+		return cond!;	//	分岐条件をチェックして、結果を返す
+	}
+
+	//	指定の id のブロックから count 段数分先に既読のブロックがあるか
+	//	結果: 見つかったら、既読ブロックの id とその段数を返す。見つからなかったら void
+	function checkRead(id, count=4, f=flags, sf=globalflags)
+	{
+		//	このブロックが既読なら、すぐに戻る
+		var	block	= chart.getObjectByID(id);
+		var	label	= getTrailLabel(typeof block.script == "Object" ? block.script[0] : block.script);
+		if(label != "" && globalflags.trail[label] > 0)
+			return [ id, count ];
+
+		//	この先を調べるかどうか
+		count--;
+		if(count < 1)
+			return void;
+
+		//	フラグを複製する
+		var	dup_f	= %[];
+		dup_f.assign(f);
+		var	dup_sf	= %[];
+		dup_sf.assign(sf);
+
+		//	このブロックのフラグ処理を実施
+		operateflag(block.operate, dup_f, dup_sf) if block.operate != "";
+
+		//	分岐をチェック
+		var	result;
+		var	short	= 0;
+		for(var i=0; i<block.routes.count; i++)
+		{
+			var	route	= block.routes[i];
+			if(route.condition == "" || checkcondition(route.condition, dup_f, dup_sf))
+			{//	条件がないか、条件に合致したとき
+				var	res	= checkRead(route.arrival, count, dup_f, dup_sf);
+
+				//	見つかって、これまでに見つかったものより近いなら、
+				if(res != void && res[1] > short)
+				{
+					result	= res;	//	それを記録する
+					short	= res[1];
+				}
+			}
+		}
+		invalidate dup_sf;
+		invalidate dup_f;
+		return result;
+	}
+
+	/*--シーン再生関連-------------------------------------------------------*/
+	//	初期化
+	function initScenePlay()
+	{
+		lastplay		= void;
+		currentcategory	= chart.categories.id;
+	}
+
+	//	カテゴリーの名称を取得
+	//	in	: cid	カテゴリーID
+	//	out	: カテゴリー名
+	function getCategoryName(cid)
+	{
+		cid		= currentcategory if cid == void;
+		var	c	= chart.getObjectByID(cid);
+		return c.name;
+	}
+
+	//	現在のカテゴリーの内容を取得
+	//	in	: cid	カテゴリーID
+	//	out	: 結果の辞書配列(.category には現在のカテゴリ名、.type にはその順番の型)
+	function getCategoryChildren(cid)
+	{
+		cid		= currentcategory if cid == void;
+		no		= 0 if no == void;
+
+		var	c	= chart.getObjectByID(cid);
+
+		var	ret	= [];
+		for(var i=0; i<c.children.count; i++)
+		{
+			var	data	= c.children[i];
+			var	item	= %[];
+			if(typeof data == "Integer")
+			{
+				//	ブロックの場合
+				data	= chart.getObjectByID(data);
+				with(item)
+				{
+					.type		= "block";
+					.title		= data.title;
+					.synopsis	= data.synopsis;
+				}
+			}
+			else
+			{
+				//	カテゴリーの場合
+				with(item)
+				{
+					.type	= "category";
+					.name	= data.name;
+					.id		= data.id;
+				}
+			}
+			ret.add(item);
+		}
+		return ret;
+	}
+
+	//	カテゴリーの変更
+	//	in	: cid	カテゴリーID
+	//	out	: 変更に成功したか
+	function setCurrentCategory(cid)
+	{
+		var	c	= chart.getObjectByID(+cid);
+		if(c == void || !(c instanceof "NFECategoryData"))
+			return false;
+
+		currentcategory	= +cid;
+		return true;
+	}
+
+	//	一つ上のカテゴリー
+	//	in	: cid	カテゴリーID(指定がなければ、現在のカテゴリー)
+	//	out	: 一つ上のカテゴリーのID(voidなら上のカテゴリーは存在しない)
+	function getParentCategory(cid)
+	{
+		cid		= currentcategory if cid == void;
+		var	c	= chart.getObjectByID(+cid);
+		return c.parent;
+	}
+
+	//	ブロックを再生する
+	//	in	: bid	ブロックID
+	//	out	: 成否
+	function playScene(bid)
+	{
+		var	b	= chart.getObjectByID(+bid);
+		if(b == void || !(b instanceof "NFEBlockData"))
+			return false;
+
+		lastplay	= +bid;
+		var	pendings= kag.conductor.pendings;
+		var	pi		= 0;
+		pendings.insert(pi++, %[tagname:"cancelskip"]);					//	スキップ状態をキャンセル
+		pendings.insert(pi++, %[tagname:"cm"]);							//	メッセージレイヤーを消去
+		if(typeof b.script == "Object")
+		{
+			for(var i=0; i<b.script.count; i++)
+				pendings.insert(pi++, %[tagname:"calltag",storage:b.script[i]]);	//	スクリプトの再生を開始
+		}
+		else
+			pendings.insert(pi++, %[tagname:"calltag",storage:b.script]);	//	スクリプトの再生を開始
+//		for(var i=0; i<pendings.count; i++) dm(@"pendings[${i}].tagname = ${pendings[i].tagname}");
+		return true;
+	}
+
+	/*--サブウィンドウ関連---------------------------------------------------*/
+	//	フラグ一覧ウィンドウの作成
+@if(__USE_FLAGLISTWINDOW__!=0)
+	var	subwindows	= %[];
+	function createFlagListWindow()
+	{
+		if(chart.storage == "")
+			return;
+
+		var	key	= "flaglist";
+		if(subwindows[key] == void)
+		{
+			with(subwindows[key] = new FlagListWindow(this))
+			{
+				.initFlag(chart.flags);
+				.drawFlag(flags);
+			}
+		}
+		else
+			subwindows[key].visible	= true;
+	}
+@endif
+
+	/*--メニュー処理関連-----------------------------------------------------*/
+	//	シナリオ再生メニュー用に、既読のシナリオのみを抽出したカテゴリーデータを作成
+	function getAlreadyReadCategories()
+	{
+		var	data	= %[];
+		var	func	= function(data, cates, gobi, func)
+		{
+			data.children	= [];
+			var	cnt	= 0;
+			for(var i=0; i<cates.count; i++)
+			{
+				//	カテゴリ
+				if(typeof cates[i] == "Object")
+				{
+					var	cate= %[id:cates[i].id, name:cates[i].name];
+					if(func(cate, cates[i].children, gobi, func) > 0)
+						data.children.add(cate);
+					else
+						invalidate cate;
+				}
+				//	ブロック
+				else
+				{
+					var	block	= gobi(+cates[i]);
+					if(block != void)
+					{
+						var	label	= getTrailLabel(typeof block.script == "Object" ? block.script[0] : block.script);
+						if(globalflags.trail[label] > 0)
+						{
+							data.children.add(cates[i]);	//	既読スクリプトなら追加
+							cnt++;
+						}
+					}
+				}
+			}
+			return cnt;
+		} incontextof this;
+		func(data, chart.categories.children, chart.getObjectByID, func);
+		return data;
+	}
+
+	//	サポート
+	//	スクリプトファイル名からブロックを得る
+	function getBlockFromScript(script)
+	{
+//		dm("getBlockFromScript("+script+")");
+		var	keys	= [];
+		keys.assign(chart.objects);
+		for(var i=0; i<keys.count; i+=2) with(keys[i+1])
+		{
+			var	block	= keys[i+1];
+			if(block instanceof "NFEBlockData")
+			{
+				if(typeof .script == "String")
+				{
+//					dm(.title+": "+.script);
+					if(.script == script)
+						return .title;
+				}
+				else
+				{
+//					dm(.title+": "+.script.join(", "));
+					for(var i=0; i<.script.count; i++)
+					{
+						if(.script[i] == script)
+							return block;
+					}
+				}
+			}
+		}
+		return void;
+	}
+}
+kag.addPlugin(global.tracer_object = new TracerPlugin(kag));
+
+//	pending できる call タグを追加
+kag.tagHandlers.calltag	= function(elm)
+{
+	processCall(elm.storage, elm.target);
+	return 0;
+} incontextof kag;
+
+//	pending できる jump タグを追加
+kag.tagHandlers.jumptag	= function(elm)
+{
+	process(elm.storage, elm.target);
+	return 0;
+} incontextof kag;
+
+//	フラグ一覧ウィンドウを表示する
+@if(__USE_FLAGLISTWINDOW__==1)
+function dispFlagListWindow()
+{
+	global.tracer_object.createFlagListWindow();
+}
+@endif
+
+/*---------------------------------------------------------------------------*/
+@endif

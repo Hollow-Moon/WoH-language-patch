@@ -1,0 +1,1270 @@
+﻿/*-----------------------------------------------------------------------------
+/	Copyright (C) TYPE-MOON All Rights Reserved.
+/		漫画の集中線を描画するプラグイン
+/----------------------------------------------------------------------------*/
+@if(__FOCUSLINE_PLUGIN_DEFINED__==0)
+@set(__FOCUSLINE_PLUGIN_DEFINED__=1)
+
+Scripts.execStorage("BasePlugin.tjs");
+Plugins.link("layerExYADraw.dll");	//	集中線等を描画
+
+class FocusLinePlugin extends AsyncAnimationBasePlugin
+{
+	var	name	= "focusline";
+@if(IS_TLE)
+	var	title	= "効果線";
+@endif
+
+	//	パラメータ
+	var	params	= [
+//		[ 名称,				規定値,	範囲(配列/型),				説明 ],
+		// 以下は、page の指定によりどちらのページに設定されるかが決まる
+		[ "cx",				512,	[ -100000, 100000 ],		"中心のX座標" ],
+		[ "cy",				288,	[ -100000, 100000 ],		"中心のY座標" ],
+		[ "cmin",			50,		[ 0, 10000 ],				"中心から線が現れるまでの最小距離" ],
+		[ "cmax",			100,	[ 0, 10000 ],				"中心から線が現れるまでの最大距離" ],
+		[ "lmin",			25,		[ 0, 10000 ],				"線の最小の本数" ],
+		[ "lmax",			50,		[ 0, 10000 ],				"線の最大の本数" ],
+		[ "emin",			2000,	[ 0, 10000 ],				"中心から線が消えるまでの最小距離" ],
+		[ "emax",			2000,	[ 0, 10000 ],				"中心から線が消えるまでの最大距離" ],
+		[ "color",			0,		"color",					"線の色" ],
+		[ "opacity",		255,	[ 0, 255 ],					"不透明度" ],
+		[ "absolute",		100000,	[ 0, 100000 ],				"前後位置" ],
+		[ "interval",		50,		[ 0, 10000 ],				"最小描画間隔" ],
+		[ "time",			0,		[ 0, 100000 ],				"継続時間(0なら永遠)" ],
+		[ "status",			"stop",	[ "play", "pause", "stop" ],"実行中かどうか" ]
+	];
+	var	storeKeys		= [	//	全体の、保存するパラメータ
+	];
+	var	storePageKeys	= [	//	ページ毎の保存するパラメータ
+		"cx", "cy", "cmin", "cmax", "lmin", "lmax", "emin", "emax", "color", "interval", "time", "status"
+	];
+
+	function FocusLinePlugin()
+	{
+		super.AsyncAnimationBasePlugin(...);
+	}
+
+	//	ページ毎の状態
+	property cx			{ setter(v) { setprop("cx", v); }		getter { return getprop("cx"); } }
+	property cy			{ setter(v) { setprop("cy", v); }		getter { return getprop("cy"); } }
+	property cmin		{ setter(v) { setprop("cmin", v); }		getter { return getprop("cmin"); } }
+	property cmax		{ setter(v) { setprop("cmax", v); }		getter { return getprop("cmax"); } }
+	property lmin		{ setter(v) { setprop("lmin", v); }		getter { return getprop("lmin"); } }
+	property lmax		{ setter(v) { setprop("lmax", v); }		getter { return getprop("lmax"); } }
+	property emin		{ setter(v) { setprop("emin", v); }		getter { return getprop("emin"); } }
+	property emax		{ setter(v) { setprop("emax", v); }		getter { return getprop("emax"); } }
+	property color		{ setter(v) { setprop("color", v); }	getter { return getprop("color"); } }
+	property opacity	{ setter(v) { setprop("opacity", v); }	getter { return getprop("opacity"); } }
+	property absolute	{ setter(v) { setprop("absolute", v); }	getter { return getprop("absolute"); } }
+	property interval	{ setter(v) { setprop("interval", v); }	getter { return getprop("interval"); } }
+	property time		{ setter(v) { setprop("time", v); }		getter { return getprop("time"); } }
+	//	status は BasePlugin で定義済み
+
+	function getInitializedPage()
+	{
+		var	elm	= super.getInitializedPage();
+		with(elm)
+		{
+			.imageLayer		= void;
+			.lastplaytick	= 0;
+		}
+		return elm;
+	}
+
+	property imageLayer		{ setter(v) { setprop("imageLayer", v); }	getter { return getprop("imageLayer"); } }
+	property lastplaytick	{ setter(v) { setprop("lasttick", v); }		getter { return getprop("lasttick"); } }
+
+	function setVisible(vis)
+	{
+@if(!IS_TLE)
+		imageLayer.visible	= vis if imageLayer != void && imageLayer isvalid;
+@endif
+	}
+@if(IS_TLE)
+	function doPlay(tick)
+	{
+//		dm("FocusLine.doPlay("+tick+"/"+starttick+")["+(tick - starttick)+"]: "+page.name);
+		{
+			var	par	= getCanvasLayer("FocusLineLayer");
+			if(imageLayer == void)
+			{
+				if( kag === void || ! isvalid kag || par === void || ! isvalid par || page === void || ! isvalid page )
+					return false;
+
+				imageLayer	= new FocusLineImageLayer(kag, par, page);
+				imageLayer.plugin	= this;
+			}
+			else if(imageLayer.parent != par)
+				imageLayer.parent	= par;
+			imageLayer.update();	//	現在のパラメータで描画
+			lastplaytick	= tick;
+		}
+		if(time > 0 && tick - starttick > time)
+			return false;	//	時間の指定があり、時間を過ぎていたら終了
+
+		return true;
+	}
+@endif
+	function doStop()
+	{
+		//	停止したら片付ける
+		dm("FocusLine.doStop()");
+		if(imageLayer != void)
+		{
+			invalidate imageLayer if imageLayer isvalid;
+			imageLayer	= void;
+		}
+	}
+
+	function clear()
+	{
+		var	keys	= getAllItems();
+		for(var i=0; i<keys.count; i+=2)
+			invalidate keys[i+1].imageLayer if keys[i+1].imageLayer != void && keys[i+1].imageLayer isvalid;
+		super.clear();
+	}
+@if(IS_TLE)
+	function draw(layer)
+	{
+		with(layer)
+		{
+//			dm("FocusLine.draw: "+page+" → "+.parent.parent);
+			temporaryPage(.parent.parent);
+			if(status == "play")
+			{
+				.clear(+color);
+				.drawFocusLines(cx, cy, cmin, cmax, lmin, lmax, emin, emax, 0xFF000000 | +color);
+				.setPos(0, 0);
+				.opacity	= opacity;
+				.absolute	= absolute;
+			}
+			recoverPage();
+		}
+	}
+@endif
+	function getLayerFromElm(elm, prefix)
+	{
+		with(elm)
+		{
+//			dm("---- FocusLinePlugin.getLayerFromElm(): "+elm.plugin+"/"+elm.page);
+//			dm(Scripts.getTraceString());
+			if(.pluginLayer == name || .plugin == name)
+			{
+				page	= kag[.page].base;
+				if(imageLayer == void)
+				{
+					if(.needlayer)
+					{
+						imageLayer	= new FocusLineImageLayer(kag, page);
+						imageLayer.plugin	= this;
+					}
+					else
+						return void;
+				}
+				else if(imageLayer.parent != page)
+					imageLayer.parent	= page;
+				imageLayer.notuse	= false;
+//				dm("--------- imageLayer = "+imageLayer+" / "+getprop("imageLayer"));
+				return imageLayer;
+			}
+		}
+		return void;
+	}
+
+	function getLayerPageFromElm(elm, backlay)
+	{
+		if(elm.plugin == name)
+			return getprop("imageLayer", kag[backlay ? "back" : "fore"].base);
+		return void;
+	}
+
+	function getLayers()
+	{
+		var	layers	= [];
+		var	pgs		= [ "fore", "back" ];
+		for(var i=0; i<pgs.count; i++)
+		{
+			var	layer	= getprop("imageLayer", kag[pgs[i]].base);
+			if(layer != void)
+			{
+				if(layer isvalid)
+					layers.add(layer);
+				else
+					setprop("imageLayer", void, kag[pgs[i]].base);
+			}
+		}
+		return layers;
+	}
+
+	function getLayerFromObject(object)
+	{
+		var	layers	= getLayers();
+		for(var i=0; i<layers.count; i++)
+		{
+			if(layers[i] == object)
+				return %[page:pgs[i], plugin:name];
+		}
+		return void;
+	}
+@if(!IS_TLE)
+	function onStore(f, elm)
+	{
+		var	dic	= f[name]	= %[];
+		var	pgs	= [ "fore", "back" ];
+		var str = false;
+		for(var i=0; i<pgs.count; i++)
+		{
+			var	il	= getprop("imageLayer", kag[pgs[i]].base);
+			if(il != void && il isvalid)
+			{
+				dic[pgs[i]+"_imageLayer"]	= il.store();
+				str = true;
+			}
+		}
+		if( ! str)
+			delete f[name];
+	}
+
+	function onRestore(f, clear, elm)
+	{
+		this.clear() if clear;
+
+		var	dic	= f[name];
+		if( dic === void ) return;
+		var	pgs	= [ "fore", "back" ];
+		for(var i=0; i<pgs.count; i++)
+		{
+			if(dic[pgs[i]+"_imageLayer"] != void)
+			{
+				var	layer	= getLayerFromElm(%[pluginLayer:name, page:pgs[i], needlayer:true]);
+				layer.restore(dic[pgs[i]+"_imageLayer"]) if layer !== void;
+			}
+		}
+	}
+@endif
+	function onStopAllActions(page=void)
+	{
+		var	layers;
+		if(page == void)
+			layers	= getLayers();
+		else
+			layers	= [ getprop("imageLayer", kag[page].base) ];
+		if(layers != void)
+		{
+			for(var i=0; i<layers.count; i++)
+				layers[i].status	= "stop" if layers[i] != void && layers[i] isvalid;
+		}
+	}
+
+	function onStopAllForeActions()	{ onStopAllActions("fore"); }
+	function onStopAllBackActions()	{ onStopAllActions("back"); }
+
+	function onPauseAction(target=void, forceAll=false)
+	{
+		var	layers	= getLayers();
+		for(var i=0; i<layers.count; i++)
+		{
+			if((target == void || target == layers[i] || forceAll) &&
+				(layers[i] != void && layers[i] isvalid && layers[i].status == "play"))
+				layers[i].status	= "systempause";
+		}
+	}
+
+	function onResumeAction(target=void)
+	{
+		var	layers	= getLayers();
+		for(var i=0; i<layers.count; i++)
+		{
+			if((target == void || target == layers[i]) &&
+				(layers[i] != void && layers[i] isvalid && layers[i].status == "systempause"))
+				layers[i].status	= "play";
+		}
+	}
+
+	function onExchangeForeBack()
+	{
+		var	fore	= getprop("imageLayer", kag.fore.base);
+		var	back	= getprop("imageLayer", kag.back.base);
+		addPage(kag.fore.base) if fore == void;	//	page が存在しない可能性があるので
+		addPage(kag.back.base) if back == void;
+		setprop("imageLayer", back, kag.fore.base);
+		setprop("imageLayer", fore, kag.back.base);
+		if(fore != void)
+		{
+			if(fore isvalid)
+				fore.updateName();
+			else
+				setprop("imageLayer", void, kag.fore.base);
+		}
+		if(back != void)
+		{
+			if(back isvalid)
+				back.updateName();
+			else
+				setprop("imageLayer", void, kag.back.base);
+		}
+	}
+
+	function onCopyLayer(toback)
+	{
+	}
+
+	//	レイヤー使用前の処理
+	function initLayerUse()
+	{
+		//	全てのレイヤーに「使っていない」フラグを立てる
+		var	layers	= getLayers();
+		for(var i=0; i<layers.count; i++)
+			layers[i].notuse = true if layers[i] != void && layers[i] isvalid;
+	}
+
+	//	レイヤー使用後の処理
+	function uninitLayerUse()
+	{
+		//	「使っていない」フラグが立っているレイヤーは
+		var	layers	= getLayers();
+		for(var i=0; i<layers.count; i++)
+		{
+			if(layers[i].notuse)
+			{
+				setprop("imageLayer", void, layers[i].parent);
+				invalidate layers[i];
+			}
+		}
+	}
+
+	//	強制消去
+	function clearLayers()
+	{
+		var	layers	= getLayers();
+		for(var i=0; i<layers.count; i++)
+		{
+			setprop("imageLayer", void, layers[i].parent);
+			invalidate layers[i];
+		}
+	}
+}
+
+class FocusLineImageLayer extends Layer
+{
+	var	plugin;
+
+	function FocusLineImageLayer(win, par, page)
+	{
+		super.Layer(...);
+//		dm(this+".parent = "+par+" / "+Scripts.getTraceString());
+@if(IS_TLE)
+		name	= "FocusLines";
+		setImageSize(page.baseWidth, page.baseHeight);
+@endif
+@if(!IS_TLE)
+		updateName();
+		setImageSize(parent.width, parent.height);
+		this.timer	= new Timer(onTimeout, "");
+		init();
+@endif
+		setSizeToImageSize();
+		hitThreshold= 256;
+		visible		= true;
+	}
+
+@if(!IS_TLE)
+	function updateName()
+	{
+		name	= (parent == kag.fore.base ? "表" : "裏") + "FocusLine";
+	}
+@endif
+
+	property parent
+	{
+		setter(v)
+		{
+			if(v != parent)
+			{
+//				dm(name+".parent = "+parent+" → "+v+" / "+Scripts.getTraceString());
+				super.parent	= v;
+@if(IS_TLE)
+				super.parent.child = this;
+@endif
+			}
+		}
+		getter	{ return super.parent; }
+	}
+
+	function finalize()
+	{
+		if(typeof this.timer != "undefined" && timer != void && timer isvalid)
+		{
+			timer.enabled	= false;
+			invalidate timer;
+		}
+		super.finalize(...);
+	}
+
+	function clear(color)
+	{
+		fillRect(0, 0, width, height, color & 0x00FFFFFF);	//	RGB部分は線の色と同じにしておく
+	}
+
+@if(IS_TLE)
+	//	パラメータが変更されたとき、現在フレームが変化したときのみ更新する
+	var	lastCurrent;
+	var	lastStates;
+	function onPaint()
+	{
+		if(lastCurrent !== parent.data.current || plugin.compareStates(lastStates))
+		{
+			plugin.draw(this);
+			lastCurrent	= parent.data.current;
+			lastStates	= plugin.getStates(lastStates);
+		}
+		super.onPaint(...);
+	}
+
+	property absolute
+	{
+		setter(v)
+		{
+			super.absolute	= v;
+			parent.realAbsolute	= v;	//	親レイヤーも連動させる
+		}
+		getter	{ return super.absolute; }
+	}
+@endif
+
+@if(!IS_TLE)
+	var	cx, cy;
+	var	cmin, cmax;
+	var	lmin, lmax;
+	var	emin, emax;
+	var	color;
+	var	time;
+	var	stop2invisible;	//	停止したら非表示にする
+	var	starttick;
+
+	function init()
+	{
+		cx		= 512;
+		cy		= 288;
+		cmin	= 50;
+		cmax	= 100;
+		lmin	= 25;
+		lmax	= 50;
+		emin	= 2000;
+		emax	= 2000;
+		color	= 0;
+		opacity	= 255;
+		absolute= 100000;
+		interval= 50;
+		time	= 0;
+		stop2invisible	= false;
+		status	= "stop";
+	}
+
+	property interval
+	{
+		setter(v)	{ timer.interval = v; }
+		getter		{ return timer.interval; }
+	}
+
+	var	_status	= "stop";
+	property status
+	{
+		setter(v)
+		{
+			if(status !== v)
+			{
+//				dm("FocusLineImageLayer.status = "+_status+" → "+v);
+//				dm(Scripts.getTraceString());
+				_status	= v;
+				timer.enabled	= v == "play";
+			}
+		}
+		getter	{ return _status; }
+	}
+
+	function onTimeout()
+	{
+		var	tick	= System.getTickCount();
+		starttick	= tick if starttick === void;
+		if(time > 0 && tick - starttick > time)
+		{
+			starttick	= void;
+			status		= "stop";
+			visible		= false if stop2invisible;
+			stop2invisible	= false;
+			return;
+		}
+		draw();
+	}
+
+	function draw()
+	{
+@if(DEBUG)
+		//dm("draw focus line");
+@endif
+		clear(+color);
+		drawFocusLines(cx, cy, cmin, cmax, lmin, lmax, emin, emax, 0xFF000000 | +color);
+		setPos(0, 0);
+	}
+
+	function store()
+	{
+		var	f	= %[];
+		with(f)
+		{
+			.cx			= cx;
+			.cy			= cy;
+			.cmin		= cmin;
+			.cmax		= cmax;
+			.lmin		= lmin;
+			.lmax		= lmax;
+			.emin		= emin;
+			.emax		= emax;
+			.color		= color;
+			.opacity	= opacity;
+			.absolute	= absolute;
+			.interval	= interval;
+			.time		= time;
+			.stop2invisible	= stop2invisible;
+			.past		= System.getTickCount() - starttick if starttick != void;
+			.status		= status;
+			.visible	= visible;
+		}
+		return f;
+	}
+
+	function restore(f)
+	{
+		with(f)
+		{
+			cx			= .cx;
+			cy			= .cy;
+			cmin		= .cmin;
+			cmax		= .cmax;
+			lmin		= .lmin;
+			lmax		= .lmax;
+			emin		= .emin;
+			emax		= .emax;
+			color		= .color;
+			opacity		= .opacity;
+			absolute	= .absolute;
+			interval	= .interval;
+			time		= .time;
+			stop2invisible	= .stop2invisible;
+			starttick	= .past !== void ? System.getTickCount() - .past : void;
+			status		= .status;
+			visible		= .visible;
+			draw();
+		}
+	}
+@endif
+}
+
+/*----------------------------------------------------------------------------/
+/	編集時、実行時どちらにも必要な定義
+/----------------------------------------------------------------------------*/
+global.flp	= new FocusLinePlugin();
+var	FocusLineObjectKeys				= getPluginPropertyKeys(global.flp.params);
+var	FocusLineObjectKeysInit			= getPluginPropertyInit(global.flp.params);
+var	FocusLineObjectDefaultValues	= createDefaultValuesFunc(FocusLineObjectKeys, FocusLineObjectKeysInit, false);
+var	FocusLineObjectMiddleProperty	= %[cx:true, cy:true, cmin:true, cmax:true, lmin:true, lmax:true, emin:true,
+	emax:true, color:true, opacity:true, absolute:true, interval:true, time:false];
+
+/*----------------------------------------------------------------------------/
+/	プラグインのインスタンス作成とTLObjectの定義
+/----------------------------------------------------------------------------*/
+@if(!IS_TLE)
+kag.addPlugin(global.FocusLine_object = new FocusLinePlugin(kag));	//	TLE ではTLE側で対応する
+PluginDefaultValues[FocusLine_object.name]	= FocusLineObjectDefaultValues;
+
+//	プラグインリストへ登録する
+global.effectPluginList[global.FocusLine_object.name]	= global.FocusLine_object;
+
+//	TLオブジェクト
+class TLFocusLineObject extends TLPluginObject
+{
+	function TLFocusLineObject()
+	{
+		super.TLPluginObject(...);
+	}
+
+	property keys				{ getter { return FocusLineObjectKeys; } }
+	property defaultValues		{ getter { return FocusLineObjectDefaultValues; } }
+	property middleProperties	{ getter { return FocusLineObjectMiddleProperty; } }
+	property storageProperties	{ getter { return ""; } }
+
+	//	アクションを生成する
+	//		プラグインを target とせず、プラグインが返す FocusLineLayer を target とする
+	function createAction(st, ed, stop, framerate, elms, pages, uuid2elm)
+	{
+		var	par	= parent;
+		while(par != void && !(par instanceof "TLBGObject"))
+			par	= par.parent;
+
+		var	page= pages[par.page];
+//		dm("---- FocusLineObject.createAction(): page = "+page+", plugin name = "+pluginName);
+		var	elm	= %[
+			tagname:"action",
+			module:"MixedKeyFrameActionModule",
+			page:page,
+			pluginLayer:pluginName
+		];
+		var	tk	= [];
+		tk.assign(timeline.keys);
+		tk.add("visible");
+		if(timeline.getKeyDataToTag(tk, defaultValues, framerate, st, ed, stop, elm))
+		{
+			dispElements(elm);
+			if(elm.keys != void && elm.props != void)
+			{
+				elm.init	= defaultValues;
+				elms.add(elm);
+				uuid2elm[uuid]	= %[page:elm.page, plugin:elm.plugin];
+			}
+		}
+	}
+}
+
+@endif
+
+/*----------------------------------------------------------------------------/
+/	KAGタグの定義
+/----------------------------------------------------------------------------*/
+@if(!IS_TLE)
+/**TAG
+ *	focusline - 集中線表示.
+ *	@param page		"fore" / "back"
+ *	@param cx		中心のX座標
+ *	@param cy		中心のY座標
+ *	@param cmin		中心から線が現れるまでの最小距離
+ *	@param cmax		中心から線が現れるまでの最大距離
+ *	@param lmin		線の最小の本数
+ *	@param lmax		線の最大の本数
+ *	@param emin		中心から線が消えるまでの最小距離
+ *	@param emax		中心から線が消えるまでの最大距離
+ *	@param color	線の色
+ *	@param opacity	不透明度
+ *	@param absolute	前後位置
+ *	@param interval	最小描画間隔
+ *	@param time		継続時間(0なら永遠)
+ *	@param delay	動作開始遅延時間
+ *	@param status	"play", "pause", "stop" 実行中かどうか
+ *	@param nowait 	終了を待たない(default: true)
+ *	@param canskip 	終了を待つとき、クリックでのスキップができるか(default: true)
+ *	@param both		fore/back同時に処理
+ *		@memo:		短縮表記 fl
+ *		@link:		focusline, startfocusline, stopfocusline, pausefocusline
+ *					focuslineact, movefocusline
+ *		@group:		集中線プラグイン
+ */
+kag.tagHandlers.focusline	= function(elm)
+{
+	with(elm)
+	{
+		.status	= "play" if .status === void;
+
+		if( .status == "stop" )
+			return kag.tagHandlers.stopfocusline(elm);
+		if( .status == "pause" )
+			return kag.tagHandlers.pausefocusline(elm);
+
+		.page	= "fore" if .page === void;
+		.target	= getLayerFromElm(%[page:.page, pluginLayer:FocusLine_object.name, needlayer:true]);
+		if( .status == "play" )
+			.target.init();	//	初期化
+
+		.visible= true;
+		.time	= 0 if .time === void;	//	時間の指定がなければ永続
+		.stop2invisible	= true if .stop2invisible === void;	//	デフォルトでは、停止したら非表示にする
+		FocusLine_object.call(elm);
+
+		if( .both )
+		{
+			.page = .page == "back" ? "fore" : "back";
+			.both = false;
+			kag.tagHandlers.focusline(elm);
+		}
+		if((.nowait && !.wait) || .time == 0)
+			return 0;
+		else
+			return doWait(elm);
+	}
+} incontextof kag;
+kag.tagHandlers.fl	= kag.tagHandlers.focusline;	//	別名
+
+/**TAG
+ *	startfocusline - 集中線表示の開始.
+ *	継続的に集中線表示を行う
+ *	パラメータは focusline を参照のこと
+ * @param 	page		"fore" / "back"
+ * @param 	delay		動作開始遅延時間
+ *		@memo:		短縮表記 startfl
+ *		@link:		focusline, startfocusline, stopfocusline, pausefocusline
+ *					focuslineact, movefocusline
+ *		@group:		集中線プラグイン
+ */
+kag.tagHandlers.startfocusline	= function(elm)
+{
+	with(elm)
+	{
+		.page	= "fore" if .page === void;
+		.target	= getLayerFromElm(%[page:.page, pluginLayer:FocusLine_object.name, needlayer:true]);
+		.target.init();	//	初期化
+
+		.status	= "play";
+		.visible= true;
+		.time	= 0;
+		FocusLine_object.call(elm);
+		return 0;
+	}
+} incontextof kag;
+kag.tagHandlers.startfl	= kag.tagHandlers.startfocusline;	//	別名
+
+/**TAG
+ *	stopfocusline - 集中線表示の停止
+ *	パラメータは focusline を参照のこと
+ *		@memo:		短縮表記 stopfl
+ *		@link:		focusline, startfocusline, stopfocusline, pausefocusline
+ *					focuslineact, movefocusline
+ *		@group:		集中線プラグイン
+ */
+kag.tagHandlers.stopfocusline	= function(elm)
+{
+	with(elm)
+	{
+		if(.page === void)
+		{
+			elm.page	= "fore";
+			tagHandlers.stopfocusline(elm);
+			elm.page	= "back";
+			tagHandlers.stopfocusline(elm);
+		}
+		else
+		{
+			.page	= "fore" if .page === void;
+			.target	= getLayerFromElm(%[page:.page, pluginLayer:FocusLine_object.name]);
+
+			.status	= "stop";
+			.visible= false;
+			.time	= 0;
+			FocusLine_object.call(elm);
+		}
+		return 0;
+	}
+} incontextof kag;
+kag.tagHandlers.stopfl	= kag.tagHandlers.stopfocusline;	//	別名
+
+/**TAG
+ *	pausefocusline - 集中線表示の一時停止
+ *	パラメータは focusline を参照のこと
+ *		@memo:		短縮表記 pausefl
+ *		@link:		focusline, startfocusline, stopfocusline, pausefocusline
+ *					focuslineact, movefocusline
+ *		@group:		集中線プラグイン
+ */
+kag.tagHandlers.pausefocusline	= function(elm)
+{
+	with(elm)
+	{
+		if(.page === void)
+		{
+			elm.page	= "fore";
+			tagHandlers.pausefocusline(elm);
+			elm.page	= "back";
+			tagHandlers.pausefocusline(elm);
+		}
+		else
+		{
+			.target	= getLayerFromElm(%[page:.page, pluginLayer:FocusLine_object.name]);
+
+			.status	= "pause";
+			.visible= true;
+			.time	= 0;
+			FocusLine_object.call(elm);
+		}
+		return 0;
+	}
+} incontextof kag;
+kag.tagHandlers.pausefl	= kag.tagHandlers.pausefocusline;	//	別名
+
+/**TAG
+ *	focuslineact - 集中線表示の動的変更
+ *	パラメータは focusline を参照のこと
+ *		@memo:		短縮表記 flact
+ *		@link:		focusline, startfocusline, stopfocusline, pausefocusline
+ *					focuslineact, movefocusline
+ *		@group:		集中線プラグイン
+ */
+kt.focuslineact		= function(mp)
+{
+	mp.plugin	= FocusLine_object.name;
+	mp.interval = 50 if mp.interval === void;
+	mp.page		= mp.targetpage if mp.page === void && mp.targetpage !== void;
+	return tagHandlers.action(mp);
+} incontextof kag;
+kag.tagHandlers.flact	= kag.tagHandlers.focuslineact;	//	別名
+
+/**TAG
+ *	movefocusline - 集中線表示の設定変更.
+ *	現在の(若しくは_付きで指定した)値から指定の値へ、timeで指定された時間で変化させる
+ *	プロパティについては focusline タグを参照
+ *	@param	accel	移動加速度(減速-5〜0=等速〜+5増速)
+ *	@param	time	変化に要する時間
+ *	@param	nowait	終了を待たない(default: true)
+ *	@param	textoff	テキスト消去しない
+ *	@param	canskip	終了を待つとき、クリックでのスキップができるか(default: true)
+ *	@param	both	fore/back同時に処理する
+ *		@memo:		短縮表記 flopt, movefl
+ *		@link:		focusline, startfocusline, stopfocusline, pausefocusline
+ *					focuslineact, movefocusline
+ *		@group:		集中線プラグイン
+ */
+kag.tagHandlers.movefocusline	= function(elm)
+{
+	with(elm)
+	{
+		.page	= "fore" if .page === void;
+		.target	= getLayerFromElm(%[page:.page, pluginLayer:FocusLine_object.name]);
+		.status	= "play" if .status === void;
+
+		FocusLine_object.action(elm, FocusLineObjectMiddleProperty);
+
+		if(.both)
+		{
+			//	both=表裏両面で同じ処理を実行
+			.page	= (.page == "back") ? "fore" : "back";
+			.both	= void;
+			.nowait	= true;		//!nowaitの時にBasePlugin.action内でwact発行があるので２面目は実施しない
+			return FocusLine_object.action(elm, FocusLineObjectMiddleProperty);
+		}
+		return 0;
+	}
+} incontextof kag;
+kag.tagHandlers.flopt	= kag.tagHandlers.movefocusline;			//	別名(旧名称短縮)
+kag.tagHandlers.focuslineopt	= kag.tagHandlers.movefocusline;	//	別名(旧名称)
+kag.tagHandlers.movefl	= kag.tagHandlers.movefocusline;			//	別名
+
+/**TAG
+ *	clearfocusline - 使っていない集中線レイヤーを破棄
+ */
+kag.tagHandlers.clearfocusline	= function(elm)
+{
+	FocusLine_object.clearLayers();
+	return 0;
+} incontextof kag;
+
+@endif
+
+/*----------------------------------------------------------------------------/
+/	TLEで編集するためのObject,Layer,Properties登録
+/----------------------------------------------------------------------------*/
+@if(IS_TLE)
+Scripts.execStorage("PluginObject.tjs");
+Scripts.execStorage("PluginLayer.tjs");
+Scripts.execStorage("focusline_property.tjs");
+
+var	FocusLineObjectPropertyType	= getPluginPropertyType(global.flp.params);
+var	FocusLineObjectPropertyRange= getPluginPropertyRange(global.flp.params);
+
+class FocusLineObject extends PluginObject
+{
+	var	staticProperties	= [];	//	全てのFocusLineObjectで同一の値となるプロパティ
+
+	function FocusLineObject()
+	{
+		super.PluginObject(...);
+		pluginName = name = "focusline";
+		plugin = global.pluginManager.get(name);
+	}
+
+	property keys						{ getter { return FocusLineObjectKeys; } }
+	property initvalues					{ getter { return FocusLineObjectKeysInit; } }
+	property defaultValues				{ getter { return FocusLineObjectDefaultValues; } }
+	property storageType				{ getter { return ""; } }
+	property notStateProperties			{ getter { return []; } }
+	property createPropertyMenuMethod	{ getter { return create_focusline_property; } }
+	property eventPropertyMenuMethod	{ getter { return onChildValueModified_focusline_property; } }
+	property middleProperties			{ getter { return FocusLineObjectMiddleProperty; } }
+	property propertyTypes				{ getter { return FocusLineObjectPropertyType; } }
+	property propertyRanges				{ getter { return FocusLineObjectPropertyRange; } }
+	property isOutputTag				{ getter { return false; } }
+
+	//	状況を再現するタグ
+	function getStateTag(frame, shift)
+	{
+		var	tag	= super.getStateTag(...);
+		tag.set("status", timeline.getProperty(frame, "status"));	//	status = stop(=初期値) のとき、値が入らないので
+		if(!(shift & ssShift))
+		{
+			tag.name	= "focusline";
+		}
+		else
+		{
+			//	動的な変化
+			tag.set("time", 1000);
+			tag.name	= "movefocusline";
+			tag.reset("status") if tag.get("status") == "play";
+		}
+		return tag;
+	}
+
+	//	アクションタグを取得
+	function getActionTag(st, ed)
+	{
+		//	タグを生成
+		var	tag	= new KAGTagData();
+		tag.name= "focuslineact";
+		tag.set("targetpage", "fore");	//	eval して実体を示す文字列(fore,backのみkag[x].baseに読み替える)
+
+		var	ks	= [];
+		ks.assign(keys);
+		ks.add("visible");
+		if(timeline.getKeyDataToTag(ks, defaultValues, root.frameRate, st, ed, void, tag))
+			return tag;
+		else
+			return void;
+	}
+
+	//	このオブジェクトの状態を示すタグかどうか
+	function isStateTag(tag)
+	{
+		var	tags	= %[
+			focusline:[],				//状態変更タグ
+			fl:[],						//状態変更タグ短縮
+			movefocusline:[],			//動的変更タグ
+			movefl:[],					//動的変更タグ短縮
+			focuslineopt:[],			//旧名称
+			flopt:[],					//旧名称短縮
+		];
+		var	params	= tags[tag.name];
+		if(params == void)
+			return false;
+		for(var i=0; i<params.count; i++)
+		{
+			if(tag.get(params[i][0]) != params[i][1])
+				return false;
+		}
+		return true;
+	}
+
+	//	対応できるactionタグかどうか
+	function isActionTag(tag)
+	{
+		return ((tag.name == "action" && tag.get("plugin") == pluginName) || tag.name == "focuslineact" || tag.name == "flact");
+	}
+
+
+	//動作状態によって帯表示を変える
+	function drawFrameInner(frame, layer, l, t, w, h, c)
+	{
+		var status = getPropertyValue(frame,"status");
+
+		if( isChoseFrame(frame) )
+		{
+			super.drawFrameInner(...);
+			return;
+		}
+
+		var rr = (c & 0x000000FF);
+		var gg = ((c >> 8) & 0x000000FF);
+		var bb = ((c >> 16) & 0x000000FF);
+		var mask =  ( bb < gg ) ? 0xFF7FFFFF : 0xFFAFAFAF;
+		switch( status )
+		{
+		case "play":
+			layer.fillRect(l, t, w, h, c);
+			layer.fillRect(l, t, w, h, c & mask);
+			break;
+		case "pause":
+			var	hh	= int(h >> 1);
+			layer.fillRect(l, t, w, hh, c);
+			layer.fillRect(l, t+hh, w, hh, c & mask);
+			break;
+		case "stop":
+		default:
+			super.drawFrameInner(...);
+			break;
+		}
+	}
+
+	//	最初、pluginName を effectline で登録してしまい後で focusline と変えたが、
+	//	既に保存されているデータでは effectline のままなので、effectline を focusline と読み替える
+	function restore(dic, owner, func)
+	{
+		super.restore(...);
+		plugin	= pluginManager.plugins.focusline if plugin == void;
+	}
+}
+postProcessOfObject("FocusLineObject", FocusLineObjectKeys);
+
+var	FocusLineLayer_markers_hints	= [
+	"中心座標",
+	"中心から線が現れるまでの最小距離",
+	"中心から線が現れるまでの最大距離",
+	"中心から線が消えるまでの最小距離",
+	"中心から線が消えるまでの最大距離"
+];
+
+class FocusLineLayer extends PluginLayer
+{
+	var	plugin;
+
+	function FocusLineLayer(win, par, obj)
+	{
+		super.PluginLayer(...);
+
+		neutralColor= 0x00000000;
+		setImageSize(parent.baseWidth, parent.baseHeight);
+		setSizeToImageSize();
+		setPos(parent.baseLeft, parent.baseTop);
+		plugin		= obj.plugin;
+		hasImage	= false;
+	}
+
+	function finalize()
+	{
+		plugin.eraseImageLayer(parent, "imageLayer") if plugin isvalid;	//	対応するレイヤーを破棄する
+		super.finalize();
+	}
+
+	property cx			{ setter(v) { object.cx = v; }		getter { return object.cx; } }
+	property cy			{ setter(v) { object.cy = v; }		getter { return object.cy; } }
+	property cmin		{ setter(v) { object.cmin = v; }	getter { return object.cmin; } }
+	property cmax		{ setter(v) { object.cmax = v; }	getter { return object.cmax; } }
+	property lmin		{ setter(v) { object.lmin = v; }	getter { return object.lmin; } }
+	property lmax		{ setter(v) { object.lmax = v; }	getter { return object.lmax; } }
+	property emin		{ setter(v) { object.emin = v; }	getter { return object.emin; } }
+	property emax		{ setter(v) { object.emax = v; }	getter { return object.emax; } }
+	property color		{ setter(v) { object.color = v; }	getter { return object.color; } }
+	property opacity	{ setter(v) { object.opacity = v; }	getter { return object.opacity; } }
+	property absolute	{ setter(v) { object.absolute = v; }getter { return object.absolute; } }
+	property interval	{ setter(v) { object.interval = v; }getter { return object.interval; } }
+	property time		{ setter(v) { object.time = v; }	getter { return object.time; } }
+	property status		{ setter(v) { object.status = v; }	getter { return object.status; } }
+
+	property realAbsolute
+	{
+		setter(v)	{ /*dm(name+".realAbsolute = "+realAbsolute+" → "+v+" / "+Scripts.getTraceString());*/ super.absolute = v; }
+		getter		{ return super.absolute; }
+	}
+
+	function moveBase(bl, bt)
+	{
+		setPos(bl, bt);
+	}
+
+	//	各種マーカーを表示
+	function addMarker()
+	{
+//		dm("FocusLine.addMarker()");// / "+Scripts.getTraceString());
+		if(markers.count == 0)
+		{
+			markers.add(new MarkerLayer(window, parent, this, MARKER_CENTER));
+			markers.add(new MarkerLayer(window, parent, this, MARKER_FOCUSLINE_CMIN));
+			markers.add(new MarkerLayer(window, parent, this, MARKER_FOCUSLINE_CMAX));
+			markers.add(new MarkerLayer(window, parent, this, MARKER_FOCUSLINE_EMIN));
+			markers.add(new MarkerLayer(window, parent, this, MARKER_FOCUSLINE_EMAX));
+			for(var i=0; i<markers.count; i++)
+				markers[i].hint	= FocusLineLayer_markers_hints[i];
+		}
+		super.addMarker();
+	}
+
+	function updateMarker()
+	{
+		if(markers.count > 0)
+		{
+			var	cl	= cx + parent.baseLeft;
+			var	ct	= cy + parent.baseTop;
+			markers[0].setCenter(cl, ct);
+			markers[1].setCenter(cl + cmin, ct);
+			markers[2].setCenter(cl + cmax, ct);
+			markers[3].setCenter(cl + emin, ct);
+			markers[4].setCenter(cl + emax, ct);
+		}
+	}
+
+	//	マーカー動作を処理
+	var	operateMode;
+	var	operate = void, startx, starty;
+	var	first_cx, first_cy, first_cmin, first_cmax, first_emin, first_emax;
+	function onMouseDown(x, y, button, shift)
+	{
+		if(!operatable)
+			return;
+		if(button == mbLeft)
+		{
+			if(!selected)
+				selected	= true;
+			if(!selected)
+				return;
+			if(operateMode == 0)
+				return;
+
+			updateMarker();
+			operate	= operateMode;
+			with(parent)
+				x	= .cursorX, y	= .cursorY;
+			startx	= x;
+			starty	= y;
+			switch(operate)
+			{
+			case MARKER_CENTER:
+				first_cx= cx;
+				first_cy= cy;
+				break;
+			case MARKER_FOCUSLINE_CMIN:
+				first_cmin	= cmin;
+				break;
+			case MARKER_FOCUSLINE_CMAX:
+				first_cmax	= cmax;
+				break;
+			case MARKER_FOCUSLINE_EMIN:
+				first_emin	= emin;
+				break;
+			case MARKER_FOCUSLINE_EMAX:
+				first_emax	= emax;
+				break;
+			}
+			data.snapshot();
+		}
+		else if(button == mbRight)
+		{
+			x	= cursorX;	//	正しい座標でない可能性があるので
+			y	= cursorY;
+			with(canvas.rmenu)
+			{
+				var	setstatus	= function(obj,val) { obj.status=val; };
+				var	setcolor	= function(obj,val) { obj.color=val; };
+				.clearCommands();
+				.addCommand("実行",		status != "play",	setstatus, this, "play");
+				.addCommand("一時停止",	status != "pause",	setstatus, this, "pause");
+				.addCommand("停止",		status != "stop",	setstatus, this, "stop");
+				.addSeparator();
+				.addCommand("黒にする",	color != 0,			setcolor, this, 0);
+				.addCommand("白にする",	color != 0xFFFFFF,	setcolor, this, 0xFFFFFF);
+				.addCommand("色を選択",	true,
+					global.win.propertymenu.choiceColor, "color", "0x%06x".sprintf(color));	//	"0xRRGGBB"で渡す必要があるので
+				.addSeparator();
+				.addCommand("画面中央へ", cx != plugin.params[0][1] || cy != plugin.params[1][1],
+					function(obj,cx,cy) { obj.cx = cx; obj.cy = cy; }, this, plugin.params[0][1], plugin.params[1][1]);
+				.show(this, x, y);
+			}
+		}
+	}
+
+	function onMouseMove(x, y)
+	{
+		if(!operate || !operatable)
+			return;
+		with(parent)
+			x	= .cursorX, y	= .cursorY;
+		switch(operate)
+		{
+		case MARKER_CENTER:
+			cx	= first_cx + x - startx;
+			cy	= first_cy + y - starty;
+			break;
+		case MARKER_FOCUSLINE_CMIN:
+			cmin= first_cmin + x - startx;
+			break;
+		case MARKER_FOCUSLINE_CMAX:
+			cmax= first_cmax + x - startx;
+			break;
+		case MARKER_FOCUSLINE_EMIN:
+			emin= first_emin + x - startx;
+			break;
+		case MARKER_FOCUSLINE_EMAX:
+			emax= first_emax + x - startx;
+			break;
+		}
+	}
+
+	function onMouseUp(x, y, button, shift)
+	{
+		if(button == mbLeft)
+		{
+			var	nochg	= false;
+			switch(operate)
+			{
+			case MARKER_CENTER:			nochg	= first_cx == cx && first_cy == cy;	break;
+			case MARKER_FOCUSLINE_CMIN:	nochg	= first_cmin == cmin;	break;
+			case MARKER_FOCUSLINE_CMAX:	nochg	= first_cmax == cmax;	break;
+			case MARKER_FOCUSLINE_EMIN:	nochg	= first_emin == emin;	break;
+			case MARKER_FOCUSLINE_EMAX:	nochg	= first_emax == emax;	break;
+			}
+			if(nochg)
+				data.discardSnapshot();
+			operate	= void;
+		}
+	}
+
+	function updateCurrentState()
+	{
+		with( global.Layer )
+		{
+			super.updateCurrentState();
+			.visible = (object.status != "stop");
+			if( .visible )
+				if( typeof this.child != "undefined" && isvalid this.child )
+					plugin.draw(child);
+		}
+	}
+}
+
+global.addMethodName	= "addFocusLine";	//	PluginManager も参照するので、統合しないこと
+CV_object2layer["FocusLineObject"]	= [ "FocusLineLayer", void, "layers" ];
+OD_add.add(["addFocusLine", "FocusLineObject", false]);
+OD_parentageConsistency["FocusLineObject"]	= function(parent)
+{
+	if(parent != "BGObject" && parent != "PartBgObject")
+	{
+		popupMessage("集中線プラグインは背景レイヤーの下にのみ配置可能です");
+		return false;
+	}
+	return true;
+};
+
+//キャンバスへのボタン追加
+CV_addButtons["FocusLineObject"] = [
+	[ "focusline",, "集中線効果を開始します(time指定で実行時間を指定可能)" ],
+//	[ "startfocusline",, "現在の状態で集中線効果を開始します" ],
+	[ "movefocusline",, "集中線効果の状態を指定の時間で変化させます" ],
+	[ "action",, "選択されているオブジェクトの全区間をactionタグにします。" ]
+];
+global.CanvasLayer.focusline_override_onButtonDown = global.CanvasLayer.onButtonDown;
+global.CanvasLayer.onButtonDown = function(btn)
+{
+	focusline_override_onButtonDown(...);
+	switch(btn.name)
+	{
+	case "focusline":
+		data.copyState();
+		break;
+
+	case "movefocusline":
+		data.copyState(ssShift);
+/*
+		//statusは指定しない、開始〜規定時間後に停止　の挙動をさせる
+		global.fgtime	= 1000;
+		data.setTextToClipboardByChoseObject(function(obj){return obj instanceof "FocusLineObject";},
+			function(obj){return [ %[name:"movefocusline", time:fgtime, plugin:FocusLine_object.name,
+									 cx:obj.cx, cy:obj.cy, cmin:obj.cmin, cmax:obj.cmax,
+									 lmin:obj.lmin, lmax:obj.lmax, emin:obj.emin, emax:obj.emax,
+									 color:obj.color, absolute:obj.absolute, interval:obj.interval ],
+								   %[name:"wm", canskip:0] ]; });
+*/
+		break;
+	}
+} incontextof global.CanvasLayer;
+//エディタのタグ解釈部の追加
+__isactiontag["flact"] = true;
+__isactiontag["focuslineact"] = true;
+@endif
+
+invalidate global.flp;
+delete global.flp;
+
+@endif

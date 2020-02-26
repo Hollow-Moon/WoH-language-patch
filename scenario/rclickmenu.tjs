@@ -1,0 +1,366 @@
+﻿@if(__RCLICKMENU_DEFINED__==0)
+@set(__RCLICKMENU_DEFINED__=1)
+
+/*
+ *	右クリックメニュー
+ */
+var	RClickTips	= %[
+	savemenu	:"進行状況を保存します",
+	loadmenu	:"保存した地点に復帰します",
+	configmenu	:"各種設定を行います",
+	autoplay	:"自動再生を開始します",
+	startskip	:"未読文章までのスキップを開始します",
+	backlog		:"テキスト履歴を表示します",
+	returntitle	:"タイトルへ戻ります",
+	returnarchive:"Archive へ戻ります",
+	graphic		:"このメニューを隠して、画像のみにします",
+	exitgame	:"ゲームを終了します",
+	rclick_back	:"一つ前に戻ります",
+];
+//	右クリックしたとき
+function doRClick()
+{
+	//	トランジション中はメニューを開けない
+/*	if(kag.transCount > 0)
+		return;
+*/
+	// トランジション付きのFGタグなどが多数並んだスクリプトを実行中にシステム系画面が出ようとすると表示がおかしくなるので抑止
+	if( typeof global.stablecontrol_object != "undefined" && isvalid stablecontrol_object )
+	{
+		if(!stablecontrol_object.inStable)
+			return;
+	}
+/*	else if( kag.skipMode )
+	{
+		//Stable制御を行わない場合でもスキップ中は無効にする
+		return;
+	}
+	→	右クリックメニューをトランジションとは関係ない位置に表示するようにしたので、実行状態に関係なく表示する
+*/
+	/*
+	else if(!enabledShortcutKey)
+	{
+		//割り込めないメニューやロード直後などでは抑止が必要
+		return;
+	}
+	*/
+
+	//	モードと状態で処理分岐
+	if(!kag.messageLayerHiding)
+	{//	テキストが表示されているか、表示途中なら
+		kag.hideMessageLayerByUser();
+		if(cf.doubleCushionMenuOpen)
+			return;	//	テキストが表示されている間、処理は進めない
+	}
+	openRClickMenu();	//	メニューを開く
+}
+//	残っているボタンカーソルは全て消す
+function freeRClickCursor(carry=false)
+{
+	var	list	= Menu_object.getMenuItems(PRIMARY);
+	var	cursor	= void;
+	for(var i=0; i<list.count; i++)
+	{
+		if(list[i] != void && list[i] isvalid && list[i].name == "ボタンカーソル")
+			list[i].vanish(300);
+	}
+	return cursor;
+}
+//	右クリックメニューを開く
+function openRClickMenu()
+{
+	if(tf.do_systemmenu)
+		return;
+//	dmt("openRClickMenu()");
+	kag.lockSnapshot();	//	メニューを開く前の状態でスナップショット
+	inMenu("system");
+	tf.do_systemmenu	= true;
+
+	freeRClickCursor();	//	カーソルを隠す
+
+	Scripts.execStorage("system.ttd");
+	var	tdata	= __get_system_timelinedata(5);
+	if(f.doArchiveMenu)
+	{//	title を archive へ変更する
+		setCreateProp(tdata[1][tdata[0]["returntitle"]], "storage", "system_archive");
+		setActionLast(tdata[2][tdata[0]["returntitle"]], "mouseUp", "askGotoArchive();release();");
+	}
+	muteAllMenuItem(tdata, false);	//	効果音ON(素早くメニュー間の移動を行うと、レイヤーが残っていて再利用される可能性があるので)
+
+	//	開くときだけキーボード操作を設定
+	var	keys	= [], right = [ void ];
+	keys.assign(RClickTips);
+	for(var i=0; i<keys.count; i+=2)
+	{
+		var	pos	= tdata[0][keys[i]];
+		if(pos === void)
+			continue;
+		setCreateProp(tdata[1][pos], "rightItems", right);	//	ボタンの右へは移動しない
+	}
+
+	setCreateProp(tdata[1][tdata[0]["rclick_back"]], "pressse", "");
+
+	Menu_object.playTimeline(PRIMARY, tdata[1], tdata[2], %[absolute:1000000],,, true, false);
+
+	//	クリック時処理設定
+	Menu_object.resetClick() if cf.doubleCushionMenuOpen;	//	先に設定されたクリック処理をリセットする
+	Menu_object.setClick(, "closeRClickMenu()");
+
+	//	自動移動
+	if(cf.autoMouseMove)
+		moveCursor(Menu_object.find("savemenu", PRIMARY));
+}
+//	バックログを開く
+function openBacklog(btn)
+{
+	if(tf.do_askyesno)
+		return;
+	btn.release();
+	closeRClickMenu(true);
+	kag.showHistory();
+}
+//	右クリックメニューを閉じる
+function closeRClickMenu(forbacklog=false)
+{
+	if(!tf.do_systemmenu)
+		return;
+//	dmt("closeRClickMenu()");
+	delete tf.do_systemmenu;
+	delete tf.last_tips;
+	kag.unlockSnapshot();	//	スナップショットを破棄
+	//	save/load メニューが表示状態なら、それも消す
+	closeSaveMenu(true);	//	システムメニューが 300ms に対し、save/load を閉じるのに 600ms 掛かっているので
+	closeLoadMenu(true);	//	この場合のみ早く閉じるようにする
+
+	outMenu("system");
+
+	//	閉じる効果音
+	Menu_object.playSE(closese);
+
+	//	クリック時処理を元に戻す
+	Menu_object.resetClick();	//	バックログを表示するために閉じたときは、クリック処理を元に戻さない
+
+	//	テキストを表示状態に
+	kag.showMessageLayerByUser() if !forbacklog;
+
+	//	メニューを消す
+	var	tdata	= __get_system_timelinedata(8);
+	if(f.doArchiveMenu)
+	{//	title を archive に変える
+		setCreateProp(tdata[1][tdata[0]["returntitle"]], "storage", "system_archive");
+	}
+	muteAllMenuItem(tdata);		//	すべて効果音mute
+	Menu_object.playTimeline(PRIMARY, tdata[1], tdata[2], %[absolute:1000000],, true,, false);
+
+	//	カーソルが表示されていたら隠す
+	var	list	= Menu_object.getMenuItems(PRIMARY);
+	for(var i=0; i<list.count; i++)
+	{
+		if(list[i] != void && list[i] isvalid && list[i].name == "ボタンカーソル") with(list[i])
+		{
+			.ibv	= true;
+			.ssact(350, "vcenter", .vcenter + 19,,, false);
+			.ssact(350, "opacity", 0,,, false);
+		}
+	}
+
+	//	メニューから出るとき、スキップを開始するかどうか
+//	dm("tf.startSkipAtOutMenu = "+tf.startSkipAtOutMenu+" / getCurrentRead() = "+kag.getCurrentRead());
+	if(typeof global.startSkipAtOutMenu != "undefined" && global.startSkipAtOutMenu && ! forbacklog)
+	{
+		kag.skipToStop() if kag.getCurrentRead();
+		delete global.startSkipAtOutMenu;
+	}
+}
+//	右クリックメニューを隠す
+function hideRClickMenu()
+{
+	if(!tf.do_systemmenu || tf.do_hidesystemmenu || tf.do_askyesno)
+		return;
+//	dm("hideRClickMenu");
+	tf.do_hidesystemmenu	= true;
+
+	//	すべて隠す
+	var	list	= Menu_object.getMenuItems(PRIMARY);
+	for(var i=0; i<list.count; i++)
+	{
+		if(list[i] == void)
+			continue;
+		with(list[i])
+		{
+			.stopAction();
+			if(.name == "ボタンカーソル")
+			{//	ボタンカーソルは消す
+				.ibv	= true;
+				.ssact(100, "vcenter", .vcenter + 19);
+				.ssact(100, "opacity", 0);
+			}
+			else
+			{//	それ以外は隠す
+				.last_opacity	= .opacity;
+				.disabled		= true;
+				.ssact(100, "opacity", 0);
+			}
+		}
+	}
+
+	//	クリック設定
+	Menu_object.setClick("appearRClickMenu()", "appearRClickMenu()");
+}
+//	右クリックメニューを戻す
+function appearRClickMenu()
+{
+	if(!tf.do_systemmenu || !tf.do_hidesystemmenu)
+		return;
+//	dm("appearRClickMenu");
+	delete tf.do_hidesystemmenu;
+
+	//	出現させる
+	var	list	= Menu_object.getMenuItems(PRIMARY);
+	for(var i=0; i<list.count; i++)
+	{
+		if(list[i] == void || typeof list[i].last_opacity == "undefined")
+			continue;
+		with(list[i])
+		{
+			.disabled	= false;
+			kag.stopAction(list[i]);
+			.ssact(100, "opacity", .last_opacity);
+			delete .last_opacity;
+		}
+	}
+
+	//	クリック設定をリセット
+	Menu_object.resetClick();
+}
+//	ボタンにカーソルが乗った
+function RClickMenuOnEnter(button)
+{
+	if(!tf.do_systemmenu)
+		return;
+	button.enter();
+
+	//	残っていたら隠す
+	/*
+	if(typeof button.cursorLayer != "undefined" && button.cursorLayer != void && button.cursorLayer isvalid &&
+		button.name == "ボタンカーソル" && button.cursorLayer.opacity > 0)
+	{
+		with(button.cursorLayer)
+		{
+			.ibv	= true;
+			.ssact(300, "opacity", 0);
+		}
+	}
+	*/
+	var	buttoncursor	= freeRClickCursor(true);	//	カーソルが表示されていたら隠す
+
+	//	毎回レイヤーを取得する
+	if(buttoncursor == void)
+		buttoncursor	= Menu_object.getLayerFromElm(%[page:PRIMARY, name:"ボタンカーソル", menuitem:-2]);
+	with(buttoncursor)
+	{
+		.cont	= kag.transCount > 0;	//	裏にもコピーを配置する
+		.storage= "selectCursor";
+		.left	= button.left - .width;
+		.vcenter= button.vcenter;
+		.target	= button;
+		.absolute	= 1050000;
+		.opacity= 0;
+		.ssact(300, "opacity", 255);
+		.visible= true;
+	}
+	button.cursorLayer	= buttoncursor;
+	drawRClickTips(RClickTips[button.name]);
+//	dm("RClickMenuOnEnter: "+buttoncursor);
+}
+//	ボタンからカーソルが離れた
+function RClickMenuOnLeave(button)
+{
+	if(!tf.do_systemmenu)
+		return;
+	button.leave();
+
+	if(typeof button.cursorLayer != "undefined")
+	{
+		var	buttoncursor	= button.cursorLayer;
+		if(buttoncursor != void && buttoncursor isvalid && buttoncursor.target == button)
+		{
+			with(buttoncursor)
+			{
+				.ibv	= true;
+				.ssact(300, "opacity", 0);
+			}
+		}
+		button.cursorLayer	= void;
+	}
+	eraseRClickTips();
+}
+//	スキップを開始する
+function startSkipFromRClick()
+{
+	if(tf.do_askyesno)
+		return;
+	closeRClickMenu();
+	kag.skipToNextStopByKey();
+}
+//	自動再生を開始する
+function startAutoPlayFromRClick()
+{
+	if(tf.do_askyesno)
+		return;
+	closeRClickMenu();
+	kag.onAutoModeMenuItemClick();
+}
+//	タイトルに戻るか確認
+function askGotoTitle()
+{
+	askYesNo("タイトルへ戻ってもよろしいですか？",, gotoTitle);
+}
+function gotoTitle()
+{
+	closeRClickMenu();
+	kag.process('call.ks','*rclick2title');
+}
+//	アーカイブに戻るか確認
+function askGotoArchive()
+{
+	askYesNo("Archive へ戻ってもよろしいですか？",, gotoArchive);
+}
+function gotoArchive()
+{
+	if(f.chapter !== void)
+	{
+		outMenu(__menuStack[__menuStack.count-1]);	//	save/load が開いていた時のため
+		outMenu("system");
+	}
+	closeRClickMenu();
+	kag.process('call.ks','*rclick2archive');
+}
+//	tips 表示指定
+function drawRClickTips(text)
+{
+	tf.rclick_tips	= text;
+	asyncCaller.callOnce(updateRClickTips);
+}
+//	tips 消去指定
+function eraseRClickTips()
+{
+	if(!tf.rclick_tips)
+		asyncCaller.callOnce(updateRClickTips);
+}
+//	tips 更新
+function updateRClickTips()
+{
+	if(tf.last_tips != tf.rclick_tips)
+	{
+		var	help	= Menu_object.find("helptext", PRIMARY);
+		if(help != void) with(help)
+		{
+			.reload();
+			.drawText2Area(12, 12, .width - 24, .height - 24, tf.rclick_tips, 18,, "lt") if tf.rclick_tips != "";
+		}
+		tf.last_tips	= tf.rclick_tips;
+	}
+	delete tf.rclick_tips;
+}
+@endif

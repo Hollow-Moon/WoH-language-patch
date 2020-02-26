@@ -1,0 +1,426 @@
+﻿/*----------------------------------------------------------------------------/
+/	誤爆時対応をサポートするスクリプト
+/----------------------------------------------------------------------------*/
+var	plugindir	= System.exePath+"plugin/";
+Plugins.link(plugindir+"win32ole.dll");
+Plugins.link(plugindir+"base64.dll");
+Plugins.link(plugindir+"registory.dll");
+Plugins.link(plugindir+"qrcode.dll");
+Plugins.link(plugindir+"savestruct.dll");
+
+//デバッグ時ネット経由での認証を行わない場合は1にする
+@set(NOT_CONNECT_NETWORK=0)
+
+var	basekey	= "Software\\TYPE-MOON\\" + GameName + "\\1.00\\execute";
+var	mburl	= "https://www.typemoon.com/users/mb.php";
+
+var	statefn	= System.dataPath + "mb.ksc";
+
+Scripts.execStorage("tool/toolwindow.tjs");
+class MyWindow extends ToolWindow
+{
+	var	states	= %[];
+
+	function MyWindow()
+	{
+		super.ToolWindow(...);
+		caption	= "「"+GameName+"」プロテクト誤動作対応ツール";
+
+		states	= Scripts.evalStorage(statefn) if Storages.isExistentStorage(statefn);
+		begin();	//	初期状態へ
+
+		visible	= true;
+	}
+
+	function finalize()
+	{
+		(Dictionary.saveStruct incontextof states)(statefn);
+		super.finalize(...);
+	}
+
+	/*-----------------------------------------------------------------------*/
+
+	//	最初
+	function begin()
+	{
+		clearForms();
+		lf();
+		addMessage("ご迷惑おかけしてしまい、大変申し訳ありません。\nプロテクトの誤動作対応をさせていただきます。");
+		lf();
+		addMessage("※ 製品同梱のシリアルコードシートをご準備いただき、\n　 下記フォームへご入力の後、OKボタンを押してください。");
+		lf();
+		addText(GameID+"-");
+		var	scode	= states.serial != "" ? states.serial.split("-") : (serial != "" ? serial.split("-") : []);
+		var	item	= addInput("serial1",, 44);
+		item.text	= scode[1];
+		item.maxLength	= 4;
+		item.convertData= hankaku_ascii_upper;	//	半角英数字の大文字のみ入力可能にする
+		item.onMaxInput	= nextItem;
+		addText("-");
+		item	= addInput("serial2",, 44);
+		item.text	= scode[2];
+		item.maxLength	= 4;
+		item.convertData= hankaku_ascii_upper;
+		item.onMaxInput	= nextItem;
+		addText("-");
+		item	= addInput("serial3",, 44);
+		item.text	= scode[3];
+		item.maxLength	= 4;
+		item.convertData= hankaku_ascii_upper;
+		item.onMaxInput	= nextItem;
+		addText(" ");
+		addButton("OK", checkSerial);
+		lf(2);
+		addMessage("※ 既にキーコードを取得済みの方は、キーコード入力ボタンを押してください。");
+		lf();
+		addButton("キーコード入力", inputKeyCode);
+		lf(2);
+		addCancelClose();
+		drawForms();
+	}
+
+	function nextItem(item)
+	{
+		if(item.nextFocusable != null)
+			asyncCall(item.nextFocusable.focus);
+	}
+
+	function getInfoCode()
+	{
+		var	info	= [ 8763124, 987581345 ];
+		if(typeof global.getLocalInfoData != "undefined")
+			info	= global.getLocalInfoData();
+		return info;
+	}
+
+	function getURL(serial, maddr, auto=true)
+	{
+		var	info	= getInfoCode();
+		return mburl + "?s=" + serial + "&v=" + info[0] + "&k=" + info[1] + (maddr != "" ? "&m=" + maddr : "") + "&f=" + (!auto);
+	}
+
+	//	シリアルコードのチェック
+	var	serial;
+	function checkSerial()
+	{
+		//	入力されたコードを取得
+		serial	= GameID;
+		for(var i=1; i<4; i++)
+		{
+			var	item= findForm("serial"+i);
+			if(item.text.length < 4)
+			{
+				System.inform("シリアルコードの入力に漏れがあります。");
+				return;
+			}
+			serial	+= "-" + item.text;
+		}
+		serial	= serial.replace(/0/, "O");	//	0 は含まれないので、O(オー)に置き換え
+		dm("serial: "+serial);
+
+		//	画面表示
+		clearForms();
+		lf();
+		addMessage("シリアルコード: "+serial);
+		lf();
+		addMessage("対応サーバーへ接続しています ...");
+		lf(2);
+		addCancelClose();
+		drawForms();
+
+		//	サポートページへ問い合わせる
+@if(!NOT_CONNECT_NETWORK)
+		var	url	= getURL(serial);
+		openURL(, url, checkResponce,, faildNetworkConnection);
+@endif
+@if(NOT_CONNECT_NETWORK)
+		faildNetworkConnection();
+@endif
+	}
+
+	function drawMailForm(msg)
+	{
+		clearForms();
+		lf();
+		addMessage(msg);
+		lf(2);
+		addText("メールアドレス : ");
+		var	item	= addInput("mailaddr",, 240);
+		item.text	= mailaddress;
+		addButton("OK", sendMailAddress);
+		lf(2);
+		addCancelClose("終了");
+		drawForms();
+	}
+
+	//	結果を確認
+	function checkResponce()
+	{
+		var	list	= getResponseText();
+		var	data	= list[0].split("=");
+		var	msg;
+		clearForms();
+		if(data[0] == "c")
+		{
+			states.serial	= serial;	//	成功したときだけ記録する
+			registKeyCode(data[1]);
+			return;
+		}
+		else if(data[0] == "e")
+		{
+			lf();
+			var	msg, no = +data[1];
+			switch(no)
+			{
+			case -1:	msg	= "シリアルコードの確認に失敗しました。\nシートと比較していただき、再度ご入力ください。";	break;
+			case -2:	msg	= "まだ発売日になっていません。\nサポートは発売日より開始します。";	break;
+			case -3:	msg	= "ご入力いただいたシリアルコードは使用済みのため、お手続きが必要となります。\n下記フォームにお使いのメールアドレスをご記入いただき、[OK]ボタンを押してください。";	break;
+			}
+			if(no == -3)
+			{
+				drawMailForm(msg);
+				return;
+			}
+			else
+			{
+				addMessage(msg);
+				lf(2);
+				addButton("再入力", begin);
+			}
+			addCancelClose("終了");
+		}
+		else
+		{
+			lf();
+			addMessage("ネットワーク接続に失敗しました。\nサーバーが応答していませんので、時間をおいて試してみてください。");
+			lf(2);
+			addButton("再試行", begin);
+			addCancelClose("終了");
+		}
+		drawForms();
+	}
+
+	function crlf(str)
+	{
+		var	lines	= str.split(/\r|\n|\r\n/);
+		return lines.join("%0d%0a");
+	}
+
+	//	ゲームを開始する
+	function startGame()
+	{
+		System.shellExecute(Storages.getLocalName(System.exePath + GameName + ".exe"));	//	exe を呼び出して
+		delayClose();	//	ツールを閉じる
+	}
+
+	//	ネットワーク接続に失敗
+	function faildNetworkConnection()
+	{
+		clearForms();
+		lf();
+		addMessage("ネットワークに接続できませんでした。");
+		lf();
+		addMessage("※ このPCがネットワークに接続されていない場合は、\n　　下記のQRコードを使って携帯電話等でサーバーへ接続してください。");
+		lf();
+		var	url	= getURL(states.serial = serial,, false);
+		var	layer	= new Layer(this, primaryLayer);
+		layer.drawQRCode(url,,,, 0);
+		var	item	= addImage();
+		with(item)
+		{
+			.setImageSize(layer.width * 3, layer.height * 3);
+			.setSizeToImageSize();
+			.operateStretch(0, 0, .width, .height, layer, 0, 0, layer.imageWidth, layer.imageHeight);
+		}
+		lf(2);
+		addMessage("※ 接続手段がない場合は、FAX/郵送での対応となります。\n　 次のボタンを押して、請求用のテキストファイルを取得してください。");
+		lf();
+		addButton("テキスト取得", getTextFile);
+		lf(2);
+		addMessage("キーコードを取得したら、次のボタンを押してキーコードを入力してくだい。");
+		lf();
+		addButton("キーコード入力", inputKeyCode);
+		drawForms();
+	}
+
+	//	テキストファイル取得
+	function getTextFile()
+	{
+		//	保存先を確認
+		var	params	= %[
+			initialDir:System.dataPath,
+			filter:["テキストファイル(*.txt)|*.txt"],
+			filterIndex:1,
+			name:System.dataPath + "誤動作対応必要事項.txt",
+			title:"誤動作対応に必要な事項を記入したテキストファイルの保存先を指定してください。",
+			save:true,
+			defaultExt:"txt"
+		];
+		if(!Storages.selectFile(params))
+		{
+			clearForms();
+			lf();
+			addMessage("処理をキャンセルしました。");
+			lf(2);
+			addCancelClose("終了");
+			drawForms();
+			return;
+		}
+
+		//	ファイルを出力
+		var	info	= getInfoCode();
+		var	lines	= [
+			"-".repeat(80),
+			"『"+GameName+"』プロテクト誤動作対応依頼",
+			"-".repeat(80),
+			"ご依頼者情報(ご記入ください)",
+			"　　　　お名前: ",
+			"　　　　ご住所: 〒",
+			"　　　　　　　: ",
+			"",
+			"-".repeat(80),
+			"サポート情報",
+			"　　　　シリアルコード: " + serial,
+			"　　　　オリジナルコード 1: "+info[0],
+			"　　　　オリジナルコード 2: "+info[1],
+			"",
+			"",
+			"-".repeat(80),
+			"　お手数ですがこのファイルをプリントアウトして、下記のいずれかへご送付ください。",
+			"　　　　FAX番号: 03-3865-6177",
+			"　　　　郵送先 : 〒111-0053",
+			"　　　　　　　 : 東京都台東区浅草橋4-2-2 浅草橋西口ビル4F",
+			"　　　　　　　 : 有限会社ノーツ　プロテクト誤動作対応係",
+			"　よろしくお願いいたします。"
+		];
+		lines.save2(params.name);
+		System.shellExecute(Storages.getLocalName(params.name));
+
+		clearForms();
+		lf();
+		addMessage("出力したテキストに必要事項をご記入の上、下記のいずれかへご送付ください。");
+		lf(2);
+		addMessage("FAX番号: 03-3865-6166\n郵送先　: 〒111-0053\n　　　　　　 東京都台東区浅草橋4-2-2 浅草橋西口ビル4F\n　　　　　　 有限会社ノーツ プロテクト誤動作対応係");
+		lf();
+		addMessage("※ 迅速な対応を心掛けておりますが、処理に時間が掛かることがあります。\n　　どうぞ、ご了承くださいますようお願いいたします。\n"+
+			"※ 本件サポートに使用した個人情報は、サポート以外へは利用いたしません。");
+		lf(2);
+		addButton("キーコード入力", inputKeyCode);
+		addCancelClose("閉じる");
+		drawForms();
+	}
+
+	//	キーコード入力フォーム
+	function inputKeyCode()
+	{
+		clearForms();
+		lf();
+		addMessage("弊社からお知らせしたキーコードをご入力ください。\n\n※ 入力にミスがある場合でも「完了しました」と\n　　表示されます。\n※ 起動時のチェックを通過できなかった場合は、\n　　よくご確認いただき再度ご入力ください。");
+		lf(2);
+		var	item	= addInput("keycode",, 100);
+		item.convertData= hankaku_number;
+		addButton(" OK ", checkKeyCode,, 44);
+		lf(2);
+		addCancelClose();
+		drawForms();
+	}
+
+	//	キーコードチェック
+	function checkKeyCode()
+	{
+		var	item	= findForm("keycode");
+		if(item.text === "")
+			inputKeyCode();
+		else
+			registKeyCode(item.text);
+	}
+
+	//	完了
+	function registKeyCode(keycode)
+	{
+		keycode	= "%08x".sprintf((int keycode) & 0xFFFFFFFF);
+//		System.writeRegValue("HKEY_CURRENT_USER\\"+basekey, keycode);
+		System.writeRegValue("HKEY_LOCAL_MACHINE\\"+basekey, keycode);
+
+		clearForms();
+		lf();
+		addMessage("キーコードの記録を完了しました。\n下記のボタンを押下すると、ツールを閉じて『"+GameName+"』を起動します。");
+		lf(2);
+		addButton("『"+GameName+"』起動", startGame);
+		addCancelClose("終了");
+		drawForms();
+	}
+
+	//	メールアドレス他を通知
+	var	mailaddress;
+	function sendMailAddress()
+	{
+		var	item	= findForm("mailaddr");
+		mailaddress	= item.text;
+		//	半角へコンバート
+		var	str;
+		for(var i=0; i<mailaddress.length; i++)
+		{
+			var	chr	= #(mailaddress[i]);
+			str	+= chr >= 0xf8f0 ? $(chr - 0xfee0) : mailaddress[i];
+		}
+		mailaddress	= str;
+
+		var	msg;
+		if(mailaddress == "")
+			msg	= "メールアドレスが入力されていません。";
+		else if(mailaddress.indexOf("@") < 0)
+			msg	= "メールアドレスではありません。";
+		else
+		{
+			clearForms();
+			lf();
+
+			addMessage("サーバーへ接続しています ...");
+			lf(2);
+			addCancelClose();
+			drawForms();
+			var	url	= getURL(serial, mailaddress);
+			openURL(, url, resultSendMailAddress,, failedSendMailAddress);
+			return;
+		}
+
+		drawMailForm(msg+"\nもう一度入力し直してください。");
+	}
+
+	//	メールアドレス送信結果を通知
+	function resultSendMailAddress()
+	{
+		var	list	= getResponseText();
+		var	data	= list[0].split("=");
+
+		if(data[0] == "c")
+		{
+			clearForms();
+			lf();
+			addMessage("手続きメールの送信を行いました。\nお知らせいただいたメールアドレスの受信トレイをご確認いただき、お手続きください。");
+			lf(2);
+			addButton("キーコード入力", inputKeyCode);
+			lf(2);
+			addCancelClose("終了");
+			drawForms();
+		}
+		else if(data[0] == "e")
+		{
+			var	msg	= "error code: "+data[1];
+			switch(+data[1])
+			{
+			}
+			drawMailForm(msg);
+		}
+		else
+			drawMailForm("ネットワーク接続に失敗しました。\nサーバーが応答していませんので、時間をおいて試してみてください。");
+	}
+
+	//	メールアドレス送信に失敗
+	function failedSendMailAddress()
+	{
+		drawMailForm("ネットワーク接続に失敗しました。\nサーバーが応答していませんので、時間をおいて試してみてください。");
+	}
+}
+var	win	= new MyWindow();

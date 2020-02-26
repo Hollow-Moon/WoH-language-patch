@@ -1,0 +1,345 @@
+﻿//	別ウィンドウで各種状態をリアルタイム表示するプラグイン
+@if(__DISPSTATE_PLUGIN_DEFINED__!=1)
+@set(__DISPSTATE_PLUGIN_DEFINED__=1)
+
+class DispStatePlugin extends KAGPlugin
+{
+	var	owner;
+	var	_window;
+
+	function DispStatePlugin(window)
+	{
+		super.KAGPlugin(...);
+		this.owner	= window;
+	}
+
+	function finalize()
+	{
+		invalidate window if window != void;
+		super.finalize(...);
+	}
+
+	property window
+	{
+		getter
+		{
+			if(_window == void)
+			{
+				_window	= new DispStateWindow(owner);
+				if(owner.scflags.dispstatewindow != void)
+				{
+					with(owner.scflags.dispstatewindow)
+						_window.setPos(.left, .top), _window.setSize(.width, .height);
+				}
+			}
+			return _window;
+		}
+	}
+
+	property visible
+	{
+		setter(v)	{ window.visible = v; }
+		getter		{ return window.visible; }
+	}
+
+	function addDisplay() { window.addDisplay(...); }
+
+	function onSaveSystemVariables()
+	{
+		owner.scflags.dispstatewindow	= %[] if owner.scflags.dispstatewindow == void;
+		with(owner.scflags.dispstatewindow)
+		{
+			.left	= window.left;
+			.top	= window.top;
+			.width	= window.width;
+			.height	= window.height;
+		}
+	}
+}
+
+class DispStateWindow extends Window
+{
+	var	owner;
+	var	margin	= 1;
+
+	function DispStateWindow(owner)
+	{
+		super.Window(...);
+		this.owner	= owner;
+		caption		= "デバッグウィンドウ";
+		add(new Layer(this, null));
+	}
+
+	function finalize()
+	{
+		visible	= false;
+		super.finalize(...);
+	}
+
+	function addDisplay(l, t, w, h, func)
+	{
+		var	disp	= new StateDisplayLayer(this, primaryLayer);
+		with(disp)
+		{
+			.setImageSize(w, h);
+			.setSizeToImageSize();
+			.fontHeight	= 12;
+			.visible	= true;
+			.updateText	= func;
+		}
+		add(disp);
+		reorder();
+	}
+
+	property visible
+	{
+		setter(v)
+		{
+			if(visible !== v)
+			{
+				super.visible	= v;
+				if(v)
+					System.addContinuousHandler(onTimeout);
+				else
+					System.removeContinuousHandler(onTimeout);
+			}
+		}
+		getter	{ return super.visible; }
+	}
+
+	function reorder()
+	{
+		var	t	= 0;
+		var	w	= primaryLayer.width;
+		var	last;
+		for(var i=0; i<primaryLayer.children.count; i++)
+		{
+			var	layer	= primaryLayer.children[i];
+			if(layer instanceof "StateDisplayLayer")
+			{
+				with(layer)
+				{
+					.setPos(0, t);
+					.setSize(w, .originalHeight);
+					t	+= .height + margin;
+					.update();
+				}
+				last	= layer;
+			}
+		}
+		//	最後のレイヤーだけ、ウィンドウ下端までサイズを大きくする
+		last.height	= primaryLayer.height - last.top;
+	}
+
+	function onTimeout()
+	{
+//		dm("on timeout");
+		for(var i=0; i<primaryLayer.children.count; i++)
+		{
+			var	layer	= primaryLayer.children[i];
+			if(layer instanceof "StateDisplayLayer")
+				layer.update();
+		}
+	}
+
+	function onResize()
+	{
+		with(primaryLayer)
+		{
+			.setSize(innerWidth, innerHeight);
+			.fillRect(0, 0, .width, .height, 0xFF00Af80);
+			.visible	= true;
+		}
+		reorder();
+	}
+
+	function onCloseQuery()
+	{
+		visible	= false;
+		super.onCloseQuery(...);
+	}
+
+	function onKeyDown(key, shift)
+	{
+		if(key == VK_F12)
+			visible	= false;
+	}
+}
+
+class StateDisplayLayer extends Layer
+{
+	var	updateText;	//	テキストを更新するためのメソッド
+
+	var	margin		= 2;
+	var	spacing		= 1;
+	var	bgcolor		= 0xFF000000;
+	var	textcolor	= 0x00AF80;
+
+	var	originalLeft, originalTop;
+	var	originalWidth, originalHeight;
+
+	function StateDisplayLayer()
+	{
+		super.Layer(...);
+	}
+
+	function setPos(l, t)
+	{
+		if(originalLeft === void)
+		{
+			originalLeft	= l;
+			originalTop		= t;
+		}
+		if(l < 0)
+			l	= parent.width - width + l;
+		if(t < 0)
+			t	= parent.height - height + t;
+		super.setPos(l, t);
+	}
+
+	function setImageSize(w, h)
+	{
+		super.setImageSize(w, h);
+		if(originalWidth === void)
+		{
+			originalWidth	= w;
+			originalHeight	= h;
+		}
+	}
+
+	//	マウスでスクロール
+	var	lx, ly, lbtn;
+	var	lil, lit;
+	function onMouseDown(x, y, button)
+	{
+		if(button === mbLeft)
+		{
+			lbtn= button;
+			lx	= x;
+			ly	= y;
+			lil	= imageLeft;
+			lit	= imageTop;
+		}
+	}
+
+	function onMouseMove(x, y)
+	{
+		if(lbtn === mbLeft)
+		{
+			var	tmp	= lil + x - lx;
+			tmp	= tmp > 0 ? 0 : tmp < width - imageWidth ? width - imageWidth : tmp;
+			imageLeft	= tmp;
+			tmp	= lit + y - ly;
+			tmp	= tmp > 0 ? 0 : tmp < height - imageHeight ? height - imageHeight : tmp;
+			imageTop	= tmp;
+		}
+	}
+
+	function onMouseUp(x, y, button)
+	{
+		if(button === mbLeft)
+			lbtn	= void;
+		else if(button === mbRight)
+			closed	= !closed;	//	レイヤーを押下するたびに拡大縮小する
+	}
+
+	function onPaint()
+	{
+		if(closed)
+		{
+			fillRect(0, 0, width, height, bgcolor);
+			return;
+		}
+
+		text	= updateText() if updateText != void;	//	テキストを更新
+		var	mfw;
+		for(var i=0; i<_text.count; i++)
+		{
+			var	fw	= font.getTextWidth(_text[i]);
+			mfw	= fw if fw > mfw;
+		}
+		var	fh	= font.getTextHeight(_text[0]);
+		var	mfh	= (fh + spacing) * _text.count - spacing;
+		var	iw	= mfw + (margin << 1), ih = mfh + (margin << 1);
+//		imageLeft	= width - iw if imageLeft < width - iw;		//	はみ出さないように
+//		imageTop	= height - ih if imageTop < height - ih;
+/*		if(iw < originalWidth || ih < originalHeight)
+			setSize(iw, ih);
+		else
+			setSize(originalWidth, originalHeight);
+		setImageSize(iw, ih);
+*/		setPos(originalLeft, originalTop);
+		fillRect(0, 0, imageWidth, imageHeight, bgcolor);
+
+		var	t	= margin;
+		var	ls	= font.getTextHeight(_text[0]) + spacing;
+		for(var i=0; i<_text.count; i++)
+		{
+			drawText(margin, t, _text[i], textcolor, 255, false);
+			t	+= ls;
+		}
+	}
+
+	var	_closed	= false;
+	property closed
+	{
+		setter(v)
+		{
+			if((_closed = v) != 0)
+				setSize(8, 8);
+			else
+				setSize(originalWidth, originalHeight);
+		}
+		getter	{ return _closed; }
+	}
+
+	property fontHeight
+	{
+		setter(v)	{ font.height = +v; }
+		getter		{ return font.height; }
+	}
+
+	var	_text;
+	property text
+	{
+		setter(v)
+		{
+			if(typeof v == "String")
+				_text	= v.split(/\r\n|\r|\n/);
+			else if(typeof v == "Object" && v instanceof "Array")
+				_text	= v;
+			else
+				return;
+			update();
+		}
+		getter	{ return _text.join("\r\n"); }
+	}
+}
+
+kag.addPlugin(global.dispstate_object = new DispStatePlugin(kag));
+
+//	メッセージを追加する
+function addDisplay(l, t, w, h, func)
+{
+	global.dispstate_object.addDisplay(l, t, w, h, func);
+}
+
+//	メッセージを表示する
+function visibleDisplay()
+{
+	global.dispstate_object.visible	= true;
+}
+
+//	メッセージを隠す
+function invisibleDisplay()
+{
+	global.dispstate_object.visible	= false;
+}
+
+//	メッセージの表示/非表示を切り替える
+function switchDisplay()
+{
+	global.dispstate_object.visible	= !global.dispstate_object.visible;
+}
+
+@endif

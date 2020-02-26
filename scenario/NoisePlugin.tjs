@@ -1,0 +1,1679 @@
+﻿// NoisePlugin.tjs - ノイズ描画層(最前面の前景、旧仕様の@noise対応)プラグイン
+@if(__NOISE_PLUGIN_DEFINED__==0)
+@set(__NOISE_PLUGIN_DEFINED__=1)
+
+@set(NOISELAYER_ACTION_VERVOSE=0)
+
+@if(NOISELAYER_ACTION_VERVOSE)
+@set(DEBUG_VERBOSE=1)
+@endif
+@if(!NOISELAYER_ACTION_VERVOSE)
+@set(DEBUG_VERBOSE=0)
+@endif
+
+Scripts.execStorage("BasePlugin.tjs");
+Plugins.link("layerExFilter.dll") if typeof Layer.drawNoise == "undefined";
+
+class NoisePlugin extends AsyncAnimationBasePlugin
+{
+	var name = "Noise";
+@if(IS_TLE)
+	var title	= "ノイズ";
+@endif
+	var comp;
+
+	function NoisePlugin(window)
+	{
+		super.AsyncAnimationBasePlugin(...);
+	}
+
+//	function finalize()
+//	{
+//		clear();
+//		super.finalize();
+//	}
+
+	//	パラメータ
+	var	params	= [
+//		[ 名称,				規定値,	範囲(配列/型),				説明 ],
+		// 以下は、page の指定によりどちらのページに設定されるかが決まる
+		[ "monocro",		1,		[ 0, 1 ],					"モノクロで表示" ],
+		[ "under",			0,		[ 0, 255 ],					"ノイズ最小値" ],
+		[ "upper",			255,	[ 0, 255 ],					"ノイズ最大値" ],
+		[ "type",			ltOpaque,[ 0, 255 ],				"合成タイプ" ],
+		[ "absolute",		100000,	[ 0, 100000 ],				"前後位置" ],
+		[ "opacity",		255,	[ 0, 255 ],					"不透明度" ],
+		[ "interval",		50,		[ 0, 10000 ],				"最小描画間隔" ],
+		[ "time",			0,		[ 0, 100000 ],				"継続時間(0なら永遠)" ],
+		[ "status",			"stop",	[ "play", "pause", "stop" ],"実行中かどうか" ]
+	];
+	var	storeKeys		= [	//	全体の、保存するパラメータ
+	];
+	var	storePageKeys	= [	//	ページ毎の保存するパラメータ
+		"monocro", "under", "upper", "type", "absolute", "opacity", "interval", "time", "status"
+	];
+
+	//	ページ毎の状態
+	property monocro		{ setter(v) { setprop("monocro", v); }		getter { return getprop("monocro"); } }
+	property under			{ setter(v) { setprop("under", v); }		getter { return getprop("under"); } }
+	property upper			{ setter(v) { setprop("upper", v); }		getter { return getprop("upper"); } }
+	property interval		{ setter(v) { setprop("interval", v); }		getter { return getprop("interval"); } }
+	property time			{ setter(v) { setprop("time", v); }			getter { return getprop("time"); } }
+
+	property type			{ setter(v) { setprop("type", v); }			getter { return getprop("type"); } }
+	property absolute		{ setter(v) { setprop("absolute", v); }		getter { return getprop("absolute"); } }
+	property opacity		{ setter(v) { setprop("opacity", v); }		getter { return getprop("opacity"); } }
+
+	function getInitializedPage()
+	{
+		var	elm	= super.getInitializedPage();
+		with(elm)
+		{
+			.imageLayer		= void;
+			.lastplaytick	= 0;
+		}
+		return elm;
+	}
+
+	property imageLayer		{ setter(v) { setprop("imageLayer", v); }	getter { return getprop("imageLayer"); } }
+	property lastplaytick	{ setter(v) { setprop("lasttick", v); }		getter { return getprop("lasttick"); } }
+
+	function setVisible(vis)
+	{
+@if(!IS_TLE)
+		imageLayer.visible	= vis if imageLayer != void;
+@endif
+	}
+
+@if(IS_TLE)
+	function doPlay(tick)
+	{
+		if(!(page isvalid))
+			return;
+//		dm("Noise.doPlay("+tick+"): "+page.name+" imageLayer=" + ((imageLayer==void)?"void":imageLayer));
+//		dm(Scripts.getTraceString());
+//		dm("Noise.doPlay("+tick+"/"+starttick+")["+(tick - starttick)+"]: "+page.name);
+		{
+			var	par	= getCanvasLayer("NoisePreviewLayer");
+			if(imageLayer == void)
+			{
+				//dm("doPlay: new NoiseLayer");
+				imageLayer	= new NoiseLayer(kag, par, page);
+				imageLayer.plugin	= this;
+			}
+			else if(imageLayer.parent != par)
+				imageLayer.parent	= par;
+			lastplaytick	= tick;
+			imageLayer.update();	//	現在のパラメータで描画
+		}
+		if(time > 0 && tick - starttick > time)
+			return false;	//	時間の指定があり、時間を過ぎていたら終了
+
+		return true;
+	}
+@endif
+	function doStop()
+	{
+		//	停止したら片付ける
+		dm("NoiseLayer.doStop()");
+		if(imageLayer != void)
+		{
+			invalidate imageLayer;
+			imageLayer	= void;
+		}
+	}
+
+	//プラグイン管理下の有効なレイヤーの状態配列を返す
+	function getLayersState()
+	{
+		var ret = [];
+		var	keys	= getAllItems();
+		for(var i=0; i<keys.count; i+=2)
+		{
+			if( keys[i+1].imageLayer !== void && isvalid keys[i+1].imageLayer )
+			{
+				ret.add( keys[i+1].imageLayer.status );
+			}
+		}
+		return ret;
+	}
+
+	function clear()
+	{
+		var	keys	= getAllItems();
+		for(var i=0; i<keys.count; i+=2)
+			invalidate keys[i+1].imageLayer if keys[i+1].imageLayer != void;
+		super.clear();
+	}
+
+@if(IS_TLE)
+	function draw(layer)
+	{
+		if( layer === void ) return;
+		with(layer)
+		{
+			//dm("NoiseLayer.draw: lastplaytick="+lastplaytick+" opacity="+.opacity + " type=" + .type);
+			//dm("NoiseLayer.draw: "+page+" → "+.parent.parent + ", parent=" + .parent);
+			if( .parent === void || .parent.parent === void ) return;
+			temporaryPage(.parent.parent);
+			//dm("　draw: .parent.object.status = " + .parent.object.status + "[" + .parent.parent.name + "]" );
+			if(.parent.object isvalid && typeof .parent.object.status != "undefined" && .parent.object.status == "play")
+			{
+				.setPos(0, 0);
+				.type		= type;
+				.absolute	= absolute;
+				.opacity	= opacity;
+				.visible	= true;
+				.drawNoise(monocro, under, upper, lastplaytick + Math.random() * 10);
+				//dm("NoiseLayer.draw: lastplaytick="+lastplaytick+" opacity="+.opacity + " type=" + .type + " face=" + .face);
+			}
+			recoverPage();
+		}
+	}
+
+@endif
+
+	//タグハンドラからの事前整合処理
+	function setElms(elm)
+	{
+		with(elm)
+		{
+			.plugin = "Noise";
+			.monocro = true if .monocro === void;
+			.under = 0 if .under === void;
+			.upper = 255 if .upper === void;
+
+			.opacity	= 255 if .opacity === void;
+			.absolute	= 100000 if .absolute === void;
+			.type		= ltOpaque if .type === void;
+			.type		= .type! if typeof .type == "String";	//	type指定が文字列でされている場合数値化
+
+			.time	= 0 if .time === void;
+			.interval = 50 if .interval === void;
+		}
+	}
+
+	//タグハンドラからの処理実行
+	function execElms(elm, tagname)
+	{
+		with(elm)
+		{
+			var	layers	= [];
+			if( .page == "both" )
+				layers	= noise_object.getLayers();
+			else
+				layers.add(noise_object.getLayerFromElm(elm));
+			var	status	= .status;
+			for(var i=0; i<layers.count; i++)
+			{
+				.status	= status;
+				.status	= "stop" if layers[i].status == "stop" && (tagname == "pausenoise" || tagname == "resumenoise");
+//				dm(layers[i].name+".status = "+layers[i].status+" → "+.status+" by "+tagname);
+				layers[i].call(elm);
+			}
+		}
+		return 0;
+	}
+@if(!IS_TLE)
+	function onStore(f, elm)
+	{
+		var	dic	= f[name]	= %[];
+		var	pgs	= [ "fore", "back" ];
+		var str = false;
+		for(var i=0; i<pgs.count; i++)
+		{
+			var	pg	= kag[pgs[i]].base;
+//			dm("NoisePlugin.onStore: "+pgs[i]+" = "+pg+" / "+get(pg));
+//			dm("\t\timageLayer = "+getprop("imageLayer", pg)) if get(pg) != void;
+			var	il	= getprop("imageLayer", pg);
+			if(il != void && il.visible)
+			{
+				dic[pgs[i]+"_imageLayer"]	= il.store();
+				str = true;
+			}
+		}
+		if( ! str)
+			delete f[name];
+	}
+
+	function onRestore(f, clear, elm)
+	{
+		this.clear() if clear;
+
+		var	dic	= f[name];
+		if( dic === void ) return;
+		var	pgs	= [ "fore", "back" ];
+		for(var i=0; i<pgs.count; i++)
+		{
+			if(dic[pgs[i]+"_imageLayer"] != void)
+			{
+				var	layer	= getLayerFromElm(%[pluginLayer:name, page:pgs[i], needlayer:true]);
+				layer.restore(dic[pgs[i]+"_imageLayer"]) if layer !== void;
+			}
+		}
+	}
+@endif
+	//プラグインで管理している実際の表示レイヤーオブジェクトを返す
+	function getLayers(needlayer=false)
+	{
+		var	layers	= [];
+		var	pgs		= [ "fore", "back" ];
+		for(var i=0; i<pgs.count; i++)
+		{
+			var	layer	= getprop("imageLayer", kag[pgs[i]].base);
+			layers.add(layer) if layer != void;
+		}
+		return layers;
+	}
+
+	//kagからのアクション終了通知
+	function onStopAllActions()
+	{
+		var ret = getLayers();
+		for( var i=0; i<ret.count; i++ )
+		{
+			if( ret[i] === void ) continue;
+			ret[i].status = "stop";
+		}
+	}
+
+	function onStopAllForeActions()
+	{
+		var ret = getLayers();
+		if( ret[0] !== void )
+			ret[0].status = "stop";
+	}
+
+	function onStopAllBackActions()
+	{
+		var ret = getLayers();
+		if( ret[1] !== void )
+			ret[1].status = "stop";
+	}
+
+	//kagからのアクション停止通知
+	function onPauseAction(target, forceAll)
+	{
+		var ret = getLayers();
+		for( var i=0; i<ret.count; i++ )
+		{
+			if( ret[i] === void ) continue;
+			if( target !== void )
+				if( target != ret[i] && ! forceAll )
+					continue;
+			if( ret[i].status == "play" )
+			{
+				ret[i].status = "systempause";	//システムからの制御で停止
+			}
+		}
+	}
+
+	//kagからのアクション再開通知
+	function onResumeAction(target)
+	{
+		var ret = getLayers();
+		for( var i=0; i<ret.count; i++ )
+		{
+			if( ret[i] === void ) continue;
+			if( target !== void )
+				if( target != ret[i] )
+					continue;
+			if( ret[i].status == "systempause" )	//システムからの制御で停止していた場合のみ再開
+			{
+				ret[i].status = "play";
+			}
+		}
+	}
+
+	function onExchangeForeBack()
+	{
+//		dm("noise: onExchangeForeBack");
+		var	fore	= getprop("imageLayer", kag.fore.base);
+		var	back	= getprop("imageLayer", kag.back.base);
+		addPage(kag.fore.base) if fore == void;	//	page が存在しない可能性があるので
+		addPage(kag.back.base) if back == void;
+//		setprop("imageLayer", back, kag.fore.base);
+//		setprop("imageLayer", fore, kag.back.base);
+		fore.updateName() if fore != void;
+		back.updateName() if back != void;
+	}
+
+	function onCopyLayer(toback)
+	{
+//		dm("noise: onCopyLayer("+toback+")");
+		var	layer	= getLayerFromElm(%[plugin:name, page:toback ? "fore" : "back"]);
+		var	comp	= getLayerFromElm(%[plugin:name, page:toback ? "back" : "fore", needlayer:layer != void]);
+		if(comp != void)
+		{
+			if(layer == void)
+				comp.visible	= false;
+			else
+				comp.assignComp();
+		}
+	}
+
+	function getLayerFromElm(elm, prefix)
+	{
+		with(elm)
+		{
+//			dm("---- NoisePlugin.getLayerFromElm(): "+elm.plugin+"/"+elm.page);
+			if(.pluginLayer == name || .plugin == name)
+			{
+				page	= kag[.page].base;
+//				dm("---- imageLayer = "+imageLayer);
+				if(imageLayer == void)
+				{
+					if(.needlayer)
+					{
+						//dm("getLayerFromElm: new NoiseLayer");
+						imageLayer	= new NoiseLayer(kag, page);
+						imageLayer.plugin	= this;
+						imageLayer.init();
+					}
+					else
+						return void;
+				}
+				else if(imageLayer.parent != page)
+					imageLayer.parent	= page;
+				imageLayer.notuse	= false;
+//				dm("--------- imageLayer = "+imageLayer+" / "+getprop("imageLayer"));
+				return imageLayer;
+			}
+		}
+		return void;
+	}
+
+	function getLayerPageFromElm(elm, backlay)
+	{
+		if(elm.plugin == name)
+			return getprop("imageLayer", kag[backlay ? "back" : "fore"].base);
+		return void;
+	}
+
+	function getLayerFromObject(object)
+	{
+		var	pgs	= [ "fore", "back" ];
+		for(var i=0; i<pgs.count; i++)
+		{
+			if(getprop("imageLayer", kag[pgs[i]].base) == object)
+				return %[page:pgs[i], plugin:name];
+		}
+		return void;
+	}
+
+	//	レイヤー使用前の処理
+	function initLayerUse()
+	{
+		//	全てのレイヤーに「使っていない」フラグを立てる
+		var	pgs	= [ "fore", "back" ];
+		for(var i=0; i<pgs.count; i++)
+		{
+			var	pg	= kag[pgs[i]].base;
+			var	il	= getprop("imageLayer", pg);
+			if(il != void)
+				il.notuse	= true;
+		}
+	}
+
+	//	レイヤー使用後の処理
+	function uninitLayerUse()
+	{
+		//	「使っていない」フラグが立っているレイヤーは
+		var	pgs	= [ "fore", "back" ];
+		for(var i=0; i<pgs.count; i++)
+		{
+			var	pg	= kag[pgs[i]].base;
+			var	il	= getprop("imageLayer", pg);
+			if(il != void && il.notuse)
+			{
+				invalidate il;
+				setprop("imageLayer", void, pg);
+			}
+		}
+	}
+}
+
+/*----------------------------------------------------------------------------/
+/	プラグインのインスタンス作成
+/----------------------------------------------------------------------------*/
+@if(!IS_TLE)
+kag.addPlugin(global.noise_object = new NoisePlugin(kag));	//	TLE ではTLE側で対応する
+
+//	プラグインリストへ登録する
+global.effectPluginList[global.noise_object.name]	= global.noise_object;
+@endif
+
+//**********************************************************
+//	NoiseLayer 画面全体のノイズ効果をもつ前景レイヤーの定義
+//**********************************************************
+class NoiseLayer extends Layer
+{
+
+	var plugin;
+	var page;
+
+	var comp;
+	var isnoise = true;
+	var inTransition = false;
+	var lastNoiseTick = 0;
+
+	var pauseBySystem = false;
+	var firstDraw = false;
+
+	property index
+	{
+		setter(v)
+		{
+			if( v > NOISE_ABSOLUTE ) v = NOISE_ABSOLUTE;
+			super.index = v;
+		}
+		getter
+		{
+			return super.index;
+		}
+	}
+
+@if(!IS_TLE)
+	var starttick;
+	var time;
+
+	property noiseabsolute	{ setter(v) { absolute = v; } getter { return absolute; } }
+	property noiseopacity	{ setter(v) { opacity = v; } getter { return opacity; } }
+	property noisetype		{ setter(v) { type = v; } getter { return type; } }
+
+	property absolute
+	{
+		setter(v)
+		{
+			if( v > NOISE_ABSOLUTE ) v = NOISE_ABSOLUTE;
+			super.absolute = v;
+		}
+		getter
+		{
+			return super.absolute;
+		}
+	}
+@endif
+@if(IS_TLE)
+	property absolute
+	{
+		setter(v)
+		{
+			if( v > NOISE_ABSOLUTE ) v = NOISE_ABSOLUTE;
+			super.absolute = v;
+			if( parent instanceof "NoisePreviewLayer" )
+				parent.absolute = v;
+		}
+		getter
+		{
+			return super.absolute;
+		}
+	}
+
+	property opacity
+	{
+		setter(v)
+		{
+			super.opacity = v;
+			if( parent instanceof "NoisePreviewLayer" )
+			{
+				parent.opacity = v;
+				if( parent.status == "stop" )
+				{
+					parent.opacity = 0;
+				}
+			}
+		}
+		getter
+		{
+			return super.opacity;
+		}
+	}
+@endif
+	property type
+	{
+		setter(v)
+		{
+			//dm("_____property type setter["+name+"]  old=" + super.type + " new=" + v);
+			if( v == "~" ) return;
+			if( 0 < v && v <= 28 && v != 6 && v != 7)
+			{
+				if( super.type != v )
+				{
+					//dm("property type: " + Scripts.getTraceString());
+					super.type = v;
+@if(IS_TLE)
+					if( parent instanceof "NoisePreviewLayer" )
+						parent.type = v;
+@endif
+					firstDraw = true;
+				}
+				//fillRect( 0, 0, imageWidth, imageHeight, 0xFF7F7F7F );
+			}
+			else
+			{
+				dm("ERROR: type = " + v + " は使用できません");
+			}
+		}
+		getter
+		{
+			return super.type;
+		}
+	}
+
+@if(IS_TLE)
+	var status = "stop";
+	var noiseInterval = 50;
+	property interval	{ setter(v){ noiseInterval = v; }	getter{ return noiseInterval; }	}
+@endif
+@if(!IS_TLE)
+	var	_interval;
+	property interval
+	{
+		setter(v)	{ _interval = +v; timer.interval = _interval * kag.drawspeed; }
+		getter		{ return _interval; }
+	}
+@endif
+	var _monocro = true;
+	var _under = 0;
+	var _upper = 255;
+	property monocro	{ setter(v){ _monocro = v;	}	getter{ return _monocro; } }
+	property under		{ setter(v){ _under = v;	}	getter{ return _under; } }
+	property upper		{ setter(v){ _upper = v;	}	getter{ return _upper; } }
+
+	var DMY_STORAGE = "noise";
+	var NOISE_ABSOLUTE = 999999;	//メッセージレイヤーのすぐ下、前景レイヤー群のどれよりも上
+
+	function NoiseLayer(win, par, page)
+	{
+		super.Layer(...);
+@if(!IS_TLE)
+		this.timer	= new Timer(onTimeout, "");
+		timer.interval = 0;
+		updateName();
+@endif
+		parent = par;
+		page = par;
+//		dm("NosieLayer.parent = " + parent.name+" / "+Scripts.getTraceString());
+		init();
+		hasImage		= true;
+		hitType			= htMask;
+		hitThreshold	= 256;
+
+@if(IS_TLE)
+		setImageSize(page.baseWidth, page.baseHeight);
+		setSizeToImageSize();
+		setPos( 0, 0 );
+@endif
+@if(!IS_TLE)
+		setImageSize( parent.realWidth, parent.realHeight );
+		setSizeToImageSize();
+		setPos(0, 0);
+@endif
+		fillRect( 0, 0, imageWidth, imageHeight, 0xFF7F7F7F );
+
+@if(!IS_TLE)
+		timer.interval = 50;
+@endif
+		update();
+		//dm("construcer obj=" + this + " / p=" + parent.name);
+	}
+@if(!IS_TLE)
+	function updateName()
+	{
+		name	= (parent == kag.fore.base ? "表" : "裏") + "Noise";
+	}
+@endif
+	property parent
+	{
+		setter(v)
+		{
+			if(v != parent)
+			{
+//				dm(name+".parent = "+parent+" → "+v+" / "+Scripts.getTraceString());
+				super.parent	= v;
+@if(IS_TLE)
+				super.parent.child = this;
+@endif
+			}
+		}
+		getter	{ return super.parent; }
+	}
+
+	function finalize()
+	{
+		//dm("finalize obj=" + this + " / p=" + parent.name);
+		if(typeof this.timer != "undefined" && timer != void && timer isvalid)
+		{
+			timer.enabled	= false;
+			invalidate timer;
+		}
+		super.finalize(...);
+	}
+
+	function clearImage()
+	{
+		var color;
+		switch( type )
+		{
+		case	ltOpaque:			//不透明 = 1, // the same as ltCoverRect
+		case	ltAdditive:			//加算合成 = 3,
+		case	ltSubtractive:		//減算合成 = 4,
+				color = 0x00000000;
+				break;
+		case	ltMultiplicative:	//乗算合成 = 5,
+		case	ltDarken:			//比較(暗) = 9,
+		case	ltScreen:			//スクリーン乗算 = 11,
+				color = 0xFFFFFFFF;
+				break;
+		case	ltDodge:			//覆い焼き = 8,
+				color = 0xFF7F7F7F;
+				break;
+		case	ltAddAlpha:			//加算α合成 = 12, // additive alpha blend
+				color = 0x007F7F7F;
+				break;
+		case	ltAlpha:			//α合成 = 2,
+				color = 0xFF000000;
+				break;
+		case	ltLighten:			//比較(明) = 10,
+		case	ltPsNormal:			// = 13,
+		case	ltPsAdditive:		//[PS]覆い焼き(リニア) = 14,
+		case	ltPsSubtractive:	//[PS]焼き込み(リニア) = 15,
+		case	ltPsMultiplicative:	//[PS]乗算 = 16,
+		case	ltPsScreen:			//[PS]スクリーン = 17,
+		case	ltPsOverlay:		//[PS]オーバーレイ = 18,
+		case	ltPsHardLight:		//[PS]ハードライト = 19,
+		case	ltPsSoftLight:		//[PS]ソフトライト = 20,
+		case	ltPsColorDodge:		//[PS]覆い焼きカラー = 21,
+		case	ltPsColorDodge5:	//[PS]覆い焼きカラー(Ver.5以前) = 22,
+		case	ltPsColorBurn:		//[PS]焼き込みカラー = 23,
+		case	ltPsLighten:		//[PS]比較(明) = 24,
+		case	ltPsDarken:			//[PS]比較(暗) = 25,
+		case	ltPsDifference:		//[PS]差の絶対値 = 26,
+		case	ltPsDifference5:	//[PS]差の絶対値(Ver.5以前) = 27,
+		case	ltPsExclusion:		//[PS]除外 = 28
+				color = 0xFF000000;
+				break;
+		}
+		fillRect( 0, 0, imageWidth, imageHeight, color );
+		firstDraw = false;
+
+		//dm("clearImage: fillColor= 0x" + ("%08x".sprintf(color)).toUpperCase());
+	}
+
+	var _noiseOnce = false;
+	var _noiseOnceDone = false;
+@if(!IS_TLE)
+	// ノイズ処理(前景の場合はアルファ成分を保護する)
+	function drawNoise(m=true, d=0, p=255, seed=System.getTickCount(), holdalpha=true)
+	{
+//		dm("[[]]"+name+".drawNoise("+monocro+", "+under+", "+upper+", "+seed+") / ("+left+", "+top+"): "+storage);
+//		dm("noise type = " + type + " super.type = " + super.type );
+		if( firstDraw )
+			clearImage();
+
+		if(!visible)
+			return;
+
+		var	par	= parent;
+		var	inTrans	= false;
+		while(par != null)
+		{
+			if(par == kag.fore.base)
+			{
+				if( _noiseOnce )
+				{
+					if( _noiseOnceDone )
+						return;
+					else
+					{
+						_noiseOnceDone = true;
+						dm("NoisePlugin: noiseOnceDone cf.speffect==true のため１回だけノイズ処理します");
+					}
+				}
+				super.drawNoise(m, d, p, seed, 0, 0, width, height, holdalpha);
+				return;
+			}
+			inTrans	|= par.inTransition || par.comp.inTransition if typeof par.inTransition != "undefined";
+			par	= par.parent;
+		}
+
+		//	対のレイヤーが非表示(描画されていない)でトランジション中なら、裏でも描画する
+		if((comp == void || !comp.visible) && inTrans)
+			super.drawNoise(m, d, p, seed, 0, 0, width, height, holdalpha);
+	}
+@endif
+@if(IS_TLE)
+	function drawNoise(m=true, d=0, p=255, seed=System.getTickCount(), holdalpha=true)
+	{
+		if( ! parent instanceof "NoisePreviewLayer" ) return;
+
+		//dm("drawNoise: type=" + parent.type);
+		if( parent.type == 0 || parent.type > 28 || parent.type == 6 || parent.type == 7 )
+		{
+			parent.type = ltOpaque;
+		}
+		parent.drawNoise(m, d, p, seed, 0, 0, width, height, holdalpha);
+	}
+
+	function fillRect
+	{
+		if( ! parent instanceof "NoisePreviewLayer" ) return;
+		parent.fillRect(...);
+	}
+@endif
+
+	function setCompLayer(lay) { comp = lay; }
+
+	function init()
+	{
+@if(!IS_TLE)
+		visible = false;
+@endif
+		monocro	= false;
+		type	= ltOpaque;
+		interval = 50;
+	}
+
+@if(IS_TLE)
+	//	パラメータが変更されたとき、現在フレームが変化したときのみ更新する
+	var	lastCurrent;
+	var	lastStatus;
+	function onPaint()
+	{
+		if(lastCurrent !== parent.data.current || plugin.compareStates(lastStatus))
+		{
+			plugin.draw(this);
+			lastCurrent	= parent.data.current;
+			lastStatus	= plugin.getStates(lastStatus);
+		}
+		super.onPaint(...);
+	}
+@endif
+
+@if(!IS_TLE)
+
+	//アクション(movenoise)から呼ばれる場合、更新がかからないので自力で描かせる
+	var _inactupdate = 0;
+	var _lastdraw = 0;
+	property inactupdate
+	{
+		getter{ return _inactupdate; }
+		setter(v)
+		{
+			if( _inactupdate != v )
+			{
+				if( v - _lastdraw > interval && status == "play" )
+				{
+					onTimeout();
+					_lastdraw = v;
+				}
+
+				_inactupdate = v;
+			}
+		}
+	}
+
+	//	KAGタグから呼び出される、パラメータを変更するメソッド
+	var	nextelm;
+	var	calltimer;
+	function call(elm)
+	{
+		//	遅延/破壊的に処理するので複製
+		nextelm	= %[];
+		(Dictionary.assign incontextof nextelm)(elm);
+		delete elm.tagName;
+
+		if(elm.delay !== void)
+		{//	遅延実行のため、タイマー開始
+			calltimer	= new Timer(internalCall, "") if calltimer === void;
+			calltimer.interval	= elm.delay;
+			calltimer.enabled	= true;
+
+			delete nextelm.delay;	//	遅延時間は不要なので
+		}
+		else
+			internalCall();
+	}
+
+	//	call で保存されたパラメータをプロパティに入れる
+	function internalCall()
+	{
+		calltimer.enabled	= false if calltimer != void;
+		invalidate calltimer;
+		calltimer = void;
+
+		var	values	= [];
+		delete nextelm.tagname;
+		values.assign(nextelm);
+
+		var lastProps = ["status", "doUpdate"];		//最後に更新をかけるプロパティ名の列挙(後ろに並べたほうが最後に実行される)
+		for(var i=0; i<values.count; i+=2)
+		{
+			var skip = false;
+			for(var j=0; j<lastProps.count; j++)
+			{
+				var prop = lastProps[j];
+				if( prop === void ) continue;
+				if( values[i] == prop )
+				{
+					skip = true;
+					break;
+				}
+			}
+			if( skip ) continue;
+@if(DEBUG_VERBOSE)
+			if(typeof this[values[i]] == "undefined")
+			{
+				dm("NoiseLayer."+values[i]+" は未定義のプロパティです。");
+				continue;
+			}
+			dm("NoiseLayer."+values[i]+" = "+values[i+1]);
+@endif
+			this[values[i]]	= values[i+1];
+		}
+		for(var j=0; j<lastProps.count; j++)
+		{
+			var prop = lastProps[j];
+			if( prop === void ) continue;
+			if(typeof this[prop] != "undefined" && typeof nextelm[prop] != "undefined")
+			{
+@if(DEBUG_VERBOSE)
+				dm("NoiseLayer."+prop+" = "+nextelm[prop]);
+@endif
+				this[prop]	= nextelm[prop];
+			}
+		}
+	}
+
+	function onTimeout()
+	{
+		var	tick	= System.getTickCount();
+		starttick	= tick if starttick === void;
+
+		//dm(" starttick=" + starttick + " time=" + time + " tick-starttick=" + (tick - starttick));
+
+		if(time > 0 && tick - starttick > time)
+		{
+			starttick	= void;
+			status		= "stop";
+		}
+		draw();
+		//dm("draw p=" + parent.name) if status == "play";
+	}
+
+/*
+	property visible
+	{
+		setter(v)
+		{
+			super.visible = v;
+			dm("visible=" + visible + " obj=" + this + "[" + name + " / p=" + parent.name + "]" + Scripts.getTraceString());
+		}
+		getter
+		{
+			return super.visible;
+		}
+	}
+*/
+
+	var	_status	= "stop";
+	property status
+	{
+		setter(v)
+		{
+			if(status != v)
+			{
+//				dm("///" + Scripts.getTraceString());
+//				dm("NoiseLayer.status = "+_status+" → "+v);
+				if( v == "pause" && time )
+				{
+					//一時停止されたら既に経過していたぶんを指定時間から引いておく
+					var now = System.getTickCount();
+					time -= (now - starttick);
+				}
+				if( v == "play" && _status == "pause" )
+				{
+					//再開時は現在時刻を開始時間にしておく
+					starttick = System.getTickCount();
+				}
+
+				_status	= v;
+
+				//特殊効果表示なしの場合は１回だけ表示
+				_noiseOnce = ! cf.speffect if v == "play";					//特殊効果ありで開始時に設定
+				_noiseOnce = false if v == "stop";							//停止時にはクリア
+				_noiseOnceDone = false if v == "stop" || v == "play";		//開始時と終了時にクリア
+
+				timer.enabled = (v == "play");	//play状態でしか更新をかけない
+				visible = ( v != "stop" );		//playとpause状態で表示
+				starttick = void if v == "stop";
+				draw() if v != "stop";
+				update();
+				//dm("status=" + v + " visible=" + visible + " obj=" + this + "[" + name + " / p=" + parent.name + "]" + Scripts.getTraceString());
+				//dm("noiseLayer status_property　status=" + v + " mono=" + monocro + " under=" + under + " upper=" + upper + " int=" + interval + " parent=" + parent.name);
+			}
+		}
+		getter	{ return _status; }
+	}
+
+	function draw(m=monocro, d=under, p=upper)
+	{
+		//dm("draw: mono=" + m + " under=" + d + " upper=" + p);
+		drawNoise(m, d, p);
+	}
+
+	function assign(src)
+	{
+		super.assignImages(...);
+		//super.assign(...);
+		with(src)
+		{
+			monocro			= .monocro;
+			under			= .under;
+			upper			= .upper;
+			interval		= .interval;
+			type			= .type;
+			opacity			= .opacity;
+			absolute		= .absolute;
+			time			= .time;
+//			super.setPos(.left, .top, .width, .height);
+//			super.setImagePos(.imageLeft, .imageTop);
+			status			= .status;
+			visible			= .visible;
+			//dm("noise_plugin assign called");
+		}
+	}
+
+	function assignComp()
+	{
+		// 対になるレイヤの内容をコピー
+		if( comp === void )
+		{
+			dm("ERROR: NoiseLayer.assignComp: com=void");
+			return;
+		}
+		assign(comp);
+	}
+
+	function store()
+	{
+		var	dic	= %[];
+		with(dic)
+		{
+			.visible	= visible;
+			.name		= name;
+			.monocro	= monocro;
+			.type		= type;
+			.opacity	= opacity;
+			.absolute	= absolute;
+			.under		= under;
+			.upper		= upper;
+			.interval	= interval;
+		}
+		return dic;
+	}
+
+	function restore(dic)
+	{
+		init();
+
+		with(dic)
+		{
+			visible = .visible if .visible !== void;
+			name	= .name if .name !== void;
+			type	= .type if .type !== void;
+			opacity	= .opacity if .opacity !== void;
+			absolute= .absolute if .absolute !== void;
+			monocro	= .monocro if .monocro !== void;
+			under	= .under if .under !== void;
+			upper	= .upper if .upper !== void;
+			interval= .interval if .interval !== void;
+		}
+		firstDraw = true;
+		draw();
+	}
+
+@endif
+
+}
+
+@if(!IS_TLE)
+// ノイズ系タグハンドラ拡張
+var kt = kag.tagHandlers;
+
+//ノイズプラグインによる全画面対象のノイズ処理
+/**TAG
+ * noise - 全画面対象のノイズ処理
+ * @param	page		省略時はboth扱い
+ * @param	monocro		モノクロで表示
+ * @param	under		ノイズ最小値
+ * @param	upper		ノイズ最大値
+ * @param	type		合成タイプ
+ * @param	absolute	前後位置
+ * @param	opacity		不透明度
+ * @param	interval	最小描画間隔
+ * @param 	delay		動作開始遅延時間
+ * @param	time		継続時間(0なら永遠)
+ * @param	status		"play", "pause", "stop"  実行中かどうか
+ * @param	both		fore/back同時に処理
+ *		@link:			noise, noise_back, noise_noback, pausenoise, resumenoise
+ *						stopnoise, noiseact, movenoise
+ *		@group:			ノイズプラグイン
+ */
+kt.noise	= function(elm)
+{
+	with(elm)
+	{
+		noise_object.setElms(elm);
+		.status	= "play" if .status === void;
+
+		if( .status == "pause" )
+			return tagHandlers.pausenoise(elm);
+		if( .status == "stop" )
+			return tagHandlers.stopnoise(elm);
+
+		//トランジション時の挙動のために両面の実体生成しておく
+		var layFore = noise_object.getLayerFromElm(%[pluginLayer:"Noise",page:"fore", needlayer:true]);
+		var layBack = noise_object.getLayerFromElm(%[pluginLayer:"Noise",page:"back", needlayer:true]);
+		layFore.setCompLayer(layBack);
+		layBack.setCompLayer(layFore);
+
+@if(DEBUG)
+		//DEBUG
+		global.noise_fore = layFore;
+		global.noise_back = layBack;
+		//DEBUG
+@endif
+		.page	= "fore" if .page === void;
+		.interval = 50 if .interval === void;
+		var ret = noise_object.execElms(elm, "noise");
+		if( ret ) return ret;
+
+		if( .both )
+		{
+			.page = .page == "back" ? "fore" : "back";
+			.both = false;
+			tagHandlers.noise(elm);
+		}
+
+		if(.nowait && !.wait)
+			return 0;
+		else
+			return doWait(elm);
+		return 0;
+	}
+} incontextof kag;
+kt.noise_on	= kt.noise;
+
+/**TAG
+ * noise_back - backに対してノイズ複製を行う
+ *		@link:			noise, noise_back, noise_noback, pausenoise, resumenoise
+ *						stopnoise, noiseact, movenoise
+ *		@group:			ノイズプラグイン
+ */
+kt.noise_back	= function(elm)
+{
+	with(elm)
+	{
+		noise_object.setElms(elm);
+		.status	= "play" if .status === void;
+
+		var elmFore = %[];
+		var elmBack = %[];
+		(Dictionary.assignStruct incontextof elmFore)(elm);
+		(Dictionary.assignStruct incontextof elmBack)(elm);
+
+		elmFore.page = "fore";
+		var layFore = noise_object.getLayerFromElm(elmFore);
+		if( layFore === void )
+		{
+			dm("ERROR: noise_backタグにてgetLayerFromElmがvoidを返しました [fore]");
+			return -1;
+		}
+
+		elmBack.page = "back";
+		var layBack = noise_object.getLayerFromElm(elmBack);
+		if( layBack === void )
+		{
+			dm("ERROR: noise_backタグにてgetLayerFromElmがvoidを返しました [back]");
+			return -1;
+		}
+
+		layFore.setCompLayer(layBack);
+		layBack.setCompLayer(layFore);
+		layBack.assignComp();
+
+		if(.nowait !== void && !.nowait)
+			return 0;
+		else
+			return doWait(elm);
+		return 0;
+	}
+} incontextof kag;
+
+/**TAG
+ * noise_noback - backのみ停止とレイヤー破棄する
+ *		@link:			noise, noise_back, noise_noback, pausenoise, resumenoise
+ *						stopnoise, noiseact, movenoise
+ *		@group:			ノイズプラグイン
+ */
+kt.noise_noback	= function(elm)
+{
+	return tagHandlers.stopnoise(%[page:"back"]);
+
+} incontextof kag;
+
+/**TAG
+ * pausenoise - ノイズ処理の一時停止
+ * @param	page		省略時はboth扱い
+ * @param 	delay		動作開始遅延時間
+ *		@link:			noise, noise_back, noise_noback, pausenoise, resumenoise
+ *						stopnoise, noiseact, movenoise
+ *		@group:			ノイズプラグイン
+ */
+kt.pausenoise	= function(elm)
+{
+	with(elm)
+	{
+		.plugin = "Noise";
+		.status	= "pause";
+		.page	= "both" if .page === void;
+		var ret = noise_object.execElms(elm, "pausenoise");
+		return ret;
+	}
+} incontextof kag;
+
+/**TAG
+ * resumenoise - 一時停止していたノイズ処理の再開
+ * @param	page		省略時はboth扱い
+ * @param 	delay		動作開始遅延時間
+ *		@link:			noise, noise_back, noise_noback, pausenoise, resumenoise
+ *						stopnoise, noiseact, movenoise
+ *		@group:			ノイズプラグイン
+ */
+kt.resumenoise	= function(elm)
+{
+	with(elm)
+	{
+		.plugin = "Noise";
+		.status	= "play";
+		.page	= "both" if .page === void;
+		var ret = noise_object.execElms(elm, "resumenoise");
+		return ret;
+	}
+	return 0;
+
+} incontextof kag;
+
+/**TAG
+ * stopnoise - ノイズ処理の停止とレイヤー破棄
+ * @param	page		省略時はboth扱い
+ *		@link:			noise, noise_back, noise_noback, pausenoise, resumenoise
+ *						stopnoise, noiseact, movenoise
+ *		@group:			ノイズプラグイン
+ */
+kt.stopnoise	= function(elm)
+{
+	with(elm)
+	{
+		.plugin = "Noise";
+		.status	= "stop";
+		.page	= "both" if .page === void;
+		var ret = noise_object.execElms(elm, "stopnoise");
+		if( ret ) return ret;
+
+		//動作中のものが残っていなければ実体を破棄する
+		var stat = noise_object.getLayersState();
+		var nums = 0;
+		for( var i=0; i<stat.count; i++ )
+		{
+			nums++ if( stat[i] == "play" || stat[i] == "pause" );
+		}
+		if( ! nums )
+			noise_object.clear();
+		else
+			dm("停止していないノイズレイヤーが存在します。");
+		return 0;
+	}
+
+} incontextof kag;
+kt.noise_off = kt.stopnoise;
+
+/**TAG
+ * noiseact - ノイズ処理の動的変更
+ *	@param targetpage	"fore"/"back"
+ *	@param props		変化させるプロパティをカンマ区切りで指定する
+ *						段階的に変化させないものには先頭にハイフンをつける
+ *						プロパティ名については noise タグを参照
+ *						ex) props=-visible,opacity
+ *	@param keys			時間毎の状態(キーフレーム)をカッコで括り列挙する
+ *						内訳は順に(time,accel,interpolation,props[0],props[1]...)
+ *						・time:				ミリ秒
+ *						・accel:			equationを用いた加速度(変化カーブ)指定
+ *						・interpolation: 	n=なし / l:線形補間(デフォルト) / s:スプライン補間
+ *						ex) keys=(0,,l,,255)(1000,,n,127)
+ *		@link:			action, equation, noise, noise_back, noise_noback, pausenoise, resumenoise
+ *						stopnoise, noiseact, movenoise
+ *		@group:			ノイズプラグイン
+ */
+kt.noiseact		= function(mp)
+{
+	mp.plugin	= noise_object.name;
+	mp.interval = 50 if mp.interval === void;
+	mp.page		= mp.targetpage if mp.page === void && mp.targetpage !== void;
+	return tagHandlers.action(mp);
+} incontextof kag;
+
+/**TAG
+ * movenoise - ノイズレイヤーを変化させる.
+ *	トランジションの場合はデフォルトで終了を待つ、moveの場合はデフォルトで待たない
+ *	プロパティについては noise タグを参照
+ *	@param	accel		移動加速度(減速-5〜0=等速〜+5増速)
+ *	@param	time		変化に要する時間
+ *	@param	nowait		終了を待たない(default: true)
+ *	@param	textoff		テキスト消去しない
+ *	@param	canskip		終了を待つとき、クリックでのスキップができるか(default: true)
+ *	@param	both		fore/back同時に処理する
+ *		@link:			noise, noise_back, noise_noback, pausenoise, resumenoise
+ *						stopnoise, noiseact, movenoise
+ *		@group:			ノイズプラグイン
+ */
+kt.movenoise = function(elm)
+{
+	with(elm)
+	{
+		.page	= "fore" if .page === void;
+		.target	= getLayerFromElm(%[page:.page, pluginLayer:noise_object.name]);
+		.status	= "play" if .status === void;
+
+		noise_object.action(elm, NoiseObjectMiddleProperty);
+
+		if(.both)
+		{
+			//	both=表裏両面で同じ処理を実行
+			.page	= .page == "back" ? "fore" : "back";
+			.both	= void;
+			.nowait	= true;		//!nowaitの時にBasePlugin.action内でwact発行があるので２面目は実施しない
+			return noise_object.action(elm, NoiseObjectMiddleProperty);
+		}
+		return 0;
+	}
+} incontextof kag;
+
+
+
+@endif	/* !IS_TLE */
+
+/*----------------------------------------------------------------------------/
+/	編集時、実行時どちらにも必要な定義
+/----------------------------------------------------------------------------*/
+global.noisep	= new NoisePlugin();
+var	NoiseObjectKeys				= getPluginPropertyKeys(global.noisep.params);
+var	NoiseObjectKeysInit			= getPluginPropertyInit(global.noisep.params);
+var	NoiseObjectDefaultValues	= createDefaultValuesFunc(NoiseObjectKeys, NoiseObjectKeysInit, false);
+var	NoiseObjectMiddleProperty	= %[under:true, upper:true, absolute:true, opacity:true, interval:true, time:false];
+
+@if(!IS_TLE)
+/*----------------------------------------------------------------------------/
+/	インスタンス作成とTLObjectの定義
+/----------------------------------------------------------------------------*/
+//PluginDefaultValues[noise_object.name]	= NoiseObjectDefaultValues;
+
+//	TLオブジェクト
+class TLNoiseObject extends TLPluginObject
+{
+	function TLNoiseObject()
+	{
+		super.TLPluginObject(...);
+	}
+
+	property keys				{ getter { return NoiseObjectKeys; } }
+	property defaultValues		{ getter { return NoiseObjectDefaultValues; } }
+	property middleProperties	{ getter { return NoiseObjectMiddleProperty; } }
+	property storageProperties	{ getter { return ""; } }
+
+	//	アクションを生成する
+	//		プラグインを target とせず、プラグインが返す NoiseLayer を target とする
+	function createAction(st, ed, stop, framerate, elms, pages, uuid2elm)
+	{
+		var	par	= parent;
+		while(par != void && !(par instanceof "TLBGObject"))
+			par	= par.parent;
+
+		var	page= pages[par.page];
+//		dm("---- NoiseObject.createAction(): page = "+page);
+		var	elm	= %[
+			tagname:"action",
+			module:"MixedKeyFrameActionModule",
+			page:page,
+			pluginLayer:pluginName
+		];
+		var	tk	= [];
+		tk.assign(timeline.keys);
+//		tk.add("visible");
+		if(timeline.getKeyDataToTag(tk, defaultValues, framerate, st, ed, stop, elm))
+		{
+			dispElements(elm);
+			if(elm.keys != void && elm.props != void)
+			{
+				elm.init	= defaultValues;
+				elms.add(elm);
+				uuid2elm[uuid]	= %[page:elm.page, plugin:elm.plugin];
+			}
+		}
+	}
+}
+
+@endif
+/*----------------------------------------------------------------------------/
+/	TLEで編集するためのObject,Layer,Properties登録
+/----------------------------------------------------------------------------*/
+@if(IS_TLE)
+Scripts.execStorage("PluginObject.tjs");
+Scripts.execStorage("PluginLayer.tjs");
+Scripts.execStorage("noise_property.tjs");
+
+var	NoiseObjectPropertyType	= getPluginPropertyType(global.noisep.params);
+var	NoiseObjectPropertyRange= getPluginPropertyRange(global.noisep.params);
+
+class NoiseObject extends PluginObject
+{
+	var	staticProperties	= [];	//	全てのNoiseObjectで同一の値となるプロパティ
+
+	function NoiseObject()
+	{
+		super.PluginObject(...);
+		pluginName = name = "Noise";
+		plugin = global.pluginManager.get(name);
+	}
+
+	property keys						{ getter { return NoiseObjectKeys; } }
+	property initvalues					{ getter { return NoiseObjectKeysInit; } }
+	property defaultValues				{ getter { return NoiseObjectDefaultValues; } }
+	property storageType				{ getter { return ""; } }
+	property notStateProperties			{ getter { return []; } }
+	property createPropertyMenuMethod	{ getter { return create_noise_property; } }
+	property eventPropertyMenuMethod	{ getter { return onChildValueModified_noise_property; } }
+	property middleProperties			{ getter { return NoiseObjectMiddleProperty; } }
+	property propertyTypes				{ getter { return NoiseObjectPropertyType; } }
+	property propertyRanges				{ getter { return NoiseObjectPropertyRange; } }
+	property isOutputTag				{ getter { return false; } }
+
+	//	状況を再現するタグ
+	function getStateTag(frame, shift)
+	{
+		var	tag	= super.getStateTag(...);
+		tag.set("status", timeline.getProperty(frame, "status"));	//	status = stop(=初期値) のとき、値が入らないので
+		if(!(shift & ssShift))
+		{
+			//	停止指定されるまで動作
+			tag.name	= "noise";
+		}
+		else
+		{
+			//	動的な変化
+			tag.name	= "movenoise";
+			tag.set("time", 1000) if tag.get("time") == 0;
+			tag.reset("status") if tag.get("status") == "play";
+		}
+		return tag;
+	}
+
+	//	タグで状況を再現する(プロパティ名読み替えのためオーバーライド)
+	function setStateTag(frame, tag)
+	{
+		if(isStateTag(tag))
+		{
+			timeline.setFrameStateFromTag(frame, tag, keys, defaultValues);
+			return true;
+		}
+		return false;
+	}
+
+	//	アクションタグを取得
+	function getActionTag(st, ed)
+	{
+		//	タグを生成
+		var	tag	= new KAGTagData();
+		tag.name= "noiseact";
+		tag.set("targetpage", "fore");	//	eval して実体を示す文字列(fore,backのみkag[x].baseに読み替える)
+
+		var	ks	= [];
+		ks.assign(keys);
+		ks.add("visible");
+		ks.add("noiseInterval");
+		tag.rename("noiseInterval", "interval");
+		if(timeline.getKeyDataToTag(ks, defaultValues, root.frameRate, st, ed, void, tag))
+			return tag;
+		else
+			return void;
+	}
+/*
+	//	action タグを設定
+	function setActionTag(frame, tag)
+	{
+		if(isActionTag(tag))
+		{
+			timeline.setKeyData(tag.get("props"), tag.get("keys"), root.mspf, frame);
+			return true;
+		}
+		return false;
+	}
+*/
+	//	このオブジェクトの状態を示すタグかどうか
+	function isStateTag(tag)
+	{
+		var	tags	= %[
+			noise:[],
+			movenoise:[],
+		];
+		var	params	= tags[tag.name];
+		if(params == void)
+			return false;
+		for(var i=0; i<params.count; i++)
+		{
+			if(tag.get(params[i][0]) != params[i][1])
+				return false;
+		}
+		return true;
+	}
+
+	//	対応できるactionタグかどうか
+	function isActionTag(tag)
+	{
+		return ((tag.name == "action" && tag.get("plugin") == pluginName) || tag.name == "noiseact");
+	}
+
+	//動作状態によって帯表示を変える
+	function drawFrameInner(frame, layer, l, t, w, h, c)
+	{
+		var status = getPropertyValue(frame,"status");
+		//dm("NoiseObject.drawFrameInner status=" + status);
+
+		if( isChoseFrame(frame) )
+		{
+			super.drawFrameInner(...);
+			return;
+		}
+		var rr = (c & 0x000000FF);
+		var gg = ((c >> 8) & 0x000000FF);
+		var bb = ((c >> 16) & 0x000000FF);
+		var mask =  ( bb < gg ) ? 0xFF7FFFFF : 0xFFAFAFAF;
+		switch( status )
+		{
+		case "play":
+			layer.fillRect(l, t, w, h, c);
+			layer.fillRect(l, t, w, h, c & mask);
+			break;
+		case "pause":
+			var	hh	= int(h >> 1);
+			layer.fillRect(l, t, w, hh, c);
+			layer.fillRect(l, t+hh, w, hh, c & mask);
+			break;
+		case "stop":
+		default:
+			super.drawFrameInner(...);
+			break;
+		}
+	}
+
+}
+postProcessOfObject("NoiseObject", NoiseObjectKeys);
+
+var	NoiseLayer_markers_hints	= [
+];
+
+class NoisePreviewLayer extends PluginLayer
+{
+	var	plugin;
+	var child = void;
+
+	function NoisePreviewLayer(win, par, obj)
+	{
+		super.PluginLayer(...);
+
+		neutralColor= 0x00000000;
+		setImageSize(parent.baseWidth, parent.baseHeight);
+		setSizeToImageSize();
+		setPos(parent.baseLeft, parent.baseTop);
+		plugin		= obj.plugin;
+		hasImage	= false;
+		hitThreshold = 256;
+//		type = ltOpaque;
+//		opacity = 0;
+	}
+
+	function finalize()
+	{
+		plugin.eraseImageLayer(parent, "imageLayer") if plugin isvalid;	//	対応するレイヤーを破棄する
+		super.finalize();
+	}
+
+	function moveBase(bl, bt)
+	{
+		setPos(bl, bt);
+	}
+
+	property monocro		{ setter(v){ object.monocro = v; }	getter{ return object.monocro; }	}
+	property under 			{ setter(v){ object.under = v; }	getter{ return object.under; }		}
+	property upper 			{ setter(v){ object.upper = v; }	getter{ return object.upper; }		}
+	property interval		{ setter(v){ object.interval = v; }	getter{ return object.interval; }	}
+	property time			{ setter(v){ object.time = v; }		getter{ return object.time; }		}
+	property status			{ setter(v){ object.status = v; }	getter{ return object.status; }		}
+	property absolute		{ setter(v){ object.absolute = v; }	getter{ return object.absolute; } }
+	property opacity		{ setter(v){ object.opacity = v; }	getter{ return object.opacity; } }
+	property type			{ setter(v){ object.type = v; }		getter{ return object.type; } }
+	property interval		{ setter(v) { object.interval = v; }getter { return object.interval; }	}
+
+	function updateCurrentState()
+	{
+		with( global.Layer )
+		{
+			.visible = false;
+			.opacity	= opacity;
+			.type		= type;
+			.absolute	= absolute;
+			super.updateCurrentState();
+
+			.visible = (object.status != "stop");
+			if( .visible )
+				if( typeof this.child != "undefined" && isvalid this.child )
+					plugin.draw(child);
+			//dm("updateCurrentState: status=" + object.status + " g.visible=" + .visible + " visible=" + visible + "[" + parent.name + "]");
+		}
+	}
+
+	function onMouseDown(x, y, button, shift)
+	{
+		if(button == mbRight)
+		{
+			x	= cursorX;	//	正しい座標でない可能性があるので
+			y	= cursorY;
+			with(canvas.rmenu)
+			{
+				var	setstatus	= function(obj,val) { obj.status=val; };
+				var	setmono		= function(obj,val) { obj.monocro=val; };
+				var	setopac		= function(obj,val) { obj.opacity=val; };
+				var	settype		= function(obj,val) { obj.type=val; };
+				.clearCommands();
+				.addCommand("実行",		status != "play",	setstatus, this, "play");
+				.addCommand("一時停止",	status != "pause",	setstatus, this, "pause");
+				.addCommand("停止",		status != "stop",	setstatus, this, "stop");
+				.addSeparator();
+				.addCommand("モノクロ",	!monocro,			setmono, this, true);
+				.addCommand("カラー",	monocro,			setmono, this, false);
+				.addSeparator();
+				.addCommand("   0%(透明)",	opacity != 0,		setopac, this, 0);
+				.addCommand("12.5%",		opacity != 32,		setopac, this, 32);
+				.addCommand("  25%",		opacity != 64,		setopac, this, 64);
+				.addCommand("37.5%",		opacity != 96,		setopac, this, 96);
+				.addCommand("  50%",		opacity != 128,	setopac, this, 128);
+				.addCommand("62.5%",		opacity != 160,	setopac, this, 160);
+				.addCommand("  75%",		opacity != 192,	setopac, this, 192);
+				.addCommand("87.5%",		opacity != 224,	setopac, this, 224);
+				.addCommand(" 100%(不透明)",opacity != 255,	setopac, this, 255);
+				.addSeparator();
+				.addCommand("不透明(ltOpaque)",			type != ltOpaque,		settype, this, ltOpaque);
+				.addCommand("減算合成(ltSubtractive)",	type != ltSubtractive,	settype, this, ltSubtractive);
+				.addCommand("覆い焼き(ltDodge)",		type != ltDodge,		settype, this, ltDodge);
+				.show(this, x, y);
+			}
+		}
+	}
+}
+
+global.addMethodName	= "addNoise";	//	PluginManager も参照するので、統合しないこと
+CV_object2layer["NoiseObject"]	= [ "NoisePreviewLayer", void, "layers" ];
+OD_add.add(["addNoise", "NoiseObject", false]);
+OD_parentageConsistency["NoiseObject"]	= function(parent)
+{
+	if(parent != "BGObject" && parent != "PartBgObject")
+	{
+		popupMessage("ノイズプラグインは背景レイヤーの下にのみ配置可能です");
+		return false;
+	}
+	return true;
+};
+//キャンバスへのボタン追加
+CV_addButtons["NoiseObject"] = [
+	[ "noise",, "現在の指定でノイズを開始します" ],
+	[ "movenoise",, "実行されているノイズの状態を変化させる" ],
+	[ "action",, "選択されているオブジェクトの全区間をactionタグにします。" ]
+];
+global.CanvasLayer.noise_override_onButtonDown = global.CanvasLayer.onButtonDown;
+global.CanvasLayer.onButtonDown = function(btn)
+{
+	noise_override_onButtonDown(...);
+	switch(btn.name)
+	{
+	case "noise":
+		data.copyState();
+		break;
+
+	case "movenoise":
+		data.copyState(ssShift);
+/*
+		//statusは指定しない、開始〜規定時間後に停止　の挙動をさせる
+		global.fgtime	= 300;
+		data.setTextToClipboardByChoseObject(function(obj){return obj instanceof "NoiseObject";},
+			function(obj){return [ %[name:"movenoise", time:fgtime, plugin:NoiseObject.name,
+									 type:obj.type, opacity:obj.opacity, absolute:obj.absolute,
+									 monocro:obj.monocro, interval:obj.interval,
+									 under:obj.under, upper:obj.upper ],
+								   %[name:"wm", canskip:0] ]; });
+*/
+
+		break;
+	}
+} incontextof global.CanvasLayer;
+//エディタのタグ解釈部の追加
+__isactiontag["noiseact"] = true;
+
+@endif
+
+invalidate global.noisep;
+delete global.noisep;
+
+
+@endif	/* __NOISE_PLUGIN_DEFINED__==0 */

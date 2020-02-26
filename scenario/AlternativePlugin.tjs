@@ -1,0 +1,685 @@
+﻿/*-----------------------------------------------------------------------------/
+/	Copyright (C) TYPE-MOON All Rights Reserved.
+/		選択肢表示プラグイン
+/	※	小さなメッセージウィンドウで構成された選択肢を表示する。
+/		(見た目は変更可能)
+/
+/	○利用方法
+/	・準備
+/		添付の画像を参考に alt_frame-normal,alt_frame-enter,alt_frame-push,alt_new
+/		という画像を作成。出来た画像は自動検索パスの範囲内においておく。
+/		次に、使用する前に @eval exp=Scirpts.execStorage('AlternativePlugin.tjs')
+/		でプラグインを読み込んでおく。
+/	・使い方
+/		ex.)
+/			@addalter target=*school text=登校する
+/			@addalter target=*town text=街へ出かける
+/			@addalter target=*park text=公園へ行ってみる
+/			@showalter time=800
+/			@s
+/		上記のスクリプトで、「登校する」「街へ出かける」「公園へ行ってみる」という
+/		選択肢が押下できる状態で画面最前面に表示される。
+/		プレイヤーが何れかを選択すると、それぞれに設定されたラベルへ移動する。
+/	・タグ
+/		@addalter
+/			選択肢を追加します。
+/				text	: 選択肢に表示する文字列
+/				image	:         〃      画像ファイル名
+/				storage	: 選択された場合の移動先スクリプト名
+/				target	:       〃      の移動先ラベル
+/				exp		: 選択時に実行されるtjsスクリプト
+/				align	: 選択肢ボタン上での、文字の描画位置(left,center,right)
+/				enabled	: クリックできるかどうか
+/				opt		: 選択肢上に追加する画像の名称(AlternativePlugin.options で定義済みのもののみ)
+/				optalign:           〃          の表示位置(left,center,right と top,vcenter,bottom の組み合わせ/ "left-vcenter"等)
+/				center	: 選択肢の表示X座標(画像ファイル名が指定されているときのみ)
+/				vcenter	:    〃   表示Y座標
+/		@showalter
+/			選択肢を画面に表示します。
+/			必ず事前に addalter タグで、選択肢を追加しておいてください。
+/			※ 文字に関する指定は、選択肢に画像ファイル名が指定されている場合は無効になります
+/				frame		: 選択肢ボタン枠(default:"alt_frame-")(frame+"normal",frame+"push",frame+"enter"の3種類の画像が必要)
+/				bgcolor		: 選択肢を表示したときの背景色(default:黒50%)
+/				width		: 選択肢ボタンの幅(default:テキストの表示サイズに合わせる)
+/				spacing		:      〃     の間隔(default:32)
+/				top			:      〃     の表示開始高さ(default:ボタンを均等に整列して中央に配置)
+/				fontheight	: 選択肢を表示するフォントのサイズ(default:現在のメッセージレイヤーに準拠)
+/				fontface	: 	           〃           の種類(default:同上)
+/				textcolor	: 選択肢文字の色(default:同上)
+/				shadow		:     〃    に影をつけるか(default:同上)
+/				shadowcolor	:     〃    の影の色(default:同上)
+/				edge		:     〃    を袋文字にするか(default:同上)
+/				edgeemphasis: 袋文字の強調度(default:同上)
+/				edgecolor	: 	  〃  の色(default:同上)
+/				edgeextent	:     〃  の太さ(default:同上)
+/				antialiased	: 選択肢文字をアンチエイリアスで描画するか(default:同上)
+/				time		: 選択肢を表示するフェードの時間
+/				accel		:             〃          の加速度
+/		@resetalter
+/			選択肢を破棄します。
+/			選択肢を選ぶと、表示が消えた後自動的に破棄されるため、特に呼び出す必要はありません。
+/
+/	○注意
+/		NGCEに対応した選択肢プラグインを作成する場合、このプラグインを参考にしてください。
+/		NGCEの選択肢指定機能のために複数のプラグインを同居させるときは、下記に気をつけてください。
+/			・プラグインオブジェクト名が重ならないようにする。
+/			・Scripts.execStorage でファイル読み込むとき、毎回タグ追加の命令が実行されるようにする。
+/-----------------------------------------------------------------------------*/
+if(typeof global.alternative_object == 'undefined')
+{//	初回読み込み時のみ実行 - ここから(プラグインの定義と追加を行なう)
+
+Scripts.execStorage("PushButtonLayer.tjs");
+Scripts.execStorage("FadeLayer.tjs");
+
+class AlternativePlugin extends KAGPlugin
+{
+	var base;
+	var buttons;	//	選択肢ボタン
+	var	accessories;//	アクセサリ
+
+//	var frameImage	= "al_frame-";	//	lt, rt, lb, rb が四隅で、l, t, r, b が四辺。bgが背景部分になる
+	var defaultFrameImage	= "alt_frame-";	//	normal, enter, push の3画像が必要
+	var frameTypes	= [ "normal", "enter", "push", "normal" ];	//	enabled=falseのときはnormal背景を使用する
+	var	frameCenterSize	= 1;		//	フレーム画像の中心サイズ
+	var	frame4lr	= true;	//	左右方向への拡張しか考えていないデザインの場合
+	var	options		= %[
+		"new" => "alt_new",
+		"exclamation" => "alt_ex",
+	];
+	var	lineFeedString	= "\\n";	//	選択肢文字列中での改行記号("\"を使用するときは、"\\"と記述する)
+//	var bgOpacity	= 128;
+	var bgColor		= 0x80000000;
+	var alterSpacing= 16;	//	選択肢が入りきれない場合には、間隔が狭まる
+	var	lineSpacing	= 2;
+	var	margin		= 32;	//	上下のマージン(この範囲には選択肢を配置しない)
+	var	defaultalign= "center";
+	var	defaultoptionalign	= "center-top";
+
+	var	enter_se	= "";	//	選択(載った時)の効果音
+	var	decide_se	= "";	//	決定の効果音
+	var	playsound_method;	//	効果音を再生させるメソッド
+	var	time	= 300, accel	= 0;
+
+	var	alters;
+
+	var	enabled;
+	var	lastMCS;
+
+	var	goStorage, goLabel;	//	移動先ストレージ、ラベル
+
+	function AlternativePlugin()
+	{
+		super.KAGPlugin();
+	}
+
+	function finalize()
+	{
+		uninit();
+		super.finalize(...);
+	}
+
+	//	選択肢の追加
+	function addAlter(mp)
+	{
+		if(base)
+			base.stopfade();	//	現在実行中のフェードを強制終了
+		if(alters == void)
+			alters	= [];
+		var	elm	= %[];
+		(Dictionary.assign incontextof elm)(mp);	//	内容をコピー
+		elm.enabled	= true if elm.enabled === void;	//	enabled は指定がなければ true
+		alters.add(elm);
+	}
+
+	//	選択肢のリセット
+	function resetAlters()
+	{
+		if(alters != void)
+		{
+			invalidate alters;
+			alters = void;
+		}
+	}
+
+	//	接頭語
+	function getPrefix(no)
+	{
+//		return $(#'１'+no)+"．";
+		return "";
+	}
+
+	//	選択肢表示の準備
+	function init(elm)
+	{
+		//	データが無いので、選択肢を作成できない
+		if(alters == void)
+			return false;
+
+		var	frame	= elm.frame !== void ? elm.frame : defaultFrameImage;
+
+		//	baseレイヤーを作成
+		var	par	= kag.primaryLayer;
+		with(base = new FadeLayer(kag, par))
+		{
+			.name	= "選択肢base";
+			.setImageSize(.window.scWidth, .window.scHeight);
+			.setSizeToImageSize();
+			.setPos(0, 0);
+			var	bgcolor	= elm.bgcolor !== void ? +elm.bgcolor: bgColor;
+			.fillRect(0, 0, .width, .height, bgColor);
+			.hitThreshold	= 256;	//	クリック透過
+			.absolute		= kag.current.absolute + 1000;	//	メッセージより手前、履歴より奥
+			.type			= ltAddAlpha;
+			.opacity		= 0;
+
+			var fontSize	= elm.fontheight !== void ? +elm.fontheight : kag.current.fontSize;
+			var fontFace	= elm.fontface !== void ? +elm.fontface : kag.current.fontFace;
+			var textColor	= elm.textcolor !== void ? +elm.textcolor : kag.current.chColor;
+			var shadow		= elm.shadow !== void ? +elm.shadow : kag.current.shadow;
+			var shadowColor	= elm.shadowcolor !== void ? +elm.shadowcolor : kag.current.shadowColor;
+			var	edge		= elm.edge !== void ? +elm.edge : kag.current.edge;
+			var edgeEmphasis= elm.edgeemphasis !== void ? +elm.edgeemphasis : kag.current.edgeEmphasis;
+			var edgeColor	= elm.edgecolor !== void ? +elm.edgecolor : kag.current.edgeColor;
+			var edgeExtent	= elm.edgeextent !== void ? +elm.edgeextent : kag.current.edgeExtent;
+			var	antialiased	= elm.antialiased !== void ? +elm.antialiased : kag.current.antialiased;
+			.font.height	= fontSize;
+			.font.face		= fontFace;
+
+			//	描画に必要なサイズや、表示位置を割り出す
+			var	ths = [], tws = [];	//	それぞれのテキストの幅と高さ
+			var	mw	= 0;	//	最も大きな幅
+			var	tth	= 0;	//	ボタンのトータルの高さ
+			var	lfregexp	= new RegExp(lineFeedString.replace(/\\/, "\\\\"));
+			for(var i=0; i<alters.count; i++)
+			{
+				with(alters[i])
+				{
+					if(.text == void)
+						continue;
+					if(typeof .text == "String" && .text.indexOf(lineFeedString) >= 0)
+						.text	= .text.split(lfregexp);
+
+					if(typeof .text == "Object")
+					{
+						var	tw;
+						ths[i]	= 0;
+						for(var j=0; j<.text.count; j++)
+						{
+							tw	= base.font.getTextWidth(getPrefix(i) + .text[j]);
+							tws[i]	= tw if tws[i] < tw;
+							ths[i]	+= base.font.getTextHeight(.text[j]);
+						}
+						ths[i] += lineSpacing * (.text.count - 1);
+					}
+					else
+					{
+						tws[i]	= base.font.getTextWidth(getPrefix(i) + .text);
+						ths[i]	= base.font.getTextHeight(.text);
+					}
+
+					mw	= tws[i] if mw < tws[i];
+					tth	+= ths[i];
+				}
+			}
+			var	ee	= edgeExtent;
+			mw	= +elm.width if elm.width !== void;
+			mw	+= ee << 1;
+
+			//	フレーム用画像を用意
+			var frames	= [];
+			var	fw, fh;
+			if(ths.count > 0)
+			{
+				for(var i=0; i<frameTypes.count; i++)
+				{
+					with(frames[i] = new global.Layer(kag, base))
+					{
+						.loadImages(frame+frameTypes[i]);
+						.setSizeToImageSize();
+					}
+				}
+				fw	= frames[0].width;
+				fh	= frames[0].height;
+			}
+			var	fcs	= frameCenterSize;
+			var fiw	= (fw - fcs) \ 2;	//	フレーム画像の個別の幅
+			var	fih = (fh - fcs) \ 2;	//	        〃        の高さ
+
+			//	ボタンサイズ
+			var	bw		= (mw + fiw * 2);	//	ボタンの幅
+			var	bh;							//	ボタンの高さは、それぞれで異なる
+
+			var	spacing	= elm.spacing !== void ? +elm.spacing : alterSpacing;
+			var	l		= (.width - bw) \ 2;	//	表示位置(文章の幅が異なっても、ボタンは最大サイズに合わせる)
+//			var	h		= tth + (ee + fih) * 2 * alters.count;
+			var	h	= 0;
+			for(var i=0; i<ths.count; i++)
+			{
+				if(ths[i] + (ee << 1) < fh)
+					h	+= fh;
+				else
+					h	+= tth + (ee + fih) * 2;
+			}
+			var	mh		= .height - margin * 2;
+			if(h + spacing * (alters.count-1) > mh)
+				spacing	= (mh - h) / (alters.count-1);
+			var	t		= elm.top !== void ? +elm.top : ((.height - h - spacing * (alters.count-1)) \ 2);	//	各ボタンの高さの和と、間の空間の和を足す
+
+			//	ボタンを作成
+			buttons	= [];
+			var stype	= stNearest;
+			var	keys	= [ "storage", "target", "exp", "enabled", "onenter", "onleave" ];
+			var	btn;
+			for(var i=0; i<alters.count; i++)
+			{
+				var	alter	= alters[i];
+				var	prfx	= getPrefix(i);
+				with(btn = buttons[i] = new PushButtonLayer(kag, base))
+				{
+					if(alter.text != void)
+					{
+						var	text	= alter.text;
+						if(typeof text == "Object")
+							.name	= "選択肢: "+text[0]+" ...";
+						else
+							.name	= "選択肢: "+text;
+						.font.height	= fontSize;
+						.font.face		= fontFace;
+						.owner	= this;	//	メッセージはプラグインへ
+						var	th	= ths[i] + (ee << 1);
+						bh	= fh > th ? fh : (th + (fih << 1));
+						.setImageSize(bw * .imagesept, bh);
+						.setSize(bw, bh);
+
+						var	p	= 0;
+//						var	tp	= (mw - tws[i]) \ 2 + fiw;
+						var	tp	= fiw;
+						var	tw	= tws[i];
+						for(var i=0; i<frameTypes.count; i++)
+						{
+							if(fh > th)
+							{//	高さが十分あるので、左右方向だけ拡張する
+								.copyRect(p,            0, frames[i], 0,         0, fiw, fh);	//	l
+								.stretchCopy(p + fiw, 0, mw, fh, frames[i], fiw, 0, fcs, fh);	//	middle
+								.copyRect(p + bw - fiw, 0, frames[i], fiw + fcs, 0, fiw, fh);	//	r
+								fih = (fh - th) >> 1;
+							}
+							else if(frame4lr)
+							{//	高さが足りないので、左右端も縦方向に拡張する
+								.stretchCopy(p,            0, fiw, bh, frames[i], 0,         0, fiw, fh, stFastLinear);	//	l
+								.stretchCopy(p + fiw,      0, mw,  bh, frames[i], fiw,       0, fcs, fh);				//	middle
+								.stretchCopy(p + bw - fiw, 0, fiw, bh, frames[i], fiw + fcs, 0, fiw, fh, stFastLinear);	//	r
+							}
+							else
+							{//	高さが足りないので、四隅を拡張する
+								.copyRect(p,			0,			frames[i], 0,		0,		fiw, fih);	//	lt
+								.copyRect(p + bw - fiw,	0,			frames[i], fiw+fcs,	0,		fiw, fih);	//	rt
+								.copyRect(p,			bh - fih,	frames[i], 0,		fih+fcs,	fiw, fih);	//	lb
+								.copyRect(p + bw - fiw,	bh - fih,	frames[i], fiw+fcs,	fih+fcs,	fiw, fih);	//	rb
+
+								.stretchCopy(p + fiw,		0,		mw,	fih,	frames[i], fiw,		0, 		fcs,fih,	stype);	//	t
+								.stretchCopy(p,				fih,		fiw,	th,	frames[i], 0,		fih,		fiw,	fcs,stype);	//	l
+								.stretchCopy(p + bw - fiw,	fih,		fiw,	th,	frames[i], fiw+fcs,	fih,		fiw,	fcs,stype);	//	r
+								.stretchCopy(p + fiw,		bh - fih,mw,	fih,	frames[i], fiw,		fih+fcs,	fcs,fih,	stype);	//	b
+
+	//							.stretchCopy(p + fiw, fih, mw, th, frames[i], fiw, fih, fcs, fcs, stype);		//	center
+								if(fcs > 1)
+								{
+									//	中央部分が1pixelより大きければ、中央部分を繰り返しコピーする
+									.setClip(p + fiw, fih, mw, th);
+									var	t	= fih;
+									for(var y=((th - 1) \ fcs) + 1; y>=0; y--)
+									{
+										var	l	= p + fiw;
+										for(var x=((hw - 1) \ fcs) + 1; x>=0; x--)
+										{
+											.copyRect(l, t, frames[i], fiw, fih, fcs, fcs);
+											l	+= fcs;
+										}
+										t	+= fcs;
+									}
+									.setClip();
+								}
+								else
+								{
+									//	中央部分が1pixelなら、その色で塗りつぶす
+									.fillRect(p + fiw, fih, mw, th, frames[i].getMainPixel(fiw, fih) | (frames[i].getMaskPixel(fiw, fih) << 24));	//	center
+								}
+							}
+
+							//	text
+							alter.align	= defaultalign if alter.align == void;
+							{
+								var	l, t = fih + ee;
+								switch(alter.align)
+								{
+								case "left":	//	左寄せ
+									l	= p + tp + ee;
+									break;
+								case "center":	//	中央揃え
+									l	= p + ((bw - tw) >> 1);
+									break;
+								case "right":	//	右寄せ
+									//	未実装
+									break;
+								}
+								if(typeof text == "Object")
+								{
+									for(var i=0; i<text.count; i++)
+									{
+	//									.drawText(l, t, prfx+text[i], textColor, 255, true, edgeEmphasis, edgeColor, ee, 0, 0);
+										if(edge)
+											.drawText(l, t, prfx+text[i], textColor, 255, antialiased, edgeEmphasis, edgeColor, edgeExtent, 0, 0);
+										else if(shadow)
+											.drawText(l, t, prfx+text[i], textColor, 255, antialiased, 255, shadowColor, 0, 2, 2);
+										else
+											.drawText(l, t, prfx+text[i], textColor, 255, antialiased);
+										t	+= .font.getTextHeight(prfx+text) + lineSpacing;
+									}
+								}
+								else
+	//								.drawText(l, t, prfx+text, textColor, 255, true, edgeEmphasis, edgeColor, ee, 0, 0);
+									if(edge)
+										.drawText(l, t, prfx+text, textColor, 255, antialiased, edgeEmphasis, edgeColor, edgeExtent, 0, 0);
+									else if(shadow)
+										.drawText(l, t, prfx+text, textColor, 255, antialiased, 255, shadowColor, 0, 2, 2);
+									else
+										.drawText(l, t, prfx+text, textColor, 255, antialiased);
+							}
+							p	+= bw;
+						}
+						.setPos(l, t);
+						.visible	= true;
+					}
+					else if(alter.image != void)
+					{
+						.loadImages(alter.image);
+						if(alter.center !== void)
+							.left	= alter.center - .width \ 2;
+						else
+							.left	= alter.left;
+						if(alter.vcenter !== void)
+							.top	= alter.vcenter - .height \ 2;
+						else
+							.top	= alter.top;
+						.visible	= true;
+					}
+				}
+				for(var i=0; i<keys.count; i++)
+					btn[keys[i]]	= alter[keys[i]];
+				if(!btn.enabled)
+					btn.hint	= "この選択肢は選べません。";
+
+				//	フェードが完了するまでは、ボタンを押せない
+				btn["defaultEnabled"]	= btn.enabled;
+				btn.enabled		= false;
+
+				//	アクセサリ追加
+				if(alter.opt != "" && options[alter.opt])
+				{
+					var	accessory;
+					with(accessory = new AnimationLayer(kag, base))
+					{
+						.loadImages(%[storage:options[alter.opt]]);
+						.setSizeToImageSize();
+						.hitThreshold	= 256;
+						.absolute	= btn.absolute + 1;	//	選択肢ボタンより手前
+						.opacity	= 255;
+						.visible	= true;
+						alter.optalign	= defaultoptalign if alter.optalign == void;
+						var	aligns	= alter.optalign.split("-");
+						var	l, t;
+						for(var i=0; i<aligns.count; i++)
+						{
+							switch(aligns[i])
+							{
+							case "left":	l	= btn.left - (.width >> 1);				break;
+							case "center":	l	= btn.left + ((btn.width - .width)>>1);	break;
+							case "right":	l	= btn.left + btn.width - btn.width;		break;
+							case "top":		t	= btn.top - (.height >> 1);				break;
+							case "vcenter":	t	= btn.top + ((btn.height - .height)>>1);break;
+							case "bottom":	t	= btn.top + btn.height - (.height >> 1);break;
+							}
+						}
+						l	= btn.left - (.width >> 1) if l === void;
+						t	= btn.top - (.height >> 1) if t === void;
+						.setPos(l, t);
+					}
+					accessories	= [] if accessories == void;
+					accessories.add(accessory);
+				}
+
+				t	+= bh + spacing;
+			}
+			.visible	= true;
+
+			for(var i=0; i<frames.count; i++)
+				invalidate frames[i];
+			invalidate frames;
+		}
+		return true;
+	}
+
+	function setButtonEnabled(e)
+	{
+		enabled	= e;
+		if(buttons != void)
+		{
+			for(var i=0; i<buttons.count; i++)
+			{
+				with(buttons[i])
+				{
+					if(e)
+						.enabled	= .defaultEnabled;
+					else
+					{
+						.defaultEnabled	= .enabled;
+						.enabled		= false;
+					}
+				}
+//	enabled=true になったとき最初のボタンにフォーカスがあい、マウスで他のボタンを指してもフォーカスが移動しないのでコメントアウト
+//	(enter してないけど enter していることになっていたため、イベントが送られてこないのが原因)
+//				buttons[0].state	= e ? 1 : 0;
+			}
+		}
+	}
+
+	function uninit()
+	{
+		if(base)
+		{
+			invalidate buttons if buttons != void;
+			invalidate accessories if accessories != void;
+			invalidate base if base != void;
+			base = buttons = accessories = void;
+
+			resetAlters();
+		}
+	}
+
+	//	選択肢を出現させる
+	function show(time=this.time, accel=this.accel)
+	{
+		this.time	= time;
+		this.accel	= accel;
+		if(base)
+			base.fade(255, time, accel, onEndShow);
+	}
+
+	//	表示が終了したら選択肢をクリック可能
+	function onEndShow()
+	{
+		setButtonEnabled(true);		//	選択肢有効
+		lastMCS	= mcsVisible;
+		kag.mouseCursorState <-> lastMCS;
+
+		kag.focusedLayer	= null;	//	初期状態ではどのレイヤーもフォーカスを持たない
+	}
+
+	//	選択肢を隠す
+	function hide(time=this.time, accel=this.accel, func)
+	{
+		if(base)
+			base.fade(0, time, accel, func);
+
+		kag.mouseCursorState <-> lastMCS;
+		setButtonEnabled(false);	//	選択肢無効
+	}
+
+	function onMouseDown(x, y, button, shift)
+	{
+		if(button == mbRight)
+			kag.onPrimaryRightClick() if kag isvalid;
+	}
+
+	function onButtonEnter(button)
+	{
+		if(enabled)
+		{
+			//	選択音再生
+			playsound_method(enter_se) if enter_se != "" && playsound_method != void;
+
+			if(button.onenter != "")
+			{
+				dm("onenter: \""+button.onenter+"\"");
+				global.button	= button;	//	ボタンレイヤーに onenter スクリプトからアクセスできるように。
+				Scripts.eval(button.onenter);
+			}
+		}
+	}
+
+	function onButtonLeave(button)
+	{
+		if(enabled && button.onleave != "")
+		{
+			dm("onleave: \""+button.onleave+"\"");
+			global.button	= button;	//	ボタンレイヤーに onleave スクリプトからアクセスできるように。
+			Scripts.eval(button.onleave);
+		}
+	}
+
+	function onButtonDown(button)
+	{
+		if(enabled)
+		{
+			//	決定音再生
+			playsound_method(decide_se) if decide_se != "" && playsound_method != void;
+
+			//	行き先登録
+			dm("goto: "+button.storage+" / "+button.target);
+			goStorage	= button.storage;
+			goLabel		= button.target;
+
+			//	押下時実行
+			if(button.exp != "")
+			{
+				dm("exp: \""+button.exp+"\"");
+				global.button	= button;	//	ボタンレイヤーに onenter スクリプトからアクセスできるように。
+				Scripts.eval(button.exp);
+			}
+
+			hide(,, gotoNext);	//	選択肢を消去したあと、選択されたスクリプトへ移動する
+		}
+	}
+
+	function gotoNext()
+	{
+		//	ボタンに記録されたラベルへ移動する
+		if(typeof global.kag != "undefined")
+			kag.process(goStorage, goLabel);
+
+		uninit();	//	不要となった選択肢レイヤーを破棄
+	}
+
+	// 栞を読み出すとき
+	function onRestore()
+	{
+		//	表示中の選択肢は消える
+		hide(,, uninit);
+	}
+}
+kag.addPlugin(global.alternative_object = new AlternativePlugin(kag));
+
+}//	初回読み込み時のみ実行 - ここから(プラグインの定義と追加を行なう)
+
+//----- 選択肢表示タグの追加 -------------------------------------------------/
+/*----------------------------------------------------------------------------/
+/	選択肢の追加
+/	in	: text			選択肢表示文
+/		: storage		行き先のストレージ
+/		: target		行き先のラベル
+/		: exp			選択時処理
+/		: align			文字描画位置(left,center,right)
+/		: enabled		有効(クリックできる)/無効(表示するだけ)
+/		: opt			選択肢の上に追加するイメージ(AlternativePlugin.options で定義)
+/		: optalign		追加イメージの表示位置(left,center,right と top,vcenter,bottom の組み合わせ: "left-vcenter"等)
+/----------------------------------------------------------------------------*/
+kag.tagHandlers.addalter	= function(mp)
+{
+	with(mp)
+	{
+		.storage	= .storage == void ? conductor.curStorage : .storage;
+		alternative_object.addAlter(mp);
+	}
+	return 0;
+} incontextof kag;
+
+/*----------------------------------------------------------------------------/
+/	選択肢の表示と進行の停止
+/	in	: frame			選択肢ボタン枠(default:"alt_frame-")
+/		:				(frame+"normal",frame+"push",frame+"enter"の3種類の画像が必要)
+/		: bgcolor		選択肢を表示したときの背景色(default:黒50%)
+/		: width			選択肢ボタンの幅(default:テキストの表示サイズに合わせる)
+/		: spacing		     〃     の間隔(default:32)
+/		: top			     〃     の表示開始高さ(default:ボタンを均等に整列して中央に配置)
+/		: fontheight	選択肢を表示するフォントのサイズ(default:現在のメッセージレイヤーに準拠)
+/		: fontface		           〃           の種類(default:同上)
+/		: textcolor		選択肢文字の色(default:同上)
+/		: shadow		    〃    に影をつけるか(default:同上)
+/		: shadowcolor	    〃    の影の色(default:同上)
+/		: edge			    〃    を袋文字にするか(default:同上)
+/		: edgeemphasis	袋文字の強調度(default:同上)
+/		: edgecolor		  〃  の色(default:同上)
+/		: edgeextent	  〃  の太さ(default:同上)
+/		: antialiased	選択肢文字をアンチエイリアスで描画するか(default:同上)
+/		: time			選択肢を表示するフェードの時間
+/		: accel			            〃          の加速度
+/----------------------------------------------------------------------------*/
+kag.tagHandlers.showalter	= function(mp)
+{
+	with(alternative_object)
+	{
+		if(.init(mp))
+		{
+			var	time	= mp.time === void ? 300 : +mp.time;
+			var	accel	= mp.accel === void ? 0 : +mp.accel;
+			.show(time, accel);
+		}
+		else
+			throw new Exception("選択肢情報が存在しません。(表示する前に\"addalter\"を使って登録しておいてください。)");
+	}
+	return 0;
+} incontextof kag;
+
+/*----------------------------------------------------------------------------/
+/	選択肢を隠す
+/----------------------------------------------------------------------------*/
+kag.tagHandlers.hidealter	= function(mp)
+{
+	with(alternative_object)
+		.hide(,, .uninit);
+	return 0;
+} incontextof kag;
+
+/*----------------------------------------------------------------------------/
+/	選択肢の消去
+/----------------------------------------------------------------------------*/
+kag.tagHandlers.resetalter	= function(mp)
+{
+	alternative_object.resetAlters();
+	return 0;
+} incontextof kag;
+
+/*-----------------------------------------------------------------------------/
+/	End of File
+/-----------------------------------------------------------------------------*/

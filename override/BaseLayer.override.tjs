@@ -1,0 +1,507 @@
+﻿// BaseLayer.override.tjs - 背景レイヤーのオーバーライド
+
+var DEF_BLANK_IMAGE = "black";
+
+//	背景画像と効果の対応表を読み込む
+var	BG2EnvList	= Scripts.evalStorage("bg2env.ksc");
+var	regBGKeyword= /\(([^)]+)\)/;	//	()の中を取り出す
+
+/*
+ * 背景画像のサイズを画面サイズと同じにし、背景の移動や揺れ・振動等は表示位置(imageLeft,imageTop)の変化で
+ * あらわすようにした。
+ * また前景レイヤーは背景の移動の影響を受けず、揺れ・振動にのみ反応するようにしている。
+ */
+class BaseLayer extends BaseLayerOriginal
+{
+	var usecurrent = false;
+
+	var	_childEffect;	//	子レイヤーへの効果(環境光)
+
+	//	子レイヤーも背景と同じように揺れるかどうか
+	var	_sync	= false;
+	property sync
+	{
+		setter(v)
+		{
+			if(sync !== v && v >= 0)
+			{
+				_sync	= v;
+				if(sync)
+				{
+					updateHorizontalMargin();
+					updateVerticalMargin();
+				}
+			}
+		}
+		getter	{ return _sync; }
+	}
+
+	property childEffect
+	{
+		setter(v)
+		{
+			if( _childEffect != v )
+			{
+				//dm("________childEffect setter old="+_childEffect+" new="+v+" /// "+Scripts.getTraceString());
+				_childEffect = v;
+			}
+		}
+
+		getter
+		{
+			if( _childEffect === void || _childEffect == "" )
+			{
+				var partbg_env = [];
+				//	全てのレイヤーから検索
+				for(var i=0; i<children.count; i++)
+				{
+					if( children[i] === void || ! isvalid children[i] ) continue;
+					if( typeof children[i].childEffect == "undefined") continue;
+					if( children[i].childEffect === void || children[i].childEffect == "") continue;
+
+					var find = false;
+					//重複チェック
+					for( var j=0; j<partbg_env.count; j++ )
+					{
+						if( partbg_env[j] == children[i].childEffect )
+						{
+							find = true;
+						}
+					}
+					if( ! find )
+					{
+						//dm("________childEffect: children["+i+"]="+children[i].name+" "+children[i].childEffect);
+						partbg_env.add(children[i].childEffect) if children[i].visible;
+					}
+				}
+				//複数ある場合は自動で処理しない
+				if( partbg_env.count == 1 )
+				{
+					//dm("________childEffect: extenv=" + partbg_env[0]+" /// "+Scripts.getTraceString());
+					return partbg_env[0];
+				}
+				else if( partbg_env.count )
+				{
+@if(0)
+					//dm("________childEffect: return void. extenv0=" + partbg_env[0] + " extenv1=" + partbg_env[1] + "... /// "+Scripts.getTraceString());
+					dm("WARNING! : 複数の特殊背景で環境光設定が異なります。手動で指定して下さい。");
+@endif
+					return void;
+				}
+				else
+				{
+					//dm("________childEffect: return void. notfound /// "+Scripts.getTraceString());
+					return void;
+				}
+			}
+			else
+			{
+				//dm("________childEffect: normalenv=" + _childEffect);
+				return _childEffect;
+			}
+		}
+	}
+
+	function BaseLayer()
+	{
+		super.BaseLayerOriginal(...);
+	}
+
+	function finalize()
+	{
+		super.finalize();
+	}
+
+	function reset()
+	{
+		super.reset();
+		type	= ltOpaque;	//	AnimationLayer.override.tjs で ltAlpha にしてしまうと、色々不具合が出るので、戻す
+	}
+
+	//	画像の読み込み直後かどうか
+	var	loaded	= false;
+
+	function AfterloadImage()
+	{
+		super.AfterloadImage(...);
+		if(storage != "")
+		{
+			loaded	= true;		//	画像を読み込んだ
+
+			//	読み込んだ画像に対応する環境光の効果を取得
+			var	st	= Storages.chopStorageExt(Storages.extractStorageName(storage));
+			var	ce	= BG2EnvList[st];	//	背景画像名が登録されていればそれで
+			if(ce === void && regBGKeyword.test(st))		//	登録されていなければ
+				ce	= BG2EnvList[regBGKeyword.matches[1]];	//	()の中の文字列で対応を探す
+@if(0)
+			if(st != "black" && st != "white")
+			{
+				if(ce === void)
+					dm("BaseLayer.AfterloadImage: \""+st+"\"に対応する効果は存在しません。");
+				else
+					dm("BaseLayer.AfterloadImage: \""+st+"\"に対応する効果は\""+ce+"\"です。");
+			}
+@endif
+			//	効果が変わっていたら、表示されている前景レイヤーを更新する
+			if(ce !== childEffect)
+			{
+				for(var i=0; i<children.count; i++)
+					children[i].update() if children[i] instanceof "BasicCharacterLayer";
+				childEffect	= ce;
+			}
+		}
+	}
+
+	function onPaint(force=false)
+	{
+//		dm(name+".onPaint("+force+"): "+(this == window.fore.base)+" || "+window.fore.base.inTransition+" || "+force);
+		if(this == window.fore.base || window.fore.base.inTransition || force)	//	表か、トランジション中のみ描画処理する
+		{
+@if(CHECKNEEDPERFORMANCE)
+			global.checkneedperformance.countOnPaint(this);
+@endif
+			super.onPaint(...);
+@if(PAUSE_TRANSITION)
+			asyncCaller.call(update) if inTransition;	//	トランジション中なら再度 update
+@endif
+		}
+		else
+			update();	//	次回チャレンジ
+	}
+
+	function AffineLayer_onPaint()
+	{
+		if(loaded)
+		{
+			//	読み込み直後は完全不透明で描画する
+			var	lastopac	= opacity;
+			opacity	= 255;
+			super.AffineLayer_onPaint(...);
+			opacity	= lastopac;
+			loaded	= false;
+		}
+		else
+			super.AffineLayer_onPaint(...);
+	}
+
+	function doHazeCopy(src)
+	{
+		hazeCopy(waveinfono, src, 0, 0, hazeValue, hazeDelta, hazePower, true, screen_plus_alpha, screen_plus_alpha, _image.imageWidth, _image.imageHeight);
+	}
+
+	function assign(src)
+	{
+		super.assign(...);
+		with(src)
+		{
+			usecurrent	= .usecurrent;
+			childEffect	= .childEffect;
+		}
+	}
+
+	/*	ブラー状態を復帰時点でも有効にする方法
+	 *	1. 行なった処理を逐一記録し、実行時に再現する
+	 *	→	数回であれば時間的にも問題ないが、複数回、またimageが複雑な状態(haze)であったり、
+	 *		途中で別の画像を読み込んでいたりすると、復帰までに多くの時間が必要になる。
+	 *	2. 保存時点でブラー状態になっていたら、画像を保存する
+	 *	→	画像の保存には時間が懸かるが、固定時間で終了する。
+	 *		条件を厳密に適用すれば、保存が必要になることは少ないと思われる。
+	 *	とりあえず、2を選択
+	 */
+	function store()
+	{
+		var	dic	= super.store();
+
+		//	opacity が255未満のとき、MainWindow.saveBookMarkToFile で保存されるレイヤーに現在の状態をコピー
+	//	dm("window.fore.base = "+window.fore.base+" / this = "+this);
+		var	no	= window.fore.base == this ? 0 : 1;
+		if(opacity < 255)
+		{
+			with(window.backupBase[no])
+			{
+				.setImageSize(imageWidth, imageHeight);
+				.copyRect(0, 0, this, 0, 0, imageWidth, imageHeight);
+				.saved	= true;
+			}
+		}
+		else
+			window.backupBase[no].saved	= false;
+		dic.bindChildren	= bindChildren;
+
+		return dic;
+	}
+
+	function restore(dic)
+	{
+		//初期状態の何もない状態を復元してしまうとサイズがおかしくなるので任意のベタイメージを読んでおく
+		if( getExistImageName(DEF_BLANK_IMAGE) !== void ){
+			loadImages(%[storage:DEF_BLANK_IMAGE]);
+		}
+
+		if( dic === void ) return;
+		if( dic.storage === void || dic.storage == "" || typeof dic.storage != "String" ) return;
+
+		super.restore(dic);
+		bindChildren	= dic.bindChildren;
+//		centerImage();
+
+		//	レイヤーから画像データをコピー
+	//	dm("window.fore.base = "+window.fore.base+" / this = "+this);
+		var	no	= window.fore.base == this ? 0 : 1;
+	//	dm("opacity = "+opacity+" / window.backupBase["+no+"].loaded = "+window.backupBase[no].loaded);
+		if(opacity < 255 && window.backupBase[no].loaded)
+		{
+			with(window.backupBase[no])
+			{
+				//	このレイヤー自身にコピーする
+				global.Layer.copyRect(0, 0, window.backupBase[no], 0, 0, .imageWidth, .imageHeight);
+				.loaded	= false;
+			}
+
+			//	storage 等の読み込みで予約されている、AffineLayer_onPaint の処理を実行しないように
+			_doAffine = false;
+		}else{
+			//doOffsetが呼ばれる前に、復元したイメージのサイズを実イメージに反映するため AffineLayer_onPaint の強制実施
+			_doAffine = true;
+			AffineLayer_onPaint();
+		}
+		//dm("restore: [" + dic.storage + "]   this.width=" + width + " height=" + height + " imageWidth=" + imageWidth + " imageHeight=" + imageHeight);
+	}
+
+	//BaseLayerOriginalからオーバーライド、オートおよびスキップを右クリックで停止対応
+	function internalOnMouseDown(x, y, button, processprovince = true)
+	{
+		// 内部関数
+		var provinceprocessed = false;
+		var provinceprocessed2 = false;
+		if(button == mbLeft && processprovince && !window.messageLayerHiding)
+			provinceprocessed = processProvince(x, y);
+		if(button == mbRight && processprovince && !window.messageLayerHiding)
+			provinceprocessed2 = processProvince(x, y);
+		if(button == mbLeft && !provinceprocessed)
+		{
+			// 自身がプライマリレイヤならば、ウィンドウの
+			// onPrimaryClick を呼ぶ
+			if(isPrimaryBase) window.onPrimaryClick();
+		}
+		else if(button == mbRight && !provinceprocessed2 && ( window.skipMode == 3 || window.autoMode))
+		{
+			// オートおよびスキップを右クリックでも中断できる
+			if(isPrimaryBase) window.onPrimaryClick(mbRight);
+		}
+		else if(button == mbRight)
+		{
+			// 自身がプライマリレイヤならば、ウィンドウの
+			// onPrimaryRightClick を呼ぶ
+			if(isPrimaryBase) window.onPrimaryRightClick();
+		}
+	}
+
+	function internalStorePos()
+	{
+		return [ left, top ];
+	}
+
+	function internalRestorePos(pos)
+	{
+		left	= pos[0];
+		top		= pos[1];
+	}
+
+	function expandImageSize()
+	{
+	}
+
+	//	子レイヤーも同じように移動させる
+/*	var	_bindChildren	= false;
+	property bindChildren
+	{
+		setter(v)
+		{
+		}
+		getter	{ return _bindChildren; }
+	}
+*/	var	bindChildren	= false;
+
+	property left
+	{
+		setter(v)
+		{
+			if(bindChildren)
+			{
+				var	diff	= v - left;
+				for(var i=0; i<children.count; i++)
+					children[i].left	+= diff if children[i] instanceof "CharacterLayer";
+			}
+			super.left	= v;
+		}
+		getter	{ return super.left; }
+	}
+
+	property top
+	{
+		setter(v)
+		{
+//			dm(name+".top = "+top+" → "+v+": bindChildren = "+bindChildren);
+			if(bindChildren)
+			{
+				var	diff	= v - top;
+				for(var i=0; i<children.count; i++)
+					children[i].top	+= diff if children[i] instanceof "CharacterLayer";
+			}
+			super.top	= v;
+		}
+		getter	{ return super.top; }
+	}
+
+	//	sync = true の間、子レイヤーも同じように揺れる
+	property _act_x
+	{
+		setter(v)
+		{
+			super._act_x	= v;
+			if(sync)
+			{
+				for(var i=0; i<children.count; i++)
+					children[i]._act_x	= v;
+			}
+		}
+		getter	{ return super._act_x; }
+	}
+
+	property _act_y
+	{
+		setter(v)
+		{
+			super._act_y	= v;
+			if(sync)
+			{
+				for(var i=0; i<children.count; i++)
+					children[i]._act_y	= v;
+			}
+		}
+		getter	{ return super._act_y; }
+	}
+
+	function updateHorizontalMargin(h)
+	{
+		super.updateHorizontalMargin(h);
+		if(sync)
+		{
+			for(var i=0; i<children.count; i++)
+				children[i].setHorizontalMargin(maxHorizontalMargin) if typeof children[i].setHorizontalMargin != "undefined";
+		}
+	}
+
+	function updateVerticalMargin(v)
+	{
+		super.updateVerticalMargin(v);
+		if(sync)
+		{
+			for(var i=0; i<children.count; i++)
+				children[i].setVerticalMargin(maxVerticalMargin) if typeof children[i].setVerticalMargin != "undefined";
+		}
+	}
+
+	property realCenterAfx	{ getter { return _orgimage.width/2; } }
+	property realCenterAfy	{ getter { return _orgimage.height/2; } }
+
+	property opacity
+	{
+		setter(v)
+		{
+			_orgimage.opacity	= +v;
+			calcAffine();
+		}
+		getter { return _orgimage.opacity; }
+	}
+
+	var	layerVisible	= %[];
+	function setVisibleInfo(v)
+	{
+		var	messages	= this == window.fore.base ? window.fore.messages : window.back.messages;
+		for(var i=0; i<messages.count; i++)
+		{
+			layerVisible[messages[i]]	= messages[i].visible;
+			messages[i].visible	= v;
+		}
+		layerVisible[window.historyLayer]	= window.historyLayer.visible;
+		window.historyLayer.visible	= v;
+	}
+
+	function resetVisibleInfo()
+	{
+		var	messages	= this == window.fore.base ? window.fore.messages : window.back.messages;
+		for(var i=0; i<messages.count; i++)
+			messages[i].visible	= layerVisible[messages[i]] if layerVisible[messages[i]] !== void;
+		window.historyLayer.visible	= layerVisible[window.historyLayer] if layerVisible[window.historyLayer] !== void;
+	}
+
+	//	画面の状態を指定のレイヤーへ書き込む
+	function drawCurrent(layer, screenSize=true)
+	{
+		dm(name+".drawCurrent("+layer.name+")");
+		setVisibleInfo(false);
+		with(layer)
+		{
+			var	vis	= .visible;
+			.visible	= false;
+			var	l, t, w, h;
+			if(screenSize)
+			{
+				l	= 0;
+				t	= 0;
+				w	= window.innerWidth;
+				h	= window.innerHeight;
+			}
+			else
+			{
+				l	= -screen_plus_alpha;
+				t	= -screen_plus_alpha;
+				w	= window.innerWidth + (screen_plus_alpha << 1);
+				h	= window.innerHeight + (screen_plus_alpha << 1);
+			}
+			dm(@"size = (${l}, ${t})-(${w}, ${h})");
+			.setImageSize(w, h);
+			.setSizeToImageSize();
+			.piledCopy(0, 0, this, l, t, w, h);
+			.visible	= vis;
+		}
+		resetVisibleInfo();
+	}
+
+	//	base がトランジションしている個数を記録するようにした
+	function beginTransition()
+	{
+		super.beginTransition(...);
+		window.baseTransCount++;
+	}
+
+	function onTransitionCompleted()
+	{
+		super.onTransitionCompleted(...);
+		window.baseTransCount-- if window != null;
+	}
+
+	function atEndOfTransition()
+	{
+		super.atEndOfTransition(...);
+//		dm(name+".atEndOfTransition()");
+		cancelUpdate();
+	}
+
+	function cancelUpdate()
+	{
+		//	逆側の子レイヤーの描画予約をキャンセルする(次のトランジション時に強制描画されるので)
+		for(var i=0; i<children.count; i++)
+			children[i].cancelUpdate() if children[i] instanceof "BasicCharacterLayer";
+	}
+
+	function forcePaint()
+	{
+//		dm(name+"["+storage+"].forcePaint()");
+		super.forcePaint(...);
+		for(var i=0; i<children.count; i++)
+			children[i].forcePaint(...) if children[i] instanceof "BasicCharacterLayer";
+	}
+}

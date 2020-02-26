@@ -1,0 +1,232 @@
+﻿//	犯人選択のためのレイヤー
+@if(__SUSPECT_LAYER_DEFINED__!=1)
+@set(__SUSPECT_LAYER_DEFINED__=1)
+
+var	SS_suspectsList	= [
+//	立ち絵ファイル名, 縦方向補正(+なら下へ)
+	[ "青子私服aブーツ01a(遠)",	 ],
+	[ "有珠私服01a(遠)",		8 ],
+	[ "草十郎私服01a(遠)|首輪a", ],
+	[ "橙子01a(遠)",			8 ],
+	[ "鳶丸私服b01(遠)",		-12 ],
+	[ "木乃実私服01(遠)",		 ],
+	[ "金鹿私服01(遠)",			29 ],
+	[ "ベオ01a(遠)",			25 ],
+	[ "詠梨01a(遠)",			-32 ],
+	[ "律架01a(遠)",			9 ],
+	[ "唯架シスター01a(遠)",	14 ],
+	[ "山城01(遠)",				-3 ],
+	[ "土桔01(遠)",				-2 ],
+	[ "リデル01(遠)",			-6 ]
+];
+
+var	SS_templayer;
+function SS_getTempLayer()
+{
+	if(SS_templayer == void)
+	{
+		with(SS_templayer = new CompositionLayer(kag, kag.primaryLayer))
+			.visible	= false;
+	}
+	return SS_templayer;
+}
+function SS_releaseTempLayer()
+{
+	if(SS_templayer != void)
+	{
+		invalidate SS_templayer;
+		SS_templayer	= void;
+	}
+}
+
+var	SS_layers	= [];
+class SuspectLayer extends CompositionLayer
+{
+	var	label;
+
+	function SuspectLayer(win, par)
+	{
+		super.CompositionLayer(...);
+		focusable	= true;
+		SS_layers.add(this);
+	}
+
+	function finalize()
+	{
+		SS_releaseTempLayer();
+		super.finalize(...);
+	}
+
+	function loadImages(storage)
+	{
+		storage	+= ".tlg";
+		var	tmp	= SS_getTempLayer();
+		with(tmp)
+		{
+			.loadImages(storage);
+			.setSizeToImageSize();
+
+			setImageSize(.width * 2, .height);
+			setSize(.width, .height);
+
+			copyRect(width, 0, tmp, 0, 0, width, height);
+			.doGrayScale();
+			copyRect(0, 0, tmp, 0, 0, width, height);
+		}
+		return true;
+	}
+
+	function enter()
+	{
+		//	マウスが載ったら、手前に出してカラー
+		Menu_object.playSE("basicchoice");
+		absolute	+= 100000;
+		imageLeft	= -width;
+	}
+
+	function leave()
+	{
+		//	マウスが離れたら、奥に移動してグレー
+		absolute	-= 100000;
+		imageLeft	= 0;
+	}
+
+	function select()
+	{
+		Menu_object.playSE("basicdecide");
+		kag.process("sp2.ks", label);
+	}
+
+	function onFocus()		{ enter(); }
+	function onBlur()		{ leave(); }
+	function onMouseEnter()	{ focus(); }
+	function onMouseLeave()	{ kag.focusedLayer = null; }
+
+	function onMouseDown(x, y, button, shift)
+	{
+		if(!focusable)
+			return;
+		if(button == mbLeft)
+			select();
+		else if(button == mbRight)
+			kag.onPrimaryRightClick();
+	}
+
+	function onKeyDown(key, shift)
+	{
+		if(key == VK_RETURN || key == VK_SPACE)
+			select();
+		else if(key == VK_LEFT || (key == VK_TAB && shift == ssShift))
+		{
+			var	idx	= SS_layers.find(this);
+			if(idx > 0)
+				SS_layers[idx-1].focus();
+		}
+		else if(key == VK_RIGHT || (key == VK_TAB && shift == void))
+		{
+			var	idx	= SS_layers.find(this);
+			if(idx < SS_layers.count - 1)
+				SS_layers[idx+1].focus();
+		}
+		else if(key == VK_ESCAPE)
+			kag.onPrimaryRightClick();
+@if(DEBUG)
+		else if(key == VK_UP)
+		{
+			this.offy	= 0 if typeof this.offy == "undefined";
+			offy--;
+			vcenter--;
+			dm("offset Y: "+storage+" = "+offy);
+		}
+		else if(key == VK_DOWN)
+		{
+			this.offy	= 0 if typeof this.offy == "undefined";
+			offy++;
+			vcenter++;
+			dm("offset Y: "+storage+" = "+offy);
+		}
+@endif
+	}
+}
+
+//	容疑者レイヤーを無効化
+function SSdisableSuspects()
+{
+	dm("SSdisableSuspects()");
+	tf.focusableSuspect	= kag.focusedLayer;
+	for(var i=0; i<SS_layers.count; i++) with(SS_layers[i])
+	{
+		.focusable		= false;
+		.hitThreshold	= 256;
+	}
+}
+
+//	容疑者レイヤーを有効化
+function SSenableSuspects()
+{
+	dm("SSenableSuspects()");
+	for(var i=0; i<SS_layers.count; i++) with(SS_layers[i])
+	{
+		.focusable		= true;
+		.hitThreshold	= 16;
+	}
+	if(typeof tf.focusableSuspect != "undefined")
+	{
+		tf.focusableSuspect.focus() if tf.focusableSuspect != null;
+		delete tf.focusableSuspect;
+	}
+}
+
+//	容疑者を並べる
+kag.tagHandlers.createsuspects	= function(elm)
+{
+	//	容疑者レイヤーを用意して並べる
+	var	par	= elm.page == "fore" ? kag.fore.base : kag.back.base;
+	var	margin	= elm.margin !== void ? +elm.margin : 16;
+	for(var i=0; i<SS_suspectsList.count; i++)
+	{
+		var	fn	= SS_suspectsList[i][0];
+		var	char= fn.substr(0, fn.indexOf("0"));
+//		dm(fn+": "+char+" = "+(char == elm.criminal ? "criminal" : ""));
+		with(new SuspectLayer(kag, par))
+		{
+			.loadImages(fn);
+			.label	= char == elm.criminal ? elm.ok : elm.failure;
+@if(DEBUG)
+			.storage= fn;
+@endif
+		}
+	}
+	var	l	= SS_layers[0];
+	l		= l.width \ 2 + l.centerCorrect + margin;
+	var	r	= SS_layers[SS_layers.count-1];
+	r		= 1024 - r.width \ 2 + r.centerCorrect - margin;
+	var	step= (r - l) / (SS_layers.count - 1);
+	for(var i=0; i<SS_layers.count; i++) with(SS_layers[i])
+	{
+		.center	= l;
+		.ground	= 400 + SS_suspectsList[i][1];
+		.visible= true;
+		l	+= step;
+	}
+
+	//	メニューに入った時、容疑者レイヤーを無効化する
+	addInOutMenuFunc(SSdisableSuspects, SSenableSuspects);
+	return 0;
+} incontextof kag;
+
+//	容疑者を削除する
+kag.tagHandlers.clearsuspects	= function()
+{
+	//	容疑者レイヤーを破棄
+	for(var i=0; i<SS_layers.count; i++)
+		invalidate SS_layers[i] if SS_layers[i] != void;
+	SS_layers.clear();
+
+	//	メニュー処理を破棄
+	removeInOutMenuFunc(SSdisableSuspects, SSenableSuspects);
+
+	return 0;
+} incontextof kag;
+
+@endif

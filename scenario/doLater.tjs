@@ -1,0 +1,89 @@
+﻿@if(__DOLATER_DEFINED__==0)
+@set(__DOLATER_DEFINED__=1)
+
+var	__doLaterTimer;
+
+//	指定時間後に指定のメソッドを実行する
+function doLater(_time, func, args*)
+{
+	var time = _time * kag.drawspeed;
+	if(time <= 0)
+	{
+		func(args*);	//	すぐに行う
+		return;
+	}
+	if(__doLaterTimer == void)
+	{
+		with(__doLaterTimer = new Timer(onTimeoutDo, ""))
+		{
+			.interval= time;
+			.starttick	= System.getTickCount();
+			.funcs	= [ [ time, func, args ] ];
+			.enabled	= true;
+		}
+	}
+	else
+	{
+		with(__doLaterTimer)
+		{
+			var	tick	= System.getTickCount() - .starttick;
+			time	+= tick;
+			var	idx;
+			if(.funcs[0][0] > time)
+			{
+				//	interval の変更を確実に行う
+				.enabled	= false;
+				.interval	= time;
+				.enabled	= true;
+
+				idx	= 0;	//	一番早く時間がくるので、先頭に追加
+			}
+			else
+			{
+				for(var i=0; i<.funcs.count; i++)
+				{
+					if(.funcs[i][0] > time)
+					{//	実行される時間の順に並ぶよう、挿入位置を決める
+						idx	= i;
+						break;
+					}
+				}
+			}
+			.funcs.insert(idx, [ time, func, args ]);
+		}
+	}
+}
+
+//	メソッド実行
+function onTimeoutDo()
+{
+	with(__doLaterTimer)
+	{
+		var	tick	= System.getTickCount();
+		var	past	= tick - .starttick;
+		while(.funcs.count > 0)
+		{
+			var	data	= .funcs[0];
+			if(data[0] < past)
+			{
+				data[1](data[2]*);
+				.funcs.erase(0);
+			}
+			else
+				break;
+		}
+		if(.funcs.count > 0)
+		{
+			.enabled	= false;
+			.interval	= .funcs[0][0] - past;
+			.enabled	= true;		//	interval のリセットを確実にするため
+		}
+		else
+		{
+			invalidate __doLaterTimer;
+			__doLaterTimer	= void;
+		}
+	}
+}
+
+@endif

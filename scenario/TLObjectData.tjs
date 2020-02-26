@@ -1,0 +1,1094 @@
+﻿/*-----------------------------------------------------------------------------
+/	Copyright (C) TYPE-MOON All Rights Reserved.
+/		タイムラインのオブジェクトデータ
+/----------------------------------------------------------------------------*/
+@if(__TLOBJECTDATA_DEFINED__==0)
+@set(__TLOBJECTDATA_DEFINED__=1)
+
+//	取得したタイムラインの情報を表示する
+@set(DISPLAY_TIMELINE_ELEMENTS=0)
+
+//	実行時用のタイムラインデータを読み込む
+@set(SIMPLE_TIMELINEDATA=1)
+Scripts.execStorage("TimeLineData.tjs");
+Scripts.execStorage("ObjectValues.tjs");
+
+class TLBaseObject
+{
+	var	name;		//	名称
+	var	owner;		//	管理者(=TLObjectData)
+	var	parent;		//	親オブジェクト
+	var	children;	//	子オブジェクト
+	var	timeline;	//	タイムラインデータ
+	var	uuid;		//	オブジェクトUUID
+
+	function TLBaseObject(owner)
+	{
+		this.owner	= owner;
+	}
+
+	property defaultValues	{ getter { return %[]; } }
+	property storageProperties	{ getter { return []; } }
+
+	function restore(dic, parent, func)
+	{
+		with(dic)
+		{
+			this.parent	= parent;
+			this.name	= .name;
+			if(.timeline != void)
+			{
+				timeline	= new TimeLineData(this, defaultValues, keys);
+				timeline.restore(.timeline, defaultValues);
+			}
+//			dm(this+": "+.children);
+			if(.children != void)
+			{
+				if(children != void)
+					children.clear();
+				else
+					children	= [];
+				for(var i=0; i<.children.count; i++)
+					children[i]	= func(.children[i], this, func);
+			}
+			uuid	= .uuid;
+
+			//	BGObject のときのみ、page が存在する
+			if(typeof .page != "undefined")
+				this.page	= .page;
+		}
+	}
+
+	//	アクションのパラメータを作成
+	function createAction(st, ed, stop, framerate, elms, pages, uuid2elm)
+	{
+	}
+
+	//	使用するファイル名とフレーム番号のリストを取得
+	function getStorageList(list = [], st, ed)
+	{
+		var	frames	= timeline.frames;
+		var	storages= %[];
+		for(var i=0; i<frames.count; i++)
+		{
+			var	frame	= frames[i];
+			for(var i=0; i<storageProperties.count; i++)
+			{
+				var	storage	= frame[storageProperties[i]];
+				if(storage != "" && !storages[storage])
+				{
+					list.add([frame.frame, storage]);
+					storages[storage]	= true;
+				}
+			}
+		}
+		return list;
+	}
+
+	property className	{ getter { var tr=[];tr.assign(Scripts.getClassNames(this));return tr[0]; } }
+
+	property length
+	{
+		getter	{ return timeline.length; }
+	}
+@if(DISPLAY_TIMELINE_ELEMENTS)
+	function dispElements(elm)
+	{
+		dm(className+": page = "+elm.page+", layer = "+elm.layer+", use current = "+elm.usecurrent);
+		dm("\tprops = "+(typeof elm.props == "String" ? elm.props : elm.props.join(", "))) if elm.props != void;
+		if(typeof elm.keys == "String" || elm.keys == void)
+			dm("\tkeys  = "+elm.keys);
+		else
+		{
+			var	k;
+			for(var i=0; i<elm.keys.count; i++)
+				k	+= "(" + elm.keys[i].join(",") + ")";
+			dm("\tkeys  = "+k);
+		}
+	}
+@endif
+
+	//	ファイルの一覧を取得
+	function addStorageList(list)	{ return list; }
+}
+
+//	フォルダオブジェクト
+class TLFolderObject extends TLBaseObject
+{
+	function TLFolderObject()
+	{
+		super.TLBaseObject(...);
+	}
+}
+
+//	背景オブジェクト
+class TLBGObject extends TLBaseObject
+{
+	function TLBGObject()
+	{
+		super.TLBaseObject(...);
+	}
+
+	property keys			{ getter { return BGKeys; } }
+	property defaultValues	{ getter { return BGDefaultValues; } }	//	各キーの初期値
+	property middleProperties { getter { return BGObjectMiddleProperty; } }
+	property storageProperties	{ getter { return BGStorageProperties; } }
+	property noblank { getter { return true; } }
+	function isDirectValue(prop, value)
+	{
+		return (BGObjectValueIsDirect[prop] == void || BGObjectValueIsDirect[prop][value] != true);
+	}
+
+	function createAction(st, ed, stop, framerate, elms, pages, uuid2elm)
+	{
+		var	elm	= %[
+			tagname:"action",
+			name:name,
+			module:"MixedKeyFrameActionModule",
+			page:pages[this.page],
+			layer:"base"
+		];
+		var	tk	= [];
+		tk.assign(timeline.keys);
+//		tk.add("visible");	//	visible があると、トランジションがうまく行かないので(トランジション先が可視状態だと、動作がおかしい)
+
+		if(timeline.getKeyDataToTag(tk, defaultValues, framerate, st, ed, stop, elm))
+		{
+@if(DISPLAY_TIMELINE_ELEMENTS)
+			dispElements(elm);
+@endif
+			elm.init	= defaultValues;	//	オブジェクトの初期値を参照渡しする
+			elms.add(elm);
+			uuid2elm[uuid]	= %[page:elm.page, storage:elm.storage];
+		}
+	}
+
+	function addStorageList(list)	{ return timeline.getValueList("storage", list); }
+}
+
+//	前景オブジェクト
+class TLLayerObject extends TLBaseObject
+{
+	var	id;		//	kag.fore/back.layers[id] の id
+
+	function TLLayerObject()
+	{
+		super.TLBaseObject(...);
+	}
+
+	property keys			{ getter { return LayerKeys; } }
+	property defaultValues	{ getter { return LayerDefaultValues; } }	//	各キーの初期値
+	property middleProperties { getter { return LayerObjectMiddleProperty; } }
+	property storageProperties	{ getter { return LayerStorageProperties; } }
+	property noblank { getter { return false; } }
+	function isDirectValue(prop, value)
+	{
+		return (LayerObjectValueIsDirect[prop] == void || LayerObjectValueIsDirect[prop][value] != true);
+	}
+
+	function createAction(st, ed, stop, framerate, elms, pages, uuid2elm)
+	{
+		var	par	= parent;
+		while(par != void && !(par instanceof "TLBGObject"))
+			par	= par.parent;
+
+		var	page	= pages[par.page];
+//		this.id		= owner.getLayerNo(page);
+		var	elm	= %[
+			tagname:"action",
+			name:name,
+			module:"MixedKeyFrameActionModule",
+			page:page,
+//			id:id,		//	この時点では、対象のレイヤーを指定しない
+			exchg:true,	//	storage の変更を、2枚のレイヤーでの擬似クロスフェードにする
+//			needlayer:true,	//	getLayerFromElm に needlayer=true で渡すと、必ずレイヤーを都合してくれる
+		];
+		var	tk	= [];
+		tk.assign(timeline.keys);
+		tk.add("visible");
+
+		if(timeline.getKeyDataToTag(tk, defaultValues, framerate, st, ed, stop, elm))
+		{
+@if(DISPLAY_TIMELINE_ELEMENTS)
+			dispElements(elm);
+@endif
+			elm.init	= defaultValues;	//	オブジェクトの初期値を参照渡しする
+			elms.add(elm);
+			uuid2elm[uuid]	= %[page:elm.page, storage:elm.storage];
+		}
+	}
+
+	function addStorageList(list)	{ return timeline.getValueList("storage", list); }
+}
+
+//	ページオブジェクト
+class TLPageObject extends TLBaseObject
+{
+	function TLPageObject()
+	{
+		super.TLBaseObject(...);
+	}
+
+	property keys			{ getter { return PageKeys; } }
+	property defaultValues	{ getter { return PageDefaultValues; } }	//	各キーの初期値
+	property storageProperties	{ getter { return PageStorageProperties; } }
+	property noblank { getter { return true; } }
+	function isDirectValue(prop, value)	{ return true; }
+
+	function createAction(st, ed, stop, framerate, elms)
+	{
+		st	= 0 if st === void;
+		ed	= timeline.last if ed === void;
+		var	pages	= getPages(st);
+		var	frm2ms	= 1000 / framerate;
+
+		//	最初のキーフレームをチェック
+		var	sindex	= timeline.getKeyFrameIndexGE(st);
+		var	stframe	= timeline.get(sindex);
+		if(stframe == void || stframe.frame > ed)	//	まったくキーのない区間なら、何もしない
+			return;
+
+		var	page	= pages[stframe.page];	//	最初のページ
+		var	keys	= [];
+		for(var i=sindex+1; i<timeline.count; i++)
+		{
+			//	次のキーフレームを取得
+			var	nxframe	= timeline.get(i);
+			var	transEnd= nxframe.frame > ed ? ed : nxframe.frame;
+
+			//	ページが変化していたら、トランジションを行なう
+			var	keyframe;
+			if(stframe.page != nxframe.page)
+			{
+				keyframe	= [
+					int(frm2ms * (stframe.frame - st)),			//	開始時間
+					stframe.method == "universal" ? stframe.rule : stframe.method,	//	メソッド もしくは ユニバーサルのルール画像
+					int(frm2ms * (transEnd - stframe.frame))	//	トランジション時間
+				];
+				keyframe[3]	= stframe.vague if stframe.method == "universal";	//	あいまい領域値
+				if(stframe.method == "scroll")
+				{
+					keyframe[4]	= stframe.from if stframe.from != void;
+					keyframe[5]	= stframe.stay if stframe.stay != void;
+				}
+			}
+
+			//	アクションが指定されていたら、アクションを行なう
+			if(typeof stframe.action != "undefined" && stframe.action != "")
+			{
+				if(keyframe != void)
+					keyframe[6]	= stframe.action;
+				else
+				{
+					keyframe	= [
+						int(frm2ms * (stframe.frame - st)),	//	フレームの時間
+						"action",					//	アクションのみ実行することを示す
+						stframe.action				//	実行するアクション
+					];
+				}
+			}
+
+			keys.add(keyframe) if keyframe != void;
+
+			stframe	= nxframe;	//	次は次のフレームを基準に
+
+			//	最終フレームを過ぎていたら、終了
+			if(stframe.frame >= ed)
+				break;
+		}
+
+		//	トランジションを追加
+		if(keys.count > 0)
+		{
+			//	トランジションが完了していると思われる時刻に、ダミー命令を入れる
+			keys.add([int(frm2ms * (ed - st)), "stop"]);//	入れておかないと、最後のトランジションが強制停止される
+
+			var	elm	= %[
+				tagname:"action",
+				name:name,
+				target:kag.primaryLayer,
+				module:"KeyFramePageModule",
+				keys:keys
+			];
+			elm.nowait = true if stop !== void && stop !== null && stop < ed;
+@if(DISPLAY_TIMELINE_ELEMENTS)
+			dispElements(elm);
+@endif
+			elms.add(elm);
+		}
+	}
+
+	function getPages(frame=0)
+	{
+		var	key	= timeline.get(timeline.getKeyFrameIndexLE(frame));
+		return key.page == 0 ? [ "fore", "back" ] : [ "back", "fore" ];
+	}
+}
+
+//	効果音オブジェクト
+class TLSEObject extends TLBaseObject
+{
+	function TLSEObject()
+	{
+		super.TLBaseObject(...);
+	}
+
+	property keys			{ getter { return SEKeys; } }
+	property defaultValues	{ getter { return SEDefaultValues; } }	//	各キーの初期値
+	property storageProperties	{ getter { return SEStorageProperties; } }
+	property noblank { getter { return false; } }
+	function isDirectValue(prop, value)	{ return true; }
+
+	//	outer	区間外のフレームかどうか
+	function _addKey(kf, time, cur, keys, outer=false)
+	{
+		var	key	= [ time, kf.state ];	//	基底の項目
+		switch(kf.state)
+		{
+		case "play":
+			if(outer)
+				return;
+			key[2]	= kf.storage;
+			key[5]	= kf.label if kf.label != "";	//	指定があるとき
+			key[6]	= kf.loop if kf.loop !== void;	//	〃
+			key[8]	= kf.volume if kf.volume !== cur.volume;	//	初期の音量
+			key[9]	= kf.pan if kf.pan !== cur.pan;			//	初期のパン
+			break;
+		case "stop":
+			if(outer)
+				return;
+			//	先頭にある場合、何もしない
+			if(keys.count < 1)
+				return;
+
+			if(cur.state != "stop")
+			{
+				//	フェードアウト、パン変化しながらの再生停止の場合、
+				if(cur.volume !== kf.volume || cur.pan !== kf.pan)
+				{
+					//	直前のキーの直後にキーを追加する
+					key[0]	= keys[keys.count - 1][0] + 1;
+					key[2]	= time - key[0];
+					key[3]	= kf.volume if kf.volume !== cur.volume && kf.volume != meansMiddle;
+					key[4]	= kf.pan if kf.pan !== cur.pan && kf.pan != meansMiddle;
+				}
+			}
+			else
+				key	= void;	//	既に停止中であれば、キーは不要
+			break;
+		case "continuous":
+			//	先頭にある場合、何もしない
+			if(keys.count < 1)
+				return;
+
+			//	直前の状態
+			var lastkey	= keys[keys.count - 1];
+			switch(cur.state)
+			{
+			case "play":
+				//	直前が play なら、playキーを変更する
+				lastkey[3]	= time - lastkey[0];
+				lastkey[4]	= kf.volume if kf.volume !== cur.volume;
+				lastkey[7]	= kf.pan if kf.pan !== cur.pan;
+				lastkey[10]	= kf.loop if kf.loop != cur.loop;
+
+				//	次の基点となるので、このキーはそのまま入れる
+				break;
+			case "resume":
+			case "continuous":
+				//	直前が resume, continuous なら、その処理が終わった直後に入れる
+				if( cur.state == "continuous" )
+				{
+					//	直前が continuous なら、その処理が終わる時間に入れる
+					key[0]	= lastkey[0] + lastkey[3];
+					key[2]	= time - key[0];
+				}
+				else
+				{
+					//	直前が resume なら、その処理が終わった直後に入れる
+					key[0]	= lastkey[0] + 1;
+					key[2]	= time - key[0];
+				}
+				if(kf.volume !== cur.volume && kf.volume != meansMiddle)
+				{
+					if(kf.pan !== cur.pan && kf.pan != meansMiddle)
+					{//	volume も pan も
+						key[1]	= "param";
+						key[3]	= kf.volume;
+						key[4]	= kf.pan;
+						key[5]	= kf.loop if kf.loop !== void;
+					}
+					else
+					{//	volume のみ
+						key[1]	= "volume";
+						key[3]	= kf.volume;
+						key[5]	= kf.loop if kf.loop !== void;
+					}
+				}
+				else if(kf.pan !== cur.pan && kf.pan != meansMiddle)
+				{//	pan のみ
+					key[1]	= "pan";
+					key[3]	= kf.pan;
+					key[5]	= kf.loop if kf.loop !== void;
+				}
+				else
+					key	= void;
+				break;
+			}
+			break;
+//		"pause", "resume" は特に変更の必要はない
+		}
+		cur.state	= kf.state;
+		cur.volume	= kf.volume;
+		cur.pan		= kf.pan;
+		if(key != void)
+			keys.add(key);
+	}
+
+	function createAction(st, ed, stop, framerate, elms)
+	{
+		var	frm2ms	= 1000 / framerate;
+
+		//	各キーフレーム毎に対応する処理を追加
+		var	keydata	= [];
+		with(timeline)
+		{
+			st	= 0 if st === void;
+			ed	= .last if ed === void;
+			var	sindex	= .getKeyFrameIndexGE(st);
+			var	eindex	= .getKeyFrameIndexLE(ed);						//	最後のキーフレームか、その次のキーフレームまで
+			eindex++ if .get(eindex).frame < ed && eindex < .count-1;	//	ただし、区間外のキーフレームの場合は、continuous のみ受け付ける
+
+			var	initkey	= .get(sindex);
+			var	cur = %[
+				state:"stop",
+				time:0
+			];
+			for(var i=sindex; i<=eindex; i++)
+			{
+//				dm("se: vol = "+cur.volume+", pan = "+cur.pan);
+				var	frame	= .get(i);
+				var	time	= int(frm2ms * (frame.frame - st));
+				_addKey(frame, time, cur, keydata, frame.frame > ed/* 区間外のフレームかどうか */);
+				cur.time	= time;
+			}
+		}
+		if(keydata.count < 1)
+			return;
+
+		if(keydata.count > 0)
+		{
+			var	elm	= %[
+				tagname:"action",
+				name:name,
+				module:"KeyFrameSoundModule",
+//				se:string(owner.getSENo()),
+				se:-1,		//	storage 等から探す
+				keys:keydata
+			];
+			elm.nowait	= true if stop !== void && stop !== null && stop < ed;
+@if(DISPLAY_TIMELINE_ELEMENTS)
+			dispElements(elm);
+@endif
+			elms.add(elm);
+		}
+	}
+}
+
+//	BGMオブジェクト
+class TLBGMObject extends TLBaseObject
+{
+	function TLBGMObject()
+	{
+		super.TLBaseObject(...);
+	}
+
+	property keys			{ getter { return BGMKeys; } }
+	property defaultValues	{ getter { return BGMDefaultValues; } }	//	各キーの初期値
+	property storageProperties	{ getter { return BGMStorageProperties; } }
+	property noblank { getter { return true; } }
+	function isDirectValue(prop, value)	{ return true; }
+
+	function _addKey(kf, time, cur, keys)
+	{
+		dm("BGM._addKey("+kf.state+", "+time+") " + getDebugStringFromElm(cur," cur=") + " / keyframe=%[storage=>"+kf.storage+",state=>"+kf.state+",loop=>"+kf.loop+"("+(kf.loop!=false)+"),volume=>"+kf.volume+"]");
+		var	key	= [ time, kf.state ];
+		switch(kf.state)
+		{
+		//	再生開始
+		case "play":
+			if(cur.state != "pause")
+			{
+				key[2]	= kf.storage;
+				key[3]	= kf.xchgtime;
+				key[6]	= kf.loop if kf.loop !== void;
+				key[7]	= kf.label;
+				key[8]	= kf.overlaptime;
+				key[9]	= kf.volume if kf.volume != meansMiddle;
+			}
+			else
+			{
+				key[1]	= "resume";		//一時停止状態のあとの再生指定は再開
+				key[2]	= kf.storage;
+			}
+			break;
+
+		//	音楽停止
+		case "stop":
+			if(cur.state != "stop")
+			{
+				//	フェードアウトしながらの再生停止の場合
+				if(cur.volume !== kf.volume)
+				{
+					//	直前のキーの直後にキーを追加する
+					key[0]	= keys[keys.count - 1][0] + 1;
+					key[2]	= time - key[0];
+					key[3]	= kf.volume;
+				}
+			}
+//			else
+//				key	= void;	//	既に停止中であれば、キーは不要
+			break;
+
+		//	音量変更などの区切り
+		case "continuous":
+			if(cur.storage != kf.storage)
+			{//	音楽ファイルが変更されたら
+				//	exchange(音楽入替)として処理する
+				key[1]	= "play";
+				key[2]	= kf.storage;
+				key[3]	= kf.xchgtime;
+				key[6]	= kf.loop if kf.loop !== void;
+				key[7]	= kf.label;
+				key[8]	= kf.overlaptime;
+				key[9]	= kf.volume;
+			}
+			else
+			{//	音量が変更されたら
+				//	直前の状態を変更する
+				var lastkey	= keys[keys.count - 1];
+				switch(cur.state)
+				{
+				case "play":
+					//	直前が play で音量が変化されているなら、フェード時間とフェード後音量を設定
+					if(cur.volume !== kf.volume && kf.volume != meansMiddle)
+					{
+						lastkey[3]	= time - lastkey[0];
+						lastkey[9]	= kf.volume;
+					}
+					break;
+
+				case "exchange":
+				case "resume":
+				case "continuous":
+					//	直前が exchange 等で、音量が変更されているなら、直後にフェード命令を設定
+					if(cur.volume !== kf.volume && kf.volume != meansMiddle)
+					{
+						key[0]	= lastkey[0] + 1;
+						key[1]	= "volume";
+						key[2]	= time - key[0];
+						key[3]	= kf.volume;
+						key[5]	= kf.loop if kf.loop !== void;
+					}
+					break;
+				}
+			}
+			break;
+
+		//	一時停止、再開
+		case "pause":
+		case "resume":
+			//	特に処理は必要なし
+			break;
+		}
+		cur.state	= kf.state;
+		cur.storage	= kf.storage;
+		cur.volume	= kf.volume;
+		if(key != void)
+			keys.add(key);
+	}
+
+
+	function createAction(st, ed, stop, framerate, elms)
+	{
+		var	frm2ms	= 1000 / framerate;
+
+		//	各キーフレーム毎に対応する処理を追加
+		var	keydata	= [];
+		with(timeline)
+		{
+			var	initkey	= .get(0);
+			var	cur = %[
+				state:"stop",
+				time:0
+			];
+
+			st	= 0 if st === void;
+			ed	= .last if ed === void;
+			var	sindex	= .getKeyFrameIndexGE(st);
+			var	eindex	= .getKeyFrameIndexLE(ed);
+			for(var i=sindex; i<=eindex; i++)
+			{
+				var	frame	= .get(i);
+				var	time	= int(frm2ms * (frame.frame - st));
+				_addKey(frame, time, cur, keydata);
+				cur.time	= time;
+			}
+		}
+		if(keydata.count < 1)
+			return;
+
+		//	タグを返す
+		if(keydata.count > 0)
+		{
+			var	elm	= %[
+				tagname:"action",
+				name:name,
+				module:"KeyFrameSoundModule",
+				bgm:"",
+				keys:keydata
+			];
+			elm.nowait	= true if stop !== void && stop !== null && stop < ed;
+@if(DISPLAY_TIMELINE_ELEMENTS)
+			dispElements(elm);
+@endif
+			elms.add(elm);
+		}
+	}
+}
+
+//	小背景枠オブジェクト
+class TLSmallBgObject extends TLBaseObject
+{
+	function TLSmallBgObject()
+	{
+		super.TLBaseObject(...);
+	}
+
+	property keys			{ getter { return SmallBgKeys; } }
+	property defaultValues	{ getter { return SmallBgDefaultValues; } }	//	各キーの初期値
+	property storageProperties	{ getter { return SmallBgStorageProperties; } }
+	property noblank { getter { return false; } }
+	function isDirectValue(prop, value)	{ return true; }
+
+	function createAction(st, ed, stop, framerate, elms, pages, uuid2elm)
+	{
+	}
+}
+
+//	小背景パーツオブジェクト
+class TLSmallBgPartsObject extends TLBaseObject
+{
+	function TLSmallBgPartsObject()
+	{
+		super.TLBaseObject(...);
+	}
+
+	property keys			{ getter { return SmallPgPartsKeys; } }
+	property defaultValues	{ getter { return SmallPgPartsDefaultValues; } }	//	各キーの初期値
+	property storageProperties	{ getter { return SmallBgPartsStorageProperties; } }
+	property noblank { getter { return false; } }
+	function isDirectValue(prop, value)	{ return true; }
+
+	function createAction(st, ed, stop, framerate, elms, pages, uuid2elm)
+	{
+	}
+}
+
+//	特殊背景オブジェクト
+class TLPartBgObject extends TLLayerObject
+{
+	function TLPartBgObject()
+	{
+		super.TLLayerObject(...);
+	}
+
+	property keys			{ getter { return PartBgKeys; } }
+	property defaultValues	{ getter { return PartBgDefaultValues; } }	//	各キーの初期値
+	property middleProperties { getter { return PartBgObjectMiddleProperty; } }
+	property storageProperties	{ getter { return PartBgStorageProperties; } }
+	function isDirectValue(prop, value)
+	{
+		return (PartBgObjectValueIsDirect[prop] == void || PartBgObjectValueIsDirect[prop][value] != true);
+	}
+
+	function createAction(st, ed, stop, framerate, elms, pages, uuid2elm)
+	{
+		var	par	= parent;
+		while(par != void && !(par instanceof "TLBGObject"))
+			par	= par.parent;
+
+		var	page	= pages[par.page];
+//		this.id		= owner.getLayerNo(page);
+		var	elm	= %[
+			tagname:"action",
+			name:name,
+			module:"MixedKeyFrameActionModule",
+			page:page,
+//			id:id,
+			ispart:true,
+//			needlayer:true,	//	getLayerFromElm に needlayer=true で渡すと、必ずレイヤーを都合してくれる
+		];
+		var	tk	= [];
+		tk.assign(timeline.keys);
+		tk.add("visible");
+
+		if(timeline.getKeyDataToTag(tk, defaultValues, framerate, st, ed, stop, elm))
+		{
+@if(DISPLAY_TIMELINE_ELEMENTS)
+			dispElements(elm);
+@endif
+			elm.init	= defaultValues;	//	オブジェクトの初期値を参照渡しする
+			elms.add(elm);
+			uuid2elm[uuid]	= %[page:elm.page, storage:elm.storage];
+		}
+	}
+
+	function addStorageList(list)	{ return timeline.getValueList("storage", list); }
+}
+
+//	プラグインオブジェクト
+class TLPluginObject extends TLBaseObject
+{
+	var	pluginName;
+
+	function TLPluginObject()
+	{
+		super.TLBaseObject(...);
+	}
+
+	property keys				{ getter { return ; } }
+	property defaultValues		{ getter { return ; } }
+	property middleProperties	{ getter { return ; } }
+	property storageProperties	{ getter { return ; } }
+	property noblank			{ getter { return false; } }
+	function isDirectValue(prop, value)	{ return true; }
+
+	function createAction(st, ed, stop, framerate, elms, pages, uuid2elm)
+	{
+		var	par	= parent;
+		var	layerid;
+		while(par != void)
+		{
+			if(par instanceof "TLLayerObject" && layerid === void)
+				layerid	= par.id;
+			else if(par instanceof "TLBGObject")
+				break;
+			par	= par.parent;
+		}
+		var	elm;
+		if(par != void)
+		{
+			var	page	= pages[par.page];
+			elm	= %[
+				tagname:"action",
+				name:name,
+				module:"MixedKeyFrameActionModule4Plugin",	//	プラグイン用
+				targetpage:"global.kag."+page+"."+(layerid !== void ? "layers["+layerid+"]" : "base"),
+				pluginModule:pluginName,	//	プラグイン自体を呼び出したい場合
+//				pluginLayer:pluginName,		//	プラグインの管理するレイヤーを呼び出したい場合
+			];
+		}
+		else
+		{
+			elm	= %[
+				tagname:"action",
+				name:name,
+				module:"MixedKeyFrameActionModule4Plugin",	//	プラグイン用
+				targetpage:"",
+				pluginModule:pluginName,	//	プラグイン自体を呼び出したい場合
+//				pluginLayer:pluginName,		//	プラグインの管理するレイヤーを呼び出したい場合
+			];
+		}
+		var	tk	= [];
+		tk.assign(timeline.keys);
+		tk.add("visible");
+
+		if(timeline.getKeyDataToTag(tk, defaultValues, framerate, st, ed, stop, elm))
+		{
+@if(DISPLAY_TIMELINE_ELEMENTS)
+			dispElements(elm);
+@endif
+			if(elm.keys != void && elm.props != void)
+			{
+				dm("exec: "+this);
+				elm.init	= defaultValues;
+				elms.add(elm);
+			}
+		}
+	}
+
+	function restore(dic, parent, func)
+	{
+		super.restore(...);
+		with(dic)
+			pluginName	= .pluginName;
+	}
+}
+
+//	TLE の ObjectData の順番を参照すること(旧方式につき、追加不要)
+var	objectType2object	= [
+	TLBaseObject,
+	TLFolderObject,
+	TLLayerObject,
+	TLSEObject,
+	TLBGObject,
+	TLPageObject,
+	TLSmallBgObject,
+	TLSmallBgPartsObject,
+	TLBGMObject,
+	TLPartBgObject
+];
+
+class TLObjectData
+{
+	var	frameRate;			//	フレームレート(1フレーム = 何ミリ秒)
+	var	cacheType;			//	キャッシュ方法
+	var	objects	= [];		//	オブジェクト
+	var	scenes	= %[];		//	各シーン
+
+	var	page;		//	ページオブジェクト
+	var	bg = [];	//	背景オブジェクト
+	var	bgm;		//	BGMオブジェクト
+
+	var	currentSceneID;
+
+	function TLObjectData()
+	{
+	}
+
+	function restoreObject(dic, par)
+	{
+		var	obj;
+		if(dic.className != "")
+			obj	= new global["TL"+dic.className](this);
+		else
+			obj	= new objectType2object[dic.objectType](this);
+		obj.restore(dic, par, restoreObject);
+		return obj;
+	}
+
+	function restore(dic)
+	{
+		with(dic)
+		{
+			(Dictionary.clear incontextof scenes)();
+			for(var i=0; i<.scenes.count; i+=2)
+				scenes[.scenes[i]]	= .scenes[i+1];		//	辞書データだけ読み込む
+			cacheType	= .cacheType;
+		}
+		currentSceneID	= void;
+	}
+
+	//	基本となるページオブジェクトと背景オブジェクト、BGMオブジェクトを見つけ出しておく
+	function searchBasicObjects()
+	{
+		page = bg[0] = bg[1] = bgm = void;
+		for(var i=0; i<objects.count; i++)
+		{
+			if(objects[i] instanceof "TLPageObject")
+				page	= objects[i];
+			else if(objects[i] instanceof "TLBGObject")
+				bg[objects[i].page]	= objects[i];
+			else if(objects[i] instanceof "TLBGMObject")
+				bgm	= objects[i];
+		}
+	}
+
+	//	シーンの切り替え(シーンIDからオブジェクトを生成)
+	function setSceneID(sid)
+	{
+		if(scenes[sid] == void)
+			return false;
+		if(currentSceneID === sid)
+			return true;
+
+//		dm("--- setscene ---: "+currentSceneID+" → "+sid);
+		var	objs	= scenes[sid][0];
+		objects.clear();
+		for(var i=0; i<objs.count; i++)
+		{
+			var	obj;
+			objects.add(obj = restoreObject(objs[i], void));
+			if(obj.children != void)
+			{
+				for(var i=0; i<obj.children.count; i++)
+					objects.add(obj.children[i]);
+			}
+		}
+		frameRate	= scenes[sid][2];
+		searchBasicObjects();
+		currentSceneID	= sid;
+		return true;
+	}
+
+	//	キャッシュすべきファイル名の取得
+	function getCacheStorageList(sid, list)
+	{
+		list	= [] if list == void;
+		setSceneID(sid);
+		for(var i=0; i<objects.count; i++)
+		{
+			var	obj	= objects[i];
+			obj.addStorageList(list);
+			if(obj.children != void)
+			{
+				for(var i=0; i<obj.children.count; i++)
+					obj.children[i].addStorageList(list);
+			}
+		}
+		return list;
+	}
+
+	//	タグパラメータを取得
+	function getActions(sid, stframe, edframe=void, isrelative=false)
+	{
+		if(!setSceneID(sid))
+			return void;
+
+//		initNumbers();				//	番号の初期化
+		var	end	= scenes[sid][5];	//	終了位置(これ以降にキーフレームがある場合は、次のシーンでも実行される)
+
+		var	pages	= page.getPages();
+		var	elms	= [];
+		var	uuid2elm= %[];
+		for(var i=0; i<objects.count; i++)
+			objects[i].createAction(stframe, edframe, end, frameRate, elms, pages, uuid2elm);
+
+		//	uuid を、getLayerFromElm用のオブジェクトを示すパラメータに置換する
+		var	uuidprops	= [ "basis" ];	//	uuidが入っていると思われるパラメータ
+		for(var i=0; i<elms.count; i++)
+		{
+			var	props	= elms[i].props;
+			var	keys	= elms[i].keys;
+			if(props == void || keys == void)
+				continue;
+//			dm(i+": "+elms[i].module);
+			for(var i=0; i<uuidprops.count; i++)
+			{
+				var	no	= props.find("-"+uuidprops[i]);		//	中間値を持つような内容ではないので、"-"をつける
+//				dm(props.join(",")+": "+uuidprops[i]+" = "+no);
+				if(no < 0)
+					continue;
+				no	+= 3;	//	基本パラメータが3つ(time,accel,interpolate)があるので
+				for(var i=0; i<keys.count; i++)
+				{
+//					dm("keys["+i+"]["+no+"] = "+keys[i][no]);
+					keys[i][no]	= uuid2elm[keys[i][no]] if keys[i][no] != void;
+				}
+			}
+		}
+
+		return elms;
+	}
+
+	//	フレームの長さを取得
+	var	_length;
+	property length
+	{
+		getter
+		{
+			if(_length == void)
+			{
+				for(var i=0; i<objects.count; i++)
+					_length	= objects[i].length if objects[i].length > _length;
+			}
+			return _length;
+		}
+	}
+
+	//	シーンの時間
+	property time
+	{
+		getter	{ return int(length * 1000 / frameRate); }
+	}
+
+	//	キーフレームのプロパティを変更する
+	function setProperty(sid, objname, prop, kfidx, value)
+	{
+		if(sid === void || objname == void || prop == void)
+		{
+			dm("シーンID、オブジェクト名、プロパティ名は必ず指定が必要です。");
+			return false;
+		}
+		if(!setSceneID(sid))
+		{
+			dm("シーンID: "+sid+" に対応するシーンが見つかりませんでした。");
+			return false;
+		}
+		var	obj	= findObject(objname);
+		if(obj == void)
+		{
+			dm("オブジェクト名: "+objname+" に対応するオブジェクトが見つかりませんでした。");
+			return false;
+		}
+		if(kfidx === void)
+		{
+			var	frames	= obj.timeline.frames;
+			for(var i=0; i<frames.count; i++)
+			{
+//				dm(objname+"["+i+"]."+prop+" = "+frames[i][prop]+" → "+value+" (frame = "+frames[i].frame+")");
+				frames[i][prop]	= value;
+//				dm("→ "+frames[i][prop]);
+			}
+		}
+		else
+		{
+			kfidx	+= obj.timeline.count if kfidx < 0;
+			kfidx	= Math.max(0, Math.min(obj.timeline.count-1, kfidx));
+			var	frame	= obj.timeline.get(kfidx);
+			frame[prop]	= value if frame != void;
+		}
+		return true;
+	}
+
+	function findObject(name)
+	{
+		for(var i=0; i<objects.count; i++)
+		{
+			if(name == objects[i].name)
+				return objects[i];
+		}
+		return void;
+	}
+
+	//	使用するファイル名とフレーム番号のリストを取得
+	function getStorageList(st, ed, needFrameNo = false)
+	{
+		//	範囲
+		st	= 0 if st === void;
+		ed	= length - 1 if ed === void;
+
+		//	全てのオブジェクトから取得
+		var	list	= [];
+		for(var i=0; i<objects.count; i++)
+			objects[i].getStorageList(list, st, ed);
+
+		//	フレーム番号順に並び替える
+		list.sort(function(a, b) { return a[0] < b[0]; });
+
+		//	重複している場合は、後の方を削除する(最初に現れるものを優先)
+		var	storages	= %[];
+		for(var i=0; i<list.count; i++)
+		{
+			if(storages[list[i][1]])
+			{
+				list.erase(i);
+				i--;
+			}
+			else
+				storages[list[i][1]]	= true;
+		}
+
+		//	フレーム番号を破棄するか
+		if(!needFrameNo)
+		{
+			for(var i=0; i<list.count; i++)
+				list[i]	= list[i][1];
+		}
+
+		return list;
+	}
+}
+
+@endif

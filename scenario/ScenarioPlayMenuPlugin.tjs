@@ -1,0 +1,860 @@
+﻿/*-----------------------------------------------------------------------------/
+/	Copyright (C) TYPE-MOON All Rights Reserved.
+/		シナリオ再生メニュープラグイン
+/	※ NGChartEditor で設定したカテゴリに沿って、既読シナリオの再生メニューを表示する
+/
+/	○利用方法
+/	・準備
+/		背景画像、カテゴリ毎の画像(、シナリオのサムネール)を用意します。
+/		@eval exp=Scripts.execStorage('ScenarioPlayMenuPlugin.tjs') でプラグインを読み込んでおく。
+/
+/	・使い方
+/		ex.)
+/			*title
+/			;タイトルメニューの表示処理
+/				:
+/
+/			@jump target=*show_scenarioplaymenu
+/				:
+/			*show_scenarioplaymenu
+/			@reset_scenarioplaymenu
+/			*redisplay_scenarioplaymenu
+/			@set_scenarioplaymenu bgimage=シナリオ再生メニュー背景 next=*choice_scenarioplaymenu already=true
+/			@set_scenarioplaymenu_categorylist
+/			@set_scenarioplaymenu_scenariolist
+/			@trans layer=base method=crossfade time=800
+/			@s
+/			*choice_scenarioplaymenu
+/			@if_dont_choose_scenario target=*title
+/			@image page=back layer=base storage=幕間背景
+/			@stoptrans
+/			@trans layer=base method=crossfade time=800
+/			@wt
+/			@call storage=&scenarioplaymenu_object.scenario_script
+/			@image page=back layer=base storage=幕間背景
+/			@stoptrans
+/			@trans layer=base method=crossfade time=800
+/			@wt
+/			@jump target=*redisplay_scenarioplaymenu
+/
+/		※	幕間背景	シナリオを呼び出す時、シナリオからメニューに戻ってくるときにはさまれる画像
+/
+/	・タグ説明
+/		@reset_scenarioplaymenu
+/			シナリオ再生メニューの表示状態をリセットする。
+/			行なわない場合は、メニューを表示しても前回と同じ状態で復帰する(セーブはされない)
+/		@set_scenarioplaymenu
+/			シナリオ再生メニューの設定を行なう。
+/				bgimage	背景画像
+/				next	シナリオが選択されたりメニューが閉じられたとき、next の示すラベルへ[jump]する
+/				already	既読のシナリオのみを表示する(true)かどうか
+/		@set_scenarioplaymenu_categorylist
+/			シナリオ再生メニューの、カテゴリリスト表示の設定を行なう
+/				left, top		表示位置
+/				width, height	サイズ
+/				bwidth, bheight	ボタンのサイズ
+/				bfontheight		ボタンのフォントサイズ
+/				stepx, stepy	次のボタンの位置(縦に順番なら、stepx=0 stepy=bheightと同じ値 とか)
+/				vert			スクロール用ボタンの位置(trueなら上下に配置)
+/				indent			下層のインデント量
+/		@set_scenarioplaymenu_scenariolist
+/			シナリオ再生メニューの、シナリオリスト表示の設定を行なう
+/				left, top		表示位置
+/				width, height	サイズ
+/				bwidth, bheight	ボタンのサイズ
+/				bfontheight		ボタンのフォントサイズ
+/				stepx, stepy	次のボタンの位置(縦に順番なら、stepx=0 stepy=bheightと同じ値 とか)
+/				vert			スクロール用ボタンの位置(trueなら上下に配置)
+/		@if_dont_choose_scenario
+/			シナリオ再生メニューでシナリオを選択しなかった時、storage/target のスクリプトへ[jump]する。
+/		@call storage=&scenarioplaymenu_object.scenario_script
+/			シナリオ再生メニューで選ばれたシナリオを[call]する。
+/-----------------------------------------------------------------------------*/
+@if(__SCENARIOPLAYMENUPLUGIN_DEFINED__==0)
+@set(__SCENARIOPLAYMENUPLUGIN_DEFINED__=1)
+
+Scripts.execStorage("BasicMenuPluginClass.tjs");
+Scripts.execStorage("PushButtonLayer.tjs");
+
+class ScenarioPlayMenuPlugin extends BasicMenuPlugin
+{
+	var	tracer;			//	対象の TracerPlugin
+	var	categories;		//	カテゴリーデータ
+	var	alreadyread;	//	既読のみを表示するか？
+
+	var	clstat, slstat;	//	カテゴリリスト、シナリオリストの状態
+
+	var	category_start;	//	カテゴリリストの表示開始番号
+	var	category_open;	//	開いている状態のカテゴリ
+	var	category_choice;//	現在選ばれているカテゴリ
+	var	scenario_start;	//	シナリオリストの表示開始番号
+	var	scenario_script;//	選ばれたシナリオファイル
+
+	function ScenarioPlayMenuPlugin()
+	{
+		super.BasicMenuPlugin();
+
+		initStat();
+	}
+
+	function initStat()
+	{
+		categories		= void;
+
+		category_start	= 0;
+		invalidate category_open if category_open != void;
+		category_open	= %[];
+		category_choice	= void;
+		scenario_start	= 0;
+		scenario_script	= void;
+	}
+
+	property categorylist	{ getter { return objects[0]; } }
+	property scenariolist	{ getter { return objects[1]; } }
+
+	//	カテゴリー一覧を作成
+	function createCategoryList(elm)
+	{
+		if(categorylist != void)
+			return;
+
+		with(elm)
+			objects[0] = new ButtonListLayer(kag, kag.back.base, +elm.left, +elm.top, +elm.width, +elm.height,
+				+elm.bwidth, +elm.bheight, +elm.bfontheight, +elm.stepx, +elm.stepy, +elm.vert, +elm.indent);
+		with(categorylist)
+		{
+			.name	= "カテゴリー一覧";
+			.owner	= this;
+			.addScrollButton();
+			updateCategoryList(category_start);
+			.visible= true;
+		}
+	}
+
+	//	開閉の状態に合わせて、カテゴリー一覧を更新
+	function updateCategoryList(start)
+	{
+		var	list	= [];
+		var	func	= function(cates, open, list, rank, func)	//	開いているかどうかで再帰的に登録
+		{
+			for(var i=0; i<cates.count; i++)
+			{
+				var	cate	= cates[i];
+				if(typeof cate == "Object")
+				{
+					list.add(["", cate.name, cate.id, rank]);
+					if(open[cate.id])
+						func(cate.children, open, list, rank + 1, func);
+				}
+			}
+		};
+		if(categories == void)
+		{
+			if(alreadyread)
+				categories	= tracer.getAlreadyReadCategories();
+			else
+				categories	= tracer.chart.categories;
+		}
+		func(categories.children, category_open, list, 0, func);
+		categorylist.updateButtons(list, start);
+	}
+
+	//	シナリオ一覧を作成
+	function createScenarioList(elm)
+	{
+		if(scenariolist != void)
+			return;
+
+		with(elm)
+			objects[1] = new ButtonListLayer(kag, kag.back.base, +elm.left, +elm.top, +elm.width, +elm.height,
+				+elm.bwidth, +elm.bheight, +elm.bfontheight, +elm.stepx, +elm.stepy, +elm.vert);
+		with(scenariolist)
+		{
+			.name	= "シナリオ一覧";
+			.owner	= this;
+			.addScrollButton();
+			.nomove	= true;
+			updateScenarioList(scenario_start);
+			.visible= true;
+		}
+	}
+
+	//	選択されているカテゴリーに合わせて、シナリオ一覧を更新
+	function updateScenarioList(start)
+	{
+		if(category_choice === void)
+		{
+			scenariolist.clearButtons();
+		}
+		else
+		{
+			var	list	= [];
+//			var	cate	= tracer.chart.getObjectByID(category_choice);
+			//	選択されているカテゴリーを探す
+			var	func	= function(cates, id, func)
+			{
+				var	cate;
+				for(var i=0; i<cates.count; i++)
+				{
+					if(typeof cates[i] == "Object")
+					{
+						if(cates[i].id == id)
+							return cates[i];
+						cate	= func(cates[i].children, id, func);
+						if(cate != void)
+							return cate;
+					}
+				}
+				return void;
+			};
+			var	cate	= func(categories.children, category_choice, func);
+			if(cate == void)
+				return;
+			var	sces	= cate.children;
+			for(var i=0; i<sces.count; i++)
+			{
+				if(typeof sces[i] == "String")
+				{
+					var	sce	= tracer.chart.getObjectByID(+sces[i]);
+//					if(tracer.globalflags.trail[tracer.getTrailLabel(sce.script)] > 0)
+					list.add(["", sce.title, sce.id]);
+				}
+			}
+			scenariolist.updateButtons(list, start);
+		}
+	}
+
+	//	左クリックされた
+	function onLeftClickDown()
+	{
+		return true;	//	true を返すと、これ以降の処理を行なわない
+	}
+
+	//	右クリックされた
+	function onRightClickDown()
+	{
+		//	メニューを隠して、元に戻る
+		scenario_script	= void;
+		close();
+
+		return true;	//	true を返すと、これ以降の処理を行なわない
+	}
+
+	//	キーが押された
+	function onKeyDown(key, shift)
+	{
+		switch(key)
+		{
+		case VK_ESCAPE:
+			scenario_script	= void;
+			close();
+		}
+
+		return true;	//	true を返すと、これ以降の処理を行なわない
+	}
+
+	//	ボタンが押された
+	function onButtonDown(button)
+	{
+		if(button == void)
+			return;
+
+		var	obj	= tracer.chart.getObjectByID(button.value);
+		if(obj == void)
+			return;
+
+		//	カテゴリーの変更
+		if(typeof obj.script == "undefined")
+		{
+			//	カテゴリーを開閉する
+			if(category_open[obj.id])
+				delete category_open[obj.id];
+			else
+				category_open[obj.id]	= true;
+			updateCategoryList();
+
+			//	カテゴリーに含まれるシナリオ一覧を表示
+			category_choice	= obj.id;
+			updateScenarioList();
+		}
+
+		//	シナリオの選択
+		else
+		{
+			scenario_script	= obj.script;
+			close();
+		}
+	}
+
+	//	メニューを閉じる
+	function close()
+	{
+		category_start	= categorylist.start;
+		scenario_start	= scenariolist.start;
+//		dm("scenario_start: "+scenario_start);
+
+		//	通常の閉じる処理
+		super.close();
+	}
+
+	function getButtonsByNo(no)
+	{
+		return (no >= 0 && no < 2) ? objects[no].children : void;
+	}
+}
+kag.addPlugin(global.scenarioplaymenu_object = new ScenarioPlayMenuPlugin(kag));
+
+//	ボタンのリスト
+class ButtonListLayer extends KAGLayer
+{
+	var	owner;
+
+	var	buttonStartLeft, buttonStartTop;	//	ボタンの表示開始位置
+	var	buttonAreaWidth, buttonAreaHeight;	//	ボタンの表示範囲
+	var	buttonWidth, buttonHeight;	//	ボタンのサイズ
+	var	buttonFontHeight;			//	ボタンのフォントサイズ
+	var	buttonStepX, buttonStepY;	//	次のボタンのオフセット位置
+	var	_vert;
+	var	indent	= 0;	//	インデント量
+	var	nomove;			//	内容が変わったときに、項目が移動しない(true)かどうか
+
+	var	_start;
+
+	var	buttons	= [];
+	var	prev, next;
+
+	//	選択ボタン設定
+	var	buttoncolor	= %[
+		bgcolor				:0x00000000,
+		textcolor			:0xFFFFFF,
+		lightbordercolor	:0xFFFFFFFF,
+		darkenbordercolor	:0xFF404040,
+	];
+
+	//	スクロール用ボタン設定
+	var	scrollbuttontext	= [
+		"≫≪",	//	横
+		"▲▼"	//	縦
+	];
+	var	scrollbuttoncolor	= %[
+		bgcolor				:0xFFEFEFEF,
+		textcolor			:0x000000,
+		lightbordercolor	:0xFFFFFFFF,
+		darkenbordercolor	:0xFFA0A0A0,
+	];
+	var	scrollbuttonabsolute	= 10000000;	//	一番手前
+
+	//	l, t, w, h	: 位置とサイズ
+	//	bw, bh		: ボタンのサイズ
+	//	bsx, bsy	: 次のボタンの位置
+	//	vert		: スクロール用ボタンの位置(trueなら上下に配置)
+	function ButtonListLayer(win, par, l, t, w, h, bw, bh, bfh, bsx, bsy, vert=true, indent=0)
+	{
+		super.KAGLayer(...);
+
+		setPos(l, t);
+		setSize(w, h);
+		type		= ltAddAlpha;
+		opacity		= 255;
+		hitThreshold= 256;
+		if(typeof this.hasImage != "undefined")
+			hasImage	= false;
+		else
+			fillRect(0, 0, w, h, 0x00000000);
+
+		if(vert)
+		{
+			buttonStartLeft	= 0;
+			buttonStartTop	= 0;
+		}
+		else
+		{
+			buttonStartLeft	= width;
+			buttonStartTop	= 0;
+		}
+		buttonAreaWidth	= bw;
+		buttonAreaHeight= bh;
+		buttonWidth	= bw;
+		buttonHeight= bh;
+		buttonFontHeight	= bfh;
+		buttonStepX	= bsx;
+		buttonStepY	= bsy;
+		_vert		= vert;
+		this.indent	= indent;
+
+		owner	= par;
+	}
+
+	function finalize()
+	{
+		invalidate prev if prev != void;
+		invalidate next if next != void;
+
+		clearButtons();
+		invalidate buttons;
+
+		super.finalize();
+	}
+
+	//	ボタンの表示開始位置
+	property start
+	{
+		setter(s)
+		{
+			if(s === void)
+				return;
+			var	a	= area;
+			s	= a - 1 if s >= a;
+			s	= 0 if s < 0;
+			_start	= s;
+//			dm(name+".start = "+s);
+
+			//	ボタンの表示位置を変更する
+			lineupButtons();
+		}
+		getter	{ return _start; }
+	}
+
+	//	表示しているボタンの数
+	property area
+	{
+		getter	{
+			var	a	= _vert ? buttonAreaHeight \ buttonStepY : buttonAreaWidth \ buttonStepX;
+//			dm("a: "+buttons.count+" - "+a+" = "+(buttons.count - a));
+			a= buttons.count - a + 1;
+			a= 0 if a < 0;
+			return a;
+		}
+	}
+
+	//	スクロール用のボタンを追加する
+	function addScrollButton(prev_storage, next_storage)
+	{
+		invalidate prev if prev != void;
+		invalidate next if next != void;
+
+		var	text	= scrollbuttontext[_vert ? 1 : 0];
+		var	w, h;
+		if(_vert)
+		{
+			w	= width;
+			h	= buttonHeight;
+			buttonStartLeft	= 0;
+			buttonStartTop	= buttonHeight;
+			buttonAreaWidth	= width;
+			buttonAreaHeight= height - buttonHeight * 2;	//	ボタンの分だけ範囲を狭める
+		}
+		else
+		{
+			w	= buttonWidth;
+			h	= height;
+			buttonStartLeft	= width - buttonWidth;
+			buttonStartTop	= 0;
+			buttonAreaWidth	= width - buttonWidth * 2;		//	ボタンの分だけ範囲を狭める
+			buttonAreaHeight= height;
+		}
+
+		with(prev = new PushButton4ScrollLayer(window, this, prev_storage))
+		{
+			.name	= "prev button";
+			.font.height	= buttonFontHeight;
+			.createButton(text[0], w, h, scrollbuttoncolor.bgcolor, scrollbuttoncolor.textcolor,
+				scrollbuttoncolor.lightbordercolor, scrollbuttoncolor.darkenbordercolor) if(prev_storage == "");
+			.setPos(_vert ? 0 : width - .width, 0);	//	前へボタンは、縦の時は上、横のときは右に配置
+			.index		= 1000000;
+			.absolute	= scrollbuttonabsolute;
+			.getBros	= owner.getButtonsByNo incontextof owner;
+			.byCursorKey= true;
+			.visible	= true;
+		}
+
+		with(next = new PushButton4ScrollLayer(window, this, next_storage))
+		{
+			.name	= "next button";
+			.font.height	= buttonFontHeight;
+			.createButton(text[1], w, h, scrollbuttoncolor.bgcolor, scrollbuttoncolor.textcolor,
+				scrollbuttoncolor.lightbordercolor, scrollbuttoncolor.darkenbordercolor) if(next_storage == "");
+			.setPos(0, _vert ? height - .height : 0);	//	次へボタンは、縦の時は下、横のときは左へ配置
+			.absolute	= scrollbuttonabsolute;
+			.getBros	= owner.getButtonsByNo incontextof owner;
+			.byCursorKey= true;
+			.visible	= true;
+		}
+
+		lineupButtons();
+	}
+
+	//	配列に沿ってボタンを作成/更新(同じボタンは保持)する
+	//	array	: [ [ storage, text, value, rank ], ... ]
+	//	storage	: 画像ファイル名
+	//	text	: storage が指定されていないときは、text でボタンを作成
+	//	value	: ボタンの持つ値
+	//	st		: 初期位置
+	function createButtons(array, st)
+	{
+		var	btn;
+		var	btns	= [];
+		_start	= st if st !== void;
+		for(var i=0; i<array.count; i++)
+		{
+			var	data	= array[i];
+			var	j;
+			for(j=0; j<buttons.count; j++)
+			{
+				btn	= buttons[j];
+				if(btn.storage == data[0] && btn.text == data[1] && btn.value == data[2])
+				{
+					//	再利用
+					btns.add(btn);
+					btn._no	= void if nomove;	//	旧位置から移動しないように
+					buttons.erase(j);
+					j	= -1;
+					break;
+				}
+			}
+			if(j >= 0)
+			{
+				//	見つからなかったので、新たに作成
+				with(btn = new AutoAlignPushButtonLayer(window, this, data[0]))
+				{
+					.indent	= data[3] * indent;
+					.font.height	= buttonFontHeight;
+					.createButton(data[1], buttonWidth, buttonHeight, buttoncolor.bgcolor, buttoncolor.textcolor,
+						buttoncolor.lightbordercolor, buttoncolor.darkenbordercolor) if data[0] == "";
+					.absolute	= 1000;
+					.storage= data[0];
+					.text	= data[1];
+					.name	= "ボタン("+(.storage != "" ? .storage : .text)+")";
+					.value	= data[2];
+					.getBros	= owner.getButtonsByNo incontextof owner;
+					.byCursorKey= true;
+					.visible= true;
+				}
+				btns.add(btn);
+			}
+			btn.no	= i - start;
+		}
+		clearButtons();
+		invalidate buttons;
+		buttons	= btns;
+		start	= start;	//	表示位置補正
+	}
+	function updateButtons()
+	{
+		createButtons(...);
+	}
+
+	//	ボタンを並べ直す
+	function lineupButtons()
+	{
+		for(var i=0; i<buttons.count; i++)
+			buttons[i].no	= i - start;
+	}
+
+	//	ボタンを全て破棄
+	function clearButtons()
+	{
+		for(var i=0; i<buttons.count; i++)
+			invalidate buttons[i] if buttons[i] != void;
+		buttons.clear();
+	}
+
+	//	各ボタンが押されたときの処理
+	function onButtonDown(button)
+	{
+		//	スクロール用のボタンなら、表示位置をずらす
+		if(button == prev)
+			start--;
+		else if(button == next)
+			start++;
+
+		//	内容のボタンなら、
+		else if(owner.onButtonDown != "undefined")
+			owner.onButtonDown(button);
+	}
+
+	//	ボタン
+	function onMouseDown(x, y, button, shift)
+	{
+		if(button == mbRight)
+			owner.onRightClickDown();
+	}
+
+	function onMouseUp()
+	{
+	}
+}
+
+//	押下している間だけ、一定間隔で onButtonDown を投げるボタン
+class PushButton4ScrollLayer extends PushButtonLayer
+{
+	var	repeat_start	= 600;	//	ボタンのリピートが開始されるまでの時間
+	var	repeat_interval	= 150;	//	ボタンのリピート間隔
+	var	repeat_timer;
+
+	function PushButton4ScrollLayer()
+	{
+		super.PushButtonLayer(...);
+
+		with(repeat_timer = new Timer(onButtonRepeat, ""))
+			.enabled	= false;
+	}
+
+	function finalize()
+	{
+		if(repeat_timer != void)
+		{
+			repeat_timer.enabled	= false;
+			invalidate repeat_timer;
+			repeat_timer	= void;
+		}
+
+		super.finalize();
+	}
+
+	//	マウスボタンをクリックしたとき
+	function press()
+	{
+		if(enabled)
+		{
+			state	= BUTTON_push;
+			playsound_method(pressse) if playsound_method != void;
+
+			if(typeof owner.onButtonDown != "undefined")
+				owner.onButtonDown(this);
+
+			with(repeat_timer)
+				.interval	= repeat_start, .enabled	= true;	//	最初の待ち
+		}
+	}
+
+	//	マウスボタンが離されたとき
+	function push()
+	{
+		if(enabled && state == BUTTON_push)
+		{
+			state	= entered ? BUTTON_enter : BUTTON_leave;
+
+			repeat_timer.enabled	= false;
+		}
+	}
+
+	//	リピート処理
+	function onButtonRepeat()
+	{
+		if(enabled && state == BUTTON_push)
+		{
+			playsound_method(pressse) if playsound_method != void;
+			if(typeof owner.onButtonDown != "undefined")
+				owner.onButtonDown(this);
+
+			repeat_timer.interval	= repeat_interval;	//	リピート中の待ち
+		}
+		else
+			repeat_timer.enabled	= false;	//	ボタンが離されていたら、リピート停止
+	}
+}
+
+//	自分で位置を把握するボタン
+class AutoAlignPushButtonLayer extends PushButtonLayer
+{
+	var	_no, lastno;
+
+	var	move_timer;
+	var	time = 300, accel = -2;
+	var	interval	= 16;
+	var	starttick;
+	var	startLeft, startTop, endLeft, endTop;
+
+	var	indent = 0;
+
+	function AutoAlignPushButtonLayer()
+	{
+		super.PushButtonLayer(...);
+
+		with(move_timer = new Timer(onMoveTimeout, ""))
+			.interval	= interval, .enabled	= false;
+	}
+
+	function finalize()
+	{
+		if(move_timer != void)
+		{
+			move_timer.enabled	= false;
+			invalidate move_timer;
+			move_timer	= void;
+		}
+		super.finalize();
+	}
+
+	property no
+	{
+		setter(n)
+		{
+			var	l	= parent.buttonStartLeft + parent.buttonStepX * n;
+			var	t	= parent.buttonStartTop + parent.buttonStepY * n;
+			if(no === void)
+				setPos(l, t);	//	暫時移動はせず、すぐに目的位置へ
+			else
+				moveTo(l, t);
+			lastno	= no;
+			_no	= n;
+		}
+		getter	{ return _no; }
+	}
+
+	function drawButtonText(l, text, textcolor)
+	{
+		var	fh	= font.getTextHeight(text);
+		drawText(l + indent + 2, (height - fh) \ 2, text, textcolor,, true);
+	}
+
+	function moveTo(l, t)
+	{
+		starttick	= System.getTickCount();
+		startLeft	= left;
+		startTop	= top;
+		endLeft		= l;
+		endTop		= t;
+
+		move_timer.enabled	= true;
+	}
+
+	function onMoveTimeout()
+	{
+		var	past	= System.getTickCount() - starttick;
+		if(past > time)
+		{
+			left	= endLeft;
+			top		= endTop;
+			move_timer.enabled	= false;
+		}
+		else
+		{
+			var	per	= past / time;
+			if(accel < 0)
+			{
+				per = 1.0 - per;
+				per = Math.pow(per, -accel);
+				per = 1.0 - per;
+			}
+			else if(accel > 0)
+				per = Math.pow(per, accel);
+
+			setPos(Math.round(startLeft + (endLeft - startLeft) * per),
+				Math.round(startTop + (endTop - startTop) * per));
+		}
+	}
+
+	function onMouseMove()
+	{
+		//	ボタンが自動移動している間
+		if(!move_timer.enabled)
+			return;
+
+		//	ボタン上でマウスが動いているなら、Enterしたことにする
+		if(focusable && window.focusedLayer != this) focus(); else enter();
+	}
+
+	function onMouseEnter()
+	{
+		//	自動移動している間は、Enterしてもしてないことにする
+		if(move_timer.enabled)
+			return;
+
+		if(focusable && window.focusedLayer != this) focus(); else enter();
+	}
+
+	//	リスト内ボタン用のメソッド
+	function onKeyDown(key, shift)
+	{
+		//	メニューの上下端のボタンなら、メニューをスクロールさせる
+		var	prev, next;
+		if(parent._vert)
+			prev	= VK_UP, next	= VK_DOWN;
+		else
+			prev	= VK_LEFT, next	= VK_RIGHT;
+//		dm("key: "+key+" / no = "+no+" / parent.area = "+parent.area);
+		if(key == prev && no <= 1)
+			parent.start--;
+		else if(key == next && no >= parent.area - 1)
+			parent.start++;
+
+		return super.onKeyDown(...);
+	}
+}
+
+/*-----------------------------------------------------------------------------/
+/	タグの追加
+/-----------------------------------------------------------------------------*/
+/*-----------------------------------------------------------------------------/
+/	シナリオ再生メニューの表示状態をリセットする。
+/-----------------------------------------------------------------------------*/
+kag.tagHandlers.reset_scenarioplaymenu	= function(mp)
+{
+	scenarioplaymenu_object.initStat();
+
+	return 0;
+} incontextof kag;
+
+/*-----------------------------------------------------------------------------/
+/	シナリオ再生メニューの設定を行なう。
+/	in	: bgimage	背景画像
+/		: next		シナリオが選択されたりメニューが閉じられたとき、next の示すラベルへ[jump]する
+/		: already	既読のみを表示する(true)かどうか
+/-----------------------------------------------------------------------------*/
+kag.tagHandlers.set_scenarioplaymenu	= function(mp)
+{
+	with(scenarioplaymenu_object)
+	{
+		.initBG(mp.bgimage);
+		.tracer			= global.tracer_object;
+		.return_target	= mp.next;
+		.alreadyread	= +mp.already;
+	}
+
+	return 0;
+} incontextof kag;
+
+/*-----------------------------------------------------------------------------/
+/	シナリオ再生メニューの、カテゴリリスト表示の設定を行なう
+/	in	: left, top			表示位置
+/		: width, height		サイズ
+/		: bwidth, bheight	ボタンのサイズ
+/		: stepx, stepy		次のボタンの位置(縦に順番なら、stepx=0 stepy=bheightと同じ値 とか)
+/		: vert				スクロール用ボタンの位置(trueなら上下に配置)
+/-----------------------------------------------------------------------------*/
+kag.tagHandlers.set_scenarioplaymenu_categorylist	= function(mp)
+{
+	scenarioplaymenu_object.createCategoryList(mp);
+
+	return 0;
+} incontextof kag;
+
+/*-----------------------------------------------------------------------------/
+/	シナリオ再生メニューの、シナリオリスト表示の設定を行なう
+/	in	:
+/-----------------------------------------------------------------------------*/
+kag.tagHandlers.set_scenarioplaymenu_scenariolist	= function(mp)
+{
+	scenarioplaymenu_object.createScenarioList(mp);
+
+	return 0;
+} incontextof kag;
+
+/*-----------------------------------------------------------------------------/
+/	シナリオ再生メニューでシナリオを選択しなかった時、storage/target のスクリプトへ[jump]する。
+/	in	:
+/-----------------------------------------------------------------------------*/
+kag.tagHandlers.if_dont_choose_scenario	= function(mp)
+{
+	if(scenarioplaymenu_object.scenario_script == void)
+		kag.process(mp.storage, mp.target);
+
+	return 0;
+} incontextof kag;
+
+/*-----------------------------------------------------------------------------/
+/	End of File
+/-----------------------------------------------------------------------------*/
+@endif

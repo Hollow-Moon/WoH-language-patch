@@ -1,0 +1,539 @@
+﻿/*-----------------------------------------------------------------------------
+/	Copyright (C) TYPE-MOON All Rights Reserved.
+/		オブジェクトに関する定義値(キーと初期値)
+/----------------------------------------------------------------------------*/
+@if(__OBJECTVALUES_DEFINED__==0)
+@set(__OBJECTVALUES_DEFINED__=1)
+
+//	haze の波定義や強さ定義を行なえるようにするかどうか
+@set(SET_HAZE_WAVES_POWERS=0)
+
+//	冗長なので、一つだけ定義して他で使う
+var	__afxValueIsDirect	= %[
+	AffineLayer.AFFINEOFFSET_CENTER	=> true,
+	AffineLayer.AFFINEOFFSET_LEFT	=> true,
+	AffineLayer.AFFINEOFFSET_RIGHT	=> true,
+];
+var	__afyValueIsDirect	= %[
+	AffineLayer.AFFINEOFFSET_CENTER	=> true,
+	AffineLayer.AFFINEOFFSET_TOP	=> true,
+	AffineLayer.AFFINEOFFSET_BOTTOM	=> true,
+];
+
+//	defaultValues を作成する関数
+function createDefaultValuesFunc(keys, init, noblank)
+{
+	var	dic	= %[];
+@if(IS_TLE)
+	dic["blank"]	= noblank ? false : true;
+	for(var i=1; i<global.KeyDataBasicKeys.count; i++)
+		dic[KeyDataBasicKeys[i]]	= KeyDataBasicInit[i];
+@endif
+	for(var i=0; i<keys.count; i++)
+		dic[keys[i]]	= init[i];
+	return dic;
+}
+
+//	オブジェクト個別の値を複製する
+function cloneObjectSettings(src, keys)
+{
+	var	newset;
+	if(src instanceof "Array")
+	{
+		newset	= [];
+		newset.assignStruct(src);
+		if(keys != void)
+		{
+			for(var i=0; i<keys.count; i++)
+				newset.add(keys[i]);
+		}
+	}
+	else if(src instanceof "Dictionary")
+	{
+		newset	= %[];
+		(Dictionary.assignStruct incontextof newset)(src);
+		if(keys != void)
+		{
+			var	values	= [];
+			values.assign(keys);
+			for(var i=0; i<values.count; i+=2)
+				newset[values[i]]	= values[i+1];
+		}
+	}
+	return newset;
+}
+
+/*---------------------------------------------------------------------------/
+/	背景(BGObject)
+/---------------------------------------------------------------------------*/
+var	BGKeys	= [
+	"storage",
+	"left", "top",
+	"opacity",
+	"afx", "afy",
+	"rotate",
+	"zoomx", "zoomy",
+	"effect", "contrast", "xblur", "yblur",
+//	"relact"
+	"quakeHMax", "quakeVMax", "quakeInterval", "quake",
+	"shakeHMax", "shakeVMax", "shakeCycle", "shake",
+	"swingMinCycle", "swingMaxCycle", "swingMinVibration", "swingMaxVibration", "swingRate", "swing",
+	"hazePower", "hazeDelta", "hazeOmega",
+@if(SET_HAZE_WAVES_POWERS==1)
+	"hazeWaves", "hazeLineWaves", "hazePowers",
+@endif
+	"haze",
+	"noiseMonocro", "noise",
+	"usecurrent", "aorder", "brightness"
+];
+var	BGKeysInit	= [
+	"",
+	0, 0,
+	255,
+	AffineLayer.AFFINEOFFSET_CENTER, AffineLayer.AFFINEOFFSET_CENTER,
+	0,
+	100, 100,
+	"", 0, 0, 0,
+//	""
+	10, 10, 50, false,
+	0, 10, 300, false,
+	1000, 2000, 5, 10, 1, false,
+	10, 7, 1,
+@if(SET_HAZE_WAVES_POWERS==1)
+	void, void, void,
+@endif
+	false,
+	true, false,
+	false, ""
+];
+var	BGObjectMiddleProperty	= %[
+	left:true, top:true, opacity:true, afx:true, afy:true, rotate:true, zoomx:true, zoomy:true,
+	storage:false, effect:false, brightness:false, contrast:false, xblur:false, yblur:false,
+//	relact:false,
+	quake:false, quakeHMax:true, quakeVMax:true, quakeInterval:true,
+	shake:false, shakeHMax:true, shakeVMax:true, shakeCycle:true,
+	swing:false, swingMinCycle:true, swingMaxCycle:true, swingMinVibration:true, swingMaxVibration:true, swingRate:true,
+	haze:false, hazePower:true, hazeDelta:true, hazeOmega:true,
+@if(SET_HAZE_WAVES_POWERS==1)
+	hazeWaves:false, hazeLineWaves:false, hazePowers:false,
+@endif
+	noise:false, noiseMonocro:false, usecurrent:false, aorder:false
+];
+//	プロパティが直値かどうかの判別
+var	BGObjectValueIsDirect	= %[
+	afx:__afxValueIsDirect,
+	afy:__afyValueIsDirect
+];
+//	初期値
+var	BGDefaultValues	= createDefaultValuesFunc(BGKeys, BGKeysInit, true);
+//	ファイル名を格納したプロパティ名
+var	BGStorageProperties	= [ "storage" ];
+
+
+/*---------------------------------------------------------------------------/
+/	前景(LayerObject)
+/---------------------------------------------------------------------------*/
+var	LayerKeys	= [
+	"storage",
+	"processing",	//	そのフレームで実行する処理
+//	"left", "top",
+	"center", "vcenter",
+	"absolute",
+	"opacity",
+	"type",
+	"afx", "afy",
+	"rotate",
+	"zoomx", "zoomy",
+	"effect", "contrast", "xblur", "yblur",
+//	"relact"
+	"quakeHMax", "quakeVMax", "quakeInterval", "quake",
+	"shakeHMax", "shakeVMax", "shakeCycle", "shake",
+	"swingMinCycle", "swingMaxCycle", "swingMinVibration", "swingMaxVibration", "swingRate", "swing",
+	"hazePower", "hazeDelta", "hazeOmega",
+@if(SET_HAZE_WAVES_POWERS==1)
+	"hazeWaves", "hazeLineWaves", "hazePowers",
+@endif
+	"haze",
+	"noiseMonocro", "noise",
+	"viewarea",
+	"basis",	//	基準となる、別のオブジェクト(通常はBGObjectだが、他のLayerObjectを基準とすることもできるように)
+	"aorder", "brightness"
+];
+var	LayerKeysInit	= [
+	"",
+	"",
+	0, 0,
+	1000,
+	255,
+	ltAlpha,
+	AffineLayer.AFFINEOFFSET_CENTER, AffineLayer.AFFINEOFFSET_CENTER,
+	0,
+	100, 100,
+	"", 0, 0, 0,
+//	""
+	10, 10, 50, false,
+	0, 10, 300, false,
+	1000, 2000, 5, 10, 1, false,
+	10, 7, 1,
+@if(SET_HAZE_WAVES_POWERS==1)
+	void, void, void,
+@endif
+	false,
+	true, false,
+	"",
+	"",
+	""
+];
+//	中間値を取るプロパティなら true
+var	LayerObjectMiddleProperty	= %[
+//	left:true, top:true,
+	center:true, vcenter:true,
+	opacity:true, afx:true, afy:true, rotate:true, zoomx:true, zoomy:true,
+	type:false, storage:false, absolute:true, effect:false, brightness:false, contrast:false, xblur:false, yblur:false,
+//	relact:false,
+	quake:false, quakeHMax:true, quakeVMax:true, quakeInterval:true,
+	shake:false, shakeHMax:true, shakeVMax:true, shakeCycle:true,
+	swing:false, swingMinCycle:true, swingMaxCycle:true, swingMinVibration:true, swingMaxVibration:true, swingRate:true,
+	haze:false, hazePower:true, hazeDelta:true, hazeOmega:true,
+@if(SET_HAZE_WAVES_POWERS==1)
+	hazeWaves:false, hazeLineWaves:false, hazePowers:false,
+@endif
+	noise:false, noiseMonocro:false,
+	viewarea:false,
+	basis:false,
+	processing:false,
+	aorder:false,
+];
+//	プロパティが直値かどうかの判別
+var	LayerObjectValueIsDirect	= %[
+	afx:__afxValueIsDirect,
+	afy:__afyValueIsDirect
+];
+//	初期値
+var	LayerDefaultValues	= createDefaultValuesFunc(LayerKeys, LayerKeysInit, false);
+//	ファイル名を格納したプロパティ名
+var	LayerStorageProperties	= [ "storage" ];
+
+
+/*---------------------------------------------------------------------------/
+/	ページ(PageObject)
+/---------------------------------------------------------------------------*/
+var	PageKeys	= [
+	"page", "method", "rule", "vague", "from", "stay", "progress"
+];
+var	PageKeysInit	= [
+	1, "crossfade", "", 128, "left", "nostay", 0
+];
+var	PageObjectMiddleProperty	= %[
+	page:false, method:false, rule:false, vague:false, from:false, stay:false,
+	progress:true,
+];
+//	初期値
+var	PageDefaultValues	= createDefaultValuesFunc(PageKeys, PageKeysInit, true);
+//	ファイル名を格納したプロパティ名
+var	PageStorageProperties	= [ "rule" ];
+
+
+/*---------------------------------------------------------------------------/
+/	特殊背景(PartBgObject)
+/---------------------------------------------------------------------------*/
+var	PartBgKeys	= [
+	"part",
+	//コピー元の設定値
+	"storage",
+	"srcleft", "srctop",// "srcwidth", "srcheight",
+	"srcafx", "srcafy",
+	"srcrotate", "srczoomx", "srczoomy",
+	"srcopacity",
+
+	//枠の設定値
+	"absolute",
+	"width", "height", "center", "vcenter",
+	"opacity",
+	"type",
+	"afx", "afy",
+	"rotate",// "zoomx", "zoomy",
+	"effect", "contrast", "xblur", "yblur",
+	"bordersize", //"relact",
+	"quakeHMax", "quakeVMax", "quakeInterval", "quake",
+	"shakeHMax", "shakeVMax", "shakeCycle", "shake",
+	"swingMinCycle", "swingMaxCycle", "swingMinVibration", "swingMaxVibration", "swingRate", "swing",
+	"hazePower", "hazeDelta", "hazeOmega",
+@if(SET_HAZE_WAVES_POWERS==1)
+	"hazeWaves", "hazeLineWaves", "hazePowers",
+@endif
+	"haze",
+	"noiseMonocro", "noise",
+	"basis",		//	基準となる、別のオブジェクト(通常はBGObjectだが、他のLayerObjectを基準とすることもできるように)
+	"bordercolor"
+//	, "srcaorder"
+	, "brightness"
+];
+
+var	PartBgKeysInit	= [
+	true,
+	"",
+	0, 0, //100, 100,
+	AffineLayer.AFFINEOFFSET_CENTER, AffineLayer.AFFINEOFFSET_CENTER,
+	0, 100, 100,
+	255,
+	100,
+	300, 300, 512, 288,
+	255,
+	ltAlpha,
+	AffineLayer.AFFINEOFFSET_CENTER, AffineLayer.AFFINEOFFSET_CENTER,
+	0,// 100, 100,
+	"", 0, 0, 0,
+	40, //"",	//	枠の幅は40pxがデフォルト
+	10, 10, 50, false,
+	0, 10, 300, false,
+	1000, 2000, 5, 10, 1, false,
+	10, 7, 1,
+@if(SET_HAZE_WAVES_POWERS==1)
+	void, void, void,
+@endif
+	false,
+	true, false,
+	"",
+	0x00000000	//	枠色は黒がデフォルト
+//	, ""
+];
+//	中間値を取るプロパティなら true
+var	PartBgObjectMiddleProperty	= %[
+	part:false,
+	storage:false, bordersize:true,
+	srcleft:true, srctop:true,// srcwidth:true, srcheight:true,
+	srcafx:true, srcafy:true, srcrotate:true, srczoomx:true, srczoomy:true,
+	srcopacity:true,
+	center:true, vcenter:true, width:true, height:true,
+	opacity:true, afx:true, afy:true, rotate:true,// zoomx:true, zoomy:true,
+	type:false, absolute:true, effect:false, brightness:false, contrast:false, xblur:false, yblur:false,
+	quake:false, quakeHMax:true, quakeVMax:true, quakeInterval:true,
+	shake:false, shakeHMax:true, shakeVMax:true, shakeCycle:true,
+	swing:false, swingMinCycle:true, swingMaxCycle:true, swingMinVibration:true, swingMaxVibration:true, swingRate:true,
+	haze:false, hazePower:true, hazeDelta:true, hazeOmega:true,
+@if(SET_HAZE_WAVES_POWERS==1)
+	hazeWaves:false, hazeLineWaves:false, hazePowers:false,
+@endif
+	noise:false, noiseMonocro:false,
+	basis:false,
+	bordercolor:false,
+//	srcaorder:false,
+];
+//	プロパティが直値かどうかの判別
+var	PartBgObjectValueIsDirect	= %[
+	afx:__afxValueIsDirect,
+	afy:__afyValueIsDirect,
+	srcafx:__afxValueIsDirect,
+	srcafy:__afyValueIsDirect
+];
+//	初期値
+var	PartBgDefaultValues	= createDefaultValuesFunc(PartBgKeys, PartBgKeysInit, false);
+//	ファイル名を格納したプロパティ名
+var	PartBgStorageProperties	= [ "storage" ];
+
+
+/*---------------------------------------------------------------------------/
+/	効果音(SEObject)
+/---------------------------------------------------------------------------*/
+var	SEKeys	= [
+	"storage",
+	"state",	//	"play", "stop", "pause", "resume", "continuous"(継続)
+	"label",
+	"loop",
+	"pan",
+	"volume"
+];
+var	SEKeysInit	= [
+	"",
+	"stop",
+	"",
+	false,
+	0,
+	100,
+];
+//	中間値を取るプロパティなら true
+var	SEObjectMiddleProperty	= %[
+	storage:false, state:false, label:false, loop:false,
+	pan:true, volume:true,
+];
+//	初期値
+var	SEDefaultValues	= createDefaultValuesFunc(SEKeys, SEKeysInit, true);
+//	ファイル名を格納したプロパティ名
+var	SEStorageProperties	= [ "storage" ];
+
+
+/*---------------------------------------------------------------------------/
+/	小背景(SmallBgObject)
+/---------------------------------------------------------------------------*/
+var	SmallBgKeys	= [
+	"storage",
+	"overlay",
+	"imgmask",
+//	"smbg",				//→自動採番に変更
+	"left", "top",
+	"width", "height",
+	"absolute",
+	"opacity",
+	"type",
+	"outerzoomx", "outerzoomy",
+	"innerzoomx", "innerzoomy",
+	"relact"
+];
+
+var	SmallBgKeysInit	= [
+	"",
+	"",
+	"",
+//	0,
+	0, 0,
+	150, 150,
+	1000,
+	255,
+	ltAlpha,
+	100, 100,
+	100, 100,
+	"",
+	0
+];
+//	中間値を取るプロパティなら true
+var	SmallBgObjectMiddleProperty	= %[
+	left:true, top:true, opacity:true,
+	outerzoomx:true, outerzoomy:true, innerzoomx:true, innerzoomy:true,
+	type:false, storage:false, overlay:false, imgmask:false, absolute:true,
+	relact:false, width:true, height:true
+];
+//	初期値
+var	SmallBgDefaultValues	= createDefaultValuesFunc(SmallBgKeys, SmallBgKeysInit, false);
+//	ファイル名を格納したプロパティ名
+var	SmallBgStorageProperties	= [ "storage", "imgmask" ];
+
+
+/*---------------------------------------------------------------------------/
+/	小背景パーツ(SmallBgPartsObject)
+/---------------------------------------------------------------------------*/
+var	SmallBgPartsKeys	= [
+	"storage",
+//	"pname",
+	"left", "top",
+	"absolute",
+	"opacity",
+	"type",
+	"afx", "afy",
+	"rotate",
+	"zoomx", "zoomy",
+	"effect", "contrast", "xblur", "yblur",
+	"relact"
+];
+
+var	SmallBgPartsKeysInit	= [
+	"",
+//	"",
+	0, 0,
+	1000,
+	255,
+	ltAlpha,
+	AffineLayer.AFFINEOFFSET_CENTER, AffineLayer.AFFINEOFFSET_CENTER,
+	0,
+	100, 100,
+	"", 0, 0, 0,
+	"",
+	0
+];
+//	中間値を取るプロパティなら true
+var	SmallBgPartsObjectMiddleProperty	= %[
+	left:true, top:true, opacity:true, afx:true, afy:true, rotate:true, zoomx:true, zoomy:true,
+	type:false, storage:false, absolute:true, effect:false, contrast:false, xblur:false, yblur:false,
+	relact:false //pname:false,
+];
+//	初期値
+var	SmallBgPartsDefaultValues	= createDefaultValuesFunc(SmallBgPartsKeys, SmallBgPartsKeysInit, false);
+//	ファイル名を格納したプロパティ名
+var	SmallBgPartsStorageProperties	= [ "storage" ];
+
+
+/*---------------------------------------------------------------------------/
+/	BGM(BGMObject)
+/---------------------------------------------------------------------------*/
+//	オブジェクトで使われるプロパティの名称リスト(TimeLineData に登録されるプロパティ)
+var	BGMKeys	= [
+	"storage",
+	"state",
+	"loop",
+	"volume",
+	"xchgtime",
+	"overlaptime",
+	"label"
+];
+
+//	プロパティの初期値(BGMKeysの順番に対応)
+var	BGMKeysInit	= [
+	"",
+	"stop",
+	true,
+	0,
+	0,
+	0,
+	"",
+];
+//	プロパティが中間値を取るか(true)、直前のキーフレームの値をとるか(false)
+var	BGMObjectMiddleProperty	= %[
+	storage:false, state:false, loop:false,
+	label:false,
+	volume:true, xchgtime:false, overlaptime:false,
+];
+//	特定のプロパティが直接の値をとるかどうかの判別
+//	(prop:%[value1=>true,value2=>true] とすると、prop が value1 か value2 の場合は直接の値ではないことを示す)
+var	BGMObjectValueIsDirect	= %[];
+//	初期値
+var	BGMDefaultValues	= createDefaultValuesFunc(BGMKeys, BGMKeysInit, true);
+//	ファイル名を格納したプロパティ名
+var	BGMStorageProperties	= [ "storage" ];
+
+
+/*---------------------------------------------------------------------------/
+/	メニューアイテム(MenuItem)
+/---------------------------------------------------------------------------*/
+var	MenuItemKeys	= cloneObjectSettings(LayerKeys, [
+	"mouseDown", "mouseMove", "mouseUp", "mouseEnter", "mouseLeave", "keyDown", "itemMode", "hint", "usecurrent", "viewareaNo", "on", "ibv"
+]);
+var	MenuItemKeysInit	= cloneObjectSettings(LayerKeysInit, [
+	void, void, void, void, void, void, 0, void, 0, void, false, true
+]);
+var	MenuItemObjectMiddleProperty	= cloneObjectSettings(LayerObjectMiddleProperty, %[
+	mouseDown:false, mouseMove:false, mouseUp:false, mouseEnter:false, mouseLeave:false,
+	keyDown:false, itemMode:false, hint:false, usecurrent:false,
+	viewareaNo:false, on:false, ibv:false
+]);
+var	MenuItemObjectValueIsDirect	= cloneObjectSettings(LayerObjectValueIsDirect);
+var	MenuItemDefaultValues	= createDefaultValuesFunc(MenuItemKeys, MenuItemKeysInit, false);
+var	MenuItemStorageProperties	= [ "storage" ];
+
+/*---------------------------------------------------------------------------/
+/	全体の設定
+/---------------------------------------------------------------------------*/
+//	指定の値に変化がないときは処理されないプロパティ
+var	formerProperty	= %[
+	quakeHMax:"quake",
+	quakeVMax:"quake",
+	quakeInterval:"quake",
+	shakeHMax:"shake",
+	shakeVMax:"shake",
+	shakeCycle:"shake",
+	swingMinCycle:"swing",
+	swingMaxCycle:"swing",
+	swingMinVibration:"swing",
+	swingMaxVibration:"swing",
+	swingRate:"swing",
+	hazePower:"haze",
+	hazeDelta:"haze",
+	hazeOmega:"haze",
+@if(SET_HAZE_WAVES_POWERS==1)
+	hazeWaves:"haze",
+	hazeLineWaves:"haze",
+	hazePowers:"haze",
+@endif
+	noiseMonocro:"noise",
+];
+
+@endif

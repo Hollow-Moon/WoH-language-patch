@@ -1,0 +1,2548 @@
+﻿/*-----------------------------------------------------------------------------
+/	Copyright (C) TYPE-MOON All Rights Reserved.
+/		タイムラインのデータ
+/----------------------------------------------------------------------------*/
+@if(__TIMELINEDATA_DEFINED__==0)
+@set(__TIMELINEDATA_DEFINED__=1)
+
+@set(FIXED_MEANMIDDLE=0)	//	中間値を固定するかどうか(シーン個別のタイムラインになったので、固定不要)
+
+@set(ENABLED_BLANK_TWEEN=0)	//	空白キーフレームでもトゥイーンできる
+
+//	実行時用の、編集機能などを取り除いたシンプルなタイムラインデータとするには
+//		@set(SIMPLE_TIMELINEDATA=1)
+//	とする
+
+if(typeof global.equations == "undefined")
+{
+	Plugins.link("Equations.dll");
+	global.equations	= new Equations();
+}
+
+@if(SIMPLE_TIMELINEDATA!=1)
+//	KAGタグクラス
+Scripts.execStorage("KAGTagData.tjs");
+@endif
+
+//	フレームのスケール(現在、1フレームが何ミリ秒にあたるか)
+var frameScale	= 10;	//	10(ms/frame) = 100(fps)
+property fps
+{
+	setter(f)	{ frameScale = 1000 \ f; }
+	getter		{ return 1000 \ frameScale; }
+}
+
+//	キーデータの基本キー
+var	KeyDataBasicKeys	= [ "blank", "tween", "accel", "interpolate" ];
+var	KeyDataBasicInit	= [ true, false, 0, "linear" ];
+
+//	特殊キー
+var	KeyDataSpecialKeys	= [
+	"loopframe",		//	ループするキーフレームか(開始 or 終了)
+	"keyframecolor"		//	キーフレームの色
+];
+
+//	中間を意味する値
+var	meansMiddle	= "~";
+
+//	現在値を意味する値
+var	meansCurrent= "<";
+
+//	データが入っていないこと(void)を示す値
+var	meansVoid	= '"';		//	文字列プロパティの空文字列を示す
+
+//	補間方法
+var	interpolateTypes	= [
+	"none",
+	"linear",
+	"spline"
+];
+function array2idDict(array)
+{
+	var	dic	= %[];
+	for(var i=0; i<array.count; i++)
+		dic[array[i]]	= i;
+	return dic;
+}
+var	interpolate2id	= array2idDict(interpolateTypes);
+
+var	KeyDataExclusiveKeyDic	= %[currentKeys:true, visible:true, frame:true];
+	for(var i=0; i<KeyDataBasicKeys.count; i++) { KeyDataExclusiveKeyDic[KeyDataBasicKeys[i]] = true; }
+	for(var i=0; i<KeyDataSpecialKeys.count; i++) { KeyDataExclusiveKeyDic[KeyDataSpecialKeys[i]] = true; }
+
+//	キーフレーム
+class KeyData
+{
+	var	owner;		//	オーナー
+	var	frame;		//	フレーム番号
+	var	blank;		//	表示/非表示
+	var	tween;		//	次のキーフレームまで、トゥイーンするか
+	var	accel;		//	進行度の変化方法(accel値 / Equationsクラス)
+	var	interpolate;//	補間方法
+
+	var	defaultValues;
+
+	function KeyData(owner, frame, elm, keys, noblank, defaultValues)
+	{
+		this.owner	= owner;
+		this.frame	= frame;
+		blank		= true;
+		tween		= false;
+		accel		= 0;
+		interpolate	= "linear";
+		this.defaultValues	= defaultValues;
+		set(elm, keys, noblank);
+
+		//	プロパティが存在しないとき、missing を呼び出すように
+		Scripts.setCallMissing(this);
+	}
+
+	//	このオブジェクトに name メンバが存在しないときに呼び出される
+	function missing(is_set, name, value)
+	{
+//		dm("missing("+is_set+", "+name+", "+value+" = "+(value == void ? "void" : *value)+"): defaultValues["+name+"] = "+(name == void || defaultValues == void ? "void" : defaultValues[name]));
+		if(is_set)
+		{
+@if(!SIMPLE_TIMELINEDATA)
+			owner.isupdated	= true;
+@endif
+			return false;	//	通常の処理を実行(メンバを追加して、値を設定)
+		}
+		else
+		if(defaultValues != void)
+		{
+//			dm("missing get("+name+") = "+defaultValues[name]);//+" / "+Scripts.getTraceString());
+			*value = this[name]	= defaultValues[name];	//	初期値を返す
+		}
+		return true;
+	}
+
+	//	値を設定
+	function set(elm, keys, noblank=true)
+	{
+		if(elm != void)
+		{
+//			dm("set: "+keys.join(","));
+			if(typeof elm.blank != "undefined")
+				blank	= elm.blank;
+			else if(typeof elm.visible != "undefined")
+				blank	= !elm.visible;
+			else if(noblank !== void)
+				blank	= !noblank;
+			tween		= elm.tween if typeof elm.tween != "undefined";
+			accel		= elm.accel if typeof elm.accel != "undefined";
+			interpolate	= elm.interpolate if typeof elm.interpolate != "undefined";
+
+			for(var i=0; i<keys.count; i++)
+			{
+				var	key	= keys[i];
+				if(elm[key] == defaultValues[key])
+					delete this[key] if typeof this[key] != "undefined";
+				else
+					this[key]	= elm[key];
+			}
+		}
+	}
+/*
+	var	_blank;
+	property blank
+	{
+		setter(v)
+		{
+			global.dm("blank = "+blank+" → "+v+" / "+global.Scripts.getTraceString());
+			_blank	= v;
+		}
+		getter
+		{
+			global.dm("blank = "+_blank+" / "+global.Scripts.getTraceString());
+			return _blank;
+		}
+	}
+*/
+	//	値を初期化
+	function reset()
+	{
+		//	基本キーは変えないので、状態保存
+		var	state	= %[];
+		for(var i=0; i<global.KeyDataBasicKeys.count; i++)
+//			this[global.KeyDataBasicKeys[i]]	= global.KeyDataBasicInit[i];
+			state[global.KeyDataBasicKeys[i]]	= this[global.KeyDataBasicKeys[i]];
+
+		//	拡張キー
+		var	keys	= [];
+		keys.assign(defaultValues);
+		for(var i=0; i<keys.count; i+=2)
+			delete this[keys[i]] if typeof this[keys[i]] != "undefined";
+
+		//	特殊キー
+		for(var i=0; i<global.KeyDataSpecialKeys.count; i++)
+			delete this[global.KeyDataSpecialKeys[i]] if typeof this[global.KeyDataSpecialKeys[i]] != "undefined";
+
+		//	基本キーを元に戻す
+		for(var i=0; i<global.KeyDataBasicKeys.count; i++)
+			this[global.KeyDataBasicKeys[i]]	= state[global.KeyDataBasicKeys[i]];
+	}
+
+	//	辞書から値を設定
+	function setDictionary(dic)
+	{
+		if(dic != void)
+		{
+			var	keys= [];
+			keys.assign(dic);
+			for(var i=0; i<keys.count; i+=2)
+			{
+				var	key	= keys[i];
+				if(keys[i+1] == defaultValues[key])
+					delete this[key] if typeof this[key] != "undefined";
+				else
+					this[key]	= keys[i+1];
+			}
+		}
+	}
+
+@if(SIMPLE_TIMELINEDATA!=1)
+	//	中間を意味する値を設定
+	function setMiddle(keys)
+	{
+		for(var i=0; i<keys.count; i++)
+			this[keys[i]]	= global.meansMiddle;
+	}
+
+	//	コピー
+	function assign(src, keys)
+	{
+		for(var i=0; i<global.KeyDataBasicKeys.count; i++)
+			this[global.KeyDataBasicKeys[i]]	= src[global.KeyDataBasicKeys[i]];
+		var	lists	= [ keys, global.KeyDataSpecialKeys ];
+		for(var i=0; i<lists.count; i++)
+		{
+			var	list	= lists[i];
+			for(var i=0; i<list.count; i++)
+			{
+				var	key	= list[i];
+				if(src[key] === void)
+					delete this[key] if typeof this[key] != "undefined";
+				else
+					this[key]	= src[key];
+			}
+		}
+	}
+
+	//	状態の保存
+	//	in	: keys			保存に使用するキー
+	//	out	: Dictionary	状態を保存したデータ
+	function store(keys)
+	{
+		var	array	= [];
+		var	p	= 0;
+		array[p++]	= frame;
+		array[p++]	= blank;
+		array[p++]	= tween;
+		array[p++]	= accel;
+		array[p++]	= interpolate != void ? global.interpolate2id[interpolate] : 0;
+		var	lists	= [ keys, global.KeyDataSpecialKeys ];
+		for(var i=0; i<lists.count; i++)
+		{
+			var	list	= lists[i];
+			for(var i=0; i<list.count; i++)
+			{
+				var	type	= typeof this[list[i]];
+				if(type != "undefined")
+				{
+					var	value	= this[list[i]];
+					value		= +("%4.3f".sprintf(value)) if type == "Real";	//	ある程度丸める
+					array[p++]	= value;
+				}
+			}
+		}
+		return array;
+	}
+@endif
+	//	状態の復帰
+	//	in	: dic	状態
+	//		: keys	キー
+	//		: def	初期値/直前のフレーム
+	function restore(dic, keys, def)
+	{
+		if(dic instanceof "Dictionary")
+		{//	old ver.
+			var	lists	= [ keys, global.KeyDataBasicKeys, global.KeyDataSpecialKeys ];
+			for(var i=0; i<lists.count; i++)
+			{
+				var	list	= lists[i];
+				for(var i=0; i<list.count; i++)
+				{
+					var	key	= list[i];
+					this[key]	= (dic[key] !== void) ? dic[key] : def[key];
+				}
+			}
+		}
+		else if(dic instanceof "Array")
+		{
+			var	p	= 0;
+			if(dic[p] === null)
+				return false;		//	フレーム番号が null のキーフレームは破棄する
+			this.frame	= dic[p++];
+			var	lists	= [ global.KeyDataBasicKeys, keys, global.KeyDataSpecialKeys ];
+			for(var i=0; i<lists.count; i++)
+			{
+				var	list	= lists[i];
+				for(var i=0; i<list.count; i++, p++)
+				{
+					var	key	= list[i];
+@if(IS_TLE)
+					if(global.oldDataType)
+					{
+						if(key == "left")
+							key	= list[i] = "center";
+						else if(key == "top")
+							key	= list[i] = "vcenter";
+					}
+@endif
+					this[key]	= dic[p] !== null ? (dic[p] != "void" ? dic[p] : "") : def[key];
+//					global.dm(key+": dic["+p+"] = "+(dic[p] === null ? "null" : (dic[p] === void ? "void" : dic[p]))+" → "+this[key]);
+				}
+			}
+		}
+		interpolate	= global.interpolateTypes[interpolate === void ? 1 : int(interpolate)] if typeof interpolate != "String";
+		return true;
+	}
+
+	property visible
+	{
+@if(SIMPLE_TIMELINEDATA)
+		setter(v)	{ blank = !v; }	//	実行時に書き換える可能性がある
+@endif
+@if(!SIMPLE_TIMELINEDATA)
+		setter(v) {}	//	書き込みは無効(何もしない)
+@endif
+		getter { return !blank; }
+	}
+
+	//	基本、特殊キー以外のキーの、名前一覧(値が設定されているもののみ)
+	property currentKeys
+	{
+		getter
+		{
+			var	keys	= [];
+			var	data	= [];
+			data.assign(this);
+			for(var i=0; i<data.count; i+=2)
+			{
+				var	name	= data[i];
+				if(global.KeyDataExclusiveKeyDic[name] || typeof data[i+1] == "Object")
+					continue;
+//				global.Debug.message(name);
+				keys.add(name);
+			}
+			return keys;
+		}
+	}
+}
+
+//	タイムライン
+class TimeLineData
+{
+	var	owner;			//	オーナーとなるオブジェクト
+	var	frames	= [];	//	フレームデータ
+	var	_length;		//	フレームの長さ
+	var	keys;			//	補間対象となるキー
+	var	defaultValues;	//	初期値
+
+	var	isupdated;		//	キーフレームのパラメータが変更された
+@if(!SIMPLE_TIMELINEDATA)
+	var	currentFrame;			//	現在のフレーム
+	var	currentValues = %[];	//	currentFrame に対応する値を格納
+@endif
+	function TimeLineData(owner, defaultValues, keys)
+	{
+		this.owner	= owner;
+		if(keys != void)
+		{
+			this.keys	= keys;
+			init(defaultValues) if defaultValues != void;
+		}
+	}
+
+	function finalize()
+	{
+		invalidate frames;
+	}
+
+	//	初期化
+	function init(src=defaultValues)
+	{
+		//	初期値として保存する
+		if(src != void)
+			defaultValues	= src;
+
+		//	最初のフレームに空白キーフレームを挿入
+		if(frames[0] == void)
+			frames[0]	= createKey(0, src);
+	}
+
+	//	フレームの長さ
+	property length
+	{
+		getter { return _length; }
+		setter(v)
+		{
+//			dm("length = "+length+" → "+v);
+//			dm(Scripts.getTraceString());
+			var	fl	= frames.count > 0 ? lastKeyFrame.frame : 0;
+			v	= fl + 1 if v <= fl;
+			_length	= v if v !== length;
+		}
+	}
+
+	//	フレームの数
+	property count	{ getter { return frames.count; } }
+
+	//	最後のフレーム
+	property last	{ getter { return length - 1; } }
+
+	//	最後のキーフレーム
+	property lastKeyFrame	{ getter { return frames[frames.count-1]; } }
+
+	//	空白キーフレームを持たないか？
+	property noblank { getter { return owner.noblank; } }
+
+	//	中間値を持つプロパティかどうかを保持する辞書配列
+	property middleProperties { getter { return owner.middleProperties; } }
+
+	//	プロパティの値が直値かどうか判別(prop=afx で AffineLayer.AFFINEOFFSET_CENTER だったら false 等)
+	function isDirectValue(prop, value)	{ return owner.isDirectValue(prop, value); }
+
+	//	指定のインデックスのキーフレームを取得
+	function get(index)
+	{
+		if(index >= 0 && index < frames.count)
+			return frames[index];
+		else
+			return void;
+	}
+
+	//	指定のフレームのキーフレームを取得
+	function getByFrame(frame)
+	{
+		var	index	= searchIndex(frame);
+		if(index >= 0)
+			return frames[index];
+		else
+			return void;
+	}
+
+	//	キーフレームかどうか
+	//	in	: frame	フレーム番号
+	//	out	: キーフレームなら true
+	function isKeyFrame(frame)
+	{
+		return frame >= 0 && searchIndex(frame) >= 0;
+	}
+
+	//	指定フレームのインデックスを取得
+	//	in	: frame	フレーム番号
+	//	out	: フレーム番号にキーフレームがあればインデックスを、なければ挿入位置を示すインデックスを負数で返す
+	function searchIndex(frame)
+	{
+		var	l = 0, r = frames.count, i;
+		while(l < r)
+		{
+			i	= (l + r) >> 1;
+			if(frames[i].frame < frame)
+				l	= i + 1;
+			else
+				r	= i;
+		}
+		return frames[l] != void && frames[l].frame == frame ? l : -l;
+	}
+
+	//	指定フレーム以前に存在するキーフレームのインデックスを返す
+	//	in	: frame	フレーム番号
+	function getKeyFrameIndexLE(frame)
+	{
+		var	index	= searchIndex(frame);
+		if(index >= 0)
+			return index;
+		else
+			return -index - 1;
+	}
+
+	//	指定フレーム以降に存在するキーフレームのインデックスを返す
+	//	in	: frame	フレーム番号
+	function getKeyFrameIndexGE(frame)
+	{
+		var	index	= searchIndex(frame);
+		if(index >= 0)
+			return index;
+		else
+			return -index;
+	}
+
+	//	指定フレームに存在するキーフレームのインデックスを返す
+	//	in	: frame	フレーム番号
+	function getKeyFrameIndex(frame)
+	{
+		var	index	= searchIndex(frame);
+		if(index >= 0)
+			return index;
+		else
+			return void;
+	}
+
+	//	指定フレームに対応するキーフレームを取得
+	function getKeyFrame(frame)
+	{
+		var	index	= searchIndex(frame);
+		if(index >= 0)
+			return frames[index];
+		else
+			return void;
+	}
+
+	//	指定のフレームの指定プロパティに値を入れる
+	function setProperty(frame, prop, value)
+	{
+		var	kf	= getKeyFrame(frame);
+//		dm("setProperty("+frame+", "+prop+", "+value+"): "+kf[prop]);
+		if(kf != void && kf[prop] !== value)
+		{
+			kf[prop]	= value;
+@if(!SIMPLE_TIMELINEDATA)
+			currentValues[prop]	= value if frame === currentFrame;
+			isupdated	= true;
+@endif
+			return true;
+		}
+		else
+			return false;
+	}
+
+	//	指定の区間に存在するキーフレームを返す
+	function getKeyFrameBetween(from, to)
+	{
+		var	kfs	= [];
+		var	idx	= getKeyFrameIndexGE(from);
+		if(frames[idx] != void && frames[idx].frame <= to)
+		{
+			do
+			{
+				kfs.add(idx);
+				idx++;
+			}
+			while(frames[idx] != void && frames[idx].frame <= to);
+		}
+		return kfs;
+	}
+
+	//	指定の区間に存在するキーフレームのプロパティに値を入れる
+	function setPropertyBetween(from, to, prop, value)
+	{
+		var	idx	= getKeyFrameIndexGE(from);
+		if(frames[idx] != void && frames[idx].frame <= to)
+		{
+			do
+			{
+				frames[idx][prop]	= value;
+				idx++;
+			}
+			while(frames[idx] != void && frames[idx].frame <= to);
+@if(!SIMPLE_TIMELINEDATA)
+			currentValues[prop]	= value if from <= currentFrame && currentFrame <= to;
+@endif
+			return true;
+		}
+		else
+			return false;
+	}
+
+	//	すべてのキーフレームのプロパティに値を入れる
+	function setPropertyAllKeyFrame(prop, value)
+	{
+		for(var i=0; i<frames.count; i++)
+			frames[i][prop]	= value;
+@if(!SIMPLE_TIMELINEDATA)
+		delete currentValues[prop];
+@endif
+		return true;
+	}
+
+	//	指定のフレームの指定プロパティから値を取得
+	function getProperty(frame, prop)
+	{
+		var	frame	= getKeyFrame(frame);
+		if(frame != void)
+			return frame[prop];
+		else
+			return void;
+	}
+
+	//	直前のキーフレーム番号を取得
+	//	in	: frame	フレーム番号
+	//	out	: フレーム番号
+	function getPreviousKeyFrameIndex(frame)
+	{
+		var	index	= searchIndex(frame);
+		if(index > 0)
+			return index - 1;
+		else if(index < 0)
+			return -index - 1;
+		else
+			return 0;
+	}
+
+	//	直前のキーフレームを取得
+	//	in	: frame	フレーム番号
+	//	out	: キーフレーム
+	function getPreviousKeyFrame(frame)
+	{
+		return frames[getPreviousKeyFrameIndex(frame)];
+	}
+
+	//	直後のキーフレーム番号を取得
+	//	in	: frame	フレーム番号
+	//	out	: フレーム番号
+	function getNextKeyFrameIndex(frame)
+	{
+		var	index	= searchIndex(frame);
+		if(index >= 0)
+		{
+			index++;
+//			return index < frames.count ? index : void;	//	範囲外の時は void を返す
+			return index;								//	範囲外の時は、範囲外の値(=frames.count)を返す
+		}
+		else
+			return -index;
+	}
+
+	//	直後のキーフレームを取得
+	//	in	: frame	フレーム番号
+	//	out	: キーフレーム
+	function getNextKeyFrame(frame)
+	{
+		return frames[getNextKeyFrameIndex(frame)];	//	最後のキーフレーム以降のフレームを指定すると、void を返すことがある
+	}
+
+	//	キーフレームの作成
+	//	in	: frame	フレーム番号
+	//		: src	元データ
+	function createKey(frame, src)
+	{
+		if(frame >= length)
+			length	= frame + 1;
+
+		return new KeyData(this, frame, src, keys, noblank, defaultValues);
+	}
+@if(SIMPLE_TIMELINEDATA!=1)
+	//	キーフレームのコピー
+	//	in	: frame		フレーム番号(キーフレームインデックス)
+	//		: src		元データ
+	//		: isIndex	true なら、frame はキーフレームインデックス
+	function assignKey(frame, src, isIndex=false)
+	{
+		if(isIndex)
+			frames[frame].assign(src, keys);
+		else
+		{
+			var	idx	= searchIndex(frame);
+			if(idx >= 0)
+				frames[idx].assign(src, keys);
+			else
+				frames.insert(-idx, createKey(frame, src));	//	キーフレームがなかったので、キーを作成
+		}
+	}
+
+	//	キーフレームを初期化する
+	//	in	: frame		フレーム番号(キーフレームインデックス)
+	//		: isIndex	true なら、frame はキーフレームインデックス
+	function initKey(frame, isIndex=false)
+	{
+		if(isIndex)
+			frames[frame].set(defaultValues, keys);
+		else
+		{
+			var	idx	= searchIndex(frame);
+			if(idx >= 0)
+				frames[idx].set(defaultValues, keys);
+			else
+				frames.insert(-idx, createKey(frame, defaultValues));
+		}
+	}
+@endif
+	//	キーフレームの間にキーフレームを作成
+	//	in	: frame	フレーム番号
+	function addInKey(frame)
+	{
+		//	挿入位置の直前のキーフレームが tween しているか
+		var	prev	= getPreviousKeyFrame(frame);
+		var	key		= createKey(frame, prev);
+
+		//	この区間が tween しているなら、
+		var	next	= getNextKeyFrame(frame);
+		if(prev.tween && next != void)
+		{
+@if(FIXED_MEANMIDDLE)
+			//	前後のキーフレームに"~"が入っていれば、その値を確定させる
+			var	ks	= [ prev, next ];
+			for(var i=0; i<ks.count; i++)
+			{
+				var	kf	= ks[i];
+				var	fs	= getFrameState(kf.frame);
+				for(var i=0; i<keys.count; i++)
+					kf[keys[i]]	= fs[keys[i]] if prev[keys[i]] == meansMiddle;
+			}
+@endif
+			//	中間値を取るものは中間値を示す値を入れる
+			for(var i=0; i<keys.count; i++)
+				key[keys[i]]	= meansMiddle if middleProperties[keys[i]];
+		}
+		return key;
+	}
+
+	//	指定フレームにおける進行度を取得
+	//	in	: frame		フレーム番号
+	//		: prop		プロパティ名
+	function getProgress(frame, prop)
+	{
+		//	指定フレームを構成するキーフレームを探す
+		var	sindex	= getKeyFrameIndexLE(frame);
+		while(sindex > 0 && frames[sindex][prop] === meansMiddle)
+			sindex--;
+		var	key1	= frames[sindex];
+
+		//	次の、値をもつキーフレームを探す
+		var	eindex		= getKeyFrameIndexGE(key1.frame == frame ? frame + 1 : frame);
+		while(eindex < frames.count && frames[eindex][prop] === meansMiddle)
+			eindex++;
+		if(eindex == frames.count)
+			return 1;
+		var	key2	= frames[eindex];	// 値を持つ次のキーフレーム
+
+		return (frame - key1.frame) / (key2.frame - key1.frame);
+	}
+
+	//	指定フレームにおける、指定プロパティの値を取得
+	//	in	: frame			フレーム番号
+	//		: prop			プロパティ名
+	//		: index			フレームに対応するインデックス
+	//		: nomid			中間値を取るかどうかを無視する
+	//	out	: Real/String	値
+	function getValueInFrame(frame, prop, index, nomid=false)
+	{
+@if(!SIMPLE_TIMELINEDATA)
+		//	キャッシュに残っていれば、それを返す
+		if(currentFrame === frame)
+		{
+			if(typeof currentValues[prop] != "undefined")
+			{
+//				dm("return cache: "+prop+" = "+currentValues[prop]) if prop == "center";
+				return currentValues[prop];
+			}
+		}
+		else
+		{
+			currentFrame	= frame;
+			(Dictionary.clear incontextof currentValues)();
+		}
+//		dm("calc: "+prop);
+@endif
+		//	フレームに対応するインデックス
+		var	sindex;
+		if(index !== void)
+		{
+			if(index >= 0)
+				sindex	= index;
+			else
+				sindex	= -index - 1;
+		}
+		else
+			sindex	= getKeyFrameIndexLE(frame);
+		var	eindex	= sindex + 1;
+
+		//	指定フレームを構成するキーフレームを探す
+		while(sindex > 0 && frames[sindex][prop] === meansMiddle)
+			sindex--;
+
+		//	指定のフレームにキーフレームが存在するか中間値を取らないプロパティなら、開始キーフレームの状態とする
+		var	key1	= frames[sindex];
+		if(key1.frame == frame || (!middleProperties[prop] && !nomid))
+@if(SIMPLE_TIMELINEDATA)
+			return typeof key1[prop] != "undefined" ? key1[prop] : void;
+@endif
+@if(!SIMPLE_TIMELINEDATA)
+			return (currentValues[prop] = typeof key1[prop] != "undefined" ? key1[prop] : void);
+@endif
+		//	次の、値をもつキーフレームを探す
+		while(eindex < frames.count && frames[eindex][prop] === meansMiddle)
+			eindex++;
+
+		//	終了キーフレームが存在しないかトゥイーンが設定されていなければ、開始キーフレームの状態とする
+		var	ip	= key1.interpolate[0];
+@if(ENABLED_BLANK_TWEEN)
+		if(!key1.tween || ip == "n" || eindex == frames.count)
+@endif
+@if(!ENABLED_BLANK_TWEEN)
+		if(!key1.tween || ip == "n" || eindex == frames.count || (!noblank && frames[eindex].blank))
+@endif
+@if(SIMPLE_TIMELINEDATA)
+			return typeof key1[prop] != "undefined" ? key1[prop] : void;
+@endif
+@if(!SIMPLE_TIMELINEDATA)
+			return (currentValues[prop] = typeof key1[prop] != "undefined" ? key1[prop] : void);
+@endif
+		var	key2	= frames[eindex];	// 値を持つ次のキーフレーム
+
+		//	前後何れかの値が直値でなければ、中間値を返さない
+		//	→	さすがに現実的ではないので、予測される値を返すことにする？
+		//		実環境の方もそのようにする
+		var	value1	= key1[prop];
+		var	value2	= key2[prop];
+		if(value1 == value2 || !isDirectValue(prop, value1) || !isDirectValue(prop, value2))
+@if(SIMPLE_TIMELINEDATA)
+			return value1;
+@endif
+@if(!SIMPLE_TIMELINEDATA)
+			return (currentValues[prop] = value1);
+@endif
+
+		//	進行度を得る
+		var	cur, len, per, accel = key1.accel;
+/*
+		//	一応下記のスクリプトで、区間をまたぐ加速度を設定できるが、
+		//	中間のキーフレームを再度設定するのが難しくなるなど、副作用が大きい
+		if(accel == 999 || key2.accel == 999)
+		{
+			//	前の加速を継続する形になるので、前後のキーフレームを捜す
+			var	fi, ti, fk = frames[0], tk = frames[last];
+			for(fi=sindex; fi>=0; fi--)
+			{
+				fk	= frames[fi];
+				if(fk.accel != 999)
+					break;
+			}
+			accel	= fk.accel;
+			for(ti=eindex; ti<last; ti++)
+			{
+				tk	= frames[ti];
+				if(tk.accel != 999)
+					break;
+			}
+
+			//	開始から終了までの進行度を取得
+			cur	= frame - fk.frame;
+			len	= tk.frame - fk.frame;
+			per	= cur / len;
+			per	= equations.calc(+accel, cur, 0, 1, len) if accel != void;
+			dm(fi+"("+fk.frame+")→"+ti+"("+tk.frame+"): "+cur+", "+len+", "+per) if prop == "center";
+
+			//	進行度に対応するキー区間を取得
+			cur	= len * per + fk.frame;
+			sindex	= fi;
+			for(; sindex < ti; sindex++)
+			{
+				if(frames[sindex+1].frame > cur)
+					break;
+			}
+			eindex	= sindex+1;
+			dm("cur = "+cur+": "+sindex+"→"+eindex);
+
+			//	中間値を示すキーなら前後に移動する
+			while(sindex >= fi && frames[sindex][prop] === meansMiddle)
+				sindex++;
+			while(eindex <= ti && frames[eindex][prop] === meansMiddle)
+				eindex++;
+			key1	= frames[sindex];
+			key2	= frames[eindex];
+			value1	= key1[prop];
+			value2	= key2[prop];
+
+			//	進行度を対応するキー区間内の値に調整する
+			cur	-= key1.frame;
+			per	= cur / (key2.frame - key1.frame);
+		}
+		else
+*/		{
+			cur	= frame - key1.frame;
+			len	= key2.frame - key1.frame;
+			per	= cur / len;
+			per	= equations.calc(+accel, cur, 0, 1, len) if accel != void;
+		}
+
+		//	中間値を返す
+		var	value	= void;
+		switch(ip)
+		{
+		case "l":	//	線形補間
+			value	= value1 + (value2 - value1) * per;	//	線形補間
+			break;
+
+		case "s":	//	スプライン補間
+			//	実行時は、最初だけワークを作成する。
+@if(SIMPLE_TIMELINEDATA)
+			if(work == void)
+@endif
+@if(!SIMPLE_TIMELINEDATA)
+			//	編集時には、値が変化していたら作成しなおす
+			if(work == void || isupdated)
+@endif
+				updateWork();
+			if(work[sindex] != void)
+			{
+@if(!SIMPLE_TIMELINEDATA)
+				updateWork() if work[sindex] == void || work[eindex] == void;	//	work がないときは、計算する
+@endif
+				var	work1 = work[sindex][prop], work2 = work[eindex][prop];
+				value	= (((work2 - work1) * per + work1*3) * per +
+							((value2 - value1) - (work1*2 + work2))) * per + value1;
+			}
+			else
+				value	= value1 + (value2 - value1) * per;	//	ポイントが足りないので線形補間を行う
+			break;
+		}
+//		dm(frame+": frames["+sindex+"]("+key1.frame+") "+value1+"/"+ip+" →frames["+eindex+"]("+key2.frame+") "+value2+" = "+cur+", "+len+", "+per+" => "+value) if prop == "center";
+@if(SIMPLE_TIMELINEDATA)
+		return value;
+@endif
+@if(!SIMPLE_TIMELINEDATA)
+		return (currentValues[prop] = value);
+@endif
+	}
+
+	//	指定フレームでの状態
+	//	in	: frame	フレーム番号
+	//	out	: 状態
+	function getFrameState(frame)
+	{
+		var	kfno	= getKeyFrameIndexLE(frame);
+		var	key1	= frames[kfno];
+		if(frame == key1.frame)
+			return key1;
+
+		var	data = %[
+			frame:frame,
+			blank:key1.blank && !noblank,
+			visible:key1.visible,
+			tween:key1.tween,
+			accel:key1.accel,
+			interpolate:key1.interpolate
+		];
+		for(var i=0; i<keys.count; i++)
+		{
+			if(middleProperties[keys[i]])
+				data[keys[i]]	= getValueInFrame(frame, keys[i]);
+			else
+				data[keys[i]]	= key1[keys[i]];
+		}
+
+		return data;
+	}
+
+	//	指定区間の、指定プロパティの値を取得
+	function getIntervalStates(st, ed, props=[], nomid=false, addlast_keyframe=false)
+	{
+		st	= 0 if st < 0;
+		ed	= last if ed > last;
+
+		var	list	= [];
+		for(var i=ed-st; i>=0; i--)
+			list.add([]);
+
+		var	_sindex	= getKeyFrameIndexLE(st);
+		var	lf		= lastKeyFrame.frame;
+		for(var i=0; i<props.count; i++)
+		{
+			var	prop	= props[i];
+
+			//	指定フレームを構成するキーフレームを探す
+			var	sindex	= _sindex;
+			var	eindex	= sindex;
+			while(sindex > 0 && frames[sindex][prop] === meansMiddle)
+				sindex--;
+			eindex++;
+			while(eindex < frames.count && frames[eindex][prop] === meansMiddle)
+				eindex++;
+
+			for(var f=st; f<=ed; f++)
+			{
+				//	補間する必要がなければ、最初の値を返す
+				var	key1 = frames[sindex], value1 = key1[prop];
+				var	key2 = frames[eindex];
+				if(f > lf || key2 == void)
+				{//	最後のキーフレームよりフレームが長いときは、最後のキーフレームの値を返す
+					list[f-st][i]	= value1;
+					continue;
+				}
+				var	value2 = key2[prop];
+				if(key2.frame == f)
+				{
+					sindex	= eindex;
+					eindex++;
+					while(eindex < frames.count && frames[eindex][prop] === meansMiddle)
+						eindex++;
+					list[f-st][i]	= value2;
+					continue;
+				}
+				if( key1.frame == f ||
+					(!middleProperties[prop] && !nomid) ||
+					!key1.tween ||
+					key1.interpolate[0] == "n" ||
+					eindex == frames.count ||
+@if(!ENABLED_BLANK_TWEEN)
+					(!noblank && frames[eindex].blank) ||
+@endif
+					value1 == value2 ||
+					!isDirectValue(prop, value1) ||
+					!isDirectValue(prop, value2))
+				{
+					list[f-st][i]	= value1;
+					continue;
+				}
+
+				var	cur		= f - key1.frame;
+				var	len		= key2.frame - key1.frame;
+				var	per		= cur / len;
+				if(key1.accel != void)
+					per	= equations.calc(+key1.accel, cur, 0, 1, len);
+
+				var	ip	= key1.interpolate[0];
+				if(ip == "l")
+					value1	+= (value2 - value1) * per;
+				else if(ip == "s")
+				{
+					if(work == void || isupdated)
+						updateWork();
+					if(work.count > 0)
+					{
+						//	キーフレームを追加した直後は、isupdated=false のままで work の準備ができていないので、
+						//	兆候が見えたら work を作成しなおす
+						updateWork() if work[sindex] == void || work[eindex] == void;
+						var	work1 = work[sindex][prop], work2 = work[eindex][prop];
+						value1	= (((work2 - work1) * per + work1*3) * per +
+										((value2 - value1) - (work1*2 + work2))) * per + value1;
+					}
+					else
+						value1	+= (value2 - value1) * per;
+				}
+				list[f-st][i]	= value1;
+
+				if(key2.frame == f)
+				{
+					sindex	= eindex;
+					eindex++;
+					while(eindex < frames.count && frames[eindex][prop] === meansMiddle)
+						eindex++;
+				}
+			}
+		}
+
+		//	最後にキーフレームのフレームと番号を入れる
+		if(addlast_keyframe)
+		{
+			for(var i=_sindex; i<frames.count; i++)
+			{
+				var	f	= frames[i].frame;
+				if(f < st)
+					continue;
+				if(f > ed)
+					break;
+				with(list[f-st])
+					.add(f), .add(i);
+			}
+		}
+
+		return list;
+	}
+
+	//	スプライン補間用のワークを更新
+	var	work;	//	[ %[ left:1], void, void, %[left:2], void ] といった形式
+	function updateWork()
+	{
+		if(work == void)
+			work	= [];
+		else
+		{
+			for(var i=0; i<work.count; i++)
+				invalidate work[i] if work[i] != void;
+			work.clear();
+		}
+
+		//	キーフレームが3つ以上ないと、スプライン補間できない
+		var	points	= frames.count;
+		if(points < 3)
+			return;
+
+		//	キーフレームの番号をリスト化
+		for(var i=0; i<frames.count; i++)
+			work[i]	= %[];	//	値を保管する辞書
+
+		//	各キー毎にワークを更新
+		for(var i=0; i<keys.count; i++)
+		{
+			var	n	= keys[i];
+			if(!middleProperties[n])
+				continue;	//	補間しない要素なので、次へ
+			var	tmp	= [];
+			work[0][n]	= 0;
+			work[points - 1][n]	= 0;
+
+			var	lim	= points - 2;
+			for(var i=lim; i>=0; i--)
+				tmp[i+1]	= frames[i+1][n] - frames[i][n];
+
+			work[1][n]	= tmp[2] - tmp[1] - work[0][n];
+			tmp[1]	= 4;
+
+			for(var i=1; i<lim; i++)
+			{
+				var	x	= i / tmp[i];
+				work[i+1][n]	= tmp[i+2] - tmp[i+1] - tmp[i] * x;
+				tmp[i+1]	= 4 - x;
+			}
+
+			work[lim][n]	-= work[lim+1][n];
+
+			for(var i=lim; i>0; i--)
+				work[i][n]	= (work[i][n] - work[i+1][n]) / tmp[i];
+		}
+
+		isupdated	= false;
+	}
+
+@if(SIMPLE_TIMELINEDATA!=1)
+	//	キーフレームの値を設定する
+	//	in	: frame		フレーム番号(キーフレームインデックス)
+	//		: elm		データ
+	//		: isIndex	true なら frame はキーフレームーインデックス
+	function setKeyFrame(frame, elm, isIndex=false)
+	{
+		if(isIndex)
+			frames[frame].set(elm, keys) if (frame >= 0 && frame < frames.count);
+		else
+		{
+			var	index	= searchIndex(frame);
+//			dm("setKeyFrame("+frame+", elm, "+isIndex+"): index = "+index+" / frames.count = "+frames.count);
+//			dispDictionary(elm);
+			if(index < 0 || frames[index] == void)
+			{
+				var	kf	= elm == void ? addInKey(frame) : createKey(frame, elm);
+				if(frames.count > -index)
+					frames.insert(-index, kf);
+				else
+					frames.add(kf);
+			}
+			else
+				frames[index].set(elm, keys);
+		}
+	}
+
+	//	キーフレームに辞書配列から設定
+	//	in	: frame		フレーム番号(キーフレームインデックス)
+	//		: values	データ
+	//		: isIndex	true なら frame はキーフレームーインデックス
+	function setDictionary(frame, values, isIndex=false)
+	{
+		if(isIndex)
+			frames[frame].setDictionary(values) if (frame >= 0 && frame < frames.count);
+		else
+		{
+			var	index	= searchIndex(frame);
+			if(index < 0)
+			{
+				var	kf	= values == void ? addInKey(frame) : createKey(frame, values);
+				if(frames.count > -index)
+					frames.insert(-index, kf);
+				else
+					frames.add(kf);
+			}
+			else if(values != void)
+				frames[index].setDictionary(values);
+		}
+@if(!SIMPLE_TIMELINEDATA)
+		(Dictionary.clear incontextof currentValues)();
+@endif
+	}
+
+	//	全てのキーフレームのプロパティを設定
+	//	in	: prop		プロパティ名
+	//		: value		値
+	function setAllKeyFrame(prop, value)
+	{
+		if(typeof prop == "String")
+		{
+			for(var i=0; i<frames.count; i++)
+				frames[i][prop]	= value;
+@if(!SIMPLE_TIMELINEDATA)
+			delete currentValues[prop];
+@endif
+		}
+		else
+		{
+			for(var i=0; i<frames.count; i++)
+			{
+				var	f	= frames[i];
+				for(var i=0; i<prop.count; i++)
+					f[prop[i]]	= value[i];
+			}
+@if(!SIMPLE_TIMELINEDATA)
+			for(var i=0; i<prop.count; i++)
+				delete currentValues[prop];
+@endif
+		}
+	}
+
+	//	全てのキーフレームのプロパティを獲得
+	//	in	: prop		プロパティ名
+	//	out	: 値の列挙配列
+	function getAllKeyFrame(prop)
+	{
+		var tmp = %[];
+		var ary = [];
+		var value = [];
+		if(typeof prop == "String")
+		{
+			for(var i=0; i<frames.count; i++)
+			{
+				var val = frames[i][prop];
+				if( val !== void && val != "" )
+					tmp[val] = true;
+			}
+			ary.assign(tmp);
+			for(var i=0; i<ary.count; i+=2)
+				value.add(ary[i]);
+		}
+		return value;
+	}
+
+	//	キーフレームの挿入
+	//	in	: frame		フレーム番号
+	//		: blank		強制的に空白キーフレームにするか(default: false)
+	//		: jostle	キーフレームが既に存在していたら押し分ける(default: true)
+	//	memo: 指定フレームの状態に沿ったキーフレームを挿入する
+	function insertKeyFrame(frame, blank=false, jostle=true)
+	{
+		var	index	= searchIndex(frame);
+
+		//	既にキーフレームが存在しており、
+		if(index >= 0)
+		{
+			if(!jostle)
+				return frames[index];
+			//	次のフレームにもキーフレームが存在していたら
+			if(frames[index+1] != void && frames[index+1].frame == frame + 1)
+				return void;	//	キーフレームを挿入しない
+			frame++;
+			index++;
+		}
+		else
+			index	= -index;
+
+		var	kf	= addInKey(frame);
+		kf.blank	= blank;
+		frames.insert(index, kf);	//	フレームの状態に沿ったキーフレームを挿入
+		return kf;
+	}
+
+	//	特定フレームの移動
+	//	in	: from	移動するフレームの番号
+	//		: to	移動先のフレーム番号
+	//	memo: 移動先にキーフレームがあれば、上書きされる
+	//		: 移動元にキーフレームがなければ、追加される
+	//		: このとき、移動元の直前のキーフレームと同じ状態の新たなキーフレームが追加される
+	function moveKeyFrame(from, to)
+	{
+		var	findex	= searchIndex(from);
+		var	tindex	= searchIndex(to);
+
+		//	移動するキーフレーム(存在しなれば、新しく作成)
+		var	kf	= findex >= 0 ? frames[findex] : createKey(to, getPreviousKeyFrame(from));
+
+		//	上書き、もしくは挿入
+		if(tindex >= 0)
+		{
+			invalidate frames[tindex];
+			frames[tindex]	= kf;
+		}
+		else
+			frames.insert(tindex, kf);
+
+		//	移動元を破棄する
+		if(findex >= 0)
+			frames.erase(findex > Math.abs(tindex) ? findex - 1 : findex);
+
+		correctFrame();	//	フレームの訂正
+	}
+
+	//	キーフレームの削除
+	//	in	: from	削除する区間の開始フレーム番号
+	//		: to	削除する区間の終了フレーム番号
+	//	memo: 区間に存在するキーフレームを削除する
+	function deleteKeyFrame(from, to)
+	{
+		//	区間を整理
+		to	= from if to === void;
+		from <-> to if from > to;
+		to	= last if to > last;
+
+		//	削除前後のキーフレーム
+		var	prev	= getPreviousKeyFrameIndex(from);
+		var	next	= getNextKeyFrameIndex(to);
+		if(prev + 1 == next)
+			return false;	//	削除するキーフレームが存在しない
+
+		//	削除する区間の直前・直後のキーフレームに、中間を表す値が入っているなら、
+		//	実際の値に変更する
+		var	prevkey	= frames[prev];
+		var	nextkey	= next !== void ? frames[next] : void;
+		for(var i=0; i<keys.count; i++)
+		{
+			if(prevkey[keys[i]] === meansMiddle)
+				prevkey[keys[i]]	= getValueInFrame(prev, keys[i]);
+			if(nextkey != void && nextkey[keys[i]] === meansMiddle)
+				nextkey[keys[i]]	= getValueInFrame(next, keys[i]);
+		}
+
+		//	キーフレームを削除
+		for(var i=next-1; i>prev; i--)
+		{
+			invalidate frames[i];
+			frames.erase(i);
+		}
+
+@if(!SIMPLE_TIMELINEDATA)
+		currentFrame	= void if from <= currentFrame && currentFrame <= to;
+@endif
+		correctFrame();	//	フレームの訂正
+
+		return true;
+	}
+
+	//	最後のキーフレーム以外を削除
+	function deleteKeyFrameWithoutLast()
+	{
+		while(frames.count > 1)
+		{
+			invalidate frames[0];
+			frames.erase(0);
+		}
+		frames[0].frame	= 0;
+		length	= 1;
+@if(!SIMPLE_TIMELINEDATA)
+		currentFrame	= void;
+@endif
+		correctFrame();	//	フレームの訂正
+	}
+
+	//	キーフレーム化
+	//	in	: from	変換する区間の開始フレーム番号
+	//		: to	変換する区間の終了フレーム番号
+	//		: blank	空白キーフレームか(default:false)
+	function changeKeyFrame(from, to, blank=false)
+	{
+		//	区間を整理
+		to	= from if to === void;
+		from <-> to if from > to;
+
+/*		//	全てのキーフレームがblankにならないようにチェックする
+		if(blank)
+		{
+			var	nb	= false;
+			for(var i=0; i<frames.count; i++)
+			{
+				if((frames[i].frame < from || frames[i].frame > to) && !frames[i].blank)
+				{
+					nb	= true;
+					break;
+				}
+			}
+			if(!nb)
+			{
+				popupMessage("全てのキーフレームを空白キーフレームにすることは出来ません。") if typeof global.popupMessage != "undefined";
+				return;
+			}
+		}
+*/
+		for(var i=from; i<=to; i++)
+		{
+			var	index	= searchIndex(i);
+			if(index >= 0)
+				frames[index].blank	= noblank ? false : blank;
+			else
+			{
+				var	key	= addInKey(i);
+				key.blank	= noblank ? false : blank;
+				frames.insert(-index, key);
+			}
+@if(!SIMPLE_TIMELINEDATA)
+			currentFrame	= void if frames[index].frame === currentFrame;
+@endif
+		}
+
+		correctFrame();	//	フレームの訂正
+	}
+
+	//	キーフレームを初期化
+	//	in	: from	変換する区間の開始フレーム番号
+	//		: to	変換する区間の終了フレーム番号
+	function resetKeyFrame(from, to)
+	{
+		//	区間を整理
+		to	= from if to === void;
+		from <-> to if from > to;
+
+		var	fidx	= getKeyFrameIndexGE(from);
+		for(var i=fidx; i<frames.count; i++)
+		{
+			if(frames[i].frame > to)
+				break;
+@if(!SIMPLE_TIMELINEDATA)
+			currentFrame	= void if frames[i].frame === currentFrame;
+@endif
+			frames[i].reset();
+		}
+
+		correctFrame();	//	フレームの訂正
+	}
+
+	//	キーフレームのプロパティをmeansMiddleに設定
+	//	in	: from		変換する区間の開始フレーム番号
+	//		: to		変換する区間の終了フレーム番号
+	//		: ismiddle	中間値を取るプロパティならtrue
+	function setMiddleToKeyFrame(from, to, ismiddle)
+	{
+		//	区間を整理
+		to	= from if to === void;
+		from <-> to if from > to;
+
+		var	fidx	= getKeyFrameIndexGE(from);
+		for(var i=fidx; i<frames.count; i++)
+		{
+			if(frames[i].frame > to)
+				break;
+			for(var j=0; j<keys.count; j++)
+				frames[i][keys[j]]	= meansMiddle if ismiddle[keys[j]];
+@if(!SIMPLE_TIMELINEDATA)
+			currentFrame	= void if frames[i].frame === currentFrame;
+@endif
+		}
+	}
+
+	//	キーフレームの入れ替え
+	function swapKeyFrame(idx1, idx2)
+	{
+		frames[idx1] <-> frames[idx2];
+		frames[idx1].frame <-> frames[idx2].frame;
+@if(!SIMPLE_TIMELINEDATA)
+		currentFrame	= void if frames[idx1].frame === currentFrame || frames[idx2].frame === currentFrame;
+@endif
+	}
+
+	// 構造体の比較		KWidgets KUtils.tjs から移植(これだけTimeLineData内で使用しているため)
+	function equalStruct(s1, s2)
+	{
+		if(s1 instanceof "Array" && s2 instanceof "Array" && s1.count == s2.count)
+		{
+			for( var i = 0; i < s1.count; i++)
+			{
+				if(s1[i] instanceof "Array" || s1[i] instanceof "Dictionary")
+				{
+					if (! equalStruct(s1[i], s2[i]))
+						return false;
+				}
+				else
+				{
+					if(s1[i] !== s2[i])
+						return false;
+				}
+			}
+		}
+		else if(s1 instanceof "Dictionary" && s2 instanceof "Dictionary")
+		{
+			var key1, key2;
+			(key1 = []).assign(s1);
+			(key2 = []).assign(s2);
+
+			if(key1.count != key2.count)
+				return false;
+			var i;
+			for(var i = 0; i < key1.count; i+= 2)
+			{
+				var key = key1[i];
+				if(s1[key] instanceof "Array" || s1[key] instanceof "Dictionary")
+				{
+					if(! equalStruct(s1[key], s2[key]))
+						return false;
+					else if(s1[key] !== s2[key])
+						return false;
+				}
+			}
+		}
+		else
+			return false;
+	}
+
+	//	区間フレームの挿入
+	//	in	: from	挿入する区間の開始フレーム番号
+	//		: to	挿入する区間の終了フレーム番号
+	//	memo: from の位置に空白のフレームを区間の長さ分挿入する
+	function insertZone(from, to)
+	{
+		//	区間を整理
+		to	= from if to === void;
+		from <-> to if from > to;
+
+		if(from > last)
+			length	= to + 1;
+		else
+		{
+			var	ins		= to - from + 1;	//	挿入されるフレーム数
+
+			//	挿入位置以降のキーフレームを、挿入されるフレーム数分ずらす
+			var	findex	= searchIndex(from);
+			findex	= -findex if findex < 0;
+			for(var i=findex; i<frames.count; i++)
+				frames[i].frame	+= ins;
+			length	+= ins;
+
+			//	フレームの先頭に挿入したために、0フレームにキーフレームが存在しない状態になったら、
+			if(from == 0)
+				init();	//	基本のフレームを挿入する
+
+@if(!SIMPLE_TIMELINEDATA)
+			currentFrame	= void if from <= currentFrame;
+@endif
+		}
+	}
+
+	//	区間フレームの移動
+	//	in	: from_st	移動する区間の開始フレーム番号
+	//		: from_ed	移動する区間の終了フレーム番号
+	//		: to		移動先のフレーム番号
+	//	memo: 移動区間のキーフレームをコピーして、移動先に貼り付ける。
+	//		: 移動元のキーフレームは削除される(クリア=空白キーフレームの挿入ではない)
+	function moveZone(from_st, from_ed, to)
+	{
+//		dm("moveZone("+from_st+", "+from_ed+", "+to+")");
+		from_st <-> from_ed if from_st > from_ed;
+
+		//	移動元の区間を複製
+		var	buf	= copyZone(from_st, from_ed);
+
+		//	移動元のキーフレームを削除
+		deleteKeyFrame(from_st, from_ed);
+
+		//	移動先に上書き
+		return pasteZone(to,, buf);
+	}
+
+	//	区間フレームの削除
+	//	in	: from	削除する区間の開始フレーム番号
+	//		: to	削除する区間の終了フレーム番号
+	//	memo: フレームのみ削除する
+	//		: 削除区間のキーフレームは削除開始フレームへ移動するが、既にキーフレームが存在する場合は破棄される
+	//		: 複数のキーフレームが存在した場合、一番最後のキーフレームが残る
+	function deleteZone(from, to)
+	{
+		//	区間を整理
+		to	= from if to === void;
+		from <-> to if from > to;
+		to	= last if to > last;
+
+		//	削除区間の一番最後のキーフレーム
+		var	idx	= getKeyFrameIndexLE(to);
+		var	pkf	= frames[idx];
+		if(pkf.frame >= from && (idx+1 >= frames.count || frames[idx+1].frame != to + 1))
+			idx--;	//	開始位置より先で、次のキーフレームが削除区間の次のフレームでない場合、一番最後のキーフレームは残す
+		else
+			pkf	= void;
+
+		//	from から delto までの区間のキーフレームを破棄
+		for(; idx>=0; idx--)
+		{
+			if(frames[idx].frame < from)
+				break;
+			invalidate frames[idx];
+			frames.erase(idx);
+		}
+
+		//	一番最後のキーフレームのフレーム位置を、削除開始位置へ移動
+		idx++;
+		if(pkf != void)
+		{
+			pkf.frame	= from;
+			idx++;
+		}
+
+		//	以降のキーフレームのフレーム位置をずらす
+		var	del	= to - from + 1;
+		for(; idx<frames.count; idx++)
+			frames[idx].frame	-= del;
+		length	-= del;
+		var	last	= lastKeyFrame.frame;
+		length	= last + 1 if last >= length;
+
+		//	フレームの先頭を含む部分を削除したために、0フレームにキーフレームが存在しない状態になったら、
+		if(from == 0)
+			init();	//	基本のフレームを挿入する
+
+@if(!SIMPLE_TIMELINEDATA)
+		currentFrame	= void if from <= currentFrame;
+@endif
+		correctFrame();	//	フレームの訂正
+	}
+
+	//	区間フレームのコピー
+	//	in	: from	指定区間の開始フレーム番号
+	//		: to	指定区間の終了フレーム番号
+	//	out	: コピーしたフレームデータ
+	//	memo: 指定区間を一時領域へコピー
+	//		: 一度にコピーできるのは一つだけ
+	function copyZone(from, to)
+	{
+		//	区間を整理
+		to	= from if to === void;
+		from <-> to if from > to;
+		to	= last if to > last;
+
+		//	区間に存在するキーフレームをコピーする
+		var	buf	= [];		//	バッファ
+		buf.add(to - from + 1);		//	実際の長さ(キーフレームが存在しないものも含め)を入れておく
+		buf.add(owner.className);	//	元々のオーナーのクラス名(ファイルに保存するために、keys と defaultValues が必要なので)
+
+		//	コピーする区間の先頭がキーフレームでなければ、区間の直前にあるキーフレームを先頭に置く
+		var	findex	= getKeyFrameIndexLE(from);
+		if(frames[findex].frame < from)
+		{
+			buf.add(createKey(0, frames[findex]));	//	最初のフレームのフレーム番号は必ず 0
+			findex++;
+		}
+
+		//	区間にあるキーフレームを複製
+		for(var i=findex; i<frames.count; i++)
+		{
+			if(frames[i].frame > to)
+				break;
+			buf.add(createKey(frames[i].frame - from, frames[i]));	//	フレーム番号は、from を基準とする相対番号にしておく
+		}
+
+		return buf;
+	}
+
+	//	区間フレームのクリア
+	//	in	: from	指定区間の開始フレーム番号
+	//		: to	指定区間の終了フレーム番号
+	//	memo: 指定区間の先頭と最後に空白キーフレームを挿入して、その間のキーフレームは削除する
+	function clearZone(from, to)
+	{
+		//	区間を整理
+		to	= from if to === void;
+		from <-> to if from > to;
+		to	= last if to > last;
+
+		//	区間の最後のキーフレームのインデックス
+		var	tindex	= getKeyFrameIndexLE(to);
+		if(frames[tindex].frame < from)	//	区間にキーフレームがなければ、
+			frames.insert(tindex+1, createKey(to + 1, getFrameState(to + 1)));	//	カットされた位置の中間値でキーフレームを作成する
+		else
+			frames[tindex].frame	= to + 1;	//	あればそのキーフレームを持ってくる
+
+		//	先頭と最後に空白キーフレームを入れる
+		var	findex	= getKeyFrameIndexLE(from);
+		frames.insert(findex + (frames[findex].frame == from ? 0 : 1), createKey(from));
+		var	tindex	= getKeyFrameIndexLE(to);
+		frames.insert(tindex + 1, createKey(to));
+
+		deleteKeyFrame(from+1, to-1);	//	中間のキーフレームを削除する
+
+@if(!SIMPLE_TIMELINEDATA)
+		currentFrame	= void if from <= currentFrame;
+@endif
+		correctFrame();	//	フレームの訂正
+	}
+
+	//	区間フレームのペースト
+	//	in	: from	ペーストする位置の開始フレーム番号
+	//		: to	ペーストする位置の終了フレーム番号
+	//		: buf	ペーストするフレームデータ
+	//	memo: 一時領域にある区間を指定のフレーム位置へ挿入する
+	function pasteZone(from, to, buf)
+	{
+		if(buf == void)
+			return false;	//	ペーストするものが存在しない
+
+		//	区間を整理
+		to	= from + buf[0] if to === void;
+		from <-> to if from > to;
+
+		//	ペーストされる区間は破棄される
+		var	findex	= getKeyFrameIndexGE(from);
+		for(var i=findex; i<frames.count; i++)
+		{
+			if(frames[i].frame > to)	//	to にあるキーフレームまで破棄する
+				break;
+			invalidate frames[i];
+			frames.erase(i);
+		}
+
+		//	挿入される分だけフレームの長さを伸ばす
+		var	plus	= buf[0] - (to - from) - 1;
+//		length	+= plus;
+
+		var	changelast	= findex == frames.count;	//	最終キーフレームをペーストした？
+
+		//	挿入する
+		for(var i=2; i<buf.count; i++)
+		{
+			var	orgkey	= buf[i];
+//			if(orgkey instanceof "KeyData")
+			{
+				if(orgkey.defaultValues != defaultValues)
+				{//	異なる defaultValues がコピー元に設定されていたら、プロパティ名を共通にしてコピーする
+					var	arr	= [];
+					arr.assign(defaultValues);
+					var	val	= %[frame:orgkey.frame];
+					for(var i=0; i<arr.count; i+=2)
+					{
+						var	prop	= arr[i];
+//						dm(prop+" = "+orgkey[prop]);
+						val[prop]	= orgkey[prop] === void ? arr[i+1] : orgkey[prop];
+					}
+					orgkey	= val;
+				}
+
+				dm("insert: "+orgkey.frame+" + "+from);
+				frames.insert(findex++, createKey(orgkey.frame + from, orgkey));	//	buf のフレームは相対フレーム番号になっているので
+			}
+		}
+
+		//	挿入されたより後のフレームをずらす
+		for(; findex<frames.count; findex++)
+			frames[findex].frame	+= plus;
+
+		//	最終キーフレームをペーストしたら、フレームの長さを調整
+		length	= 0 if changelast;
+
+@if(!SIMPLE_TIMELINEDATA)
+		currentFrame	= void if from <= currentFrame;
+@endif
+		return true;
+	}
+
+	//	区間フレームのモーションをペースト
+	//	in	: from	ペーストする位置の開始フレーム番号
+	//		: to	ペーストする位置の終了フレーム番号
+	//		: buf	ペーストするフレームデータ
+	//		: ppl	ペーストするプロパティのリスト
+	//	memo: 一時領域にある区間を指定のフレーム位置へ挿入する
+	function pasteMotion(from, to, buf, ppl=[])
+	{
+		if(buf == void)
+			return false;	//	ペーストするものが存在しない
+
+		//	区間を整理
+		to	= from + buf[0] if to === void;
+		from <-> to if from > to;
+
+		//	同じ defaultValues を持っていなければ、別のオブジェクトからのコピーとなり、その場合はキャンセル
+		if(!equalStruct(frames[0].defaultValues, buf[buf.count-1].defaultValues))
+			return false;
+
+		//	ペーストされる区間は破棄される
+		var	findex	= getKeyFrameIndexGE(from);
+		for(var i=findex; i<frames.count; i++)
+		{
+			if(frames[i].frame > to)	//	to にあるキーフレームまで破棄する
+				break;
+			invalidate frames[i];
+			frames.erase(i);
+		}
+
+		//	挿入する
+		var	srckey	= frames[findex-1];
+		for(var i=1; i<buf.count; i++)
+		{
+			if(!(buf[i] instanceof "KeyData"))
+				continue;
+			var	nk	= createKey(buf[i].frame + from, srckey);	//	buf のフレームは相対フレーム番号になっているので
+			for(var j=0; j<ppl.count; j++)
+				nk[ppl[j]]	= buf[i][ppl[j]];	//	コピーするプロパティだけ上書き
+			frames.insert(findex++, nk);
+		}
+
+		//	挿入されたより後のフレームをずらす
+		var	plus	= buf[0] - (to - from) - 1;
+		for(; findex<frames.count; findex++)
+			frames[findex].frame	+= plus;
+
+		//	挿入された分だけフレームの長さを伸ばす
+		length	+= plus;
+
+@if(!SIMPLE_TIMELINEDATA)
+		currentFrame	= void if from <= currentFrame;
+@endif
+		correctFrame();	//	フレームの訂正
+
+		return true;
+	}
+
+	//	区間フレームのカット
+	//	memo: コピーした後、コピーした区間にあるキーフレームを削除する
+	function cutZone(from, to)
+	{
+		var	buf	= copyZone(...);
+		clearZone(...);
+		return buf;
+	}
+
+	//	フレームの反転
+	//	memo: 処理の順序を逆にする？(逆再生)
+	function reverseZone(from, to)
+	{
+		var	sidx	= getKeyFrameIndexGE(from);
+		var	eidx	= getKeyFrameIndexLE(to);
+		var	temp	= [];	//	一時的にキーフレームを保持する
+		for(var i=eidx; i>=sidx; i--)
+		{
+			var	kf	= frames[i];
+			kf.frame= from + to - kf.frame;
+			temp.add(kf);
+			frames.erase(i);
+		}
+		for(var i=0; i<temp.count; i++)
+			frames.insert(sidx+i, temp[i]);
+@if(!SIMPLE_TIMELINEDATA)
+		currentFrame	= void if from <= currentFrame && currentFrame <= to;
+@endif
+		return true;
+	}
+
+	//	キーフレームの blank を反転させる
+	function switchBlank(from, to)
+	{
+		//	区間を整理
+		to	= from if to === void;
+		from <-> to if from > to;
+		to	= last if to > last;
+
+		//	区間内の最初のキーフレームを取得
+		var	findex	= getKeyFrameIndexGE(from);
+		for(var i=findex; i<frames.count; i++)
+		{
+			if(frames[i].frame > to)
+				break;
+			frames[i].blank	= !frames[i].blank if !noblank;
+		}
+
+@if(!SIMPLE_TIMELINEDATA)
+		currentFrame	= void if from <= currentFrame && currentFrame <= to;
+@endif
+		correctFrame();	//	フレームの訂正
+	}
+
+	//	フレームの長さを変更する(フレームレート変更時に、時間を維持する)
+	//	in	: rate	倍率
+	function changeFrameLength(rate)
+	{
+		var	maxf= 0;
+		var	lk	= lastKeyFrame.frame == last;
+		for(var i=frames.count-1; i>=0; i--)
+		{
+			var	nf	= int(frames[i].frame * rate + 0.5);
+			frames[i].frame	= nf;
+			maxf	= nf if maxf < nf;
+		}
+		maxf	+= 1;
+		var	nl	= int(length * rate);
+		length	= lk ? 0 : (nl > maxf ? nl : maxf);
+@if(!SIMPLE_TIMELINEDATA)
+		currentFrame	= void;
+@endif
+	}
+
+	//	キーフレームの拡大縮小(長さ方向に)
+	//	in	: from, to			変更する範囲
+	//		: newfrom, newto	新しい範囲
+	function scaleZone(from, to, newfrom, newto)
+	{
+		if(from === void || to === void || newfrom === void || newto === void)
+			return false;
+
+		//	区間を整理
+		from <-> to if from > to;
+		newfrom <-> newto if newfrom > newto;
+@if(!SIMPLE_TIMELINEDATA)
+		currentFrame	= void if from <= currentFrame;
+@endif
+
+		//	範囲を補正
+		var	fidx	= getKeyFrameIndexGE(from);
+		var	tidx	= getKeyFrameIndexLE(to);
+		if(fidx > tidx)
+			return false;	//	範囲内にキーフレームが存在しない(1)
+		if(frames[fidx].frame < from || frames[fidx].frame > to)
+			return false;	//	同上(2)
+		if(frames[tidx].frame < from || frames[tidx].frame > to)
+			return false;	//	同上(3)
+		if(fidx > 0)
+		{
+			if(frames[fidx-1].frame >= newfrom)
+				newfrom	= frames[fidx-1].frame + 1;
+		}
+		else
+			newfrom	= from;
+		if(tidx < frames.count - 1 && frames[tidx+1].frame <= newto)
+			newto	= frames[tidx+1].frame;
+
+		//	新しい範囲がフレームの数より短ければ、短くならないようにする
+		var	fcnt	= tidx - fidx;
+		if(newto - newfrom <= fcnt)
+		{
+			if(newto == to)
+				newfrom	= newto - fcnt;
+			else
+				newto	= newfrom + fcnt;
+
+			//	均等に配置する
+			var	f	= newfrom;
+			for(var i=fidx; i<=tidx; i++)
+				frames[i].frame	= f++;
+
+			return true;
+		}
+
+//		dm("scaleZone("+from+", "+to+", "+newfrom+", "+newto+")");
+		//	最初に相対位置にする
+		for(var i=fidx; i<=tidx; i++)
+			frames[i].frame	-= from;
+
+		//	次に、先頭からの位置で新しいフレームを決める
+		var	curlen	= to - from;
+		var	newlen	= newto - newfrom;
+		var	last;
+		for(var i=fidx; i<=tidx; i++)
+		{
+			var	kf		= frames[i];
+//			var	last	= kf.frame + from;
+			kf.frame	= newfrom + int((kf.frame / curlen) * newlen + 0.5);	//	四捨五入
+//			dm("frames["+i+"] = "+last+" → "+kf.frame);
+			if(kf.frame === last)
+				kf.frame++;	//	直前と同じだったら、一つ後ろにずらす
+			last	= kf.frame;
+		}
+
+		//	フレームの長さを超えていたら、フレームを長くする
+		if(length <= frames[tidx].frame)
+			length	= frames[tidx].frame + 1;
+
+		return true;
+	}
+
+	//	キーフレームカラーの設定
+	function setKeyFrameColor(st, ed, color)
+	{
+		ed	= st if ed === void;
+		st <-> ed if st > ed;
+		ed	= last if ed > last;
+		var	fi	= getKeyFrameIndexGE(st);
+		for(var i=fi; i<frames.count; i++)
+		{
+			var	f	= frames[i];
+			if(f.frame > ed)
+				break;
+			f.keyframecolor	= color;
+		}
+	}
+
+	//	最終キーフレーム以外を削除して、0フレームにする
+	function eraseWithoutLast()
+	{
+		while(frames.count > 1)
+		{
+			invalidate frames[0];
+			frames.erase(0);
+		}
+		frames[0].frame	= 0;
+		length	= 1;
+
+@if(!SIMPLE_TIMELINEDATA)
+		currentFrame	= void;
+@endif
+		correctFrame();	//	フレームの訂正
+	}
+
+	//	指定の範囲だけにする
+	function makeOnlyArea(st, ed)
+	{
+		ed	= last if ed === void;	//	終了位置の指定がなければ最後まで
+
+//		dm("make only area("+st+", "+ed+") / "+length+", "+last);
+		var	buf	= copyZone(st, ed);	//	残す部分を確保
+
+		while(frames.count > 0)		//	すべて破棄
+		{
+			invalidate frames[0];
+			frames.erase(0);
+		}
+
+		for(var i=1; i<buf.count; i++)	//	挿入
+		{
+			if(buf[i] instanceof "KeyData")
+				frames.add(buf[i]);
+		}
+
+		length	= lastKeyFrame.frame + 1;
+
+@if(!SIMPLE_TIMELINEDATA)
+		currentFrame	= void;
+@endif
+		correctFrame();	//	フレームの訂正
+	}
+
+	//	フレームデータを訂正する
+	//		全てのキーフレームが空白キーフレームだとサドンデスを起こしてしまうので、そのような状態にならないように
+	function correctFrame()
+	{
+		return;	//	原因が判明したので、訂正の必要がなくなった
+@if(0)
+		var	nb	= false;
+		for(var i=0; i<frames.count; i++)
+		{
+			if(!frames[i].blank)
+			{
+				nb	= true;
+				break;
+			}
+		}
+		if(!nb)
+			frames[0].blank	= false;
+@endif
+	}
+
+	//	タイムラインで一意の値を持つ場合の訂正を行う
+	//	in	: frame		値を持つフレーム
+	//		: prop		プロパティ名
+	//		: value		対象の値
+	//		: cvalue	訂正する値
+	function correctUniqueValue(frame, prop, value, cvalue)
+	{
+		for(var i=0; i<frames.count; i++)
+		{
+			var	f	= frames[i];
+			if(f.frame != frame && f[prop] === value)
+				f[prop]	= cvalue;
+		}
+@if(!SIMPLE_TIMELINEDATA)
+		delete currentValues[prop] if frame === currentFrame;
+@endif
+	}
+
+	//-- 状態保存/復帰 --------------------------------------------------------
+
+	//	状態の保存
+	//	out	: 状態を保存した辞書配列
+	//	memo: UNDO用に使用？
+	function store()
+	{
+		var	dic	= %[];
+		with(dic)
+		{
+			.keys	= [];
+			.keys.assign(keys);		//	実行時に使用するので、一応保存
+			var	kcnt	= keys.count + 5;
+			.frames	= [];
+			var	last	= [];
+			for(var i=0; i<keys.count; i++)
+				last[i+5]	= defaultValues[keys[i]];
+			var	changed	= %[];
+			for(var i=0; i<frames.count; i++)
+			{
+				//	直前のキーフレームと同じ値なら、null に置き換え
+				var	frame	= frames[i].store(keys);
+				var	cur		= [];
+				cur.assign(frame);	//	frame が変更されるので、取得した状態を保存しておく
+				for(var i=0; i<frame.count; i++)
+				{
+					if(last[i] === frame[i])
+						frame[i]	= null;
+					else if(i>=5 && i<kcnt)
+						changed[keys[i-5]]	= true;	// frame と KeyDataBasicKeys, KeyDataSpecialKeys は無視する
+				}
+				last	= cur;
+
+				.frames.add(frame);
+			}
+			for(var i=.keys.count-1; i>=0; i--)
+			{
+				if(!changed[.keys[i]])
+				{
+					.keys.erase(i);	//	最後まで初期値から変化がなかったので、キーとフレームデータを保存しない
+					var	idx	= i + 5;
+					for(var i=0; i<.frames.count; i++)
+						.frames[i].erase(idx);
+				}
+			}
+			.length	= length;
+		}
+//		return dic;
+		return [ dic.keys, dic.frames, dic.length ];
+	}
+@endif
+	//	状態の復帰
+	//	in	: 状態を保存した辞書配列
+	function restore(dic, def)
+	{
+		if(dic instanceof "Array")
+			dic	= %[keys:dic[0], frames:dic[1], length:dic[2]];
+
+		with(dic)
+		{
+			var	savekeys	= .keys;	//	保存時のキー(現在のキーと順番が異なる可能性があるので)
+			if(this.keys == void)
+			{
+				this.keys	= [];
+				this.keys.assign(.keys);
+			}
+			for(var i=0; i<frames.count; i++)
+				invalidate frames[i];
+			frames.clear();
+			if(.frames instanceof "Array")
+			{
+				//	新旧チェック
+				var	last;
+				if(typeof .frames[0] == "Integer")
+				{//	旧
+					for(var i=0; i<.frames.count; i+=2)
+					{
+						var	frame	= new KeyData(this,,,,, def);
+						.frames[i+1].insert(0, .frames[i]);
+						frame.restore(.frames[i+1], savekeys, last !== void ? last : def);	//	保存時のキー順で読み込み
+						frames.add(frame);
+						last	= frame;
+					}
+					length	= .count;
+				}
+				else
+				{//	新
+					for(var i=0; i<.frames.count; i++)
+					{
+						var	frame	= new KeyData(this,,,,, def);
+						if(frame.restore(.frames[i], savekeys, last !== void ? last : def))	//	保存時のキー順で読み込み
+						{
+							//	正常なキーフレームのみ読み込む
+							frames.add(frame);
+							last	= frame;
+						}
+					}
+					length	= .length;
+				}
+			}
+			else
+			{
+				var	array	= [];
+				array.assign(.frames);
+				for(var i=0; i<array.count; i+=2)
+				{
+					frames[+array[i]]	= new KeyData(this,,,,, def);
+					frames[+array[i]].restore(array[i+1], savekeys, def);	//	保存時のキー順で読み込み
+				}
+				invalidate array;
+				length	= .length;
+			}
+		}
+
+@if(!SIMPLE_TIMELINEDATA)
+		correctFrame();		//	全てのキーフレームが空白キーフレームだったら、先頭だけでもキーフレームに戻す
+@endif
+	}
+
+	//-- 判定 -----------------------------------------------------------------
+
+	//	指定フレーム区間にフレームが含まれているか
+	//	in	: st, ed	開始、終了フレーム
+	function isInFrame(st, ed)
+	{
+		if(st < ed)
+			return st <= length;
+		else
+			return ed <= length;
+	}
+
+	//	指定フレーム区間にキーフレームが含まれているか
+	//	in	: st, ed	開始、終了フレーム
+	function isInKeyFrame(st, ed)
+	{
+		var	eindex	= getKeyFrameIndexLE(ed);	//	終了フレームに対応するキーフレームが
+//		return frames[eindex].frame >= st;		//	開始フレームより後にあれば、キーフレームが含まれている
+		var	cnt	= 0;
+		while(eindex >= 0 && frames[eindex].frame >= st)
+			cnt++, eindex--;
+		return cnt;		//	区間に含まれているキーフレームの数を返す
+	}
+
+	//	指定フレーム区間に掛かる区間の全てにトゥイーンが存在するか
+	//	in	: st, ed	開始、終了フレーム
+	function existTweenInAllFrame(st, ed)
+	{
+		var	sindex	= getKeyFrameIndexLE(st);
+		var	eindex	= getKeyFrameIndexLE(ed);
+		for(var i=sindex; i<=eindex; i++)
+		{
+			if(!frames[i].tween)
+				return false;
+		}
+		return true;	//	全ての区間にトゥイーンが存在する
+	}
+
+	//-- キーデータ取得 -------------------------------------------------------
+@if(SIMPLE_TIMELINEDATA!=1)
+@if(0)
+	//	初期値を取得する
+	function getInitValue(keys, st = 0)
+	{
+		var	init	= %[];	//	初期値
+		var	cnt	= 0;
+		for(var f=0; f<frames.count; f++)
+		{
+			var	frame	= frames[f];
+			for(var i=0; i<keys.count; i++)
+			{
+				var	prop	= keys[i];
+				if(typeof frame[prop] != "undefined" && frame[prop] !== void)
+				{
+					init[prop]	= frame[prop] if frame[prop] != "";
+					cnt++;
+				}
+			}
+			//	全ての項目の初期値が判明したら
+			if(frame.frame >= st && cnt >= keys.count)
+				break;	//	終了
+		}
+		return init;
+	}
+
+	//	初期値をタグに設定する
+	function getInitValueToTag(keys, st = 0, tag)
+	{
+		var	tmp	= [];
+		var	cnt	= 0;
+		for(var f=0; f<frames.count; f++)
+		{
+			var	frame	= frames[f];
+			for(var i=0; i<keys.count; i++)
+			{
+				var	prop	= keys[i];
+				if(typeof frame[prop] != "undefined" && frame[prop] !== void)
+				{
+					tag.set(prop, frame[prop]) if frame[prop] != "";
+					cnt++;
+				}
+			}
+			//	全ての項目の初期値が判明したら終了
+			if(frame.frame >= st && cnt >= keys.count)
+				return;
+		}
+	}
+@endif
+@endif
+	//	プロパティリストとキーデータをタグに設定する
+	function getKeyDataToTag(props, initValues, framerate, st, ed, stop, tag)
+	{
+		var	last	= %[];	//	直前の値
+		var	changed	= %[];	//	直前の値から変化したプロパティなら true
+		var	frm2ms	= 1000 / framerate;	//	フレーム番号を時間に変換
+
+		//	区間の指定がなければ、全区間
+		st	= 0 if st === void;
+		ed	= this.last if ed === void;
+
+		//	オブジェクトの初期値を直前の値として記録
+		for(var i=0; i<props.count; i++)
+			last[props[i]]	= initValues[props[i]];
+		last["accel"]		= void;
+		last["interpolate"]	= void;
+
+		//	開始フレームにキーフレームが存在しなければ、
+		var	firstframeindex	= getKeyFrameIndexLE(st);
+		var	keydata	= [];	//	各キーフレームでの値
+		var	curframe;
+		var	loop	= void;
+		var	islastvalue;
+		for(var f=firstframeindex; f<frames.count; f++)
+		{
+			islastvalue	= false;
+			var	kf		= frames[f];
+			curframe	= kf.frame;
+			if(curframe < st)					//	キーフレームのフレーム番号が st より前なら、
+			{
+				if(kf.loopframe === 1)			//	そのキーフレームがループ終点フレームなら
+					islastvalue	= true;			//	各プロパティに現在値を示す値を入れる
+				else
+					kf	= getFrameState(st);	//	st 時点での状態をキーフレームとして得る
+			}
+			else if(curframe > ed)				//	キーフレームのフレーム番号が ed より後なら、
+				kf	= getFrameState(ed);	//	ed 時点での状態をキーフレームとして得る
+
+			// キーフレームの値
+			var	keyframe	= [
+				int(frm2ms * (curframe - st))	//	フレームの時間
+			];
+
+			//	基本情報
+			var	acc	= kf.accel;								//	加速処理
+			var	itp	= !kf.tween ? "n" : kf.interpolate[0];	//	補間方法(トゥイーン状態でなければ、補間処理をしていしない)
+
+			//	直前から変化していなければ void を入れる
+			keyframe.add(last.accel !== acc ? acc : void);		last.accel		= acc;
+			keyframe.add(last.interpolate !== itp ? itp : void);last.interpolate= itp;
+
+			for(var i=0; i<props.count; i++)
+			{
+				var	prop	= props[i];
+				if(islastvalue || kf[prop] == meansCurrent)
+				{
+					keyframe.add(meansCurrent);	//	現在の値を示す文字
+					last[prop]	= meansCurrent;	//	前回の値を記憶
+					continue;
+				}
+				var	value	= kf[prop];
+				if(typeof value == "Real")
+					value	= +("%5.3f".sprintf(value));
+				if(value == meansMiddle)
+				{
+					//	中間値を示す文字なら、そのまま記録
+					keyframe.add(value);
+				}
+				else
+				{
+					if(last[prop] !== value)
+					{
+						changed[prop] = true;	//	直前の値から変化した(=記録の要あり)
+						keyframe.add(value === "" ? meansVoid : value);
+						last[prop]	= value;	//	前回の値を記憶
+					}
+					else
+						keyframe.add("");	//	値が変化していないので入れる必要がない
+				}
+			}
+			keyframe[0]	= 0 if islastvalue;
+			keydata.add(keyframe);
+
+			//	ループ始点フレームなら、位置を記録
+			if(kf.loopframe === 0)
+				loop	= keyframe[0];
+
+			//	ループ終点フレームで、開始フレームを超えていたら終わり
+			else if(kf.loopframe === 1 && curframe >= st)
+				break;
+
+			//	終了フレームを超えていたら終わり
+			if(curframe >= ed)
+			{
+				loop	= void;		//	ループ終点で終わらなかったので、ループが正常に構成されていない
+				break;
+			}
+		}
+
+		var	diff	= 3;	//	破棄によるズレの記録(最初の3つは破棄しない)
+
+		//	最初に設定されている storage を取り出す
+		var	firststorage;
+		for(var i=0; i<props.count; i++)
+		{
+			if(props[i] == "storage")
+			{
+				firststorage	= keydata[0][i + diff];
+//				dm("first storage = "+firststorage);
+				break;
+			}
+		}
+		if(firststorage === void)
+			firststorage	= "";
+
+		var	pns		= [];	//	プロパティ名
+		for(var i=0; i<props.count; i++)
+		{
+			var	prop	= props[i];
+			//	変更されているプロパティのみ含める
+			if(changed[prop] && (formerProperty[prop] == void || changed[formerProperty[prop]]))
+			{
+				// 中間値を取らないプロパティは先頭に"-"を付ける
+				pns.add((middleProperties[prop] ? "" : "-") + prop);
+			}
+			else
+			{
+				//	変更されていないプロパティのデータは破棄する
+				for(var j=0; j<keydata.count; j++)
+					keydata[j].erase(i + diff);
+				diff--;	//	破棄したことにより、ずれが生じるので記録しておく
+			}
+		}
+
+		//	区間でいずれのプロパティも変化していないなら、処理不要
+		if(pns.count < 1)
+			return false;
+
+@if(SIMPLE_TIMELINEDATA!=1)
+		//	プロパティリストを設定
+		tag.set("props", pns);
+
+		//	キーデータを設定
+		tag.set("keys", keydata);
+		tag.set("loop", loop) if loop !== void;	//	ループ始点時間があれば、ループする
+		tag.set("usecurrent", true) if frames[firstframeindex]["usecurrent"] != void;	//	最初のフレームには現在の値を使う
+		tag.set("nowait", true) if stop !== void && stop !== null && stop < ed;
+		tag.set("storage", firststorage) if firststorage != "";
+@endif
+@if(SIMPLE_TIMELINEDATA==1)
+		//	プロパティリストを設定
+		tag["props"]	= pns;
+
+		//	キーデータを設定
+		tag["keys"]	= keydata;
+		tag["loop"]	= loop if loop !== void;	//	ループ始点時間があれば、ループする
+		tag["usecurrent"]	= true if frames[firstframeindex]["usecurrent"] != void;	//	最初のフレームには現在の値を使う
+		tag["nowait"]	= true if stop !== void && stop !== null && stop < ed;
+		tag["storage"]		= firststorage if firststorage != "";
+@endif
+		return true;
+	}
+
+	//	指定の区間で指定のプロパティが変化しているかどうか
+	function isChangeProperty(prop, st, ed)
+	{
+		st	= 0 if st === void;
+		ed	= last if ed === void;
+
+//		dm("isChangeProperty("+prop+", "+st+", "+ed+")");
+		var	value;
+		for(var i = getKeyFrameIndexLE(st); i<frames.count; i++)
+		{
+			var	kf	= frames[i];
+			var	cur	= kf[prop];
+			if(kf.frame < st)
+				cur	= getValueInFrame(st, prop);
+			else if(kf.frame > ed)
+				cur	= getValueInFrame(ed, prop);
+
+//			dm("frame["+i+"]."+prop+" = "+cur);
+			if(value === void)
+				value	= cur;
+			else if(cur != meansMiddle && cur != meansCurrent && value != cur)
+				return true;
+
+			if(kf.frame > ed)
+				break;
+		}
+		return false;
+	}
+
+@if(SIMPLE_TIMELINEDATA!=1)
+	//	タグでタイムラインを初期化
+	function initFromTag(tag, st = 0)
+	{
+		frames.clear();
+		init(tag.values) if tag != void;
+	}
+
+	//	タグのデータでタイムラインを生成
+	function setKeyData(props, values, mspf, st)
+	{
+		//	挿入位置以降のキーフレームを破棄
+		deleteKeyFrame(st, last);
+
+		//	データを整形
+		props	= props.split(",");
+		values	= values.split(/\)\(/,, true);	//	途中の")("で分割
+		for(var i=0; i<props.count; i++)
+			props[i]	= props[i].substr(1) if props[i][0] == "-";
+		values[0]	= values[0].substr(1) if values[0][0] == "(";
+		var	last	= values.count-1;
+		values[last]	= values[last].substr(0, values[last].length-1) if values[last][values[last].length-1] == ")";
+
+		var	ip2name	= %[];
+		for(var i=0; i<interpolateTypes.count; i++)
+			ip2name[interpolateTypes[i][0]]	= interpolateTypes[i];
+
+		var	elm	= %[];
+		for(var i=0; i<keys.count; i++)
+			elm[keys[i]]	= defaultValues[keys[i]];	//	初期値を設定
+		var	numreg	= new RegExp("^[0-9\\-]+$");
+		var	realreg	= new RegExp("^[0-9\\-\\.]+$");
+		for(var i=0; i<values.count; i++)
+		{
+			var	vs	= values[i].split(",");	// データの中に","が存在しないこと…
+
+			//	データを作成
+			elm.accel		= vs[1] if vs[1] != "";	// 加速処理
+			if(vs[2] != "")
+			{
+				elm.tween		= vs[2] != "n";		// トゥイーン
+				elm.interpolate	= ip2name[vs[2]];	// 補間方法
+			}
+			for(var i=0; i<props.count; i++)
+			{
+				var	value	= vs[3 + i];
+				if(value != "")
+				{
+					if(numreg.test(value))
+						elm[props[i]]	= int value;
+					else if(realreg.test(value))
+						elm[props[i]]	= real value;
+					else
+						elm[props[i]]	= value;
+				}
+			}
+
+			//	キーフレームを追加する
+			setKeyFrame(vs[0] \ mspf + st, elm);
+		}
+@if(!SIMPLE_TIMELINEDATA)
+		currentFrame	= void;
+@endif
+	}
+
+	//	指定フレームでの状態を、初期状態から変わっているもののみ取得
+	function getFrameState2Tag(frame, keys, defaultValues)
+	{
+		var	state	= getFrameState(frame);
+		var	tag		= new KAGTagData();
+		for(var i=0; i<keys.count; i++)
+		{
+			var	prop	= keys[i];
+			var	value	= state[prop];
+			if(value === meansMiddle)
+				value	= getValueInFrame(frame, prop);
+			else if(value === meansCurrent)
+				continue;
+			tag.set(prop, value) if value != defaultValues[prop];
+		}
+		return tag;
+	}
+
+	//	指定フレームに指定された状態のキーフレームを追加
+	function setFrameStateFromTag(frame, tag, keys, defaultValues)
+	{
+		var	kf	= insertKeyFrame(frame,, false);	//	新しく挿入するか、既にあるもの
+		for(var i=0; i<keys.count; i++)
+		{
+			var	prop	= keys[i];
+			var	value	= tag.get(prop);
+			kf[prop]	= value !== void ? value : defaultValues[prop];
+@if(!SIMPLE_TIMELINEDATA)
+			currentValues[prop]	= kf[prop];
+@endif
+		}
+	}
+@endif
+
+	//	指定プロパティの値一覧を作成
+	function getValueList(prop, list)
+	{
+		list	= [] if list == void;
+		for(var i=0; i<frames.count; i++)
+			list.add(frames[i][prop]) if frames[i][prop] != "" && list.find(frames[i][prop]) < 0;
+		return list;
+	}
+}
+
+@endif

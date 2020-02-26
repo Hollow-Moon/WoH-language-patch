@@ -1,0 +1,2998 @@
+﻿// TagEx.tjs - KAGタグの拡張
+@if(__TAG_EX_DEFINED__==0)
+@set(__TAG_EX_DEFINED__=1)
+
+//	位置の名称をシンプルなものに合わせる
+var correctPosName	= %[l:"l",r:"r",lc:"lc",rc:"rc",c:"c",
+						left:"l",right:"r",leftcenter:"lc",rightcenter:"rc",center:"c",
+						left_center:"lc", right_center:"rc",
+						all:"all"];
+var	default_vaguevalue	= 256;
+
+//	次の演出が開始される直前に、クリック待ちするかどうか
+@if(CLICKSKIP_NEXT_EFFECT)
+var	clickWaitIfNextEffect	= false;
+@endif
+
+//	なぜなにプロイ用ウィンドウ設定
+var	nzWindowPositions	= %[
+	ru13:%[ frame:"nzフキダシ13右上", left:420, top:35, marginl:46, margint:22, marginr:46, marginb:48 ],
+	lu13:%[ frame:"nzフキダシ13左上", left:75, top:35, marginl:31, margint:22, marginr:56, marginb:48 ],
+	rb13:%[ frame:"nzフキダシ13右下", left:420, top:331, marginl:46, margint:33, marginr:46, marginb:37 ],
+	lb13:%[ frame:"nzフキダシ13左下", left:75, top:331, marginl:31, margint:33, marginr:56, marginb:37 ],
+	c13:%[ frame:"nzフキダシ13中央", left:270, top:183, marginl:46, margint:22, marginr:46, marginb:48 ],
+
+	ru19:%[ frame:"nzフキダシ19右上", left:262, top:27, marginl:40, margint:20, marginr:32, marginb:78 ],
+	lu19:%[ frame:"nzフキダシ19左上", left:63,  top:27, marginl:32, margint:20, marginr:40, marginb:78 ],
+	rb19:%[ frame:"nzフキダシ19右下", left:262, top:314, marginl:40, margint:60, marginr:32, marginb:40 ],
+	lb19:%[ frame:"nzフキダシ19左下", left:63,  top:314, marginl:32, margint:60, marginr:40, marginb:40 ],
+	c19:%[ frame:"nzフキダシ19中央", left:157, top:168, marginl:40, margint:20, marginr:32, marginb:78 ],
+
+	ru26:%[ frame:"nzフキダシ26右上", left:72, top:10, marginl:40, margint:40, marginr:50, marginb:78 ],
+	lu26:%[ frame:"nzフキダシ26左上", left:50, top:10, marginl:50, margint:40, marginr:40, marginb:78 ],
+	rb26:%[ frame:"nzフキダシ26右下", left:72, top:310, marginl:40, margint:63, marginr:50, marginb:55 ],
+	lb26:%[ frame:"nzフキダシ26左下", left:50, top:310, marginl:50, margint:63, marginr:40, marginb:55 ],
+	c26:%[ frame:"nzフキダシ26中央", left:57, top:158, marginl:40, margint:40, marginr:50, marginb:78 ],
+
+//テキストが2行
+	ru132:%[ frame:"nzフキダシ13右上", left:420, top:35, marginl:46, margint:42, marginr:46, marginb:78 ],
+	lu132:%[ frame:"nzフキダシ13左上", left:75, top:35, marginl:31, margint:42, marginr:56, marginb:78 ],
+	rb132:%[ frame:"nzフキダシ13右下", left:420, top:331, marginl:46, margint:53, marginr:46, marginb:67 ],
+	lb132:%[ frame:"nzフキダシ13左下", left:75, top:331, marginl:31, margint:53, marginr:56, marginb:67 ],
+	c132:%[ frame:"nzフキダシ13中央", left:270, top:183, marginl:46, margint:42, marginr:46, marginb:78 ],
+
+	ru192:%[ frame:"nzフキダシ19右上", left:262, top:27, marginl:40, margint:40, marginr:32, marginb:108 ],
+	lu192:%[ frame:"nzフキダシ19左上", left:63,  top:27, marginl:32, margint:40, marginr:40, marginb:108 ],
+	rb192:%[ frame:"nzフキダシ19右下", left:262, top:314, marginl:40, margint:80, marginr:32, marginb:70 ],
+	lb192:%[ frame:"nzフキダシ19左下", left:63,  top:314, marginl:32, margint:80, marginr:40, marginb:70 ],
+	c192:%[ frame:"nzフキダシ19中央", left:157, top:168, marginl:40, margint:40, marginr:32, marginb:108 ],
+
+	ru262:%[ frame:"nzフキダシ26右上", left:72, top:10, marginl:40, margint:60, marginr:50, marginb:108 ],
+	lu262:%[ frame:"nzフキダシ26左上", left:50, top:10, marginl:50, margint:60, marginr:40, marginb:108 ],
+	rb262:%[ frame:"nzフキダシ26右下", left:72, top:310, marginl:40, margint:83, marginr:50, marginb:85 ],
+	lb262:%[ frame:"nzフキダシ26左下", left:50, top:310, marginl:50, margint:83, marginr:40, marginb:85 ],
+	c262:%[ frame:"nzフキダシ26中央", left:57, top:158, marginl:40, margint:60, marginr:50, marginb:108 ],
+
+];
+
+// レイヤー実装型アクションの呼び出し共通部
+KAGWindow.getLayerActionObj = function(elm, funcname)
+{
+	if( elm.page === void ) elm.page = "fore";
+	if( elm.id === void && elm.layer === void && elm.storage === void) elm.layer = "base";
+
+	var	obj	= elm.target != void ? elm.target : getLayerFromElm(elm);
+	if( obj === void ){
+		throw new Exception(funcname + ": 対象のオブジェクトがありません");
+		return void;
+	}
+	if( typeof obj.actionInfo == "undefined" ){
+		throw new Exception(funcname + ": 対象のオブジェクトには実装されていません");
+		return void;
+	}else{
+		return obj;
+	}
+} incontextof this;
+
+//	page, layer, storage, target, id, partbgid のパラメータから、適当なレイヤーのリストを返す
+//	(for quake, shake, shock)
+KAGWindow.getTargetLayers	= function(elm)
+{
+	with(elm)
+	{
+		var	layers;
+		.all	= false;
+		if(.layer !== void || .storage !== void || .id !== void || .partbgid !== void)
+		{//	個別指定
+//			dm("getTargetLayers: "+elm.page+"/"+elm.layer+"/"+elm.target+"/"+elm.id+"/"+elm.partbgid);
+			.all		= true if .partbgid !== void && .id === void && .storage === void && .layer === void;	//	partbgid のみの指定なら、partbg 内のレイヤーをすべて取得
+			var	layer	= getLayerFromElm(elm);
+			if(layer != void)
+				layers	= layer instanceof "Array" ? layer : [ layer ];
+		}
+		else
+		{
+			.all	= .target == void || .target == "all";
+			if(.target == "fg" || .all)
+			{//	前景のみ
+				layers	= getLayerAll(elm);
+			}
+			if(.target == "bg" || .all)
+			{//	背景のみ
+				layers	= [] if layers == void;
+				layers.add(this[.page].base);
+			}
+		}
+		return layers;
+	}
+} incontextof this;
+
+KAGWindow.org_getHandlers	= KAGWindow.getHandlers;
+KAGWindow.lastTarget		= void;	//	最後に action したオブジェクト
+KAGWindow.pauseVolume		= 100;	//	bgm を pause したときの音量
+KAGWindow.getHandlers		= function()
+{
+	var	handlers	= org_getHandlers();
+	with(handlers)
+	{
+		/**TAG
+		 *	wait(EX) - 待ち合わせ処理
+		 *	@param time		ウェイトのミリ秒指定
+		 *	@param mode		"normal"(default) / "until"
+		 *	@param canskip	true / false 無指定時はcf.effectCutコンフィグ設定に従う
+		 *	@param norapid	true / false(defualt) cf.effectSkipコンフィグ指定や早送りキー操作中でも時間を早めない
+		 *		@memo	waitの瞬間表示＋カット対応
+		 */
+		.orgtag_wait = .wait;
+		.wait = function(mp)
+		{
+			mp.time *= drawspeed if cf.effectSkip && ! mp.norapid;
+			if( mp.time < 1 )
+				return true;
+
+			//	デフォルトは cf.effectCut に依存する
+			mp.canskip	= isEffectCut if mp.canskip === void || isEffectCut;	//	エフェクトをカットするときは必ず、そうでないときは指定がないときにカットしない
+
+			return tagHandlers.orgtag_wait(mp);
+		} incontextof this;
+
+		/*
+		 *	タグ先読みにより状態保存のタイミングがずれてしまうので、cm(pg)したときにコピーする
+		 */
+		.cm4pg	= function(mp)
+		{
+			var	ret	= tagHandlers.cm(mp);
+			originalStoreFlags() if autoCache;
+			return ret;
+		} incontextof this;
+
+		/**TAG
+		 *	scriptcache - スクリプトの先読み設定
+		 *	@param enabled	有効/無効
+		 */
+		.scriptcache	= function(mp)
+		{
+			autoCache	= +mp.enabled if mp.enabled !== void;
+			return 0;//return mp.enabled ? 200 : 0;
+		} incontextof this;
+@if(CLICKSKIP_NEXT_EFFECT)
+		/**
+		 *	次の演出が開始される直前に、クリック待ちする
+		 */
+		.orgtag_ch	= .ch;
+		.ch	= function(mp)
+		{
+			clickWaitIfNextEffect	= true;	//	文字が表示されたので、次でクリック待ちする
+			return tagHandlers.orgtag_ch(...);
+		} incontextof this;
+
+		.orgtag_p	= .p;
+		.p	= function(mp)
+		{
+			clickWaitIfNextEffect	= false;	//	ページ切り替え待ちしたので、次のクリック待ちは不要
+			return tagHandlers.orgtag_p(...);
+		} incontextof this;
+@endif
+		/**TAG
+		 *	trans(EX) - トランジションタグの拡張
+		 *	@param nowait	トランジションの終了を待たない(default:false)
+		 *	@param canskip	トランジションの終了待ちをスキップできるか(default:true)
+		 *	@param textoff	テキストを消去する(default:true)
+		 *	@param method	処理方法(default:"crossfade"/ruleが指定されていて、crossfade以外なら"universal")
+		 *	@param norapid	true / false(defualt) cf.effectSkipコンフィグ指定や早送りキー操作中でも時間を早めない
+		 *		@group:		レイヤ操作
+		 */
+		.orgtag_trans	= .trans;
+		.trans	= function(mp)
+		{
+@if(CLICKSKIP_NEXT_EFFECT)
+			//	演出開始前のクリック待ちする
+			if(clickWaitIfNextEffect && canIgnoreL())
+			{
+				conductor.pendings.insert(0, mp);
+				clickWaitIfNextEffect	= false;	//	次はクリック待ちしない
+				tagHandlers.texton(%[]);			//	クリック待ち記号が見えるよう、メッセージウィンドウを表示
+				return showLineBreakWithoutIgnore();
+			}
+@endif
+			//	パラメータ調整
+			mp.time		= int(+mp.time * drawspeed) if ! mp.norapid;
+			mp.method	= mp.rule != "" && mp.rule != "crossfade" ? "universal" : "crossfade" if mp.method == "";
+			mp.vague	= mp.method == "crossfade" ? 60000 : (mp.vague === void ? default_vaguevalue : mp.vague);
+			mp.exchange = mp.exchange !== void ? mp.exchange : true;
+
+			if( mp.page === void ) mp.page = "fore";
+			var lay = getLayerFromElm(mp);
+			if(lay === void)
+			{
+				mp.layer	= "base";
+				lay	= getLayerFromElm(mp);
+			}
+			if( lay !== void )
+			{
+				if(mp.layer === void && mp.layer != "base")
+				{
+					dm(getDebugStringFromElm(mp,"ERROR:",3));
+					throw new Exception("trans: トランジション対象が背景以外の指定ですが特定出来ませんでした");
+					return 0;
+				}
+				mp.layer = string(mp.layer);
+			}
+			else
+			{
+				throw new Exception("trans: トランジション対象のレイヤーが特定できませんでした。");
+				return 0;
+			}
+
+			//	対象のレイヤーがトランジション中なら、トランジションを終了させる
+			lay.stopTransition();
+			lay.comp.stopTransition() if typeof lay.comp != "undefined" && lay.comp != void;
+
+			//	トランジション対象の強制描画
+			if(lay == kag.back.base)
+				lay.forcePaint();
+			else
+				lay.comp.forcePaint();	//	texton/off がない場合、対象が描画されるタイミングが、トランジションが開始してからに
+										//	なってしまうため、トランジションの実行時間が短くなっていたので
+
+			//	トランジション実行
+			var	ret	= tagHandlers.orgtag_trans(mp);
+
+			//	トランジションの終了を待つか
+			if(mp.wait !== void)
+				mp.nowait = !mp.wait;
+			if(!mp.nowait)
+				conductor.pendings.insert(0, %[tagname:"wt", canskip:mp.canskip, noback:mp.noback]);
+@if(DEBUG)
+			else
+				dm("※注意 trans: wtされていないので、トランジション終了後の backlay は行われません！");
+@endif
+			return ret;
+		} incontextof this;
+
+		/**TAG
+		 *	wt(EX) - トランジション終了待ちタグの拡張
+		 *	@param noback	終了後の backlay を実行しない(default:false)
+		 *	@memo トランジションが終了したら、backlay を実行するようにした。
+		 *	@memo (利点)スクリプターが操作する時点では、必ず前後関係が維持される
+		 *		@group:		レイヤ操作
+		 */
+		.orgtag_wt	= .wt;
+		.wt		= function(mp)
+		{
+			if(kag.transCount < 1)
+			{
+@if(DEBUG)
+				dm("トランジションが行われていないので、wt タグは処理を停止しません。");
+@endif
+				return 0;
+			}
+			if(mp.noback == void)
+			{
+				//	終了後、backlay の実行を予約
+				conductor.pendings.insert(0, %[tagname:"backlay", withact:mp.withact]);
+			}
+
+			//	wt を実行
+			//	デフォルトは cf.effectCut に依存する
+			mp.canskip	= isEffectCut if mp.canskip === void || isEffectCut;	//	エフェクトをカットするときは必ず、そうでないときは指定がないときにカットしない
+
+			return tagHandlers.orgtag_wt(mp);
+		} incontextof this;
+
+		/**TAG
+		 *	image(EX) - 画像の読み込みタグの拡張
+		 *	@param page		"fore" / "back"
+		 *	@param storage	画像ファイル名
+		 *	@param id		オブジェクトID
+		 *					(省略可、複数の同一storageを読み込む場合に使用)
+		 *	@param center	画像中心Ｘ座標
+		 *	@param vcenter	画像中心Ｘ座標
+		 *	@param left		左上基準座標のＸ
+		 *	@param top		左上基準座標のＹ
+		 *	@param x		左上基準座標のＸ
+		 *	@param y		左上基準座標のＹ
+		 *	@param afx		拡大回転中心座標
+		 *	@param afy		拡大回転中心座標
+		 *	@param mag		拡大率(旧仕様互換)
+		 *	@param rotate	回転指定
+		 *	@param blur		ぼかし指定
+		 *	@param effect	画像効果指定
+		 *	@param brightness	明るさ
+		 *	@param contrast	コントラスト指定
+		 *	@param zoom		拡大率
+		 *		@group:		レイヤ操作
+		 */
+		.image	= function(elm)
+		{
+			// 画像読み込み
+			updateBeforeCh = 1;
+			var start = System.getTickCount();
+			var	layer	= getLayerFromElm(elm);
+			layer.loadImages(elm);
+@if(DEBUG)
+			dm(layer.name+": "+elm.storage + " の読み込みに " + (System.getTickCount() - start) + "ms かかりました");
+@endif
+			//	値の設定がない場合、初期値を与える(setOptions が現在の値を使うため)
+			with(elm)
+			{
+				.afx	= AnimationLayer.AFFINEOFFSET_CENTER if .afx === void;
+				.afy	= AnimationLayer.AFFINEOFFSET_CENTER if .afy === void;
+				if(.zoom === void && .mag === void)
+				{
+					.zoomx	= 100 if .zoomx === void;
+					.zoomy	= 100 if .zoomy === void;
+				}
+				.rotate	= 0 if .rotate === void && .rot === void;
+				if(.blur === void)
+				{
+					.xblur	= 0 if .xblur === void;
+					.yblur	= 0 if .yblur === void;
+				}
+				.effect	= "" if .effect === void;
+				.brightness	= 0 if .brightness === void;
+				.contrast	= 0 if .contrast === void;
+				.aorder	= "" if .aorder === void;
+
+				//	type が数値じゃないなら、数値に直す
+				.type	= .type! if !/^[0-9]+$/.test(.type);
+
+				.__layer= layer;	//	呼び出し元のタグが使えるように
+			}
+
+			with(layer)
+			{
+				.setOptions(elm);
+				.calcAffine();
+			}
+
+			return 0;
+		} incontextof this;
+
+		/**TAG
+		 *	layopt - 画像のパラメータ変更
+		 *	@param page		"fore" / "back"
+		 *	@param storage	画像ファイル名
+		 *	@param id		オブジェクトID
+		 *					(省略可、複数の同一storageを読み込む場合に使用)
+		 *	@param center	画像中心Ｘ座標
+		 *	@param vcenter	画像中心Ｘ座標
+		 *	@param afx		拡大回転中心座標
+		 *	@param afy		拡大回転中心座標
+		 *	@param mag		拡大率(旧仕様互換)
+		 *	@param rotate	回転指定
+		 *	@param blur		ぼかし指定
+		 *	@param effect	画像効果指定
+		 *	@param brightness	明るさ
+		 *	@param contrast	コントラスト指定
+		 *	@param zoom		拡大率
+		 *		@group:		レイヤ操作
+		 */
+		.orgtag_layopt = .layopt;
+		.layopt = function(elm)
+		{
+			if( elm === void )
+			{
+				dm("■ERROR: layoptタグの呼び出しパラメータelmがvoidです");
+				return 0;
+			}
+			// レイヤのオプションを設定
+			updateBeforeCh = 1;
+			var lay = getLayerFromElm(elm);
+			if( lay === void )
+			{
+				dm("■ERROR: layoptタグで処理対象のレイヤーが見つかりませんでした");
+				return 0;
+			}
+			lay.setOptions(elm);
+			lay.calcAffine() if typeof lay.calcAffine != "undefined";
+			return 0;
+		} incontextof this,
+
+		/**TAG
+		 *	freeimage - レイヤーの消去
+		 *	@param page		"fore" / "back"
+		 *	@param storage	画像ファイル名
+		 *	@param id		オブジェクトID
+		 *					(省略可、複数の同一storageを読み込む場合に使用)
+		 *		@memo: 全てのレイヤーオブジェクトがfreeimageされたら動的に増やしていたレイヤー数をデフォルトに戻す
+		 *		@group:		レイヤ操作
+		 */
+		.orgtag_freeimage = .freeimage;
+		.freeimage = function(elm)
+		{
+			if( elm === void )
+			{
+				dm("■ERROR: freeimageタグの呼び出しパラメータelmがvoidです");
+				return 0;
+			}
+			if( elm.layer === void )		elm.layer = "";
+			if( elm.invisible === void )	elm.invisible = true;
+			if( elm.reset === void )		elm.reset = false;
+
+			updateBeforeCh = 1;
+			var lay = getLayerFromElm(elm);
+			if(lay != void)
+			{
+				lay.visible = false if elm.invisible;
+				lay.freeImage(elm);
+				lay.reset();
+//				dm("freeimage: name=" + lay.name);
+			}
+
+			return 0;
+		} incontextof this;
+
+		/**TAG
+		 *	dotrans - パラメータを見てトランジションするかどうか判断する
+		 *	@param rule		ルール画像名,またはトランジションメソッド指定
+		 *					"crossfade"指定時はクロスフェード
+		 *					ルールファイルが指定されると"universal"扱いとする
+		 *	@param time		トランジション時間
+		 *	@param vague	あいまい指定
+		 *		@memo		rule, time, vague のいずれかが指定されているとトランジションを実施する
+		 *		@group:		レイヤ操作
+		 */
+		.dotrans	= function(elm)
+		{
+			with(elm)
+			{
+				if(.rule != "" || .time != void || .vague != void)
+				{
+					.layer	= "base";
+					if(.rule === void || .rule == "crossfade")
+						.method	= "crossfade";
+					else
+						.method	= "universal";
+					.time	= 800 if .time === void;
+					.vague	= 256 if .vague === void;
+					return tagHandlers.trans(elm);
+				}
+				else
+					return 0;
+			}
+		} incontextof this;
+
+		/**TAG
+		 *	bg - 背景の読み込み
+		 *	@param page		"fore" / "back"
+		 *	@param storage	画像ファイル名
+		 *	@param left		左上基準座標のＸ
+		 *	@param top		左上基準座標のＹ
+		 *	@param x		左上基準座標のＸ
+		 *	@param y		左上基準座標のＹ
+		 *	@param center	画像中心Ｘ座標
+		 *	@param vcenter	画像中心Ｘ座標
+		 *	@param afx		拡大回転中心座標
+		 *	@param afy		拡大回転中心座標
+		 *	@param mag		拡大率(旧仕様互換)
+		 *	@param rotate	回転指定
+		 *	@param xblur	横ぼかし指定
+		 *	@param yblur	縦ぼかし指定
+		 *	@param blur		ぼかし指定
+		 *	@param effect	画像効果指定
+		 *	@param brightness	明るさ
+		 *	@param contrast	コントラスト指定
+		 *	@param zoomx	横拡大率
+		 *	@param zoomy	縦拡大率
+		 *	@param zoom		拡大率
+		 *	@param noclear	全ての前景消去を伴わない = true を指定
+		 *	@param stop		アクションを停止する(必ず)
+		 *	@param nonstop	アクションを停止しない(トランジションするとき)
+		 *	@param textoff	メッセージウィンドウ消去指定
+		 *	@param time		トランジションさせる場合の時間指定
+		 *	@param rule		トランジションさせる場合のルール画像またはメソッド
+		 *	@param vague	トランジションの滑らかさ
+		 *	@param nowait	トランジションさせる場合のウェイト指定
+		 *		@link: bg, bgopt
+		 *		@group:		レイヤ操作
+		 */
+		.bg	= function(elm)
+		{
+			var ret;
+			with(elm)
+			{
+				if(.storage == void)
+				{
+					throw new Exception("storage が指定されていません。");
+					return 0;
+				}
+				if(.page == void)
+					.page	= "back";
+
+				.layer	= "base";
+				.visible= true;
+				if(!.noclear)
+				{
+					//	前景の削除
+					var	layers	= this[.page].layers;
+					for(var i=0; i<layers.count; i++)
+						tagHandlers.freeimage(%[layer:string i,page:.page]);
+
+					//	プラグインにも消させる
+					forEachClearLayers(.page);
+				}
+
+				//	アクションは停止(トランジションするとき)
+				this[.page].base.stopAction() if .stop || (!.nonstop && (.rule != "" || .time != void || .vague != void));
+
+				//	通常背景の呼び出し
+				tagHandlers.image(elm);
+
+				//	表示位置の指定がなければ、中央下端あわせ
+				with(this[.page].base)
+				{
+					var	bgMargin	= 48;
+					.left	= (scWidth - .imageWidth) \ 2 if elm.left === void;
+					.top	= scHeight - .imageHeight + bgMargin if elm.top === void;
+				}
+				elm.forcetextoff	= true;	//	bg では必ずテキストウィンドウを隠す
+
+				return tagHandlers.dotrans(elm);
+			}
+		} incontextof this;
+
+		/**TAG
+		 *	bgopt - 背景のパラメータ変更
+		 *	@param page		"fore" / "back"
+		 *	@param storage	画像ファイル名
+		 *	@param left		画像左指定座標
+		 *	@param top		画像上指定座標
+		 *	@param center	画像中心Ｘ座標
+		 *	@param vcenter	画像中心Ｘ座標
+		 *	@param afx		拡大回転中心座標
+		 *	@param afy		拡大回転中心座標
+		 *	@param mag		拡大率(旧仕様互換)
+		 *	@param rotate	回転指定
+		 *	@param blur		ぼかし指定
+		 *	@param effect	画像効果指定
+		 *	@param brightness	明るさ
+		 *	@param contrast	コントラスト指定
+		 *	@param zoom		拡大率
+		 *		@link: bg, bgopt
+		 *		@group:		レイヤ操作
+		 */
+		.bgopt	= function(elm)
+		{
+			updateBeforeCh = 1;
+
+			var	base = (elm.page === void || elm.page != "fore" ? back : fore).base;
+			with(base)
+			{
+				.setOptions(elm);
+				.calcAffine();
+			}
+			return 0;
+		} incontextof this;
+
+		// MessageLayer の改造による変更 --------------------------------------
+		/**TAG
+		 *	ruby - ルビ呼び出しを変更
+		 *	@param text		ルビ文字列
+		 *	@param char		対応する本文の文字数
+		 *					(rubyタグの次に位置する本文が対象となる)
+		 *		@group:		メッセージ操作
+		 */
+		.ruby	= function(elm)
+		{
+			with(elm)
+			{
+				if(.char != void && string(+.char) != .char)
+				{//	char に本文の文字列が指定されていたら、タイミングを合わせてルビを表示する
+					var	cws	= current.getChWidth(.char);
+					var	rws	= current.getRubyWidth(.text);
+					var	rx	= (cws[1] - rws[1]) \ 2;
+					var	thres = cws[1] / .text.length;
+					var	cp	= thres, rp = 0, l = 0;
+					cws	= cws[0];
+					rws	= rws[0];
+					for(var i=0, ip=0; i<.char.length; i++)
+					{
+						var	ruby	= "";
+						var	lrp		= rp;
+						while(cp >= thres)
+						{
+							cp	-= thres;
+							ruby+= .text[rp++] if rp < .text.length;
+						}
+						if(ruby != "")
+						{
+//							dm(.char[i]+"["+i+"] to ruby: "+ruby, l, rx, cws[i]);
+							conductor.pendings.insert(ip++, %[tagname:"ruby", char:1, text:ruby, pos:"l", offset:rx]);
+							while(lrp < rp)
+								rx	+= rws[lrp++];
+						}
+						var	cw	= cws[i] + current.pitch;
+						cp	+= cw;
+						l	+= cw;
+						rx	-= cw;
+						conductor.pendings.insert(ip++, %[tagname:"ch", text:.char[i]]);
+					}
+				}
+				else
+				{
+					.pos	= "c" if .pos == void;
+					if(currentWithBack) current.comp.setRuby(elm);
+					current.setRuby(elm);
+					if(historyWriteEnabled) historyLayer.storeRuby(elm);
+				}
+			}
+			return 0;
+		} incontextof this;
+
+		// バックスペースの追加
+		/**TAG
+		 *	backspace - バックスペースの追加
+		 *	@param cnt		処理数
+		 *		@group:		メッセージ操作
+		 */
+		.backspace	= function(elm)
+		{
+			if(currentWithBack) current.comp.processBackspace(elm);
+			current.processBackspace(elm);
+			if(historyWriteEnabled) historyLayer.backspace(elm);
+			return 0;
+		} incontextof this;
+
+		// SESoundBuffer の改造による変更 -------------------------------------
+		/**TAG
+		 *	panse - パンの変化
+		 *	@param buf		変化させるバッファ
+		 *	@param pan		変化後のpan
+		 *	@param time		変化時間
+		 *	@param accel	変化加速度
+		 *	@param firstpan	変化前のpan
+		 *	@param wait		変化の終了を待つか
+		 *	@param nowait	変化の終了を待たないか
+		 *		@link:	se, seloop, seopt, sestop, fadese, panse, wpanse, getsebuf
+		 *		@group:		効果音・BGM・ビデオ操作
+		 */
+		.panse	= function(elm)
+		{
+			tagHandlers.getsebuf(elm);
+			se[+elm.buf].startPan(elm);
+			if((elm.wait !== void && +elm.wait) || (elm.nowait !== void && !+elm.nowait))
+				conductor.pendings.insert(0, %[tagname:"wpanse", buf:elm.buf, storage:elm.storage, canskip:elm.canskip]);
+			return 0;
+		} incontextof this;
+
+		/**TAG
+		 *	getsebuf - 効果音バッファの選択.
+		 *	バッファの指定が無ければ storage からバッファを探す
+		 *	@param buf		バッファID
+		 *	@param storage	音声ファイル
+		 *		@link:	se, seloop, seopt, sestop, fadese, panse, wpanse, getsebuf
+		 *		@group:		効果音・BGM・ビデオ操作
+		 */
+		.getsebuf	= function(elm)
+		{
+			if(elm.buf === void)
+				elm.buf	= getSESoundBufferFromStorage(elm.storage) if elm.storage != void;
+@if(DEBUG)
+			if(elm.buf === void)
+				dm("******** サウンドバッファが指定されていない(buf=void)か、指定の効果音("+elm.storage+")が再生されていません。 *******");
+@endif
+			return 0;
+		} incontextof this;
+
+		/**TAG
+		 *	wpanse - パン変化の終了を待つ.
+		 *	@param buf		バッファID
+		 *	@param storage	音声ファイル
+		 *	@param canskip	スキップ可否
+		 *		@link:	se, seloop, seopt, sestop, fadese, panse, wpanse, getsebuf
+		 *		@group:		効果音・BGM・ビデオ操作
+		 */
+		.wpanse	= function(elm)
+		{
+			var	id	= +elm.buf;
+			var	buf	= se[id];
+			if(panTimer == void || !panTimer.enabled)
+				return 0;	//	パンが開始していないので、待てない
+			if(elm.canskip !== void && +elm.canskip && clickSkipEnabled)
+			{
+				//	スキップできる場合
+				if(skipMode)
+				{
+					// スキップ中なら即座に終了
+					buf.stopPan();
+					return 0;
+				}
+				conductor.wait(%[
+					 // クリックされたらパンを終了して wait 解除
+					'click' => function (id) { se[id].stopPan(); } incontextof this,
+					'click_arg' => id, // ハンドラへの引数
+
+					// トリガが引かれたら wait 解除
+					'panstop'+id => function (id) { } incontextof this,
+					'panstop'+id+'_arg' => id // ハンドラへの引数
+				]);
+			}
+			else
+			{
+				// スキップできない場合
+				conductor.wait(%[
+					'panstop'+id => function (id) { } incontextof this,
+					'panstop'+id+'_arg' => id // ハンドラへの引数
+				]);
+			}
+			return -2;
+		} incontextof this;
+
+		// BaseLayer の改造による変更 -----------------------------------------
+
+		//以下レイヤー実装型アクションはtime指定やdelay指定には対応していません。
+		//旧仕様との違いに注意。
+
+		/**TAG
+		 *	action - アクション開始
+		 *	@param page			"fore" / "back"
+		 *	@param storage		処理対象のレイヤーに読み込まれている画像
+		 *	@param id			複数の同一ファイルが読み込まれている場合の識別ID
+		 *	@param both			fore, back 両方同時に処理する
+		 *	@param pause		アクションの一時停止を可能とするか
+		 *	@param needlayer	対象となるレイヤーが無い場合生成するか
+		 *	@param nonstop		対象オブジェクトで既に動いているアクションを停止しない
+		 *		@link:	stopaction, setaction, stopnowait, stopforeact, stopbackact, pauseaction, resumeaction, wact
+		 *		@group:		レイヤ操作(アクション)
+		 */
+		.action = function(elm)
+		{
+@if(CLICKSKIP_NEXT_EFFECT)
+			//	演出開始前のクリック待ちする
+			if(clickWaitIfNextEffect && canIgnoreL())
+			{
+				conductor.pendings.insert(0, elm);
+				clickWaitIfNextEffect	= false;	//	次はクリック待ちしない
+				tagHandlers.texton(%[]);			//	クリック待ち記号が見えるよう、メッセージウィンドウを表示
+				return showLineBreakWithoutIgnore();
+			}
+@endif
+			with(elm)
+			{
+				var canpause = true;	//アクションの一時停止を可能とするか
+				if (.pause !== void )
+					canpause = .pause;
+
+				//	texton,textoff の指定ににより、実行する前にメッセージレイヤーを隠す(すでに隠れているなら void を返す)
+				var	ret	= hidebeforeexecute(elm);
+				if(ret !== void)
+					return ret;
+
+				.page	= "fore" if .page === void;
+				.needlayer	= true if .needlayer === void;	//	対応するレイヤーが存在しなくても、とりあえず確保する
+//				dmt("action elm.target = "+.target+"("+(.target != void && typeof .target.name != "undefined" ? .target.name : "")+")");
+				var	target	= .target != void ? .target : getLayerFromElm(elm);;
+//				dm("action.target = "+target+ " / " + .page);
+//				dm(target.name+".layerID = "+target.layerID+" / "+.id);
+				if (typeof target == "Object")
+				{
+					//	対象のオブジェクトで実行されているアクションを停止する
+					if(!.nonstop)
+						tagHandlers.stopaction(%[target:target]);
+					else
+						.noinit	= true;		//	quake 等の noinit=false なら停止してしまうアクションがあるので
+
+					//	アクション構造を取得
+					var action;
+					if (.action !== void)
+					{
+						// 直接アクション構造が指定されている場合
+						action = .action;
+					}
+					else
+					{
+						action = %[];
+						// アクション構造をパラメータから生成
+						(Dictionary.assignStruct incontextof action)(elm);
+						delete action.tagname;
+						delete action.layer if action.layer !== void;
+						delete action.id if action.id !== void;
+						delete action.storage if action.storage !== void;
+						delete action.page;
+						delete action.target;
+					}
+
+					//	アクションの呼び出し
+					if (target instanceof "GraphicLayer")
+					{
+//						dm("beginAction: GraphicLayer");
+//						target.name	= .name if .name != void;	//	menuitem にのみ名称を設定するため、MenuPlugin 内で設定している
+						target.beginAction(action, .hide, .nowait, canpause);
+					}
+					else
+					{
+//						dm("beginAction: this");
+						beginAction(target, action, onActionCompleted, .nowait, canpause);
+					}
+					lastTarget	= target;	//	直前のアクションで指定したtarget
+
+					if(.both)
+					{
+						//	both=表裏両面で同じ処理を実行
+						.page	= .page == "back" ? "fore" : "back";
+						.both	= void;
+						.target = void;
+						return tagHandlers.action(elm);
+					}
+				}
+				else
+				{
+//					error("アクションはオブジェクトに指定する必要があります");
+					throw new Exception("アクションはオブジェクトに指定する必要があります: "+.layer+"/"+.id+"/"+.storage+"/"+.se+"/"+.bgm+": =>"+target);
+				}
+			}
+			return 0;
+		} incontextof this;
+
+		/**TAG
+		 *	setaction - 動作中アクションに追加
+		 *	@param page			"fore" / "back"
+		 *	@param storage		処理対象のレイヤーに読み込まれている画像
+		 *	@param id			複数の同一ファイルが読み込まれている場合の識別ID
+		 *	@param target		処理対象
+		 *	@param propname		対象となるプロパティ名
+		 *	@param handler		実施するアクションハンドラ
+		 *		@link:	stopaction, setaction, stopnowait, stopforeact, stopbackact, pauseaction, resumeaction, wact
+		 *		@group:		レイヤ操作(アクション)
+		 */
+		.setaction = function(elm)
+		{
+			var	target	= elm.target != void ? elm.target : getLayerFromElm(elm);
+			if (target !== void) {
+				if (typeof target == "Object") {
+					setAction(target, elm.propname, elm.handler, elm);
+				} else {
+					dm("アクションはオブジェクトに指定する必要があります");
+				}
+			}
+			return 0;
+
+		} incontextof this;
+
+		/**TAG
+		 *	stopaction - アクション停止
+		 *	@param page			"fore" / "back", 省略時は両方
+		 *	@param storage		処理対象のレイヤーに読み込まれている画像
+		 *	@param id			複数の同一ファイルが読み込まれている場合の識別ID
+		 *	@param target		処理対象
+		 *	@param propname		対象となるプロパティ名
+		 *	@param handler		実施するアクションハンドラ
+		 *		@link:	stopaction, setaction, stopnowait, stopforeact, stopbackact, pauseaction, resumeaction, wact
+		 *		@group:		レイヤ操作(アクション)
+		 */
+		.stopaction = function(elm)
+		{
+//			dm("---- stop action ----: storage = "+elm.storage+" / page = "+elm.page);
+//			dm(Scripts.getTraceString());
+			updateBeforeCh = 1;
+			if(elm.storage !== void)
+			{
+				var strs = elm.storage.split(",");	//複数指定の場合、候補となるものを全て停止
+				var pages	= elm.page !== void ? [ elm.page ] : ["back","fore"];	//ページ指定されていた場合はそのページのみ対象
+				for( var j=0; j<pages.count; j++ )
+				{
+					for( var i=0; i<strs.count; i++ )
+					{
+						var	layer	= getLayerFromElm(%[page:pages[j], storage:strs[i]]);
+						if(layer != void)
+							stopAction(layer, elm.propname, elm.handler);
+@if(DEBUG)
+						else
+							dm("page="+pages[j]+", storage="+strs[i]+" なオブジェクトは存在しません。");
+@endif
+					}
+				}
+				return 0;
+			}
+			else if(elm.page !== void)
+			{
+				//	ページ単位で停止
+				if(elm.page == "fore")
+					stopAllForeActions();
+				else
+					stopAllBackActions();
+				//	トランジション中でなければ、アクションを停止したことで発生した裏画面への再描画要求をキャンセルする
+				if(!baseTransCount)
+					back.base.cancelUpdate();
+				return 0;
+			}
+			var	target	= elm.target != void ? elm.target : getLayerFromElm(elm);
+//			dm("stop action: target = "+target);
+			if (target !== void)
+			{
+//				dm("stop action: "+(typeof target.name != "undefined" ? target.name : target));
+				if (typeof target == "Object")
+					stopAction(target, elm.propname, elm.handler);
+				else
+					dm("アクションを停止するには、オブジェクトを指定する必要があります");
+			}
+			else
+			{
+				if( elm.acttype === void )
+					stopAllActions(elm.all);	//	default: nowait 以外のアクションを停止する(all=true なら、すべて停止)
+				else
+					stopAllActionsByType(elm.acttype);	//種別を指定して停止させる
+			}
+			//	トランジション中でなければ、アクションを停止したことで発生した裏画面への再描画要求をキャンセルする
+			if(!baseTransCount)
+				back.base.cancelUpdate();
+			return 0;
+		} incontextof this;
+
+		/**TAG
+		 *	removeaction - アクションを破棄.
+		 *	stopaction だと最終状態で終了するが、removeaction なら実行された時点の状態を維持して終了する
+		 *	@param page			"fore" / "back", 省略時は両方
+		 *	@param storage		処理対象のレイヤーに読み込まれている画像
+		 *	@param id			複数の同一ファイルが読み込まれている場合の識別ID
+		 *		@link:	stopaction, setaction, stopnowait, stopforeact, stopbackact, pauseaction, resumeaction, wact
+		 *		@group:		レイヤ操作(アクション)
+		 */
+		.removeaction = function(elm)
+		{
+			updateBeforeCh	= 1;
+			if(elm.storage != void)
+			{
+				var strs = elm.storage.split(",");	//複数指定の場合、候補となるものを全て停止
+				var pages	= elm.page !== void ? [ elm.page ] : ["back","fore"];	//ページ指定されていた場合はそのページのみ対象
+				for( var j=0; j<pages.count; j++ )
+				{
+					for( var i=0; i<strs.count; i++ )
+					{
+						var	layer	= getLayerFromElm(%[page:pages[j], storage:strs[i]]);
+						if(layer != void)
+							removeAction(layer);
+@if(DEBUG)
+						else
+							dm("page="+pages[j]+", storage="+strs[i]+" のレイヤーは存在しません。");
+@endif
+					}
+				}
+				return 0;
+			}
+
+			var	target;
+			if((target = getLayerFromElm(elm)) != void)
+			{
+				if(typeof target == "Object")
+					removeAction(target);
+				else
+					dm("アクションを破棄するには、オブジェクトを指定する必要があります");
+			}
+			else
+				dm("全てのアクションを破棄することはできません。個別に指定してください。");
+			//	トランジション中でなければ、アクションを停止したことで発生した裏画面への再描画要求をキャンセルする
+			if(!baseTransCount)
+				back.base.cancelUpdate();
+			return 0;
+		} incontextof this;
+
+		/**TAG
+		 *	stopnowait - シーンを越えるアクションを停止
+		 *				 storage が指定されていれば個別に、指定されていなければすべてを停止
+		 *	@param page			"fore" / "back"
+		 *	@param storage		処理対象のレイヤーに読み込まれている画像
+		 *	@param id			複数の同一ファイルが読み込まれている場合の識別ID
+		 *	@param target		処理対象
+		 *	@param propname		対象となるプロパティ名
+		 *	@param handler		実施するアクションハンドラ
+		 *		@link:	stopaction, setaction, stopnowait, stopforeact, stopbackact, pauseaction, resumeaction, wact
+		 *		@group:		レイヤ操作(アクション)
+		 */
+		.stopnowait = function(elm)
+		{
+			elm.target	= void;
+			elm.all		= true;
+			return tagHandlers.stopaction(elm);
+		} incontextof this;
+
+		// fore側のアクション全停止
+		/**TAG
+		 *	stopforeact - fore側のアクション全停止
+		 *		@link:	stopaction, setaction, stopnowait, stopforeact, stopbackact, pauseaction, resumeaction, wact
+		 *		@group:		レイヤ操作(アクション)
+		 */
+		.stopforeact = function(elm)
+		{
+			updateBeforeCh = 1;
+			stopAllForeActions();
+			return 0;
+		} incontextof this;
+
+		/**TAG
+		 *	stopbackact - back側のアクション全停止
+		 *		@link:	stopaction, setaction, stopnowait, stopforeact, stopbackact, pauseaction, resumeaction, wact
+		 *		@group:		レイヤ操作(アクション)
+		 */
+		.stopbackact = function(elm)
+		{
+			updateBeforeCh = 1;
+			stopAllBackActions();
+			return 0;
+		} incontextof this;
+
+		/**TAG
+		 *	pauseaction - アクション一時停止
+		 *				  (停止不可の属性をもつアクション以外全て一斉)
+		 *				  (この後実行開始されたアクションは一時停止されない)
+		 *	@param all	停止不可属性のものまで止める
+		 *		@link:	stopaction, setaction, stopnowait, stopforeact, stopbackact, pauseaction, resumeaction, wact
+		 *		@group:		レイヤ操作(アクション)
+		 */
+		.pauseaction = function(elm)
+		{
+			if(elm.all)
+			{
+				pauseAction(true);	//停止不可のものも止める
+				return 0;
+			}
+			elm.page	= "fore" if elm.page === void;
+			elm.needlayer	= false;	//	存在するもののみ
+			var	target	= getLayerFromElm(elm);
+			pauseAction(, target);
+			return 0;
+		} incontextof this;
+
+		// アクション再開(一時停止中を解除)
+		/**TAG
+		 *	resumeaction - アクション再開(一時停止中を解除)
+		 *		@link:	stopaction, setaction, stopnowait, stopforeact, stopbackact, pauseaction, resumeaction, wact
+		 *		@group:		レイヤ操作(アクション)
+		 */
+		.resumeaction = function(elm)
+		{
+			elm.page	= "fore" if elm.page === void;
+			elm.needlayer	= false;	//	存在するもののみ
+			var	target	= getLayerFromElm(elm);
+			resumeAction(target);
+			return 0;
+		} incontextof this;
+
+		/**TAG
+		 *	settimerate - アクションの時間経過率を変更
+		 *	@param page		"fore" / "back"
+		 *	@param storage	画像ファイル名
+		 *	@param id		オブジェクトID
+		 *	@param rate		時間経過率(1.0なら等速/>1.0なら早送り/<1.0ならスロー)
+		 *		@group:		レイヤ操作(アクション)
+		 */
+		.settimerate	= function(elm)
+		{
+			elm.page	= "fore" if elm.page === void;
+			elm.needlayer	= false;
+			var	target	= getLayerFromElm(elm);
+			target.timeRate	= +elm.rate if target != void && elm.rate > 0;
+			return 0;
+		} incontextof this;
+
+		/**TAG
+		 *	wact - アクション終了待ち
+		 *	@param canskip	スキップ可否
+		 *	@param acttype	処理対象とするアクションを限定する
+		 *	@param target	処理対象
+		 *	@param propname		対象となるプロパティ名
+		 *	@param handler		実施するアクションハンドラ
+		 *		@link:	stopaction, setaction, stopnowait, stopforeact, stopbackact, pauseaction, resumeaction, wact
+		 *		@group:		レイヤ操作(アクション)
+		 */
+		.wact = function(elm)
+		{
+			if(cf.effectSkip)
+				return 0;	//	エフェクトスキップ中はアクションを待たない
+
+			//	デフォルトは cf.effectCut に依存する
+			elm.canskip	= isEffectCut if elm.canskip === void || isEffectCut;	//	エフェクトをカットするときは必ず、そうでないときは指定がないときにカットしない
+
+			if(elm.acttype !== void )
+			{
+				//タイプ指定のアクションを待つ
+				return waitActionByType(elm.acttype, elm.canskip);
+			}
+
+			var	target	= elm.target != void ? elm.target : getLayerFromElm(elm);
+			target	= lastTarget if target == "last";	//	直前に実行されたアクションの target
+			if (target !== void)
+			{
+				if (typeof target == "Object")
+				{
+					if(actmgr.isInAction(target))
+					{
+						if(elm.canskip)
+							conductor.pendings.insert(0, %[tagname:"stopaction"]);
+						return waitAction(target, elm.propname, elm.handler, elm.canskip);
+					}
+				}
+				else
+				{
+					dm("アクション待ちはオブジェクトに指定する必要があります");
+				}
+			}
+			else
+			{
+				//何も指定が無い場合は全てのアクションを待つ
+				return waitAllAction(elm.canskip);
+			}
+			return 0;
+		} incontextof this;
+
+		.waitaction = function(elm)	// == wact
+		{
+			return tagHandlers.wact(elm);
+		} incontextof this;
+
+		/**TAG
+		 *	touchimage - 画像のキャッシュ読み込み
+		 *	@param storage	先読みしておく画像ファイル
+		 *	@param timeout	タイムアウト指定時間 default=1000
+		 *		@group:		レイヤ操作
+		 */
+		.touchimage	= function(elm)
+		{
+			var	storages	= [];
+			storages.add(elm.storage) if elm.storage != void;
+			storages.add(elm.storages.split(", ",, true)) if elm.storages != void;
+			System.touchImages(storages, 0, elm.timeout != void ? +elm.timeout : 1000);	//	指定がなければ、1秒でタイムアウト
+			return 0;
+		} incontextof this;
+
+		/**TAG
+		 *	resetall - TLEからの実環境動作用、全停止
+		 *	@param withoutsound 音声は停止しない
+		 *				※通常このタグを単体で使用することは無い
+		 *		@group:		タイムライン操作
+		 */
+		.resetall = function(elm)
+		{
+			resetAllState(elm.withoutsound);
+			return 0;
+		} incontextof this;
+
+
+		//=============================================================================
+		//	旧システムとの互換用タグ実装
+		//
+
+
+		/**TAG
+		 *	setautomode - 自動実行の可否切替の追加(！！未実装！！)
+		 *		@group:		メッセージ操作
+		 */
+		.setautomode	= function(elm)
+		{
+		//	enabledAutoMode	= +elm.enabled;
+			dm("▼setautomode タグは実装されていません、無視します。");
+			return 0;
+		} incontextof this;
+
+		/**TAG
+		 *	say - 発言
+		 *	@param name		発言者名(指定がなければ、名前表示OFF)
+		 *	@param storage	ボイスファイル名
+		 *		@memo: 本機能はbuf=0固定で動作する
+		 *		@link: say, saystop
+		 *		@group:		効果音・BGM・ビデオ操作
+		 */
+		.say	= function(mp)
+		{
+			if( SESTARTIDX )	//先頭からSEとして使用されている場合はsayタグを実行しない
+			{
+				//	ボイス再生中なら停止する
+				se[0].stop();
+
+				//	ファイル名が指定されていれば、ボイスを再生する
+				if(mp.storage != "")
+				{
+					mp.tagname	= "playse";
+					mp.buf		= 0;	//	ボイスのバッファは 0 固定
+										//	※通常使用のSEバッファ先頭をSESTARTIDX定数としてKAGWindow.override.tjsに記述
+					mp.loop		= false;
+					conductor.pendings.insert(0, mp);
+				}
+
+				f.nextSpeaker	= mp.name;
+				f.resetSpeaker	= true;
+			}
+			else
+			{
+				throw new Exception("SESTARTIDX==0 で定義されているため @say タグは無効です");
+			}
+			return 0;
+		} incontextof this;
+
+		/**TAG
+		 *	saystop - 発言停止
+		 *		@memo: 本機能はbuf=0固定で動作する
+		 *		@link: say, saystop
+		 *		@group:		効果音・BGM・ビデオ操作
+		 */
+		.saystop = function(mp)
+		{
+			se[0].stop();
+			return 0;
+		} incontextof this;
+
+		/**TAG
+		 *	se - 効果音再生
+		 *	時間を指定すると、フェードやパンの変化を再生開始と共に行える
+		 *	@param se		対象のバッファid(0〜), -1 指定時は空きバッファから自動的に使用される
+		 *	@param storage	再生する効果音
+		 *	@param volume	再生音量
+		 *	@param loop		繰り返し再生するか
+		 *	@param pan		パン指定
+		 *	@param buf		再生する効果音バッファ(指定がなければ適当なものを選択), seパラメータと同意(se優先)
+		 *	@param delay	処理開始の遅延時間(default: 0)
+		 *	@param nodup	同じ効果音が再生されていたら、再生しない(default:false)
+		 *		@link:	se, seloop, seopt, sestop, fadese, panse, wpanse, getsebuf, seact
+		 *		@group:		効果音・BGM・ビデオ操作
+		 */
+		.se	= function(elm)
+		{
+			//	スキップモード時はループしないSEを鳴らさない
+			if(skipMode >= 2 && !elm.loop)
+			{
+@if(DEBUG)
+				dm("スキップ中のため、効果音 "+elm.storage+" は再生されません。");
+@endif
+				return 0;
+			}
+
+			//seが指定されていたらbufに反映
+			elm.buf	= elm.se == -1 ? void : elm.se if elm.se !== void;
+			var ses = se;
+			if(elm.buf === void)
+			{
+				//	空きバッファを探す
+				for(var i=SESTARTIDX; i<ses.count; i++) with(ses[i])
+				{
+					//	再生中でなく、delay中でなく、アクション中でもない
+					if(.playingStorage=="" && !.isDelaying && !isInAction(ses[i]))
+					{
+						elm.buf = i;
+						if(!elm.nodup)
+							break;
+					}
+					if(elm.nodup && (.playingStorage == elm.storage || (.isDelaying && .isReservedStorage(elm.storage))))
+					{
+						dm("**** \""+elm.storage+"\"は buffer["+i+"] で再生中のため、新たな再生を取りやめました。 ****");
+						return 0;
+					}
+				}
+			}
+			if(elm.buf === void)
+			{
+@if(DEBUG)
+				dm("************ 効果音の再生バッファ数が足りません **********");
+@endif
+				return 0;
+			}
+
+			//dm("   se: storage="+elm.storage+" idx="+idx);
+			var tgt = ses[+elm.buf];
+//			dm("se["+elm.buf+"]: "+elm.pan+"("+(elm.pan === void)+")");
+			if(elm.time > 0)
+			{
+				tgt.volume	= elm._volume !== void ? +elm._volume : elm.svolume !== void ? +elm.svolume : 0;	//初期音量
+				tgt.pan		= elm._pan !== void ? +elm._pan : elm.span !== void ? +elm.span : 0;		//初期パン
+				elm.volume	= 100 if elm.volume === void;
+				elm.pan		= 0 if elm.pan === void;
+			}
+			else
+			{
+				tgt.volume	= elm.volume !== void ? +elm.volume : 100;
+				tgt.pan		= elm.pan !== void ? +elm.pan : 0;
+			}
+			scflags.se	= [] if scflags.se == void;
+			tgt.volume2	= scflags.se[+elm.buf].globalVolume if scflags.se[+elm.buf] != void;	//	効果音音量を設定
+			var newelm = %[buf:+elm.buf, storage:elm.storage, loop:elm.loop, delay:elm.delay];
+			newelm.start = elm.label if elm.label!==void;
+			if(elm.time > 0)
+			{
+				newelm.time		= elm.time;
+				if(tgt.volume !== elm.volume)
+				{
+					newelm.volume	= elm.volume;
+					tgt.fadeIn(newelm);
+				}
+				if(tgt.pan !== elm.pan)
+				{
+					newelm.pan		= elm.pan;
+					tgt.startPan(newelm);
+				}
+			}
+			else
+				tgt.play(newelm);
+
+			return 0;
+		} incontextof this;
+
+		/**TAG
+		 *	seopt - 効果音の設定
+		 *	@param storage	変更する効果音
+		 *	@param buf		変更する効果音バッファ
+		 *		@link:	se, seloop, seopt, sestop, fadese, panse, wpanse, getsebuf, seact
+		 *		@memo: storage でバッファを探すように変更
+		 *		@group:		効果音・BGM・ビデオ操作
+		 */
+		.seopt_org	= .seopt;
+		.seopt	= function(elm)
+		{
+			tagHandlers.getsebuf(elm);
+			return tagHandlers.seopt_org(elm);
+		} incontextof this;
+
+		/**TAG
+		 *	fadese - 効果音の音量変更
+		 *	@param storage	変更する効果音
+		 *	@param buf		変更する効果音バッファ
+		 *	@param time		フェード時間
+		 *	@param volume	ボリューム指定
+		 *		@link:	se, seloop, seopt, sestop, fadese, panse, wpanse, getsebuf, seact
+		 *		@group:		効果音・BGM・ビデオ操作
+		 */
+		.fadese_org = .fadese;
+		.fadese = function(elm)
+		{
+			tagHandlers.getsebuf(elm);
+
+			if(skipMode >= 2)
+			{
+				elm.time	= 0;	//	スキップ中はフェードしない
+				delete elm.delay;	//	遅延実行もなし
+			}
+
+			elm.time	= 500 if elm.time === void;
+			elm.volume	= 0 if elm.volume === void;
+			se[+elm.buf].fade(elm);
+			return 0;
+		} incontextof this;
+
+		/**TAG
+		 *	seloop - 効果音をループで再生
+		 *	@param storage	変更する効果音
+		 *	@param buf		変更する効果音バッファ
+		 *	@param volume	ボリューム指定
+		 *		@link:	se, seloop, seopt, sestop, fadese, panse, wpanse, getsebuf, seact
+		 *		@group:		効果音・BGM・ビデオ操作
+		 */
+		.seloop	= function(elm)
+		{
+			elm.loop = true;
+			return tagHandlers.se(elm);
+		} incontextof this;
+
+		/**TAG
+		 *	sestop - 効果音を停止
+		 *	バッファもファイル名も指定しなければ、全ての効果音を停止する
+		 *	@param buf		停止するバッファ
+		 *	@param storage	停止する効果音ファイル
+		 *	@param time		フェードする場合の時間
+		 *	@param delay	処理開始の遅延時間(default: 0)
+		 *	@param nowait	即時で停止
+		 *	@param norapid	true / false(defualt) cf.effectSkipコンフィグ指定や早送りキー操作中でも時間を早めない
+		 *		@link:	se, seloop, seopt, sestop, fadese, panse, wpanse, getsebuf, seact
+		 *		@group:		効果音・BGM・ビデオ操作
+		 */
+		.sestop	= function(elm)
+		{
+//			dm("sestop: "+elm.storage);
+			var nowait = (elm.nowait!==void)?elm.nowait:false;
+			if(skipMode >= 2)
+			{
+				elm.time	= 0;	//	スキップ中はフェードしない
+				delete elm.delay;	//	遅延実行もなし
+			}
+			if(elm.buf === void && elm.storage != void)
+			{
+				elm.buf = getSESoundBufferFromStorage(elm.storage);
+				if(elm.buf === void)
+				{
+@if(DEBUG)
+					dm("not playing: "+elm.storage);
+@endif
+					return 0;	//	停止すべき効果音が見つからなかった
+				}
+			}
+			if(elm.buf !== void)
+			{
+				if(elm.time > 0)
+				{
+					se[+elm.buf].fadeOut(elm);
+					if(!nowait)
+						doWait(%[time:elm.time, canskip:false, mode:"normal", norapid:elm.norapid]);
+				}
+				else if(se[+elm.buf].status == "play")
+					se[+elm.buf].stop(elm.delay);
+			}
+			else
+			{
+				//全停止
+				for( var i=SESTARTIDX; i<se.count; i++ )
+				{
+					if(elm.time > 0)
+					{
+						se[i].fadeOut(elm);
+						if(!nowait && i==se.count-1)
+							doWait(%[time:elm.time, canskip:false, mode:"normal", norapid:elm.norapid]);
+					}
+					else if(se[i].status == "play")
+						se[i].stop(elm.delay);
+				}
+			}
+			return 0;
+		} incontextof this;
+
+		/**TAG
+		 *	seact - 効果音を動的に変更.
+		 *	パラメータは se を参照のこと
+		 *	@param se		対象のバッファid(0〜), -1 指定時は空きバッファから自動的に使用される
+		 *	@param keys			KeyFrameSoundActionで使用するキー値の列挙
+		 *						(time,accel,interpolate,state)を基本形とし、stateによって後続の内訳が変わる
+		 *						stateに指定出来るのは"play","stop","param","volume","pan"
+		 *						※stateごとの後続パラメータ：
+		 *						　・"play",storage,xchgtime,volume,start,loop,pan,
+		 *						　　volume2,pan2,loop2
+		 *						　・"stop",xchgtime,volume,pan
+		 *						　・"param",xchgtime,volume,pan,loop2
+		 *						　・"volume",xchgtime,volume,,loop2
+		 *						　・"pan",xchgtime,pan,,loop2
+		 *						※「,,」のようになっている部分はそのstateでは使われないものを省略
+		 *						※loop2はフェード処理が終わった時点でloopの状態を変更する場合に指定
+		 *						※volume2はフェード処理が終わる時点の音量指定
+		 *						※pan2はフェード処理が終わる時点のパン指定
+		 *						※startは効果音内に設定されている再生開始ポイントを示すラベル
+		 *	@param texton		メッセージウィンドウを残したアクション指定
+		 *	@param textoff		textonの逆
+		 *		@link:		action, se, seloop, seopt, sestop, fadese, panse, wpanse, getsebuf, seact
+		 *		@group:		効果音・BGM・ビデオ操作
+		 */
+		.seact	= function(elm)
+		{
+			elm.se = (( elm.buf !== void ) ? elm.buf: -1) if elm.se === void;
+			elm.module = "KeyFrameSoundModule" if elm.module === void;
+			elm.page = elm.targetpage if elm.page === void && elm.targetpage !== void;
+			return tagHandlers.action(elm);
+		} incontextof this;
+
+		/**TAG
+		 *	sedelayexec - 効果音バッファの遅延実行待ち処理を、時間が来ているものについて処理する
+		 */
+		.sedelayexec	= function(elm)
+		{
+			for(var i=0; i<kag.se.count; i++)
+				kag.se[i].onDelayed();
+			return 0;
+		} incontextof this;
+
+		/**TAG
+		 *	play - BGMの再生
+		 *	@param storage	再生するBGMファイル
+		 *	@param time		フェードする場合の時間
+		 *	@param delay	再生開始の遅延時間
+		 *	@param intime	曲の入れ替えを行う場合のクロスフェード時間(in)
+		 *	@param outtime	曲の入れ替えを行う場合のクロスフェード時間(out)
+		 *	@param overlap	曲の入れ替えを行う場合の重なり時間
+		 *		@link:	play, playstop, playpause, playresume, bgmact
+		 *		@group:		効果音・BGM・ビデオ操作
+		 */
+		.play	= function(elm)
+		{
+			with(bgm)
+			{
+				//	指定のBGMがすでに再生されていたら、特に何もしない
+				if(.playingStorage == elm.storage)
+					return 0;
+
+				.setVolume(int((elm.volume !== void ? +elm.volume : 100) * 1000));	//	開始時音量及びフェードイン後音量
+				if(elm.time > 0)
+				{
+					if(.currentBuffer.status == "play")
+					{
+						elm.intime	= +elm.time if elm.intime === void;
+						elm.outtime	= +elm.time if elm.outtime === void;
+						elm.overlap	= +elm.time if elm.overlap === void;
+						.exchange(elm);
+					}
+					else
+						.fadeIn(elm);
+				}
+				else
+					.play(elm);
+			}
+			return 0;
+		} incontextof this;
+
+		/**TAG
+		 *	playstop - BGMの停止
+		 *	@param time		フェードする場合の時間
+		 *		@link:	play, playstop, playpause, playresume, bgmact
+		 *		@group:		効果音・BGM・ビデオ操作
+		 */
+		.playstop	= function(elm)
+		{
+			if(elm.time > 0)
+				bgm.fadeOut(%[time:elm.time]);
+			else
+				bgm.stop();
+			return 0;
+		} incontextof this;
+
+		/**TAG
+		 *	playpause - BGMの一時停止
+		 *	@param time フェードアウト時間
+		 *		@link:	play, playstop, playpause, playresume, bgmact
+		 *		@group:		効果音・BGM・ビデオ操作
+		 */
+		.playpause	= function(elm)
+		{
+			pauseVolume	= bgm.volume \ 1000;	//	ポーズしたときのボリュームを覚えておく
+			if(elm.time > 0)
+				return tagHandlers.fadepausebgm(elm);
+			else
+				return tagHandlers.pausebgm(elm);
+		} incontextof this;
+
+		/**TAG
+		 *	playresume - BGMの一時停止から再開
+		 *	@param time フェードイン時間
+		 *	@param volume 最終ボリューム
+		 *		@link:	play, playstop, playpause, playresume, bgmact
+		 *		@group:		効果音・BGM・ビデオ操作
+		 */
+		.playresume	= function(elm)
+		{
+			var	ret	= tagHandlers.resumebgm(elm);
+			elm.volume	= pauseVolume <= 0 ? 100 : pauseVolume if elm.volume === void;
+			if(elm.time > 0)
+			{
+				tagHandlers.bgmopt(%[volume:0]);
+				ret	= tagHandlers.fadebgm(elm);
+			}
+			else
+				tagHandlers.bgmopt(elm);
+			return ret;
+		} incontextof this;
+
+		/**TAG
+		 *	bgmact - BGMを動的に変更
+		 *	パラメータは play を参照のこと
+		 *	@param keys			KeyFrameSoundActionで使用するキー値の列挙
+		 *						(time,accel,interpolate,state)を基本形とし、stateによって後続の内訳が変わる
+		 *						stateに指定出来るのは
+		 *						　"play","stop","param","volume","pause","resume"
+		 *						※stateごとの後続パラメータ：
+		 *						　・"play",storage,xchgtime,,,loop,label,overlaptime,volume,loop2
+		 *						　・"stop",xchgtime,volume
+		 *						　・"param",xchgtime,volume,,loop2
+		 *						　・"volume",xchgtime,volume,,loop2
+		 *						　・"pause"(後続パラメータなし)
+		 *						　・"resume"(後続パラメータなし)
+		 *						※「,,」のようになっている部分はそのstateでは使われないものを省略
+		 *						※loop2はフェード処理が終わった時点でloopの状態を変更する場合に指定
+		 *						※labelは効果音内に設定されている再生開始ポイントを示すラベル
+		 *	@param texton		メッセージウィンドウを残したアクション指定
+		 *	@param textoff		textonの逆
+		 *		@link:		action, play, playstop, playpause, playresume, bgmact
+		 *		@group:		効果音・BGM・ビデオ操作
+		 */
+		.bgmact	= function(elm)
+		{
+			elm.bgm = 0 if elm.bgm === void;
+			elm.module = "KeyFrameSoundModule" if elm.module === void;
+			return tagHandlers.action(elm);
+		} incontextof this;
+
+		/**
+		 *	change_condition - 各種コンディション変更の処理(内部で呼び出されるため直接叩かない)
+		 *	@param page		対象となるページ
+		 *	@param storage	対象となる画像ファイル名
+		 *	@param both		表裏どちらにも行うかどうか
+		 *	@param offmode	解除するなら true
+		 *	@param effect	設定する効果の名称
+		 *	@param brightness	明るさ(-255〜255)
+		 *	@param blur		設定するブラーの値(0〜)
+		 *	@param time		トランジションする際の時間
+		 *		@memo:	明示的にresetconditionかcondoffしないと効果が永続する
+		 *		@link:	resetcondition, condoff, condoffT
+		 *				monocro, monocroT, red, redT, green, greenT, blue, blueT
+		 *				sepia, sepiaT, nega, negaT, contrast, contrastoff, blur, bluroff
+		 */
+		.change_condition	= function(elm)
+		{
+			dm("change_condition: "+elm.effect);
+			var dotrans = false;
+			var doboth = elm.both;
+			elm.page = "back", doboth = false if elm.time > 0;	//	トランジションが指定されていたら、対象は裏のみにする
+
+			var page = (elm.page!==void)?elm.page:"back";
+			var comp = (page=="fore")?"back":"fore";
+			var off = elm.offmode = (elm.offmode!==void)?elm.offmode:false;	//解除タイプの場合
+
+			//パラメータ正規化
+			var effect		= (elm.effect!==void) ? elm.effect : "";
+			var contrast	= (elm.contrast!==void) ? +elm.contrast : void;
+			var blur		= (elm.blur!==void) ? +elm.blur : void;
+
+			if( elm.range !== void )
+			{
+				elm.target = "all";
+				doboth = true;
+			}
+
+			//時間指定がある場合はトランジションを実施する
+			//指定時間が短い場合は次の処理でトランジション結果に影響を与えてしまうので行わない
+			if( elm.time !== void && elm.time > 100 )
+			{
+				dotrans = true;
+				tagHandlers.backlay(%[withact:elm.withact]);	//表→裏　複製
+				page = "back";	//トランジションがある場合、処理は常に裏に行う
+				comp = "fore";
+			}
+
+			var objbase = this[page].base;
+			var targets = [];	//処理対象オブジェクトの列挙配列
+			if( elm.target === "all" || (elm.target === void && elm.storage === void) || off )
+			{
+				//現時点で非表示でもこのあと表示されたものまで対象にする
+				var objlayers = this[page].layers;
+				for( var i=0; i<objlayers.count; i++ )
+					targets.add(objlayers[i]);
+				getLayerAll(%[page:page],, targets);	//	プラグインのレイヤーを追加
+				if( effect != "" || off )
+					targets.add(objbase);
+
+				//両面に実施する場合
+				if(doboth)
+				{
+					var cmplayers = this[comp].layers;
+					for( var i=0; i<cmplayers.count; i++ )
+						targets.add(cmplayers[i]);
+					getLayerAll(%[page:comp],, targets);	//	プラグインのレイヤーを追加
+					if( effect != "" || off )
+						targets.add(this[comp].base);
+				}
+			}
+			else
+			{
+				var lay = getLayerFromElm(elm);
+				if( lay !== void )
+					targets.add(lay);
+				else
+					targets.add(objbase);
+			}
+
+			for( var i=0; i<targets.count; i++ )
+			{
+//				dm("targets["+i+"] = "+targets[i]+" / "+effect);
+				//エフェクト効果
+				if(effect == "none" || effect == "" || Layer_effect_list[effect] != void)
+					targets[i].holdeffect	= effect;
+				else
+					dm("▼change_condition " + effect + " の処理は未実装です");
+				targets[i].holdcontrast	= +contrast if contrast !== void;	//コントラスト
+				targets[i].holdblur		= +blur if blur !== void;			//ブラー
+			}
+
+			if( dotrans )
+				conductor.pendings.insert(0, %[tagname:"trans", time:elm.time]);
+
+			return 0;
+		} incontextof this;
+
+		/**TAG
+		 *	resetcondition - 各種コンディションの全解除
+		 *		@memo:	明示的にresetconditionかcondoffしないと効果が永続する
+		 *		@link:	resetcondition, condoff, condoffT
+		 *				monocro, monocroT, red, redT, green, greenT, blue, blueT
+		 *				sepia, sepiaT, nega, negaT, contrast, contrastoff, blur, bluroff
+		 *		@group:		レイヤ操作(画像効果)
+		 */
+		.resetcondition	= function(elm)
+		{
+			elm.target = "all";
+			elm.effect = "";
+			elm.contrast = 0;
+			elm.blur = 0;
+			elm.offmode = true;
+			return tagHandlers.change_condition(elm);
+		} incontextof this;
+
+		/**TAG
+		 *	condoff - 各種コンディションの解除
+		 *	@param page		"fore" / "back"
+		 *	@param storage	対象レイヤーに読み込まれている画像ファイル名
+		 *	@param id		複数の同一画像が使用されている場合の識別ID
+		 *		@link:	resetcondition, condoff, condoffT
+		 *				monocro, monocroT, red, redT, green, greenT, blue, blueT
+		 *				sepia, sepiaT, nega, negaT, contrast, contrastoff, blur, bluroff
+		 *		@group:		レイヤ操作(画像効果)
+		 */
+		.condoff	= function(elm)
+		{
+			elm.effect = "";
+			elm.contrast = 0;
+			elm.blur = 0;
+			elm.offmode = true;
+			elm.both	= elm.page === void;
+			return tagHandlers.change_condition(elm);
+		} incontextof this;
+
+		/**TAG
+		 *	condoffT - 各種コンディションの解除(texton=false)
+		 *	@param page		"fore" / "back"
+		 *	@param storage	対象レイヤーに読み込まれている画像ファイル名
+		 *	@param id		複数の同一画像が使用されている場合の識別ID
+		 *		@link:	resetcondition, condoff, condoffT
+		 *		@link:	monocro, monocroT, red, redT, green, greenT, blue, blueT
+		 *		@link:	sepia, sepiaT, nega, negaT, contrast, contrastoff, blur, bluroff
+		 *		@group:		レイヤ操作(画像効果)
+		 */
+		.condoffT	= function(elm)
+		{
+			elm.texton = false;
+			return tagHandlers.condoff(elm);
+		} incontextof this;
+
+		/**TAG
+		 *	monocro - モノクローム効果
+		 *	@param page		"fore" / "back"
+		 *	@param storage	対象レイヤーに読み込まれている画像ファイル名
+		 *	@param id		複数の同一画像が使用されている場合の識別ID
+		 *		@link:	resetcondition, condoff, condoffT
+		 *		@link:	monocro, monocroT, red, redT, green, greenT, blue, blueT
+		 *		@link:	sepia, sepiaT, nega, negaT, contrast, contrastoff, blur, bluroff
+		 *		@memo:	condoff, condoffT, resetcondition で解除
+		 *		@group:		レイヤ操作(画像効果)
+		 */
+		.monocro	= function(elm)
+		{
+			elm.effect = "monocro";
+			return tagHandlers.change_condition(elm);
+		} incontextof this;
+
+		/**TAG
+		 *	monocroT - モノクローム効果(texton=false)
+		 *	@param page		"fore" / "back"
+		 *	@param storage	対象レイヤーに読み込まれている画像ファイル名
+		 *	@param id		複数の同一画像が使用されている場合の識別ID
+		 *		@link:	resetcondition, condoff, condoffT
+		 *		@link:	monocro, monocroT, red, redT, green, greenT, blue, blueT
+		 *		@link:	sepia, sepiaT, nega, negaT, contrast, contrastoff, blur, bluroff
+		 *		@memo:	condoff, condoffT, resetcondition で解除
+		 *		@group:		レイヤ操作(画像効果)
+		 */
+		.monocroT	= function(elm)
+		{
+			elm.texton = false;
+			return tagHandlers.monocro(elm);
+		} incontextof this;
+
+		/**TAG
+		 *	red - 赤効果
+		 *	@param page		"fore" / "back"
+		 *	@param storage	対象レイヤーに読み込まれている画像ファイル名
+		 *	@param id		複数の同一画像が使用されている場合の識別ID
+		 *		@link:	resetcondition, condoff, condoffT
+		 *		@link:	monocro, monocroT, red, redT, green, greenT, blue, blueT
+		 *		@link:	sepia, sepiaT, nega, negaT, contrast, contrastoff, blur, bluroff
+		 *		@memo:	condoff, condoffT, resetcondition で解除
+		 *		@group:		レイヤ操作(画像効果)
+		 */
+		.red	= function(elm)
+		{
+			elm.effect = "red";
+			return tagHandlers.change_condition(elm);
+		} incontextof this;
+
+		/**TAG
+		 *	redT - 赤効果(texton=false)
+		 *	@param page		"fore" / "back"
+		 *	@param storage	対象レイヤーに読み込まれている画像ファイル名
+		 *	@param id		複数の同一画像が使用されている場合の識別ID
+		 *		@link:	resetcondition, condoff, condoffT
+		 *		@link:	monocro, monocroT, red, redT, green, greenT, blue, blueT
+		 *		@link:	sepia, sepiaT, nega, negaT, contrast, contrastoff, blur, bluroff
+		 *		@memo:	condoff, condoffT, resetcondition で解除
+		 *		@group:		レイヤ操作(画像効果)
+		 */
+		.redT	= function(elm)
+		{
+			elm.texton = false;
+			return tagHandlers.red(elm);
+		} incontextof this;
+
+		/**TAG
+		 *	green - 緑効果
+		 *	@param page		"fore" / "back"
+		 *	@param storage	対象レイヤーに読み込まれている画像ファイル名
+		 *	@param id		複数の同一画像が使用されている場合の識別ID
+		 *		@link:	resetcondition, condoff, condoffT
+		 *		@link:	monocro, monocroT, red, redT, green, greenT, blue, blueT
+		 *		@link:	sepia, sepiaT, nega, negaT, contrast, contrastoff, blur, bluroff
+		 *		@memo:	condoff, condoffT, resetcondition で解除
+		 *		@group:		レイヤ操作(画像効果)
+		 */
+		.green	= function(elm)
+		{
+			elm.effect = "green";
+			return tagHandlers.change_condition(elm);
+		} incontextof this;
+
+		/**TAG
+		 *	greenT - 緑効果(texton=false)
+		 *	@param page		"fore" / "back"
+		 *	@param storage	対象レイヤーに読み込まれている画像ファイル名
+		 *	@param id		複数の同一画像が使用されている場合の識別ID
+		 *		@link:	resetcondition, condoff, condoffT
+		 *		@link:	monocro, monocroT, red, redT, green, greenT, blue, blueT
+		 *		@link:	sepia, sepiaT, nega, negaT, contrast, contrastoff, blur, bluroff
+		 *		@memo:	condoff, condoffT, resetcondition で解除
+		 *		@group:		レイヤ操作(画像効果)
+		 */
+		.greenT	= function(elm)
+		{
+			elm.texton = false;
+			return tagHandlers.green(elm);
+		} incontextof this;
+
+		/**TAG
+		 *	blue - 青効果
+		 *	@param page		"fore" / "back"
+		 *	@param storage	対象レイヤーに読み込まれている画像ファイル名
+		 *	@param id		複数の同一画像が使用されている場合の識別ID
+		 *		@link:	resetcondition, condoff, condoffT
+		 *		@link:	monocro, monocroT, red, redT, green, greenT, blue, blueT
+		 *		@link:	sepia, sepiaT, nega, negaT, contrast, contrastoff, blur, bluroff
+		 *		@memo:	condoff, condoffT, resetcondition で解除
+		 *		@group:		レイヤ操作(画像効果)
+		 */
+		.blue	= function(elm)
+		{
+			elm.effect = "blue";
+			return tagHandlers.change_condition(elm);
+		} incontextof this;
+
+		/**TAG
+		 *	blueT - 青効果(texton=false)
+		 *	@param page		"fore" / "back"
+		 *	@param storage	対象レイヤーに読み込まれている画像ファイル名
+		 *	@param id		複数の同一画像が使用されている場合の識別ID
+		 *		@link:	resetcondition, condoff, condoffT
+		 *		@link:	monocro, monocroT, red, redT, green, greenT, blue, blueT
+		 *		@link:	sepia, sepiaT, nega, negaT, contrast, contrastoff, blur, bluroff
+		 *		@memo:	condoff, condoffT, resetcondition で解除
+		 *		@group:		レイヤ操作(画像効果)
+		 */
+		.blueT	= function(elm)
+		{
+			elm.texton = false;
+			return tagHandlers.blue(elm);
+		} incontextof this;
+
+		/**TAG
+		 *	sepia - セピア効果
+		 *	@param page		"fore" / "back"
+		 *	@param storage	対象レイヤーに読み込まれている画像ファイル名
+		 *	@param id		複数の同一画像が使用されている場合の識別ID
+		 *		@link:	resetcondition, condoff, condoffT
+		 *		@link:	monocro, monocroT, red, redT, green, greenT, blue, blueT
+		 *		@link:	sepia, sepiaT, nega, negaT, contrast, contrastoff, blur, bluroff
+		 *		@memo:	condoff, condoffT, resetcondition で解除
+		 *		@group:		レイヤ操作(画像効果)
+		 */
+		.sepia	= function(elm)
+		{
+			elm.effect = "sepia";
+			return tagHandlers.change_condition(elm);
+		} incontextof this;
+
+		/**TAG
+		 *	sepiaT - セピア効果(texton=false)
+		 *	@param page		"fore" / "back"
+		 *	@param storage	対象レイヤーに読み込まれている画像ファイル名
+		 *	@param id		複数の同一画像が使用されている場合の識別ID
+		 *		@link:	resetcondition, condoff, condoffT
+		 *		@link:	monocro, monocroT, red, redT, green, greenT, blue, blueT
+		 *		@link:	sepia, sepiaT, nega, negaT, contrast, contrastoff, blur, bluroff
+		 *		@memo:	condoff, condoffT, resetcondition で解除
+		 *		@group:		レイヤ操作(画像効果)
+		 */
+		.sepiaT	= function(elm)
+		{
+			elm.texton = false;
+			return tagHandlers.sepia(elm);
+		} incontextof this;
+
+		/**TAG
+		 *	nega - ネガ反転効果
+		 *	@param page		"fore" / "back"
+		 *	@param storage	対象レイヤーに読み込まれている画像ファイル名
+		 *	@param id		複数の同一画像が使用されている場合の識別ID
+		 *		@link:	resetcondition, condoff, condoffT
+		 *		@link:	monocro, monocroT, red, redT, green, greenT, blue, blueT
+		 *		@link:	sepia, sepiaT, nega, negaT, contrast, contrastoff, blur, bluroff
+		 *		@memo:	condoff, condoffT, resetcondition で解除
+		 *		@group:		レイヤ操作(画像効果)
+		 */
+		.nega	= function(elm)
+		{
+			elm.effect = "nega";
+			return tagHandlers.change_condition(elm);
+		} incontextof this;
+
+		/**TAG
+		 *	negaT - ネガ反転効果(texton=false)
+		 *	@param page		"fore" / "back"
+		 *	@param storage	対象レイヤーに読み込まれている画像ファイル名
+		 *	@param id		複数の同一画像が使用されている場合の識別ID
+		 *		@link:	resetcondition, condoff, condoffT
+		 *		@link:	monocro, monocroT, red, redT, green, greenT, blue, blueT
+		 *		@link:	sepia, sepiaT, nega, negaT, contrast, contrastoff, blur, bluroff
+		 *		@memo:	condoff, condoffT, resetcondition で解除
+		 *		@group:		レイヤ操作(画像効果)
+		 */
+		.negaT	= function(elm)
+		{
+			elm.texton = false;
+			return tagHandlers.nega(elm);
+		} incontextof this;
+
+		/**TAG
+		 *	contrast - コントラスト指定
+		 *	@param page		"fore" / "back"
+		 *	@param storage	対象レイヤーに読み込まれている画像ファイル名
+		 *	@param id		複数の同一画像が使用されている場合の識別ID
+		 *		@link:	resetcondition, condoff, condoffT
+		 *		@link:	monocro, monocroT, red, redT, green, greenT, blue, blueT
+		 *		@link:	sepia, sepiaT, nega, negaT, contrast, contrastoff, blur, bluroff
+		 *		@memo:	contrastoff, condoff, condoffT, resetcondition で解除
+		 *		@group:		レイヤ操作(画像効果)
+		 */
+		.contrast	= function(elm)
+		{
+			elm.target = "all";
+			if( elm.level === void ){
+				dm("▼contrast levelパラメータが指定されていません、無視します。");
+				elm.level = 0;
+			}
+			elm.contrast = elm.level;
+			return tagHandlers.change_condition(elm);
+		} incontextof this;
+
+		/**TAG
+		 *	contrastoff - コントラスト解除
+		 *	@param page		"fore" / "back"
+		 *	@param storage	対象レイヤーに読み込まれている画像ファイル名
+		 *	@param id		複数の同一画像が使用されている場合の識別ID
+		 *		@link:	resetcondition, condoff, condoffT
+		 *		@link:	monocro, monocroT, red, redT, green, greenT, blue, blueT
+		 *		@link:	sepia, sepiaT, nega, negaT, contrast, contrastoff, blur, bluroff
+		 *		@group:		レイヤ操作(画像効果)
+		 */
+		.contrastoff	= function(elm)
+		{
+			elm.target = "all";
+			elm.contrast = 0;
+			elm.offmode = true;
+			return tagHandlers.change_condition(elm);
+		} incontextof this;
+
+		// → blur
+		.smudge	= function(elm)
+		{
+			elm.texton = false;
+			return tagHandlers.blur(elm);
+		} incontextof this;
+
+		// → bluroff
+		.smudgeoff	= function(elm)
+		{
+			elm.texton = false;
+			return tagHandlers.bluroff(elm);
+		} incontextof this;
+
+		/**TAG
+		 *	blur - ブラー効果
+		 *	@param page		"fore" / "back"
+		 *	@param storage	対象レイヤーに読み込まれている画像ファイル名
+		 *	@param id		複数の同一画像が使用されている場合の識別ID
+		 *		@link:	resetcondition, condoff, condoffT
+		 *		@link:	monocro, monocroT, red, redT, green, greenT, blue, blueT
+		 *		@link:	sepia, sepiaT, nega, negaT, contrast, contrastoff, blur, bluroff
+		 *		@memo:	bluroff, condoff, condoffT, resetcondition で解除
+		 *		@group:		レイヤ操作(画像効果)
+		 */
+		.blur	= function(elm)
+		{
+			if( elm.level === void ){
+				dm("▼blur levelパラメータが指定されていません、無視します。");
+				elm.level = 0;
+			}
+			elm.page = elm.range if elm.range !== void;
+			elm.blur = elm.level;
+			return tagHandlers.change_condition(elm);
+		} incontextof this;
+
+		/**TAG
+		 *	bluroff - ブラー解除
+		 *	@param page		"fore" / "back"
+		 *	@param storage	対象レイヤーに読み込まれている画像ファイル名
+		 *	@param id		複数の同一画像が使用されている場合の識別ID
+		 *		@link:	resetcondition, condoff, condoffT
+		 *		@link:	monocro, monocroT, red, redT, green, greenT, blue, blueT
+		 *		@link:	sepia, sepiaT, nega, negaT, contrast, contrastoff, blur, bluroff
+		 *		@group:		レイヤ操作(画像効果)
+		 */
+		.bluroff	= function(elm)
+		{
+			elm.page = elm.range if elm.range !== void;
+			elm.blur = 0;
+			elm.offmode = true;
+			return tagHandlers.change_condition(elm);
+		} incontextof this;
+
+		/**
+		 *	motionstart - プロパティで制御される運動の開始(内部呼び出し用タグ)
+		 *	@param page		"fore" / "back"
+		 *	@param storage	対象レイヤーに読み込まれている画像ファイル名
+		 *	@param id		複数の同一画像が使用されている場合の識別ID
+		 *	@param prop		アクション対象のプロパティ
+		 *	@param propInfo	アクションを設定するときの情報
+		 *	@param intime	動作開始時間指定
+		 *	@param canskip	スキップ可否
+		 *	@param wait		完了待ちをする
+		 *	@param nowait	完了待ちをしない
+		 *	@param sync		(背景又はpartbgのみ)子レイヤーも同期して揺れる
+		 *		@link:	motionstart, motionstop
+		 *		@group:		レイヤ操作(アクション)
+		 */
+		.motionstart	= function(elm)
+		{
+//			elm.layer	= elm.layer !== void ? elm.layer : "base" if elm.storage === void;
+			elm.page	= elm.page !== void ? elm.page : "fore";
+//			dm("motionstart: "+elm.prop+" / "+elm.page+"."+elm.layer);
+			var	layers	= getTargetLayers(elm);
+			if(layers == void)
+			{
+@if(DEBUG)
+				throw new Exception("page/layer/target/id/partbgid = "+elm.page+"/"+elm.layer+"/"+elm.target+"/"+elm.id+"/"+elm.partbgid+" で指定できるオブジェクトが存在しません。");
+@endif
+				return 0;
+			}
+
+			if(elm.both)
+			{
+				var	lc	= layers.count;
+				for(var i=0; i<lc; i++)
+					layers.add(layers[i].comp) if layers[i].comp != void;
+			}
+			var	delay	= +elm.delay;
+//			dm("delay = "+delay);
+			for(var i=0; i<layers.count; i++)
+			{
+				var	layer	= layers[i];
+				if(!layer.visible && elm.page != "back")
+					continue;
+				if(elm.sync)
+				{
+					if(layer.parent instanceof "BaseLayer" || layer.parent instanceof "PartBgLayer")
+						continue;
+					else
+						layer.sync	= true;
+				}
+				else if(layer instanceof "BaseLayer" || layer instanceof "PartBgLayer")
+					layer.sync	= false;
+				if(typeof layer.quakeMode != "undefined")
+				{//	quakeMode が存在する場合、全体を揺らしているなら 1 を、個別に揺らしているなら 0 を設定する
+					var	tp	= elm.prop == "quake" ? "quakeMode" : (elm.prop == "shake" ? "shakeMode" : "relMode");
+					layer[tp]	= elm.all ? 1 : 0;
+				}
+				layer[elm.prop]	= false if elm.start;
+				for(var i=0; i<elm.propInfo.count; i++)
+				{
+					var	pi	= elm.propInfo[i];
+					var	prop= pi[0];
+					if(typeof layer[prop] == "undefined")
+						continue;
+					var	val	= pi[1] === void ? pi[2] : elm[pi[1]];
+					val	= pi[2] === void ? val : (val !== void ? +val : pi[2]);
+					if(pi[3])
+					{
+						var	init	= pi[4] !== void ? pi[4] : 0;
+						//	0から徐々に指定の値へ
+						if(elm.intime > 0)
+						{
+							var	actelm	= %[start:init, value:val, time:+elm.intime, delay:delay];
+							layer.actionInfo.addAction(prop, MoveAction, actelm);
+//							dm(elm.prop+": "+prop+" = 0 → "+val);
+						}
+
+						//	指定の値から0へ
+						else if(elm.time > 0)
+						{
+							var	actelm	= %[start:val, value:init, time:+elm.time, delay:delay];
+							layer.actionInfo.addAction(prop, MoveAction, actelm);
+//							dm(elm.prop+": "+prop+" = "+val+" → 0");
+						}
+						//	一定時間後に設定
+						else if(delay > 0)
+						{
+							var	actelm	= %[value:val, time:delay];
+							layer.actionInfo.addAction(prop, SetAction, actelm);
+//							dm(elm.prop+": "+prop+" = "+val);
+						}
+						//	最初から指定の値で
+						else
+							layer[prop]	= val;
+					}
+					else if(delay > 0)
+					{
+						var	actelm	= %[value:val, time:delay];
+						layer.actionInfo.addAction(prop, SetAction, actelm);
+					}
+					else
+						layer[prop]	= val;
+				}
+				if(delay > 0)
+				{
+					var	actelm	= %[value:true, time:delay];
+					layer.actionInfo.addAction(elm.prop, SetAction, actelm);
+				}
+				else
+					layer[elm.prop]	= true;
+//				dm(layer.name+"."+elm.prop+" = true");
+			}
+			if(elm.time > 0 && ((elm.nowait !== void && !elm.nowait) || elm.wait))
+				return wact(%[canskip:elm.canskip, acttype:elm.prop]);
+			else
+				return 0;
+		} incontextof this;
+
+		/**
+		 *	motionstop - プロパティで制御される運動の終了(内部呼び出し用タグ)
+		 *	@param page		"fore" / "back"
+		 *	@param storage	対象レイヤーに読み込まれている画像ファイル名
+		 *	@param id		複数の同一画像が使用されている場合の識別ID
+		 *	@param prop		アクション対象のプロパティ
+		 *	@param time		動作終了時間指定
+		 *	@param canskip	スキップ可否
+		 *	@param wait		完了待ちをする
+		 *	@param nowait	完了待ちをしない
+		 *		@link:	motionstart, motionstop
+		 *		@group:		レイヤ操作(アクション)
+		 */
+		.motionstop	= function(elm)
+		{
+			var	layers	= [];
+			if(elm.layer == "all" || elm.layer === void)
+			{
+				if(elm.page === void)
+				{
+//					dm("all page");
+					//	全て(前景と特殊背景、表も裏も)
+					elm.page	= "fore";
+					getLayerAll(elm,, layers);
+					elm.page	= "back";
+				}
+//				else
+//					dm("all "+elm.page);
+				getLayerAll(elm,, layers);	//	elm.page !== void なら、指定のページのみ
+				layers.add(fore.base);
+				layers.add(back.base);
+			}
+			else
+			{
+				elm.layer	= elm.layer !== void ? elm.layer : "base" if elm.storage === void;
+				elm.page	= elm.page !== void ? elm.page : "fore";
+				layers.add(getLayerActionObj(elm, elm.prop));
+			}
+			if(layers.count < 1)
+			{
+				dm(elm.prop+" の停止対象が見つかりませんでした("+elm.page+"."+elm.layer+")");
+				return 0;
+			}
+			var	actelm	= %[value:0, time:+elm.time];
+			for(var i=0; i<layers.count; i++)
+			{
+//				dm("motionstop: "+layers[i]);
+				var	layer	= layers[i];
+				if(layer == void || !layer[elm.prop])
+					continue;
+//				dm("stop."+elm.prop+": "+layer.name+"."+elm.prop+" = "+layer[elm.prop]);
+				if(elm.time > 0)
+				{
+					for(var i=0; i<elm.propInfo.count; i++)
+					{
+						var	pi	= elm.propInfo[i];
+						if(!pi[3])
+							continue;
+						actelm.start	= layer[pi[0]];
+						layer.actionInfo.addAction(pi[0], MoveAction, actelm);
+					}
+					delete actelm.start;
+					actelm.value	= false;
+					layer.actionInfo.addAction(elm.prop, SetAction, actelm);
+				}
+				else
+					layer[elm.prop]	= false;
+			}
+			if(elm.time > 0 && ((elm.nowait !== void && !elm.nowait) || elm.wait))
+				return wact(%[canskip:elm.canskip, acttype:elm.prop]);
+			else
+				return 0;
+		} incontextof this;
+
+		// 画面(背景＋前景)の揺れ
+		.quakePropInfo	= [
+			[ "quakeMode",		"actmode" ],
+			[ "quakeHMax",		"hmax",		10, true ],	//	intime による変化を行う
+			[ "quakeVMax",		"vmax",		10, true ],
+			[ "quakeInterval",	"interval", 16 ],
+			[ "quakeForce",,				true ],		//	必ず true
+			[ "quakeTime",		"time" ]
+		];
+		/**TAG
+		 *	quake - 画面(背景＋前景)の揺れ
+		 *	@param page		"fore" / "back"
+		 *	@param storage	対象レイヤーに読み込まれている画像ファイル名
+		 *	@param id		複数の同一画像が使用されている場合の識別ID
+		 *	@param intime	開始時間指定
+		 *	@param canskip	スキップ可否
+		 *	@param wait		完了待ちをする
+		 *	@param nowait	完了待ちをしない
+		 *		@link:	quake, stopquake, shake, stopshake, swing, swingopt, stopswing
+		 *		@link:	haze, stophaze, shock, wshock
+		 *		@group:		レイヤ操作(アクション)
+		 */
+		.quake	= function(elm)
+		{
+			elm.start		= true;
+			elm.prop		= "quake";
+			elm.propInfo	= tagHandlers.quakePropInfo;
+			return tagHandlers.motionstart(elm);
+		} incontextof this;
+
+		/**TAG
+		 *	stopquake - 画面の揺れを停止
+		 *	@param page		"fore" / "back"
+		 *	@param storage	対象レイヤーに読み込まれている画像ファイル名
+		 *	@param id		複数の同一画像が使用されている場合の識別ID
+		 *	@param time		停止時間指定
+		 *	@param canskip	スキップ可否
+		 *	@param wait		完了待ちをする
+		 *	@param nowait	完了待ちをしない
+		 *		@link:	quake, stopquake, shake, stopshake, swing, swingopt, stopswing
+		 *		@link:	haze, stophaze, shock, wshock
+		 *		@group:		レイヤ操作(アクション)
+		 */
+		.stopquake	= function(elm)
+		{
+			elm.prop		= "quake";
+			elm.propInfo	= tagHandlers.quakePropInfo;
+			return tagHandlers.motionstop(elm);
+		} incontextof this;
+
+		// 画面のシェイク
+		.shakePropInfo	= [
+			[ "shakeMode",		"actmode" ],
+			[ "shakeVMax",		"vmax",		10, true ],
+			[ "shakeHMax",		"hmax",		0, true ],
+			[ "shakeCycle",		"cycle",	300 ],
+			[ "shakeForce",,				true ],
+			[ "shakeTime",		"time" ]
+		];
+		/**TAG
+		 *	shake - 画面のシェイク
+		 *	@param page		"fore" / "back"
+		 *	@param storage	対象レイヤーに読み込まれている画像ファイル名
+		 *	@param id		複数の同一画像が使用されている場合の識別ID
+		 *	@param intime	開始時間指定
+		 *	@param canskip	スキップ可否
+		 *	@param wait		完了待ちをする
+		 *	@param nowait	完了待ちをしない
+		 *		@link:	quake, stopquake, shake, stopshake, swing, swingopt, stopswing
+		 *		@link:	haze, stophaze, shock, wshock
+		 *		@group:		レイヤ操作(アクション)
+		 */
+		.shake	= function(elm)
+		{
+			elm.start	= true;
+			elm.prop	= "shake";
+			elm.propInfo= tagHandlers.shakePropInfo;
+			return tagHandlers.motionstart(elm);
+		} incontextof this;
+
+		/**TAG
+		 *	stopshake - 画面のシェイクを停止
+		 *	@param page		"fore" / "back"
+		 *	@param storage	対象レイヤーに読み込まれている画像ファイル名
+		 *	@param id		複数の同一画像が使用されている場合の識別ID
+		 *	@param time		停止時間指定
+		 *	@param canskip	スキップ可否
+		 *	@param wait		完了待ちをする
+		 *	@param nowait	完了待ちをしない
+		 *		@link:	quake, stopquake, shake, stopshake, swing, swingopt, stopswing
+		 *		@link:	haze, stophaze, shock, wshock
+		 *		@group:		レイヤ操作(アクション)
+		 */
+		.stopshake	= function(elm)
+		{
+			elm.prop		= "shake";
+			elm.propInfo	= tagHandlers.shakePropInfo;
+			return tagHandlers.motionstop(elm);
+		} incontextof this;
+
+		//	画面をランダムに揺らす
+		.swingPropInfo	= [
+			[ "swingMinCycle",		"mincycle",		1000 ],
+			[ "swingMaxCycle",		"maxcycle",		2000 ],
+			[ "swingMinVibration",	"minvibration",	5, true ],
+			[ "swingMaxVibration",	"maxvibration",	10, true ],
+			[ "swingRate",			"rate",			1 ],
+			[ "swingTime",			"time" ]
+		];
+		/**TAG
+		 *	swing - 画面をランダムに揺らす
+		 *	@param page		"fore" / "back"
+		 *	@param storage	対象レイヤーに読み込まれている画像ファイル名
+		 *	@param id		複数の同一画像が使用されている場合の識別ID
+		 *	@param intime	開始時間指定
+		 *	@param canskip	スキップ可否
+		 *	@param wait		完了待ちをする
+		 *	@param nowait	完了待ちをしない
+		 *		@link:	quake, stopquake, shake, stopshake, swing, swingopt, stopswing
+		 *		@link:	haze, stophaze, shock, wshock
+		 *		@group:		レイヤ操作(アクション)
+		 */
+		.swing	= function(elm)
+		{
+			elm.start	= true;
+			return tagHandlers.swingopt(elm);
+		} incontextof this;
+
+		//	画面をランダムに揺らすパラメータを変更する
+		/**TAG
+		 *	swingopt - 画面をランダムに揺らすパラメータを変更する
+		 *	@param page		"fore" / "back"
+		 *	@param storage	対象レイヤーに読み込まれている画像ファイル名
+		 *	@param id		複数の同一画像が使用されている場合の識別ID
+		 *	@param time		停止時間指定
+		 *	@param canskip	スキップ可否
+		 *	@param wait		完了待ちをする
+		 *	@param nowait	完了待ちをしない
+		 *		@link:	quake, stopquake, shake, stopshake, swing, swingopt, stopswing
+		 *		@link:	haze, stophaze, shock, wshock
+		 *		@group:		レイヤ操作(アクション)
+		 */
+		.swingopt	= function(elm)
+		{
+			elm.prop	= "swing";
+			elm.propInfo= tagHandlers.swingPropInfo;
+			return tagHandlers.motionstart(elm);
+		} incontextof this;
+
+		/**TAG
+		 *	stopswing - swing を停止
+		 *	@param page		"fore" / "back"
+		 *	@param storage	対象レイヤーに読み込まれている画像ファイル名
+		 *	@param id		複数の同一画像が使用されている場合の識別ID
+		 *	@param time		停止時間指定
+		 *	@param canskip	スキップ可否
+		 *	@param wait		完了待ちをする
+		 *	@param nowait	完了待ちをしない
+		 *		@link:	quake, stopquake, shake, stopshake, swing, swingopt, stopswing
+		 *		@link:	haze, stophaze, shock, wshock
+		 *		@group:		レイヤ操作(アクション)
+		 */
+		.stopswing	= function(elm)
+		{
+			elm.prop		= "swing";
+			elm.propInfo	= tagHandlers.swingPropInfo;
+			return tagHandlers.motionstop(elm);
+		} incontextof this;
+
+		//	haze を開始
+		.hazePropInfo	= [
+			[ "hazeContinue",	"continue" ],
+			[ "hazeSource",		"source" ],
+			[ "hazeDelta",		"delta",	7 ],
+			[ "hazeOmega",		"omega",	1 ],
+			[ "hazeWaves",		"waves" ],
+			[ "hazeLineWaves",	"lwaves",	void ],
+			[ "hazePowers",		"powers" ],
+			[ "hazeInterval",	"interval",	50 ],
+			[ "hazeForce",		,			true ],
+			[ "hazeTime",		"time" ],
+			[ "hazePower",		"power",	10, true ]
+		];
+		/**TAG
+		 *	haze - haze(揺らぎ) を開始.
+		 *	waves=(1,0,1)(2,3.14,0.5) powers=(0,1)(672,0)等と指定できる
+		 *	@param page		"fore" / "back"
+		 *	@param storage	対象レイヤーに読み込まれている画像ファイル名
+		 *	@param id		複数の同一画像が使用されている場合の識別ID
+		 *	@param intime	開始時間指定
+		 *	@param canskip	スキップ可否
+		 *	@param wait		完了待ちをする
+		 *	@param nowait	完了待ちをしない
+		 *	@param power	波の大きさ(通常10)
+		 *	@param waves	波を示すパラメータ(cos(θ*[0]+[1])*[2]: [0]=波の速度up、[1]=最初の位相、[2]=波の大きさup)
+		 *	@param powers	波のラインでの大きさを示す配列([0]=ライン、[1]=乗数)
+		 *	@param upper	旧)波の大きさをライン間で指定する際の、最上端のライン(通常0)
+		 *	@param upperpow	旧)upper で指定されたラインでの波の大きさ(1を指定でpowerどおりの大きさ)
+		 *	@param center	旧)中間のライン
+		 *	@param centerpow	旧)center で指定されたラインでの波の大きさ
+		 *	@param lower	旧)下端のライン
+		 *	@param lowerpow	旧)lower で指定されたラインでの波の大きさ
+		 *	@param delta	波の密集度(通常7、大きくすれば密、小さくすれば疎)
+		 *	@param omega	波の進行度(通常1、大きくすれば早く、小さくすれば遅く)
+		 *		@link:	quake, stopquake, shake, stopshake, swing, swingopt, stopswing
+		 *		@link:	haze, stophaze, shock, wshock
+		 *		@group:		レイヤ操作(アクション)
+		 */
+		.haze	= function(elm)
+		{
+			elm.prop	= "haze";
+			elm.propInfo= tagHandlers.hazePropInfo;
+
+			//	独自の初期化
+			elm.page	= elm.page == "back" if elm.page === void;
+			elm.continue= elm.page == "back";
+			elm.source	= typeof elm.source == "String" ? (elm.source)! : elm.source if elm.source !== void;
+			var	hp	= [];
+			if(elm.upperpow !== void)
+				hp.add([elm.upper !== void ? +elm.upper : 0, +elm.upperpow]);
+			if(elm.centerpow !== void)
+				hp.add([elm.center !== void ? +elm.center : 336, +elm.centerpow]);
+			if(elm.lowerpow !== void)
+				hp.add([elm.lower !== void ? +elm.lower : 672, +elm.lowerpow]);
+			if(hp.count > 0)
+			{
+				//	上端と下端の値も必要なので、なければ追加しておく
+				hp.insert(0, [0, hp[0][1]]) if hp[0][0] > 0;
+				hp.add([672, hp[hp.count-1][1]]) if hp[hp.count-1][0] < 672;
+				elm.powers	= hp;
+			}
+
+			var	ret	= tagHandlers.motionstart(elm);
+@if(DEBUG)
+			var	layer	= getLayerFromElm(elm);
+			if(layer != void)
+				layer.checkHazeParams();
+			else
+				dm("haze 対象レイヤーが見つかりませんでした");
+@endif
+			return ret;
+		} incontextof this;
+
+		/**TAG
+		 *	stophaze - haze を停止
+		 *	@param page		"fore" / "back"
+		 *	@param storage	対象レイヤーに読み込まれている画像ファイル名
+		 *	@param id		複数の同一画像が使用されている場合の識別ID
+		 *	@param time		停止時間指定
+		 *	@param canskip	スキップ可否
+		 *	@param wait		完了待ちをする
+		 *	@param nowait	完了待ちをしない
+		 *		@link:	quake, stopquake, shake, stopshake, swing, swingopt, stopswing
+		 *		@link:	haze, stophaze, shock, wshock
+		 *		@group:		レイヤ操作(アクション)
+		 */
+		.stophaze	= function(elm)
+		{
+			elm.prop	= "haze";
+			elm.propInfo= tagHandlers.hazePropInfo;
+			return tagHandlers.motionstop(elm);
+		} incontextof this;
+
+		/**TAG
+		 *	shock - shock を開始
+		 *	@param page		"fore" / "back"
+		 *	@param storage	対象レイヤーに読み込まれている画像ファイル名
+		 *	@param id		複数の同一画像が使用されている場合の識別ID
+		 *	@param count	揺れる回数
+		 *	@param time		一回の揺れる時間
+		 *	@param vmax		縦方向の揺れ幅
+		 *	@param hmax		横方向の揺れ幅
+		 *	@param intime	開始時間指定
+		 *	@param canskip	スキップ可否
+		 *	@param wait		完了待ちをする
+		 *	@param nowait	完了待ちをしない
+		 *		@link:	quake, stopquake, shake, stopshake, swing, swingopt, stopswing
+		 *		@link:	haze, stophaze, shock, wshock
+		 *		@group:		レイヤ操作(アクション)
+		 */
+		.shock	= function(elm)
+		{
+			with(elm)
+			{
+				var	cycle	= .cycle !== void ? +.cycle : (.time !== void ? +.time : 300);
+				var	count	= .count !== void ? +.count : 3;
+				var	hv		= .hmax !== void ? +.hmax : 0;
+				var	vv		= .vmax !== void ? +.vmax : 0;
+				.both	= true if .both === void;	//	shock は基本的に both=true で動作させる
+				.page	= "fore" if .page === void;
+
+				var	layers	= getTargetLayers(elm);
+				if(layers != void)
+				{
+					for(var i=0; i<layers.count; i++)
+					{
+						var	layer	= layers[i];
+						if(typeof layer.quakeMode != "undefined")
+							layer.relMode	= .all ? 1 : 0;
+						layer.startShock(cycle, hv, vv, count);
+						if(.both && layer.comp != void)
+							layer.comp.startShock(cycle, hv, vv, count);
+						if((.nowait !== void && !.nowait) || .wait)
+							return wact(%[canskip:.canskip, acttype:"shock"]);
+					}
+				}
+			}
+			return 0;
+		} incontextof this;
+
+		/**TAG
+		 *	wshock - shock の完了を待つ
+		 *	@param page		"fore" / "back"
+		 *	@param storage	対象レイヤーに読み込まれている画像ファイル名
+		 *	@param id		複数の同一画像が使用されている場合の識別ID
+		 *	@param time		停止時間指定
+		 *	@param canskip	スキップ可否
+		 *	@param wait		完了待ちをする
+		 *	@param nowait	完了待ちをしない
+		 *		@link:	quake, stopquake, shake, stopshake, swing, swingopt, stopswing
+		 *		@link:	haze, stophaze, shock, wshock
+		 *		@group:		レイヤ操作(アクション)
+		 */
+		.wshock	= function(elm)
+		{
+			return wact(%[canskip:elm.canskip, acttype:"shock"]);
+		} incontextof this;
+
+		/**TAG
+		 *	line - 棒線をテキスト長音の形で表示する
+		 *	@param len		長さ
+		 *		@group:		メッセージ操作
+		 */
+		.line	= function(mp)
+		{
+			//結局はlineNN-MMの形式のファイルを読み込んでくるが旧システムとの互換のため長音に戻す
+			if( mp.len === void ) mp.len = 1;
+			var lines = "";
+			for( var i=0; i<mp.len; i++ ) lines += "―";
+			tagHandlers.ch(%["text" => lines]);
+			return 0;
+		} incontextof this;
+
+		/**TAG
+		 *	settextwindow - テキストウィンドウのみの変更
+		 *	@param frame	フレーム
+		 *		@link:		settextwindow, invisibleframe, visibleframe
+		 *		@group:		メッセージ操作
+		 */
+		.settextwindow	= function(mp)
+		{
+			f.frameGraphic	= mp.frame;
+			var messages	= [ fore.messages, back.messages ];
+			for(var i=0; i<messages.count; i++)
+			{
+				for(var j=0; j<messages[i].count; j++)
+				{
+					//	"(通常)"という文字がテキストウィンドウ名に入っていれば、変更可能
+		//			if(messages[i][j].frameGraphic.indexOf("(") >= 0)
+						messages[i][j].setPosition(mp);
+				}
+			}
+			return 0;
+		} incontextof this;
+
+		/**TAG
+		 *	invisibleframe - テキストウィンドウのフレームをなくす
+		 *		@link:		settextwindow, invisibleframe, visibleframe
+		 *		@group:		メッセージ操作
+		 */
+		.invisibleframe	= function(mp)
+		{
+			if(f.lastFrameGraphic === void)
+			{
+				f.lastFrameGraphic	= current.frameGraphic;	//	現在のフレームを記憶
+				f.lastFrameOpacity	= current.frameOpacity;
+			}
+			tagHandlers.settextwindow(%[frame:"",opacity:0]);
+			return 0;
+		} incontextof this;
+
+		/**TAG
+		 *	visibleframe - テキストウィンドウのフレームを元に戻す
+		 *		@link:		settextwindow, invisibleframe, visibleframe
+		 *		@group:		メッセージ操作
+		 */
+		.visibleframe	= function(mp)
+		{
+			if(f.lastFrameGraphic !== void)
+				tagHandlers.settextwindow(%[frame:f.lastFrameGraphic,opacity:f.lastFrameOpacity]);
+			f.lastFrameGraphic	= f.lastFrameOpacity	= void;
+			return 0;
+		} incontextof this;
+
+		/**TAG
+		 *	setmessageappearaction - 以降のメッセージに出現アクションを指定
+		 *	@param page		"fore" / "back"
+		 *	@param type		出現タイプ
+		 *	@param timerate	出現に要する時間(何文字の表示時間かで指定/default=1)
+		 *		@link: setmessageappearaction, resetmessageappearaction, setdefaultmessageaction
+		 *		@link: resetdefaultmessageaction, startmessageaction, stopmessageaction
+		 *		@group:		メッセージ操作
+		 */
+		.setmessageappearaction	= function(elm)
+		{
+			getMessageLayerObjectFromElm(elm).appearType	= elm.type;
+			getMessageLayerObjectFromElm(elm).appearTimeRate= elm.timerate;
+			return 0;
+		} incontextof this;
+
+		/**TAG
+		 *	resetmessageappearaction - 以降のメッセージの出現アクションをリセット
+		 *	@param page		"fore" / "back"
+		 *		@link: setmessageappearaction, resetmessageappearaction, setdefaultmessageaction
+		 *		@link: resetdefaultmessageaction, startmessageaction, stopmessageaction
+		 *		@group:		メッセージ操作
+		 */
+		.resetmessageappearaction	= function(elm)
+		{
+			getMessageLayerObjectFromElm(elm).appearType	= "";
+			return 0;
+		} incontextof this;
+
+		/**TAG
+		 *	setdefaultmessageaction - 以降のメッセージに継続アクションを指定
+		 *	@param page		"fore" / "back"
+		 *	@param type		アクションタイプ
+		 *		@link: setmessageappearaction, resetmessageappearaction, setdefaultmessageaction
+		 *		@link: resetdefaultmessageaction, startmessageaction, stopmessageaction
+		 *		@group:		メッセージ操作
+		 */
+		.setdefaultmessageaction	= function(elm)
+		{
+			getMessageLayerObjectFromElm(elm).continuousType	= elm.type;
+			return 0;
+		} incontextof this;
+
+		/**TAG
+		 *	resetdefaultmessageaction - 以降のメッセージの継続アクションをリセット
+		 *	@param page		"fore" / "back"
+		 *		@link: setmessageappearaction, resetmessageappearaction, setdefaultmessageaction
+		 *		@link: resetdefaultmessageaction, startmessageaction, stopmessageaction
+		 *		@group:		メッセージ操作
+		 */
+		.resetdefaultmessageaction	= function(elm)
+		{
+			getMessageLayerObjectFromElm(elm).continuousType	= "";
+			return 0;
+		} incontextof this;
+
+		/**TAG
+		 *	{ - メッセージの範囲指定を開始
+		 */
+		handlers["{"]	= function(elm)
+		{
+			getMessageLayerObjectFromElm(elm).beginSelection();
+			return 0;
+		} incontextof this;
+
+		/**TAG
+		 *	} - メッセージの範囲指定を終了
+		 */
+		handlers["}"]	= function(elm)
+		{
+			getMessageLayerObjectFromElm(elm).endSelection();
+			return 0;
+		} incontextof this;
+
+		/**TAG
+		 *	reset{} - 範囲指定をリセット.
+		 *	cm 等でメッセージが消去されたときもリセットされる
+		 */
+		handlers["reset{}"]	= function(elm)
+		{
+			getMessageLayerObjectFromElm(elm).resetSelection();
+			return 0;
+		} incontextof this;
+
+		/**TAG
+		 *	startmessageaction - 指定範囲に継続アクションを指定
+		 *	@param page		"fore" / "back"
+		 *	@param type		出現タイプ
+		 *		@link: setmessageappearaction, resetmessageappearaction, setdefaultmessageaction
+		 *		@link: resetdefaultmessageaction, startmessageaction, stopmessageaction
+		 *		@group:		メッセージ操作
+		 */
+		.startmessageaction	= function(elm)
+		{
+			getMessageLayerObjectFromElm(elm).startContinuousActionToSelection(elm.type);
+			return 0;
+		} incontextof this;
+
+		/**TAG
+		 *	stopmessageaction - 実行されている継続アクションを停止
+		 *	@param page		"fore" / "back"
+		 *		@link: setmessageappearaction, resetmessageappearaction, setdefaultmessageaction
+		 *		@link: resetdefaultmessageaction, startmessageaction, stopmessageaction
+		 *		@group:		メッセージ操作
+		 */
+		.stopmessageaction	= function(elm)
+		{
+			getMessageLayerObjectFromElm(elm).stopCharAction();
+			return 0;
+		} incontextof this;
+
+		/**TAG
+		 *	autocache - 一時停止タグを表示する直前に画像ファイルをキャッシュに読み込むかどうかの設定
+		 *	@param enabled	読み込むかどうか
+		 */
+		.autocache	= function(elm)
+		{
+			autoCache	= +elm.enabled || elm.enabled === void;
+			return 0;
+		} incontextof this;
+
+		/**TAG
+		 *	bindbg - レイヤーを、bgの動きにあわせて移動させる
+		 *	@param page fore/back(default: fore)
+		 *	@param enabled	移動させるかどうか
+		 *		@memo:	背景の動きに合わせて前景を動かし、更に前景を独立した動きに
+		 *				したい場合には本タグをenabled=0として個別に動かす事
+		 *		@group:		レイヤ操作(アクション)
+		 */
+		.bindbg	= function(elm)
+		{
+			with(elm)
+			{
+				.page	= "fore" if .page === void;
+				this[.page].base.bindChildren	= .enabled;
+//				dm("bindbg: "+.page+", "+this[.page].base.bindChildren);
+			}
+			return 0;
+		} incontextof this;
+
+		/**TAG
+		 *	displayedon - 画像を表示したことにする
+		 *	@param storage	画像ファイル名
+		 *	@memo:	BaseLayer.override.tjs の BaseLayer.AfterloadImage、PartBgPlugin.tjs の PartBgLayer.loadImages でも設定している
+		 */
+		.displayedon	= function(elm)
+		{
+			if(elm.storage != "")
+			{
+				sf.displayedPictures	= %[] if sf.displayedPictures == void;
+				sf.displayedPictures[Storages.chopStorageExt(elm.storage).toLowerCase()]++;
+			}
+			return 0;
+		} incontextof this;
+
+		/**TAG
+		 *	displayedoff - 画像を表示していないことにする
+		 *	@param storage	画像ファイル名
+		 */
+		.displayedoff	= function(elm)
+		{
+			if(elm.storage != "")
+			{
+				sf.displayedPictures	= %[] if sf.displayedPictures == void;
+				sf.displayedPictures[Storages.chopStorageExt(elm.storage).toLowerCase()]--;
+				//	ここでの表示を無効にするだけなので、--している
+			}
+			return 0;
+		} incontextof this;
+
+		/**TAG
+		 *	playedon - BGMを再生したことにする
+		 *	@param storage BGMファイル名
+		 */
+		.playedon	= function(elm)
+		{
+			if(elm.storage != "")
+				sf.playedBGM[Storages.chopStorageExt(elm.storage).toLowerCase()]++;
+			return 0;
+		} incontextof this;
+
+		/**TAG
+		 *	playedoff - BGMを再生してないことにする
+		 *	@param storage BGMファイル名
+		 */
+		.playedoff	= function(elm)
+		{
+			if(elm.storage != "")
+				sf.playedBGM[Storages.chopStorageExt(elm.storage).toLowerCase()]--;
+			return 0;
+		} incontextof this;
+
+		/**TAG
+		 *	stopcache - 先読みを一時停止するタグ
+		 */
+		.stopcache	= function()
+		{
+			return 0;
+		} incontextof this;
+
+		/**TAG
+		 *	effectskip - ユーザー指定のエフェクトスキップを許可するかどうか
+		 */
+		.effectskip	= function(elm)
+		{
+			enableEffectSkip	= +elm.enabled;
+			return 0;
+		} incontextof this;
+
+		/**TAG
+		 *	msgopt - メッセージレイヤーの設定
+		 *	@param single	表と裏それぞれにメッセージレイヤーを用意しない(default:false)
+		 */
+		.msgopt	= function(elm)
+		{
+			singleMessageLayer	= +elm.single;
+			return 0;
+		} incontextof this;
+
+		/**TAG
+		 *	beginploy - なぜなにプロイを開始
+		 */
+		.beginploy	= function()
+		{
+			var	empty	= %[];
+			if(f.inploy == void)
+			{
+				//	現在の設定を記憶
+				f.inploy	= %[];
+				var	msgparams	= [
+					"defaultFace", "defaultAntialiased", "defaultBold", "defaultFontSize", "defaultChColor",
+					"defaultRubySize", "defaultRubyOffset", "defaultRubyBold", "defaultShadow", "defaultShadowColor",
+					"defaultEdge", "defaultEdgeColor",
+					"lineBreakGlyph", "lineBreakGlyphKey", "pageBreakGlyph", "pageBreakGlyphKey", "glyphFixedPosition", "glyphFixedLeft", "glyphFixedTop"
+				];
+				for(var i=0; i<msgparams.count; i++)
+					f.inploy[msgparams[i]]	= current[msgparams[i]];
+
+				//	ウィンドウを増やす
+				with(tagHandlers)
+				{
+					.laycount(%[messages:2]);
+					.stopquake(empty);
+					.stopshake(empty);
+				}
+
+				//	フォント/グリフの設定を変更する
+				var	pages	= [ fore.messages, back.messages ];
+				var	fontElm	= %[
+					face:"ＭＳ Ｐゴシック",
+					color:0x804000,
+					shadow:0,
+					edge:0,
+				];
+				var	glyphElm= %[
+					line:"clearglyph",
+					page:"clearglyph",
+				];
+				for(var i=0; i<pages.count; i++)
+				{
+					var	msgs	= pages[i];
+					for(var i=0; i<msgs.count; i++) with(msgs[i])
+					{
+						.setDefaultFont(fontElm);
+						.setGlyph(glyphElm);
+					}
+				}
+				f.ploysay	= 0;
+			}
+
+			return tagHandlers.cm(empty);	//	モードの変更を有効にするため、メッセージをフラッシュする
+		} incontextof this;
+
+		/**TAG
+		 *	endploy - なぜなにプロイを終了
+		 */
+		.endploy	= function()
+		{
+			var	empty	= %[];
+			if(f.inploy != void)
+			{
+				//	ウィンドウを一つに戻す
+				with(tagHandlers)
+				{
+					.laycount(%[messages:1]);
+					.stopquake(empty);
+					.stopshake(empty);
+				}
+
+				//	フォントの設定を戻す
+				var	msgs	= [ fore.messages[0], back.messages[0] ];
+				var	keys	= [];
+				keys.assign(f.inploy);
+				for(var i=0; i<msgs.count; i++)
+				{
+					var	msg	= msgs[i];
+					for(var i=0; i<keys.count; i+=2)
+						msg[keys[i]]	= keys[i+1];
+					msg.resetFont();
+					msg.resetPosition();
+				}
+
+				delete f.inploy;
+				delete f.ploysay;
+			}
+
+			return tagHandlers.cm(empty);	//	モードの変更を有効にするため、メッセージをフラッシュする
+		} incontextof this;
+
+		/**TAG
+		 *	ploysay - なぜなにプロイでしゃべる
+		 *	@param mode 表示モード
+		 *	@param noclear 前のふきだしを消すかどうか(def:false)
+		 */
+		.ploysay	= function(elm)
+		{
+			if(f.inploy == void)
+				return 0;
+			var	mode	= nzWindowPositions[elm.mode];
+			if(mode == void)
+			{
+@if(DEBUG)
+				System.inform(elm.mode+" は存在しません。data/override/TagEx.tjs の ploysay modes に定義してください。");
+@endif
+				return 0;
+			}
+			currentNum	= elm.noclear ? 1 : 0;
+			currentPage	= 0;
+			current		= fore.messages[currentNum];
+
+			with(fore.messages[currentNum])
+			{
+				.setPosition(mode);
+				.left	+= +elm.ox if elm.ox != void;
+				.left	= +elm.x if elm.x !== void;
+				.top	+= +elm.oy if elm.oy != void;
+				.top	= +elm.y if elm.y !== void;
+			}
+			with(back.messages[currentNum])
+			{
+				.setPosition(mode);
+				.left	+= +elm.ox if elm.ox != void;
+				.left	= +elm.x if elm.x !== void;
+				.top	+= +elm.oy if elm.oy != void;
+				.top	= +elm.y if elm.y !== void;
+			}
+			return tagHandlers.cm(%[]);
+		} incontextof this;
+
+		/**TAG
+		 *	pauseploy - 一時的にフキダシ表示を取りやめる
+		 */
+		.pauseploy	= function()
+		{
+			with(tagHandlers)
+			{
+				.endploy();
+				.deffont(%[face:"ＭＳ Ｐゴシック"]);
+				return .resetfont();
+			}
+		} incontextof this;
+
+		/**TAG
+		 *	resumeploy - pauseploy を取りやめる
+		 */
+		.resumeploy	= function()
+		{
+			with(tagHandlers)
+			{
+				.deffont(%[face:"user"]);
+				.resetfont();
+				return .beginploy();
+			}
+		} incontextof this;
+	}
+
+	return handlers;
+};
+
+@endif

@@ -1,0 +1,250 @@
+﻿// BGM.override.tjs - BGMのオーバーライド
+@if(__BGM_OVERRIDE_DEFINED__==0)
+@set(__BGM_OVERRIDE_DEFINED__=1)
+
+class BGM extends BGMOriginal
+{
+	var	delayTimer;	//	遅延再生開始を実行するためのタイマー
+	var	delayElm;	//	遅延実行するパラメータ
+	var	delayFuncName;	//	遅延時間終了後に実行するメソッド
+
+	function BGM(owner)
+	{
+		//フェード後停止の機能拡張、フェードアウトだけでなく指定ボリュームにして停止
+		global.KAGWaveSoundBuffer.org_fadeOutAndStop = global.KAGWaveSoundBuffer.fadeOutAndStop;
+		global.KAGWaveSoundBuffer.fadeOutAndStop = function(time, delay = 0, volume=0)
+		{
+			// 時間 time, delay, volume でフェード後、演奏を停止する
+			inFading = true;
+			inFadeAndStop = true;
+			//dm("override fadeOutAndStop: time=" + time + " volume=" + volume);
+			sbclass.fade(volume * 1000, time, delay);
+		} incontextof global.KAGWaveSoundBuffer;
+
+		//フェード完了時の処理拡張、フェード完了時に次のフェードに移る動作に対応、状態更新せず続行する
+		global.KAGWaveSoundBuffer.org_onFadeCompleted = global.KAGWaveSoundBuffer.onFadeCompleted;
+		global.KAGWaveSoundBuffer.onFadeCompleted = function()
+		{
+			//dm("override onFadeCompleted: inFadeAndStop=" + inFadeAndStop + " continueFade=" + bgmobj.continueFade);
+			if( bgmobj.continueFade )
+			{
+				bgmobj.continueFade = false;
+				return;
+			}
+			if( bgmobj.chgloop !== void )
+			{
+				//dm(" BGM onFadeCompleted: looping=" + bgmobj.looping + " → chgloop=" + bgmobj.chgloop);
+				bgmobj.looping = bgmobj.chgloop;
+				bgmobj.chgloop = void;
+			}
+			org_onFadeCompleted();
+		} incontextof global.KAGWaveSoundBuffer;
+
+		super.BGMOriginal(...);
+
+		buf1.bgmobj = this;
+		buf2.bgmobj = this;
+	}
+
+	function finalize()
+	{
+		invalidate delayTimer if delayTimer != void;
+		buf1.bgmobj = void if buf1 !== void;
+		buf2.bgmobj = void if buf2 !== void;
+		super.finalize();
+	}
+
+	var	bgmrule	= /^m([0-9]+)s?$/;
+	function playBuffer(buf, storage, loop, paused = false, start)
+	{
+		//	再生されたBGMを記録
+		var	fn	= Storages.chopStorageExt(Storages.extractStorageName(storage)).toLowerCase();
+		if(bgmrule.test(fn))
+			sf.playedBGM[fn]++;
+
+		super.playBuffer(...);
+	}
+
+	function doDelay(elm, funcname)
+	{
+		delayTimer.enabled	= false if delayTimer != void;
+		if(delayElm == void)
+			delayElm	= %[];
+		else
+			(Dictionary.clear incontextof delayElm)();
+		(Dictionary.assign incontextof delayElm)(elm);
+		delete delayElm.delay;
+		delayFuncName	= funcname;
+		delayTimer	= new Timer(onDelayTimeout, "") if delayTimer == void;
+		delayTimer.interval	= +elm.delay;
+		delayTimer.enabled	= true;
+		delayTimer.startTick= System.getTickCount();
+	}
+
+	function onDelayTimeout()
+	{
+		this[delayFuncName](delayElm);
+		delayTimer.enabled	= false;
+	}
+
+	var chgloop = void;			//フェード後やパン完了時にループ状態を変更する場合の変更値
+	var continueFade = void;	//フェード後に次のフェードを行うので停止しない
+
+	//再生後の遅延変更でフェードする場合
+	function fade(elm)
+	{
+		//dm(" BGM fade: chgloop=" + chgloop + " → " + elm.chgloop);
+		if( elm.chgloop !== void )
+			chgloop = elm.chgloop;
+
+		//dm(" BGM fade: " + getDebugStringFromElm(elm));
+		if( currentBuffer.inFading )
+		{
+			continueFade = true;
+			stopFade();
+		}
+		super.fade(...);
+	}
+
+	function fadeIn(elm)
+	{
+		if(elm.delay > 0)
+			doDelay(elm, "fadeIn");
+		else
+			super.fadeIn(...);
+	}
+
+	// フェードアウト
+	function fadeOut(elm)
+	{
+		if(elm.delay > 0)
+			doDelay(elm, "fadeOut");
+		else
+		{
+			if( currentBuffer.inFading )
+				continueFade = true;
+			if(_enabled) currentBuffer.fadeOutAndStop(elm.time, ,elm.volume);
+			currentStorage = "";
+		}
+	}
+
+	function play(elm)
+	{
+		if(elm.delay > 0)
+			doDelay(elm, "play");
+		else
+		{
+			chgloop = void;
+			//dm(" BGM play: chgloop=void");
+			//dm(" BGM play: " + getDebugStringFromElm(elm));
+			super.play(...);
+		}
+	}
+
+	function stop()
+	{
+		chgloop = void;
+		//dm(" BGM stop: chgloop=void");
+		super.stop();
+	}
+
+	function exchange(elm)
+	{
+		if(elm.delay > 0)
+			doDelay(elm, exchange);
+		else
+			super.exchange(...);
+	}
+
+	function store()
+	{
+		// 辞書配列に現在の状態を待避
+		var dic = %[];
+		dic.currentStorage = currentStorage if currentStorage !== void && currentStorage != "";
+		dic.paused = buf1.paused if buf1.paused;
+		dic.volume = volume if volume != 100000;
+		if(delayTimer != void && delayTimer.enabled)
+		{
+			dic.delayElm		= %[];
+			(Dictionary.assign incontextof dic.delayElm)(delayElm);
+			dic.delayFuncName		= delayFuncName;
+			dic.delayElm.delay	= delayTimer.interval - (System.getTickCount() - delayTimer.startTick);
+		}
+		return dic;
+	}
+
+	function restore(dic)
+	{
+		//	実行中の処理を停止
+		stopFade();
+		delayTimer.enabled	= false if delayTimer != void;
+
+		// 辞書配列から現在の状態を復帰
+		dic.currentStorage = "" if dic.currentStorage === void;
+		dic.paused = false if dic.paused === void;
+		dic.volume = 100000 if dic.volume === void;
+
+		setVolume(dic.volume);
+		if(dic.delayElm != void)
+			doDelay(dic.delayElm, dic.delayFuncName);
+		if(dic.currentStorage != "") {
+			play(%[ storage : dic.currentStorage, loop : true, paused: dic.paused]);
+		} else
+			stop();
+	}
+
+	//アクション系拡張
+	function onActionCompleted(trigger)
+	{
+		if (hide) {
+			visible = false;
+		}
+		//dm("BGM: onActionCompleted " + string(trigger));
+		if( trigger !== void ){
+			//トリガ文字列を伴う終了通知(個別にwact指定しているものなど)
+			owner.onActionCompleted(trigger);
+			if( typeof this.trigger != "undefined" ){
+				for(var i=0; i<this.trigger.count; i++ ){
+					if( this.trigger[i] == trigger ){
+						this.trigger.erase(i);
+						//通知の終わったトリガ文字列を消去
+						dm("BGM: onActionCompleted: erase: " + trigger );
+						break;
+					}
+				}
+			}
+		}else{
+			//従来の終了通知
+			owner.onActionCompleted(this);
+			if( typeof this.trigger != "undefined" ){
+				//オブジェクト全体のアクション終了のため個別通知トリガ文字列をまるごと削除
+				invalidate this.trigger;
+				delete this.trigger;
+			}
+		}
+	}
+
+	//シーケンスIDを振ったハンドラの増加を受け付け
+	function onSequenseAdded(seqid)
+	{
+		//dm("BGM.onSequenseAdded: " + seqid);
+		owner.onSequenseAdded(...);
+	}
+
+	//シーケンスIDを振ったハンドラの終了を受け付け
+	function onSequenseDone(seqid)
+	{
+		owner.onSequenseDone(...);
+	}
+
+	//アクションの対象オブジェクトを特定するための情報を格納
+	function getActionTargetInfo()
+	{
+		var dic = %[];
+		dic.targetstring = "BGM0";
+		return dic;
+	}
+
+}
+
+@endif

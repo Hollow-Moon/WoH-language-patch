@@ -1,0 +1,86 @@
+﻿/*-----------------------------------------------------------------------------
+/	Copyright (C) TYPE-MOON All Rights Reserved.
+/	フェードするレイヤー
+/----------------------------------------------------------------------------*/
+@if(__FADELAYER_DEFINED__==0)
+@set(__FADELAYER_DEFINED__=1)
+
+class FadeLayer extends KAGLayer
+{
+	var	startopac, endopac;
+	var	time, accel;
+	var	endfunc;
+	var	timer;
+	var	starttick;
+
+	//	フェードの間隔(ms)
+	var	fadeInterval	= 16;
+
+	function FadeLayer(win, par)
+	{
+		super.KAGLayer(...);
+	}
+
+	function finalize()
+	{
+		invalidate timer if timer != void;
+		super.finalize(...);
+	}
+
+	//	フェード
+	//	in	: opac		目標の不透明度
+	//		: time		フェード時間
+	//		: accel		フェードの進行度
+	//		: endfunc	フェード終了時に呼び出す関数
+	function fade(opac, time, accel, endfunc)
+	{
+		invalidate	timer if timer != void;
+
+		if(!this isvalid)
+			return;
+
+		startopac	= this.opacity;
+		endopac		= opac;
+		this.time	= time;
+		this.accel	= accel;
+		this.endfunc= endfunc;
+
+		starttick	= System.getTickCount();
+		with(timer = new Timer(fade_handler, ""))
+			.interval = fadeInterval, .capacity = 1, .enabled = true;
+	}
+
+	//	フェードの実行
+	function fade_handler()
+	{
+		var	tick	= System.getTickCount() - starttick;
+		if(tick > time)
+			stopfade();
+		else
+		{
+			var	per		= tick / time;
+			if(accel < 0)
+				per	= 1.0 - (Math.pow(1.0 - per, -accel));
+			else if(accel > 0)
+				per	= Math.pow(per, accel);
+			opacity	= (int)((endopac - startopac) * per + startopac);
+		}
+	}
+
+	//	フェードの停止
+	function stopfade()
+	{
+		if(timer != void)
+		{
+			opacity	= endopac;
+			invalidate timer;
+			timer	= void;
+			endfunc(this) if endfunc != void;
+		}
+	}
+}
+
+/*----------------------------------------------------------------------------/
+/	End of File
+/----------------------------------------------------------------------------*/
+@endif

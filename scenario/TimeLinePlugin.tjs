@@ -1,0 +1,709 @@
+﻿/*-----------------------------------------------------------------------------
+/	Copyright (C) TYPE-MOON All Rights Reserved.
+/		タイムラインデータを再生するプラグイン
+/----------------------------------------------------------------------------*/
+@if(__TIMELINE_PLUGIN_DEFINED__==0)
+@set(__TIMELINE_PLUGIN_DEFINED__=1)
+
+//	オブジェクトデータを読み込む
+Scripts.execStorage("TLObjectData.tjs");
+//	dash, move のKeyFrameAction動作モジュールを読み込む
+Scripts.execStorage("DashMoveRoutine.tjs");
+Plugins.link("json.dll");
+
+class TimeLinePlugin extends KAGPlugin
+{
+	var	storage;	//	読み込んでいるファイル名
+	var	data;		//	読み込んでいるデータ
+	var	scene;		//	現在のシーン
+	var	temporary;	//	サブルーチン(ゲーム中メニュー)へ移動したときのため、一時的に状態を保存
+
+	var	time;		//	シーンの時間
+	var	next;		//	次へ進む時刻
+
+	var	caches = [];//	キャッシュしているデータ
+	var	maxCache = 5;//	最大キャッシュ数
+
+	function TimeLinePlugin()
+	{
+		super.KAGPlugin(...);
+	}
+
+	//	キャッシュされているデータを返す
+	function getCacheIndex(name)
+	{
+		for(var i=0; i<caches.count; i++)
+		{
+			if(!(caches[i] isvalid))
+			{
+				caches.erase(i);
+				i--;
+			}
+			else if(caches[i].name == name)
+				return i;
+		}
+		return void;
+	}
+
+	//	タイムラインの読み込み
+	function load(storage, ischose=true)
+	{
+		dm("load("+storage+", "+ischose+")");
+		if(this.storage != storage)
+		{
+			var	name	= Storages.extractStorageName(Storages.chopStorageExt(storage));
+			var	ret;
+			dm(name+" cache? "+getCacheIndex(name));
+			if(getCacheIndex(name) !== void)
+				ret	= loadByData(void, name, ischose);	//	キャッシュから読み込む
+			else
+			{
+				//	オブジェクトデータをファイルから読み込む
+				var	dic;
+				try
+				{
+					var	ext	= Storages.extractStorageExt(storage);
+					if(ext == ".tla")
+						dic	= Scripts.evalStorage(storage);
+					else if(ext == ".ks")
+					{
+						var	lines	= [].load(storage);
+						var	keyword	= "global.__tmp_tla";
+						for(var i=0; i<lines.count; i++)
+						{
+							var	text	= lines[i];
+							if(text.indexOf(keyword) == 0)
+							{
+								if(text[text.length-1] != ";")
+								{
+									i++;
+									while(lines[i][lines[i].length - 1] != ";" && i < lines.count)
+									{
+										text	+= lines[i];
+										i++;
+									}
+									text	+= lines[i];
+								}
+								text!;
+								break;
+							}
+						}
+						dic	= global.__tmp_tla;
+					}
+				}
+				catch(e)
+				{
+					dm("Exception: "+e.message);
+					return false;
+				}
+
+				if(dic == void)
+					return false;
+				ret	= loadByData(dic, name, ischose);
+			}
+			this.storage = storage;
+			return ret;
+		}
+		return false;
+	}
+
+	//	データから読み込む
+	function loadByData(dic, name, ischose=true)
+	{
+		var	idx	= getCacheIndex(name);
+		var	d;
+		if(idx !== void)
+		{//	キャッシュされていたら
+			d	= caches[idx];	//	それを返す
+			caches.erase(idx);
+			caches.add(d);		//	呼び出されたものを最後に移動させる
+		}
+		else
+		{//	キャッシュされていなかったら、データを読み込む
+			d	= new TLObjectData();
+			if(typeof dic == "String")
+			{
+				dic	= Scripts.evalJSON(dic) if dic.substr(0,2) == '{"';
+			}
+			d.restore(dic);
+			var	keys	= [];
+			keys.assign(d.scenes);
+			//	シーンが0以上で、キャッシュする価値がある
+			if(keys.count > 0)
+			{
+				//	最大キャッシュ数に達していたら、最も古いデータを破棄する
+				if(caches.count >= maxCache)
+				{
+					invalidate caches[0];
+					caches.erase(0);
+					d	= caches[0];
+				}
+				caches.add(d);
+			}
+			d.name	= name;
+		}
+		data	= d if ischose;
+		storage	= void;	//	loadByData のみだと storage="" で、load から読み込むと storage が記録されるように
+
+/*	// conductor 側でキャッシュするので不要
+		//	画像のキャッシュを先に行なっておく
+		if(data.cacheType == "prepare")
+		{
+			//	使っている画像ファイルをリストアップ
+			var	list	= data.getStorageList();
+
+			//	後に使う分から読み込んでいく(先に現れるファイルを後に読み込む=上位に配置)
+			var	layer	= new global.Layer(kag, kag.back.base);
+			for(var i=list.count-1; i>=0; i--)
+				layer.loadImages(list[i]);
+			invalidate layer;
+		}
+*/
+		//	タイムラインを読み込んだことを通知する
+		kag.forEachEventHook('onLoadTimeline',
+			function(handler, f) { handler(f.storage, f.data); } incontextof kag,
+			%[storage:storage, data:data]);
+
+		return true;
+	}
+
+	//	タイムラインの実行
+	//	elm.stop=false なら、現在実行しているアクションを停止しない
+	function play(elm)
+	{
+		//	スキップの判定
+		var	canskip	= elm.canskip === void ? false : +elm.canskip;	//	とりあえず、指定が無いときはクリックスキップできないようにしておく
+		if(canskip && kag.skipMode)
+			return 0;	//	スキップ可能で
+
+@if(USE_RECORD)
+		elm.norapid	= false;
+@endif
+
+//initMicro(1);
+		//	実行区間のアクションを生成
+		var	d	= data;
+		if(elm.name != "")
+		{
+			var	idx	= getCacheIndex(elm.name);
+			if(idx !== void)
+				d	= caches[idx];
+			else
+			{
+				throw new Exception("playtimeline: 読み込まれていないタイムライン("+elm.name+")が指定されました。");
+				return 0;
+			}
+		}
+		var	elms= d.getActions(elm.scene, elm.frame !== void ? +elm.frame : 0, elm.end !== void ? +elm.end : void);
+		if(elms == void)
+		{
+			throw new Exception("playtimeline: 指定されているシーン("+elm.scene+")が存在しません。");
+			return 0;
+		}
+//dispMicro("create action", 1);
+		//	メニュープラグインが存在している場合
+		var	formenu = false;
+		var	bgcnt	= 0;
+		for(var i=0; i<elms.count; i++)
+		{
+			if(elms[i].module == "MixedKeyFrameActionModule4Plugin" && elms[i].pluginModule == "menu")
+				formenu	= true;
+			else if(elms[i].layer == "base")
+				bgcnt++;
+		}
+		//	BGが一つもない場合
+		var	forrelative = false;
+		if(bgcnt < 1)
+		{
+			forrelative	= true;
+			elm.next	= 0;
+
+			for(var i=0; i<elms.count; i++)
+			{
+				with(elms[i])
+				{
+					//	page と bg のアクションを破棄
+					if(.layer == "base" || .module == "KeyFramePageModule")
+					{
+						elms.erase(i);
+						i--;
+						continue;
+					}
+
+					//	アクションを相対アクションへ書き換え
+					if(.module == "MixedKeyFrameActionModule")
+					{
+						.module	= "MixedRelativeKeyFrameActionModule";	//	相対的な処理は MixedRelativeKeyFrameActionModule で行う
+						.noaskaction	= true;		//	アクションしているかどうかは関係なくオブジェクトを選ぶ
+					}
+				}
+			}
+		}
+
+		//	先に実行していたアクションを停止(next!=void指定されるとwactを発行しないため停止していない)
+		var	kt	= kag.tagHandlers;
+		if(!forrelative && !elm.noclear)
+		{
+			if(elm.stop || elm.stop === void)
+			{
+//				kag.conductor.onTag(%[tagname:"stopaction"]);
+				kt.stopaction(%[]);
+				kag.update();
+			}
+		}
+
+		//	nowait なアクションなど、ファイル名指定で個別に停止させる
+		if(elm.stopbystorage != void)
+//			kag.conductor.onTag(%[tagname:"stopnowait", storage:elm.stopbystorage]);
+			kt.stopnowait(%[storage:elm.stopbystorage]);
+
+		//	レイヤーのリストを作成(後で使わないレイヤーを非表示にするため)
+		var	pages	= [ "fore", "back" ];
+		var	notused	= %[];
+		if(!forrelative && !elm.noclear)
+		{
+			for(var i=0; i<pages.count; i++)
+			{
+				var	ls	= kag[pages[i]].layers;
+				for(var i=0; i<ls.count; i++)
+					notused[ls[i]]	= ls[i];
+			}
+			//	プラグインに関しても初期化を行う
+			kag.forEachEventHook("initLayerUse", function(handler, f) { handler(); } incontextof this);
+		}
+
+		//	引数取得
+		next		= elm.next !== void ? (+elm.next - +elm.frame * 1000 / data.frameRate) : elm.end !== void ? ((+elm.end - +elm.frame) * 1000 / data.frameRate) : void;
+//		var isImmediate = elm.immediate === void ? false : elm.immediate;	//投げっぱなしの即時アクション実施モード
+		scene		= elm.scene;
+		time		= d.time;
+
+		//	実行区間がマイナスなら、実行しない
+
+		//	次へ進むなら時刻をリセット
+		if(next !== void)
+			kag.resetWait();
+//dispMicro("other", 1);
+		//	アクションを実行
+		var	doinit		= !formenu && !forrelative;
+		var	choseLayers	= [];
+		var	relativeprops	= [ "absolute", "center", "vcenter" ];
+		for(var i=0; i<relativeprops.count; i++)
+		{
+			if(elm[relativeprops[i]] == void)	//	相対値の指定がなければ、プロパティ名を削除
+			{
+				relativeprops.erase(i);
+				i--;
+			}
+		}
+		var	longest, longesttime = 0;
+//		var	targets	= [];
+		for(var i=0; i<elms.count; i++)
+		{
+			var	_elm	= elms[i];
+			if(elm.norapid)
+				_elm.norapid = true;
+			//	Page,BG,BGMのアクションを実行しない(nopgbg=trueのとき)
+			if(elm.nopgbg && (_elm.layer == "base" || _elm.module == "KeyFramePageModule" || typeof _elm.bgm != "undefined"))
+				continue;
+			if(_elm.tagname == "action")
+				_elm.textoff= (elm.textoff !== void ) ? elm.textoff : true;		//	トランジション時のテキスト保持
+			if(elm.origin != void)
+			{//	メニューアイテムの相対アクションのため、プライマリレイヤーを指定する
+				_elm.origin	= elm.origin;
+				elm.basicitem	= elm.origin;	//	基準とするレイヤーにする
+				elm.origin	= void;
+			}
+			else if(forrelative)
+			{
+				_elm.basicitem	= elm.basicitem;	//	基準とするレイヤー(先頭のレイヤー)を通知
+				_elm.hide	= true;					//	origin 以外のレイヤーは隠す
+			}
+			_elm.noinit	= !doinit if _elm.noinit === void;	//	初期化するかどうか
+//			_elm.usecurrent	= formenu if _elm.usecurrent === void;	//	現在値を使うかどうか
+			_elm.chose	= choseLayers;
+			_elm.texton	= elm.texton;
+
+			//	すべてのアイテムに対して相対値設定する必要があれば
+			var	idx;
+			for(var i=0; i<relativeprops.count; i++)
+			{
+				var	rprop	= relativeprops[i];
+				if(_elm.props != void && (idx = _elm.props.find(rprop)) >= 0)
+				{
+//					dm(_elm.storage+": "+rprop+" += "+elm[rprop]);
+					//	全てのキーに対して相対値を足す
+					idx	+= 3;
+					var	last;
+					for(var i=0; i<_elm.keys.count; i++)
+					{
+						var	value	= _elm.keys[i][idx];
+						if((value !== void && value !== "" && value != last) || last === void)
+						{
+							last	= value;
+							_elm.keys[i][idx]	+= +elm[rprop];
+						}
+					}
+				}
+			}
+
+			kt[_elm.tagname](_elm);
+//dispMicro("do action["+i+"]", 1);
+			_elm.needlayer	= false;	//	↑のactionタグ実行で選択/生成されたオブジェクトを得るため、needlayer=false にする
+			var	layer	= kag.lastTarget;
+			delete notused[layer] if layer != void;
+			choseLayers.add(layer);		//	選択済みレイヤー
+//			targets.add(layer);
+			//	実行時間の一番長いtargetを記録
+			var	endtime	= _elm.keys[_elm.keys.count - 1][0];
+			if(endtime > longesttime)
+			{
+				longest	= layer;
+				longesttime	= endtime;
+			}
+		}
+
+		//	今回使っておらず、またアクションも実行されていないレイヤーを非表示にする
+		if(!forrelative && !elm.noclear)
+		{
+			var	keys	= [];
+			keys.assign(notused);
+			for(var i=0; i<keys.count; i+=2)
+			{
+//				dm(keys[i+1].storage+" is in action?: "+(kag.isInAction(keys[i]) ? "true" : "false"));
+				keys[i+1].visible	= false if !kag.isInAction(keys[i]);
+			}
+			//	プラグインに対しても……
+			kag.forEachEventHook("uninitLayerUse", function(handler, f) { handler(); } incontextof this);
+		}
+
+		//	次へ進む時刻を設定
+		var	ret	= 0;
+		if(next === void)
+		{
+			//	↑の「アクションを実行」で開始したアクションが終了するまで待つ
+//			ret	= kag.waitAllAction(canskip);
+			//	アクションを実行したすべてのターゲットのアクション終了を待つ
+//			for(var i=0; i<targets.count; i++)
+//				ret	= kag.waitAction(targets[i],,, canskip);
+			//	もっとも長いアクションが終了するのを待つ
+			ret	= kag.waitAction(longest,,, canskip);
+			dm("wait action: ");
+			if(canskip)
+				kag.conductor.pendings.insert(0, %[tagname:"stopaction"]);	//	スキップされたらアクションを停止
+		}
+		else if(next > 0)
+		{
+			//	次へ進む時刻になるまで待つ
+			ret	= kag.doWait(%[mode:"until", time:next, canskip:canskip, norapid:elm.norapid, pause:true]);
+			dm("do wait: "+next);
+			//	スキップされたらアクションを停止(waitTime内で処理)
+		}
+//dispMicro("other", 1);
+		return ret;
+	}
+
+	//	実行した数だけアクションが終了するまで待つ
+	function w(canskip)
+	{
+	}
+
+	//	タイムラインデータの破棄
+	function reset()
+	{
+		if(data != void)
+		{
+//			dm("reset("+data+")");
+			invalidate data;
+			data	= void;
+			storage	= void;
+		}
+	}
+
+	//	指定のシーンで使用される画像ファイルの一覧を取得
+	function getCacheStorageList(sceneid, list)
+	{
+		if(data != void)
+			return data.getCacheStorageList(sceneid, list);
+	}
+
+	//	オブジェクトのキーフレームのプロパティを変更する
+	function setProperty(elm)
+	{
+		var	d	= data;
+		if(elm.data != "")
+		{
+			var	idx	= getCacheIndex(elm.data);
+			if(idx !== void)
+				d	= caches[idx];
+		}
+		d.setProperty(elm.scene, elm.name, elm.prop, elm.keyframe, elm.value) if d != void;
+		return 0;
+	}
+
+	function onStore(f, elm)
+	{
+		if(data == void)
+			return;
+		with(f.timeline_plugin = %[])
+		{
+			.storage	= storage	if storage !== void && storage != "";
+			.scene		= scene		if scene !== void;
+		}
+		var tmp = [];
+		tmp.assign( f.timeline_plugin );
+		if( ! tmp.count )
+			delete f.timeline_plugin;
+	}
+
+	function onRestore(f, clear, elm)
+	{
+		if(f.timeline_plugin == void)
+			return;
+		with(f.timeline_plugin)
+		{
+			if(.storage != "")
+			{
+				dm("onRestore: TimeLinePlugin.load("+storage+")");
+				load(.storage);
+			}
+			else
+			{
+				//読み込んだセーブデータのカレントks自体にはtladataラベルが存在しない場合があるので例外キャッチしておく
+				dm("onRestore: call *tladata");
+//				try
+				{
+					kag.processCall(, "*tladata");	//	読み込まれているスクリプトのtlaデータを取り込む
+				}
+/*				catch(e)
+				{
+					dm("ERROR! *tladata ラベルがありません");
+				}
+*/			}
+			scene	= .scene;
+		}
+	}
+
+	function saveTemporary()
+	{
+		if(temporary != void)
+		{
+			throw new Exception("すでに一時保存されたデータが存在しています。");
+			return;
+		}
+		if(data == void)
+		{
+//			dm("data == void のため、一時保存する必要がありません。");
+			return;
+		}
+		temporary	= %[
+			data:data,
+			storage:storage,
+			scene:scene
+		];
+		data	= void;
+		storage	= "";
+	}
+
+	function loadTemporary()
+	{
+		if(temporary == void)
+		{
+//			dm("一時保存されたデータが存在していないので、処理を行いません。");
+			return;
+		}
+		reset();
+		with(temporary)
+		{
+			data		= .data;
+			storage		= .storage;
+			scene		= .scene;
+		}
+		resetTemporary();
+	}
+
+	function resetTemporary()
+	{
+		if(temporary != void)
+		{
+			invalidate temporary;
+			temporary	= void;
+		}
+	}
+}
+kag.addPlugin(global.timeline_object = new TimeLinePlugin());
+
+//-- タグ宣言 -----------------------------------------------------------------
+var	kt	= kag.tagHandlers;
+
+@if(0)
+loadtimeline タグでtlaデータを読み込まなくなったので、一時的にコメントアウトしておく
+/**
+ *	loadtimeline - タイムラインデータの読み込み
+ *	@param storage ファイル名
+ */
+kt._loadtimeline	= function(mp)
+{
+	if(mp.storage != "")
+	{
+		var	fn	= Storages.extractStorageName(mp.storage);
+		//	デバッグ時のみ、ファイルが存在しなければ、オリジナルのパスを利用する
+		if(!Storages.isExistentStorage(fn))
+			fn	= mp.storage;
+		timeline_object.load(fn);
+	}
+
+	return 0;
+} incontextof kag;
+kag.conductor.macros["loadtimeline"]	= "[if exp=mp.target!=''][call *][eval exp=timeline_object.loadByData(global.__tmp_tla)][else][_loadtimeline *][endif]";
+@endif
+/*
+	@return の後にあるデータは次のようになっている
+
+@iscript
+global.__tmp_tla = Scripts.evalJSON('
+※ ここにtlaデータを記載
+');
+@endscript
+@eval exp=timeline_object.loadByData(global.__tmp_tla)
+@return
+
+	これを @call target=* で呼び出す
+*/
+
+/**TAG
+ *	playtimeline - タイムラインを指定フレームから実行する
+ *	@param frame		開始フレーム
+ *	@param end			終了フレーム
+ *	@param immidiate	テキストの非表示を行なわず、次に進んだ場合でもアクションの完了を行わない(SEの再生のみ等)
+ *	@param textoff		実行前にテキストレイヤーを非表示にするか(default:true)
+ *	@param texton		テキストレイヤーを表示したままにするか(default:false)
+ *	@param stop			現在実行中のアクションを停止するか(default:true)
+ *		@link:			playtimeline, wtimeline, resettimeline, savetemptimeline
+ *						loadtemptimeline, resettemptimeline
+ *		@group:			タイムライン操作
+ */
+kt.playtimeline_org	= function(mp)
+{
+//	dm("---- play timeline ---");
+//	dm(Scripts.getTraceString());
+	return timeline_object.play(mp);
+} incontextof kag;
+
+kt.playtimeline	= function(mp)
+{
+/*
+	var imm = (mp.immediate === void) ? false : mp.immediate;
+	if(imm )
+	{
+		mp.immediate = true;
+		return tagHandlers.playtimeline_org(mp);
+	}
+*/
+	//	texton,textoff の指定ににより、実行する前にメッセージレイヤーを隠す(すでに隠れているなら void を返す)
+	var	ret	= hidebeforeexecute(mp);
+	if(ret !== void)
+		return ret;
+	else
+		return tagHandlers.playtimeline_org(mp);
+} incontextof kag;
+
+/**TAG
+ *	wtimeline - タイムラインが呼び出した action の終了を待つ
+ *		@link:			playtimeline, wtimeline, resettimeline, savetemptimeline
+ *						loadtemptimeline, resettemptimeline
+ *		@group:			タイムライン操作
+ */
+kt.wtimeline	= function(mp)
+{
+	return tagHandlers.wact(%[canskip:mp.canskip]);	//	実行中の全てのアクションが終了するまで待つ
+} incontextof kag;
+
+/**TAG
+ *	resettimeline - 読み込んでいるタイムラインデータを破棄する(開発用)
+ *		@link:			playtimeline, wtimeline, resettimeline, savetemptimeline
+ *						loadtemptimeline, resettemptimeline
+ *		@group:			タイムライン操作
+ */
+kt.resettimeline	= function(mp)
+{
+	timeline_object.reset();
+	return 0;
+} incontextof kag;
+
+/**TAG
+ *	settlprop - 指定のキーフレームのプロパティを書き換える(メニュー用)
+ *	@param scene	シーンID
+ *	@param name		オブジェクト名
+ *	@param prop		プロパティ名
+ *	@param value	値
+ *	@param keyframe	キーフレームのインデックス(default:すべてのキーフレーム/マイナスを指定すると、最後のキーフレームから)
+ *		@link:			playtimeline, wtimeline, resettimeline, savetemptimeline
+ *						loadtemptimeline, resettemptimeline
+ *		@group:			タイムライン操作
+ */
+kt.settlprop	= function(mp)
+{
+	return timeline_object.setProperty(mp);
+} incontextof kag;
+
+/**TAG
+ *	savetemptimeline - 一時保存
+ *		@link:			playtimeline, wtimeline, resettimeline, savetemptimeline
+ *						loadtemptimeline, resettemptimeline
+ *		@group:			タイムライン操作
+ */
+kt.savetemptimeline	= function(mp)
+{
+	timeline_object.saveTemporary();
+	return 0;
+} incontextof kag;
+
+/**TAG
+ *	loadtemptimeline - 保存データの復帰
+ *		@link:			playtimeline, wtimeline, resettimeline, savetemptimeline
+ *						loadtemptimeline, resettemptimeline
+ *		@group:			タイムライン操作
+ */
+kt.loadtemptimeline	= function(mp)
+{
+	timeline_object.loadTemporary();
+	return 0;
+} incontextof kag;
+
+/**TAG
+ *	resettemptimeline - 保存データの破棄
+ *		@link:			playtimeline, wtimeline, resettimeline, savetemptimeline
+ *						loadtemptimeline, resettemptimeline
+ *		@group:			タイムライン操作
+ */
+kt.resettemptimeline	= function(mp)
+{
+	timeline_object.resetTemporary();
+	return 0;
+} incontextof kag;
+
+/*
+	右クリック時にゲームメニューを呼び出すときのスクリプト例
+
+----
+;現在実行されているタイムラインを一時保存して、メニュータイムラインを呼び出す
+*start
+@savetemptimeline
+@loadtimeline storage=rclickmenu.tla
+@playtimeline frame=0
+@s
+
+;ゲームに戻る場合は、タイムラインを復帰して元に戻る
+*return
+@loadtemptimeline
+@return
+
+;ゲームに戻らない場合は、一時保存データを破棄する(タイムラインのなかで resetTemporary を呼び出しても良い)
+*noreturn
+@resettemptimeline
+@jump storage=&next_storage target=&next_target
+----
+
+*/
+@endif

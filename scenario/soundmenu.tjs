@@ -1,0 +1,1266 @@
+﻿@if(__SOUNDMENU_DEFINED__==0)
+@set(__SOUNDMENU_DEFINED__=1)
+
+
+@set(SOUNDMENU_NOCHECK_PLAYED=0)	//	再生済みかどうかのチェックを行わない
+@set(SOUNDMENU_NOCHECK_DISPLAYED=0)	//	表示非表示に関わらず演出用に背景を表示する/切替時間も短くする(5秒)
+@set(SOUNDMENU_INVISIBLE_NOPLAY=1)	//	未聴のBGMを非表示にするなら1
+@set(SOUNDMENU_PLAY_IMMIEDIATELY=1)	//	選択していないBGMでも、クリックしたらすぐに再生開始する(選択→再生を同時に行う)
+
+/*
+ *	サウンド再生メニュー
+ */
+var	smBGMCount	= 56;
+var	smPageBGMCount	= 28;
+var	smBGM2Images;
+var	smImage2Chapter;
+var	smBGOpacity	= 255;	//	演出用背景画像の不透明度
+var	smBGFillColor	= 0xFF000000;	//	黒
+var	smMinExchange	= 8;	//	画像切替の最小時間(秒単位)
+var	smMaxExchange	= 20;	//	   〃   の最大時間(秒単位)
+var	smHideInterfaceTimeout	= 3 * 1000;	//	再生中に何秒操作が無いと入力インタフェースを隠すか
+var	smComposers	= %[
+	m21:2,
+	m22:2,
+	m23:2,
+	m24:2,
+	m25:2,
+	m26:1,
+	m27:1,
+	m28:1,
+	m29:1,
+	m30:1,
+	m31:1,
+	m32:1,
+	m33:3,
+	m34:3,
+	m35:3,
+	m36:3,
+	m37:3,
+	m38:1,
+	m39:1,
+	m40:3,
+	m41:2,
+	m42:2,
+	m43:1,
+	m01:4,
+	m02:4,
+	m03:4,
+	m04:4,
+	m05:4,
+	m06:4,
+	m07:4,
+	m08:4,
+	m09:4,
+	m10:4,
+	m11:4,
+	m12:4,
+	m13:4,
+	m14:4,
+	m15:4,
+	m16:4,
+	m17:4,
+	m18:4,
+	m19:4,
+	m44:4,
+	m45:4,
+	m46:4,
+	m47:4,
+	m48:4,
+	m49:4,
+	m50:4,
+	m51:4,
+	m52:4,
+
+	//	以下、未確定
+	m53:4,
+	m54:4,
+	m55:4,
+	m56:4,
+	m20:4,
+];
+var	smNo2BGMNo	= %[	//	ボタン番号とBGM番号が異なる場合の対応表
+	"20" => 45,
+	"45" => 46,
+	"46" => 47,
+	"47" => 48,
+	"48" => 49,
+	"49" => 51,
+	"50" => 50,
+	"51" => 59,
+	"52" => 60,
+	"53" => 61,
+	"54" => 62,
+	"55" => 63,
+	"56" => 20,
+];
+var	smNo2ButtonNo	= %[
+	"20" => 45,
+	"45" => 46,
+	"46" => 47,
+	"47" => 48,
+	"48" => 49,
+	"49" => 50,
+	"50" => 51,
+	"51" => 52,
+	"52" => 53,
+	"53" => 54,
+	"54" => 55,
+	"55" => 56,
+	"56" => 20,
+];
+//	サウンドメニューを開く
+var	smAllCleared;
+function openSoundMenu(page="fore")
+{
+	if(tf.sm_opened)
+		return;
+	dm("openSoundMenu");
+	tf.sm_opened		= true;	//	メニューを開いているか
+	tf.sm_pageno		= 0;	//	ページ番号
+	tf.sm_bgmno		= void;	//	選択/再生しているBGM番号
+	tf.sm_laststorage= "";	//	直前に再生していたBGMファイル名
+	tf.sm_lastbg		= "";	//	直前に表示していた背景画像
+	tf.sm_playbgmno	= void;	//	再生中のBGM番号
+	tf.sm_lastx = tf.sm_lasty	= void;	//	直前のカーソル位置
+	tf.sm_playedbgms	= [];	//	再生済みの曲番号
+	for(var i=0; i<smBGMCount; i++)
+		tf.sm_playedbgms.add(i) if SMisPlayed(i);
+	tf.sm_randomplayed	= [];	//	曲をランダム再生したかどうか
+	tf.sm_randomplaylist	= [];	//	曲をランダム再生した順番
+
+	//	ボリュームを記憶
+	if(tf.sm_lastbgmvolume === void)
+		tf.sm_lastbgmvolume	= kag.bgmVolume;
+	kag.bgmVolume	= int(Math.min(((kag.bgmVolume + 10) \ 10) * 10, 100));
+
+	//	BGMフェードアウト
+	kag.bgm.fadeOut(%[time:500]);
+
+	//	すべて読破しているか
+	smAllCleared	= isAllCleared;
+
+	//	BGMに対応した演出用画像リストの取得
+	if(smBGM2Images == void)
+		smBGM2Images	= Scripts.evalStorage("soundlist.txt");
+
+	//	イベント画像が表示されているかどうか
+	var	data	= Scripts.evalStorage("gallery.txt");
+	smImage2Chapter	= data.img2chp != void ? data.img2chp : %[];
+
+@if(SOUNDMENU_PLAY_IMMIEDIATELY)
+	Menu_object.setClick(, "rightClickSoundMenu()");
+@endif
+@if(!SOUNDMENU_PLAY_IMMIEDIATELY)
+	Menu_object.setClick(, "closeSoundMenu()");
+@endif
+
+	Scripts.execStorage("soundmode.ttd");
+	var	tdata	= __get_soundmode_timelinedata(5);
+	var	creates	= tdata[1], name2pos = tdata[0];
+	setCreateProp(creates[name2pos["SM曲名"]], "visible", false);
+	setCreateProp(creates[name2pos["SM作曲者名"]], "visible", false);
+	setCreateProp(creates[name2pos["SMリピート"]], "hint", "1曲を繰り返し再生します");
+	setCreateProp(creates[name2pos["SM全曲リピート"]], "hint", "順番に再生していきます");
+	setCreateProp(creates[name2pos["SMランダム再生"]], "hint", "ランダムに再生します");
+	setCreateProp(creates[name2pos["SM停止"]], "on", true);
+	setCreateProp(creates[name2pos["SMpage1ボタン"]], "on", true);
+
+	//	各ボタン状態を設定
+	for(var i=10; i<=100; i+=10)
+		setCreateProp(creates[name2pos["SMVolume%03d".sprintf(i)]], "on", i <= kag.bgmVolume);
+	var	mode2num	= %[repeat:0, "repeat all"=>1, random:2];
+	setCreateProp(creates[name2pos[SMplayModeButtonName(mode2num[sf.sm_playmode])]], "on", true) if sf.sm_playmode != void;
+@if(!SOUNDMENU_INVISIBLE_NOPLAY)
+	setBGMButtons(name2pos, creates);
+@endif
+	muteAllMenuItem(tdata);		//	すべて効果音mute
+	Menu_object.playTimeline(page, tdata[1], tdata[2], %[absolute:1100000], getSoundMenuIgnoreList(), false, true);
+
+	//	再生時間を表示するレイヤー
+	var	layer	= Menu_object.addMenuItem(%["class" => "PlayTimeMenuItemLayer", page:page, name:"SM再生時間",
+		storage:"sound_digit", center:352, vcenter:505, itemMode:imParts, opacity:0, absolute:1108000, visible:true, ibv:0,
+		neutralColor:0x00000000, spacing:1, markWidth:3, digit:5,
+	]);
+	layer.continuousHandler	= function {
+		time	= kag.bgm.currentBuffer.position;
+		var	item= Menu_object.find("SM再生時間バー");
+		if(item != void) with(item)
+			.per	= (kag.bgm.currentBuffer.totalTime) ? (time / kag.bgm.currentBuffer.totalTime) : 0;
+	} incontextof layer;
+	layer.ssact(450, "opacity", 255, 250);
+	layer	= Menu_object.addMenuItem(%["class" => "PlayTimeMenuItemLayer", page:page, name:"SM総再生時間",
+		storage:"sound_digit", center:672, vcenter:505, itemMode:imParts, opacity:0, absolute:1108000, visible:true, ibv:0,
+		neutralColor:0x00000000, spacing:1, markWidth:3, digit:5,
+	]);
+	layer.ssact(450, "opacity", 255, 250);
+	layer	= Menu_object.addMenuItem(%["class" => "ProgressBarMenuItemLayer", page:page, name:"SM再生時間バー",
+		storage:"sound_曲時間バーoff", barstorage:"sound_曲時間バーon", center:512, vcenter:506, opacity:0, absolute:1108000,
+		visible:true, ibv:0, per:0, barLeft:2, barTop:1, itemMode:imParts,
+	]);
+	layer.onchangeper	= function(p) {
+		with(kag.bgm.currentBuffer)
+			.position	= int(.totalTime * p);	//	再生位置変更
+	};
+	layer.ssact(450, "opacity", 255, 250);
+
+	//	画像を読み込んでいるかどうかのフラグを設定
+	Menu_object.find("SM演出1", page).loaded = Menu_object.find("SM演出2", page).loaded = false;
+
+	//	BGM再生状態の変化をこちらで受ける
+	kag.bgmStopHandler	= SMonStopBGM;
+}
+//	BGMが再生停止されたときに呼ばれる
+function SMonStopBGM()
+{
+	SMsetBGMNames(void);	//	曲名、作曲者名を隠す
+
+	//	ユーザーによって停止されたなら、何もしない
+	if(tf.sm_userstoped)
+	{
+		delete tf.sm_userstoped;
+		SMstopedBGM();
+		return;
+	}
+
+	//	このメニューで開始されたのでなければ、何もしない
+	if(!tf.sm_playing)
+		return;
+
+	//	モードによって処理を変える
+	switch(sf.sm_playmode)
+	{
+	case "repeat":		//	1曲リピート
+		SMplayCurrent();	//	停止したら再度再生する
+		break;
+	case "repeat all":	//	全曲リピート
+		SMmove(1);			//	次へ
+		SMplayCurrent();	//	再生開始
+		break;
+	case "random":		//	ランダム再生
+		SMplayRandom();
+		break;
+	default:		//	停止
+		tf.sm_playing	= false;
+		SMstopedBGM();
+		break;
+	}
+}
+function SMselectRandom(nofocus=false)
+{
+	//	一度ランダム再生で再生された曲は、他の曲を聴くまでは再生されない
+	var	no, cnt = 1000;
+	do
+		no	= tf.sm_playedbgms[int(Math.random() * tf.sm_playedbgms.count)];
+	while((no == tf.sm_playbgmno || !SMisPlayed(no) || tf.sm_randomplayed[no]) && --cnt > 0);
+
+	if(SMisPlayed(no))
+	{
+		SMselectBGM(no,, nofocus);
+		tf.sm_randomplayed[no]	= true;
+		tf.sm_randomplaylist.add(no);
+
+		//	すべてランダム再生されたらリセットする
+		var	cnt	= 0;
+		for(var i=0; i<tf.sm_playedbgms.count; i++)
+			cnt++ if tf.sm_randomplayed[tf.sm_playedbgms[i]];
+		if(cnt == tf.sm_playedbgms.count)
+		{
+			tf.sm_randomplayed.clear();
+			tf.sm_randomplaylist.clear();
+		}
+	}
+}
+function SMplayRandom()
+{
+//	dmt("SMplayRandom()");
+	SMselectRandom();
+	SMplayCurrent();
+}
+function SMstopedBGM()
+{
+	//	順次画像表示を停止
+	SMstopChangeBG();
+
+	//	ボタンの状態を変更
+	Menu_object.find("SM再生").on	= false;
+	Menu_object.find("SM停止").on	= true;
+
+	//	再生時間情報をリセット
+	var	item	= Menu_object.find("SM再生時間");
+	if(item != void) with (item)
+		.continuous	= false, .time = 0;
+	item	= Menu_object.find("SM総再生時間");
+	if(item != void) with (item)
+		.time	= 0;
+	item	= Menu_object.find("SM再生時間バー");
+	if(item != void) with (item)
+		.hitThreshold	= 256, .per	= 0;
+
+	//	マウスカーソルとボタンを表示し、消去する処理を停止する
+	SMbuttonState(false);
+}
+property smButtonHided
+{
+	setter(v)
+	{
+		if(!tf.sm_opened)
+			return;
+		if(tf.do_askyesno)
+			return;			//	確認ダイアログが表示されている間は、ボタンの状態を変えない
+		if(smButtonHided != v)
+		{
+//			dmt("smButtonHided: "+smButtonHided+" → "+v);
+			tf.sm_buttonhided	= v;
+
+			//	隠したり閉じたり
+			var	tdata	= __get_soundmode_timelinedata(v ? 15 : 16);
+			var	creates	= tdata[1], name2pos = tdata[0];
+			//	名称を変更
+			if(tf.sm_pageno == 1)
+			{
+				for(var i=1; i<=smPageBGMCount; i++)
+				{
+					var	no	= name2pos["bgm"+i];
+					if(no === void)
+						continue;
+					var	trg	= creates[no];
+					var	idx	= i+smPageBGMCount;
+					trg[1]	= "bgm" + idx;
+					var	btn	= smNo2ButtonNo[idx];
+					trg[3]	= "sound_bgmボタン%02d".sprintf(btn != void ? btn : idx);	//	storage も([3] じゃなくなるかも……)
+					name2pos["bgm"+idx]	= no;
+					delete name2pos["bgm"+i];
+				}
+			}
+			clearCreateProp(creates[name2pos["SM再生"]], "storage");	//	一時停止かもしれないので(大丈夫だと思うけど)
+@if(!SOUNDMENU_INVISIBLE_NOPLAY)
+			setBGMButtons(name2pos, creates);
+@endif
+			muteAllMenuItem(tdata);		//	すべて効果音mute
+			Menu_object.playTimeline("fore", creates, tdata[2], %[absolute:1100000],
+				getSoundMenuIgnoreList(%[SM作曲者名:1, SM曲名:1, SMbar:1, SM背景:1, SM演出1:1, SM演出2:1,
+					SM再生時間枠:1, SM総再生時間枠:1, SM再生時間ベース:1, SM再生時間バー:1])
+			);
+		}
+		SMresetTimer();		//	表示された時で、タイマーが存在すれば一度リセットする
+	}
+	getter	{ return tf.sm_buttonhided; }
+}
+//	マウスが動いたりキーが押されたらボタンを表示して、一定時間操作がなければボタンを隠す
+function SMbuttonState(hide)
+{
+	if(!tf.sm_opened)	//	メニューが閉じた後は無効
+		return;
+	dm("SMbuttonState("+hide+")");
+	if(hide)
+	{
+		if(tf.smHideTimer == void)
+		{
+			with(tf.smHideTimer = new Timer(SMonHideTimeout, ""))
+				.interval	= smHideInterfaceTimeout, .enabled	= true;
+//			smButtonHided	= true;	//	再生が開始されたらすぐに隠す
+			//	onMouseUp によって呼び出された直後に何故か onMouseMove が発生するため、
+			//	すぐにボタン類が表示されてしまう。なので、asyncCaller で反応し始めるのを遅らす
+			asyncCaller.call(function {
+				kag.addHook("mouseMove", SMmouseMove);
+				Menu_object.keyDownCallback	= function { return smButtonHided; };
+				Menu_object.keyUpCallback	= SMkeyUp;
+			});
+		}
+	}
+	else if(tf.smHideTimer != void)
+	{
+		tf.smHideTimer.enabled	= false;
+		invalidate tf.smHideTimer;
+		delete tf.smHideTimer;
+		kag.removeHook("mouseMove", SMmouseMove);
+		delete Menu_object.keyDownCallback;
+		delete Menu_object.keyUpCallback;
+		smButtonHided	= false;
+	}
+}
+//	消去タイマーのタイムアウト
+function SMonHideTimeout()
+{
+//	dm("SMonHideTimeout()");
+	tf.smHideTimer.enabled	= false;
+	smButtonHided			= true;
+	kag.mouseCursorState	= mcsTempHidden;
+}
+//	タイマーをリセットする(操作したとき等)
+function SMresetTimer()
+{
+//	dmt("SMresetTimer(): "+kag.primaryLayer.cursorX+", "+kag.primaryLayer.cursorY);
+	if(!smButtonHided && tf.smHideTimer != void)
+	{
+		tf.smHideTimer.enabled	= false;
+		tf.smHideTimer.enabled	= true;
+	}
+}
+//	キーが押されたら、ボタンを出現
+function SMkeyUp(key, shift, item)
+{
+	//	アイテムが非表示な状態か、消去されようとしているときに
+//	dm("SMkeyUp()");
+	if(smButtonHided)
+	{
+		smButtonHided	= false;
+		return true;
+	}
+	else
+	{
+		SMresetTimer();
+		return false;
+	}
+}
+//	マウスが動いたら、ボタンを出現
+function SMmouseMove()
+{
+//	dm("SMmouseMove()");
+	//	実際にカーソルが動いたときだけ処理する
+	if(tf.sm_lastx != kag.primaryLayer.cursorX || tf.sm_lasty != kag.primaryLayer.cursorY)
+	{
+		tf.sm_lastx	= kag.primaryLayer.cursorX;
+		tf.sm_lasty	= kag.primaryLayer.cursorY;
+		smButtonHided	= false;
+	}
+}
+//	BGM番号をファイル名にする
+function SMno2filename(no)
+{
+	var	fn	= "m%02d".sprintf(smNo2BGMNo[no] != void ? smNo2BGMNo[no] : no);
+	fn	= "m01s" if fn == "m01";
+	return fn;
+}
+//	再生されたBGMかどうか
+function SMisPlayed(no)
+{
+@if(DEBUG&&SOUNDMENU_NOCHECK_PLAYED)
+	return true;
+@endif
+	if(sf == void || sf.playedBGM == void)
+		return false;
+	//	no は 0〜55 で、playedBGM は 1〜56 なので、+1して調べる
+	return no < 55 && (smAllCleared || sf.playedBGM[SMno2filename(no+1)] > 0);
+}
+//	ignore リストを取得
+function getSoundMenuIgnoreList(ignore=%[])
+{
+	ignore["SM再生時間バー"]	= 1;
+	ignore["SM再生時間ベース"]	= 1;
+	ignore["bgm56"]				= 1;
+@if(SOUNDMENU_INVISIBLE_NOPLAY)
+	//	未聴のBGMを入れる
+	for(var i=0; i<smBGMCount; i++)
+		ignore["bgm"+(i+1)]	= !SMisPlayed(i);
+@endif
+	return ignore;
+}
+@if(!SOUNDMENU_INVISIBLE_NOPLAY)
+//	未聴のBGMボタンを無効にする
+function setBGMButtons(name2pos, creates)
+{
+	for(var i=0; i<smBGMCount; i++)
+	{
+		var	no	= name2pos["bgm"+(i+1)];
+//		dm("bgm"+(i+1)+" = "+SMisPlayed(i)) if no !== void;
+		setCreateProp(creates[no], "enabled", SMisPlayed(i)) if no !== void;
+	}
+}
+@endif
+//	サウンドメニューで右クリックした
+function rightClickSoundMenu()
+{
+	if(tf.sm_playing)
+		SMstop();
+	else
+		closeSoundMenu();
+}
+//	サウンドメニューを閉じる
+function closeSoundMenu()
+{
+	if(!tf.sm_opened)
+		return;
+	dm("closeSoundMenu");
+	var	playing	= tf.sm_playing;
+	var	pgno	= tf.sm_pageno;
+	delete tf.sm_opened;
+	delete tf.sm_pageno;
+	delete tf.sm_playing;
+	delete tf.sm_bgmno;
+	SMstopChangeBG(false);	//	画像の順次表示を停止
+	SMbuttonState(false);
+	delete tf.sm_laststorage;
+	delete tf.sm_lastbg;
+	delete tf.sm_playbgmno;
+	delete tf.sm_buttonhided;
+	delete tf.sm_playedbgms;
+	delete tf.sm_randomplayed;
+	delete tf.sm_randomplaylist;
+
+	//	まだエクストラメニューからのトランジション中なら、トランジションを停止する
+	kag.fore.base.stopTransition();
+
+	kag.bgmStopHandler	= void;
+
+	//	BGMフェードアウト
+	var	fadetime	= 500;
+	kag.bgm.fadeOut(%[time:fadetime]);
+
+	//	BGMのボリュームを元に戻す
+	var	safetytime	= 300;
+	doLater(fadetime+safetytime, function(vol) { global.kag.bgmVolume = vol; }, tf.sm_lastbgmvolume);	//	フェードアウトが終了した後
+	delete tf.sm_lastbgmvolume;
+
+	//	マウスカーソルによるボタン出現消去を停止
+	if(tf.smHideTimer != void)
+	{
+		tf.smHideTimer.enabled	= false;
+		invalidate tf.smHideTimer;
+		delete tf.smHideTimer;
+		kag.removeHook("mouseMove", SMmouseMove);
+		delete Menu_object.keyDownCallback;
+		delete Menu_object.keyUpCallback;
+	}
+
+	if(smBGM2Images != void)
+	{//	データを破棄
+		invalidate smBGM2Images;
+		smBGM2Images	= void;
+	}
+	if(smImage2Chapter != void)
+	{
+		invalidate smImage2Chapter;
+		smImage2Chapter	= void;
+	}
+
+	Menu_object.resetClick();
+
+	var	tdata	= __get_soundmode_timelinedata(pgno == 0 ? 6 : 13);	//	ページ毎に切り替え
+	var	creates	= tdata[1], name2pos = tdata[0], actions = tdata[2];
+	var	mname	= creates[name2pos["SM曲名"]];
+	clearCreateProp(mname, "storage");
+	clearCreateProp(creates[name2pos["SM作曲者名"]], "storage");
+	if(!playing)
+	{//	再生していなかったら曲名や作曲者名も表示されていないので
+		setCreateProp(mname, "visible", false);
+		setCreateProp(creates[name2pos["SM作曲者名"]], "visible", false);
+	}
+	else
+	{
+		clearCreateProp(mname, "center");
+		setCreateProp(creates[name2pos["SM曲名"]], "left", 276);
+		var	act	= tdata[2][name2pos["SM曲名"]];
+		removeActionData(act, "center");
+		act.add("left");
+		act.add([[0, 276, 0, "l"], [500, 286, void, void]]);
+	}
+	clearCreateProp(creates[name2pos["SM演出1"]], "opacity");	//	0 に設定されるので、表示されている場合に消されてしまう
+	clearCreateProp(creates[name2pos["SM演出2"]], "opacity");
+	clearCreateProp(creates[name2pos["SM再生"]], "storage");	//	一時停止状態かもしれないので
+@if(!SOUNDMENU_INVISIBLE_NOPLAY)
+	setBGMButtons(name2pos, creates);
+@endif
+	muteAllMenuItem(tdata);		//	すべて効果音mute
+	for(var i=0; i<actions.count; i++)
+		removeActionData(actions[i], "opacity") if actions[i] != void;	//	トランジションするので、不透明度を変化させない
+	Menu_object.playTimeline("fore", tdata[1], tdata[2], %[absolute:1100000], getSoundMenuIgnoreList(), true);
+
+	var	ttime	= 600;
+	var	items	= [ "SM演出1", "SM演出2", "SM再生時間", "SM総再生時間", "SM再生時間バー" ];
+	for(var i=0; i<items.count; i++)
+	{
+		var	item	= Menu_object.find(items[i]);
+		if(item != void)
+		{
+			item.stopAction();
+			if(item.opacity > 0)
+			{
+				item.ibv	= true;
+				item.ssact(ttime, "opacity", 0);
+			}
+			else
+				item.doInvalidate();
+		}
+	}
+
+	Menu_object.playSE(closese);	//	閉じる効果音だけは鳴らす
+
+	returnExtraMenu();	//	EXTRAメニューへ戻る
+}
+//	ページ切り替え
+function SMchangePage(pgno)
+{
+	if(pgno == tf.sm_pageno)
+		return;
+//	dmt("SMchangePage: "+tf.sm_pageno+" → "+pgno);
+
+	//	BGMボタン以外は処理しない
+	var	ignore	= %["SM停止"=> true,"SM戻る"=> true,"SMVolume"=> true,"SM草1"=> true,"SMタイトルコピー"=> true,
+		"SM再生"=> true,"SM進む"=> true,"SMVolume060"=> true,"SM草2"=> true,"SMVolume010"=> true,"SMbar"=> true,
+		"SMランダム再生"=> true,"SMVolume020"=> true,"SMVolume050"=> true,"SM曲名"=> true,"SM作曲者名"=> true,
+		"SM演出2"=> true,"SMタイトル"=> true,"SMpage2ボタン"=> true,"SM背景"=> true,"SM演出1"=> true,
+		"SMリピート"=> true,"SMVolume030"=> true,"SMVolume070"=> true,"SMVolume080"=> true,"SMVolume090"=> true,
+		"SMVolume100"=> true,"SMpage"=> true,"SMpage1ボタン"=> true,"SM草3"=> true,"SM全曲リピート"=> true,
+		"SMVolume040"=> true,"SMback"=> true,"SM再生時間バー"=> true,SM再生時間枠:1, SM総再生時間枠:1];
+	ignore	= getSoundMenuIgnoreList(ignore);	//	未再生のBGMボタンも表示しない
+
+	//	消去
+	var	tdata	= __get_soundmode_timelinedata(10);
+	var	creates	= tdata[1], name2pos = tdata[0];
+	if(pgno == 0)
+	{//	名称を変更する
+		for(var i=1; i<=smPageBGMCount; i++)
+		{
+			var	no	= name2pos["bgm"+i];
+			if(no === void)
+				continue;
+			var	trg	= creates[no];
+			var	idx	= i+smPageBGMCount;
+			trg[1]	= "bgm"+idx;
+			var	btn	= smNo2ButtonNo[idx];
+			trg[3]	= "sound_bgmボタン%02d".sprintf(btn != void ? btn : idx);	//	storage も([3] じゃなくなるかも……)
+			delete name2pos["bgm"+i];
+			name2pos["bgm"+idx]	= no;
+		}
+	}
+@if(!SOUNDMENU_INVISIBLE_NOPLAY)
+	setBGMButtons(name2pos, creates);
+@endif
+	muteAllMenuItem(tdata);		//	すべて効果音mute
+	if(!smButtonHided)
+		Menu_object.playTimeline("fore", creates, tdata[2], %[absolute:1100000], ignore, true);
+	else
+	{
+		for(var i=0; i<creates.count; i++)
+			setCreateProp(creates[i], "visible", false);
+		Menu_object.lastTimeline("fore", creates, tdata[2], %[absolute:1100000], ignore, true);
+	}
+
+	//	出現
+	tdata	= __get_soundmode_timelinedata(11);
+	var	creates	= tdata[1], name2pos	= tdata[0];
+	if(tf.sm_bgmno !== void && tf.sm_bgmno \ smPageBGMCount == pgno)
+	{
+		var	no	= tf.sm_bgmno + 1;
+		no	+= smPageBGMCount if no < 29;
+		setCreateProp(creates[name2pos["bgm"+no]], "on", true);
+	}
+	if(pgno == 0)
+	{//	名称変更
+		for(var i=1; i<=smPageBGMCount; i++)
+		{
+			var	no	= name2pos["bgm"+(i+smPageBGMCount)];
+			if(no === void)
+				continue;
+			var	trg	= creates[no];
+			trg[1]	= "bgm"+i;
+			var	btn	= smNo2ButtonNo[i];
+			trg[3]	= "sound_bgmボタン%02d".sprintf(btn != void ? btn : i);	//	storage も([3] じゃなくなるかも……)
+			delete name2pos["bgm"+(i+smPageBGMCount)];
+			name2pos["bgm"+i]	= no;
+		}
+	}
+@if(!SOUNDMENU_INVISIBLE_NOPLAY)
+	setBGMButtons(name2pos, creates);
+@endif
+	muteAllMenuItem(tdata);		//	すべて効果音mute
+	if(!smButtonHided)
+		Menu_object.playTimeline("fore", creates, tdata[2], %[absolute:1100000], ignore,, true);
+	else
+	{
+		for(var i=0; i<creates.count; i++)
+			setCreateProp(creates[i], "visible", false);
+		Menu_object.lastTimeline("fore", creates, tdata[2], %[absolute:1100000], ignore,, true);
+	}
+
+	Menu_object.setProp("SMpage"+(tf.sm_pageno+1)+"ボタン", "on", false);
+	Menu_object.setProp("SMpage"+(pgno+1)+"ボタン", "on", true);
+	tf.sm_pageno	= pgno;
+}
+//	曲名、作曲者名を変更
+function SMsetBGMNames(no)
+{
+	var	bgmname		= Menu_object.find("SM曲名");
+	var	composername= Menu_object.find("SM作曲者名");
+	if(bgmname == void || composername == void)
+		return;
+	if(no !== void)
+	{
+		no++;
+		var	composerno	= smComposers["m%02d".sprintf(no)];
+//		dm("m%02d".sprintf(no+1)+" = "+composerno);
+		composerno	= 1 if typeof composerno == "String";
+		with(composername)
+		{
+			.storage	= "sound_作曲者%02d".sprintf(composerno);
+			.visible	= true;
+		}
+		no	= smNo2ButtonNo[no] if smNo2ButtonNo[no] !== void;
+		with(bgmname)
+		{
+			.storage	= "sound_曲名%02d".sprintf(no);
+			.left		= 276;
+			.visible	= true;
+		}
+	}
+	else
+	{
+		bgmname.visible		= false;
+		composername.visible= false;
+	}
+}
+//	BGMボタンにカーソルEnter
+function SMenterBGM(btn)
+{
+	btn.enter();
+
+	//	曲名、作曲者名を表示
+//	SMsetBGMNames(int(btn.name.substr(3))-1);
+}
+//	BGMボタンからカーソルLeave
+function SMleaveBGM(btn)
+{
+	btn.leave();
+
+	//	曲名、作曲者名を選択状態のものに変更
+//	SMsetBGMNames(tf.sm_bgmno);
+}
+//	BGMを選択
+function SMselectBGM(no, btn, nofocus=false)
+{
+	SMunselectBGM(nofocus);	//	選択されているBGMを解除
+
+	//	ページの異なる曲へ移動したら、ページを変更する
+	SMchangePage(no \ smPageBGMCount);
+
+	//	BGMを選択
+	tf.sm_bgmno	= no;
+	if(btn)
+	{
+		btn.on	= true;
+		btn.focus() if !nofocus;
+	}
+	else
+	{
+		var	next	= Menu_object.find("bgm"+(no+1));
+		if(next != void)
+		{
+			next.on	= true;
+			next.window.focusedLayer	= null if !nofocus;
+		}
+	}
+}
+//	BGM選択を解除
+function SMunselectBGM(nofocus=false)
+{
+	if(tf.sm_bgmno !== void)
+	{
+		var	last	= Menu_object.find("bgm"+(tf.sm_bgmno+1));
+		if(last != void)
+		{
+			last.on	= false;
+			last.focus() if !nofocus;
+		}
+		tf.sm_cursorno	= tf.sm_bgmno;
+		tf.sm_bgmno	= void;
+	}
+}
+//	BGMボタンを押下
+function SMplayBGM(btn)
+{
+	btn.release();
+
+	var	no	= int(btn.name.substr(3)) - 1;
+@if(SOUNDMENU_PLAY_IMMIEDIATELY)
+	var	playing	= tf.sm_playing;
+	var	changed	= tf.sm_playbgmno !== no;
+	SMstop() if playing;
+	SMselectBGM(no, btn);	//	選択状態の曲を変更し、以前選択されていたものを未選択にする
+	SMplay() if changed;
+@endif
+@if(!SOUNDMENU_PLAY_IMMIEDIATELY)
+	if(tf.sm_bgmno === no)
+	{//	再生中なら停止、停止中なら再生
+		if(tf.sm_playing && tf.sm_playbgmno === no)
+			SMstop();
+		else
+			SMplay();
+	}
+	else
+		SMselectBGM(no, btn);	//	選択状態の曲を変更し、以前選択されていたものを未選択にする
+@endif
+}
+//	再生開始
+function SMplayCurrent(begin=false)
+{
+	if(tf.sm_bgmno === void)
+		return;
+//	dmt("SMplayCurrent("+tf.sm_bgmno+")");
+
+	var	storage	= SMno2filename(tf.sm_bgmno + 1)+".ogg";
+//	dm("SMplayCurrent(): "+storage);
+	if(!Storages.isExistentStorage(storage))
+	{
+		dm("not found: "+storage);
+		return;
+	}
+	kag.bgm.play(%[storage:storage]);
+	tf.sm_playing	= true;
+	Menu_object.find("SM再生時間").continuous	= true;
+	Menu_object.find("SM総再生時間").time		= kag.bgm.currentBuffer.totalTime;
+	Menu_object.find("SM再生時間バー").hitThreshold	= 64;
+	if(sf.sm_playmode != "repeat")
+		kag.bgm.setLoop(false);	//	1曲リピート以外はループしない
+	tf.sm_playbgmno	= tf.sm_bgmno;
+	if(sf.sm_playmode == "random")
+	{
+		tf.sm_randomplayed[tf.sm_playbgmno]	= true;
+		tf.sm_randomplaylist.add(tf.sm_playbgmno) if tf.sm_randomplaylist[tf.sm_randomplaylist.count-1] != tf.sm_playbgmno;
+	}
+	Menu_object.find("SM再生").on	= true;
+	Menu_object.find("SM停止").on	= false;
+	SMsetPlayButton();
+
+	SMsetBGMNames(tf.sm_bgmno);	//	曲名、作曲者名を表示
+
+	//	BGMが切り替わったら、BGMに対応する画像を順次表示する
+	if(tf.sm_laststorage != storage)
+	{
+		//	表示可能な画像のリストを取得
+		tf.sm_bglist	= [];
+		var	images	= smBGM2Images[Storages.chopStorageExt(storage)];
+		if(images != void)
+		{
+			sf.displayedPictures	= %[] if sf.displayedPictures == void;
+			for(var i=0; i<images.count; i++)
+			{
+				var	image	= images[i];
+				var	fn	= typeof image == "Object" ? image[0] : image;
+				tf.sm_bglist.add(image)
+@if(!(DEBUG&&SOUNDMENU_NOCHECK_DISPLAYED))
+				//	クリアしているか、表示されたことがあるか、対応する章を通過したか
+				if smAllCleared || sf.displayedPictures[fn] || (smImage2Chapter[fn] != void && smImage2Chapter[fn] < sf.chapter)
+@endif
+				;
+			}
+
+			if(tf.sm_bglist.count > 1)
+			{//	少なくとも2枚必要
+				//	切替用のタイマー設定
+				if(tf.sm_exchgtimer == void)
+					tf.sm_exchgtimer	= new Timer(SMonTimeout, "");
+				tf.sm_exchgtimer.interval= SMgetExchangeTime();
+				tf.sm_exchgtimer.enabled	= true;
+
+				//	最初の切替を実行
+				SMexchangeBG(begin);
+			}
+			else if(tf.sm_exchgtimer != void)
+			{//	一枚だけなので切替を行わない
+				invalidate tf.sm_exchgtimer;
+				delete tf.sm_exchgtimer;
+			}
+		}
+
+		tf.sm_laststorage	= storage;
+	}
+
+	//	一定時間操作がなければ、マウスカーソルとボタンを消去する
+	SMbuttonState(true);
+}
+function SMexchangeBG(begin=false)
+{
+	var	img1 = Menu_object.find("SM演出1"), img2 = Menu_object.find("SM演出2");
+	if(img1.absolute > img2.absolute)
+		img1 <-> img2;
+	img1.ibv = img2.ibv = false;
+	img1.opacity	= 0;
+	var	data, storage;
+	var	l, t;
+	if(tf.sm_bglist.count > 1)
+	{
+		for(var i=0; i<200; i++)
+		{
+			data	= tf.sm_bglist[int(Math.random() * tf.sm_bglist.count)];
+			if(typeof data == "Object")
+			{
+				storage	= data[0];
+				l		= data[1];
+				t		= data[2];
+			}
+			else
+			{
+				storage	= data;
+				l = t	= void;
+			}
+//			dm(i+"("+tf.sm_bglist.count+") = "+storage+"["+tf.sm_bglist.join(", ")+"]");
+			if(storage != tf.sm_lastbg)
+				break;
+		}
+	}
+	else if(tf.sm_bglist.count > 0)
+		storage	= tf.sm_bglist[0];
+	else
+		return;
+//	dm("SMexchangeBG: "+tf.sm_lastbg+" → "+storage);
+	tf.sm_lastbg	= storage;
+	with(img1)
+	{
+		var	layer	= new global.Layer(.window, img1);
+		if(Storages.isExistentImage(storage))
+			layer.loadImages(storage);
+		else
+		{
+			dm("\""+storage+"\" が存在しません。");
+			layer.setImageSize(1120, 672);
+			layer.fillRect(0, 0, layer.imageWidth, layer.imageHeight, 0xFFFFFFFF);
+		}
+		var	iw = layer.imageWidth, ih = layer.imageHeight;
+		.setImageSize(.window.scWidth, .window.scHeight);
+		.setSizeToImageSize();
+		.setPos(0, 0);
+		var	col	= smBGFillColor;
+		if(iw < .width)
+		{
+			l	= (.width - iw) \ 2;
+			if(ih < .height)
+			{
+				t	= (.height - ih) \ 2;
+				.fillRect(0, 0, .width, t, col);
+				.fillRect(0, t, l, ih, col);
+				.copyRect(l, t, layer, 0, 0, iw, ih);
+				.fillRect(l + iw, t, .width - l - iw, ih, col);
+				.fillRect(0, t + ih, .width, .height - t - ih, col);
+			}
+			else
+			{
+				.t	= (ih - .height) \ 2 if t === void;
+				.fillRect(0, 0, l, .height, col);
+				.copyRect(l, 0, layer, 0, t, iw, .height);
+				.fillRect(l+iw, 0, .width-l-iw, .height, col);
+			}
+		}
+		else if(ih < .height)
+		{
+			t	= (.height - ih) \ 2;
+			l	= (iw - .width) \ 2 if l === void;
+			.fillRect(0, 0, .width, t, col);
+			.copyRect(0, t, layer, l, 0, .width, ih);
+			.fillRect(0, t+ih, .width, .height-t-ih, col);
+		}
+@if(1)
+		else if(Math.random() >= 0.5)	//	二分の一の確率で、縮小と等倍を選択
+		{//	縮小して全体を表示
+			var	mw	= .width / iw, mh = .height / ih;
+			var	mag	= Math.min(mw, mh);
+			iw	*= mag;
+			ih	*= mag;
+			l	= (.width - iw) \ 2;
+			t	= (.height - ih) \ 2;
+			dm(l, t, iw, ih);
+			if(l > 0)
+			{
+				.fillRect(0, 0, l, .height, col);
+				.stretchCopy(l, 0, iw, .height, layer, 0, 0, layer.imageWidth, layer.imageHeight, stFastLinear);
+				.fillRect(l+iw, 0, .width-(l+iw), .height, col);
+			}
+			else
+			{
+				.fillRect(0, 0, .width, t, col);
+				.stretchCopy(0, t, .width, ih, layer, 0, 0, layer.imageWidth, layer.imageHeight, stFastLinear);
+				.fillRect(0, t+ih, .width, .height-(t+ih), col);
+			}
+		}
+@endif
+		else
+		{//	等倍で一部を表示
+			l	= (iw - .width) \ 2 if l === void;
+			t	= (ih - .height) \ 2 if t === void;
+//			dm(storage+": "+l+", "+t+", "+.width+", "+.height+"("+iw+", "+ih+")");
+			.copyRect(0, 0, layer, l, t, .width, .height);
+		}
+		invalidate layer;
+		.loaded	= true;
+	}
+	img1.ssact(2000, "opacity", smBGOpacity);
+	img1.absolute <-> img2.absolute;
+}
+//	切替時間を計算
+function SMgetExchangeTime()
+{
+	return
+@if(!(DEBUG&&SOUNDMENU_NOCHECK_DISPLAYED))
+	int((smMaxExchange - smMinExchange) * Math.random() + smMinExchange) * 1000;
+@endif
+@if(DEBUG&&SOUNDMENU_NOCHECK_DISPLAYED)
+	5000;	//	5秒毎
+@endif
+}
+//	画像の切替
+function SMonTimeout()
+{
+	//	次の切替時間を設定
+	tf.sm_exchgtimer.enabled	= false;
+	tf.sm_exchgtimer.interval= SMgetExchangeTime();
+	tf.sm_exchgtimer.enabled	= true;
+
+	SMexchangeBG();	//	画像切替開始
+}
+//	停止したので、画像の順次表示を停止
+function SMstopChangeBG(hide=true)
+{
+//	dmt("SMstopChangeBG");
+	tf.sm_laststorage	= "";
+	tf.sm_lastbg			= "";
+	tf.sm_playbgmno		= void;
+	if(tf.sm_exchgtimer != void)
+	{
+		invalidate tf.sm_exchgtimer;
+		delete tf.sm_exchgtimer;
+	}
+	if(tf.sm_bglist != void)
+	{
+		invalidate tf.sm_bglist;
+		delete tf.sm_bglist;
+	}
+	if(hide)
+	{
+		for(var i=1; i<=2; i++)
+		{
+			var obj = Menu_object.find("SM演出"+i);
+			if( obj === void || ! isvalid obj )
+				continue;
+			with(obj)
+			{
+				var	opac = .opacity;
+				.stopAction();
+				.opacity = opac;
+				.ssact(int(400 * opac / 255), "opacity", 0) if opac > 0;
+			}
+		}
+	}
+}
+function SMsetPlayButton()
+{
+	Menu_object.find("SM再生").storage	= "sound_再生ボタン";
+}
+function SMsetPauseButton()
+{
+	Menu_object.find("SM再生").storage	= "sound_一時停止ボタン";
+}
+//	再生ボタンが押された
+function SMplayByButton(btn)
+{
+	btn.release();
+	if(tf.sm_playing)
+	{
+		//	再生しているBGMと選択されているBGMが異なるなら、選択されているBGMの再生を開始する
+		tf.sm_userstoped	= true;
+		if(tf.sm_playbgmno != tf.sm_bgmno)
+		{
+			SMplayCurrent();
+		}
+		else if(!kag.bgm.currentBuffer.paused)
+		{
+			kag.bgm.pause();
+			SMsetPauseButton();
+			SMbuttonState(false);	//	一時停止中はボタンを隠さない
+		}
+		else
+		{
+			kag.bgm.resume();
+			SMsetPlayButton();
+			SMbuttonState(true);
+		}
+		tf.sm_userstoped	= false;
+	}
+	else if(tf.sm_bgmno !== void)
+		SMplayCurrent(true);
+	else if(sf.sm_playmode == "random")
+		SMplayRandom();
+	else// if(sf.sm_playmode == "repeat all")
+	{
+		for(var i=0; i<smBGMCount; i++)
+		{
+			if(SMisPlayed(i))
+			{
+				SMselectBGM(i);
+				SMplayCurrent();
+				break;
+			}
+		}
+	}
+}
+//	選択されているBGMを再生
+function SMplay(btn)
+{
+	btn.release() if btn != void;
+	tf.sm_userstoped	= true;	//	再生するときに停止され SMonStopBGM が呼ばれるので、その中の処理を抑止
+	SMplayCurrent();	//	再生を開始
+	tf.sm_playing	= true;
+	tf.sm_userstoped	= false;//	再生が開始されたあとは SMonStopBGM の処理が必要なので
+}
+//	再生中のBGMを停止
+function SMstop(btn)
+{
+	btn.release() if btn != void;
+
+	//	停止
+	tf.sm_userstoped	= true;
+	tf.sm_playing	= false;
+	tf.sm_playbgmno	= void;
+	kag.bgm.stop();
+	SMsetPlayButton();
+}
+//	曲を移動する
+function SMmove(step, nofocus=false)
+{
+//	dm("SMmove("+step+")");
+	if(sf.sm_playmode == "random")
+		SMselectRandom(nofocus);	//	ランダム再生中に次へを押すと、ランダムに次へ進む
+	else
+	{
+		var	no	= tf.sm_playing ? tf.sm_playbgmno : tf.sm_bgmno;
+		if(no === void && SMisPlayed(0))
+		{
+			SMselectBGM(0,, nofocus);
+//			SMsetBGMNames(no);	//	再生中のみ表示する
+			return;
+		}
+		var	last= no;
+		for(var i=0; i<100; i++)
+		{
+			no	+= step;
+			no	= smBGMCount - 1 if no < 0;
+			no	= 0 if no >= smBGMCount;
+			if(no != last && SMisPlayed(no))
+			{
+				SMselectBGM(no,, nofocus);
+//				SMsetBGMNames(no);	//	再生中のみ表示する
+				return;
+			}
+		}
+	}
+}
+//	一つ前のBGMへ移動(再生中なら再生開始)
+function SMprev(btn)
+{
+	btn.release();
+
+	tf.sm_userstoped	= true;
+	SMmove(-1, true);		//	前のBGMへ移動
+	SMplayCurrent() if tf.sm_playing;	//	再生中なら再生開始
+}
+//	次のBGMへ移動(再生中なら再生開始)
+function SMnext(btn)
+{
+	btn.release();
+
+	tf.sm_userstoped	= true;
+	SMmove(1, true);		//	次のBGMへ移動
+	SMplayCurrent() if tf.sm_playing;	//	再生中なら再生開始
+}
+function SMplayModeButtonName(idx)
+{
+	return [ "SMリピート", "SM全曲リピート", "SMランダム再生" ][idx];
+}
+//	再生モードのボタン状態を変更する
+function SMchangePlayModeButtons(idx, page="fore")
+{
+	for(var i=0; i<3; i++)
+		Menu_object.find(SMplayModeButtonName(i), page).on	= i == idx;
+}
+//	再生モードをリセット
+function SMresetPlayMode()
+{
+	sf.sm_playmode	= "";
+	kag.bgm.setLoop(false);	//	ループしない
+	SMchangePlayModeButtons(-1);
+}
+//	現在のBGMをリピート再生する
+function SMrepeat(btn)
+{
+	btn.release();
+	if(sf.sm_playmode != "repeat")
+	{
+		sf.sm_playmode	= "repeat";
+		kag.bgm.setLoop(true);	//	ループする
+		SMchangePlayModeButtons(0);
+	}
+	else
+		SMresetPlayMode();
+}
+//	全曲リピート再生する
+function SMrepeatAll(btn)
+{
+	btn.release();
+	if(sf.sm_playmode != "repeat all")
+	{
+		sf.sm_playmode	= "repeat all";
+		kag.bgm.setLoop(false);	//	ループしない
+		SMchangePlayModeButtons(1);
+	}
+	else
+		SMresetPlayMode();
+}
+//	ランダム再生する
+function SMrandom(btn)
+{
+	btn.release();
+	if(sf.sm_playmode != "random")
+	{
+		sf.sm_playmode	= "random";
+		kag.bgm.setLoop(false);	//	ループしない
+		SMchangePlayModeButtons(2);
+		tf.sm_randomplayed[tf.sm_playbgmno]	= true if tf.sm_playbgmno !== void;
+	}
+	else
+		SMresetPlayMode();
+}
+//	ボリュームボタンの状態を設定
+function SMsetVolumeButtons(page="fore")
+{
+	//	ボリュームボタンの状態を変更
+	for(var i=10; i<=100; i+=10)
+		Menu_object.find("SMVolume%03d".sprintf(i), page).on	= i <= kag.bgmVolume;
+}
+//	メニュー内での再生ボリュームを変更
+function SMchangeVolume(btn)
+{
+	btn.release();
+
+	var	vol	= btn.name.substr(btn.name.length - 3);
+	vol	= int(vol[0] == "0" ? vol.substr(1) : vol);
+
+	//	ボリューム設定
+	kag.bgmVolume	= vol;
+	SMsetVolumeButtons();	//	ボタン状態更新
+}
+/*
+//	再生時間の描画
+function updatePlayTime()
+{
+//	var	tm, ttm;
+	with(kag.bgm.currentBuffer)
+	{
+		var	item	= Menu_object.find("SM再生時間");
+		item.time	= .position if item != void;
+		item	= Menu_object.find("SM総再生時間");
+		item.time	= .totalTime if item != void;
+//		tm	= ms2msms(.position);
+//		ttm	= ms2msms(.totalTime);
+	}
+//	dm("%2d:%02d.%03d / %2d:%02d.%03d".sprintf(tm.min, tm.sec, tm.msec, ttm.min, ttm.sec, ttm.msec));
+}
+function ms2msms(ms)
+{
+	var	s	= ms \ 1000;
+	ms		= ms - s * 1000;
+	var	m	= s \ 60;
+	s		= s - m * 60;
+	return %[ "min" => m, "sec" => s, "msec" => ms ];
+}
+*/
+@endif

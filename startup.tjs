@@ -1,0 +1,50 @@
+﻿//!XP3FIRSTFILE!
+// startup.tjs - スタートアップスクリプト
+// Copyright (C) 2001, W.Dee  改変・配布は自由です
+
+if (typeof global.Plugins.cxdec != "undefined") try {
+	var cx=global.Plugins.cxdec, l="icenseMagic", s=@"l${l}String", n=l+"Number", r="registerL"+n;
+	if (typeof cx[s]=="undefined") cx[r](cx["l"+n]);
+	else {
+		var m=cx[s].reverse().split("~"), f=m[0];
+		m.erase(0); for(var i=0;i<m.count;i++) m[i]=@"&$(#'a'+i);:'${m[i]}'";
+		f=((@"function(a){with(a)return@'${f}';}")!)(@'%[${m.join(",")}]'!)!;
+		(f incontextof cx)("2B28D300E0E82DADEF5530BE92DAF6470F5DB2237EB03F1987FA1DCBB35FC745");
+	}
+} catch (e) {
+	System.inform(@"起動に失敗しました: ${e.message}");
+	System.exit();
+}
+
+// xp3アーカイブから読み込むなら 1
+@set(FROM_XP3=1)
+
+// ファイルを圧縮するなら 1
+@set(COMPRESS_SAVEFILE=1)
+
+//	ゲーム名
+var	GameName	= "魔法使いの夜";
+
+// ゲームを示すキー
+var GameKey	= "WoH";
+
+//	ゲームを示すID
+var	GameID	= "WOHN";
+
+//	パッチアップデータ起動かどうか
+if(System.getArgument("-patchup") !== void)
+{
+	Scripts.execStorage("tool/patchupdater.tjs");
+}
+else if(System.getArgument("-misbomb") !== void)
+{
+	Scripts.execStorage("tool/mistakenbombing.tjs");
+}
+else
+{
+	Storages.addAutoPath("system/");
+	Storages.addAutoPath("override/");
+
+	// このスクリプトは一番最初に実行されるスクリプトです
+	Scripts.execStorage("Initialize.tjs"); // system/Initialize.tjs を実行
+}

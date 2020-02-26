@@ -1,0 +1,593 @@
+﻿// GraphicLayer.override.tjs - GraphicLayer のオーバーライド
+
+@if(__GRAPHICLAYER_OVERRIDE_DEFINED__==0)
+@set(__GRAPHICLAYER_OVERRIDE_DEFINED__=1)
+
+//	トランジションを一時停止可能にするなら 1
+@set(PAUSE_TRANSITION=0)
+//	→	selfupdate=1 で余計な画面更新を抑止しようとすると、必要な画面更新が発生せずに
+//		トランジションが固まってしまうため、使用中止中
+
+class GraphicLayer extends GraphicLayerOriginal
+{
+	var	layerID;	//	任意の数字/文字列が設定可能な識別子(GraphicLayer.idとは異なる)
+/*	var	_layerID;
+	property layerID
+	{
+		setter(v)
+		{
+			if(layerID !== v)
+			{
+				dm(name+".layerID = "+layerID+" → "+v);
+				dm(Scripts.getTraceString());
+				_layerID	= v;
+			}
+		}
+		getter	{ return _layerID; }
+	}
+*/
+	var hide = false;			// アクション終了時に非表示
+	global.ID_SEPARATOR = "_";	//ID連結用記号、半角英数である事
+
+	function GraphicLayer(win, par, name, id)
+	{
+		GraphicLayerOriginal(...);
+	}
+
+	function finalize()
+	{
+		window.removeAction(this) if window isvalid && window.actmgr isvalid;
+		super.finalize();
+	}
+
+	function assign(src, withAction=false)
+	{
+		super.assign(...);
+		layerID	= src.layerID;
+
+		//	アクション中ならコピーする
+		if(withAction && window.isInAction(src))
+			window.copyAction(src, this, onActionCompleted);
+	}
+
+	function assignComp(*)
+	{
+		assign(comp, *);
+	}
+
+	var	transElm;
+	function preTransition(elm)
+	{
+		//	トランジション情報を取得
+		transElm	= %[];
+		(Dictionary.assign incontextof this.transElm)(elm);
+		transElm.starttick	= System.getTickCount();
+
+@if(PAUSE_TRANSITION)
+		//	トランジションの制御
+		elm.callback	= _transition_callback;
+		elm.selfupdate	= true;	elm.lasttick	= void;
+@endif
+	}
+
+	function beginTransition(elm)
+	{
+//		dm(name+".beginTransition()");
+		preTransition(...);
+		super.beginTransition(...);
+	}
+
+	function atEndOfTransition()
+	{
+		//	トランジション情報を破棄
+		transElm	= void;
+
+		super.atEndOfTransition(...);
+	}
+@if(PAUSE_TRANSITION)
+	//	トランジション中かどうか
+	property inTransition
+	{
+		getter { return transElm != void && transElm.pausetick == void; }
+		setter(v) {}	//	KAGLayer が inTransition を設定するので
+	}
+
+	function _transition_callback
+	{
+		var	tick;
+		if(transElm.pausetick == void)
+			tick	= System.getTickCount() - transElm.starttick;
+		else
+			tick	= transElm.pausetick - transElm.starttick;
+		dm(name+".transition = "+tick);
+		if(transElm.lasttick != tick)
+		{
+			transElm.lasttick	= tick;
+			update();
+		}
+		return tick;
+	}
+
+	//	トランジションを一時停止
+	function pauseTransition()
+	{
+		if(transElm != void)
+			transElm.pausetick	= System.getTickCount();
+	}
+
+	//	トランジションを再開
+	function resumeTransition()
+	{
+		if(transElm != void)
+		{
+			transElm.starttick	+= System.getTickCount() - transElm.pausetick;
+			transElm.pausetick	= void;
+			update();
+		}
+	}
+@endif
+	function store()
+	{
+		var	dic	= global.AnimationLayer.store();
+		with(dic)
+		{
+			.loadedProvinceImage = loadedProvinceImage if loadedProvinceImage !== void && loadedProvinceImage != "";
+			.loadedProvinceActions = loadedProvinceActions if loadedProvinceActions !== void && loadedProvinceActions != "";
+			.layerID= layerID;
+			if( typeof this.trigger != "undefined" && this.trigger.count )
+			{
+				.trigger = [];
+				.trigger.assignStruct(trigger);
+			}
+			if(transElm != void)
+			{//	トランジション情報を記録
+				.transElm	= %[];
+				(Dictionary.assign incontextof .transElm)(this.transElm);
+				.transElm.pasttick	= System.getTickCount() - .transElm.starttick;
+@if(PAUSE_TRANSITION)
+				.transElm.pausetick	-= .transElm.starttick if .transElm.pausetick != void;
+@endif
+				delete .transElm.starttick;
+			}
+		}
+		return dic;
+	}
+
+	function restore(dic)
+	{
+		//初期化し直しになるのでクリアする
+		reset();
+
+		global.AnimationLayer.restore(dic);
+		with(dic)
+		{
+			if(.loadedProvinceImage !== void && .loadedProvinceImage !== '')
+				loadProvinceImage(.loadedProvinceImage);
+			else
+				loadedProvinceImage = "";
+
+			if(.loadedProvinceActions !== void && .loadedProvinceActions !== '')
+				loadProvinceActions(.loadedProvinceActions);
+			else
+				clearProvinceActions();
+
+			layerID	= .layerID;
+			if( typeof .trigger != "undefined" )
+			{
+				this.trigger = [];
+				trigger.assignStruct(.trigger);
+			}
+			if(.transElm != void)
+			{//	トランジションを再開
+				var	elm	= %[];
+				(Dictionary.assign incontextof elm)(.transElm);
+				var	tick	= System.getTickCount();
+				elm.starttick	= tick - elm.pasttick;	//	現在時刻-経過時間を開始時間にして、途中から進行させる
+@if(PAUSE_TRANSITION)
+				elm.pausetick	+= elm.starttick if elm.pausetick !== void;	//	一時停止時刻もあれば復元する
+@endif
+				if(typeof global.asyncCaller != "undefined")
+					asyncCaller.call(beginTransition, elm);
+			}
+		}
+	}
+
+
+	//アクション系拡張
+	function onActionCompleted(trigger)
+	{
+		if (hide) {
+			visible = false;
+		}
+		//dm("GraphicLayer: onActionCompleted " + string(trigger));
+		if( trigger !== void )
+		{
+			//トリガ文字列を伴う終了通知(個別にwact指定しているものなど)
+			window.onActionCompleted(trigger);
+			if( typeof this.trigger != "undefined" )
+			{
+				for(var i=0; i<this.trigger.count; i++ )
+				{
+					if( this.trigger[i] == trigger )
+					{
+						this.trigger.erase(i);
+						//通知の終わったトリガ文字列を消去
+						dm("GraphicLayer: onActionCompleted: erase: " + trigger );
+						break;
+					}
+				}
+			}
+		}
+		else
+		{
+			//従来の終了通知
+			window.onActionCompleted(this);
+			if( typeof this.trigger != "undefined" )
+			{
+				//オブジェクト全体のアクション終了のため個別通知トリガ文字列をまるごと削除
+				invalidate this.trigger;
+				delete this.trigger;
+			}
+		}
+	}
+
+
+	//シーケンスIDを振ったハンドラの増加を受け付け
+	function onSequenseAdded(seqid)
+	{
+		//dm("GraphicLayer.onSequenseAdded: " + seqid);
+		window.onSequenseAdded(...);
+	}
+
+
+	//シーケンスIDを振ったハンドラの終了を受け付け
+	function onSequenseDone(seqid)
+	{
+		window.onSequenseDone(...);
+	}
+
+	function getActionResult()
+	{
+		return window.getActionResult(this);
+	}
+
+	function beginAction(elm, hide, nowait, canpause=true)
+	{
+//		dm("GraphicLayer: beginAction " + getDebugStringFromElm(elm));
+//		dm(name+".beginAction(elm, "+hide, nowait, canpause+")");
+		this.hide = hide if hide !== void;
+		return window.beginAction(this, elm, onActionCompleted, nowait, canpause);
+	}
+
+	//GraphicLayer.stopAction()
+	function stopAction( propname, handler )
+	{
+		if( typeof window.stopAction != "undefined" ){
+			window.stopAction(this, propname, handler);
+		}
+	}
+
+	function reset()
+	{
+		hide	= false;
+		layerID	= void;
+//		stopAction();
+		super.reset();
+	}
+
+	/**
+	 *	旧来のタグが使えるようにする
+	 */
+
+	var	withback	= false;	//	裏のレイヤーもこのレイヤーと同じく、移動したり振動する
+
+	property super__act_x	{ setter(v) { super._act_x = v; } }
+	property _act_x
+	{
+		setter(v)	{ super._act_x = v; comp.super__act_x= v if withback; }
+		getter		{ return super._act_x; }
+	}
+
+	property super__act_y	{ setter(v) { super._act_y = v; } }
+	property _act_y
+	{
+		setter(v)	{ super._act_y = v; comp.super__act_y= v if withback; }
+		getter		{ return super._act_y; }
+	}
+
+	property super_left	{ setter(v) { super.left = v; } }
+	property left
+	{
+		setter(v)	{ super.left = v; comp.super_left= v if withback; }
+		getter		{ return super.left; }
+	}
+
+	property super_top	{ setter(v) { super.top = v; } }
+	property top
+	{
+		setter(v)	{ super.top = v; comp.super_top= v if withback; }
+		getter		{ return super.top; }
+	}
+
+	property super_opacity	{ setter(v) { super.opacity = v; } }
+	property opacity
+	{
+//		setter(v)	{ super.opacity = v; comp.super_opacity= v if withback; }
+		setter(v)	{
+			//0.99, 254.99などがKeyFrameActionで指定された場合両端での個別動作に影響するので四捨五入
+			v = int( v + 0.5 );
+			//Equations演算によって範囲外になる場合があるため正規化する
+			v = 0 if v < 0;
+			v = 255 if v > 255;
+			//dm("opacity["+name+"] oldval=" + super.opacity + " newval=" + v) if super.opacity != v;
+			super.opacity = v;
+			comp.super_opacity= v if withback;
+		}
+		getter		{ return super.opacity; }
+	}
+
+	property super_zoomx	{ setter(v) { super.zoomx = v; } }
+	property zoomx
+	{
+		setter(v)	{ super.zoomx = v; comp.super_zoomx= v if withback; }
+		getter		{ return super.zoomx; }
+	}
+
+	property super_zoomy	{ setter(v) { super.zoomy = v; } }
+	property zoomy
+	{
+		setter(v)	{ super.zoomy = v; comp.super_zoomy= v if withback; }
+		getter		{ return super.zoomy; }
+	}
+
+	property super_rotate	{ setter(v) { super.rotate = v; } }
+	property rotate
+	{
+		setter(v)	{ super.rotate = v; comp.super_rotate= v if withback; }
+		getter		{ return super.rotate; }
+	}
+
+	property super_afx	{ setter(v) { super.afx = v; } }
+	property afx
+	{
+		setter(v)	{ super.afx = v; comp.super_afx= v if withback; }
+		getter		{ return super.afx; }
+	}
+
+	property super_afy	{ setter(v) { super.afy = v; } }
+	property afy
+	{
+		setter(v)	{ super.afy = v; comp.super_afy= v if withback; }
+		getter		{ return super.afy; }
+	}
+
+	function beginMove(elm)
+	{
+		// elm に従い自動移動を開始する
+		stopMove();
+
+		var time = +elm.time;
+		var accel = elm.accel === void ? 0 : +elm.accel;
+
+		//	スキップ中は処理時間0(ms)とする
+		if(cf.effectSkip || window.skipMode>=2)
+			time	= 0;
+
+/*		if(elm.path===void && elm.affine===void)
+		{
+			var rl;
+			rl = reverseLayer if +elm.both;
+			if(elm.anglespeed!==void)
+			{
+				dm("rotation move");
+				//	回転
+				var radius	= elm.radius===void ? 100 : +elm.radius;
+				var yradius	= elm.yradius===void ? radius : +elm.yradius;
+				moveObject	= new RotationMover(this, time, accel, moveFinalFunction, rl,
+					elm.cx===void ? 0 : +elm.cx, elm.cy===void ? 0 : +elm.cy,
+					+elm.anglespeed, radius, yradius);
+			}
+			else if(elm.gravity!==void)
+			{
+				dm("gravity move");
+				//	重力加速度
+				moveObject	= new GravityMover(this, time, accel, moveFinalFunction, rl,
+					elm.vx===void ? 0 : +elm.vx, elm.vy===void ? 0 : +elm.vy, +elm.gravity);
+			}
+			else
+			{
+				//	情報が足りず、実行不可
+				throw new Exception("[move]を実行する為に必要な情報が足りません。");
+				return false;
+			}
+		}
+		else if(elm.magnify !== void)
+		{
+			dm("magnify move");
+			loadOriginal() if !elm.noload || orglayer == void;	//	元画像を保存
+
+			spread	= elm.spread===void ? true : +elm.spread;	//	外形が広がる(変化する)か？
+
+			//	pathの分解(座標は中心点を基準とする)
+			var array = [].split("(), ", elm.path, , true);
+			for(var i = array.count-1; i>=0; i--) array[i+4] = +array[i];
+			if(spread)
+			{
+				array[0] = elm.mx!==void ? +elm.mx : left+width\2;	//	初期の中心座標
+				array[1] = elm.my!==void ? +elm.my : top+height\2;
+			}
+			else
+			{
+				var mx	= elm.mx!==void ? +elm.mx : width \ 2;	//	初期の拡大中心座標
+				var my	= elm.my!==void ? +elm.my : height \ 2;
+				setMagnifyCenterPos(mx, my);
+				array[0] = mx, array[1] = my;
+			}
+			array[2] = opacity;
+			array[3] = magnify = +elm.magnify;
+
+			//	移動用オブジェクト
+			var rl;
+			rl = reverseLayer if +elm.both;
+			if(elm.spline !== void & +elm.spline && array.count > 4*2)
+			{
+				moveObject	= new SplineMoverWithMagnify(this, array, time, accel,
+					moveFinalFunction, rl, spread);
+			}
+			else
+			{
+				moveObject	= new LinearMoverWithMagnify(this, array, time, accel,
+					moveFinalFunction, rl, spread);
+			}
+			rotate	= void;
+		}
+		else
+*/		if(elm.affine!==void)
+		{
+			dm("magnify & rotate move: "+elm.affine);
+/*
+			loadOriginal() if !elm.noload || orglayer == void;	//	元画像を保存
+
+			var array = [].split("()", elm.affine,, true);
+			var p = [];
+			p[0]	= elm.px!==void ? +elm.px : 0;		//	初期値
+			p[1]	= elm.py!==void ? +elm.py : 0;
+			p[2]	= elm.deg!==void ? +elm.deg : 0;
+			p[3]	= elm.mag!==void ? +elm.mag : 1;
+			p[4]	= elm.opacity!==void ? +elm.opacity : 255;
+			p[5]	= elm.cx!==void ? +elm.cx : (orglayer.imageWidth>>1);
+			p[6]	= elm.cy!==void ? +elm.cy : (orglayer.imageHeight>>1);
+			var pvc	= p.count;
+			var ind = 0;
+			for(var i=0; i<array.count; i++)
+			{
+				var param = [].split(",", array[i]);
+				for(var j=0; j<pvc; j++)
+				{
+					//	設定されていればそれを、無ければ直前の値を入れる
+					p[pvc+ind]	= param[j]!="" ? +param[j] : p[ind];
+					ind++;
+				}
+			}
+			spread	= true;	//	回転していないときは拡大縮小をするので、とりあえずtrueにしておく必要がある。
+
+			var rl;
+			rl = reverseLayer if +elm.both;
+			if(elm.spline !== void && +elm.spline && p.count > 7*2)
+				moveObject = new SplineMoverWithAffine(this, p, time, accel,
+					moveFinalFunction, rl, orglayer, window.currentInterpolationMode);
+			else
+				moveObject = new LinearMoverWithAffine(this, p, time, accel,
+					moveFinalFunction, rl, orglayer, window.currentInterpolationMode);
+*/		//	KeyFrameAction に置き換える
+		}
+		else
+		{
+			dm("normal move");
+/*			// path の置換
+			var	path	= elm.path;
+			var	keys	= [
+				[ "left",	left ],
+				[ "top",	top ]
+			];
+			var	key, pos;
+			for(var i=0; i<keys.count; i++)
+			{
+				if(key = keys[i])
+				{
+					while((pos = path.indexOf(key[0]))>=0)
+						path	= path.substr(0, pos) + key[1] + path.substr(pos + key[0].length);
+				}
+			}
+
+			// path の分解
+			var array = [].split("(), ", path, , true);
+			for(var i = array.count-1; i>=0; i--) array[i+3] = +array[i];
+			array[0] = left;
+			array[1] = top;
+			array[2] = opacity;
+
+			// 移動用オブジェクトの作成
+			var rl;
+			rl = reverseLayer if +elm.both;
+			if(elm.spline !== void && +elm.spline && array.count > 3*2)
+			{
+				// スプライン補間(ポイントが3つ以上必要)
+				moveObject = new SplineMover(this, array, time, accel, moveFinalFunction, rl);
+			}
+			else
+			{
+				// 直線補間
+				moveObject = new LinearMover(this, array, time, accel, moveFinalFunction, rl);
+			}
+*/			//	KeyFrameAction に置き換える
+		}
+//		window.moveCount++;
+//		moveObject.startMove(time==0 ? 0 : +elm.delay);
+		return true;
+	}
+
+	/*-----------------------------------------------------------------------------
+	/	一定の動作を繰り返すmoveを開始
+	/	in	: mover		使用するmover名
+	/		: both		裏レイヤーも同様に動作させるか
+	/		: frame		1処理単位の時間(default:5ms[ただし、mover依存])
+	/		: interval	更新間隔(default:16ms[ただし、mover依存])
+	/		: delay		処理開始遅延(ms)
+	/		: その他	mover依存
+	/	out	:
+	/----------------------------------------------------------------------------*/
+	function beginLoopMove(elm)
+	{
+		stopMove();
+/*
+		//	元画像の保存(〜Mover2のときのみ/アフィン変換するので)
+		var	key	= "Mover2";
+		var mlast	= elm.mover.substr(elm.mover.length - key.length, key.length);
+		if(mlast == key && (!elm.noload || orglayer == void))
+			loadOriginal();//%[]);
+
+		//	moverの作成
+		var rl;
+		rl = reverseLayer if +elm.both;
+		moveObject	= new (("global."+elm.mover)!)(this, loopMoveFinalFunction, rl, elm.frame, elm.interval, elm.limit);
+//		window.moveCount++;
+
+		//	処理開始(予約)
+		var delay	= cf.effectSkip || window.skipMode>=2 ? 0 : +elm.delay;
+		moveObject.init(elm);
+		moveObject.startMove(delay);
+*/		//	KeyFrameLoopAction に置き換える
+		return true;
+	}
+
+	//	振動
+	var	quakeStopTimer;
+	function beginQuake(elm)
+	{
+		stopQuake();
+		quake		= true;
+		quakeHMax	= elm.hmax !== void ? +elm.hmax : 10;
+		quakeVMax	= elm.vmax !== void ? +elm.vmax : 10;
+		withback	= elm.widthback !== void ? elm.withback : true;
+		if(elm.time !== void && elm.time > 0)
+		{
+			if(quakeStopTimer == void)
+				quakeStopTimer	= new Timer(stopQuake, "");
+			quakeStopTimer.interval	= +elm.time;
+			quakeStopTimer.enabled	= true;
+		}
+	}
+
+	function stopQuake()
+	{
+		if(quakeStopTimer != void)
+		{
+			invalidate quakeStopTimer;
+			quakeStopTimer	= void;
+		}
+		quake	= false;
+	}
+}
+
+@endif

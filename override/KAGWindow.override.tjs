@@ -1,0 +1,4281 @@
+﻿// KAGWindow.override.tjs - KAGWindow の機能オーバーライド
+@if(__KAGWINDOW_OVERRIDE_DEFINED__==0)
+@set(__KAGWINDOW_OVERRIDE_DEFINED__=1)
+
+@set(ENABLE_RAPIDS=0)			//加速系の処理を行うかどうか
+@if(ENABLE_RAPIDS)
+@set(ENABLE_RAPID_FDBK=0)		//stableコントロールプラグインに操作状態をフィードバックする
+@set(ENABLE_RAPID_DRAW=0)		//押しっぱなしでクリックリピートしている最中、アクションやトランジションを高速化する
+@set(ENABLE_RAPID_CUT=0)		//cf.effectCut指定時にアクションやトランジションをその時だけ高速化する
+@endif
+@set(PRESS_TO_REPEAT=0)			//	押しっぱなしをクリックリピートにするか(=1)、スキップにするか(=0)
+var DRAW_DEF_SPEED	= 1.0;		//通常のdrawspeed
+var DRAW_SKIP_SPEED	= 0;		//エフェクト瞬間表示設定時のdrawspeed
+var DRAW_CUT_SPEED	= 0;		//最速時のdrawspeed(押しっぱなし加速スキップ、動作終了待ちカット時)
+
+@set(CONFIG_DRAW_SPEED=0)		//演出速度の可変対応　可否
+
+@set(CLICKSKIP_NEXT_EFFECT=0)	//	「ページ末まで一気に表示」を「次の演出まで一気に表示」に変更する
+
+@set(DISABLE_GOBACKHISTORY=1)	//	一つ前のページへ戻るを無効化
+
+//for DEBUG : デバッグ表示用設定
+@set(_SAVE_COMMENT_LABEL_	= 0)	//セーブ時のコメントにラベル情報を保存する(=1)、保存しない(=0)
+@set(_CAPTION_TRACE_INFO_	= 0)	//デバッグ用の情報をウィンドウキャプション部に表示する
+@set(_BACKLOG_TITLE_DISP_	= 0)	//シーン名・ラベルを履歴の背景上部に表示する
+@set(_DRAWSPEED_CONTROL_	= 0)	//ALT+左右で速度変更する(=1)、しない(=0)
+@set(POS_TO_CLIPBOARD=0)			//	Zキーを押すと、現在の位置を示すキーワードをクリップボードへ入れる
+
+//	画像を保存するため
+Plugins.link("LayerExSave.dll");
+
+//	バックアップ画像の破棄のため
+Plugins.link("fstat.dll");
+
+//	サムネイルを綺麗に縮小するため
+Plugins.link("LayerExAreaAverage.dll");
+
+//	クリップボードに画像を保存するため
+Plugins.link("clipboardEx.dll");
+
+//	アクション管理のため
+Scripts.execStorage("ActionManager.tjs");
+
+//	ウィンドウ機能の拡張のため
+Plugins.link("windowEx.dll");
+
+//	読み込みに失敗したファイルの記録
+@if(1)
+var	loaderrorfilesfn	= System.dataPath + "loaderror.txt";
+var	loaderrorfiles;
+function addLoadErrorFiles(storage)
+{
+	if(loaderrorfiles == void)
+		loaderrorfiles	= Storages.isExistentStorage(loaderrorfilesfn) ? Scripts.evalStorage(loaderrorfilesfn) : %[];
+	if(loaderrorfiles[storage] == void)
+	{
+		loaderrorfiles[storage]++;
+		(Dictionary.saveStruct incontextof loaderrorfiles)(loaderrorfilesfn);	//	毎回保存
+	}
+}
+@endif
+
+class KAGWindow extends KAGWindowOriginal
+{
+	var SESTARTIDX	= 0;		//SEバッファの開始インデックス(VOICE使用時は1に、未使用時は0にする)
+
+@if(PRESS_TO_REPEAT)
+	//	クリックリピート
+	var clickRepeatTimer;		//	オートクリックタイマー
+	var clickRepeatTime1st= 500;//	オートクリックに入るまでの間隔(初回)
+	var clickRepeatTime = 100;	//	オートクリック間隔
+	var isClickIfStable;		//	Stableの時だけクリックするか？
+	var _isClickRepeat;			//	オートクリック中か？(mouse on->true/mouse off->false)
+	var isClickRepeatPause;		//	オートクリックの一時停止中か?
+@endif
+@if(!PRESS_TO_REPEAT)
+	var	clickSkipTimer;			//	押下中にスキップを開始するタイマー
+	var	clickSkipTime	= 500;	//	スキップを開始するまでの時間
+@endif
+	var	asyncTransInChar	= false;	//	文章中のトランジションを非同期に動作させるか
+
+	var	previousCache	= true;		//	改ページ/クリック待ちの直前に、次に使用される画像をキャッシュするかどうか
+
+	//	背景画像が複数回の書き込みによって画像読み込みだけでは復元不可能な状態のとき、
+	//	その状態を保存するレイヤー
+	var backupBase	= [];
+
+	//	背景画像のバックアップ先
+	var backupBaseLocation	= "bkimg";
+
+	var	actmgr;	//	アクションマネージャ
+
+	var	baseTransCount	= 0;	//	base がトランジションしている個数
+
+	var	pageBookMarks	= 8;	//	一ページあたり 8ヶ
+	var	bookMarkPages	= 15;	//	15ページ分
+	var	normalBookMarks	= pageBookMarks * bookMarkPages;
+	var	quickBookMarks	= 10;		//	クイックセーブは 10ヶ
+	var	bookMarkComments	= [];	//	ユーザーが設定したブックマークのコメント
+
+	var chDefaultBold = true;		//	フォントの太字指定
+	var chDefaultRubyBold = false;	//	フォントのルビ太字指定
+
+	var	enableEffectSkip	= true;	//	エフェクト瞬間表示を許可する
+/*
+	var	_clickSkipEnabled = true;
+	property clickSkipEnabled
+	{
+		getter	{ return _clickSkipEnabled; }
+		setter(v)
+		{
+			if(v != clickSkipEnabled)
+			{
+				dmt("clickSkipEnabled = "+clickSkipEnabled+" → "+v);
+				_clickSkipEnabled	= v;
+			}
+		}
+	}
+*/
+	function KAGWindow()
+	{
+		add(actmgr = new ActionManager(this));
+
+		super.KAGWindowOriginal(...);
+
+		for(var i=0; i<2; i++)
+		{
+			with(backupBase[i] = new global.Layer(this, primaryLayer))
+			{
+				.name	= "背景バックアップ用レイヤー["+i+"]";
+				.face	= dfOpaque;
+				.type	= ltOpaque;
+				.saved	= false;
+				.loaded	= false;
+			}
+		}
+
+		//	テキスト履歴のビットマップフォントを割り当てる
+		if(historyLayer.font.face == "明朝D") with(historyLayer.font)
+		{//	ビットマップフォントを割り当てる
+			.mapPrerenderedFont("筑紫明朝d.tft");
+			var	fh	= .height;
+			.height	= current.defaultRubySize;
+			.mapPrerenderedFont("筑紫明朝d_rb.tft");
+			.height	= fh;
+		}
+
+		//	DEBUG時、確認せずに閉じる
+@if(0)
+		askOnClose = false;
+@endif
+	}
+
+	//ファイナライザにアクション関連の停止処理追加
+	function finalize
+	{
+		if( typeof this.clickRepeatTimer != "undefined" )
+		{
+			invalidate clickRepeatTimer;
+			clickRepeatTimer = void;
+		}
+		stopAllActions(true);
+		stopAllTransitions();
+		flipStop();
+
+		forEachEventHook('onClose',
+			function(handler, f) { handler(); } incontextof this);
+
+
+		super.finalize();
+	}
+@if(0)
+	var	_inStable;
+	property inStable
+	{
+		setter(v)
+		{
+			if(inStable !== v)
+			{
+				dmt("inStable = "+inStable+" → "+v);
+				_inStable	= v;
+			}
+		}
+		getter	{ return _inStable; }
+	}
+@endif
+	/*----------------------------------------------------------------------------/
+	/	プラグインへの問い合わせ
+	/		結果が返ってきたら、それを返す
+	/----------------------------------------------------------------------------*/
+	function forEachApplyPlugin(method, func, arg)
+	{
+		if(kagPlugins.count)
+		{
+			var array = [];
+			array.assign(kagPlugins); // いったんコピーし、コピーした物に対して実行する
+			var arraycount = array.count;
+			for(var i =0; i<arraycount; i++)
+			{
+				var obj = array[i];
+				if( obj === void || ! isvalid obj )
+					continue;
+				if(typeof obj[method] != "undefined")
+				{
+@if(__PLUGIN_EVENT_ERROR_TRAP__==1)
+					try{
+@endif
+						var	ret	= func(obj[method], arg);
+						if(ret != void)
+							return ret;
+@if(__PLUGIN_EVENT_ERROR_TRAP__==1)
+					}catch(e){
+						dm("■ERROR: forEachApplyPlugin() plugin-object[" + i + "]" + obj + "の " + method + " で例外が発生しました");
+					}
+@endif
+				}
+			}
+		}
+		return void;
+	}
+
+	/*----------------------------------------------------------------------------/
+	/	プラグインへのイベント通知配信
+	/----------------------------------------------------------------------------*/
+	function forEachEventHook(method, func, arg)
+	{
+		// すべてのプラグインオブジェクトの method にたいして
+		// func を実行する
+		// func の引数には各要素と arg が渡される
+		if(kagPlugins.count)
+		{
+			var array = [];
+			array.assign(kagPlugins); // いったんコピーし、コピーした物に対して実行する
+			var arraycount = array.count;
+			for(var i =0; i<arraycount; i++)
+			{
+				var obj = array[i];
+				if( obj === void || ! isvalid obj )
+					continue;
+				if(typeof obj[method] != "undefined"){
+@if(__PLUGIN_EVENT_ERROR_TRAP__==1)
+					try{
+@endif
+						func(obj[method], arg);
+@if(__PLUGIN_EVENT_ERROR_TRAP__==1)
+					}catch(e){
+						dm("■ERROR: forEachEventHook() plugin-object[" + i + "]" + obj + "の " + method + " で例外が発生しました");
+					}
+@endif
+				}
+			}
+		}
+	}
+
+	//重ね合わせのためのプラグイン管理型の表示中レイヤーを列挙獲得する
+	function forEachGetToPileLayers(page="fore")
+	{
+		if( page != "fore" && page != "back" )
+		{
+			throw new Exception("ERROR forEachGetToPileLayers パラメータにページが指定されていません");
+			return;
+		}
+		var ret = [];
+		var method = "getToPileLayers";
+		var func = function(handler, page) { return handler(page); } incontextof this;
+		if(kagPlugins.count)
+		{
+			var array = [];
+			array.assign(kagPlugins); // いったんコピーし、コピーした物に対して実行する
+			var arraycount = array.count;
+			for(var i =0; i<arraycount; i++)
+			{
+				var obj = array[i];
+				if( obj === void || ! isvalid obj )
+					continue;
+				if(typeof obj[method] != "undefined"){
+					//dm("　forEachGetToPileLayers: obj.name=" + obj.name);
+					var tmp = func(obj[method], page);
+					if( tmp !== void )
+					{
+						for( var j=0; j<tmp.count; j++ )
+						{
+							ret.add(tmp[j]);
+							//dm("　forEachGetToPileLayers: add " + tmp[j]);
+						}
+					}
+				}
+			}
+		}
+		return ret;
+	}
+
+	//背景読み込み時などのタイミングでプラグイン管理型の表示中レイヤーを消去する
+	function forEachClearLayers(page="fore")
+	{
+		if( page != "fore" && page != "back" )
+		{
+			throw new Exception("ERROR forEachClearLayers パラメータにページが指定されていません");
+			return;
+		}
+		var ret = [];
+		var method = "clearAllLayers";
+		var func = function(handler, page) { return handler(page); } incontextof this;
+		if(kagPlugins.count)
+		{
+			var array = [];
+			array.assign(kagPlugins); // いったんコピーし、コピーした物に対して実行する
+			var arraycount = array.count;
+			for(var i =0; i<arraycount; i++)
+			{
+				var obj = array[i];
+				if( obj === void || ! isvalid obj )
+					continue;
+				if(typeof obj[method] != "undefined"){
+//					dm("　forEachClearLayers: obj.name=" + obj.name);
+					var tmp = func(obj[method], page);
+				}
+			}
+		}
+		return 0;
+	}
+
+
+	/**
+	 *	レイヤーを探す
+	 *	@param elm 指定する辞書配列
+	 *	@param prop 比較対象のプロパティ名
+	 *	@param visible 表示されているものとするか(dafault: true/propがプロパティ名のときのみ)
+	 *	@param dupok 重複を許すか(default: true)
+	 *	@param layers 検索対象のリスト(default: void)
+	 */
+	function searchLayers(elm, prop, visible=true, dupok=true, layers=void)
+	{
+		if(layers == void)
+			layers	= (elm.page == "fore" ? fore : back).layers;
+		var	layer;
+		var	func;
+		if(typeof prop == "String")
+			func	= ("function(elm, layer) { return layer."+prop+" === elm."+prop+" && (elm.visible === void || elm.visible == "+visible+"); }")!;
+		else
+			func	= prop;
+		for(var i=0; i<layers.count; i++)
+		{
+			if(func(elm, layers[i]))
+			{
+				if(dupok)
+					return layers[i];
+				else if(layer != void)
+				{
+					dm("同じ条件のレイヤーが複数存在します。: "+elm[prop]+", "+elm.visible);
+					return void;
+				}
+				else
+				{
+					layer	= layers[i];
+					elm.layer	= i;
+				}
+			}
+		}
+		return layer;
+	}
+
+	/*FUNC-------------------------------------------------------------------------/
+	/	レイヤー番号がなく画像名が指定されているときは、その画像を対象とする
+	/	in	: mp.page		ページ(fore優先)
+	/		: mp.layer		レイヤー番号
+	/		: mp.storage	画像ファイル
+	/-----------------------------------------------------------------------------*/
+	function setLayerNo2Param(mp)
+	{
+		with(mp)
+		{
+			if(.layer === void)
+			{
+				if(.storage != void)
+				{
+					.page	= "fore" if .page === void;
+					.layer	= getLayerNoByStorage(mp, mp.page);
+					if(.layer === void)
+					{
+						.page	= .page != "back" ? "back" : "fore";
+						.layer	= getLayerNoByStorage(mp, mp.page);
+					}
+					if(.layer === void)
+					{
+						throw new Exception(mp.storage+" が見つかりません。");
+						return false;
+					}
+				}
+				else
+				{
+					throw new Exception("レイヤー番号かストレージ名のいずれかを必ず指定する必要があります。");
+					return false;
+				}
+			}
+			else if(.layer == "last")
+			{
+				throw new Exception("layer = \"last\" は指定できません。\n(レイヤー番号が実行時毎に変化してしまうため)");
+				return false;
+			}
+			return true;
+		}
+	}
+
+
+	//	キャラクターレイヤーを一つ追加
+	function addCharacterLayer(page)
+	{
+		var	layers	= (page == "fore" ? fore : back).layers;
+		allocateCharacterLayersWithoutOrder(numCharacterLayers+1);
+		return layers[numCharacterLayers-1];
+	}
+
+	/*----------------------------------------------------------------------------/
+	/	指定レイヤーがプラグインの管理下にあれば、オブジェクトを返す
+	/----------------------------------------------------------------------------*/
+	function getLayerFromElm(elm, prefix = '')
+	{
+//		dm("getLayerFromElm:" + getDebugStringFromElm(elm) );
+//		dm(Scripts.getTraceString());
+		//	プラグインに問い合わせる
+		var	layer	= forEachApplyPlugin('getLayerFromElm',
+			function(handler, f) { return handler(f.elm, f.prefix); } incontextof this,
+			%[elm:elm, prefix:prefix]);
+		if(layer != void)
+			return layer;
+@if(DEBUG)
+		if( elm === void ){
+			dm("ERROR: getLayerFromElm: elmがvoidです。");
+			return void;
+		}
+		if( ! elm instanceof "Dictionary" ){
+			dm("ERROR: getLayerFromElm: elmがDictionaryではありません。:" + elm);
+			return void;
+		}
+@endif
+		//前景レイヤー指定変更 番号→storage+ID
+		var	layers	= (elm.page == "fore" ? fore : back).layers;
+		if( elm.id !== void && string(elm.id).trim() != "" )
+		{
+//			dm("getLayerFromElm: id = "+elm.id);
+			var	layer	= searchLayers(elm, function(elm, layer) { return elm.id == layer.layerID; },,, layers);
+			if(layer != void)
+				return layer;
+
+			if( elm.needlayer )
+			{
+				//TimeLineの初期化付きアクションから呼ばれる場合はidが見つからない時、
+				//	まず、idが割り振られていないレイヤーがないか探す
+				for(var i=0; i<layers.count; i++)
+				{
+					if(!layers[i].visible && layers[i].layerID === void && !isInAction(layers[i]))
+					{
+//						dm("INFO getLayerFromElm: layers["+i+"].layerID === void のため、このレイヤーを接収します。");
+						layers[i].layerID	= elm.id;
+						return layers[i];
+					}
+				}
+
+				//自動的にレイヤー数を拡張して返す
+				var	layer	= addCharacterLayer(elm.page);
+				layer.layerID	= elm.id;
+//				dm("INFO getLayerFromElm: id=" + elm.id + " に合致するレイヤーを拡張作成しました");
+				return layer;
+			}
+			else
+			{
+//				dmt("ERROR! getLayerFromElm: id=" + elm.id + " に合致するレイヤーがありません");
+				return void;
+			}
+		}
+
+		//	layer指定: 番号で返す
+		if(elm.layer !== void)
+		{
+//			dm("getLayerFromElm: layer = "+elm.layer);
+			var	layer	= super_getLayerFromElm(...);
+			if(layer == void && elm.needlayer && /^[0-9]+$/.test(string elm.layer))
+			{
+				allocateCharacterLayersWithoutOrder(numCharacterLayers+1);
+				layer	= layers[numCharacterLayers-1];
+			}
+			layer.layerID	= void;
+			return layer;
+		}
+
+		//	storage指定：複数ヒットした場合には返せない
+		if(!elm.needlayer && elm.storage !== void && string(elm.storage).trim() != "")
+		{
+//			dm("getLayerFromElm: storage = "+elm.storage);
+			var layer	= searchLayers(elm, "storage", true, false, layers);
+			if(layer !== void)
+			{
+				layer.layerID	= void;
+				return layer;
+			}
+
+			//	FGPlugin があるなら、同じキャラクター・同じ距離で判定する(イレギュラーな記述)
+			if(fg_object != void)
+			{
+				layer	= fg_object.getSameCharacterLayerNo(elm.storage, elm.page);
+				if(layer != void)
+				{
+					layer	= this[elm.page].layers[layer];
+					layer.layerID	= void;
+					return layer;
+				}
+			}
+
+			//	立ち絵なら、キャラクター名まででもok
+			if(/\([遠中大近全]\)/.test(elm.storage))
+			{
+				var	res	= /^[^0-9]+/.exec(elm.storage);
+				elm.chara	= res[0];
+				layer	= searchLayers(elm, function(elm, layer)
+				{
+					//	画像を読み込んでいて、キャラクター名が同じで、
+					return layer.storage != void && layer.storage.indexOf(elm.chara) == 0 &&
+						!isInAction(layer) &&	//	アクションしていない
+						!layer.useTrans;		//	トランジションに使われていない
+				}, true, true, layers);
+				if(layer != void)
+				{
+					layer.layerID	= void;
+					return layer;
+				}
+			}
+		}
+
+		//	pos指定: 同じ pos を持つレイヤーを返す
+		if(elm.pos != void)
+		{
+//			dm("getLayerFromElm: pos = "+elm.pos);
+			var	layer	= searchLayers(elm, "pos", true, false, layers);
+			if(layer != void)
+			{
+				layer.layerID	= void;
+				return layer;
+			}
+		}
+
+		//	とりあえず空いているレイヤーを返す
+		if(elm.needlayer)
+		{
+//			dm("getLayerFromElm: needlayer");
+			//	非表示でアクションしておらず、トランジションにも使われていない(ustTrans==false)レイヤー
+			var	layer	= searchLayers(elm, function(elm, l) { /*dm(l.name+": "+l.visible+", "+isInAction(l)+", "+l.useTrans);*/ return !l.visible && !isInAction(l) && !l.useTrans; },, true, layers);
+//			dm("layer = "+layer);
+			if(layer != void)
+			{
+				layer.layerID	= void;
+				return layer;
+			}
+
+			//	レイヤーを追加
+			allocateCharacterLayersWithoutOrder(numCharacterLayers+1);
+			return layers[numCharacterLayers-1];
+		}
+
+//		dm("getLayerFromElm: not found");
+		return void;
+	}
+
+	function super_getLayerFromElm(elm, prefix = '')
+	{
+		// elm に指定されている page と layer 属性から、該当する
+		// オブジェクトを返す
+		// prefix には、属性名の前につけるプレフィクスを指定する
+		var base;
+		if(elm[prefix + 'page'] == 'back') base = back; else base = fore;
+		var layer = elm[prefix + 'layer'];
+		if(layer == 'base') return base.base; // 背景
+		if(typeof layer == "String" ){
+			if(layer[0] == 'm')
+			{
+				// message? ( ? = 数値 )
+				// ここではあまり厳密にエラーチェックはしない
+				if(layer == 'message') return base.messages[currentNum];
+				return base.messages[+layer.substr(7)];
+			}
+		}
+		return base.layers[+layer];
+	}
+
+	//	ページに関係なく、backlay にあわせて問い合わせ
+	function getLayerPageFromElm(elm, backlay)
+	{
+		//	プラグインに問い合わせ
+		var	layer	= forEachApplyPlugin('getLayerPageFromElm',
+			function(handler, f) { return handler(f.elm, f.backlay); } incontextof this,
+			%[elm:elm, backlay:backlay]);
+		if(layer != void)
+			return layer;
+
+		return super.getLayerPageFromElm(...);
+	}
+
+	//	指定ページの前景レイヤーを全て取得
+	function getLayerAll(elm, prefix='', layers=[])
+	{
+		elm.page	= "back" if elm.page === void;
+
+		//	前景を渡す
+		var	list	= elm.page == "fore" ? fore.layers : back.layers;
+		for(var i=0; i<list.count; i++)
+			layers.add(list[i]);
+
+		//	プラグインに問い合わせる
+		forEachApplyPlugin('getLayerAll',
+			function(handler, f) { return handler(f.elm, f.prefix, f.layers); } incontextof this,
+			%[elm:elm, prefix:prefix, layers:layers]);
+
+		return layers;
+	}
+
+	//	withact(アクションもコピーするか)に対応した backupLayer
+	function backupLayer(elm, toback)
+	{
+@if(DEBUG)
+		dm("-".repeat(80));
+		dm(" ".repeat(37) + "backlay");
+		dm("-".repeat(80));
+@endif
+		// レイヤの表←→裏間のコピーを行う
+		// toback = true の場合は表→裏、false の場合は裏→表
+		var	withact	= +elm.withact;
+		if(elm.layer !== void)
+		{
+			// レイヤ指定がある
+			getLayerPageFromElm(elm, toback).assignComp(withact); // 対のレイヤの内容をコピー
+		}
+		else
+		{
+			// レイヤ指定が無いので全部のレイヤをコピー
+			var base = toback ? back:fore;
+			base.base.assignComp(withact);
+			var layers = base.layers, messages = base.messages;
+			for(var i = layers.count-1; i >= 0; i--) layers[i].assignComp(withact);
+			for(var i = messages.count-1; i >= 0; i--) messages[i].assignComp();
+
+			forEachEventHook('onCopyLayer',
+				function(handler, f) { handler(f.toback, f.withact); } incontextof this,
+				%[toback:toback, withact:withact]);
+		}
+	}
+
+	//Config.tjsにて定義されているキャラクターレイヤー数の初期値を保存しておく
+	var def_numCharacterLayers = -1;
+	function allocateCharacterLayers(num)
+	{
+		if( def_numCharacterLayers == -1 ){
+			def_numCharacterLayers = numCharacterLayers;
+		}
+		super.allocateCharacterLayers(...);
+	}
+
+	function allocateCharacterLayersWithoutOrder(num)
+	{
+		// 前景レイヤ数を num に設定する
+		if(fore.layers.count > num)
+		{
+			// レイヤが減る
+			for(var i = num; i<fore.layers.count; i++)
+			{
+				invalidate fore.layers[i];
+				invalidate back.layers[i];
+			}
+			fore.layers.count = num;
+			back.layers.count = num;
+		}
+		else if(fore.layers.count < num)
+		{
+			// レイヤが増える
+			for(var i = fore.layers.count; i<num; i++)
+			{
+				fore.layers[i] = new CharacterLayer(this, fore.base, "表前景レイヤ" + i, i);
+				back.layers[i] = new CharacterLayer(this, back.base, "裏前景レイヤ" + i, i);
+				fore.layers[i].setCompLayer(back.layers[i]);
+				back.layers[i].setCompLayer(fore.layers[i]);
+			}
+		}
+		numCharacterLayers = num;
+	}
+
+	//	前景及びプラグイン提供のレイヤー構成をシンプルにする
+	function simplifyLayers(ifnoaffair=true)
+	{
+		if(ifnoaffair)
+		{
+			//	背景のみが表示状態か調べる
+			var	func	= function(children, func)
+			{
+				for(var i=0; i<children.count; i++)
+				{
+					if(!(children[i] instanceof "AnimationLayer"))
+						continue;
+					if(children[i].visible)
+						return false;
+					if(!func(children[i].children, func))
+						return false;
+				}
+				return true;
+			};
+			if(!func(fore.base.children, func))
+				return false;	//	背景以外に表示状態のレイヤーが存在する
+		}
+
+		//	レイヤーを再構成する
+		allocateCharacterLayersWithoutOrder(3);
+		forEachEventHook('onSimplify',
+			function(handler, f) { handler(); } incontextof this);
+
+		//	キャッシュもリセット
+		var	lastgcl	= System.graphicCacheLimit;
+		System.graphicCacheLimit	= 0;
+		System.graphicCacheLimit	= lastgcl;
+	}
+
+	function swapCharacterLayer(a, b=void)
+	{
+		if(b === void)
+			super.swapCharacterLayer(a);
+		else if(a.parent == b.parent)
+		{
+			var	layers	= (a.parent == fore.base ? fore : back).layers;
+			var	ai	= layers.find(a);
+			var	bi	= layers.find(b);
+			layers[ai]	= b;
+			layers[bi]	= a;
+		}
+	}
+
+	function stopAllMoves()
+	{
+		forEachEventHook('onStopAllMoves',
+			function(handler, f) { handler(); } incontextof this);
+
+		super.stopAllMoves();
+	}
+
+//	var drawspeed = 1.0;
+	var _drawspeed = DRAW_DEF_SPEED;
+
+	property drawspeed
+	{
+		setter(v)
+		{
+			_drawspeed = v;
+		}
+		getter
+		{
+			if((scflags.effectSkip && _drawspeed > DRAW_SKIP_SPEED && enableEffectSkip) || skipMode >= 3)
+				return DRAW_SKIP_SPEED;
+			return _drawspeed;
+		}
+	}
+
+	// パン停止の通知を受けて、トリガーを引く
+	function onSESoundBufferPanStop(id)
+	{
+		conductor.trigger('panstop' + id);
+	}
+
+	// storageを指定してSEバッファを探す
+	//	delay で予約されているものもチェックする
+	function getSESoundBufferFromStorage(strSE)
+	{
+		strSE	= Storages.chopStorageExt(strSE);
+		for(var i=SESTARTIDX; i<se.count; i++) with(se[i])
+		{
+//			dm(i+": "+.playingStorage, .isDelaying);
+			if((.playingStorage == strSE && !.inFadeAndStop) ||	//	再生中で、フェードアウト中ではないバッファ
+				(.isDelaying && .isReservedStorage(strSE)))		//	予約中のバッファ
+				return i;
+		}
+		return void;
+	}
+
+@if(DEBUG==1)
+	// ******* for DEBUG ********
+
+	//BGM,SEの状態表示
+	function listSE()
+	{
+		var v = bgm.volume \ 1000;
+		var v2;
+		dm("BGM    vol="+(v<10?"  ":(v!=100?" ":""))+v+" vol2=--- storage="+bgm.playingStorage);
+		for( var i=0; i<se.count; i++ )
+		{
+			v = se[i].volume;
+			v2 = se[i].volume2 \ 1000;
+			dm("SE[" + (i<10?"0":"") + i + "] vol="+(v<10?"  ":(v!=100?" ":""))+v+" vol2="+(v2<10?"  ":(v2!=100?" ":""))+v2+" storage="+se[i].playingStorage);
+		}
+	}
+
+	//base,layersの状態表示
+	function listLayer()
+	{
+		//var params = ["width","height","visible","storage","opacity"];
+		var params = ["top","left","visible","storage","opacity","absolute"];
+		var pages=["fore","back"];
+		var strs=[];
+		var objs=[];
+		for( var j=0; j<pages.count; j++ )
+		{
+			var b = this[pages[j]];
+			strs.add(pages[j]+"[base]");
+			objs.add(b.base);
+			for( var i=0; i<b.layers.count; i++ )
+			{
+				if( b.layers[i] !== void && isvalid b.layers[i] )
+				{
+					strs.add(pages[j]+"[lay"+i+"]");
+					objs.add(b.layers[i]);
+				}
+			}
+		}
+
+		for( var i=0; i<objs.count; i++ )
+		{
+			var param = "";
+			for( var j=0; j<params.count; j++ )
+			{
+				param += " " + params[j] + "=" + objs[i][params[j]] if typeof objs[i][params[j]]!="undefined";
+			}
+			dm("layer "+strs[i]+param );
+		}
+	}
+
+@endif
+
+	/*----------------------------------------------------------------------------/
+	/	レイヤーオブジェクトの参照から、page, layer を取得する
+	/----------------------------------------------------------------------------*/
+	function getLayerFromObject(layer)
+	{
+		//	KAGが管理しているレイヤー
+		var	pages	= ["fore", "back"];
+		var	elm	= %[];
+		for(var i=0; i<pages.count; i++)
+		{
+			elm.page	= pages[i];
+			var	base	= this[elm.page];
+			if(layer == base.base)
+			{
+				elm.layer	= "base";
+				return elm;
+			}
+
+			var	layers	= base.layers;
+			for(var i=0; i<layers.count; i++)
+			{
+				if(layers[i] == layer)
+				{
+					elm.id = layer.layerID;
+					elm.layer = i;
+					elm.storage = layer.storage;
+					return elm;
+				}
+			}
+
+			var	messages= base.messages;
+			for(var i=0; i<messages.count; i++)
+			{
+				if(messages[i] == layer)
+				{
+					elm.layer	= "message"+i;
+					return elm;
+				}
+			}
+
+			if(base.stage == layer)
+			{
+				elm.layer	= "stage";
+				return elm;
+			}
+			else if(base.event == layer)
+			{
+				elm.layer	= "event";
+				return elm;
+			}
+		}
+
+		//	プラグインが管理しているレイヤーかも
+		var	result	= forEachApplyPlugin('getLayerFromObject',
+			function(handler, f) { return handler(f); } incontextof this,
+			layer);	//	getLayerFromElm で識別できる情報を返す
+		if(result != void)
+			return result;
+
+		return void;	//	不明
+	}
+
+
+	//前景レイヤー数変更時に並べ替えを行わない
+	function reorderLayers(num)
+	{
+		// レイヤを正しい順序に並び替える
+		var index = 1000;
+
+		//並び順を保ったまま数値のふり直し
+		var pages = ["fore","back"];
+		for( var j=0; j<pages.count; j++ ){
+			var base = this[pages[j]];
+			var cpy = [];
+			var idx = [];
+			var tmp;
+			index = 1000;
+			for( var i=0; i<base.layers.count; i++ ){
+				cpy[i] = (int)base.layers[i].absolute;
+				idx[i] = i;
+			}
+			//現在のabsoluteでソート
+			for( var i=0; i<cpy.count-1; i++ ){
+				for( var j=cpy.count-1; j>i; j-- ){
+					if( cpy[j-1] > cpy[j] ){
+						tmp = cpy[j];
+						cpy[j] = cpy[j-1];
+						cpy[j-1] = tmp;
+						tmp = idx[j];
+						idx[j] = idx[j-1];
+						idx[j-1] = tmp;
+					}
+				}
+			}
+			for( var i=0; i<cpy.count; i++ ){
+				//dm("振り直し前 cpy[" + i + "]=" + cpy[i] + " idx=" + idx[i]);
+				if( base.layers[idx[i]].absolute > 0 ){
+					base.layers[idx[i]].absolute = +index;
+					index += 1000;
+				}else{
+					//明示的に0指定されているabsoluteは変更しない
+					base.layers[idx[i]].absolute = 0;
+				}
+			}
+			//for( var i=0; i<cpy.count; i++ ){
+			//	dm("振り直し後 absolute[" + i + "]=" + base.layers[idx[i]].absolute);
+			//}
+		}
+
+
+		index = 10;
+		for(var i = 0; i<fore.messages.count; i++)
+		{
+			fore.messages[i].absolute = index;
+			back.messages[i].absolute = index;
+			index += 1;
+		}
+
+		historyLayer.absolute = 2000000;
+
+	}
+
+	//	メッセージレイヤーをトップレイヤーの下に配置して、トランジション等と無関係にする
+	var	_singleMessageLayer	= false;
+	var	lastCurrentWithBack;
+	property singleMessageLayer
+	{
+		setter(v)
+		{
+			if(v == singleMessageLayer)
+				return;
+			_singleMessageLayer	= v;
+			if(v)
+			{
+				for(var i=0; i<back.messages.count; i++)
+				{
+					invalidate back.messages[i];
+					var	msg	= back.messages[i] = fore.messages[i];
+					msg.parent	= fore.base.parent;
+					msg.setCompLayer(void);
+					msg.assignComp	= msg.assignTransSrc = msg.exchangeInfo = function {};
+				}
+				lastCurrentWithBack	= currentWithBack;
+				currentWithBack	= false;
+				historyLayer.parent	= fore.base.parent;	//	テキスト履歴も
+			}
+			else
+			{
+				var	ci	= 0;
+				for(var i=0; i<fore.messages.count; i++)
+				{
+					ci	= i if fore.messages[i] == current;
+					invalidate fore.messages[i];
+				}
+				fore.messages.clear();
+				super.allocateMessageLayers(numMessageLayers);
+				current	= fore.messages[ci];
+				currentWithBack	= lastCurrentWithBack;
+				historyLayer.parent	= fore.base;
+			}
+		}
+		getter	{ return _singleMessageLayer; }
+	}
+
+	function allocateMessageLayers(num, setdefaultfont = true)
+	{
+		if(singleMessageLayer)
+		{
+			if(fore.messages.count > num)
+			{
+				for(var i=num; i<fore.messages.count; i++)
+				{
+					if(current == fore.messages[i])
+						current = fore.messages[0], currentNum = 0, currentPage = 0;
+					invalidate fore.messages[i];
+				}
+				fore.messages.count = back.messages.count	= num;
+			}
+			else if(fore.messages.count < num)
+			{
+				for(var i=fore.messages.count; i<num; i++)
+				{
+					var	msg	= new MessageLayer(this, fore.base.parent, "表メッセージレイヤ" + i, i, true);
+					msg.clear();
+					msg.setCompLayer(void);
+					msg.assignComp = msg.assignTransSrc = msg.exchangeInfo = function {};
+					fore.messages[i] = back.messages[i] = msg;
+				}
+				reorderLayers();
+				if(setdefaultfont) setMessageLayerUserFont();
+			}
+			numMessageLayers	= num;
+		}
+		else
+			super.allocateMessageLayers(...);
+	}
+
+	//####################################################################
+	// kag3ex/KAGWindow→system/KAGWindow Action関連機能移植
+	//####################################################################
+	//------------------------------------------------------ 特殊タイマ --
+	//	→ ActionManager 内に移動
+	function flipStart()
+	{
+		actmgr.startFlip();
+	}
+
+	function flipStop()
+	{
+		actmgr.stopFlip();
+	}
+
+	//--------------------------------------------------------- アクション関連 --
+	property actionCount
+	{
+		getter	{ return actmgr.count; }
+	}
+
+	// アクション実行中か
+	function isInAction(target)
+	{
+		if( actmgr===void || ! isvalid actmgr )
+			return false;
+		return actmgr.isInAction(...);
+	}
+	function inAction()
+	{
+		if(actmgr !== void && actmgr isvalid)
+			return actmgr.inAction();
+		else
+			return false;
+	}
+
+	//	ActionInfo をオブジェクトに関連付ける
+	function registActionInfo(target, action=void)
+	{
+		if( actmgr===void || ! isvalid actmgr )
+			return false;
+		return actmgr.registInfo(...);
+	}
+
+	// アクション情報をコピーする
+	// @param src コピー元
+	// @param dest コピー先
+	function copyAction(src, dest, completed)
+	{
+		if( actmgr===void || ! isvalid actmgr )
+			return false;
+		return actmgr.copy(...);
+	}
+
+	// アクション実行結果を返す
+	// @param target ターゲットオブジェクト
+	function getActionResult(target)
+	{
+		if( actmgr===void || ! isvalid actmgr )
+			return false;
+		return actmgr.getResult(...);
+	}
+
+	// アクションを登録
+	// @param target ターゲットオブジェクト
+	// @param action アクション情報
+	// @param completed 終了ハンドラ
+	// @param nowait 待たない
+	// @param canpause 一時停止を許可するかどうか
+	function beginAction(target, action, completed, nowait, canpause=true)
+	{
+		if( actmgr===void || ! isvalid actmgr )
+			return false;
+		return actmgr.begin(...);
+	}
+
+	// アクションを停止
+	// @param target ターゲットオブジェクト
+	// @param name アクション個別停止のための名称
+	function stopAction(target, propname, handler)
+	{
+		if( actmgr===void || ! isvalid actmgr )
+			return false;
+		return actmgr.stop(...);
+	}
+
+	// アクションを破棄.
+	// target の finalize 内で action の処分を行うなら、stopAction ではなくこちらを使う
+	// @param target ターゲットオブジェクト
+	function removeAction(target)
+	{
+		if(actmgr === void || ! isvalid actmgr)
+			return false;
+		return actmgr.remove(...);
+	}
+
+	// 全アクションの停止
+	function stopAllActions(all)
+	{
+		if( actmgr===void || ! isvalid actmgr )
+			return false;
+		forEachEventHook('onStopAllActions',
+			function(handler) { handler(); } incontextof this);
+		return actmgr.stopAll(...);
+	}
+
+	// 種別指定アクション停止
+	function stopAllActionsByType(acttype="")
+	{
+		if( actmgr===void || ! isvalid actmgr )
+			return false;
+		return actmgr.stopAllActionsByType(...);
+	}
+
+	// fore側のアクション停止
+	function stopAllForeActions()
+	{
+		if( actmgr===void || ! isvalid actmgr )
+			return false;
+		forEachEventHook('onStopAllForeActions',
+			function(handler) { handler(); } incontextof this);
+		return actmgr.stopAllFore();
+	}
+
+	// back側のアクション停止
+	function stopAllBackActions()
+	{
+		if( actmgr===void || ! isvalid actmgr )
+			return false;
+		forEachEventHook('onStopAllBackActions',
+			function(handler) { handler(); } incontextof this);
+		return actmgr.stopAllBack();
+	}
+
+	// 全アクションの一時停止
+	// @param forceAll 一時停止可否に関わらず全てを強制停止する
+	// @param target 個別に一時停止
+	function pauseAction(forceAll=false, target=void)
+	{
+		if( actmgr===void || ! isvalid actmgr )
+			return false;
+		//dm("　pauseAction called force=" + forceAll + " / " + Scripts.getTraceString()) if target===void;
+		forEachEventHook('onPauseAction',
+			function(handler, f) { handler(f.target); } incontextof this,
+			%[target:target]);
+		return actmgr.pause(...);
+	}
+
+	// 全アクションの再開(一時停止解除)
+	// @param target 個別に再開
+	function resumeAction(target=void)
+	{
+		if( actmgr===void || ! isvalid actmgr )
+			return false;
+		//dm("　resumeAction called / " + Scripts.getTraceString()) if target===void;
+		forEachEventHook('onResumeAction',
+			function(handler, f) { handler(f.target); } incontextof this,
+			%[target:target]);
+		return actmgr.resume(...);
+	}
+
+	// アクション状態更新
+	// システム全体から呼び出す
+	// @param now 現在時刻
+	function updateAction(now)
+	{
+		if( actmgr===void || ! isvalid actmgr )
+			return false;
+		return actmgr.update(now);
+	}
+
+	// アクション終了
+	function onActionCompleted(self)
+	{
+	}
+
+	// シーケンスのスタック
+	function onSequenseAdded(seqid)
+	{
+		throw new Exception("onSequenseAdded: 未実装です\n"+Scripts.getTraceString());
+	}
+
+	// seqid指定の複数アクションからのシーケンス終了
+	function onSequenseDone(seqid)
+	{
+		throw new Exception("onSequenseDone: 未実装です\n"+Scripts.getTraceString());
+	}
+
+	// アクション待ち
+	function waitAction(target, propname, handler, canskip=void)
+	{
+//		dm("wait action: "+target);
+		return actmgr.wait(...);
+	}
+
+	// タイプ指定アクション待ち
+	function waitActionByType(acttype, canskip=void)
+	{
+//		dm("wait all action: ");
+		return actmgr.waitAllByType(...);
+	}
+
+	// アクション待ち(シーケンスID[seqid]指定で動作しているハンドラ全ての終了検知、ここで言う「シーケンス」はActionSequenseとは別物)
+	function waitSeqIdAction(canskip=void, seqid=-1 )
+	{
+		throw new Exception("waitSeqIdAction: 未実装です\n"+Scripts.getTraceString());
+	}
+
+	// 全てのアクション待ち
+	function waitAllAction(canskip)
+	{
+		return actmgr.waitAll(...);
+	}
+
+	// アクションをサーチ
+	// @param target   ターゲットオブジェクト
+	// @param propname プロパティ名称
+	// @param handler  アクションハンドラ名
+	// 戻り値 ActionInfo
+	function findAction(target, propname, handler )
+	{
+		return actmgr.find(...);
+	}
+
+	// 指定されたseqidで動作しているアクションを全て停止する
+	function stopSeqIdAction(seqid)
+	{
+		throw new Exception("stopSeqIdAction: 未実装です\n"+Scripts.getTraceString());
+	}
+
+	// アクションにハンドラオブジェクトを追加
+	// @param target   ターゲットオブジェクト
+	// @param propname 対象のプロパティ
+	// @param handler  アクションハンドラ名
+	// @param elm      アクション初期化パラメータ
+	function setAction(target, propname, handler, elm)
+	{
+		return actmgr.set(...);
+	}
+
+	//	対応するアクションを取得
+	function getActionInfo(target)
+	{
+		return actmgr.getInfo(target);
+	}
+
+	function skipToStop()
+	{
+		if(inSleep)
+			return;	//	s タグで停止しているときはスキップを開始しない
+		var	last	= skipMode;
+		super.skipToStop(...);
+		if(skipMode == 3 && last != 3)
+		{
+			if(cf.ch2ndSkip)
+				popupMessage("オート既読スキップを開始します");
+			else
+				popupMessage("未読シーンまでスキップします");
+		}
+	}
+
+	function skipToStop2()
+	{
+		if(inSleep)
+			return;	//	s タグで停止しているときはスキップを開始しない
+//		dm("skipToStop2(): getCurrentRead() = "+getCurrentRead()+", cf.skipOnly2nd = "+cf.skipOnly2nd);
+		if(cf.skipOnly2nd && !getCurrentRead())
+			return;	//	既読のみメッセージ早送りを許可する
+		if(System.getKeyState(VK_F4))
+			return;	//	特殊な操作が押しっぱなしの時は無効
+		super.skipToStop2(...);
+	}
+
+	function getRead(storage, label)
+	{
+		label	= label.substr(1) if label[0] == "*";
+		var	rn	= 'trail_' + Storages.chopStorageExt(Storages.extractStorageName(storage)) + '_' + label;
+		return autoRecordPageShowing && rn != "" && +sflags[rn] || !autoRecordPageShowing;
+	}
+
+	function cancelSkip(byuser=true)
+	{
+		if(skipMode == 3)
+		{
+			if(cf.ch2ndSkip && byuser && !f.do_archive)
+			{
+				cf.ch2ndSkip	= false;
+				popupMessage("オート既読スキップを解除しました");
+			}
+			else
+				popupMessage("既読スキップを解除しました");
+		}
+//		storeFlags() if skipMode != 0;	//	スキップを解除した時点で状態保存が必要
+
+		super.cancelSkip();
+	}
+
+	function cancelAutoMode(notify=true)
+	{
+//		dmt("kag.cancelAutoMode()");
+@if(!USE_RECORD)
+		popupMessage("自動再生を解除しました") if autoMode && notify;
+@endif
+		super.cancelAutoMode();
+	}
+
+	function enterAutoMode(notify=true)
+	{
+@if(!USE_RECORD)
+		popupMessage("自動再生を開始します") if !autoMode && notify;
+@endif
+		super.enterAutoMode();
+	}
+
+	//--------------------------------------------------------- ウェイト関連 --
+	function waitTime(waittime, canskip, enabledpause=false)
+	{
+		// waittime 分待つ
+		if(waittime == 0) return 0;
+//		dm("waitTime("+waittime, canskip+"): skipMode = "+skipMode);
+		var	waitfunc	= !enabledpause ? conductor.waitWithTimeOut : conductor.waitWithTimeOutAndPause;
+		if(canskip)
+		{
+			// スキップできる場合
+			if(skipMode)
+			{
+				// スキップ中の場合
+				return 0; // スキップ中の場合はなにもせずに返る
+			}
+			waitfunc(%[
+				click : function
+				{
+					//	スキップされたら、アクションをすべて停止する
+					stopAllActions(true);
+				} incontextof this,
+
+				timeout : function
+				{
+					// やることなし
+				} incontextof this
+				], waittime);
+		}
+		else
+		{
+			// スキップできない場合
+			waitfunc(%[
+				timeout : function
+				{
+					// やることなし
+				} incontextof this
+				], waittime);
+		}
+		return -2; // break
+
+	}
+
+	function doWait(elm)
+	{
+		elm.time	= (elm.norapid) ? +elm.time : +elm.time * drawspeed;	//	wait も drawspeed によって変化する
+		// wait タグの処理
+		var waittime;
+		if(elm.mode == 'until')
+		{
+			// until モード
+			waittime = timeOrigin + +elm.time - System.getTickCount();
+			if(waittime < 0) { lastWaitTime = 0; return 0; } // すでに時間が経過している
+			lastWaitTime = waittime;
+			if(waittime < 6) return 0; // あまりに待ち時間が短いので待たない
+		}
+		else
+		{
+			waittime = +elm.time;
+		}
+		return waitTime(waittime, (elm.canskip === void || +elm.canskip) && clickSkipEnabled, elm.pause);
+	}
+
+	function pauseWait()
+	{
+		conductor.pauseTimeout();
+	}
+
+	function resumeWait()
+	{
+		conductor.resumeTimeout();
+	}
+
+//for DEBUG --------------------------------------------------------------------------------------------
+@if(DEBUG==1)
+	//アクションシーケンスをインデックス指定で獲得
+	function getActionInfoByIndex(index=0)
+	{
+		var names = [];
+		names.assign(allActions);
+		var target = names[index*2];
+		var info   = names[index*2+1];
+		if (info !== void) {
+			return info;
+		}
+	}
+
+	//アクションハンドラの終了状態をデバッグ表示
+	function dispActionInfo(index=0)
+	{
+		var inf = getActionInfoByIndex(index);
+		if( inf !== void )
+		{
+			for( var j=0; j<inf.actionList.count; j++ )
+			{
+				if( ! inf.actionList[j].absolute.alreadydone )
+				{
+					dm("disp:abs:" + getDebugStringFromElm(inf.actionList[j].absolute.elm));
+				}
+				for( var k=0; k<inf.actionList[j].relative.count; k++ )
+				{
+					if( ! inf.actionList[j].relative[k].alreadydone )
+					{
+						dm("disp:rel:" + getDebugStringFromElm(inf.actionList[j].relative[k].elm));
+					}
+				}
+			}
+		}
+	}
+
+	//デバッグ用にallActionsの情報を保存
+	function saveActionInfo(str="")
+	{
+		var actions	= [];
+		var	keys	= [];
+		keys.assign(allActions);
+		dm("  actions count = "+keys.count\2);
+		for(var i=0; i<keys.count; i+=2)
+		{
+			if( typeof keys[i+1].store != "undefined" )
+				actions[i]	= keys[i+1].store();
+		}
+		actions.saveStruct(System.exePath + "/data/" + str + ".kdt");
+	}
+@endif
+//for DEBUG --------------------------------------------------------------------------------------------
+
+	//----------------------------------------------------------------------------------
+	// 履歴関連オーバーライド
+
+	//	テキスト履歴を表示している間は、メッセージレイヤーを非表示にしておく
+	function showHistory()
+	{
+		if(historyLayer.dataPages < 1)
+		{
+			popupMessage("表示すべき履歴がまだ存在しません。");
+			return;		//	履歴がまだ無い状態では表示させない
+		}
+
+		pauseAction();				//	アクションの一時停止
+		hideMessageLayerByUser();	//	メッセージを非表示にする
+
+		historyLayer.dispInit();
+		historyShowing = true;
+		if(typeof this.showHistoryMenuItem != "undefined")
+			showHistoryMenuItem.checked = true;
+		setMenuAccessibleAll();
+	}
+
+	function hideHistory()
+	{
+		if(historyShowing)
+		{
+			super.hideHistory(...);		//	テキスト履歴を隠す
+			showMessageLayerByUser();	//	メッセージレイヤーを元の状態に戻す
+		}
+
+		//	アクションの再開
+		resumeAction();
+	}
+
+@if(_CAPTION_TRACE_INFO_)
+	//historyEnabled状態のモニタ
+	var _historyEnabled = true;
+	property historyEnabled
+	{
+		setter(v){	_historyEnabled = v;	updateInfoMenuText();	}
+		getter	 {	return _historyEnabled; }
+	}
+@endif
+
+	// キー操作系オーバーライド
+
+	// 演出のカットが許可された設定もしくはオートモード時にクリックで演出カット設定になっている場合trueを返す
+	property isEffectCut
+	{
+		getter{ return cf.effectCut || cf.autoModeArrowClick && autoMode; }
+	}
+
+	function processKeys(key, shift)
+	{
+		if(checkProceedingKey(key, shift)) return;
+		inputDevice	= "keyboard";
+		hideMouseCursor();
+
+/*
+		if( skipMode == 3 || autoMode)
+		{
+			// オートおよびスキップをあらゆるキーで中断できる
+			onPrimaryClick();
+			return;
+		}
+*/
+@if(_DRAWSPEED_CONTROL_)
+		if( key == VK_RIGHT && shift & ssAlt )
+		{
+			drawspeed -= 0.01;
+			drawspeed = 0.00 if drawspeed < 0.00 || System.getKeyState(VK_SHIFT);
+			@if(_CAPTION_TRACE_INFO_)
+			updateInfoMenuText();
+			@endif
+			return;
+		}
+
+		if( key == VK_LEFT && shift & ssAlt )
+		{
+			drawspeed += 0.01;
+			drawspeed = 1.00 if drawspeed > 1.00 || System.getKeyState(VK_SHIFT);
+			@if(_CAPTION_TRACE_INFO_)
+			updateInfoMenuText();
+			@endif
+			return;
+		}
+@endif	//_DRAWSPEED_CONTROL_
+
+		if((key == #'F' || key == VK_F7) && !(shift & ssRepeat))
+		{
+			// 次の選択肢/未読まで進む
+			skipToNextStopByKey();
+			return;
+		}
+
+		if(key == #'B')
+		{
+			// 前に戻る
+			goBackByKey();
+			return;
+		}
+
+		if((key == #'A' || key == VK_F6) && !(shift & ssRepeat))
+		{
+			// 自動的に読み勧める
+			switchAutoModeByKey();
+			return;
+		}
+
+		if(freeSaveDataMode)
+		{
+			if(key == #'S')
+			{
+				// 栞をはさむ
+				if(typeof this.storeMenu != "undefined" && storeMenu.enabled)
+					storeMenu.click();
+				return;
+			}
+
+			if(key == #'L')
+			{
+				// 栞をたどる
+				if(typeof this.restoreMenu != "undefined" && restoreMenu.enabled)
+					restoreMenu.click();
+				return;
+			}
+		}
+
+		if((key == #'R' || key == VK_UP || key==VK_PRIOR) && historyEnabled)
+		{
+			// 履歴レイヤーが無効状態または既に表示中であれば戻る
+			if(historyLayer === void || ! isvalid historyLayer || historyLayer.visible )
+				return;
+			// メッセージ履歴を表示
+			showHistoryByKey();
+			historyLayer.keyDisregardOnce	= true;
+			return;
+		}
+
+		if(isKeyOfSub(key))
+		{//	BackSpaceやDeleteキーにもESCと同じ役割を与える
+			// メッセージを消す
+			if(typeof this.rightClickMenuItem != "undefined" &&
+				rightClickMenuItem.enabled)
+			{
+				rightClickMenuItem.click(); // クリックをエミュレート
+				return;
+			}
+		}
+	}
+@if(DISABLE_GOBACKHISTORY)
+	function isHistoryOfStoreAlive()
+	{
+		return false;
+	}
+@endif
+	var greetkey = [ ,, VK_CONTROL, VK_SHIFT ];
+	function checkProceedingKey(key, shift)
+	{
+		// key が読みすすみのキーの場合はキーを処理し、
+		// true を返す。そうでなければ false を返す
+		if(cf.skipKey<2)
+		{
+			if(isKeyOfPrimary(key))
+			{
+//				dm(shift+" & "+ssRepeat+" = "+(shift & ssRepeat)+" / clickSkipEnabled = "+clickSkipEnabled+" / "+conductor.status+" == "+conductor.mRun+" = "+(conductor.status == conductor.mRun));
+				if((shift & ssRepeat) && clickSkipEnabled)/* && (
+					conductor.status == conductor.mRun)*/
+				{
+//					dm("key repeat.");
+					// キーリピート
+					if(skipMode != 4 && skipKeyRepressed)
+						skipToStop2(); // まだskipMode 4に入っていない場合は早送りモードに入る
+					// skipKeyRepressed をチェックするのは
+					// 連続してキーリピートが発生しているときに
+					// cancelSkip 後にスキップに突入するのを防ぐため
+				}
+				else
+				{
+//					dm("key press.");
+					skipKeyRepressed = true;
+					onPrimaryClickByKey();
+				}
+				return true;
+			}
+		}
+		else
+		{
+			if(clickSkipEnabled && key == greetkey[cf.skipKey])
+			{
+				skipToStop2() if skipMode!=4;
+				return true;
+			}
+			else if(isKeyOfPrimary(key) && (!(shift & ssRepeat)))
+			{
+				//	CtrlやShiftの時も、ReturnやSpaceの押下は有効
+				onPrimaryClickByKey();
+				return true;
+			}
+		}
+		return false;
+	}
+
+	function skipKeyPressing()
+	{
+		var	keystate	= false;
+		if(clickSkipEnabled)
+		{
+			var sg = getKeyState;
+			if(cf.skipKey<2)
+				// VK_RETURN あるいは VK_SPACE が押されているかどうか
+				keystate	= sg(VK_RETURN) || sg(VK_SPACE) || sg(VK_DOWN);
+			else if(cf.skipKey<3)
+				keystate	= sg(VK_CONTROL);
+			else if(cf.skipKey<4)
+				keystate	= sg(VK_SHIFT);
+@if(!PRESS_TO_REPEAT)
+			keystate	|= clickSkipTimer != void && clickSkipTimer.started;
+@endif
+		}
+		return keystate;
+	}
+
+	function isKeyOfPrimary(key)
+	{
+		//	ここに書いてあるキーが押されると、先に進む
+		//		Enter, ↓キー, Space
+		return key==VK_RETURN || key==VK_SPACE || key==VK_DOWN;
+	}
+
+	function isKeyOfSub(key)
+	{
+		//	キャンセルしたりサブメニューを開くキー
+		//		Escape
+		return key==VK_ESCAPE;
+	}
+@if(PRESS_TO_REPEAT)
+@if(ENABLE_RAPID_DRAW)
+	var usualDrawSpeed = 0;
+	var rapidDrawCounter = 0;
+@endif
+	//	クリックリピート
+	function onClickRepeat()
+	{
+		if(!isClickRepeatPause)
+			onPrimaryClick() if !isClickIfStable || inStable;
+
+@if(ENABLE_RAPID_DRAW)
+		//アクションとトランジションのスキップ(段階加速)
+		if( clickRepeatTimer.interval == clickRepeatTime )
+		{
+			var en = false;
+			for( var i=0; i<fore.messages.count; i++ )
+				en = true if fore.messages[i].visible && fore.messages[i].opacity;
+
+			//メッセージウィンドウ表示中かつエフェクトカット設定の場合のみ動作
+			if( en && isEffectCut && ! f.do_config )
+			{
+				//高速化開始時に初期化
+				if( ! usualDrawSpeed )
+				{
+					usualDrawSpeed = drawspeed;
+					dm("●drawspeed=" + drawspeed);
+				}
+
+				if( rapidDrawCounter++ > 15 )
+				{
+					//繰り返し毎に加速
+					if( usualDrawSpeed * DRAW_CUT_SPEED * 10 < drawspeed )
+					{
+						drawspeed *= 0.75;
+						dm("▲drawspeed=" + drawspeed);
+					}
+					else
+						drawspeed = usualDrawSpeed * DRAW_CUT_SPEED;
+
+					rapidDrawCounter = 15;
+				}
+			}
+		}
+@endif
+		if(isClickRepeat==true)
+		{
+			isClickRepeat	|= 2;
+			clickRepeatTimer.interval	= clickRepeatTime;	//	2回目以降の間隔
+		}
+	}
+
+	var clickRepeatPauseCount	= 0;
+	function pauseClickRepeat(pause=true, force=false)
+	{
+		if(force && !pause)
+		{
+			//	強制的に一時停止状態を解除
+			isClickRepeatPause		= false;
+			clickRepeatPauseCount	= 0;
+		}
+		else if(pause)
+		{
+			isClickRepeatPause	= true;
+			clickRepeatPauseCount++;	//	クリックリピート一時停止にされた回数
+		}
+		else
+		{
+			clickRepeatPauseCount-- if clickRepeatPauseCount>0;
+			if(clickRepeatPauseCount==0)	//	クリックリピート一時停止にされた回数が0になった
+				isClickRepeatPause	= false;	//	クリックリピート一時停止を解除
+		}
+
+		if(!isClickRepeat)
+			return;
+
+		if(clickRepeatTimer.enabled)
+			clickRepeatTimer.enabled	= false if pause;	//	一時停止させる
+		else
+			clickRepeatTimer.enabled	= true if !pause;	//	再開させる
+	}
+
+	property isClickRepeat
+	{
+		setter(i)
+		{
+			if(i!=(isClickRepeat & 1))
+			{
+				if(i)
+				{
+					//	リピート開始
+					clickRepeatTimer	= new Timer(onClickRepeat, "") if clickRepeatTimer==void;
+					clickRepeatTimer.interval	= clickRepeatTime1st;	//	初回の間隔
+					clickRepeatTimer.enabled	= true;
+				}
+				else
+				{
+					clickRepeatTimer.enabled	= false;	//	リピート終了
+@if(ENABLE_RAPID_DRAW)
+					if( usualDrawSpeed )
+					{
+						//加速終了
+						drawspeed = usualDrawSpeed;
+						usualDrawSpeed = 0;
+						rapidDrawCounter = 0;
+						dm("△drawspeed=" + drawspeed);
+					}
+@endif
+				}
+				_isClickRepeat	= i;
+			}
+		}
+		getter	{ return _isClickRepeat; }
+	}
+@endif
+@if(DEBUG)
+	function onFileDrop(files)
+	{
+		for(var i=0; i<files.count; i++)
+		{
+			var	fn	= files[i];
+			var	ext	= Storages.extractStorageExt(fn);
+			if(ext == ".ks")
+			{
+				//	一度適当なスクリプトを読み込む(指定されたファイルが読み込み中のものの場合にリセットするため)
+				var	data	= [ " " ];
+				var	noplayscript	= System.exePath + "/data/debug/testplay.ks";
+				data.save(noplayscript);
+				process(noplayscript);
+
+				//	実行環境をリセット
+				with(tagHandlers)
+				{
+					.resetall(%[]);
+					.stopallplugin() if typeof .stopallplugin != "undefined";
+					.resettimeline() if typeof .resettimeline != "undefined";
+					.s();
+					.cm();
+				}
+				//	基本的にシナリオksはcallで呼んでreturnで戻る仕組みなのでcallを挟んで実行
+				var	playscript	= System.exePath + "/data/debug/dropExec.ks";
+				tf.on_drop_load = fn;
+				autoCache	= true;
+				process(playscript);
+			}
+			else if(ext == ".bmp" && loadBookMarkFromFile(fn))
+				break;	//	セーブデータなら状態を復元する(一つだけ)
+			else
+				callHook("fileDrop", [ fn ]);
+		}
+	}
+@endif
+	var inputDevice	= "mouse";
+	var	mouseMoveByKeyboard	= false;	//	キーボードの操作によって結果的にマウスが移動したとき、inputDevice を mouse にしないなら true
+	var noConcurrentKeys	= %[
+		VK_UP=>1, VK_DOWN=>1, VK_LEFT=>1, VK_RIGHT=>1,
+		VK_TAB=>1,
+	];	//	マウスと併用しないキー
+
+	function onMouseMove(x, y)
+	{
+		if(!mouseMoveByKeyboard)
+			inputDevice	= "mouse";
+		else
+			mouseMoveByKeyboard	= false;
+		callHook("mouseMove", x, y);
+		super.onMouseMove(...);
+	}
+
+	function onMouseDown(x, y, button, shift)
+	{
+@if(PRESS_TO_REPEAT)
+		isClickRepeat = true;
+@endif
+@if(!PRESS_TO_REPEAT)
+		if(enabledShortcutKey && button==mbLeft)
+		{
+			clickSkipTimer	= new Timer(onClickSkipTimout, "") if clickSkipTimer == void;
+			clickSkipTimer.interval	= clickSkipTime;	//	スキップ開始までの時間
+			clickSkipTimer.enabled	= true;
+			clickSkipTimer.started	= false;
+		}
+@endif
+		inputDevice	= "mouse";
+		super.onMouseDown(...);
+
+@if(ENABLE_RAPIDS)
+		//エフェクトのカット許可指定の場合
+		if( enabledShortcutKey && isEffectCut )
+		{
+			if(transCount)
+				doRapidCut(0);
+			if(isLongAction())
+				doRapidAct(0);
+		}
+@endif
+	}
+
+@if(!PRESS_TO_REPEAT)
+	function onClickSkipTimout()
+	{
+		if(!clickSkipEnabled || !System.getKeyState(VK_LBUTTON))
+		{
+			cancelSkip() if clickSkipTimer.started && skipMode == 4;
+			clickSkipTimer.enabled	= clickSkipTimer.started	= false;
+		}
+		else
+		{
+			clickSkipTimer.interval	= 100;
+			with(primaryLayer)
+			{//	カーソルが画面外ならスキップしない
+				if(.cursorX < .left || .cursorY < .top || .cursorX >= .left + .width || .cursorY >= .top + .height)
+					cancelSkip(), clickSkipTimer.started = false if skipMode == 4;
+				else
+					skipToStop2(), clickSkipTimer.started = true if skipMode != 4;
+			}
+		}
+	}
+@endif
+
+	function onMouseUp(x, y, button, shift)
+	{
+@if(PRESS_TO_REPEAT)
+		isClickRepeat = false;
+@endif
+@if(!PRESS_TO_REPEAT)
+		if(clickSkipTimer != void)
+		{
+			cancelSkip() if clickSkipTimer.started && skipMode == 4;
+			clickSkipTimer.enabled	= clickSkipTimer.started	= false;
+		}
+@endif
+		super.onMouseUp(...);
+	}
+
+	function onMouseWheel(shift, delta, x, y)
+	{
+		// ホイールが回転した
+		global.Window.onMouseWheel(...);
+		if(historyEnabled)	//	テキスト履歴を表示してもいいとき
+		{
+			if(!historyLayer.visible)
+			{
+				if(delta > 0)
+					showHistoryByKey(); // メッセージ履歴を表示
+				else if(System.getTickCount() - lastHistoryHiddenTick > 150)
+						onPrimaryClick(); // クリックをエミュレート
+				// ↑ tick を比較しているのは、メッセージ履歴を隠す操作とホイールを
+				// 手前に回す操作が連続した場合に勝手に読み進むのをある程度防ぐ仕掛け
+			}
+			else
+			{
+				// メッセージ履歴にイベントを垂れ流す
+				historyLayer.windowMouseWheel(shift, delta, x, y);
+			}
+		}
+		else
+			callHook("mouseWheel", shift, delta, x, y);
+	}
+
+	function onKeyDown(key, shift)
+	{
+		//	キー入力があったら、マウスカーソルを消す
+		if(noConcurrentKeys[key])
+		{
+			//	併用するキー以外
+			inputDevice	= "keyboard";
+			hideMouseCursor();
+		}
+
+@if(ENABLE_RAPIDS)
+		//エフェクトのカット許可指定の場合
+		if( enabledShortcutKey && ! shift && (key==VK_SPACE || key==VK_RETURN) && isEffectCut )
+		{
+			if(transCount)
+				doRapidCut(key);
+			if(isLongAction())
+				doRapidAct(key);
+		}
+@endif
+
+		//	優先度の高いキー入力
+		if(key == VK_RETURN && (shift & ssAlt))
+		{
+			//	Alt + Enter: ウィンドウ<->フルスクリーン切り替え
+			dm("change screen mode.");
+			if(fullScreened)
+				onWindowedMenuItemClick();
+			else if(this == kag)
+				onFullScreenMenuItemClick();
+		}
+@if(DEBUG)
+		else if(key == VK_F12 && shift == 0)
+			switchDisplay();
+		else if(key == VK_F11 && shift == 0)
+			visibleLayerState();
+		else if(key == VK_C && shift == ssAlt)
+			Clipboard.asText	= getLayerInfo();
+@endif
+@if(POS_TO_CLIPBOARD)
+		else if(key == VK_Z)
+		{
+			//	日付毎にレポートフォルダを作成
+			var	yymmdd, date = new Date(), hhmmss;
+			with(date)
+			{
+				yymmdd	= "%02d%02d%02d".sprintf(.getYear() % 100, .getMonth()+1, .getDate());
+				hhmmss	= "%02d%02d%02d".sprintf(.getHours(), .getMinutes(), .getSeconds());
+			}
+			var	dir	= System.exePath + "reports"+yymmdd+"/";
+			Storages.createDirectory(dir) if !Storages.isExistentDirectory(dir);
+
+			//	セーブデータを保存
+			var	fn	= yymmdd + "-" + hhmmss + (saveThumbnail?".bmp":".kdt");
+			saveBookMarkToFile(dir + fn);
+
+			//	クリップボードに現在の位置とスナップショットのファイル名を入れる
+			with(kag.conductor)
+				Clipboard.asText	= "位置: \""+.curStorage+"\",\""+.curLabel+"\","+.curLine+","+.curLineStr+","+fn+"\n"+"-".repeat(80)+"\n";
+
+			popupMessage("セーブし、クリップボードに場所を示すテキストを入れました。");
+		}
+@endif
+		else
+			super.onKeyDown(...);
+	}
+
+	function onKeyUp(key, shift)
+	{
+		if(key == VK_SNAPSHOT && (shift & ssAlt))
+		{
+			var captureLayer = new Layer(this, primaryLayer);
+			with(captureLayer)
+			{
+				.setSize(primaryLayer.width, primaryLayer.height);
+				.piledCopy(0, 0, fore.base, 0, 0, primaryLayer.width, primaryLayer.height);
+				var	copyright	= "(C)TYPE-MOON All Rights Reserved.";
+				var	margin		= 8;
+				var	fw	= .font.getTextWidth(copyright);
+				var	fh	= .font.getTextHeight(copyright);
+				.drawText(.imageWidth - fw - 8, .imageHeight - fh - 8, copyright, 0x000000, 255, true, 2048, 0xFFFFFF, 1);
+				Clipboard.setAsBitmap(captureLayer);
+			}
+			invalidate captureLayer;
+		}
+		if(key == greetkey[cf.skipKey])
+			cancelSkip() if skipMode == 4;
+
+@if(DEBUG)
+		else if(key == VK_SNAPSHOT)
+		{
+			var	captureLayer	= new Layer(this, primaryLayer);
+			with(captureLayer)
+			{
+				.setSize(primaryLayer.width, primaryLayer.height);
+				var	ml;
+				if(singleMessageLayer)
+				{
+					ml	= new Layer(this, fore.base);
+					ml.setSize(current.width, current.height);
+					ml.piledCopy(0, 0, current, current.left, current.top, current.width, current.height);
+					ml.visible	= true;
+				}
+				.piledCopy(0, 0, fore.base, 0, 0, primaryLayer.width, primaryLayer.height);
+				invalidate ml if ml != void;
+				var	fn	= Storages.extractStorageName(Storages.chopStorageExt(conductor.curStorage))+"_"+conductor.curLabel.substr(1);
+				.saveLayerImage(System.dataPath + fn + "_m.bmp");
+				var	mstate	= [];
+				for(var i=0; i<fore.messages.count; i++)
+					fore.messages[i].visible <-> mstate[i];
+				.piledCopy(0, 0, fore.base, 0, 0, primaryLayer.width, primaryLayer.height);
+				for(var i=0; i<fore.messages.count; i++)
+					fore.messages[i].visible <-> mstate[i];
+				.saveLayerImage(System.dataPath + fn + "_i.bmp");
+			}
+		}
+@endif
+	}
+
+@if(ENABLE_RAPIDS)
+	// エフェクトのカット指定が許可の設定時にキーまたはボタンが割り込んだ場合の処理
+	// keyCode : 0=マウス / 0以外=VKキーコード
+	function doRapidCut(keyCode = 0)
+	{
+@if(ENABLE_RAPID_CUT==0)
+		return;
+@endif	//ENABLE_RAPID_CUT
+@if(ENABLE_RAPID_DRAW==0)
+		return;
+@endif	//ENABLE_RAPID_DRAW
+
+		stopAllTransitions();
+		dm("　startRapidCut : " + (keyCode?keyCode:"mouse"));
+	}
+
+	// アクションの加速
+	function doRapidAct(keyCode = 0)
+	{
+@if(ENABLE_RAPID_CUT==0)
+		return;
+@endif	//ENABLE_RAPID_CUT
+@if(ENABLE_RAPID_DRAW==0)
+		return;
+@endif	//ENABLE_RAPID_DRAW
+
+		for( var i=0; i<longActs.count; i++ )
+		{
+			var obj = longActs[i].obj;
+			var tgt = longActs[i].tgt;
+			if( obj === void || ! isvalid obj || tgt === void || ! isvalid tgt )
+				continue;
+			if( obj.time != obj.orgtime && obj.orgtime !== void )
+			{
+				obj.rapid = true;
+				if( obj instanceof "_KeyFrameAction" )
+				{
+					for( var j=0; j<obj.keys.count; j++ )
+					{
+						if( obj.keys.count != obj.orgtimes.count || obj.keys[j][0] != obj.orgtimes[j] )
+						{
+							obj.keys[j][0] *= DRAW_CUT_SPEED;
+							dm("　startRapidAct : keys[" + j + "] " + obj.orgtimes[j] + " → " + obj.keys[j][0]);
+						}
+					}
+				}
+				else
+				{
+					obj.time *= DRAW_CUT_SPEED;
+					dm("　startRapidAct : " + obj.orgtime + " → " + obj.time);
+				}
+			}
+		}
+	}
+
+
+	var longActs = [];
+	// 長い待ち時間のアクションが実行中かどうか返す
+	function isLongAction()
+	{
+		var ret = false;
+
+		if( actmgr === void || ! isvalid actmgr )
+			return false;
+
+/*
+@if(ENABLE_RAPID_CUT==0)
+		return false;
+@endif	//ENABLE_RAPID_CUT
+*/
+
+		with(actmgr)
+		{
+			for( var i=0; i<.actionList.count; i++ )
+			{
+				if(.actionList[i]===void || !isvalid .actionList[i])
+					continue;
+
+				var inf = .actionList[i];
+
+				if( inf.isDone || inf.isLoop || inf.nowait || inf.target === void || ! isvalid inf.target )
+					continue;
+
+				if( inf.target instanceof "MessageCharLayer" )
+					continue;
+
+				for( var j=0; j<inf.actionList.count; j++ )
+				{
+					var prop = inf.actionList[j];
+					if( prop === void || ! isvalid prop )
+						continue;
+
+					if( prop.isDone || prop.isLoop )
+						continue;
+
+					var objs = [];
+					if( prop.absolute !== void && isvalid prop.absolute )
+					{
+						var obj = prop.absolute;
+						if( obj !== void && isvalid obj && ! obj.isLoop )
+							objs.add(obj);
+					}
+					for( var k=0; k<prop.relative.count; k++ )
+					{
+						var obj = prop.relative[k];
+						if( obj !== void && isvalid obj && ! obj.isLoop )
+							objs.add(obj);
+					}
+					for( var k=0; k<objs.count; k++ )
+					{
+						var obj = objs[k];
+						if( obj instanceof "_KeyFrameAction" )
+						{
+							var sm = 0;
+							for( var l=0; l<obj.keys.count; l++ )
+								sm += obj.keys[l][0];
+							if( sm > 250 )
+							{
+								//dm("■■key inf[" + i + "] .time(sum) = " + sm );
+								longActs.add(%[obj:obj, tgt:inf.target]);
+								ret = true;
+							}
+						}
+						else
+						{
+							if( obj.orgtime > 250 )
+							{
+								//dm("■■inf[" + i + "] .time = " + obj.orgtime );
+								longActs.add(%[obj:obj, tgt:inf.target]);
+								ret = true;
+							}
+						}
+					}
+				}
+			}
+		}
+		return ret;
+	}
+@endif //if ENABLE_RAPIDS
+
+	function notifyStable()
+	{
+		super.notifyStable(...);
+@if(_CAPTION_TRACE_INFO_)
+		updateInfoMenuText();
+@endif
+	}
+
+	function notifyRun()
+	{
+		super.notifyRun(...);
+@if(_CAPTION_TRACE_INFO_)
+		updateInfoMenuText();
+@endif
+	}
+
+
+	//	メニュー
+	function setMenuAccessibleAll()
+	{
+		super.setMenuAccessibleAll();	// メニュー項目の使用可/不可を設定する
+
+		//	テキスト履歴レイヤーの消去をフェードさせるようにしたので、visible な時でも右クリックメニューを有効にする
+		if(typeof this.rightClickMenuItem != "undefined")
+			rightClickMenuItem.enabled = inStable;
+	}
+
+	//セーブロード関連オーバーライド
+
+	//システムデータの読み込みオーバーライド
+	function loadSystemVariables()
+	{
+		// システム変数の読み込み
+		try
+		{
+			var atFirst = false;
+			var fn = saveDataLocation + "/" + dataName +
+				"sc.ksd";
+			if(Storages.isExistentStorage(fn))
+			{
+				scflags = Scripts.evalStorage(fn);
+				if( scflags === void )
+				{
+					scflags = SystemVariables_configCf();
+					SystemVariables_configKag(this);
+					atFirst = true;
+				}
+			}
+			else
+			{
+				scflags = SystemVariables_configCf();
+				SystemVariables_configKag(this);
+				atFirst = true;
+			}
+
+			//フルパスで保存していないので戻す
+			//dm("loadSystemVariables: saveDataLocation=" + saveDataLocation + " lastName=" + scflags.lastSaveDataNameGlobal);
+			if( scflags.lastSaveDataNameGlobal !== void ){
+				if(scflags.lastSaveDataNameGlobal.indexOf(":") == -1){
+					scflags.lastSaveDataNameGlobal = saveDataLocation + "/" + scflags.lastSaveDataNameGlobal;
+				}
+			}
+
+			var fn = saveDataLocation + "/" + dataName +
+				"su.ksd";
+			if(Storages.isExistentStorage(fn))
+			{
+				sflags = Scripts.evalStorage(fn);
+				if( sflags === void )
+				{
+					sflags = %[];
+					// 表示済み画像などを記録
+					sflags.displayedPictures	= %[];
+					sflags.playedBGM			= %[];
+					atFirst = true;
+				}
+			}
+			else
+			{
+				sflags = %[];
+				// 表示済み画像などを記録
+				sflags.displayedPictures	= %[];
+				sflags.playedBGM			= %[];
+				atFirst = true;
+			}
+			if( atFirst )
+				saveSystemVariables();
+
+		}
+		catch(e)
+		{
+			throw new Exception("システム変数データを読み込めないか、"
+				"あるいはシステム変数データが壊れています(" + e.message + ")");
+		}
+	}
+
+	function setSystemStateFromSystemVariables()
+	{
+		with(scflags)
+		{
+			//	フォントの太字
+			chDefaultBold		= .defaultBold		if .defaultBold !== void;
+			chDefaultRubyBold	= .defaultRubyBold	if .defaultRubyBold !== void;
+				//この後の親クラスコールで setMessageLayerUserFont が呼ばれ、各messageレイヤに反映される
+		}
+		// システム変数に基づいてシステムを設定
+		// (フルスクリーン関連をのぞく)
+		super.setSystemStateFromSystemVariables(...);
+
+		with(scflags)
+		{
+			//	ウィンドウ位置を復元
+			left	= .windowLeft if .windowLeft !== void;
+			top		= .windowTop if .windowTop !== void;
+
+			//	様々な動作設定
+			asyncTransInChar	= .asyncTransInChar if .asyncTransInChar !== void;	//	文章中のトランジションを非同期に動作させるか
+			previousCache		= .previousCache if .previousCache !== void;		//	改ページ/クリック待ちの直前に、次に使用される画像をキャッシュするかどうか
+
+			//	ブックマーク関連
+			bookMarkComments	= .bookMarkComments if .bookMarkComments !== void;
+
+			//	演出速度
+			_drawspeed			= .drawSpeedProp if .drawSpeedProp !== void;
+		}
+@if(0)	//	似たようなことをやっていたのでオミット
+		//	初回起動時、幅が scWidth 以下、高さが scHeight 以下の画面サイズなら、フルスクリーンにする
+		if(scflags.fullScreened === void)
+		{
+			var	mons	= System.getDisplayMonitors();
+			if(mons.count == 1)
+			{
+				var	mon	= mons[0][2];
+				if(mon.width <= scWidth || mon.height <= scHeight)
+					scflags.fullScreen	= true;
+			}
+		}
+@endif
+	}
+
+	//システムデータの保存オーバーライド
+	function saveSystemVariables()
+	{
+		// システム変数の保存
+		if(!isMain) return;
+
+		with(scflags)
+		{
+			.asyncTransInChar	= asyncTransInChar;
+			.previousCache		= previousCache;
+			.bookMarkComments	= bookMarkComments;
+			.defaultBold		= chDefaultBold;
+			.defaultRubyBold	= chDefaultRubyBold;
+			.drawSpeedProp		= _drawspeed;
+		}
+
+		super.saveSystemVariables();
+	}
+
+	function setMessageLayerUserFont()
+	{
+		super.setMessageLayerUserFont();
+
+		// 全てのメッセージレイヤの bold, rubyBoldを設定する
+		var messages;
+		messages = fore.messages;
+		for(var i = messages.count-1; i >= 0; i--)
+			messages[i].defaultBold = chDefaultBold,
+			messages[i].defaultRubyBold = chDefaultRubyBold;
+		messages = back.messages;
+		for(var i = messages.count-1; i >= 0; i--)
+			messages[i].defaultBold = chDefaultBold,
+			messages[i].defaultRubyBold = chDefaultRubyBold;
+	}
+
+	//	裏と表、同時に変更できるようにした
+	function setMessageLayerHiddenState(b)
+	{
+		var	layerss	= [ fore.messages, back.messages, fore.layers, back.layers ];
+		for(var i=0; i<layerss.count; i++)
+		{
+			var	layers	= layerss[i];
+			for(var i = layers.count-1; i >= 0; i--) layers[i].setHiddenStateByUser(b);
+		}
+
+		// プラグインを呼ぶ
+		forEachEventHook('onMessageHiddenStateChanged',
+			function(handler, f) { handler(f.hidden); } incontextof this,
+			%[hidden:b]);
+	}
+
+	//	ブックマークファイル名から背景画像バックアップファイル名を取得
+	function getBackupBaseFileNameAtBookMarkFileName(fn)
+	{
+		return saveDataLocation + "/" + backupBaseLocation + "/" +
+			Storages.chopStorageExt(Storages.extractStorageName(fn)) + ".tlg";
+	}
+
+	function restoreFlags()
+	{
+		clearLayers();
+
+		//状態の復元
+		super.restoreFlags();
+	}
+
+	//restoreFlagsまたはMainWindow.tjsのresetAllから呼ばれる
+	function clearLayers()
+	{
+		//アクションの強制停止
+//		actionSeqs = [];
+//		actionSeqTrigger = [];
+		stopAllActions(true);
+		//トランジションの強制停止
+		stopAllTransitions();
+
+		//一旦前景レイヤーを破棄
+		for(var i=0; i<fore.layers.count; i++){
+			invalidate fore.layers[i];
+			invalidate back.layers[i];
+		}
+		fore.layers.count = 0;
+		back.layers.count = 0;
+
+		//一旦メッセージレイヤーを破棄
+		for(var i=0; i<fore.messages.count; i++){
+			invalidate fore.messages[i];
+			invalidate back.messages[i];
+		}
+		fore.messages.count = 0;
+		back.messages.count = 0;
+
+		//背景レイヤーを初期化
+		fore.base.freeImage();
+		back.base.freeImage();
+		fore.base.reset();
+		back.base.reset();
+
+		fore.base.setDefaultCursor(cursorDefault);
+		back.base.setDefaultCursor(cursorDefault);
+
+		//履歴の初期化
+		historyLayer.clear();
+
+		//多量の消去直後に再利用されるので明示的にクリアしておく
+		System.doCompact();
+
+		dm("//// clearLayers: System.doCompact() 実施");
+	}
+
+	var bookmarkName		= "記憶";
+	var loadActionName		= "をたど";
+	var loadActionNameLast	= "らりるれろ";
+	var saveActionName		= "にのこ";
+	var saveActionNameLast	= "さしすせそ";
+
+	function loadBookMarkFromFile(fn, loaduser = true)
+	{
+		// ファイル fn から栞を読み込む
+		// loaduser が false の時は user を読み込まない
+		try
+		{
+			if(!Storages.isExistentStorage(fn)) return false; //ファイルがない
+			var data;
+			var modestr;
+
+			if(saveThumbnail)
+			{
+@if(DEBUG)
+				if( Storages.extractStorageName(fn).substr(0,5) == "svss&" ||
+				    Storages.extractStorageName(fn).substr(0,10) == "bkup_svss&" )
+				{
+					//自動セーブの場合はスクリーンサイズでサムネイルを保存しているので読み替えてロード
+					var	lastThumbnailWidth = thumbnailWidth;
+					thumbnailWidth	= scWidth;
+					modestr += "o" + calcThumbnailSize().size;
+					thumbnailWidth	= lastThumbnailWidth;
+				}
+				else
+@endif
+				{
+					// 指定オフセットからデータを読み込む
+					modestr += "o" + calcThumbnailSize().size;
+				}
+			}
+
+			dm("loadBookMarkFromFile: fn=" + fn);
+			data = Scripts.evalStorage(fn, modestr);
+			if(data.id != saveDataID)
+			{
+				System.inform("他のシステムのデータを読み込もうとしました", "エラー");
+				return false;
+			}
+
+			pcflags = data.core;
+			pcflags = %[] if pcflags === void;
+			if(loaduser)
+			{
+				pflags = data.user;
+				pflags = %[] if pflags === void;
+			}
+			else
+			{
+				(Dictionary.assignStruct incontextof pflags)(flags);
+			}
+			historyOfStore = data.history;
+			historyOfStore = [] if historyOfStore === void;
+		}
+		catch(e)
+		{
+			throw new Exception(bookmarkName+"を読み込めないか、あるいは"+bookmarkName+"が"
+				"壊れています(" + e.message + ")");
+			return false;
+		}
+
+		//	背景のrestore前に、背景状態を保持した画像を読み込む
+		var	f	= pcflags.backupBase;
+		var	ifn	= getBackupBaseFileNameAtBookMarkFileName(fn);
+//		dm("f = "+f+" / ifn = "+ifn+"("+Storages.isExistentStorage(ifn)+")");
+		if(f != void && Storages.isExistentStorage(ifn))
+		{
+			//	バックアップしていた画像を読み込む
+			var	layer	= new global.Layer(this, primaryLayer);
+			layer.loadImages(ifn);
+
+			//	バックアップレイヤーへコピー
+			for(var i=0; i<f.count; i++)
+			{
+				backupBase[i].saved	= false;
+				if(f[i] == void)
+				{
+					backupBase[i].loaded	= false;
+					continue;
+				}
+//				dm("f["+i+"] = "+f[i].left+", "+f[i].width+", "+f[i].height);
+				with(backupBase[i])
+				{
+					.setImageSize(f[i].width, f[i].height);
+					.copyRect(0, 0, layer, f[i].left, 0, .imageWidth, .imageHeight);
+					.loaded	= true;
+				}
+			}
+			invalidate layer;
+		}
+
+		//	各オブジェクトのrestore
+		restoreFlags();
+		resumeAction();
+
+		//	cf.ch2ndSkip のとき、既読部分だったらスキップ開始
+		if(cf.ch2ndSkip && skipMode != 3 && getRead(conductor.curStorage, conductor.curLabel))
+			skipToStop();
+
+@if(DEBUG)
+		//自動セーブで別のキャプションになっている場合があるので戻す
+		if( load_by_ss && typeof this.captiontmp == "undefined" )
+			this.captiontmp = "";
+
+		if( load_by_ss )
+			caption = captiontmp;
+		else
+			caption = global.masterTitle;
+@endif
+
+		return true;
+	}
+
+	function getBookMarkComment(num)
+	{
+		// 栞番号 num のユーザーコメントを得る
+		return bookMarkComments[num];
+	}
+
+	function setBookMarkComment(num, text)
+	{
+@if(_SAVE_COMMENT_LABEL_)
+		if( text == "" )
+		{
+			var comm = _lastScript + "\n" + _lastLabel;
+			comm = void if comm == "\n";
+			bookMarkComments[+num] = comm;
+			return;
+		}
+@endif
+		// 栞番号 num のユーザーコメントを設定する
+		bookMarkComments[+num]	= string text;
+	}
+
+	function existBookMark(num)
+	{
+		return bookMarkDates[num] != '' && Storages.isExistentStorage(getBookMarkFileNameAtNum(...));
+	}
+
+	function lockSnapshot()
+	{
+		// スナップショットをロックする
+		// 初めてスナップショットがロックされた時点での画面を保存する
+		if(snapshotLockCount == 0)
+		{
+			if(snapshotLayer === void)
+				snapshotLayer = new Layer(this, primaryLayer);
+			snapshotLayer.setImageSize(scWidth, scHeight);
+			snapshotLayer.type	= ltOpaque;
+			var	vis	= [];
+			for(var i=0; i<fore.messages.count; i++) fore.messages[i].visible <-> vis[i];	//	メッセージレイヤーを非表示にしておく
+			//各プラグインにスクリーンショット保存が実施されることを配信
+			forEachEventHook('onSaveScreenShotStart',
+				function(handler, f) { handler(); } incontextof this,
+				%[]);
+
+			//	表示レイヤーを重ね合わせる
+//			snapshotLayer.piledCopy(0, 0, fore.base, 0, 0, scWidth, scHeight);	//	レイヤーパラメータをoverrideしているので、きちんと描画されない
+			var	layers	= [ fore.base ];
+			for(var i=0; i<layers.count; i++) with(layers[i])
+			{
+//				dm(i+": "+.name);//, .storage, .type, .screenSizeLayer);
+				var	layer	= layers[i];
+				var	p = .parent, l = *(&global.Layer.left incontextof layer), t = *(&global.Layer.top incontextof layer);
+				while(p != fore.base && p != null)
+				{
+					l	+= *(&global.Layer.left incontextof p);
+					t	+= *(&global.Layer.top incontextof p);
+					p	= p.parent;
+				}
+//				dm("→ "+l, t);
+				snapshotLayer.operateRect(l, t, layer,
+					-*(&global.Layer.imageLeft incontextof layer), -*(&global.Layer.imageTop incontextof layer),
+					*(&global.Layer.width incontextof layer), *(&global.Layer.height incontextof layer), .type, .opacity);
+				for(var i=0; i<.children.count; i++)
+				{
+					var	child	= .children[i];
+					layers.add(child) if child.visible && child.opacity > 0;
+				}
+			}
+
+			for(var i=0; i<fore.messages.count; i++) fore.messages[i].visible <-> vis[i];
+
+			//各プラグインにスクリーンショット保存が実施されたことを配信
+			forEachEventHook('onSaveScreenShotEnd',
+				function(handler, f) { handler(); } incontextof this,
+				%[]);
+		}
+		snapshotLockCount ++;
+	}
+
+	//	ファイルへの書き込み
+	function saveBookMarkToFile(fn, savehist = true)
+	{
+		//	背景の状態を保持した画像を、必要があれば保存する
+		if(!readOnlyMode)
+		{
+			//	必要な画像サイズを得る
+			var	w = 0, h = 0;
+			for(var i=0; i<backupBase.count; i++)
+			{
+				with(backupBase[i])
+				{
+					if(!.saved)
+						continue;
+					w	+= .imageWidth;
+					h	= .imageHeight if h < .imageHeight;
+				}
+			}
+
+			//	保存が必要か？
+			var	ifn	= getBackupBaseFileNameAtBookMarkFileName(fn);	//	保存するファイル名
+			if(w > 0)
+			{
+				//	画像をまとめる
+				var	f	= pcflags.backupBase	= [];
+				var	layer	= new global.Layer(this, primaryLayer);
+				layer.setImageSize(w, h);
+				var	l = 0;
+				for(var i=0; i<backupBase.count; i++)
+				{
+					with(backupBase[i])
+					{
+						if(.saved)
+						{
+							layer.copyRect(l, 0, backupBase[i], 0, 0, .imageWidth, .imageHeight);
+							f[i]	= %[left:l, width:.imageWidth, height:.imageHeight];
+							l	+= .imageWidth;
+						}
+						else
+							f[i]	= void;
+					}
+				}
+				with(layer)
+				{
+					.face	= dfMask;
+					.fillRect(0, 0, .imageWidth, .imageHeight, 0);
+				}
+
+				//	バックグラウンドで画像を保存する
+				startSaveLayerImage(layer, ifn, void);	//	バックグラウンドで保存中
+				invalidate layer;						//	コピー済みなので不要
+			}
+			else
+			{
+				//	保存不要なら、現在残っている画像を破棄する
+				Storages.deleteFile(ifn);
+			}
+		}
+
+		//	状態を保存
+		return super.saveBookMarkToFile(...);
+	}
+
+@if(DEBUG)
+	function saveScreenShot(keyword)
+	{
+		var	ext	= ".bmp";
+		var	dir	= System.exePath + "ss/";
+		var	fn	= dir + keyword + "&" + Storages.chopStorageExt(conductor.curStorage) + "&" + conductor.curLabel.substr(1)+ext;
+		if(!Storages.isExistentDirectory(dir))
+			Storages.createDirectory(dir);
+		lockSnapshot();
+//		startSaveLayerImage(snapshotLayer, fn, void);
+		snapshotLayer.saveLayerImage(fn);
+		unlockSnapshot();
+	}
+@endif
+
+	//	bookMarkDates に時刻を示す数値を設定するようにした
+	function getBookMarkInfoFromData(dic, num)
+	{
+		// 辞書配列 dic から栞のページ名と日付を読み出し、
+		// bookMarkDates[num] や bookMarkNames[num] に設定する
+		if(num < numBookMarks)
+		{
+			bookMarkNames[num] = dic.currentPageName;
+/*			var date = new Date();
+			date.setTime(dic.storeTime);
+			date = "%04d/%02d/%02d %02d:%02d".sprintf(
+				date.getYear(), date.getMonth() + 1, date.getDate(),
+				date.getHours(), date.getMinutes() );
+			bookMarkDates[num] = date;
+*/			bookMarkDates[num] = dic.storeTime;
+			setBookMarkMenuCaptions();
+			saveSystemVariables();
+		}
+	}
+
+	function saveBookMarkWithAsk(num, func=void)
+	{
+		// 栞番号 num に栞を設定する
+		num = +num;
+		// そのとき、設定するかどうかをたずねる
+		if(readOnlyMode) return false;
+		if(bookMarkDates[num] == "" && !Storages.isExistentStorage(getBookMarkFileNameAtNum(num)))
+		// bookMarkDates が空文字の場合は栞は存在しない
+		{
+			//	上書きしないときは保存するか聞く必要が無い
+			saveBookMarkAskOk(true, num, func);
+			playSound(okSE);	//	セーブが実行された効果音として再生(問い合わせする時はダイアログ側で再生される)
+			return true;
+		}
+		//	データが存在する時に上書き禁止フラグが立っていたら、書き込めない
+		if(bookMarkProtectedStates[num]) return false;
+		var prompt;
+/*		prompt += "「" + bookMarkNames[num] + "」[記録日時:"+bookMarkDates[num]+"]に\n"+
+			"「"+ pcflags.currentPageName + "」"+saveActionName+saveActionNameLast.substring(1,1)+"ますか?";
+*/		prompt += "「" + bookMarkNames[num] + "」に\n"+
+			"「"+ pcflags.currentPageName + "」"+saveActionName+saveActionNameLast.substring(1,1)+"ますか?";
+		askYesNo(prompt, "確認", saveBookMarkAskOk, saveBookMarkAskNo, num, func);
+
+		return true;
+	}
+	function saveBookMarkAskOk(num)
+	{
+		if(saveBookMarkToFile(getBookMarkFileNameAtNum(num), true))
+		{
+			// メニュー / bookMarkNames / bookMarkDates を更新
+			getBookMarkInfoFromData(pcflags, num);
+		}
+	}
+
+	function saveBookMarkAskNo()
+	{
+	}
+
+	function loadBookMarkWithAsk(num, func=void)
+	{
+		// 栞番号 num から栞を読み出す
+		num = +num;
+		if(num < numBookMarks && bookMarkDates[num] == "" &&
+			!Storages.isExistentStorage(getBookMarkFileNameAtNum(num)))
+			// bookMarkDates が空文字の場合は栞は存在しない
+			return false;
+		// そのとき、読み出すかどうかをたずねる
+		var prompt;
+/*		prompt += "「"+ bookMarkNames[num] + "」\n[記録日時:"+bookMarkDates[num]+"]\n"+
+			loadActionName+loadActionNameLast.substring(1,1)+"ますか?";
+*/		prompt += "「"+ bookMarkNames[num] + "」\n"+
+			loadActionName+loadActionNameLast.substring(1,1)+"ますか?";
+		askYesNo(prompt, "確認", loadBookMarkAskOk, loadBookMarkAskNo, num, func);
+	}
+	function loadBookMarkAskOk(num)
+	{
+		loadBookMark(num);
+	}
+
+	function loadBookMarkAskNo(result, num, func=void)
+	{
+	}
+
+	function eraseBookMarkWithAsk(num, func=void)
+	{
+		// 栞番号 num を削除する
+		num = +num;
+		if(num < numBookMarks && !Storages.isExistentStorage(getBookMarkFileNameAtNum(num)))
+			return false;
+		// そのとき、削除しても良いかをたずねる
+		var prompt;
+		if(bookMarkProtectedStates[num])
+			prompt	= "上書き禁止のデータですが、";
+//		prompt += "「"+ bookMarkNames[num] + "」\n[記録日時:"+bookMarkDates[num]+"]を削除しますか？";
+		prompt += "「"+ bookMarkNames[num] + "」を削除しますか？";
+		askYesNo(prompt, "確認", eraseBookMarkAskOk,, num, func);
+	}
+	function eraseBookMarkAskOk(num)
+	{
+		eraseBookMark(num);
+	}
+
+	function eraseBookMark(num)
+	{
+		// 栞を消す
+		// num < numBookMarks の時にしか動作しないようになったので注意
+		if(num < numBookMarks)
+		{
+			bookMarkNames[num] = void;
+			bookMarkDates[num] = void;
+			bookMarkProtectedStates[num] = false;
+			bookMarkComments[num] = void;
+			scflags.bookMarkComments[num] = void if scflags.bookMarkComments!=void;
+			var fname = getBookMarkFileNameAtNum(num);
+			Storages.deleteFile(fname);
+
+			//	強制的にファイルパスキャッシュを更新
+			//	(isExistentStorageが削除したファイルをあると勘違いするので)
+			Storages.addAutoPath("image/");
+			fname = Storages.getPlacedPath(fname);
+
+			setBookMarkMenuCaptions();
+		}
+	}
+
+	//	クイックセーブのリストを取得
+	function getQuickList()
+	{
+		var	list	= [];
+		for(var i=0; i<quickBookMarks; i++)
+			list.add([i, +getQuickDate(i, false)]);
+		list.sort(function(a,b) { return a[1] > b[1]; });	//	降順に並べる(index=0が一番新しい)
+		return list;
+	}
+
+	//	クイックセーブする
+	function saveQuick(num)
+	{
+		return saveBookMark(num + normalBookMarks);
+	}
+
+	//	空いている領域にクイックセーブする
+	function saveQuickToEmpty(comment, notify=true)
+	{
+		var	list	= getQuickList();
+		var	last	= list[list.count - 1];
+		saveQuick(last[0]);
+//		bookMarkComments[last[0] + normalBookMarks]	= comment if comment != "";
+		popupMessage("QuickSaveしました") if notify && typeof global.popupMessage != "undefined";
+	}
+
+	//	クイックロードする
+	function loadQuick(num)
+	{
+		askYesNo("「"+getQuickPage(num)+"」を[r]ロードしてもよろしいですか？",, doLoadQuick,, num);
+	}
+
+	function doLoadQuick(num)
+	{
+		tf.load_no	= num + normalBookMarks;
+		process("call.ks", "*load");
+	}
+
+	//	最後にクイックセーブしたところから開始
+	function loadQuickFromLast()
+	{
+		var	list	= getQuickList();
+		if(list[0][1] != 0)			//	一番新しいデータが保存されているモノだったら、
+			loadQuick(list[0][0]);	//	それをロードする
+	}
+
+	//	クイックセーブデータを削除する
+	function eraseQuick(num)
+	{
+		return eraseBookMark(num + normalBookMarks);
+	}
+
+	function getQuickFile(num)				{ return getBookMarkFileNameAtNum(num + normalBookMarks); }
+	function getQuickDate(num, fmt=true)	{ return getBookMarkDate(num + normalBookMarks, fmt); }
+	function getQuickPage(num)				{ return getBookMarkPageName(num + normalBookMarks); }
+
+	function getFormatDate(datetime)
+	{
+		var	date	= new Date();
+		date.setTime(datetime);
+//		var	format	= "%4d年%2d月%2d日 %2d時%2d分";
+		var	format	= "%04d/%02d/%02d %02d:%02d:%02d";
+		with(date)
+			return format.sprintf(.getYear(), .getMonth() + 1, .getDate(), .getHours(), .getMinutes(), .getSeconds());
+	}
+
+	function getBookMarkDate(num, formated=true)
+	{
+		var	date	= bookMarkDates[num];
+		if(formated)
+		{
+			if(date != void)
+				return getFormatDate(date);
+			else
+				return void;
+		}
+		else
+			return date;
+	}
+/*
+	var	_currentLabel;
+	property currentLabel
+	{
+		getter	{ return _currentLabel; }
+		setter(v)
+		{
+			if(currentLabel !== v)
+			{
+				dmt("currentLabel = "+currentLabel+" → "+v);
+				_currentLabel	= v;
+			}
+		}
+	}
+*/
+	function onConductorLabel(label, pagename)
+	{
+@if(DEBUG)
+		//	目的のラベルに到着したら、スキップを停止する
+		if(targetLabel != void && targetLabel == label)
+			targetLabel	= void;
+@endif
+//		var	ret	= super.onConductorLabel(...);
+		var ret = true;
+
+		// コンダクタがラベルを通過した
+		if(!usingExtraConductor)
+		{
+			incRecordLabel(true);
+			setRecordLabel(conductor.curStorage, label);
+		}
+		setUserSpeed();
+//		dm("onConductorLabel("+label+", "+pagename+")");//: getCurrentRead() = "+getCurrentRead()+", skipMode = "+skipMode+", cf.skipOnly2nd = "+cf.skipOnly2nd);
+		if(!usingExtraConductor)
+		{
+			if(!getCurrentRead() && (skipMode != 4 || cf.skipOnly2nd))	//	任意のメッセージ早送りでも、全文が許可されていなければ停止
+				cancelSkip(); // 未読なのでスキップを停止
+			currentLabel = label if pagename !== void;
+		}
+		if(pagename !== void && pagename !== '')
+		{
+			if(pagename[0] == '&') pagename = Scripts.eval((pagename.substring(1)));
+			currentPageName = pagename;
+		}
+/*
+		//アーカイブからの再生でも次のラベルで保存されるので初回だけは処理を通過させておく
+		var isArchive = false;
+		if( f.do_archive )
+			isArchive = (f.do_archive_label++ != 0);
+		else
+			delete f.do_archive_label;
+*/
+		var isArchive = f.do_archive;
+		if(pagename !== void && ! isArchive)
+		{
+
+//initMicro(0);
+			pushHistoryOfStore();
+			stablePosibility = false;
+			dm(conductor.curStorage + " : ラベル/ページ : " + label + "/" + currentPageName);
+			if(usingExtraConductor) throw new Exception("右クリックサブルーチン内/extraCondutor"
+				"サブルーチン内では保存可能なラベルを記述できません");
+			storeFlags(), storeLabelPassed = true, setMenuAccessibleAll();
+			if(recordHistoryOfStore == 1) // 1 : 保存可能なラベルごと
+				setToRecordHistory();
+//dispMicro("onConductorLabel:pushHistoryOfStore",0);
+
+		}
+
+@if(DEBUG)
+		if(ss_by_label)
+		{
+			if( checkSaveTargetLabel(label.substr(1)) )
+			{
+				var curName = Storages.extractStorageName(Storages.chopStorageExt(conductor.curStorage));
+				if( checkSaveTargetFile(curName) )
+				{
+					dm("＠ onConductorLabel SAVE mode file=" + curName + " label=" + label);
+					waitForBeforeSave = true;
+				}
+//				else
+//					resetWaitStatus();
+			}
+//			else
+//				resetWaitStatus();
+		}
+@endif
+		return ret;
+	}
+
+	var stackHistoryOfStore = void;
+	//	通過履歴データをまるごと退避する
+	function pushStackHistoryOfStore()
+	{
+		stackHistoryOfStore = [];
+		stackHistoryOfStore.assignStruct(historyOfStore);
+	}
+
+	//	通過履歴データを戻す
+	function popStackHistoryOfStore()
+	{
+		if(stackHistoryOfStore != void)
+		{
+			historyOfStore.assignStruct(stackHistoryOfStore);
+			delete stackHistoryOfStore;
+			this.stackHistoryOfStore = void;
+		}
+	}
+
+	var _lastPageName = "";		//履歴データが吐き出される（画面にテキストが出る）タイミングで更新
+	var _lastLabel = "";		//されるページ名とラベル名。pushHistoryOfStoreの瞬間にはコンダクタ
+	var _lastScript = "";		//としてはもう次のページに進んでいるが履歴ベースなので一意対応する。
+
+	//	表示されたシナリオテキストの情報更新イベント
+	function onUpdateScenarioLabelByHistory( lb, pn, sc )
+	{
+		_lastLabel = lb;
+		_lastPageName = pn;
+		_lastScript = sc;
+
+		@if(_CAPTION_TRACE_INFO_)
+		updateInfoMenuText(...);
+		@endif
+	}
+
+	//	デバッグ用の状態表示（メニュー部）を更新する
+@if(_CAPTION_TRACE_INFO_)
+	var _infoMenuText = "";
+	function updateInfoMenuText( lb, pn, sc )
+	{
+		if( typeof global.enabledShortcutKey == "undefined" )
+			return;
+
+		if( typeof this.infoMenu == "undefined" )
+		{
+			this.openKs = function()
+			{
+				if(_lastScript != "" && Storages.isExistentStorage(_lastScript))
+				{
+					if(Storages.getPlacedPath(_lastScript).indexOf(".xp3") == -1)
+					{
+						//デバッグ環境で .ks が直接開ける場合
+						System.shellExecute(Storages.getLocalName(Storages.getPlacedPath(_lastScript)));
+					}
+					else
+					{
+						//クリップボードに保存
+						Clipboard.asText = infoMenu.caption;
+					}
+				}
+			} incontextof this;
+			menu.add(this.infoMenu = new KAGMenuItem(this, "", 0, openKs, false));
+			infoMenu.rightJustify = true;
+		}
+
+		if( lb !== void || pn !== void || sc !== void )
+		{
+			if( lb == "*tladata" || lb == "*scenarioplay" ) lb = "*page0";
+			var titleStr = lb + "/" + pn;
+			if( titleStr == "/" ) titleStr = "";
+			if( titleStr != "" && _lastScript != "" ) titleStr = "[" + _lastScript + "] " + titleStr;
+			_infoMenuText = titleStr + " /";
+		}
+
+		infoMenu.caption =
+				_infoMenuText +		 							//	表示中の対象
+				" hist:" + (historyEnabled?"△":"▲") + 		//	historyEnabled
+				" skey:" + (enabledShortcutKey?"□":"■") + 	//	enabledShortcutKey
+				" qmnu:" + (quickMenuItem.enabled?"◇":"◆") +	//	quickMenu
+				" iStb:" + (inStable?"○":"●") +				//	kagのstable状態
+				" eSkp:" + +(cf.effectSkip) +					//	エフェクト瞬間表示設定
+				" eCut:" + +(cf.effectCut) +					//	エフェクトのクリックカット設定
+				" aCut:" + +(cf.autoModeArrowClick) + 			//	オート中のクリックカット設定
+				" skip:" + skipMode + 							//	スキップモード
+				" auto:" + autoMode + 							//	オートモード
+				" spd:"  + "%03d".sprintf(int(drawSpeedProp));	//	演出速度
+	}
+@endif
+
+	//演出速度変更　※コンフィグからのみ変更すること
+	property drawSpeedProp
+	{
+		setter(v)
+		{
+			if(!v)
+			{
+@if(CONFIG_DRAW_SPEED)
+				cf.effectSkip = true;
+@endif
+				drawspeed = DRAW_DEF_SPEED;
+			}
+			else
+			{
+@if(CONFIG_DRAW_SPEED)
+				cf.effectSkip = false;
+@endif
+				drawspeed = (100 - v) / 100;
+			}
+		}
+
+		getter
+		{
+			return 100 - drawspeed * 100;
+		}
+	}
+
+	function onConductorAfterReturn()
+	{
+		// コンダクタが return タグを実行した後
+		if(!usingExtraConductor)
+		{
+//			dm("onConductorAfterReturn: "+currentLabel+" → "+conductor.curLabel);
+			setRecordLabel(conductor.curStorage, currentLabel = conductor.curLabel);
+		}
+		setUserSpeed();
+//		dm("onConductorAfterReturn(): getCurrentRead() = "+getCurrentRead()+", skipMode = "+skipMode+", cf.skipOnly2nd = "+cf.skipOnly2nd);
+		if(!usingExtraConductor)
+		{
+			if(!getCurrentRead() && (skipMode != 4 || cf.skipOnly2nd))	//	任意のメッセージ早送りでも、全文が許可されていなければ停止
+				cancelSkip(); // 未読なのでスキップを停止
+		}
+	}
+
+@if(DEBUG)
+	//	ラベルを指定すると、そのラベルまで処理を高速スキップする("*page1"等)
+	var	lastDrawSpeed;
+	var	_targetLabel;
+	property targetLabel
+	{
+		setter(v)
+		{
+			if(targetLabel !== v)
+			{
+				if(v != void)
+				{
+					//	指定ラベルまで、スキップの開始
+					lastDrawSpeed	= drawspeed;
+					scflags.autoModePageWait = autoModePageWait;
+					scflags.autoModeLineWait = autoModeLineWait;
+					drawspeed		= 0;
+					chSpeed			= 0;
+					chUserMode		= false;
+					setUserSpeed();
+					autoModePageWait= -4;
+					autoModeLineWait= -4;
+					autoCache	= false;
+					enterAutoMode();
+				}
+				else
+				{
+					//	スキップの終了
+					drawspeed		= lastDrawSpeed if lastDrawSpeed != void;
+					chUserMode		= true;
+					setUserSpeed();
+					autoModePageWait = scflags.autoModePageWait;
+					autoModeLineWait = scflags.autoModeLineWait;
+					autoCache	= true;
+					cancelAutoMode();
+				}
+				_targetLabel	= v;
+			}
+		}
+		getter	{ return _targetLabel; }
+	}
+@if(DEBUG)
+	//※自動ラベル保存と自動読み込みを行うためには下記のコマンドオプションで起動のこと。
+	// -debug -ssbylbl -autoexec=KS-FILE-PATH
+	Plugins.link("savestruct.dll");
+	var ssFn = "";
+	var cpFn = "";	//ssFnの読み込み結果が異なった場合に消さないで残す別ファイル名
+	var ldFn = "";
+	var dfFn = "";
+	var dfFn2 = "";
+	global.SAVE_SS_TITLE = "自動ラベル保存SS処理中";
+	global.SAVE_SS_NUM = 0;
+	global.masterTitle = System.title;
+
+/*	global.loadErrorFiles = [];
+	//デバッグ用、読み込み出来なかった画像ファイルの一覧を保持る
+	global.addLoadErrorFiles = function(path)
+	{
+		if(loadErrorFiles.find(path) < 0)
+		{
+			loadErrorFiles.add(path);
+		}
+	};
+
+	//デバッグ用、読み込み出来なかった画像ファイルの一覧を出力する
+	global.outputLoadErrorFiles = function(isSave,filename)
+	{
+		var curName = Storages.extractStorageName(Storages.chopStorageExt(conductor.curStorage));
+		if(filename!==void)
+			curName = filename;
+		var fn = System.exePath+"ss/";
+		if(isSave)
+			fn += "loadError_onAutoSave&"+curName+".txt";
+		else
+			fn += "loadError_onAutoLoad&"+curName+".txt";
+
+		if( loadErrorFiles.count )
+		{
+			loadErrorFiles.save2(fn);
+		}
+	};
+*/
+	//自動保存対象のラベルかどうかチェック true 対象 / false 対象外
+	function checkSaveTargetLabel(label)
+	{
+		if( label.indexOf("tladata") > -1 || label.indexOf("dummy") > -1 || label == "" )
+			return false;
+		return true;
+	}
+
+	var lastSaveKsFile = "";
+	//自動保存対象のksかどうかチェック true 対象 / false 対象外
+	function checkSaveTargetFile(fn)
+	{
+		var ret = 1;
+		if( fn == "first" || fn == "title" || fn.indexOf("sample") > -1 )
+		{
+			//ksが切り替わったがまだ最後のラベルを実行中
+			if( lastSaveKsFile != "" &&
+				lastSaveKsFile != fn &&
+				lastSaveKsFile != "first" &&
+				lastSaveKsFile != "title" &&
+				lastSaveKsFile.indexOf("sample") == -1 )
+					ret = -1;
+			else
+				ret = 0;
+		}
+
+		return ret;
+	}
+
+	function saveScreenShotByLabel(saveMode)
+	{
+		dm("＠ saveScreenShotByLabel: saveMode=" + saveMode);
+		pauseAction(1);
+
+		curSaveFilesBySS = 0 if curSaveFilesBySS === void;
+		//	画面サイズのスクリーンショットと共に、セーブする
+		var	lastThumbnailWidth = thumbnailWidth;
+		thumbnailWidth	= scWidth;
+		var	dir	= System.exePath+"ss/";
+		if(!Storages.isExistentDirectory(dir))
+			Storages.createDirectory(dir);
+		var curName = Storages.extractStorageName(Storages.chopStorageExt(conductor.curStorage));
+		var head = (saveMode)?"svss&":"ldss&";
+		var	fn;
+		var ret;
+
+		if( ! (ret = checkSaveTargetFile(curName)) )
+		{
+			if( curName == lastSaveKsFile )
+			{
+				resetWaitStatus();
+				lastSaveKsFile = curName;
+				resumeAction();
+				return;
+			}
+		}
+
+		if( saveMode )
+		{
+			if( ! checkSaveTargetLabel(conductor.curLabel.substr(1)) )
+			{
+				resetWaitStatus();
+				lastSaveKsFile = curName;
+				resumeAction();
+				return;
+			}
+
+			fn = dir+"svss&"+curName+"&"+conductor.curLabel.substr(1)+".bmp";
+		}
+		else
+		{
+			if( ! checkSaveTargetLabel(curLabelBySS) )
+			{
+				resetWaitStatus();
+				lastSaveKsFile = curName;
+				resumeAction();
+				return;
+			}
+			//dm(" dir=" + dir);
+
+			ssFn = fnSaveFilesBySS[curSaveFilesBySS].substr(14);
+			var hd = ssFn.substr(0,ssFn.indexOf("svss"));
+			var ft = ssFn.substr(ssFn.indexOf("svss")+4);
+			cpFn = hd + "bkup_svss" + ft;
+			ldFn = hd + "ldss" + ft;
+			dfFn = hd + "diff" + ft;
+			dfFn2 = hd + "s_diff" + ft;
+			fn = ldFn;
+
+			dm("☆☆ssFn="+ssFn+" ldFn="+ldFn+" cpFn="+cpFn+" dfFn="+dfFn);
+		}
+		dm("saveScreenShotByLabel: mode=" + saveMode + " save = "+fn);
+
+		//メッセージウィンドウを非表示にしてスクリーンショットを撮る
+		var vs = [];
+		for( var i=0; i<fore.messages.count; i++ )
+		{
+			vs[i] = fore.messages[i].visible;
+			fore.messages[i].visible = false;
+		}
+
+		saveBookMarkToFile(fn, false);
+
+		if(saveMode)
+			caption = Storages.extractStorageName(f.autoexecfile) + " " + SAVE_SS_TITLE + " " + (++SAVE_SS_NUM);
+
+		//メッセージウィンドウの可視状態を戻す
+		for( var i=0; i<fore.messages.count; i++ )
+		{
+			fore.messages[i].visible = vs[i];
+		}
+		thumbnailWidth	= lastThumbnailWidth;
+
+		resumeAction();
+	}
+@endif
+
+	function resetWaitStatus()
+	{
+		waitForBeforeSave = false;
+		waitForAfterLoad = false;
+		waitForOnPaint = false;
+	}
+
+
+	var waitForLoadComplete = false;
+	var waitForLoadCompleteFn = "";
+	var afterDeleteFiles = [];
+	//自動セーブしたデータを順次自動ロード
+	function loadNextSaveFileBySS()
+	{
+		if( ! fnSaveFilesBySS.count)
+			return false;
+
+		if( fnSaveFilesBySS[curSaveFilesBySS] === void )
+			return false;
+
+		//前レコードデータのクリア
+		fnSaveFilesBySS[curSaveFilesBySS-1] = void if curSaveFilesBySS > 0;
+
+		var fn = fnSaveFilesBySS[curSaveFilesBySS].substr(14);
+		//dm(" loadNextSaveFileBySS: fn=" + fn);
+		loadBookMarkFromFile(fn, true);
+
+		//読み込み終了状態であることとファイル名を記録し、次のonPaint後のトリガでSS＋比較処理させる
+		waitForLoadComplete = true;
+		waitForLoadCompleteFn = fn;
+		return true;
+	}
+
+	var waitForAfterLoad = false;
+	var waitForBeforeSave = false;
+	var waitForOnPaint = false;
+	//Load,Save 完了待ちのAsyncTrigger
+	var astl = new AsyncTrigger(this,"onAsyncTriggerAfterLoad");
+	var asts = new AsyncTrigger(this,"onAsyncTriggerBeforeSave");
+
+	function onAsyncTriggerAfterLoad()
+	{
+		dm("＠ AsyncTrigger LOAD() ");
+		if(load_by_ss && fnSaveFilesBySS.count)
+		{
+			var msg_end = "自動読み込みテスト終了";
+
+			//ロード完了、SS採取し比較処理を行う
+			//dm("onTag.waitForComplete waitForLoadComplete");
+			loadCompleteBySS(waitForLoadCompleteFn);
+			waitForLoadCompleteFn = "";
+			waitForLoadComplete = false;
+			waitForOnPaint = false;
+
+			if( curSaveFilesBySS == fnSaveFilesBySS.count )
+			{
+				load_by_ss = false;
+				caption = msg_end;
+				if( typeof global.autoend == "undefined" ) global.autoend = false;
+				if( autoend )
+				{
+					conductor.onTag(%[tagname:"close",ask:false]);
+				}
+				conductor.pendings.insert(0,%[tagname:"ch",text:"照合処理が終了しました"]);
+				conductor.onTag(%[tagname:"cm"]);
+
+				fnSaveFilesBySS.clear();
+				curSaveFilesBySS = 0;
+
+				outputLoadErrorFiles(false);
+@if(USE_CHECK_TAG_PARAM)
+				outputUndefinedTagParams();
+@endif
+			}
+			else
+			{
+				resetWaitStatus();
+			}
+		}
+	}
+
+	function onAsyncTriggerBeforeSave()
+	{
+		dm("＠ AsyncTrigger SAVE() trans=" + fore.base.inTransition);
+		if( ss_by_label )
+		{
+			saveScreenShotByLabel(1);
+			resetWaitStatus();
+			enterAutoMode();
+		}
+	}
+
+	//ロード完了時にConductor.onTagから呼ばれるSS処理〜画像比較
+	function loadCompleteBySS(fn)
+	{
+		dm("＠ loadCompleteBySS: num=" + curSaveFilesBySS + " fn=" + fn);
+		fn = Storages.chopStorageExt(fn);
+		fn = fn.reverse();
+		fn = fn.substr(0,fn.indexOf("&"));
+		fn = fn.reverse();
+		curLabelBySS = fn;
+		//dm(" curLabelBySS="+curLabelBySS);
+		saveScreenShotByLabel(0);
+
+		curSaveFilesBySS++;
+
+		//dm("loadCompleteBySS: fn=" + fn);
+
+		var exss = Storages.isExistentStorage(ssFn);
+		var exld = Storages.isExistentStorage(ldFn);
+		if( exss && exld )
+		{
+			var ssLay = new Layer(this, primaryLayer);
+			var ldLay = new Layer(this, primaryLayer);
+			var tmLay;
+
+			ssLay.loadImages(ssFn);
+			ldLay.loadImages(ldFn);
+
+			ssLay.setSizeToImageSize();
+			ldLay.setSizeToImageSize();
+
+			ssLay.getDiffPixel(ldLay, 0xFF000000, 0xFFFF0000);
+
+			var findDiff = false;
+			for( var y=0; y<ssLay.height; y++ )
+			{
+				for( var x=0; x<ssLay.width; x++ )
+				{
+					if( ssLay.getMainPixel(x, y) != 0x000000 )
+					{
+						findDiff = true;
+						//System.inform("Diff:pix[" + x + "," + y + "]=%06x".sprintf(pix));
+						break;
+					}
+				}
+				if( findDiff ) break;
+			}
+
+			//DEBUG
+			/*
+			if( ssFn.indexOf("page8") > -1 )
+			{
+				findDiff = true;
+				ssLay.loadImages(ssFn);
+				ldLay.fillRect(370,260,200,50,0xFF000000);
+			}
+			*/
+			//DEBUG
+
+			if( findDiff )
+			{
+				var tmLay = new Layer(this, primaryLayer);
+				var dfLay = new Layer(this, primaryLayer);
+				with(tmLay)
+				{
+					//４枚を合成
+					//
+					//  　　セーブ時　　|　　DIFF　　　　
+					//  ----------------+-----------------
+					//  　　ロード時　　|　　DIFF-AREA　　
+
+					.loadImages(ssFn);
+					.setSizeToImageSize();
+					.setSize(ldLay.width * 2 + 5, ldLay.height * 2 + 5);
+					.setImageSize(ldLay.width * 2 + 5, ldLay.height * 2 + 5);
+
+					.fillRect(0, ldLay.height + 1, .width, 3, 0xFF0000FF);
+					.fillRect(ldLay.width + 1, 0, 3, .height, 0xFF0000FF);
+
+					.copyRect(0, ldLay.height + 5, ldLay, 0, 0, ldLay.width, ldLay.height);
+
+					dfLay.loadImages(ssFn);
+					dfLay.setSizeToImageSize();
+					dfLay.operateRect(0, 0, ldLay, 0, 0, ldLay.width, ldLay.height, omPsDifference);
+
+//					.copyRect(0, ssLay.height * 2, ssLay, 0, 0, ssLay.width, ssLay.height);
+					.copyRect(dfLay.width + 5, 0, dfLay, 0, 0, dfLay.width, dfLay.height);
+					.copyRect(dfLay.width + 5, dfLay.height + 5, ssLay, 0, 0, ssLay.width, ssLay.height);
+
+					//濃度をみてもう一度判断
+					findDiff = false;
+					for( var y=0; y<dfLay.height; y++ )
+					{
+						for( var x=.width-dfLay.width; x<.width; x++ )
+						{
+							//小さい誤差濃度はブラーや枠の誤差とみなして無視(16以上を差異とする)
+							var pix = .getMainPixel(x, y);
+							if( ((+pix & 0x00F00000) >> 16) ||
+								((+pix & 0x0000F000) >> 8 ) ||
+								((+pix & 0x000000F0)      )
+							)
+							{
+								findDiff = true;
+								break;
+							}
+						}
+					}
+
+					if( findDiff )
+						tmLay.saveLayerImage(dfFn, "bmp24");
+					else
+						tmLay.saveLayerImage(dfFn2, "bmp24");
+
+					invalidate dfLay;
+					invalidate tmLay;
+				}
+				if( findDiff )
+					dm("▲画像比較結果　差異あり[" + ssFn + "]");
+				else
+					dm("△画像比較結果　誤差あり[" + ssFn + "]");
+				findDiff = true;
+			}
+			else
+			{
+				dm("※画像比較結果　一致[" + ssFn + "]");
+			}
+			invalidate ldLay;
+			invalidate ssLay;
+
+			if( typeof global.autodelete == "undefined" )
+				global.autodelete = true;
+
+			if( ! global.autodelete )
+				return;
+
+			Storages.deleteFile(ldFn);
+			if( ! findDiff )
+			{
+				Storages.deleteFile(ssFn);
+			}
+			else
+			{
+				Storages.copyFile(ssFn, cpFn, false);
+				Storages.deleteFile(ssFn);
+			}
+		}
+		else
+		{
+			dm("■ERROR: " + ssFn + " がありません") if !exss;
+			dm("■ERROR: " + ldFn + " がありません") if !exld;
+		}
+	}
+
+	var curLabelBySS = "___start___";
+	var curSaveFilesBySS = 0;	//現在読み込んでいるセーブデータの配列インデックス
+	var fnSaveFilesBySS = [];
+	//自動セーブされたデータをタイムスタンプ順に列挙
+	function listupSaveFilesBySS()
+	{
+		//未処理のレコードが残っているか
+		for( var i=0; i<fnSaveFilesBySS.count; i++ )
+		{
+			if( fnSaveFilesBySS[i] !== void && fnSaveFilesBySS[i] != "" )
+			{
+				return;
+			}
+		}
+
+		curSaveFilesBySS = 0;
+
+		if( fnSaveFilesBySS === void )
+			return;
+
+		var	dir	= System.exePath+"ss/";
+		if(!Storages.isExistentDirectory(dir))
+			return -2;
+
+		var	files	= Storages.dirlist(dir);
+		for(var i=0; i<files.count; i++)
+		{
+			if(files[i][0] == ".") continue;
+			var curName = Storages.extractStorageName(Storages.chopStorageExt(files[i]));
+			if(Storages.extractStorageExt(files[i]) == ".bmp" && curName.substr(0,5) == "svss&")
+			{
+				var stat = Storages.fstat(dir+files[i]);
+				var mt = stat.mtime;
+				var times;
+				/*
+				with(mt)
+					times = "%4d%02d%02d%02d%02d%02d".sprintf(
+									.getYear(),.getMonth(),.getDate(),
+									.getHours(),.getMinutes(),.getSeconds());
+				*/
+				var tmp = curName.split("&");
+				var lblNum = (tmp[2].indexOf("page") > -1 ) ? tmp[2].substr(4) : 0;
+				with(mt)
+					times = "%11d%03d".sprintf(int(.getTime()/1000),lblNum);
+				dm("　※　fstat["+files[i]+"]="+times);
+				fnSaveFilesBySS.add(times+dir+files[i]);
+			}
+		}
+
+		fnSaveFilesBySS.sort("+a");
+
+		for( var i=0; i<fnSaveFilesBySS.count; i++)
+		{
+			dm("　→　after sort " + fnSaveFilesBySS[i]);
+		}
+	}
+@endif
+
+	function onRestoreMenuClick(sender)
+	{
+		pauseAction();
+		var ret = super.onRestoreMenuClick(...);
+		resumeAction();
+		return ret;
+	}
+
+	function onStoreMenuClick(sender)
+	{
+		pauseAction();
+		var ret = super.onStoreMenuClick(...);
+		resumeAction();
+		return ret;
+	}
+
+	//保存処理
+	function internalStoreFlags(f)
+	{
+		super.internalStoreFlags(...);
+
+		//未使用SEの削除
+		for(var i=f.se.count-1; i>=SESTARTIDX; i--)
+		{
+			if( f.se[i] === void )
+				f.se.erase(i);
+		}
+
+		//最終セーブデータ名をフルパスで保存しない
+		f.lastSaveDataName = Storages.extractStorageName(f.lastSaveDataName);
+
+//		storeActions(f);
+		actmgr.store(...);
+	}
+
+	//	storeFlags では、状態を保持しない
+	function storeFlags()
+	{
+		super.storeFlags() if !autoCache;
+	}
+
+	//	[cm]実行の直後に呼び出される originalStoreFlags で状態を保持する
+	function originalStoreFlags()
+	{
+		super.storeFlags();
+	}
+
+/*	//	アクションの状態保存
+	function storeActions(f)
+	{
+		f.actions	= [];
+		var	keys	= [];
+		keys.assign(allActions);	//	target(Layer) => info(ActionInfo)
+		dm("storeActions: actions count = "+keys.count\2);
+		var idx=0;
+		for(var i=0; i<keys.count; i+=2){
+			if( ! isvalid keys[i+1] ) continue;
+			if( typeof keys[i+1].store != "undefined" )
+				f.actions[idx++]	= keys[i+1].store();
+		}
+
+		f.actionSeqs		= [];
+		f.actionSeqs.assignStruct(actionSeqs) if actionSeqs.count;
+
+		f.actionSeqTrigger	= [];
+		f.actionSeqTrigger.assignStruct(actionSeqTrigger) if actionSeqTrigger.count;
+
+	}
+*/
+	//復元処理
+	function internalRestoreFlags(f, clear = true, elm = void)
+	{
+		//各レイヤー復元前の強制初期化
+		//(強制的にfillRectにて消しておかないと読み込まれるものがopacity指定ダッシュ
+		//の途中などでは画像イメージが変な混じり方をしてしまう)
+
+		var pages = ["fore","back"];
+
+		for( var j=0; j<pages.count; j++ ){
+			var p = this[pages[j]];
+			// 背景レイヤ
+			var b = p.base;
+			b.freeImage();
+			b.storage = void;
+			b.clearSuperImg();
+			/*
+			// メッセージレイヤ
+			for(var i = 0; i < p.messages.count; i++)
+			{
+				p.messages[i].clear();
+				p.messages[i].clear();
+			}
+			*/
+			// 前景レイヤ
+			for(var i = 0; i < p.layers.count; i++)
+			{
+				var lay = p.layers[i];
+				if( lay !== void ){
+					with(lay){
+						.freeImage();
+						.storage = void;
+						.clearSuperImg();
+					}
+				}
+			}
+		}
+
+		super.internalRestoreFlags(...);
+//		restoreActions(f);
+		actmgr.restore(...);
+	}
+
+/*	//	アクションの復帰
+	function restoreActions(f)
+	{
+		if(f.actions === void)
+			return;
+		dm("restore actions");
+		for(var i=0; i<f.actions.count; i++)
+		{
+			if( f.actions[i] === void ) continue;
+			if( f.actions[i].target == null ) continue;
+			var	info	= new ActionInfo();
+			info.restore(f.actions[i]);
+			if( info.target === void ){
+				//対象オブジェクトが特定出来ない
+				if( info.targetstring === void ){
+					throw new Exception("restoreActions:ERROR! target is void");
+				}
+			}
+			allActions[info.target]	= info;
+		}
+		actionCount	= f.actions.count;
+		actionSeqs = [];
+		actionSeqs.assignStruct(f.actionSeqs) if f.actionSeqs !== void;
+		actionSeqTrigger = [];
+		actionSeqTrigger.assignStruct(f.actionSeqTrigger) if f.actionSeqTrigger !== void;
+
+		if( actionCount > 0 ) flipStart();
+	}
+*/
+	//	アクション復帰にてBGMやSEの情報を復元する
+	function restoreActionsTarget(tgt)
+	{
+		var target;
+		//対象はBGMやSE
+		if( tgt.substr(0,3) == "BGM" ){
+			target = bgm;
+		}else if( tgt.substr(0,2) == "SE" ){
+			var seid = int(tgt.substr(2,1));
+			if( seid < se.count ){
+				target = se[seid];
+			}
+		}
+		if( target !== void ){
+			return target;
+		}
+	}
+
+	//TLEからの実環境実行用初期停止処理
+	function resetAllState(withoutsound=false)
+	{
+		//トランジション停止
+		stopAllTransitions();
+		stopAllActions(true);
+
+		//音声系停止
+		if(!withoutsound)
+		{
+			bgm.stop();
+			for( var i=0; i<se.count; i++ )
+				se[i].stop();
+		}
+
+		//レイヤー初期化
+		var pages = ["fore","back"];
+		for( var j=0; j<pages.count; j++ )
+		{
+			var obj = this[pages[j]];
+			for( var i=0; i<obj.layers.count; i++ )
+			{
+				with(obj.layers[i])
+				{
+					.reset();
+					.visible = false;
+				}
+			}
+//			obj.base.reset();
+		}
+
+		historyLayer.clear();
+		dm("== reset ==");
+	}
+
+	//	システム変更に伴う、タグの追加、変更
+	function getHandlers()
+	{
+		var	dic	= super.getHandlers();
+		with(dic)
+		{
+		}
+		return dic;
+	}
+
+	//旧システムとの互換用
+	//	直前までに消費された時間から、調整された時間を返す
+	function adjustTime(time)
+	{
+		return time;	//	調整しない
+
+		var lasttime = time;
+		var ht	= time>>1;
+		var at	= .atime;
+
+		//	必要な時間があまりにも大きすぎる場合、元の時間の半分だけ使う
+		if(.atime>ht)
+		{
+			if(ht<1)
+			{
+				//	でも、もともと0ミリ秒でやれ！ってことだったら、ここで全部清算してしまう
+				time	= 0;
+				.atime	= 0;
+			}
+			else
+			{
+				time	-= ht;
+				.atime	-= ht;
+			}
+		}
+		else
+		{
+			time	-= .atime;
+			.atime	= 0;	//	reset time
+		}
+		dm(@"経過時間: ${at}ms / 処理時間: ${lasttime}ms => ${time}ms");
+		return time;
+	}
+
+	/**
+	 * 空きレイヤーを探す
+	 * @param page ページ指定
+	 * @return レイヤー番号
+	 */
+	function getFreeLayer(page="back")
+	{
+		var	i, layers = page == "fore" ? fore.layers : back.layers;
+		for(i=0; i<layers.count; i++)
+		{
+			if(!layers[i].visible)
+				break;
+		}
+		if(i == layers.count)
+			//	レイヤーが足りなくなったら追加する
+			allocateCharacterLayers(numCharacterLayers+1);
+		return i;
+	}
+
+	/**
+	 *	メッセージレイヤーのアクションを一時停止
+	 */
+	function pauseMessageAction(page="all")
+	{
+		if(page != "back")
+		{
+			for(var i=0; i<fore.messages.count; i++)
+				fore.messages[i].pauseCharAction();
+		}
+		if(page != "fore")
+		{
+			for(var i=0; i<back.messages.count; i++)
+				back.messages[i].pauseCharAction();
+		}
+	}
+
+	/**
+	 *	メッセージレイヤーのアクションを再開
+	 */
+	function resumeMessageAction(page="all")
+	{
+		if(page != "back")
+		{
+			for(var i=0; i<fore.messages.count; i++)
+				fore.messages[i].resumeCharAction();
+		}
+		if(page != "fore")
+		{
+			for(var i=0; i<back.messages.count; i++)
+				back.messages[i].resumeCharAction();
+		}
+	}
+
+	function stopAllTransitions()
+	{
+		// すべてのトランジションを停止させる
+		forEachApplyPlugin('stopAllTransitions',
+			function(handler) { return handler(); } incontextof this,
+		);
+		super.stopAllTransitions(...);
+		baseTransCount	= 0;
+	}
+
+	property breakWithBack	{ getter { return currentWithBack && baseTransCount > 0; } }
+
+	function showLineBreak(elm)
+	{
+		var	ret = super.showLineBreak(...);
+		forEachApplyPlugin('onShowLineBreak', function(handler, ret) { return handler(ret); } incontextof this, ret);
+		return ret;
+	}
+
+	function showPageBreak(elm)
+	{
+		var ret = super.showPageBreak(...);
+		forEachApplyPlugin('onShowPageBreak', function(handler, ret) { return handler(ret); } incontextof this, ret);
+		return ret;
+	}
+@if(CLICKSKIP_NEXT_EFFECT)
+	function showLineBreakWithoutIgnore()
+	{
+		// 現在のメッセージレイヤに行待ち記号を表示する
+		stablePosibility = true;
+		if(autoMode)
+		{
+			// 自動読みすすみの場合
+			cancelSkip();
+			if(cf.autoModeArrowClick)
+				return doWait(%[time:autoModeLineWait,norapid:true,canskip:true]);
+			else
+				return autoModeLineWait;
+		}
+		if(skipMode == 1) cancelSkip();
+		if(skipMode == 4 && !skipKeyPressing()) cancelSkip(true);
+		if(skipMode == 4) return -4;
+		if(skipMode) return skipCancelKeyPressing()?-4:0;
+			// スキップ中(スキップをキャンセルするようなキーがあればスキップ解除
+			// のためのイベント処理の機会を与える)
+
+		current.showLineBreakGlyph(lineBreak);
+		current.comp.showLineBreakGlyph(lineBreak) if breakWithBack;
+			//	トランジション中は逆のメッセージレイヤーにも待ち記号を表示する
+		storeClickGlyphState("line");
+
+		if(!current.nodeVisible)
+		{
+			dm("警告 : 非表示になっている" +
+				(currentPage ? "裏" : "表") + "メッセージレイヤ" + currentNum +
+				"で行クリック待ちになりました");
+		}
+
+		// conductor を 'click' まで待ち状態に
+		conductor.wait(%[
+			click : function
+			{
+				clickWaiting = false;
+				fore.base.cursor = cursorDefault;
+				notifyRun();
+			} incontextof this
+			]);
+		clickWaiting = true;
+		fore.base.cursor = cursorWaitingClick;
+		notifyStable();
+		return -2;
+	}
+@endif
+	/**
+	* BGM ボリューム値の設定
+	* 100段階指定
+	*/
+	property bgmVolume {
+		getter() {
+			//dm("bgmVolume 取得");
+			if (scflags.bgm !== void && scflags.bgm.globalVolume !== void) {
+			    return scflags.bgm.globalVolume / 1000;
+			}
+			return 100;
+		}
+		setter(v) {
+			if (scflags.bgm === void) {
+			    scflags.bgm = %[];
+			}
+			scflags.bgm.globalVolume = v * 1000;
+			bgm.restoreSystemState(scflags);
+		}
+	}
+
+	//BGMのミュート設定　※コンフィグからのみ読み書きする事
+	property bgmPropMute
+	{
+		getter()
+		{
+			if(scflags.bgm === void)
+				scflags.bgm = %[];
+			if( typeof scflags.bgm.propmute == "undefined" )
+				scflags.bgm.propmute = false;
+			return scflags.bgm.propmute;
+		}
+		setter(v)
+		{
+			if(scflags.bgm === void)
+				scflags.bgm = %[];
+			scflags.bgm.propmute = v;
+			//ミュートされたら音量を０にし、ミュートを外したら本来の音量に戻す
+			bgmVolume = v ? 0 : scflags.bgm.propvolume;
+		}
+	}
+
+	//BGM音量の保存値　※コンフィグからのみ読み書きする事
+	property bgmPropVolume
+	{
+		getter()
+		{
+			if( bgmPropMute )
+				return scflags.bgm.propvolume;
+			else
+				return bgmVolume;
+		}
+		setter(v)
+		{
+			scflags.bgm.propvolume = v;	//	Rev.1466 で bgm.volume に値を設定していたが、間違い(bgm.volume はフェード用。また0〜100ではなく0〜100000)
+			if( ! bgmPropMute )
+				bgmVolume = v;
+		}
+	}
+
+	/**
+	 * SE ボリューム値の設定
+	 * 100段階設定
+	 */
+	property seVolume {
+		getter() {
+			if (scflags.se !== void && scflags.se[0] !== void) {
+				return scflags.se[0].globalVolume / 1000;
+			}
+			return 100;
+		}
+		setter(v) {
+			if(scflags.se === void)
+				scflags.se = [];
+			for(var i = 0; i<numSEBuffers+1; i++) {
+				if (scflags.se[i] === void) {
+					scflags.se[i] = %[];
+				}
+				scflags.se[i].globalVolume = v * 1000;
+				se[i].restoreSystemState(scflags) if se[i] !== void && isvalid se[i];
+			}
+		}
+	}
+
+	//SEのミュート設定　※コンフィグからのみ読み書きする事
+	property sePropMute
+	{
+		getter()
+		{
+			if(scflags.se === void)
+				scflags.se = [];
+			if(scflags.se[0] === void )
+				scflags.se[0] = %[];
+			if( typeof scflags.se[0].propmute == "undefined" )
+				scflags.se[0].propmute = false;
+			return scflags.se[0].propmute;
+		}
+		setter(v)
+		{
+			if(scflags.se[0] === void)
+				scflags.se[0] = %[];
+			scflags.se[0].propmute = v;
+			//ミュートされたら音量を０にし、ミュートを外したら本来の音量に戻す
+			seVolume = v ? 0 : scflags.se[0].propvolume;
+		}
+	}
+
+	//SE音量の保存値　※コンフィグからのみ読み書きする事
+	property sePropVolume
+	{
+		getter()
+		{
+			if(scflags.se[0] === void)
+				scflags.se[0] = %[];
+			if( sePropMute )
+				return scflags.se[0].propvolume;
+			else
+				return seVolume;
+		}
+		setter(v)
+		{
+			if(scflags.se[0] === void)
+				scflags.se[0] = %[];
+			scflags.se[0].propvolume = v;
+			if( ! sePropMute )
+				seVolume = v;
+		}
+	}
+
+	//	システム効果音ボリューム
+	property systemSEVolume
+	{
+		getter		{ return scflags.systemSEVolume === void ? 33 : scflags.systemSEVolume; }
+		setter(v)	{ scflags.systemSEVolume = Math.max(0, Math.min(100, +v)); }
+	}
+
+	//	システム効果音ミュート
+	property systemSEMute
+	{
+		getter		{ return scflags.systemSEMute === void ? false : scflags.systemSEMute; }
+		setter(v)	{ scflags.systemSEMute = v; }
+	}
+
+	//	指定の効果音が再生されているかどうか
+	function isplayingse(storage)
+	{
+		return getSESoundBufferFromStorage(storage) !== void;
+	}
+
+	//	コンダクタのオートキャッシュ設定
+	property autoCache
+	{
+		getter		{ return conductor.autoCache; }
+		setter(v)	{ mainConductor.autoCache = extraConductor.autoCache = +v; }
+	}
+
+@if(USE_RECORD)
+	//	ありとあらゆるものが drawspeed の影響を受けるように
+	var	_actualChSpeed;
+	property actualChSpeed
+	{
+		setter(v)	{ _actualChSpeed = +v; }
+		getter		{ return _actualChSpeed * Math.max(1.0, drawspeed); }
+	}
+
+	var	_autoModePageWait;
+	property autoModePageWait
+	{
+		setter(v)	{ _autoModePageWait = +v; }
+		getter		{ return _autoModePageWait * Math.max(1.0, drawspeed); }
+	}
+
+	var	_autoModeLineWait;
+	property autoModeLineWait
+	{
+		setter(v)	{ _autoModeLineWait = +v; }
+		getter		{ return _autoModeLineWait * Math.max(1.0, drawspeed); }
+	}
+@endif
+
+	//	トランジションの一時停止
+	function pauseTransition()
+	{
+@if(PAUSE_TRANSITION)
+		var	layers	= [ primaryLayer ];
+		for(var i=0; i<layers.count; i++) with(layers[i])
+		{
+			.pauseTransition() if typeof .pauseTransition != "undefined";
+			layers.push(.children*);
+		}
+@endif
+	}
+
+	//	トランジションの再開
+	function resumeTransition()
+	{
+@if(PAUSE_TRANSITION)
+		var	layers	= [ primaryLayer ];
+		for(var i=0; i<layers.count; i++) with(layers[i])
+		{
+			.resumeTransition() if typeof .resumeTransition != "undefined";
+			layers.push(.children*);
+		}
+@endif
+	}
+
+	//	読み込みに失敗したら、タイトル画面へ戻る
+	function processCall(file, label)
+	{
+		// 指定ファイル、指定ラベルを呼ぶ
+		// incRecordLabel(); は呼ばないので注意
+
+		if(file != '')
+		{
+			// ファイルを読み込み
+			conductor.loadScenario(file);
+		}
+
+		inSleep = false;
+		notifyRun();
+		try
+			conductor.callLabel(label); // 実行開始
+		catch(e)
+		{//	セーブデータのロードに失敗したら、タイトル画面へ戻る
+			conductor.loadScenario("first.ks");
+			conductor.goToLabel("*titlemenu");
+			popupMessage("セーブデータが破損しているため、タイトル画面へ移動します。");
+		}
+		dm("処理を開始します");
+		if(conductor.status != conductor.mRun) conductor.run();
+	}
+
+	//	chNonStopToPageBreak が未読だけではなく既読に対しても有効だったので、
+	//	未読の部分にだけ影響するように
+	function canIgnoreL()
+	{
+		// L タグを無視できるかどうか
+		var	cr = getCurrentRead();
+		return (!cr && chNonStopToPageBreak) || (cr && ch2ndNonStopToPageBreak);
+	}
+}
+
+@endif

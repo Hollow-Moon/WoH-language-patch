@@ -1,0 +1,48 @@
+﻿/*-----------------------------------------------------------------------------/
+/	Copyright (C) TYPE-MOON All Rights Reserved.
+/		各種タグの追加を行う
+/-----------------------------------------------------------------------------*/
+dm("load: initTag.tjs");
+//-- タグ宣言 -----------------------------------------------------------------
+var	kt	= kag.tagHandlers;
+/*	lr, pg は、画像の自動キャッシュの為にマクロにする必要があったので、ここでは定義しない
+//-----------------------------------------------------------------------------
+//	pg - ページ切り替え
+//	memo: [cm][p] を実行する
+kt.pg	= function(mp)
+{
+@if(DEBUG)
+	if(ss_by_pg)
+		saveScreenShot("pgss");	//	スクリーンショットを保存
+@endif
+
+	if(f.textmode2pg == void)
+	{
+		//	次に実行するタグを画面消去に変更して
+		mp.tagname	= "cm";
+		conductor.pendings.insert(0, mp);
+
+		//	ページ切り替え待ちを実行
+		return tagHandlers.p(%[]);
+	}
+	else
+		return tagHandlers[f.textmode2pg](mp);
+} incontextof kag;
+
+//-----------------------------------------------------------------------------
+//	lr - 改行待ち
+//	memo: [l][r] を実行する
+kt.lr	= function(mp)
+{
+	if(f.textmode2lr == void)
+	{
+		mp.tagname	= "r";
+		conductor.pendings.insert(0, mp);
+		return tagHandlers.l(%[]);
+	}
+	else
+		return tagHandlers[f.textmode2lr](mp);
+} incontextof kag;
+*/
+
+delete kt;

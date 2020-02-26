@@ -1,0 +1,658 @@
+﻿//	独自メニューの定義
+@if(__ORIGINALMENUS_DEFINED__==0)
+@set(__ORIGINALMENUS_DEFINED__=1)
+
+//	右クリックやいいえボタンなどでキャンセルしたときのSE
+var	cancelse	= "button-47.wav";
+
+//	右クリックやBackボタンなどで閉じたときのSE
+var	closese		= "button-47.wav";
+
+@if(DEBUG)
+@set(__STABLE_VERBOSE__	= 0)			//デバッグ用の詳細トレースを表示する
+@endif
+
+//	creates にプロパティの初期値を設定
+function setCreateProp(target, propname, value, overwrite=false)
+{
+	//	storage はプロパティに設定された時点で画像を読み込みに行くので、重ねて設定すると無駄が大きくなってしまうので
+	overwrite	= true if propname == "storage";
+	if(overwrite)
+	{
+		for(var i=2; i<target.count; i+=2)
+		{
+			if(target[i] == propname)
+			{
+				target[i+1]	= value;
+				return;
+			}
+		}
+	}
+	else
+	{
+		with(target)
+			.add(propname), .add(value);
+	}
+}
+
+function setCreateProps(target, props, cnt)
+{
+	for(var i=2; i<target.count; i+=2)
+	{
+		var	prop	= target[i];
+		if(typeof props[prop] != "undefined")
+		{
+			target[i+1]	= props[prop];
+			delete props[prop];
+			cnt--;
+			if(cnt == 0)
+				return;
+		}
+	}
+	var	keys	= [];
+	keys.assign(props);
+	with(target)
+	{
+		for(var i=0; i<keys.count; i+=2)
+			.add(keys[i]), .add(keys[i+1]);
+	}
+}
+
+//	初期値を取得する
+function getCreateProp(target, propname)
+{
+	if(typeof propname == "String")
+	{
+		for(var i=2; i<target.count; i+=2)
+		{
+			if(target[i] == propname)
+				return target[i+1];
+		}
+	}
+	else if(propname instanceof "Array")
+	{
+		var	values	= [], idx, cnt = 0;
+		for(var i=2; i<target.count; i+=2)
+		{
+			if((idx = propname.find(target[i])) >= 0)
+			{
+				values[idx]	= target[i+1];
+				cnt++;
+				if(propname.count == cnt)
+					break;
+			}
+		}
+		return values;
+	}
+	return void;
+}
+
+//	creates からプロパティの初期値を削除
+function clearCreateProp(target, propname, cnt)
+{
+	var	type	= typeof propname;
+	if(type == "Object")
+	{//	辞書配列指定で複数のプロパティを削除
+		for(var i=2; i<target.count; i+=2)
+		{
+			if(propname[target[i]])
+			{
+				target.erase(i);
+				target.erase(i);
+				i	-= 2;
+				cnt--;
+				if(cnt == 0)
+					return;
+			}
+		}
+	}
+	else if(type == "String")
+	{//	文字列指定で一つのプロパティを削除
+		for(var i=2; i<target.count; i+=2)
+		{
+			if(target[i] == propname)
+			{
+				target.erase(i);
+				target.erase(i);
+				return;
+			}
+		}
+	}
+}
+
+//	storage プロパティに文字列を付加する
+function addCreateStorageProp(target, addval)
+{
+	for(var i=2; i<target.count; i+=2)
+	{
+		if(target[i] == "storage")
+		{
+			target[i+1]	+= addval;
+			return;
+		}
+	}
+}
+
+//	アクションの最終フレームを設定
+function setActionLast(act, prop, value)
+{
+	for(var i=0; i<act.count; i+=2)
+	{
+		if(act[i] == prop)
+		{
+			var	frames	= act[i+1];
+			frames[frames.count - 1][1]	= value;
+		}
+	}
+}
+function setActionTop(act, prop, value)
+{
+	for(var i=0; i<act.count; i+=2)
+	{
+		if(act[i] == prop)
+		{
+			var	frames	= act[i+1];
+			frames[0][1]	= value;
+			break;
+		}
+	}
+}
+
+//	アクションの最終フレームを複数設定
+function setActionsLast(act, props, cnt)
+{
+	for(var i=0; i<act.count; i+=2)
+	{
+		var	prop	= act[i];
+		if(typeof props[prop] != "undefined")
+		{
+			var	frames	= act[i+1];
+			frames[frames.count - 1][1]	= props[prop];
+			delete props[prop];
+			cnt--;
+			if(cnt == 0)
+				break;
+		}
+	}
+}
+function setActionsTop(act, props, cnt)
+{
+	for(var i=0; i<act.count; i+=2)
+	{
+		var	prop	= act[i];
+		if(typeof props[prop] != "undefined")
+		{
+			var	frames	= act[i+1];
+			frames[0][1]	= props[prop];
+			delete props[prop];
+			cnt--;
+			if(cnt == 0)
+				break;
+		}
+	}
+}
+
+//	アクションの最終フレームの値を取得
+function getActionLast(act, prop)
+{
+	if(typeof prop == "String")
+	{
+		for(var i=0; i<act.count; i+=2)
+		{
+			if(act[i] == prop)
+			{
+				var	frames	= act[i+1];
+				return frames[frames.count - 1][1];
+			}
+		}
+		return void;
+	}
+	else if(prop instanceof "Array")
+	{
+		var	values	= [], idx, cnt = 0;
+		for(var i=0; i<act.count; i+=2)
+		{
+			if((idx = prop.find(act[i])) >= 0)
+			{
+				var	frames	= act[i+1];
+				values[idx]	= frames[frames.count - 1][1];
+				cnt++;
+				if(cnt == prop.count)
+					break;
+			}
+		}
+		return values;
+	}
+	return void;
+}
+
+//	アクションを削除
+function removeActionData(act, prop)
+{
+	for(var i=0; i<act.count; i+=2)
+	{
+		if(act[i] == prop)
+		{
+			act.erase(i);
+			act.erase(i);
+			break;
+		}
+	}
+}
+
+//	メニューに入るときの処理
+var	__menuStack	= [];
+var	__lastEnabledHide;
+var	__lastStable;
+var	__inMenuFuncs	= [];	//	入るときに呼ばれる処理
+var	__outMenuFuncs	= [];	//	出るときに呼ばれる処理
+function __hideMessage()
+{
+	kag.hideMessageLayerByUser();
+	kag.setMenuAccessibleAll();
+}
+function inMenu(name, vismsg=false)
+{
+	//	システムメニューが開いていないとき
+//	dmt("inMenu("+name, vismsg+"): "+__menuStack.count);
+	if(__menuStack.count == 0) with(kag)
+	{
+		__lastStable	= true;
+		.inStable <-> __lastStable;	//	停止状態にする
+		.setHistoryOptions(%[enabled:false]);	//	テキスト履歴を無効化
+		.pauseAction();				//	アクションを一時停止する
+		.pauseTransition();			//	トランジションを一時停止する
+		.pauseWait();				//	一時停止できるwaitは一時停止する
+		enabledShortcutKey	= false;	//	ショートカットキーを無効化
+		alternative_object.setButtonEnabled(false) if alternative_object != void;	//	選択肢を無効化
+		__lastEnabledHide	= setHideCursor(false) if __lastEnabledHide === void;	//	カーソル消去状態を破棄
+		for(var i=0; i<__inMenuFuncs.count; i++)
+			__inMenuFuncs[i]() if __inMenuFuncs[i] != void;
+		lockQuickMenu();	//	クイックメニューを使用不可にする
+		asyncCaller.call(__hideMessage) if !vismsg;	//	メッセージ消去
+		.enableEffectSkip	= false;	//	瞬間表示をさせない
+	}
+	__menuStack.push(name);
+}
+
+//	メニューから出る時の処理
+function outMenu(name, force=false, vismsg=true)
+{
+	//	システムメニューが開いていないとき
+//	dmt("outMenu("+name, force, vismsg+"): "+__menuStack.join(", "));
+	if(__menuStack.count > 0)
+	{
+		if(force)
+			__menuStack.clear();
+		else
+		{
+			var	last	= __menuStack.pop();
+			if(last != name)
+			{
+				last	= __menuStack.join(", ")+", "+last if __menuStack.count > 0;
+				var	msg	= "outMenu("+name+", "+force+", "+vismsg+"): 閉じるメニューの名前が相違しています。(stack: "+last+" / cur: "+name+")";
+@if(DEBUG)
+				throw new Exception(msg+": "+Scripts.getTraceString());
+@endif
+@if(!DEBUG)
+				System.inform(msg);
+				dmt(msg);
+				__menuStack.clear();
+@endif
+			}
+		}
+		if(__menuStack.count == 0) with(kag)
+		{
+//			.inStable <-> __lastStable;	//	状態を元に戻す
+			.setHistoryOptions(%[enabled:true]);	//	テキスト履歴有効
+			enabledShortcutKey	= true;	//	ショートカットキーを有効化
+			unlockQuickMenu();			//	クイックメニューを使用可能にする(アーカイブでない間)
+			for(var i=0; i<__outMenuFuncs.count; i++)
+				__outMenuFuncs[i]() if __outMenuFuncs[i] != void;
+			.resumeAction();			//	アクションを再開する
+			.resumeTransition();		//	トランジションを再開する
+			.resumeWait();			//	wait を再開する
+			alternative_object.setButtonEnabled(true) if alternative_object != void;	//	選択肢を有効化
+			setHideCursor(__lastEnabledHide) if __lastEnabledHide !== void;	//	カーソル消去状態を元に戻す
+			__lastEnabledHide	= void;
+			asyncCaller.cancel(__hideMessage);	//	メッセージ消去をキャンセル
+			if(vismsg)
+				.showMessageLayerByUser();	//	メッセージを表示するよう指定されている
+			else
+				.messageLayerHiding	= false;
+			.setMenuAccessibleAll();
+			.enableEffectSkip	= true;		//	瞬間表示を許可する
+		}
+	}
+}
+kag.tagHandlers.inmenu	= function(elm) { inMenu(elm.name, elm.vismsg); return 0; };
+kag.tagHandlers.outmenu	= function(elm) { outMenu(elm.name, elm.force, elm.vismsg); return 0; };
+
+function addInOutMenuFunc(infunc, outfunc)
+{
+	__inMenuFuncs.add(infunc) if infunc != void;
+	__outMenuFuncs.add(outfunc) if outfunc != void;
+}
+
+function removeInOutMenuFunc(infunc, outfunc)
+{
+	__inMenuFuncs.remove(infunc) if infunc != void;
+	__outMenuFuncs.remove(outfunc) if outfunc != void;
+}
+
+@if(DEBUG)
+var	lastUnlockTick;
+@endif
+kag.quickMenu.locked	= false;
+function lockQuickMenu()
+{
+	if(!kag.quickMenu.locked)
+	{
+		kag.quickSaveMenuItem.enabled = kag.quickLoadMenuItem.enabled = kag.quickMenuItem.enabled = false;
+		@if(_CAPTION_TRACE_INFO_)
+		kag.updateInfoMenuText();
+		@endif
+		kag.quickMenu.locked = true;
+@if(0)
+		dm("   quick menu locked.(unlock interval: "+(System.getTickCount() - lastUnlockTick)+" ms)");
+@endif
+	}
+}
+
+var	onceIgnoreUnlockQuickMenu	= false;	//	一度だけ unlock を無視する
+function unlockQuickMenu()
+{
+//	dmt("unlockQuickMenu(): "+kag.quickMenu.locked, !f.doArchiveMenu, !onceIgnoreUnlockQuickMenu);
+	if(kag.quickMenu.locked && !f.doArchiveMenu && !onceIgnoreUnlockQuickMenu)
+	{
+		kag.quickSaveMenuItem.enabled = kag.quickLoadMenuItem.enabled = kag.quickMenuItem.enabled = true;
+		@if(_CAPTION_TRACE_INFO_)
+		kag.updateInfoMenuText();
+		@endif
+		kag.quickMenu.locked = false;
+@if(0)
+		dmt("   quick menu unlocked.");
+		lastUnlockTick	= System.getTickCount();
+@endif
+	}
+	onceIgnoreUnlockQuickMenu	= false;
+}
+kag.tagHandlers.lockquickmenu	= function(elm) { lockQuickMenu(); return 0; } incontextof kag;
+kag.tagHandlers.unlockquickmenu	= function(elm) { unlockQuickMenu(elm.force); return 0; } incontextof kag;
+
+//	入力を受け付けるときだけクイックメニューを開けるようにする
+kag.runHandlers.add(lockQuickMenu);
+kag.stableHandlers.add(unlockQuickMenu);
+
+//自動再生のモードを一時的にユーザーには見えない形で中断する
+function pauseAutoMode()
+{
+	if( kag.autoMode )
+	{
+		tf.pauseAutoMode = true;
+		kag.cancelAutoMode(false);
+	}
+}
+
+//自動再生モードをユーザーには見えない形で再開する
+function resumeAutoMode()
+{
+	if( ! kag.autoMode && typeof tf.pauseAutoMode != "undefined" && tf.pauseAutoMode )
+		kag.enterAutoMode(false);
+	delete tf.pauseAutoMode;
+}
+kag.tagHandlers.pauseautomode	= function(elm) { pauseAutoMode(); return 0; } incontextof kag;
+kag.tagHandlers.resumeautomode	= function(elm) { resumeAutoMode(); return 0; } incontextof kag;
+
+//	全てのメニューアイテムをmuteする
+function muteAllMenuItem(tdata, mute=true, itemmode)
+{
+	var	creates	= tdata[1];
+	for(var i=0; i<creates.count; i++)
+	{
+		setCreateProp(creates[i], "mute", mute);
+		setCreateProp(creates[i], "itemMode", itemmode) if itemmode !== void;
+	}
+}
+
+function useTJSIfExists(storage)
+{
+	Scripts.execStorage(storage) if Storages.isExistentStorage(storage);
+}
+
+useTJSIfExists("systemwindow.tjs");	//	YesNoウィンドウ
+useTJSIfExists("titlemenu.tjs");		//	タイトル/EXTRAメニュー
+useTJSIfExists("rclickmenu.tjs");		//	右クリックメニュー
+useTJSIfExists("quickloadmenu.tjs");	//	クイックロードメニュー
+useTJSIfExists("savemenu.tjs");		//	セーブメニュー
+useTJSIfExists("loadmenu.tjs");		//	ロードメニュー
+useTJSIfExists("archivemenu.tjs");		//	書庫メニュー
+useTJSIfExists("cgmenu.tjs");			//	CG閲覧メニュー
+useTJSIfExists("soundmenu.tjs");		//	サウンドメニュー
+useTJSIfExists("configmenu.tjs");		//	コンフィグメニュー
+useTJSIfExists("backlogmenu.tjs");		//	テキスト履歴メニュー
+useTJSIfExists("teatimemenu.tjs");		//	TeaTime
+
+/*
+ *	キー割り当て
+ */
+@set(CHECK_CHANGE_ENABLEDSHORTCUTKEY=0)
+@if(!CHECK_CHANGE_ENABLEDSHORTCUTKEY&&!_CAPTION_TRACE_INFO_)
+var enabledShortcutKey	= true;	//	ショートカットキー
+@endif
+@if(CHECK_CHANGE_ENABLEDSHORTCUTKEY||_CAPTION_TRACE_INFO_)
+var	_enabledShortcutKey = true;
+property enabledShortcutKey
+{
+	setter(v)
+	{
+		if(enabledShortcutKey !== v)
+		{
+			@if(CHECK_CHANGE_ENABLEDSHORTCUTKEY)
+			dmt("enabledShortcutKey: "+enabledShortcutKey+" → "+v);
+			@endif
+			_enabledShortcutKey	= v;
+			@if(_CAPTION_TRACE_INFO_)
+			kag.updateInfoMenuText();
+			@endif
+		}
+	}
+	getter	{ return _enabledShortcutKey; }
+}
+@endif
+/*
+var	_enabledShortcutKey = true;
+property enabledShortcutKey
+{
+	setter(v)
+	{
+		if(enabledShortcutKey !== v)
+		{
+			dmt("enabledShortcutKey: "+enabledShortcutKey+" → "+v);
+			_enabledShortcutKey	= v;
+		}
+	}
+	getter	{ return _enabledShortcutKey; }
+}
+*/
+//	パッドの操作でテキスト履歴を開くとき、制限を設ける
+kag.padKeyMap[VK_PAD3]	= function(ev)
+{
+	showHistoryByKey(this) if enabledShortcutKey;	//	ショートカットキーが有効な時だけ
+} incontextof kag;
+function originalMenuKeyDown(key, shift)
+{
+	if(tf.do_askyesno)	//Yes/Noダイアログが出ている時はショートカットキー無効
+		return false;
+
+	if( kag.skipMode == 3 || kag.autoMode )
+	{
+@if(DEBUG)
+		dm("originalMenuKeyDown : return false , skipMode=" + kag.skipMode + " autoMode=" + kag.autoMode);
+@endif
+		return false;
+	}
+
+	if(key == VK_F4 && !shift)
+	{
+		//	画面サイズ切り替え(ウィンドウ⇔フルスクリーン)
+		if(kag.fullScreened)
+			kag.onWindowedMenuItemClick();
+		else
+			kag.onFullScreenMenuItemClick();
+	}
+
+	if(!enabledShortcutKey)
+	{
+@if(DEBUG)
+		dm("originalMenuKeyDown : return false , enableShortcutKey=false");
+@endif
+		return true;
+	}
+	//	Return,Space,Esc以外のキー処理を無効化
+	if(key == VK_RETURN || key == VK_SPACE || key == VK_ESCAPE)
+		return false;
+	// トランジション付きのFGタグなどが多数並んだスクリプトを実行中にシステム系画面が出ようとすると表示がおかしくなるので抑止
+	if(typeof global.stablecontrol_object != "undefined" && !stablecontrol_object.inStable)
+		return false;
+	else if(!kag.inStable)
+		return false;
+
+//	dm("originalMenuKeyDown("+key+", "+shift+"): Alt = "+(shift & ssAlt));
+	if(!shift)
+	{
+		switch(key)
+		{
+		case VK_F12:
+			kag.loadQuickFromLast() if !f.doArchiveMenu;	//	最後に保存したクイックセーブデータをロードする
+			return true;
+		case VK_F11:
+			kag.saveQuickToEmpty() if !f.doArchiveMenu;	//	空の領域(なければ最も古いデータを破棄)にクイックセーブする
+			return true;
+		case VK_Q:
+		case VK_F9:
+			openQuickMenu() if !f.doArchiveMenu;			//	クイックロードメニューを開く
+			return true;
+		case VK_S:
+		case VK_F2:
+			openSaveMenu();			//	セーブメニューを開く
+			return true;
+		case VK_L:
+		case VK_F3:
+			openLoadMenu();			//	ロードメニューを開く
+			return true;
+		case VK_C:
+			openConfigMenu();			//	コンフィグメニューを開く
+			return true;
+		case VK_P:
+			if(f.doArchiveMenu)
+				askGotoArchive();	//	アーカイブタイトルへ戻る
+			else
+				askGotoTitle();		//	タイトルへ戻る
+			return true;
+		// F5〜F7までVK_R,VK_A,VK_Fは本来KAG側で処理されるので不要だがバックログから戻った直後にKAGが何故か反応しない
+		case VK_R:
+		case VK_F5:
+			kag.showHistoryByKey();		//	テキスト履歴
+			return true;
+		case VK_DELETE:
+		case VK_BACK:
+			kag.switchMessageLayerHiddenByUser();	//	グラフィックのみ表示
+			return true;
+@if(DEBUG & 0)
+		case VK_D:
+			openArchiveMenu();			//	アーカイブメニューを開く
+			return true;
+		case VK_G:
+			openCGMenu();				//	CGメニューを開く
+			return true;
+		case VK_B:
+			openSoundMenu();			//	サウンドメニューを開く
+			return true;
+		case VK_T:
+			kag.processCall("teatime.ks");	//	ティータイムを開く
+			return true;
+
+@endif
+		}
+	}
+	else if(shift == ssAlt)
+	{
+		switch(key)
+		{
+@if(DEBUG)
+		case VK_F8:	//	アーカイブ用のシーン画像を作成
+			kag.tagHandlers.createscenethumbnail();
+			return true;
+@endif
+@if(DEBUG)
+		case VK_F12:
+			throw new Exception("Alt+F12キーで例外を発生させました(デバッグ機能)");
+			break;
+@endif
+		}
+	}
+	return false;
+}
+kag.addHook("keyDown", originalMenuKeyDown);
+
+@if(DEBUG)
+with(kag.debugMenu)
+{
+	.add(new MenuItem(kag, "-"));
+	.add(new KAGMenuItem(kag, "クイックセーブ", 0, kag.saveQuickToEmpty, false));
+	.add(new KAGMenuItem(kag, "クイックロード", 0, kag.loadQuickFromLast, false));
+}
+kag.tagHandlers.createscenethumbnail	= function()
+{
+	popupMessage("アーカイブ用シーン画像を作成しました: "+conductor.curStorage);
+	//	保存先ディレクトリを作成
+	var	dir	= System.exePath + "data/others/scenethumbnail/";
+	Storages.createDirectory(dir) if !Storages.isExistentDirectory(dir);
+
+	//	メッセージウィンドウを隠す
+	var	vis	= [];
+	for(var i=0; i<fore.messages.count; i++)
+		vis[i] <-> fore.messages[i].visible;
+
+	//	サムネイルを保存
+	lockSnapshot();
+	var	layer	= new Layer(kag, primaryLayer);
+	with(layer)
+	{
+		.setImageSize(184, 104);
+		.setSizeToImageSize();
+		.type	= ltOpaque;
+		.stretchCopy(0, 0, .width, .height, snapshotLayer, 0, 0, snapshotLayer.imageWidth, snapshotLayer.imageHeight, stLinear);
+//		.stretchCopyAA(0, 0, .width, .height, snapshotLayer, 0, 0, snapshotLayer.imageWidth, snapshotLayer.imageHeight);
+		.face	= dfMask;
+		.fillRect(0, 0, .width, .height, 0xffffffff);	//	なぜか半透明部分が発生するので、マスクを塗りつぶす
+		.saveLayerImageTlg5(dir + Storages.chopStorageExt(Storages.extractStorageName(conductor.curStorage)) + ".tlg");
+	}
+	invalidate layer;
+	unlockSnapshot();
+
+	//	メッセージウィンドウを元に戻す
+	for(var i=0; i<fore.messages.count; i++)
+		vis[i] <-> fore.messages[i].visible;
+	return 0;
+} incontextof kag;
+@endif
+
+//	クリアしているか(全て読んでいるか)どうか
+property isAllCleared
+{
+	getter
+	{
+		var	alls	= [ "7-ex", "8.5", "8-ex", "wik_fin", "nz1", "nz2", "nz3", "nz4", "nz5", "nz6" ];
+		for(var i=0; i<alls.count; i++)
+		{
+//			dm(i+": "+alls[i]+" = "+sf.trail[alls[i]]);
+			if(sf.trail[alls[i]] < 1)
+				return false;
+		}
+		return true;
+	}
+}
+
+@endif

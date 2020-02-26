@@ -1,0 +1,3507 @@
+﻿/*-----------------------------------------------------------------------------
+/	Copyright (C) TYPE-MOON All Rights Reserved.
+/		メニューを実装するためのプラグイン
+/----------------------------------------------------------------------------*/
+@if(__MENU_PLUGIN_DEFINED__==0)
+@set(__MENU_PLUGIN_DEFINED__=1)
+
+//	メニューアイテムを破棄せず、残したままにするか(多数のMenuItemLayerの生成に時間が掛かるので)
+//	savemenu で 260 → 170 に改善(MenuItemLayer 一つに付き、2ms→0.2ms と変化)
+//	※	直前に利用されていたレイヤーに対するイベントが、新しいレイヤーに対して発生するバグが存在するため、
+//		イベントをリセットする処理が見つからない限り、利用不可
+@set(POOL_MENUITEMS=1)
+
+//	メニューアイテムの利用履歴を names に記録する
+@set(STORE_MENUITEM_HISTORY=0)
+
+//	(テスト用)自動高速クリックを有効にする
+@set(USE_RAPID_CLICK=0)		//	中ボタンを押している間、RAPID_CLICK_TYPE 指定のボタンをクリックし続ける(100ms単位)
+@set(RAPID_CLICK_TYPE=0)	//	0:左クリック,1:右クリック,2:右左交互
+
+//	処理時間を計測するかどうか
+@set(MENUITEM_COUNT_TIME=0)
+
+Scripts.execStorage("BasePlugin.tjs");
+Scripts.execStorage("asyncCaller.tjs") if Storages.isExistentStorage("asyncCaller.tjs");
+Scripts.execStorage("doLater.tjs") if Storages.isExistentStorage("doLater.tjs");
+
+//	メニューアイテム用レイヤーのモード(itemMode)
+global.imParts	= 0;		//	パーツ(全透過でイベントに反応しない)
+global.imButton	= 1;		//	ボタン(不透過でonMouseEnter,onMouseLeave,onMouseDown時にviewareaNoを変更、押下時の動作は適当に)
+global.imOther	= 2;		//	その他(半透過で適当にイベントを処理する)
+global.imImageButton = 3;	//	画像ボタン(半透過であること以外は、ボタンと同じ)
+global.imFilter	= 4;		//	フィルター(不透過でイベントに反応しない)
+global.imLessarButton = 5;	//	ボタンのようなもの(不透過でイベントに反応するが、ボタンのように複数の状態を変化させない)
+global.imOtherOpaque = 6;	//	不透過なその他(適当にイベントを処理する)
+
+global.imButtonMode	= [ false, true, false, true, false, false ];	//	itemMode がボタンかどうか
+
+var	PRIMARY		= "primary";
+var	menuPages	= [ "fore", "back", PRIMARY ];
+
+class MenuPlugin extends BasePlugin
+{
+	var	name	= "menu";
+	var	title	= "メニュー";
+
+	var	params	= [
+//		[ 名称,		規定値,	範囲(配列/型),	説明 ],
+		[ "lclick",	void,	"String",		"左クリック押下字に実行されるスクリプト/移動先フレーム" ],
+		[ "rclick",	void,	"String",		"右クリック押下時に実行されるスクリプト/移動先フレーム" ],
+		[ "script",	void,	"String",		"このフレームで実行されるスクリプト" ]
+	];
+	var	storeKeys		= [ "lclick", "rclick", "script" ];	//	全体の、保存するパラメータ
+
+@if(IS_TLE)
+	var	hintLayer;	//	現在のフレームで設定されているスクリプトを表示する
+
+	var	_lclick;	//	左クリック押下時に実行されるスクリプト/移動先フレーム
+	property lclick
+	{
+		setter(v)	{ if(v !== lclick) { _lclick = v; updateHintLayer(); } }
+		getter		{ return _lclick; }
+	}
+
+	var	_rclick;	//	右クリック押下時に実行されるスクリプト/移動先フレーム
+	property rclick
+	{
+		setter(v)	{ if(v !== rclick) { _rclick = v; updateHintLayer(); } }
+		getter		{ return _rclick; }
+	}
+
+	var	_script;	//	実行されるスクリプト
+	property script
+	{
+		setter(v)	{ if(v !== script) { _script = v; updateHintLayer(); } }
+		getter		{ return _script; }
+	}
+
+	function omitStr(str, len=64)
+	{
+		if(str != "")
+		{
+			str	= (string str).replace(/\\t/, "\t").replace(/\\n/, "\n");
+			str	= str.substr(0, len-2)+"..." if str.length > len;
+		}
+		return str;
+	}
+
+	var	lastText;
+	function updateHintLayer()
+	{
+		var	lc = omitStr(lclick), rc = omitStr(rclick), sc = omitStr(script);
+		var	txt	= (lc != "" ? "lclick = "+lc : "");
+		txt	+= (txt != "" ? " / " : "") + "rclick = "+rc if rc != "";
+		txt	+= (txt != "" ? " / " : "") + "script = "+sc if sc != "";
+		if(lastText == txt)
+		{
+			hintLayer.visible	= true if hintLayer != void;
+			return;
+		}
+		if(txt == "")
+		{
+			hintLayer.visible	= false if hintLayer != void;
+			return;
+		}
+		if(hintLayer == void)
+		{
+			with(hintLayer = new global.Layer(kag.canvas.window, kag.canvas))
+			{
+				.name	= "MenuPlugin hint";
+				.hitThreshold	= 256;
+				.absolute		= 1000000000;
+				.visible		= true;
+			}
+		}
+		with(hintLayer)
+		{
+			.font.height	= 12;
+			.setImageSize(.font.getTextWidth(txt) + 4, .font.getTextHeight(txt) + 4);
+			.setSizeToImageSize();
+			.fillRect(0, 0, .width, .height, 0xFF000000);
+			.fillRect(1, 1, .width-2, .height-2, 0xFFFF8000);
+			.drawText(2, 2, txt, 0xFFFFFF,, false);
+			.opacity	= 192;
+			.visible	= true;
+			.setPos(.parent.width - .width, .parent.height - .height);	//	右下
+		}
+		lastText	= txt;
+	}
+@endif
+@if(!IS_TLE)
+	var	_lclickstack	= [];
+	var	_rclickstack	= [];
+	function pushStack(stack, value)	{ stack.add(value); }
+	function popStack(stack)
+	{
+		var	value, pos = stack.count - 1;
+		if(pos >= 0)
+		{
+			value = stack[pos];
+			stack.erase(pos);
+		}
+		return value;
+	}
+
+	var	_lclick;	//	左クリック押下時に実行されるスクリプト/移動先フレーム
+	property lclick
+	{
+		setter(v)
+		{
+			v	= (string v).replace(/\\[trn]/, "");
+			pushStack(_lclickstack, _lclick);
+			setLClick(v);
+		}
+		getter	{ return _lclick; }
+	}
+	function setLClick(v)
+	{
+		//	kag.leftClickHook にメソッドを設定していると、通常の左クリック処理を行う前に処理できるので
+		var	pos	= kag.leftClickHook.find(executeByLeftClick);
+		if(v == "")
+			kag.leftClickHook.erase(pos) if pos >= 0;
+		else if(pos < 0)
+			kag.leftClickHook.add(executeByLeftClick);	//	未登録なので追加
+//		dm("lclick: "+_lclick+" → "+v+" / "+Scripts.getTraceString());
+		_lclick	= v;
+	}
+	function popLClick()
+	{
+		setLClick(popStack(_lclickstack));
+	}
+
+	var	_rclick;	//	右クリック押下時に実行されるスクリプト/移動先フレーム
+	property rclick
+	{
+		setter(v)
+		{
+			v	= (string v).replace(/\\[trn]/, "");
+			pushStack(_rclickstack, _rclick);
+			setRClick(v);
+		}
+		getter	{ return _rclick; }
+	}
+	function setRClick(v)
+	{
+		//	kag.rightClickHook にメソッドを設定していると、通常の右クリック処理を行う前に処理できるので
+		var	pos	= kag.rightClickHook.find(executeByRightClick);
+		if(v == "")
+			kag.rightClickHook.erase(pos) if pos >= 0;
+		else if(pos < 0)
+			kag.rightClickHook.add(executeByRightClick);	//	未登録なので追加
+//		dmt("rclick: \""+_rclick+"\" → \""+v+"\"");
+		_rclick	= v;
+	}
+	function popRClick()
+	{
+		setRClick(popStack(_rclickstack));
+	}
+@if(DEBUG)
+	function dispClickStack()
+	{
+		dm("        old <---------------> new");
+		dm("LClick: "+_lclickstack.join(", ")+" / "+_lclick);
+		dm("RClick: "+_rclickstack.join(", ")+" / "+_rclick);
+	}
+@endif
+	function setClick(l = ";", r = ";")	//	";" = 何もしたくないが、通常のクリックもさせたくない時用
+	{
+//		dmt("Menu_object.setClick("+l+", "+r+")");
+		lclick	= l;
+		rclick	= r;
+@if(0)
+		dispClickStack();
+@endif
+	}
+	function resetClick()
+	{
+//		dmt("Menu_object.resetClick()");
+		popLClick();
+		popRClick();
+@if(0)
+		dispClickStack();
+@endif
+		//	閉じるタイミングで、右クリックによって無効になっている可能性のある
+		//	文字フェードアウト機能を有効に戻す
+		setLastMessageEffect(true) if typeof global.setLastMessageEffect != "undefined";
+	}
+	function clearClick()
+	{
+//		dmt("Menu_object.clearClick()");
+		_lclickstack.clear();
+		_rclickstack.clear();
+		setLClick("");
+		setRClick("");
+	}
+	function storeClick()
+	{
+		this.clickdata	= [ [], [], _lclick, _rclick ];
+		clickdata[0].assign(_lclickstack);
+		clickdata[1].assign(_rclickstack);
+	}
+	function restoreClick()
+	{
+		if(typeof this.clickdata != "undefined")
+		{
+			_lclickstack.assign(clickdata[0]);
+			_rclickstack.assign(clickdata[1]);
+			setLClick(clickdata[2]);
+			setRClick(clickdata[3]);
+			delete this.clickdata;
+			return true;	//	リストアできたとき
+		}
+		return false;
+	}
+	function clearStoredClick()
+	{
+		//	Store したクリックスタックを破棄する
+		if(typeof this.clickdata != "undefined")
+			delete this.clickdata;
+	}
+
+	function executeByLeftClick()
+	{
+		asyncCaller.callOnce(doExecuteByLeftClick);
+		return true;
+	}
+	function doExecuteByLeftClick()
+	{
+		if(/^[0-9]+$/.test(lclick))
+			kag.tagHandlers.playtimeline(%[scene:lclick]);
+		else if(lclick != "")
+			lclick!;
+//		lclick	= "";	//	実行されるのは一回のみ
+		return true;
+	}
+
+	function executeByRightClick()
+	{
+		asyncCaller.callOnce(doExecuteByRightClick);
+		return true;
+	}
+	function doExecuteByRightClick()
+	{
+//		dm("MenuPlugin.executeByRightClick: "+rclick);
+		if(/^[0-9]+$/.test(rclick))
+			kag.tagHandlers.playtimeline(%[scene:rclick]);
+		else if(rclick != "")
+			rclick!;
+//		rclick	= "";	//	実行されるのは一回のみ
+		return true;
+	}
+
+	function executeByKeyDown(key, shift)
+	{
+		//	lclick や rclick が設定されているときだけ処理
+		switch(key)
+		{
+		case VK_SPACE:
+		case VK_RETURN:
+			if(lclick != "")
+				return executeByLeftClick();
+			break;
+		case VK_ESCAPE:
+		case VK_DELETE:
+		case VK_BACK:
+			if(rclick != "")
+				return executeByRightClick();	//	一度のキー押下で複数回 executeByRightClick が呼ばれることがあるので、まとめて一度だけ処理
+			break;
+		}
+		return false;
+	}
+
+	property script
+	{
+		setter(v)
+		{
+			if(v != "" && v != '"')
+			{
+				v	= v.replace(/\\[trn]/, "");
+				dm("▼ playScript: "+v);
+				try
+					v!;
+				catch(e)
+					dm("\""+v+"\": ERROR = "+e.message);
+			}
+		}
+		getter		{ return ""; }
+	}
+@endif
+
+	var	reservedFocus	= void;		//	誰かがフォーカスを受け取るときに譲り渡して欲しいレイヤー
+
+	var	pools	= [];
+	var	initpoolcount	= 0;	//	MenuItem 予備数
+
+	function MenuPlugin()
+	{
+		super.BasePlugin(...);
+
+		for(var i=0; i<menuPages.count; i++)
+			page	= menuPages[i];
+@if(!IS_TLE)
+		kag.keyDownHook.add(executeByKeyDown);	//	キー処理をフック
+
+		//	primary に対して、MenuItemLayerをプールしておく
+@if(POOL_MENUITEMS)
+		var	item;
+		for(var i=0; i<initpoolcount; i++)
+		{
+			pools.add(item = new MenuItemLayer(kag, kag.primaryLayer, "MenuItem[pool]", void));
+			item.enabled= false;
+			item.pool	= true;		//	プールされているアイテム
+		}
+//		countPoolItem();
+@endif
+@endif
+	}
+
+	function finalize()
+	{
+		//	通常のクリアだとレイヤーが残ってしまうので、使っていたレイヤーをすべて破棄する
+		clearMenuItems(true);
+		super.clear();
+		super.finalize();
+	}
+
+	function clear()
+	{
+	}
+
+	property visible { setter(v){} getter { return true; } }
+
+	function getInitializedPage()
+	{
+		var	elm	= super.getInitializedPage();
+		with(elm)
+			.menuitems	= [];
+		return elm;
+	}
+@if(DEBUG)
+	function countPoolItem()
+	{
+		var	layers	= kag.primaryLayer.children;
+		var	cnt	= 0;
+		for(var i=0; i<layers.count; i++)
+		{
+			if(layers[i].name == "MenuItem[pool]")
+				cnt++;
+		}
+		dm("pools.count = "+pools.count+" / real = "+cnt);
+	}
+@endif
+	function getMenuItem(page, id)
+	{
+		var	base	= page != PRIMARY ? kag[page != "back" ? "fore" : page].base : kag.primaryLayer;
+		var	item;
+@if(POOL_MENUITEMS)
+		//	無効化されたメニューアイテムでないか、今一度確認
+		while(pools.count > 0)
+		{
+			item	= pools[0];
+			pools.erase(0);
+//			dm("erase pools["+item+"]: "+pools.count);
+			if(item isvalid)
+				break;
+		}
+		if(item != void)
+		{
+			with(item)
+			{
+//				dm("getMenuItem("+base.name+", "+id+"): "+item.name);
+				.parent	= base;
+				.name	= "MenuItem["+id+"]";
+				.id		= id;
+				.actionInfo.isPause	= false;	//	一時停止させられていることがあるので
+				.enabled= true;
+				delete .pool;
+			}
+		}
+		else
+@endif
+		{
+			item	= new MenuItemLayer(kag, base, "MenuItem["+id+"]", id);
+//			dm("getMenuItem("+base.name+", "+id+"): new");
+		}
+//		countPoolItem();
+		return item;
+	}
+
+	function clearMenuItem(item)
+	{
+		if(item != void && item isvalid && Scripts isvalid)
+		{
+//			dm("clearMenuItem("+item+")");
+@if(POOL_MENUITEMS)
+			var	cn	= Scripts.getClassNames(item);
+			if(cn[0] == "MenuItemLayer" && (typeof item.noNormalMenuItem == "undefined" || !item.noNormalMenuItem))
+			{
+//				dm("clearMenuItem("+item+"): index = "+pools.find(item));
+				if(pools.find(item) >= 0)
+					return;	//	二重にクリアしようとしていた
+//				dmt("clearMenuItem("+item.name+"): "+item);
+				if(pools.count >= initpoolcount)
+				{
+//					dm("invalidate: "+item.name);
+//					dmt("clearMenuItem("+item.name+"/"+(visibleChild ? "fore" : "back")+"): invalidate");// / "+item.names.join(", "));
+					invalidate item;	//	初期準備数を超えた分は破棄する
+				}
+				else
+				{
+//					dmt("clearMenuItem("+item.name+"/"+(visibleChild ? "fore" : "back")+"): pool");// / "+item.names.join(", "));
+					with(item)
+					{
+						.eraseFromMenuItems();	//	menuitems リストから取り除く
+						.parent	= kag.primaryLayer;
+@if(STORE_MENUITEM_HISTORY)
+						.names.add(.name);
+@endif
+						.name	= "MenuItem[pool]";
+						.id		= void;
+						.visible= false;
+						delete .pressse; delete .enterse;
+						delete .checkincursor if typeof .checkincursor != "undefined";
+						.pool	= true;		//	プールされているメニューアイテム
+						.stopRepeat();	//	リピートしていたら停止する
+						.cont	= false;
+						kag.stopAction(item);
+						.clearDrawText();
+						.clearDrawImage();
+						.freeImage();
+						.invalidateOrgimage();
+						.invalidateByInvisible	= false;
+					}
+					pools.add(item);
+//					dm("add pools["+item+"]: "+pools.count);	countPoolItem();
+				}
+			}
+			else
+@endif
+				invalidate item;
+		}
+	}
+@if(DEBUG)
+	function dispProps(prop)
+	{
+		var	menuitems	= getprop("menuitems");
+		for(var i=0; i<menuitems.count; i++)
+		{
+			if(menuitems[i] != void)
+				dm(menuitems[i].name+"."+prop+" = \""+(typeof menuitems[i][prop] != "undefined" ? menuitems[i][prop] : "undefined")+"\"");
+		}
+	}
+@endif
+	function clearMenuItems(doInvalidate=false)
+	{
+		var	keys	= getAllItems();
+		for(var i=0; i<keys.count; i+=2)
+		{
+//			dm(keys[i]+" = "+keys[i+1]);
+			if(keys[i+1] == void || keys[i+1].menuitems == void)
+				continue;
+			var	items	= keys[i+1].menuitems;
+			for(var i=0; i<items.count; i++)
+			{
+				if(items[i] == void)
+					continue;
+//				dm("clear: "+items[i].name);
+				if(doInvalidate)
+					invalidate items[i];
+				else
+					clearMenuItem(items[i]);
+			}
+			keys[i+1].menuitems.clear();
+		}
+	}
+
+	function setAllContrary(flag=false)
+	{
+		var	menuitems	= getMenuItems();
+		for(var i=0; i<menuitems.count; i++)
+		{
+			if(menuitems[i] != void && menuitems[i] isvalid)
+				menuitems[i].cont	= flag;
+		}
+	}
+
+	function clear()
+	{
+		//	初期化のつもりで stopallplugin から呼び出されるため、ここではメニューアイテムをプールに入れるのみ
+		clearMenuItems();
+	}
+
+	//	elm.menuitem として名前を指定する
+
+	function getLayerFromElm(elm, prefix)
+	{
+@if(0)
+initMicro(5);
+@endif
+		var	layer	= super.getLayerFromElm(...);
+		if(layer == void && elm.menuitem !== void)
+		{//	引数にしたがって、メニューアイテムとして管理しているレイヤーを返す
+			page	= elm.page;
+			//	menuitem の指定が -1 とかなら、storage が同じレイヤーを探して渡す
+			var	menuitems	= getprop("menuitems", elm.page);
+			if(menuitems == void)
+				return layer;
+			if(elm.origin != void)
+				return elm.origin;
+			if(elm.menuitem == -1)
+			{
+				var	crawlfunc	= function(menuitems, chkfunc, elm)
+				{
+					for(var i=menuitems.count-1; i>=0; i--)
+					{
+						//	選択済みレイヤーのリストに載っていたら、スルー
+						var	item	= menuitems[i];
+						if(elm.chose != void && elm.chose.find(item) >= 0)
+							continue;
+						if(item != void && chkfunc(item, elm))
+						{
+							elm.menuitem	= i;
+							return item;
+						}
+					}
+					return void;
+				} incontextof this;
+				//	name が同じ
+				if(elm.name != "")
+					layer	= crawlfunc(menuitems, function(l, elm) { return l.name == elm.name; }, elm);
+
+				//	storage が同じ
+				if(layer == void && elm.storage != "")
+					layer	= crawlfunc(menuitems, function(l, elm) { return l.storage == elm.storage; }, elm);
+@if(0)
+dispMicro("search item", 5);
+@endif
+			}
+			else if(elm.menuitem >= 0)
+				layer	= menuitems[+elm.menuitem];
+			if(layer == void)
+			{
+				var	i;
+				for(i=0; i<menuitems.count; i++)
+				{
+					if(menuitems[i] == void)
+						break;
+				}
+				elm.menuitem	= i;
+//				layer	= new MenuItemLayer(kag, base, "MenuItem["+elm.menuitem+"]", elm.menuitem);	//	新規
+				layer	= getMenuItem(elm.page, elm.menuitem);
+//				dm("getLayerFromElm: "+layer.name+" → "+elm.name);
+@if(0)
+dispMicro("create item", 5);
+@endif
+				layer.plugin	= this;
+				layer.menuitems	= menuitems;
+//				dmt("getLayerFromElm: menuitems["+elm.menuitem+"] = "+layer);
+				menuitems[+elm.menuitem]	= layer;
+			}
+			else
+			{
+				layer.id	= elm.menuitem;				//	変更された可能性があるので
+				layer.invalidateByInvisible	= false;	//	非表示になっても破棄しないように
+				if(notused)
+					delete notused[layer];	//	「使っていない」リストから取り除く
+			}
+			layer.name		= elm.name if elm.name != "";
+			layer.enabled	= true;	//	とりあえず有効な状態にしておく
+		}
+		return layer;
+	}
+
+	function getLayerPageFromElm(elm, backlay)
+	{
+		var	layer	= super.getLayerPageFromElm(...);
+		if(elm.page == "primary")
+		{
+			//	primary 下のレイヤーはページに所属していないので
+			return %[assignComp:function(){}, beginTransition:function(){}, ];
+		}
+		if(layer == void && elm.menuitem !== void)
+		{
+			//	引数に沿って、プラグイン管理下にあるレイヤーのページを返す
+			page	= elm.page;
+			var	menuitems	= getprop("menuitems", backlay ? "back" : "fore");
+			return menuitems[+elm.menuitem];
+		}
+		return layer;
+	}
+
+	function getLayerFromObject(object)
+	{
+		//	指定のオブジェクトがプラグイン管理下にあるレイヤーの場合、そのレイヤーを示す引数を返す
+		var	elm	= super.getLayerFromObject(object);
+		if(elm == void)
+		{
+			var	lastpage	= page;
+			for(var i=0; i<menuPages.count; i++)
+			{
+				page	= menuPages[i];
+				var	menuitems	= getprop("menuitems", page);
+				if(menuitems == void)
+					continue;
+				for(var j=0; j<menuitems.count; j++)
+				{
+					if(menuitems[j] == object)
+						return %[page:page, menuitem:j];
+				}
+			}
+			page	= lastpage;
+		}
+		return elm;
+	}
+
+	//	特殊なメニューアイテムを作成
+	function addMenuItem(elm)
+	{
+@if(MENUITEM_COUNT_TIME)
+initMicro(3);
+@endif
+		with(elm)
+		{
+//			dm("addMenuItem("+.class+")");
+			var	layer;
+			page	= .page;
+			var	menuitems	= getprop("menuitems", .page);
+			var	id;
+			if(.id !== void)
+			{
+				id	= +.id;
+				layer	= menuitems[id];
+				if(layer != void)
+				{
+					if(!(layer instanceof .class))
+					{
+						dm("別クラスのオブジェクト("+layer+")が "+id+" に割り当てられているため、追加できません。");
+						return false;
+					}
+					else
+					{
+						layer.id	= id;
+						layer.invalidateByInvisible	= false;
+						if(notused)
+							delete notused[layer];
+					}
+				}
+			}
+			else if(.name != void)
+			{
+				layer	= find(.name, page);
+				id		= menuitems.count;
+			}
+			else
+			{
+				for(id=0; id<menuitems.count; id++)
+				{
+					if(menuitems[id] == void)
+						break;
+				}
+			}
+@if(MENUITEM_COUNT_TIME)
+dispMicro("addMenuItem["+.name+"]: find menu item", 3);
+@endif
+			if(layer == void)
+			{
+				var	base= .page != "primary" ? kag[.page != "back" ? "fore" : .page].base : kag.primaryLayer;
+				menuitems[id]	= void;	//	次の new の中で再度 addMenuItem が呼ばれると、その addMenuItem で追加されたレイヤーに上書きされるため、場所を予約する
+				layer	= new (.class!)(kag, base, "MenuItem["+id+"]("+.class+")", id);
+				layer.plugin	= this;
+				layer.menuitems	= menuitems;
+//				dm("addMenuItem: menuitems["+id+"] = "+layer);
+				menuitems[id]	= layer;
+			}
+			else if(.stopaction)
+			{
+				layer.ibv	= false;
+				layer.actionInfo.stopAction();
+			}
+@if(MENUITEM_COUNT_TIME)
+dispMicro("addMenuItem["+.name+"]: get menu item ", 3);
+@endif
+			layer.enabled	= true;
+			layer.ibv		= false;	//	ibv が設定される前に opacity=255 とかしてしまうと消えてしまうので
+			delete .id;
+			delete .page;
+			delete .class;
+			delete .tagname;
+			delete .stopaction;
+
+			//	その他のプロパティを設定
+			var	keys	= [];
+			keys.assign(elm);
+			var	numreg	= /^[0-9\.\-+]+$/;
+			for(var i=0; i<keys.count; i+=2)
+			{
+				var	val	= keys[i+1];
+//				dm(layer.name+": "+keys[i]+" = "+val);
+				if(numreg.test(val))
+					layer[keys[i]]	= +val;
+				else
+					layer[keys[i]]	= val;
+			}
+@if(MENUITEM_COUNT_TIME)
+dispMicro("addMenuItem["+.name+"]: set properties", 3);
+@endif
+			return layer;
+		}
+	}
+
+	//	指定のデータでオブジェクトを作成/割り当てし、アクションを実行する
+	function playTimeline(page, creates, actions, offset=%[], ignore=%[], isclose=false, stopaction=false, contlayer=false, norapid=false)
+	{
+@if(MENUITEM_COUNT_TIME)
+initMicro(3);
+@endif
+//		dm("playTimeline("+page+", "+creates.count+", isclose="+isclose+", stopaction="+stopaction+")");
+		this.page	= page;
+		stopaction	= true if isclose;
+		var	menuitems	= getprop("menuitems", page);
+		var	totaltime	= 0;	//	タイムラインの継続時間
+		for(var i=0; i<creates.count; i++)
+		{
+			//	メニューアイテム以外なら、ここでは実行しない
+			var	initdata= creates[i];
+			if(initdata[0] != "menuitem")
+				continue;
+
+			//	無理リストに登録されているなら、実行しない
+			var	name	= initdata[1];
+			if(ignore[name])
+				continue;
+
+			//	場所を確保して作成
+			var	id, space;
+			for(id=0; id<menuitems.count; id++)
+			{
+//				dm("menuitems["+id+"] = "+menuitems[id]) if menuitems[id] != void;
+				if(menuitems[id] == void || !(menuitems[id] isvalid))
+					space	= id if space === void;
+				else if(menuitems[id].name == name)
+					break;
+			}
+//			dm("space = "+space);
+			var	layer	= menuitems[id];
+//			dm("playTimeline: menuitems["+id+"] = "+layer);
+			if(layer == void)
+			{
+				id	= space if space !== void;
+				layer	= getMenuItem(page, id);
+				layer.name		= name;
+//				dm("→ "+name);
+				layer.plugin	= this;
+				layer.menuitems	= menuitems;
+				menuitems[id]	= layer;
+			}
+			else
+			{
+				if(isclose)
+					layer.mouseDown = layer.mouseMove = layer.mouseUp = layer.mouseEnter = layer.mouseLeave = layer.keyDown = void;
+				if(stopaction)
+				{
+					layer.ibv	= false;			//	停止したときに消去されないようにする
+					layer.actionInfo.stopAction();	//	現在実行されているアクションを停止
+				}
+				asyncCaller.call(layer.updateState);//	マウスカーソルが合ったままかもしれないので、後で状態を更新する
+			}
+@if(MENUITEM_COUNT_TIME)
+dispMicro("playTimeline["+name+"]: get menu item ", 3);
+@endif
+//			dm(layer.name+" = "+id+" / "+Scripts.getTraceString());
+//			dm("menuitems["+id+"]("+name+") = "+menuitems[id]);
+			layer.enabled	= true;
+			//	プロパティの初期化
+			layer.ibv	= isclose;	//	閉じるときは、非表示になったら消えるようにする
+			layer.disabled	= isclose;	//	閉じるときは無効にする
+			if(contlayer)
+				dmt("※ contlayer = true の使用は推奨されません。page=primary にして、常時表示されるようにしてください。");
+			var	setabs	= false;
+			var	actionInfo	= layer.actionInfo;
+			for(var i=2; i<initdata.count; i+=2)
+			{
+//initMicro(4, "");
+				var	prop	= initdata[i];
+				//	初期化するプロパティのアクションは停止する
+				//	→	そうしないと意図しない値で開始されてしまうため
+				actionInfo.stopAction(prop) if !stopaction;	//	stopaction=false のとき(true なら既に停止済み)
+
+				var	ofsval	= offset[prop];
+				if(ofsval)
+					layer[prop]	= initdata[i+1] + ofsval;	//	相対値の設定
+				else
+					layer[prop]	= initdata[i+1];
+				setabs	= true if initdata[i] == "absolute";
+//dispMicro(prop, 4);
+			}
+			layer.absolute	= 1000 + offset["absolute"] if !setabs;
+			layer.ibv		= isclose;	//	変更されている可能性があるので、再設定
+@if(MENUITEM_COUNT_TIME)
+dispMicro("playTimeline["+name+"]: set properties", 3);
+@endif
+			//	アクションの設定
+			var	actdata	= actions[i];
+			if(actdata == void)
+				continue;
+			for(var i=0; i<actdata.count; i+=2)
+			{
+				var	prop	= actdata[i];
+				var	keys	= actdata[i+1];
+				var	ofsval	= offset[prop];
+				if(ofsval)
+				{//	相対値指定があるので、各キーフレームへ
+					for(var i=0; i<keys.count; i++)
+						keys[i][1]	+= ofsval;
+				}
+				layer.beginAction(%[module:KeyFrameActionModule, props:prop, keys:keys, norapid:norapid],,, !isclose);
+				totaltime	= keys[keys.count-1][0] if totaltime < keys[keys.count-1][0];
+			}
+@if(MENUITEM_COUNT_TIME)
+dispMicro("playTimeline["+name+"]: set actions["+(actdata.count>>1)+"]", 3);
+@endif
+/*			layer.disabled	= true;		//	開くときも閉じるときも、とりあえず disable する
+			if(!isclose)
+			{
+				var	time	= actdata[1][actdata[1].count - 1][0];
+				var	keys	= [ [0,true,0,"n"], [time>>1,false,0,"n"] ];
+				layer.beginAction(%[module:KeyFrameActionModule, props:"disabled", keys:keys],,, !isclose);
+			}
+*/		}
+		return totaltime;
+	}
+
+	//	タイムラインの最終状態で作成する
+	function lastTimeline(page, creates, actions, offset=%[], ignore=%[], isclose=false)
+	{
+		//	actions の最終状態を初期値とする
+		for(var i=0; i<creates.count; i++)
+		{
+			var	act		= actions[i];
+			var	last	= %[];
+			if(act != void)
+			{
+				for(var i=0; i<act.count; i+=2)
+				{
+					var	prop	= act[i];
+					var	keys	= act[i+1];
+					var	lvalue;
+					for(var i=0; i<keys.count; i++)
+						lvalue	= keys[i][1] if keys[i][1] !== void;
+					last[prop]	= lvalue if lvalue !== void;
+				}
+			}
+
+			var	create	= creates[i];
+			for(var i=2; i<create.count; i+=2)
+			{
+				var	lvalue	= last[create[i]];
+				if(lvalue !== void)
+					create[i+1]	= lvalue;
+			}
+		}
+
+		return playTimeline(page, creates, [], offset, ignore, isclose, true);
+		//                                                              ↑当然事前のアクションは停止する
+	}
+
+	//	レイヤーをすべて未使用状態にする
+	var	notused;
+	function initLayerUse()
+	{
+		if(notused == void)
+		{
+			notused	= %[];
+			var	lastpage	= page;
+			for(var i=0; i<menuPages.count; i++)
+			{
+				page	= menuPages[i];
+				var	menuitems	= getprop("menuitems", menuPages[i]);
+//				dm("init layer use . "+menuPages[i]+" layers = "+layers);
+				if(menuitems == void)
+					continue;
+				for(var i=0; i<menuitems.count; i++)
+				{
+					var	layer	= menuitems[i];
+//					dm("init layer use: "+layers[i]);
+					notused[layer]	= layer if layer != void && layer.useTimeline;
+				}
+			}
+			page	= lastpage;
+		}
+	}
+
+	//	未使用のレイヤーは非表示/破棄する
+	function uninitLayerUse()
+	{
+		if(notused != void)
+		{
+			var	keys	= [];
+			keys.assign(notused);
+			for(var i=0; i<keys.count; i+=2)
+			{
+//				dm("uninit layer use: "+keys[i]+" / "+keys[i+1]);
+				clearMenuItems(keys[i+1]) if !kag.isInAction(keys[i+1]);
+			}
+			invalidate notused;
+			notused	= void;
+		}
+	}
+
+	function doInvalidateByInvisible(page="all")
+	{
+		if(page == "all")
+		{
+			//	既存のレイヤーをすべて破棄する
+			var	keys	= getAllItems();
+			for(var i=0; i<keys.count; i+=2)
+			{
+				if(keys[i+1] == void)
+					continue;
+				var	menuitems	= keys[i+1].menuitems;
+				if(menuitems == void)
+					continue;
+				for(var i=0; i<menuitems.count; i++)
+				{
+					if(menuitems[i] != void && menuitems[i] isvalid) with(menuitems[i])
+					{
+						.invalidateByInvisible	= true;	//	非表示になった(裏画面やvisible=false,opacity=0)ら、破棄
+						.mouseDown = .mouseMove = .mouseUp = .mouseEnter = .mouseLeave = .keyDown = "";	//	無効化
+					}
+				}
+			}
+		}
+		else if(page == "fore" || page == "back")
+		{
+			var	menuitems	= getprop("menuitems", page);
+			for(var i=0; i<menuitems.count; i++)
+			{
+				if(menuitems[i] != void && menuitems[i] isvalid && typeof menuitems[i].pool == "undefined") with(menuitems[i])
+				{
+					.invalidateByInvisible	= true;
+					.mouseDown = .mouseMove = .mouseUp = .mouseEnter = .mouseLeave = .keyDown = "";	//	無効化
+				}
+			}
+		}
+	}
+
+	//	新たなタイムラインを読み込んだ時
+	function onLoadTimeline(storage, data)
+	{
+//		doInvalidateByInvisible();
+	}
+
+	function getMenuItems(page="fore")
+	{
+		return getprop("menuitems", page);
+	}
+
+	//	画像ファイル名/レイヤー名でメニューアイテムを探す
+	//	※ prop, value をセットすると、メニューアイテムが存在するときだけ値を設定する
+	function find(keyword, page="fore")
+	{
+		var	menuitems	= getprop("menuitems", page);
+		if( menuitems === void || ! isvalid menuitems )
+			return void;
+		if(pages[page] == void)
+		{
+			throw new Exception("find の page(第2引数) に指定している\""+page+"\"は、page を示すものではありません。\n今後は setProp(keyword, prop, value) を使ってください。");
+			return void;
+		}
+		for(var i=0; i<menuitems.count; i++)
+		{
+			var	item	= menuitems[i];
+//			dm("menuitems["+i+"] = "+item.name+" / "+item.storage) if item != void;
+			if(item != void && item isvalid && (item.storage == keyword || item.name == keyword))
+				return item;
+		}
+		return void;
+	}
+
+	//	指定したメニューアイテムのプロパティを設定する
+	function setProp(keyword, prop, value, page="fore")
+	{
+		var	item	= find(keyword, page);
+		if(item != void)
+			item[prop]	= value;
+		else
+			dm("setProp("+keyword+", "+prop+", "+value+") = not found");
+		return item;
+	}
+	function setProps(keyword, props, page="fore")
+	{
+		var	item	= find(keyword, page);
+		if(item != void)
+		{
+			for(var i=0; i<props.count; i+=2)
+				item[props[i]]	= props[i+1];
+		}
+		else
+			dm("setProps("+keyword+", ["+props.join(", ")+"]) = not found");
+		return item;
+	}
+
+	//	指定したメニューアイテムのアクションを設定する
+	function setAction(keyword, time, prop, value, delay=0, accel=0, canpause=true, page="fore")
+	{
+		var	item	= find(keyword, page);
+		if(item != void)
+			item.ssact(time, prop, value, delay, accel, canpause);
+		else
+			dm("setAction("+keyword+", "+time+", "+prop+", "+value+", "+delay+", "+accel+", "+canpause+") = not found");
+		return item;
+	}
+	function setActions(keyword, acts, canpause, page="fore")
+	{
+	}
+
+	//	指定したメニューアイテムのプロパティを取得
+	function getProp(keyword, prop, page="fore")
+	{
+		var	item	= find(keyword, page);
+		if(item != void)
+			return item[prop];
+		else
+			return void;
+	}
+
+	//	指定したメニューアイテムのメソッドを実行
+	function execMethod(keyword, funcname, args, page="fore")
+	{
+		var	item	= find(keyword, page);
+		if(item != void)
+		{
+			if(args != void)
+				return item[funcname](args*);
+			else
+				return item[funcname]();
+		}
+		else
+			return void;
+	}
+
+	//	隠す途中のアイテム(vanish 実行)をすぐに隠す
+	function finishVanish(page="fore")
+	{
+		var	items	= getMenuItems(page);
+		var	key		= "no name(vanish)";
+		var	keylen	= key.length;
+		for(var i=0; i<items.count; i++)
+		{
+			if(items[i] != void && items[i] isvalid && items[i].name.substr(0, keylen) == key)
+				items[i].stopAction();
+		}
+	}
+
+	//	状態更新
+	function updateState(keyword, page="fore")
+	{
+		var	item	= find(keyword, page);
+		if(item != void)
+			item.updateState();
+	}
+
+	//	サウンド再生
+	function playSE(storage)
+	{
+		if(storage == "")
+			return;
+		var	ses	= kag.se;
+		var	mintime = 0x7fffffff, no;
+		var reuse = false;
+		for(var i=kag.SESTARTIDX; i<ses.count; i++)
+		{
+			var	se	= ses[i];
+			if(se.playingStorage == "" && !se.isDelaying)
+			{//	再生しておらず、遅延実行の予約もないバッファがあったので使う
+				no	= i;
+				break;
+			}
+			else
+			{//	残りの再生時間が500ミリ秒以下で、もっとも短いものを選ぶ
+				var	resttime	= se.totalTime - se.position;	//	残りの再生時間
+//				dm(se.totalTime+" - "+se.position+" = "+resttime);
+				if(resttime < 500 && mintime > resttime)
+				{
+					mintime	= resttime;
+					no		= i;
+					reuse = true;
+				}
+			}
+		}
+		if(no !== void)
+		{
+			with(ses[no])
+			{
+				//	確実にここで停止しないとボリュームが上書きされてしまうので
+				//	(ポップノイズ対策のため、SE.tjs の stop では全て fadeOut で停止させているので、onStatusChanged が volume2 を変更した後に呼ばれることがある)
+				(global.WaveSoundBuffer.stop incontextof ses[no])();
+				.volume	= 100;
+				.volume2= kag.systemSEVolume * 1000;
+				.pan	= 0;
+				.play(%[storage:storage]);
+//				dm("playSE: " + no + " vol=" + .volume + " vol2=" + .volume2 + " sysSE=" + kag.systemSEVolume );
+			}
+		}
+@if(DEBUG)
+		else
+			dm("!!!!!!! 効果音再生バッファが足りません。 !!!!!!!");
+@endif
+	}
+
+	function onExchangeForeBack()
+	{
+		var	fm	= getprop("menuitems", "fore");
+		var	bm	= getprop("menuitems", "back");
+		setprop("menuitems", bm, "fore");
+		setprop("menuitems", fm, "back");
+
+		//	裏面の対応レイヤーがあるメニューアイテムは、裏表を入れ替える
+		var	list	= [];
+		for(var i=0; i<fm.count; i++)
+		{
+			if(fm[i] != void && fm[i] isvalid) with(fm[i])
+			{
+				if(.cont != void)
+				{
+					//	裏表を入れ替え(absolute はリセットされるので、覚えておく)
+					if(.parent == kag.back.base)
+					{
+						var	abs	= .absolute;
+						.parent <-> .cont.parent;
+//						dm(.name+": "+.parent.name+" / "+.cont.name+": "+.cont.parent.name);
+						.absolute	= .cont.absolute	= abs;
+					}
+
+					//	状態更新用にリストへ追加
+//					dm("onExchangeForeBack: "+fm[i]+" to "+list.count);
+					list.add(fm[i]);
+
+					//	リストからも入れ替え
+					bm.add(fm[i]);
+					fm.erase(i);
+					i--;
+				}
+			}
+		}
+
+//		dm("reservedFocus: "+reservedFocus);
+		if(reservedFocus)
+		{
+			reservedFocus.focus();
+			reservedFocus	= void;
+		}
+		else
+		{
+			//	absolute に沿って、状態更新
+			list.sort(function(a, b) { return a.absolute > b.absolute; });
+			var	i	= 0;
+			for(; i<list.count; i++)
+			{
+				list[i].updateState();
+				if(list[i].focused)		//	一つでもフォーカスされたら、残りは blur
+					break;
+			}
+			for(i++; i<list.count; i++)
+				list[i].onMouseLeave();
+		}
+
+		//	裏に移動したメニューアイテムで invalidateByInvisible=true なものは破棄する
+		if(kag isvalid)
+		{
+			var	menuitems	= getMenuItems("back");
+			for(var i=0; i<menuitems.count; i++)
+				menuitems[i].doInvalidate() if menuitems[i] != void && menuitems[i] isvalid && menuitems[i].invalidateByInvisible;
+		}
+	}
+
+@if(IS_TLE)
+	function onUpdateProperty(prop, value, last)
+	{
+	}
+
+	function onUpdateObjects(cmd, obj)
+	{
+		if(cmd == "add" && obj instanceof "MenuObject")
+		{
+			//	LayerObject を MenuItemObject に置き換える
+			obj.root.replaceObjectClass("LayerObject", "MenuItemObject");
+		}
+	}
+
+	function onUpdateObjectProperty(prop, obj)
+	{
+	}
+
+	function onUpdateFrame(obj, st, ed)
+	{
+	}
+
+	function onUpdateChoseFrame(obj, add, del)
+	{
+	}
+
+	function onRedraw()
+	{
+	}
+
+	function onStartPlay()
+	{
+	}
+
+	function onEndPlay()
+	{
+	}
+@endif
+
+	/**
+	 *	メニューアイテムの消去
+	 */
+	function clmenuitem(elm)
+	{
+		with(elm)
+		{
+			.page	= "back" if .page == void;
+			var	menuitems	= getprop("menuitems", .page);
+			if(menuitems != void)
+			{
+				for(var i=0; i<menuitems.count; i++)
+					clearMenuItem(menuitems[i]);
+				menuitems.clear();
+			}
+		}
+		return 0;
+	}
+
+	/**
+	 *	メニューアイテムの整理
+	 */
+	// 遷移を続けているとmenuitemsが延々と無限に増えていくのでコンフィグを終了した時点などの
+	// タイミングで使用済みの配列要素を後ろから削除
+	function onSimplify()
+	{
+		for( var j=0; j<menuPages.count; j++ )
+		{
+			var	menuitems	= getprop("menuitems", menuPages[j]);
+			if( menuitems === void || ! isvalid menuitems )
+				continue;
+
+			//dm("onSimplify Bef["+menuPages[j]+"]: menuitems.count=" + menuitems.count );
+			for( var i=menuitems.count-1; i>-1; i-- )
+			{
+				if( menuitems[i] === void || ! isvalid menuitems[i] )
+				{
+					menuitems[i] = void if ! isvalid menuitems[i];
+					menuitems.erase(i);
+				}
+				else
+					break;	//使っている有効なレコードが出てきたら終了
+			}
+			//dm("onSimplify Aft["+menuPages[j]+"]: menuitems.count=" + menuitems.count );
+		}
+	}
+
+	/**
+	 *	メニューアイテムのアクション全停止
+	 */
+	function stopAllMenuItemsAction()
+	{
+//		dm("stopAllMenuItemsAction Bef:actmgr.count=" + kag.actmgr.count );
+		for( var j=0; j<menuPages.count; j++ )
+		{
+			var	menuitems	= getprop("menuitems", menuPages[j]);
+			if( menuitems === void || ! isvalid menuitems )
+				continue;
+
+//			dm("stopAllMenuItemsAction ["+menuPages[j]+"]");
+			for( var i=menuitems.count-1; i>-1; i-- )
+			{
+				if( menuitems[i] !== void && isvalid menuitems[i] &&
+					menuitems[i].window !== void && isvalid menuitems[i].window &&
+					typeof menuitems[i].window.stopAction != "undefined")
+				{
+					menuitems[i].window.stopAction(menuitems[i]);
+					//dm("menuitems["+i+"]=" + menuitems[i]);
+				}
+			}
+		}
+//		dm("stopAllMenuItemsAction Aft:actmgr.count=" + kag.actmgr.count );
+	}
+
+	/**
+	 *	メニューアイテムを focusable=false にする
+	 *		実行した回数解除する必要がある
+	 */
+	var	focusableList	= [];
+	function setDisfocusableAll(holdbuttonstate=false)
+	{
+		var	list	= [ kag.focusedLayer ];	//	現在フォーカスされているレイヤー
+		var	pgs		= menuPages;
+		for(var i=0; i<pgs.count; i++)
+		{
+			var	menuitems	= getprop("menuitems", pgs[i]);
+			if(menuitems == void)
+				continue;
+			for(var i=0; i<menuitems.count; i++)
+			{
+				var	item	= menuitems[i];
+				if(item !== void && item !== null && isvalid item && (item.focusable || item.hitThreshold < 256))
+				{
+					list.add(item);
+					if(holdbuttonstate)
+					{//	leave させずにボタンの状態を維持する
+						item.__mouseLeave	= item.mouseLeave;	item.mouseLeave		= ";";
+//						item.__mouseUp		= item.mouseUp;		item.mouseUp		= ";";
+					}
+					item.disabled	= true;
+				}
+			}
+		}
+		focusableList.add(list);
+	}
+
+	/**
+	 *	focusable=false にしたメニューアイテムを元に戻す
+	 *	@param focuslast フォーカスできなくなる前にフォーカスしていたレイヤーへフォーカスを渡すかどうか
+	 */
+	function revertDisfocusable(focuslast)
+	{
+		var	inkey	= kag.inputDevice == "keyboard";
+		if(focusableList.count > 0)
+		{
+			var	list	= focusableList[focusableList.count - 1];
+			focusableList.erase(focusableList.count - 1);
+
+			for(var i=1; i<list.count; i++)
+			{
+				var	item	= list[i];
+				if(!(item isvalid))
+					continue;
+				if(typeof item.__mouseLeave != "undefined")
+				{
+					item.mouseLeave	= item.__mouseLeave;	delete item.__mouseLeave;
+//					item.mouseUp	= item.__mouseUp;		delete item.__mouseUp;
+				}
+				item.disabled	= false;
+			}
+			if(focuslast && list[0] != null && list[0] isvalid && (inkey || list[0].inCursor()))
+				list[0].focus();
+		}
+	}
+
+	/**
+	 *	focusable=false にしたリストをリセットする
+	 */
+	function resetDisfocusable()
+	{
+		focusableList.clear();
+	}
+
+	/**
+	 *	すべてのメニューアイテムについて、指定のメソッドを実行する
+	 */
+	function doMenuItems(page="fore", func, args*)
+	{
+		var	menuitems	= getprop("menuitems", page);
+		for(var i=0; i<menuitems.count; i++)
+			func(menuitems[i], args*) if menuitems[i] != void;
+	}
+
+	function onStore()
+	{
+	}
+
+	function onRestore(f, clear, elm)
+	{
+		// 栞を読み出すときに呼ばれる
+		// f = 読み込む栞データ ( Dictionary クラスのオブジェクト )
+		// clear = メッセージレイヤをクリアするか ( tempload の時のみ false )
+		// elm = tempload 時のオプション ( tempload でない場合は 常に void,
+		//                                 tempload の時は Dictionary クラスのオブジェクト )
+		super.onRestore(...);
+
+		//オブジェクトプールは作り直す
+		for( var i=0; i<menuPages.count; i++ )
+		{
+			pages[menuPages[i]] = %[menuitems:[]];
+		}
+	}
+
+}
+
+/*----------------------------------------------------------------------------/
+/	編集時、実行時どちらにも必要な定義
+/----------------------------------------------------------------------------*/
+var	MenuObjectKeys			= [ /*"lclick", "rclick", */"script" ];
+var	MenuObjectKeysInit		= [ /*"", "", */"" ];
+var	MenuObjectDefaultValues	= createDefaultValuesFunc(MenuObjectKeys, MenuObjectKeysInit, false);
+var	MenuObjectMiddleProperty	= %[lclick:false, rclick:false, script:false, ];
+
+/*----------------------------------------------------------------------------/
+/	プラグインのインスタンス作成とTLObjectの定義
+/----------------------------------------------------------------------------*/
+@if(!IS_TLE)
+kag.addPlugin(global.Menu_object = new MenuPlugin(kag));	//	TLE ではTLE側で対応する
+PluginDefaultValues[Menu_object.name]	= MenuObjectDefaultValues;
+
+//	プラグインリストへ登録する
+global.effectPluginList[global.Menu_object.name]	= global.Menu_object;
+
+//	TLオブジェクト
+class TLMenuObject extends TLPluginObject
+{
+	function TLMenuObject()
+	{
+		super.TLPluginObject(...);
+	}
+
+	property keys				{ getter { return MenuObjectKeys; } }
+	property defaultValues		{ getter { return MenuObjectDefaultValues; } }
+	property middleProperties	{ getter { return MenuObjectMiddleProperty; } }
+	property storageProperties	{ getter { return ""; } }
+}
+
+//	メニューアイテムオブジェクト
+class TLMenuItemObject extends TLBaseObject
+{
+//	var	id;		//	menu_object.pages[fore/back].menuitems[id] の id(メニューアイテムの名前)
+
+	function TLMenuItemObject()
+	{
+		super.TLBaseObject(...);
+	}
+
+	property keys				{ getter { return MenuItemKeys; } }
+	property defaultValues		{ getter { return MenuItemDefaultValues; } }	//	各キーの初期値
+	property middleProperties	{ getter { return MenuItemObjectMiddleProperty; } }
+	property storageProperties	{ getter { return MenuItemStorageProperties; } }
+	property noblank			{ getter { return false; } }
+	function isDirectValue(prop, value)
+	{
+		return (MenuItemObjectValueIsDirect[prop] == void || MenuItemObjectValueIsDirect[prop][value] != true);
+	}
+
+	function restore(dic, parent, func)
+	{
+		super.restore(...);
+		this.id	= dic.name;	//	レイヤー識別用に、設定された名前を使う
+	}
+
+	function createAction(st, ed, stop, framerate, elms, pages, uuid2elm)
+	{
+		//	通常とは異なるグループでアクションを実行する(KAGスクリプト停止中も停止しない)
+		var	par	= parent;
+		while(par != void && !(par instanceof "TLBGObject"))
+			par	= par.parent;
+
+		var	page	= par != void ? pages[par.page] : "primary";
+//		this.id		= owner.getMenuItemNo(page);
+		var	elm	= %[
+			tagname:"action",
+			name:name,
+			module:"MixedKeyFrameActionModule",
+			page:page,
+//			menuitem:id,	//	MenuPlugin が、elm.menuitem に対応するレイヤーを返す
+			menuitem:-1,	//	MenuPlugin が、elm.menuitem に対応するレイヤーを返す
+			canpause:false,	//	メニューアイテムは一時停止しない
+		];
+		var	tk	= [];
+		tk.assign(timeline.keys);
+		tk.add("visible");
+
+		if(timeline.getKeyDataToTag(tk, defaultValues, framerate, st, ed, stop, elm))
+		{
+@if(DISPLAY_TIMELINE_ELEMENTS)
+			dispElements(elm);
+@endif
+			elm.init	= defaultValues;	//	オブジェクトの初期値を参照渡しする
+			elms.add(elm);
+			uuid2elm[uuid]	= %[page:elm.page, storage:elm.storage];
+		}
+	}
+}
+
+/*----------------------------------------------------------------------------/
+/	KAGタグの定義
+/----------------------------------------------------------------------------*/
+@if(!IS_TLE)
+/**TAG
+ *	clmenuitem - メニューアイテムの消去
+ *	@param page	fore / back
+ */
+kag.tagHandlers.clmenuitem	= function(elm)
+{
+	return Menu_object.clmenuitem(elm);
+} incontextof kag;
+
+/**TAG
+ *	addmenuitem - メニューアイテムの追加
+ *	@param page	fore/back
+ *	@param id	menuitem ID
+ *	@param class	クラス名
+ *	@memo 特殊なメニューアイテムを追加するとき用
+ */
+kag.tagHandlers.addmenuitem	= function(elm)
+{
+	Menu_object.addMenuItem(elm);
+	return 0;
+} incontextof kag;
+
+@endif
+
+//	メニューアイテム用レイヤー
+class MenuItemLayer extends BasicCharacterLayer
+{
+	var	plugin;
+	var	menuitems;	//	同じページに表示されているメニューアイテム
+/*
+@if(DEBUG)
+	var	_mouseUp;
+	property mouseUp
+	{
+		setter(v)
+		{
+			if(mouseUp !== v)
+			{
+				dm(name+".mouseUp = "+mouseUp+" → "+v+" / "+Scripts.getTraceString());
+				_mouseUp	= v;
+			}
+		}
+		getter	{ return _mouseUp; }
+	}
+@endif
+@if(!DEBUG)
+	var	mouseUp;
+@endif
+*/
+	var	mouseDown, mouseMove, mouseUp;
+	var	mouseEnter, mouseLeave;
+	var	keyDown;
+
+	var	invalidateTimer;
+
+	var	_itemMode;	//	メニューアイテムとしての動作(imParts, imButton, imOther, imImageButton, imFilter, imOtherOpaque)
+
+	var	usecurrent;	//	存在しないと例外を出すので
+@if(STORE_MENUITEM_HISTORY)
+	var	names	= [];
+@endif
+
+	function MenuItemLayer(win, par, name, id)
+	{
+		super.BasicCharacterLayer(win, par, name, id, false);
+
+		itemMode	= imParts;	//	初期はタダのパーツ
+		visible		= false;
+	}
+
+	function finalize()
+	{
+//		dmt("MenuItemLayer["+this+"].finalize() act=" + kag.isInAction(this));
+		if(kag isvalid && kag.actmgr isvalid && kag.isInAction(this))
+			kag.removeAction(this);	//	stopAction で最終状態になったときdoInvalidate を行おうとしてしまうが、この時点ではまだ this isvalid なため予約されてしまう
+		removeAllFollowers();
+//		dmt("invalidate "+name+" / "+id);
+		if(invalidateTimer != void)
+		{
+			invalidateTimer.enabled	= false;
+			invalidate invalidateTimer;
+			invalidateTimer = void;
+		}
+
+		if(typeof this.sebuf != "undefined" )
+		{
+			for(var i=0; i<this.sebuf.count; i++)
+				invalidate this.sebuf[i];
+			invalidate this.sebuf;
+		}
+
+		stopRepeat();
+		cont	= false;
+		eraseFromMenuItems();
+		super.finalize();
+	}
+
+	property page
+	{
+		getter
+		{
+			return parent == kag.primaryLayer ? PRIMARY : (parent == kag.fore.base ? "fore" : "back");
+		}
+	}
+
+	//	タイムラインで使用する(=未使用のレイヤーは非表示にする)
+	property useTimeline	{ getter { return true; } }
+
+	function freeImage()
+	{
+		super.freeImage(...);
+		viewarea	= viewareaNo	= void;
+		mouseDown	= mouseMove = mouseUp = mouseEnter = mouseLeave = keyDown = void;
+		leftItems	= upItems = rightItems = downItems	= void;
+		var	searches= [ "Left", "Right", "Up", "Down" ];
+		for(var i=0; i<searches.count; i++)
+			delete this["search"+searches[i]] if typeof this["search"+searches[i]] != "undefined";
+//		nextFrame	= nextScene = nextLabel = void;
+//		triggerValue= -1;
+		opacity		= 255;
+		mute		= false;
+		on			= false;
+		ibv			= false;
+		hint		= void;
+		enabled		= false;
+		_itemMode	= void;
+		removeAllFollowers();
+		if(typeof this.last_hitThreshold != "undefined")
+		{
+			delete this.last_hitThreshold;
+			delete this.last_focusable;
+		}
+		stopRepeat();
+		cont	= false;
+	}
+
+	//	裏面レイヤー
+	var	_cont;
+	property cont
+	{
+		setter(v)
+		{
+			v	&= 1;
+			if(v == (_cont != void))
+				return;
+			if(v)
+			{
+				_cont	= new global.Layer(window, kag[parent == kag.fore.base ? "back" : "fore"].base);
+				_cont.cont	= this;
+//				dm("create cont by "+this+"( "+_cont+" )");
+				calcAffine();		//	onPaint を促す
+			}
+			else
+			{
+//				dm("invalidte cont by "+this+"( "+_cont+" )");
+				invalidate _cont;
+				_cont	= void;
+			}
+		}
+		getter { return _cont; }
+	}
+
+	function copy2Contrary(doa, doo)
+	{
+		if(cont != void) with(cont)
+		{
+			if(doa)
+			{
+				.assignImages(this);
+				.setImageSize(imageWidth, imageHeight);
+				.setSize(width, height);
+				.setImagePos(imageLeft, imageTop);
+				.name		= "裏: "+name;
+			}
+			if(doo)
+				.setPos(realLeft, realTop);
+			.absolute	= absolute;
+			.type		= type;
+			.visible	= visible;
+			.opacity	= opacity;
+		}
+	}
+
+	//	変化しても onPaint が呼ばれないプロパティ
+//	opacity と visible は↓に
+	property absolute
+	{
+		setter(v)	{ super.absolute = v; cont.absolute = +v if cont != void; }
+		getter		{ return super.absolute; }
+	}
+	property type
+	{
+		setter(v)	{ super.type = v; cont.type = +v if cont != void; }
+		getter		{ return super.type; }
+	}
+
+	function onPaint()
+	{
+		var	doa	= _doAffine, doo = _doOffset;
+		super.onPaint(...);
+		copy2Contrary(doa, doo);
+	}
+
+	property focusable
+	{
+		setter(v)
+		{
+			if(focusable !== v)
+			{
+//				dmt(name+".focusable = "+focusable+" → "+v);
+				kag.focusedLayer= null if focusable && kag.focusedLayer == this;
+				super.focusable	= v;
+			}
+		}
+		getter	{ return super.focusable; }
+	}
+
+	//	disabled = true にすると、イベントだけ無効になる
+	var	_disabled	= false;
+	property disabled
+	{
+		setter(v)
+		{
+			if(v !== disabled)
+			{
+//				dmt(name+".disabled = "+disabled+" → "+v);
+				if(!v)
+				{//	有効化
+					if(typeof this.last_hitThreshold != "undefined")
+					{
+						hitThreshold <-> this.last_hitThreshold;
+						focusable <-> this.last_focusable;
+						delete this.last_hitThreshold;
+						delete this.last_focusable;
+					}
+					else
+					{
+						var	im	= itemMode;
+						_itemMode	= void;
+						itemMode	= im;
+					}
+				}
+				else
+				{//	無効化
+					this.last_hitThreshold	= 256;
+					this.last_focusable		= false;
+					hitThreshold <-> this.last_hitThreshold;
+					focusable <-> this.last_focusable;
+					stopRepeat();	//	リピートされていたら停止
+				}
+				_disabled	= v;
+			}
+		}
+		getter	{ return _disabled; }
+	}
+/*
+	property hitThreshold
+	{
+		setter(v)
+		{
+			if(v !== hitThreshold)
+			{
+				dmt(name+".hitThreshold = "+hitThreshold+" → "+v);
+				super.hitThreshold	= v;
+			}
+		}
+		getter	{ return super.hitThreshold; }
+	}
+*/
+	property enabled
+	{
+		setter(v)
+		{
+//			dmt(name+".enabled = "+enabled+" → "+v);
+			if(v !== enabled)
+			{
+				disabled	= !v;
+				super.enabled	= v;
+				if(isButton)
+					viewareaNo	= v ? leaveNo : maxViewareaNo;	//	ボタンの有効/無効
+			}
+		}
+		getter	{ return super.enabled; }
+	}
+
+
+	//	指定のモードがボタンとして動作するかどうか
+	property isButton { getter { return imButtonMode[itemMode]; } }
+
+	function onHitTest(x, y, hit)
+	{
+		global.Layer.onHitTest(x, y, true);	//	どんなときでもマウスイベントを受け取るために
+	}
+
+	var	button, shift, x, y, key, tmp, result;	//	各イベント処理スクリプトが使用する一時変数
+
+	var	numreg	= /^[0-9]+$/;
+	var	tabretreg	= /(\\t|\\n)/g;
+	function executeString(str)
+	{
+		if(numreg.test(str))
+		{
+			nextScene	= +str;
+			return true;
+		}
+		else if(str != "" && str != '"')
+		{
+			if(str[0] == '*')
+				nextLabel	= str;
+			else
+			{
+				tmp	= result	= void;
+				(str.replace(tabretreg, ""))!;
+			}
+			return true;
+		}
+		return false;
+	}
+
+	function onMouseDown(x, y, button, shift)
+	{
+		this.x	= x;
+		this.y	= y;
+		this.button	= button;
+		this.shift	= shift;
+//		dmt(name+".onMouseDown("+x+", "+y+", "+button+", "+shift+"): "+(left+cursorX)+", "+(top+cursorY)+" / "+parent.cursorX+", "+parent.cursorY);
+		if(button === mbLeft)
+		{
+//			dm(name+".onMouseDown: "+mouseDown);
+			if(System.getKeyState(VK_RBUTTON))
+				return;	//	右ボタンを押しっぱなしなので、処理を行わない
+			else if(enabled && !executeString(mouseDown) && isButton)
+				press();	//	押下されたときのボタン
+			this.LButtonDown	= true;
+		}
+		else if(button === mbRight)
+		{
+			if(System.getKeyState(VK_LBUTTON))
+				return;	//	左ボタンを押しっぱなしなので、処理を行わない
+			else if(kag isvalid)
+				kag.onPrimaryRightClick();
+			this.RButtonDown	= true;
+		}
+@if(USE_RAPID_CLICK)
+		else if(button === mbMiddle)
+		{
+@if(RAPID_CLICK_TYPE==0)
+			this.lastClick	= mbLeft;
+@endif
+@if(RAPID_CLICK_TYPE!=0)
+			this.lastClick	= mbRight;
+@endif
+			with(this.clickTimer = new Timer(function() {
+@if(RAPID_CLICK_TYPE==2)
+				lastClick	= lastClick === mbLeft ? mbRight : mbLeft;
+@endif
+				kag.onMouseDown(x, y, lastClick, 0);
+				onMouseDown(x, y, lastClick, 0);
+				kag.onMouseUp(x, y, lastClick, 0);
+				onMouseUp(x, y, lastClick, 0);
+			} incontextof this, ""))
+				.interval	= 100, .enabled	= true;
+		}
+@endif
+	}
+
+	function onMouseUp(x, y, button, shift)
+	{
+		this.x	= x;
+		this.y	= y;
+		this.button	= button;
+		this.shift	= shift;
+//		dm(name+".onMouseUp("+x+", "+y+", "+button+", "+shift+"): "+left+", "+top+" / "+parent.cursorX+", "+parent.cursorY);
+		if(button === mbLeft)
+		{
+			if(typeof this.LButtonDown != "undefined" && enabled && ((typeof this.checkincursor != "undefined" && !checkincursor) || inCursor()))
+			{
+//				dm(name+".onMouseUp: "+mouseUp+" / "+storage+" / "+(typeof names != "undefined" ? names.join(",") : ""));
+				if(!executeString(mouseUp) && isButton)
+					release();	//	ボタンを離したとき
+			}
+			delete this.LButtonDown;
+		}
+		else if(button === mbRight)
+			delete this.RButtonDown;
+@if(USE_RAPID_CLICK)
+		else if(button === mbMiddle)
+		{
+			if(typeof this.clickTimer != "undefined")
+			{
+				this.clickTimer.enabled	= false;
+				invalidate this.clickTimer;
+				delete this.clickTimer;
+			}
+		}
+@endif
+	}
+
+	function onMouseMove(x, y)
+	{
+		this.x	= x;
+		this.y	= y;
+		if(!enabled)
+			return;
+
+		executeString(mouseMove);
+	}
+
+	function onMouseEnter()
+	{
+//		dm(name+".onMouseEnter(): "+enabled, focusable, (window.focusedLayer != this));
+		if(!enabled)
+			return;
+		if(focusable && window.focusedLayer != this)
+			focus();
+		else
+			onFocus();
+	}
+
+	function onMouseLeave()
+	{
+		if(!enabled)
+			return;
+//		dm(name+".onMouseLeave(): "+focusable+", "+window.focusedLayer);
+		if(focusable && window.focusedLayer == this)
+			window.focusedLayer	= null;
+		else
+			onBlur();
+	}
+
+	function onBeforeFocus(layer, blurred, direction)
+	{
+//		dm(name+".onBeforeFocus("+layer.name+"): "+(plugin.reservedFocus != void ? plugin.reservedFocus.name : "none"));
+		plugin.reservedFocus	= void if window.inputDevice != "keyboard";
+		layer	= plugin.reservedFocus if plugin.reservedFocus != void;
+		super.onBeforeFocus(layer, blurred, direction);
+	}
+
+	function onFocus()
+	{
+//		dmt(name+".onFocus(): "+mouseEnter);
+		if(this == plugin.reservedFocus)
+			plugin.reservedFocus	= void;	//	実際に指定したフォーカスになったときにリセットされる
+
+		if(!executeString(mouseEnter) && isButton)
+			enter();
+	}
+
+	function onBlur()
+	{
+//		dmt(name+".onBlur()");
+		if(!executeString(mouseLeave) && isButton)
+			leave();
+		stopRepeat();	//	リピートしてたら停止する
+	}
+
+	function onKeyDown(key, shift)
+	{
+//		dm(name+".onKeyDown("+key, shift+"): "+(typeof plugin.keyDownCallback), keyDown);
+		if(typeof plugin.keyDownCallback != "undefined" && plugin.keyDownCallback(key, shift, this))
+			return;	//	コールバックが存在し、処理されたなら戻る
+
+		this.key	= key;
+		this.shift	= shift;
+		if(keyDown != "")
+		{
+			tmp	= result	= void;
+			keyDown!;
+			if(result)	//	result != void なら、処理が完了
+				return;
+		}
+		//	ボタンなら、カーソルキーで隣のアイテムへ移動、Enter・Spaceキーで決定
+		switch(key)
+		{
+		case VK_RETURN:
+		case VK_SPACE:
+			onMouseDown(cursorX, cursorY, mbLeft);
+			return;
+
+		case VK_ESCAPE:
+		case VK_DELETE:
+		case VK_BACK:
+			onMouseDown(cursorX, cursorY, mbRight);
+			return;
+		}
+		var	key2dir	= %[
+			VK_LEFT	=> 0,
+			VK_UP	=> 1,
+			VK_RIGHT=> 2,
+			VK_DOWN	=> 3,
+		];
+		var dir = key2dir[key], it;
+		if(dir !== void && ((it = findDirectionItem(dir)) !== void || (it = searchNeighborItem(dir)) !== void))
+		{
+//			dm("focus: "+(window.focusedLayer != null ? window.focusedLayer.name : "none")+" → "+it.name);
+			it.focus();
+			return;
+		}
+		super.onKeyDown(key, shift, true);
+		kag.internalOnKeyDown(key, shift);	//	ウィンドウへも返す
+	}
+
+	function onKeyUp(key, shift)
+	{
+		if(typeof plugin.keyUpCallback != "undefined" && plugin.keyUpCallback(key, shift, this))
+			return;	//	コールバックが存在し、処理されたなら戻る
+
+		this.key	= key;
+		this.shift	= shift;
+/*		if(keyUp != "")
+		{
+			tmp	= result	= void;
+			keyUp!;
+			if(result)	//	result != void なら、処理が完了
+				return;
+		}
+*/
+		switch(key)
+		{
+		case VK_RETURN:
+		case VK_SPACE:
+			this.checkincursor	= false;
+			onMouseUp(cursorX, cursorY, mbLeft);
+			delete this.checkincursor;
+			return;
+		case VK_ESCAPE:
+		case VK_DELETE:
+		case VK_BACK:
+			this.checkincursor	= false;
+			onMouseUp(cursorX, cursorY, mbRight);
+			delete this.checkincursor;
+			return;
+		}
+		return super.onKeyUp(key, shift, true);
+	}
+
+	property centerLeft	{ getter { return left + (width >> 1); } }
+	property centerTop	{ getter { return top + (height >> 1); } }
+
+	//	指定方向に設定されたアイテムを返す
+	var	dirItemNames	= [];
+	function findDirectionItem(dir)
+	{
+		var	items	= dirItemNames[dir];
+//		dm("findDirectionItem("+dir+"): "+items);
+		if(items != void)
+		{
+			for(var i=0; i<items.count; i++)
+			{
+//				dm("items["+i+"] = "+items[i]);
+				if(items[i] == void)	//	void が指定されていたら、
+				{
+@if(DEBUG)
+					dm("→ this");
+@endif
+					return this;		//	自分自身を返す
+				}
+				var	item	= find(items[i]);
+@if(DEBUG)
+				if(item == void)
+					dm(items[i]+" = void");
+				else
+					dm(items[i]+" = "+item.name, item.visible, item.focusable);
+@endif
+				if(item != void && item.visible && item.focusable)
+					return item;
+			}
+		}
+		return void;
+	}
+
+	function resetDirectionItems()
+	{
+		dirItemNames.clear();
+	}
+
+	function setDirectionItems(no, v)
+	{
+		if(v === void)
+			dirItemNames[no]	= void;
+		else if(typeof v == "String")
+			dirItemNames[no]	= v.split(",");
+		else if(typeof v == "Object" && v instanceof "Array")
+			dirItemNames[no]	= v;
+	}
+
+	property leftItems
+	{
+		setter(v)	{ setDirectionItems(0, v); }
+		getter		{ return dirItemNames[0]; }
+	}
+
+	property upItems
+	{
+		setter(v)	{ setDirectionItems(1, v); }
+		getter		{ return dirItemNames[1]; }
+	}
+
+	property rightItems
+	{
+		setter(v)	{ setDirectionItems(2, v); }
+		getter		{ return dirItemNames[2]; }
+	}
+
+	property downItems
+	{
+		setter(v)	{ setDirectionItems(3, v); }
+		getter		{ return dirItemNames[3]; }
+	}
+
+/*
+	//	指定方向にある、隣のアイテムを返す
+	//	※	このレイヤーと同じ高さ、幅に掛かるアイテムのみ検索対象とする
+	function searchNeighborItem(dir)
+	{
+		var	func;
+		switch(dir)
+		{
+		case 0:	//	左
+			func	= function(cl, ct, trg)
+			{
+				if(top > trg.top + trg.height || top + height < trg.top)
+					return void;
+				var	d	= cl - trg.centerLeft;
+				d		= parent.width + d if d <= 0;
+				return d;
+			} incontextof this;
+			break;
+		case 1:	//	上
+			func	= function(cl, ct, trg)
+			{
+				if(left > trg.left + trg.width || left + width < trg.left)
+					return void;
+				var	d	= ct - trg.centerTop;
+				d		= parent.height + d if d <= 0;
+				return d;
+			} incontextof this;
+			break;
+		case 2:	//	右
+			func	= function(cl, ct, trg)
+			{
+				if(top > trg.top + trg.height || top + height < trg.top)
+					return void;
+				var	d	= trg.centerLeft - cl;
+				d		= parent.width + d if d <= 0;
+				return d;
+			} incontextof this;
+			break;
+		case 3:	//	下
+			func	= function(cl, ct, trg)
+			{
+				if(left > trg.left + trg.width || left + width < trg.left)
+					return void;
+				var	d	= trg.centerTop - ct;
+				d		= parent.height + d if d <= 0;
+				return d;
+			} incontextof this;
+			break;
+		}
+
+		var	cl = left + (width >> 1), ct = top + (height >> 1);
+		var diff = 0x7fffffff;
+		var	target;
+		for(var i=0; i<menuitems.count; i++)
+		{
+			var	item	= menuitems[i];
+			if(item == void || !item.focusable || !item.enabled || item == this)
+				continue;
+
+			var	res	= func(cl, ct, item);
+			if(res !== void && diff > res)
+			{
+				diff	= res;
+				target	= item;
+			}
+		}
+		dm(this.storage+"."+("左上右下"[dir])+" = "+(target != void ? target.storage : "not found"));
+		return target;
+	}
+*/
+	function distance(cl, ct, item)
+	{
+		return Math.pow(cl - item.left - (item.width >> 1), 2) + Math.pow(ct - item.top - (item.height >> 1), 2);
+	}
+
+	function _searchItem(func, args*)
+	{
+		var	cl = left + (width >> 1), ct = top + (height >> 1);
+		var	diff = 1000000000000000, _diff = -1000000000000000;
+		var	target, _target;
+		var	minlen, maxlen;
+//		dm(cl+", "+ct);
+		for(var i=0; i<menuitems.count; i++)
+		{
+			var	item	= menuitems[i];
+			if(item == void || !item.focusable || !item.enabled || !item.visible || item.opacity == 0 || item == this)
+				continue;
+
+			var	res	= func(cl, ct, item, args*);
+			if(res === void)
+				continue;
+			if(res > 0)
+			{
+				if(diff > res)
+				{
+					diff	= res;
+					target	= item;
+					minlen	= distance(cl, ct, item);
+				}
+				else if(diff == res)
+				{
+					var	len	= distance(cl, ct, item);
+					if(minlen > len)
+					{
+						diff	= res;
+						target	= item;
+						minlen	= len;
+					}
+				}
+			}
+			else if(_diff < res)
+			{
+				_diff	= res;
+				_target	= item;
+				maxlen	= distance(cl, ct, item);
+			}
+			else if(_diff == res)
+			{
+				var	len	= distance(cl, ct, item);
+				if(maxlen < len)
+				{
+					_diff	= res;
+					_target	= item;
+					maxlen	= len;
+				}
+			}
+		}
+//		dm(target.name) if target != void;
+//		return target != void ? target : _target;//	指定方向がなければ、逆方向を返す
+//		return target;							//	指定方向のみを返す
+		return target == void ? this : target;	//	見つからなかったら、自分のまま
+	}
+/*
+	function _search_Top(cl, ct, trg, plus)
+	{
+		var	d	= plus ? (trg.centerLeft - cl) : (cl - trg.centerLeft);
+		d	= -(parent.width + d) if d <= 0;
+		if(top > trg.top + trg.height || top + height < trg.top)
+		{
+			var	h	= Math.abs(ct - trg.centerTop) * 10;
+			d	+= d <= 0 ? -h : h;
+		}
+		return d;
+	}
+
+	function _search_Left(cl, ct, trg, plus)
+	{
+		var	d	= plus ? (trg.centerTop - ct) : (ct - trg.centerTop);
+		d	= -(parent.height + d) if d <= 0;
+		if(left > trg.left + trg.width || left + width < trg.left)
+		{
+			var	h	= Math.abs(cl - trg.centerLeft) * 10;
+			d	+= d <= 0 ? -h : h;
+		}
+		return d;
+	}
+*//*
+	function _search_Top(cl, ct, trg, plus)
+	{
+		var	d	= plus ? (trg.centerLeft - cl) : (cl - trg.centerLeft);	//	基本の距離
+		d	= -(parent.width + d) if d <= 0;							//	逆方向にある場合は、補正
+		var	di	= Math.abs(ct - trg.centerTop);
+		dm("→ "+d+", "+di);
+		if(d < di)
+			return void;	//	45度以上の角度を持つ場合は対象外とする
+		return d + di * 2;
+	}
+
+	function _search_Left(cl, ct, trg, plus)
+	{
+		var	d	= plus ? (trg.centerTop - ct) : (ct - trg.centerTop);
+		d	= -(parent.height + d) if d <= 0;
+		var	di	= Math.abs(cl - trg.centerLeft);
+		dm("→ "+d+", "+di);
+		if(d < di)
+			return void;
+		return d + di * 2;
+	}
+*/
+	//	レイヤーの幅、高さを基準にして、指定方向に存在するレイヤーを対象とする
+	//		指定方向と直角方向については、幅、高さ分ずれている毎に順位を下げる
+	function _search_Top(cl, ct, trg, plus)
+	{
+		var	d	= plus ? (trg.left + trg.width) - (left + width) : (left - trg.left);
+		if(d < 5)
+			return void;	//	同じ列のアイテムは選択しない
+		d	= plus ? (trg.centerLeft - cl) : (cl - trg.centerLeft);
+		if(d < 0)
+			return void;
+		if(trg.top > top + height || trg.top + trg.height < top)
+			d	+= Math.abs((trg.top - top) \ height) * 100000;
+		return d;
+	}
+
+	function _search_Left(cl, ct, trg, plus)
+	{
+		var	d	= plus ? (trg.top + trg.height) - (top + height) : (top - trg.top);
+		if(d < 5)
+			return void;	//	同じ列のアイテムは選択しない
+		var	d	= plus ? (trg.centerTop - ct) : (ct - trg.centerTop);
+		if(d < 0)
+			return void;
+		if(trg.left > left + width || trg.left + trg.width < left)
+			d	+= Math.abs((trg.left - left) \ width) * 100000;
+		return d;
+	}
+
+	//	順番に検索
+	//	1. 自分より dir 方向にあるもので、高さの同じもの
+	//	2.              〃                高さの近いもの
+	//	3. 自分より逆 dir 方向にあるもので、高さの同じもの
+	//	4.              〃                  高さの近いもの
+	function searchNeighborItem(dir)
+	{
+		switch(dir)
+		{
+		case 0:
+			if(typeof this.searchLeft != "undefined")
+				return (this.searchLeft incontextof this)();
+			else
+				return _searchItem(_search_Top, false);
+		case 1:
+			if(typeof this.searchUp != "undefined")
+				return (this.searchUp incontextof this)();
+			else
+				return _searchItem(_search_Left, false);
+		case 2:
+			if(typeof this.searchRight != "undefined")
+				return (this.searchRight incontextof this)();
+			else
+				return _searchItem(_search_Top, true);
+		case 3:
+			if(typeof this.searchDown != "undefined")
+				return (this.searchDown incontextof this)();
+			else
+				return _searchItem(_search_Left, true);
+		}
+		return this;
+	}
+@if(0)
+	property hitThreshold
+	{
+		setter(v)
+		{
+			if(hitThreshold !== v)
+			{
+				dmt(name+".hitThreshold = "+hitThreshold+" → "+v);
+				super.hitThreshold	= v;
+			}
+		}
+		getter	{ return super.hitThreshold; }
+	}
+@endif
+	//	アイテムとしての動作
+	property itemMode
+	{
+		setter(v)
+		{
+			v	= int v;
+			if(v !== _itemMode)
+			{
+				switch(_itemMode = v)
+				{
+				case imParts:
+					if(disabled)	last_hitThreshold	= 256;
+					else			hitThreshold		= 256;
+					focusable	= false;
+					break;
+				case imButton:
+				case imLessarButton:
+				case imOtherOpaque:
+					if(disabled)	last_hitThreshold	= 0;
+					else			hitThreshold		= 0;
+					focusable	= true;
+					break;
+				case imOther:
+				case imImageButton:
+					if(disabled)	last_hitThreshold	= 64;
+					else			hitThreshold		= 64;
+					focusable	= true;
+					break;
+				case imFilter:
+					if(disabled)	last_hitThreshold	= 0;
+					else			hitThreshold		= 0;
+					focusable	= false;
+					break;
+				}
+				coordinateButton();
+			}
+		}
+		getter	{ return +_itemMode; }
+	}
+	property itemmode { setter(v) { itemMode = v; } getter { return itemMode; } }	// タグ経由だと大文字が全て小文字にされてしまうので
+
+	function onActionCompleted()
+	{
+		super.onActionCompleted(...);
+
+		//	アクションが終了したら、いつでも破棄できる
+		invalidateByInvisible	= true if ibv;
+	}
+
+	//	破棄の時期をずらすためのフラグ
+	property invalidateByInvisible
+	{
+		setter(v)
+		{
+			if(invalidateByInvisible !== v)
+			{
+				if(v)
+				{
+					if(invalidateTimer == void)
+					{
+						invalidateTimer	= new Timer(invalidateTimeOut, "");
+						invalidateTimer.interval	= 500;
+						invalidateTimer.capacity	= 1;
+					}
+					invalidateTimer.enabled	= true;
+					invalidateTimeOut();	//	とりあえず初回
+				}
+				else
+					invalidateTimer.enabled	= false if invalidateTimer != void;
+//				dmt(name+".invalidateByInvisible = "+v);
+			}
+		}
+		getter	{ return invalidateTimer != void && invalidateTimer.enabled; }
+	}
+
+	//	表示されたとき、invalidateByInvisible を true にするかどうか
+	var	_ibv	= true;
+	property ibv
+	{
+		setter(v)
+		{
+//			dmt(name+".ibv = "+ibv+" → "+v);
+			_ibv	= v;
+			if(v)
+				invalidateByInvisible	= true if visible && opacity > 0 && visibleChild;
+			else
+				invalidateByInvisible	= false;
+//			dm("→ invalidateByInvisible = "+invalidateByInvisible);
+		}
+		getter	{ return _ibv; }
+	}
+
+	//	表示されるべき子かどうか(親が kag.back.base 自体、もしくは所属している親なら表示されない)
+	property visibleChild
+	{
+		getter
+		{
+			var	p	= parent;
+			do
+			{
+				if(!p.visible)
+					return false;
+				p	= p.parent;
+			}
+			while(p != null);
+			return true;
+		}
+	}
+
+	function invalidateTimeOut()
+	{
+		//	非表示になったり透明になったり、裏画面に移動したら自分を破棄
+		if(this isvalid && kag isvalid && (!visible || opacity == 0 || !visibleChild))
+			doInvalidate();
+	}
+
+	function eraseFromMenuItems()
+	{
+		if(id !== void && menuitems[id] == this)
+			menuitems[id]	= void;
+		else
+		{
+			var	idx	= menuitems.find(this);
+			if(idx >= 0)
+				menuitems[idx]	= void;
+		}
+	}
+
+	function doInvalidate()
+	{
+		invalidateTimer.enabled	= false if invalidateTimer != void;
+		eraseFromMenuItems();
+		clearAnim();	//	アニメを停止する
+//		dmt(this+" isvalid ? = "+(this isvalid));
+		asyncCaller.callOnce(plugin.clearMenuItem, this);
+	}
+
+	property visible
+	{
+		setter(v)
+		{
+			if(visible !== v)
+			{
+//				dm(name+".visible = "+visible+" → "+v);
+				super.visible	= v;
+				cont.visible	= v if cont != void;
+				if(visible === 0)
+				{
+					doInvalidate() if invalidateByInvisible;
+					this.last_hint	= hint if hint != "" && typeof this.last_hint == "undefined";
+					hint	= "";
+				}
+				else if(opacity > 0 && typeof this.last_hint != "undefined")
+				{
+					hint	= this.last_hint;
+					delete this.last_hint;
+				}
+				invalidateByInvisible	= true if ibv && visible && opacity > 0;	//	一度レイヤーが表示されたら、次に非表示になったとき削除できる
+				update() if v;
+			}
+		}
+		getter	{ return super.visible; }
+	}
+
+	property opacity
+	{
+		setter(v)
+		{
+			if(opacity !== v)
+			{
+//				dmt(name+".opacity = "+opacity+" → "+v);
+				super.opacity	= v;
+				cont.opacity	= v if cont != void;
+				if(opacity === 0)
+				{
+					doInvalidate() if invalidateByInvisible;
+					this.last_hint	= hint if hint != "" && typeof this.last_hint == "undefined";
+					hint	= "";
+				}
+				else if(visible && typeof this.last_hint != "undefined")
+				{
+					hint	= this.last_hint;
+					delete this.last_hint;
+				}
+				invalidateByInvisible	= true if ibv && visible && opacity > 0;	//	一度レイヤーが表示されたら、次に非表示になったとき削除できる
+				update() if v > 0;
+			}
+		}
+		getter	{ return super.opacity; }
+	}
+
+	//	ボタン状態の整合性を取る
+	function coordinateButton()
+	{
+		if(isButton)
+		{
+			if(!enabled)
+				viewareaNo	= maxViewareaNo;
+			else if(viewareaNo == (on ? 0 : 3))
+				viewareaNo	= leaveNo;
+			else if(viewareaNo == (on ? 1 : 4))
+				viewareaNo	= enterNo;
+		}
+	}
+
+	property viewarea
+	{
+		setter(v)
+		{
+//			dmt(name+".viewarea = "+viewarea+" → "+v);
+			super.viewarea	= v;
+			coordinateButton();
+		}
+		getter	{ return super.viewarea; }
+	}
+
+	//	効果音再生
+	function playSE(storage, cancelMute=false, otherBuff=false)
+	{
+//		dmt(name+".playSE("+storage, cancelMute+") / "+mute+"("+kag.systemSEMute+")");
+		if(!(this isvalid) || (mute && !cancelMute))
+			return;
+		if(otherBuff)
+		{
+			//別途干渉されないバッファを作成する
+			if(typeof this.sebuf !="undefined")
+			{
+				seidx++;
+				if(seidx == this.sebuf.count) seidx = 0;
+				with(sebuf[seidx])
+				{
+					(global.WaveSoundBuffer.stop incontextof sebuf[seidx])();
+					.volume	= 100;
+					.volume2= kag.systemSEVolume * 1000;
+					.pan	= 0;
+					.play(%[storage:storage]);
+					//dm("playSE["+seidx+"]: " + no + " vol=" + .volume + " vol2=" + .volume2 + " sysSE=" + kag.systemSEVolume );
+				}
+			}
+			return;
+		}
+		return plugin.playSE(storage);
+	}
+
+	property mute
+	{
+		getter { return kag.systemSEMute || (typeof this._mute == "undefined" ? false : _mute); }
+		setter(v)
+		{
+//			dmt(name+".mute = "+mute+" → "+v);
+			if(v)
+				this._mute	= true;
+			else if(typeof this._mute != "undefined")
+				delete this._mute;
+		}
+	}
+
+	function asyncPlaySE(storage, otherBuff=false)
+	{
+		asyncCaller.callOnce(playSE, storage, true, otherBuff) if !mute;
+	}
+
+	function playEnterSE()
+	{
+		//	一つの操作で複数回再生されることを避けるため、遅延して一回だけ再生するようにした
+//		dmt(name+".playEnterSE()");
+		asyncPlaySE(typeof this.enterse != "undefined" ? enterse : "basicchoice");
+	}
+
+	function playPressSE()
+	{
+		//別バッファ作成の場合
+		var other = false;
+		if(typeof this.otherBuff !== "undefined" && this.otherBuff)
+		{
+			other = true;
+			invalidate this.otherBuff;
+
+			if(typeof this.sebuf == "undefined")
+			{
+				this.sebuf = [];
+				for(var i=0; i<2; i++)
+					this.sebuf[i] = new SESoundBuffer(kag, kag.numSEBuffers+i);
+				this.seidx = -1;
+			}
+		}
+
+		//	再生指定時にmuteされていないなら、その後muteされても強制的に再生する
+//		dmt(name+".playPressSE()");
+		asyncPlaySE(typeof this.pressse != "undefined" ? pressse : "basicdecide", other);
+	}
+
+	//	表示範囲を示す番号
+	property viewareaNo
+	{
+		setter(v)
+		{
+			v	= 0 if v < 0;
+			var	mv	= maxViewareaNo;
+			v	= mv if v > mv;
+			v	= leaveNo if v == (on ? 0 : 3);
+
+			if(viewareaNo !== v)
+			{
+//				dmt(name+".viewareaNo = "+viewareaNo+" → "+v+"("+leaveNo+"/"+on+")");
+//				dm(name+".viewareaNo = "+viewareaNo+" → "+v+"("+visible+" && "+opacity+" > 0 && "+enabled+")");
+				if(visible && opacity > 0 && enabled)
+				{
+//					dm(viewareaNo+" == "+leaveNo+" && "+v+" == "+enterNo+" / "+v+" == "+pressNo);
+					if(viewareaNo == leaveNo && v == enterNo)
+					{
+//						dmt(name+".viewareaNo = "+viewareaNo+" → "+v+"(enter)");
+						playEnterSE();	//	乗ってない→乗ったと変わったとき
+					}
+					else if(v == pressNo)
+					{
+//						dm(name+".viewareaNo = "+viewareaNo+" → "+v+"(press)");
+						playPressSE();
+					}
+				}
+				imageLeft	= - v * width;
+			}
+		}
+		getter	{ return -imageLeft \ width; }
+	}
+	property viewareano		{ setter(v) { viewareaNo = v; } getter { return viewareaNo; } }	// タグ経由だと大文字がすべて小文字にされてしまうため
+	property viewareaCount	{ getter { return imageWidth \ width; } }
+	property maxViewareaNo	{ getter { return viewareaCount - 1; } }
+
+	//	カーソルが載っている状態
+	function enter()
+	{
+		viewareaNo = enterNo;
+		hover();
+	}
+
+	//	マウスカーソルが悪さしないよう、上に移動させる
+	function hover()
+	{
+		if(window.inputDevice == "keyboard")
+		{
+			window.mouseCursorState	= mcsHidden;	//	次にマウスカーソルを移動させたとき、表示状態にならないようにするため
+			setCursorPos(afx, afy);
+			window.mouseMoveByKeyboard	= true;	//	カーソルを移動させることで"mouse"に変化しないように
+			window.hideMouseCursor();
+		}
+	}
+
+	property enterNo	{ getter { return enabled ? ((on && viewareaCount > 5) ? 4 : 1) : maxViewareaNo; } }
+
+	//	カーソルが離れている状態
+	function leave()	{ viewareaNo = leaveNo; }
+	property leaveNo	{ getter { return enabled ? (on ? 3 : 0) : maxViewareaNo; } }
+
+	//	押している状態
+	function press()	{ viewareaNo = pressNo; }
+	property pressNo	{ getter { return enabled ? ((on && viewareaCount > 6) ? 5 : 2) : maxViewareaNo; } }
+
+	//	離した状態
+	function release()	{ viewareaNo = releaseNo; }
+	property releaseNo
+	{
+		getter
+		{
+			if(enabled)
+			{
+				var	x = cursorX, y = cursorY;
+				if(x >= 0 && y >= 0 && x < realWidth && y < realHeight && getMaskPixel(x, y) >= hitThreshold)
+					return enterNo;
+				return leaveNo;
+			}
+			return maxViewareaNo;
+		}
+	}
+
+	//	ボタンがON状態かどうか
+	var	_on	= false;
+	property on
+	{
+		setter(v)
+		{
+			if(_on !== v)
+			{
+//				dmt(name+".on = "+on+" → "+v);
+				_on	= v;
+				coordinateButton();
+			}
+		}
+		//	maxViewareaNo が3以下なら、状態を示す画像が存在しない(leave,enter,push,disable)ので
+		getter	{ return _on && maxViewareaNo > 3; }
+	}
+/*
+	var	names	= [];
+	property name
+	{
+		setter(v)	{ names.add(name); dm(name+" → "+v); super.name = v; }
+		getter		{ return super.name; }
+	}
+*/
+/*
+	property width
+	{
+		setter(v)	{ dm(name+".width = "+width+" → "+v); super.width = v; }
+		getter		{ return super.width; }
+	}
+
+	property imageWidth
+	{
+		setter(v)	{ dm(name+".imageWidth = "+imageWidth+" → "+v); super.imageWidth = v; }
+		getter		{ return super.imageWidth; }
+	}
+
+	function setSize(w, h)
+	{
+		dmt(name+".setSize("+w+", "+h+"): "+width+", "+height);
+		super.setSize(...);
+	}
+
+	function setSizeToImageSize()
+	{
+		dmt(name+".setSizeToImageSize(); "+width+", "+height+" → "+imageWidth+", "+imageHeight);
+		super.setSizeToImageSize();
+	}
+
+	property storage
+	{
+		setter(v)	{ dm(name+".storage = "+storage+" → "+v+"("+width+")"); super.storage = v; dm("→ "+width); }
+		getter		{ return super.storage; }
+	}
+*/
+	//	次に実行するフレームの番号
+	property nextFrame
+	{
+		setter(v)
+		{
+			if(v !== void && typeof v == "Integer")
+				kag.tagHandlers.playtimeline(%[frame:v]);
+		}
+	}
+
+	//	次に実行するシーンの番号
+	property nextScene
+	{
+		setter(v)
+		{
+			if(v !== void && typeof v == "Integer")
+			{
+//				dm("go to next scene: "+v);
+				kag.tagHandlers.playtimeline(%[scene:v, origin:this]);	//	シーン開始
+				kag.conductor.pendings.insert(0, %[tagname:"s"]);
+			}
+		}
+	}
+
+	//	移動先のラベル
+	property nextLabel
+	{
+		setter(v)
+		{
+			kag.process(, v);
+		}
+	}
+
+	//	指定の画像を持つメニューアイテムを取得
+	function getMIfI(storage)
+	{
+		for(var i=0; i<menuitems.count; i++)
+		{
+			if(menuitems[i].storage == storage)
+				return menuitems[i];
+		}
+		return void;
+	}
+
+	//	keyDown 用に、指定のキーを押下したら指定の処理を行う
+	//	in	: list		キーと実行するスクリプトのリスト。順番に処理していく
+	//		:			例) [ [key, shift, script], [key, shift, script], ... ]
+	//		: finish	いずれかのキーが押されていたら、処理を終了するか
+	function ifKeyThen(list, finish=true)
+	{
+		for(var i=0; i<list.count; i++)
+		{
+			var	item	= list[i];
+			if(this.key == item[0] && (item[1] == void || this.shift & item[1]))
+			{
+				item[2]!;
+				finishTJS() if finish;
+				break;
+			}
+		}
+	}
+
+	//	keyDown 用に、指定のキーを押下したら、指定の画像を読み込んでいるメニューアイテムへフォーカスを移動させる
+	//	in	: list		キーと対応するアイテムの画像。
+	//		:			例) [ key, storage, key, storage, ... ]
+	//		: finish	いずれかのキーが押されていたら、処理を終了するか
+	function ifKeyThenFocus(list, finish=true)
+	{
+		for(var i=0; i<list.count; i++)
+		{
+			var	tmp;
+			if(this.key == list[i] && (tmp = getMIfI(list[i+1])) != void)
+			{
+				tmp.focus();
+				finishTJS() if finish;
+				break;
+			}
+		}
+	}
+
+	//	以降の処理を停止するかどうか(keyDown用[その他のイベントでは自動実行される処理が存在しないので])
+	function finishTJS()
+	{
+		this.result	= true;
+	}
+@if(0)
+	//	指定時間指定でプロパティを変化させる
+	//		基本、メニュー用
+	var	simpleacts;
+	function startSimpleAct(time, prop, value, delay=0, curvalue=null)
+	{
+		if(simpleacts == void)
+		{
+			simpleacts	= [];
+			System.addContinuousHandler(doSimpleAct);
+		}
+		var	st	= System.getTickCount() + delay;
+		simpleacts.add([st, time, prop, curvalue, value]);
+	}
+
+	function doSimpleAct()
+	{
+		var	tick	= System.getTickCount();
+		for(var i=0; i<simpleacts.count; i++)
+		{
+			var	act	= simpleacts[i];
+			if(act[0] === void)
+			{
+				this[act[2]]	= act[4];
+				simpleacts.erase(i);
+				i--;
+			}
+			else if(act[0] > tick)
+			{
+				act[3]	= this[act[2]] if act[3] === null;
+				var	past= tick - act[0];
+				if(past > act[1])
+				{//	時間切れ
+					this[act[2]]	= act[4];
+					simpleacts.erase(i);
+					i--;
+				}
+				else
+				{//	途中
+					var	per	= past / act[1];
+					this[act[2]]	= act[3] + (act[4] - act[3]) * per;
+				}
+			}
+		}
+		if(simpleacts.count == 0)
+			stopSimpleAct();
+	}
+
+	function stopSimpleAct()
+	{
+		System.removeContinuousHandler(doSimpleAct);
+		simpleacts.clear();
+	}
+@endif
+	//	シンプルなアクション(メニューのmouse〜から呼び出すためのもの)
+	function ssact(time, prop, value, delay=0, accel=0, canpause=true)
+	{
+		var	elm	= %[time:time, start:this[prop], value:value];
+		if(time === void)
+		{//	値を指定の時間後に設定
+			elm.handler	= SetAction;
+			elm.time	= delay;
+		}
+		else
+		{//	キーフレームで処理
+			elm.props	= prop;
+			elm.keys	= [ [delay, this[prop], accel, "l"], [time + delay, value, 0, "n"] ];
+			elm.module	= KeyFrameActionModule;
+			beginAction(elm,,, canpause);
+			return;
+		}
+		beginAction(%[prop => elm],,, canpause);
+	}
+
+	//	一定時間後に指定のスクリプトを実行する
+	function ssexec(time, script)
+	{
+		var	elm	= %[time:time, script:script, handler:ExecAction];
+		beginAction(%["timeRate" => elm]);
+	}
+
+	//	指定時間後に隠す
+	function vanish(time)
+	{
+		name= "no name(vanish): last = "+name;
+		ssact(time, "opacity", 0,,, false);	//	隠す＋一時停止しない
+		invalidateByInvisible	= true;
+	}
+
+	//	維持アクション
+	function holdact(time, prop, func)
+	{
+//		actionInfo.stopAction(prop, HoldAction);
+		beginAction(%[prop => %[handler:HoldAction, time:time, func:func]]);
+	}
+
+	//	オブジェクトの検索
+	function find(keyword, page) { return Menu_object.find(keyword, page == void ? this.page : page); }	//	同じページのレイヤーを探す
+	function setProp() { return Menu_object.setProp(...); }
+	function execMethod() { return Menu_object.execMethod(...); }
+
+	//	状態更新
+	function updateState()
+	{
+		//	マウスが乗っていれば enter、乗っていなければ leave
+		if(this isvalid)
+		{
+			if(inCursor())
+				onMouseEnter();
+			else
+				onMouseLeave();
+		}
+	}
+
+	//	描画準備
+	function initDraw()
+	{
+		if(_orgimage == this)
+			copyThis2orgimage();
+		addImage(1);	//	画像レイヤーを追加する
+		this.doReloadImage	= true;
+	}
+
+	//	指定の範囲に文字列を描画する
+	function drawText2Area(x, y, w, h, text, fh=20, color=0xFFFFFF, pos="cc", expand=false, spc=2, multiline=true, maxline=0)
+	{
+		if(text == "")
+			return;
+		text	= text.split(/\[r\]|\n/);	//	行で分ける
+
+		if(typeof this.drawTextInfos == "undefined")
+			this.drawTextInfos	= [];
+		var	drawTextInfo	= %[];
+		with(drawTextInfo)
+		{
+			.x		= x;
+			.y		= y;
+			.w		= w;
+			.h		= h;
+			.text	= text;
+			.fh		= fh;
+			.color	= color;
+			.pos	= pos;
+			.expand	= expand;
+			.spc	= spc;
+			.multi	= multiline;
+			.maxline = maxline;
+		}
+		drawTextInfos.add(drawTextInfo);
+		initDraw();
+		update();
+	}
+
+	function clearDrawText()
+	{
+		delete this.drawTextInfos if typeof this.drawTextInfos != "undefined";
+	}
+
+	//	指定の位置に画像を描画する
+	function drawImage2Area(x, y, w, h, storage, opacity=255, sx, sy, sw, sh)
+	{
+		if(typeof this.drawImageInfos == "undefined")
+			this.drawImageInfos	= [];
+		var	drawImageInfo	= %[];
+		with(drawImageInfo)
+		{
+			.x		= x;
+			.y		= y;
+			.w		= w;
+			.h		= h;
+			.storage= storage;
+			.opacity= opacity;
+			.sx		= sx;	//	転送元座標
+			.sy		= sy;
+			.sw		= sw;
+			.sh		= sh;
+		}
+		drawImageInfos.add(drawImageInfo);
+		initDraw();
+		update();
+	}
+
+	function clearDrawImage()
+	{
+		delete this.drawImageInfo if typeof this.drawImageInfo != "undefined";
+	}
+
+	//	再読み込みして、画像をクリアする
+	function reload()
+	{
+		this.doReloadImage	= true;
+		clearDrawText();
+		clearDrawImage();
+		update();
+	}
+
+	function applyColorCorrection_in_onPaint()
+	{
+		//	効果は掛けない
+		//	再読み込みする
+		if(typeof this.doReloadImage != "undefined")
+		{
+			copyImage(0, 1);
+
+			//	_orgimage の元々のサイズに、画像サイズを戻す
+			setImageSize(_orgimage.realImageWidth, _orgimage.realImageHeight);
+			if(width > imageWidth || height > imageHeight)
+			{
+				//	表示サイズが画像サイズより大きい場合は、画像サイズに縮小する
+				var	c = center, vc = vcenter;	//	表示サイズが変化するので、中心位置を記憶
+				setSizeToImageSize();
+				_image.setImageSize(imageWidth, imageHeight);
+				_image.setSizeToImageSize();
+				center = c, vcenter = vc;
+			}
+
+			_doAffine = _doOffset = true;
+			delete doReloadImage;
+		}
+		//	文字は書き込む
+		if(typeof this.drawTextInfos != "undefined")
+		{
+			for(var i=0; i<drawTextInfos.count; i++)
+			{
+				with(drawTextInfos[i])
+				{
+//					dm(name+" draw text: "+.text.join("\n"));
+					//	必要なサイズを計算
+					var	mw, mh, font = _image.font;
+//					font.face	= kag.current.fontFace;
+					font.height	= .fh;
+					for(var i=0; i<.text.count; i++)
+					{
+						var	fw	= font.getTextWidth(.text[i]);
+						mw	= fw if fw > mw;
+						mh	+= .fh + .spc;
+					}
+					mh	-= .spc;
+
+					//	初回の描画で、必要なサイズより領域が小さければ、
+					var	lw = mw - .w, lh = mh - .h;
+					if(i == 0 && (lw > 0 || lh > 0))
+					{
+						if(.expand)
+						{//	レイヤー自体大きくする
+							var	c = center, v = vcenter;
+							var	ow	= _orgimage.realImageWidth, oh = _orgimage.realImageHeight;
+//							dm(ow+", "+oh+" : "+lw+", "+lh);
+							setImageSize(ow + Math.max(lw, 0), oh + Math.max(lh, 0));
+							setSizeToImageSize();
+							_image.setRealSize(width, height);
+							if(lw > 0)
+							{
+								var	hw	= ow >> 1;
+/*								if(lh > 0)
+								{//	縦横ともに大きく
+									var	hh	= oh >> 1;
+									.copyRect(0, 0, _orgimage, 0, 0, hw, hh);
+									.stretchCopy(hw, 0, width-ow+1, hh, _orgimage, hw, 0, 1, hh, stNearest);
+									.copyRect(width-hw, 0, _orgimage, ow-hw, 0, hw, hh);
+
+									.stretchCopy(0, hh, hw, height-oh, _orgimage, 0, hh, hw, 1, stNearest);
+									.fillRect(hw, hh, width-ow, height-oh, (_orgimage.getMaskPixel(hw, hh) << 24) | _orgimage.getMainPixel(hw, hh));
+									.stretchCopy(width-hw, hh, hw, height-oh, _orgimage, ow-hw, hh, hw, 1, stNearest);
+
+									.copyRect(0, height-hh, _orgimage, 0, oh-hh, hw, hh);
+									.stretchCopy(hw, height-hh, width-ow+1, hh, _orgimage, hw, oh-hh, 1, hh, stNearest);
+									.copyRect(width-hw, height-hh, _orgimage, ow-hw, oh-hh, hw, hh);
+									drawTextInfos[i].h	= mh;
+								}
+								else
+*/								{//	横のみ大きく
+									copyRect(0, 0, _orgimage, 0, 0, hw, oh);
+									stretchCopy(hw, 0, width-ow+1, oh, _orgimage, hw, 0, 1, oh, stNearest);
+									copyRect(width-hw, 0, _orgimage, ow-hw, 0, hw, oh);
+								}
+								drawTextInfos[i].w	= mw;
+							}
+							else
+							{//	縦のみ大きく
+/*								.copyRect(0, 0, _orgimage, 0, 0, ow, hh);
+								.stretchCopy(0, hh, ow, height-oh, _orgimage, 0, hh, oh, 1, stNearest);
+								.copyRect(0, height-hh, _orgimage, 0, oh-hh, ow, hh);
+								drawTextInfo[i].h	= mh;
+*/							}
+							center	= c;
+							vcenter	= v;
+						}
+						else
+						{//	範囲に入るよう、適当に改行する
+							for(var i=0; i<.text.count; i++)
+							{
+								do
+								{
+									var	l = 0, r = .text[i].length, c;
+									while(l < r)
+									{
+										c	= (l + r) >> 1;
+//										dm(l+" < "+r+" = "+c+" / "+.text[i].substr(0, c)+" = "+font.getTextWidth(.text[i].substr(0, c))+" < "+.w);
+										if(font.getTextWidth(.text[i].substr(0, c)) < .w)
+											l	= c + 1;
+										else
+											r	= c;
+									}
+									l-- if font.getTextWidth(.text[i].substr(0, l)) >= .w;
+									if(l == 0)
+										break;
+									.text.insert(i+1, .text[i].substr(l));
+									.text[i]	= .text[i].substr(0, l);
+									i++;
+								}
+								while(font.getTextWidth(.text[i]) > .w);
+							}
+						}
+					}
+
+					//	描画位置の補正
+					.pos	= .pos.toLowerCase();
+					var	l	= .pos[0] == "c" ? .x + (.w - mw) \ 2 : (.pos[0] == "r" ? .x + .w - mw : .x);
+					var	t	= .pos[1] == "c" ? .y + (.h - mh) \ 2 : (.pos[1] == "b" ? .y + .h - mh : .y);
+//					var	l	= Math.max(.x, .x + (.w - mw) \ 2);	//	幅が足りない時は、左端に合わせる
+//					var	t	= .y + (.h - mh) \ 2;
+
+					//	テキスト描画
+					setClip(.x, .y, .w, .h);
+					for(var i=0; i<.text.count; i++)
+					{
+						drawText(l, t, .text[i], .color,,, 112, 0x000000, 0, 1, 1);
+						if( ! .multi )
+							break;
+						else if( .maxline && i+1 > .maxline )
+							break;
+						t	+= .fh + .spc;
+					}
+					setClip();
+				}
+			}
+			_doAffine = _doOffset = true;
+			invalidate drawTextInfos;
+			delete drawTextInfos;
+		}
+
+		//	追加の画像も書き込む
+		if(typeof this.drawImageInfos != "undefined")
+		{
+			var	layer	= new global.Layer(window, this);
+			layer.storage	= void;
+			for(var i=0; i<drawImageInfos.count; i++)
+			{
+				with(drawImageInfos[i])
+				{
+					if(Storages.isExistentImage(.storage))
+					{
+//						dm(name+" draw image: "+.storage);
+						//	画像を読み込む
+						layer.loadImages(layer.storage = .storage) if layer.storage !== .storage;
+
+						//	書き込む
+						var	sw	= .sw !== void ? .sw : layer.imageWidth;
+						var	sh	= .sh !== void ? .sh : layer.imageHeight;
+						if(.w == sw && .h == sh)
+						{
+							if(.opacity == 255)
+								copyRect(.x, .y, layer, .sx, .sy, sw, sh);
+							else
+								operateRect(.x, .y, layer, .sx, .sy, sw, sh,, .opacity);
+						}
+						else
+							operateStretch(.x, .y, .w, .h, layer, .sx, .sy, sw, sh,, .opacity, stFastLinear);
+						_doAffine = true;
+					}
+					else
+						dm("file not found: "+.storage);
+				}
+			}
+			_doAffine = _doOffset = true;
+			invalidate layer;
+			invalidate drawImageInfos;
+			delete drawImageInfos;
+		}
+	}
+
+	function addFollower(item)
+	{
+		this.followers = [] if typeof this.followers == "undefined";
+		followers.add(item);
+		item.follow	= this;
+	}
+
+	function removeFollower(item)
+	{
+		if(typeof this.followers != "undefined")
+		{
+			item.onRemoveFollow(this) if typeof item.onRemoveFollow != "undefined";
+			followers.remove(item);
+			delete item.follow;
+			delete this.followers if followers == void || followers.count == 0;
+		}
+	}
+
+	function removeAllFollowers()
+	{
+		if(typeof this.followers != "undefined")
+		{
+			for(var i=0; i<followers.count; i++)
+			{
+				var	item	= followers[i];
+				item.onRemoveFollow(this) if item isvalid && typeof item.onRemoveFollow != "undefined";
+				delete item.follow;
+			}
+			followers.clear();
+			delete this.followers;
+		}
+	}
+
+	function doOffset()
+	{
+		super.doOffset(...);
+
+		if(typeof this.followers != "undefined")
+		{
+			for(var i=0; i<followers.count; i++)
+				followers[i].updatePos(this);
+		}
+	}
+
+	function updatePos()
+	{
+	}
+
+	//	リピート開始
+	function startRepeat(firsttime, repeattime, func, args*)
+	{
+		if(typeof this.repeatTimer != "undefined" && repeatTimer != void)
+			return false;
+
+//		dmt(name+".startRepeat()");
+		with(this.repeatTimer = new Timer(onRepeatTimeout, ""))
+		{
+			.interval	= firsttime;
+			.next		= repeattime;
+			.func		= func;
+			.args		= args;
+			.enabled	= true;
+		}
+		return true;
+	}
+
+	//	リピート一時停止
+	function pauseRepeat()
+	{
+		if(typeof this.repeatTimer == "undefined" || repeatTimer == void)
+			return false;
+		repeatTimer.enabled	= false;
+	}
+
+	//	リピート再開
+	function resumeRepeat()
+	{
+		if(typeof this.repeatTimer == "undefined" || repeatTimer == void)
+			return false;
+		repeatTimer.enabled	= true;
+	}
+
+	//	リピート終了
+	function stopRepeat()
+	{
+		if(typeof this.repeatTimer == "undefined" || repeatTimer == void)
+			return false;
+
+//		dmt(name+".stopRepeat()");
+		repeatTimer.enabled	= false;
+		invalidate repeatTimer;
+		delete repeatTimer;
+
+		return true;
+	}
+
+	//	リピート実行
+	function onRepeatTimeout()
+	{
+//		dm(name+".onRepeatTimeout");
+		with(repeatTimer)
+		{
+			.interval	= .next;
+			.func(.args*) if .func != void;
+		}
+	}
+
+	//	ssactで値に応じてメソッド実行を行うためのトリガ
+	var _triggerValue = -1;
+	property triggerValue
+	{
+		getter{ return _triggerValue; }
+		setter(v)
+		{
+			if( v != _triggerValue )
+			{
+				//dm(name+".triggerValue = "+v);
+				_triggerValue = v;
+				triggerFunc(v);
+			}
+		}
+	}
+
+	//	triggerValueの変化に応じて呼ばれるメソッド　オーバーライドして使用
+	function triggerFunc(v)
+	{
+	}
+
+	//	カーソルがレイヤー内にあるか.
+	//	レイヤー内なら、レイヤー上のカーソル座標を返す
+	function inCursor()
+	{
+		var	x = cursorX, y = cursorY;
+//		dmt(name+".inCursor: "+x+", "+y+" / "+realWidth+", "+realHeight+" / "+hitThreshold);
+		if(x < 0 || x >= realWidth || y < 0 || y >= realHeight || hitThreshold > 255)
+			return void;
+		if(hitThreshold == 0 || getMaskPixel(x, y) >= hitThreshold)
+			return [ x, y ];
+		return void;
+	}
+}
+
+global.invalidateIt	= function(it)
+{
+	invalidate it if it != void;
+	it = void;	//isvalid = fasle の状態でオブジェクトが残ったままになる場合があるので明示的にvoidとする
+};
+
+@endif
+
+/*----------------------------------------------------------------------------/
+/	TLEで編集するためのObject,Layer,Properties登録
+/----------------------------------------------------------------------------*/
+@if(IS_TLE)
+Scripts.execStorage("PluginObject.tjs");
+Scripts.execStorage("PluginLayer.tjs");
+Scripts.execStorage("menu_property.tjs");
+
+var	MenuObjectPropertyType	= %[lclick:"String", rclick:"String", script:"String"];
+var	MenuObjectPropertyRange	= %[];
+var	MenuNotStateProperties	= [];
+MenuNotStateProperties.assign(LayerNotStateProperties);
+MenuNotStateProperties.add("script");
+
+class MenuObject extends PluginObject
+{
+	function MenuObject()
+	{
+		super.PluginObject(...);
+		pluginName = name = "menu";
+		plugin = global.pluginManager.get(name);
+	}
+
+	property keys						{ getter { return MenuObjectKeys; } }
+	property initvalues					{ getter { return MenuObjectKeysInit; } }
+	property defaultValues				{ getter { return MenuObjectDefaultValues; } }
+	property storageType				{ getter { return ""; } }
+	property notStateProperties			{ getter { return MenuNotStateProperties; } }
+	property createPropertyMenuMethod	{ getter { return create_menu_property; } }
+	property eventPropertyMenuMethod	{ getter { return onChildValueModified_menu_property; } }
+	property middleProperties			{ getter { return MenuObjectMiddleProperty; } }
+	property propertyTypes				{ getter { return MenuObjectPropertyType; } }
+	property propertyRanges				{ getter { return MenuObjectPropertyRange; } }
+	property isOutputTag				{ getter { return false; } }
+	property isInRoot					{ getter { return true; } }	//	ルートに入れるかどうか
+}
+postProcessOfObject("MenuObject", MenuObjectKeys);
+
+class MenuLayer extends PluginLayer
+{
+	function MenuLayer(win, par, obj)
+	{
+		super.PluginLayer(...);
+	}
+
+//	property lclick		{ setter(v) { object.lclick = v; } getter { return object.lclick; } }
+//	property rclick		{ setter(v) { object.rclick = v; } getter { return object.rclick; } }
+	var	lclick, rclick;
+	property script		{ setter(v) { object.script = v; } getter { return object.script; } }
+}
+
+global.addMethodName	= "addMenu";	//	PluginManager も参照するので、統合しないこと
+CV_object2layer["MenuObject"]	= [ "MenuLayer", void, "layers" ];
+OD_add.add(["addMenu", "MenuObject", true]);
+OD_parentageConsistency["MenuObject"]	= function(parent)
+{
+	if(parent == "BGObject" || parent == "PartBgObject")
+	{
+		popupMessage("メニュープラグインはルートの下にのみ配置可能です\nメニュープラグインを移動してください");
+		dm(Scripts.getTraceString());
+		return false;
+	}
+	return true;
+};
+
+//	MenuObjectが追加されたときにLayerObjectをMenuItemObjectにするため、DataManager.users に MenuPlugin を追加する
+global.addManager	= true;
+
+@endif
+
+@endif

@@ -2,7 +2,7 @@
 @if(__HISTORYLAYER_OVERRIDE_DEFINED__==0)
 @set(__HISTORYLAYER_OVERRIDE_DEFINED__=1)
 
-@set(USE_FONT_MESSAGE_SETTING = 0)	// =1:メッセージレイヤと同じフォントでバックログを表示する, =0:従来のMSP明朝固定
+@set(USE_FONT_MESSAGE_SETTING = 1)	// =1:メッセージレイヤと同じフォントでバックログを表示する, =0:従来のMSP明朝固定
 
 KAGLoadScript("ExButtonLayer.tjs");
 KAGLoadScript("ScrollBarLayer.tjs");
@@ -247,6 +247,14 @@ class HistoryLayer extends HistoryLayerOriginal
 		return actionInfo[n] != void ? actionInfo[n][m] : void;
 	}
 
+	function getLineStart2(n, m)
+	{
+		// n ページ目の、m 行目の表示開始位置を得る
+		n += dataStart;
+		if(n >= maxPages) n -= maxPages;
+		return lineStart[n] != void ? lineStart[n][m] : 0;
+	}
+
 	function save()
 	{
 		//※注意：配列およびディクショナリの保存時は参照代入ではなく実体をコピーしないと
@@ -361,6 +369,22 @@ class HistoryLayer extends HistoryLayerOriginal
 		//dm("historyLayer: load");
 	}
 
+	function getCurrentLineWidth() {
+		var curLineWidth = 0;
+		var originalHeight = font.height;
+		for (var i=0; i<currentLine.length; i++) {
+			if (historyFontSize != void && historyFontSize[dataPage] != void && historyFontSize[dataPage][dataPos] != void) {
+				font.height = historyFontSize[dataPage][dataPos][i];
+			} else {
+				font.height = fontHeight;
+			}
+			curLineWidth += font.getTextWidth(currentLine[i]);
+		}
+		curLineWidth += (currentLine.length * window.current.pitch);
+		font.height = originalHeight;
+		return curLineWidth;
+	}
+
 	function store(ch)
 	{
 		if(currentLine!==void && currentLine.length<2)
@@ -385,7 +409,7 @@ class HistoryLayer extends HistoryLayerOriginal
 		else
 		{
 			// 自動改行を行う場合
-			var len	= font.getTextWidth(currentLine) + (currentLine == void ? 0 : currentLine.length) * window.current.pitch;
+			var len	= getCurrentLineWidth() + font.getTextWidth(ch);
 			currentLine += ch;
 //			dm("relinePos = "+relinePos+" / x = "+len);
 			if(len >= relinePos)
@@ -408,7 +432,7 @@ class HistoryLayer extends HistoryLayerOriginal
 					currentLine=
 						currentLine.substring(0, currentLine.length - ch.length);	//	追加した文字を取り除く
 					reline();
-					currentLine = ch;
+					currentLine = ch != " "? ch : "";
 				}
 			}
 		}
@@ -658,7 +682,7 @@ class HistoryLayer extends HistoryLayerOriginal
 			var	rcp, rcc;	//	ルビ当て開始位置、ルビ当て文字数
 			for(var l=0; l<repageLine; l++)
 			{
-				var	x = marginL;
+				var	x = marginL + getLineStart2(dispStart, l);
 				var	line	= page[l];
 				var	maxfh	= font.height = fontHeight;	//	この行の最大サイズ / フォントサイズは行毎に変更される場合があるのでリセットする
 				if(line != "")

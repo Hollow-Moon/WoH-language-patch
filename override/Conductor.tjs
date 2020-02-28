@@ -1,6 +1,10 @@
 ﻿// Conductor.tjs - KAG シナリオ進行処理
 // Copyright (C)2001-2008, W.Dee and contributors  改変・配布は自由です
 
+@if(kirikiriz)
+Plugins.link("KAGParser.dll");
+@endif
+
 //	タグ属性の未定義チェックを行うか
 @set(USE_CHECK_TAG_PARAM=1)
 
@@ -617,6 +621,71 @@ class BaseConductor extends KAGParser
 		}
 	}
 @endif
+
+	// Blech. TJS2 "String" class is /supposed/ to have a .repeat() method.
+	function dashrepeat(count)
+	{
+		var dashes = "";
+		for (var i=0;i<count;i++) {
+			dashes += "―";
+		}
+		return dashes;
+	}
+
+	function replaceLine(text, reg) {
+		var results = reg.exec(text);
+		while(results.count == 2) {
+			var count;
+			if (results[1] == "") {
+				count = 1;
+			} else {
+				count = results[1];
+			}
+			text = text.replace(reg,dashrepeat(count));
+			results = reg.exec(text);
+		}
+		return text;
+	}
+
+	function cleanLine() {
+		var line = curLineStr;
+		if (isInQuiz()) {
+			return quizdata.question;
+		}
+		if (line.length > 0 && line[0] == "@") {
+			return "";
+		}
+		line = replaceLine(line,/\[line len=([0-9]+)]/); //Replace line-tags with dashes
+		line = replaceLine(line,/\[line([0-9]*)]/); 	 //Replace slightly-different-line-tags with dashes
+		line = line.replace(/\["[a-zA-Z0-9_-]*"]/g,"");  //Remove arrays with string quotes indexes (not sure if possible but just in case)
+		line = line.replace(/\['[a-zA-Z0-9_-]*']/g,"");  //Remove arrays with string apostrophes indexes (not sure if possible but just in case)
+		line = line.replace(/\[[0-9]*]/g, ""); 			 //Remove arrays with number indexes (required or it will break when there is nested []s
+		line = line.replace(/\[[^]]*]/g, ""); 			 //Remove tags
+		return line;
+	}
+
+	function isInQuiz() {
+		return curStorage == 'QuizSystem.ks' && currentLabel == '*quiz_question';
+	}
+
+	var conductorPrevStorage;
+	var conductorPrevLine;
+	var conductorPrevLineStr;
+	var conductorPrevCleanLineStr;
+	var lastQuizdataQuestion;
+	function isNewLine() {
+		if (curStorage != conductorPrevStorage || curLine != conductorPrevLine || (curLineStr != conductorPrevLineStr && cleanLine() != conductorPrevCleanLineStr) ||(isInQuiz() && lastQuizdataQuestion != quizdata.question)) {
+			conductorPrevStorage = curStorage;
+			conductorPrevLine = curLine;
+			conductorPrevLineStr = curLineStr;
+			conductorPrevCleanLineStr = cleanLine();
+			if (isInQuiz() && lastQuizdataQuestion != quizdata.question) {
+				lastQuizdataQuestion = quizdata.question;
+			}
+			return true;
+		}
+		return false;
+	}
 }
 
 
@@ -1025,6 +1094,11 @@ class Conductor extends BaseConductor
 
 	function onScenarioLoad()
 	{
+		conductorPrevStorage = void;
+		conductorPrevLine = void;
+		conductorPrevLineStr = void;
+		conductorPrevCleanLineStr = void;
+		lastQuizdataQuestion = void;
 		return owner.onConductorScenarioLoad(...);
 	}
 
@@ -1066,6 +1140,15 @@ class Conductor extends BaseConductor
 	function onUnknownTag()
 	{
 		return owner.onConductorUnknownTag(...);
+	}
+
+	function getNextTag()
+	{
+		var nextTag = super.getNextTag();
+		if (isNewLine()) {
+			owner.onNewLine(this);
+		}
+		return nextTag;
 	}
 }
 

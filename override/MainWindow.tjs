@@ -2,6 +2,10 @@
 //;# Copyright (C)2001-2008, W.Dee and contributors	 改変・配布は自由です
 //;<<'END_OF_TJS_SCRIPT';
 
+@if(kirikiriz)
+Scripts.execStorage("hint.tjs");
+@endif
+
 //	左右同時押しで自動実行を開始するか？
 @set(ATONCECLICK_TO_AUTOMODE=0)
 
@@ -339,21 +343,29 @@ class KAGWindowOriginal extends Window
 			if (typeof this.registerExEvent != "undefined") {
 				// windoeEx 拡張イベントを使用可能
 				borderStyle = bsSizeable;
+@if(!kirikiriz)
 				innerSunken = false;
+@endif
 				registerExEvent();
 				exEventEnabled = true;
 			} else {
 				// 拡張イベントなし
 				borderStyle = bsSingle;
+@if(!kirikiriz)
 				innerSunken = true;
+@endif
 			}
 		}
 		else
 		{
 			borderStyle = bsDialog;
+@if(!kirikiriz)
 			innerSunken = false;
+@endif
 		}
+@if(!kirikiriz)
 		showScrollBars = false;
+@endif
 		if(ismain) caption = System.title;
 
 		// システムタイトルをキャプションと同じに
@@ -1197,6 +1209,16 @@ class KAGWindowOriginal extends Window
 	}
 	function onMouseMove(x, y) {
 		if (pseudoFullScreened && y == 0) trackPseudoMenu(false);
+@if(kirikiriz)
+		if (fullScreened) {
+			if (y > 0) {
+				menu.visible = false;
+			}
+			else if (y == 0) {
+				menu.visible = true;
+			}
+		}
+@endif
 		return super.onMouseMove(...);
 	}
 	var _minimized;
@@ -1574,6 +1596,9 @@ class KAGWindowOriginal extends Window
 				fullScreenMenuItem.checked = true;
 			else
 				windowedMenuItem.checked = true;
+@if(kirikiriz)
+			menu.visible = true;
+@endif
 		}
 		saveSystemVariables();
 	}
@@ -3428,6 +3453,9 @@ class KAGWindowOriginal extends Window
 		// ファイルの代わりに使うようになるので、ここにフィルタを書くこ
 		// とができる。
 		// true を返すと通常のシナリオファイル読み込みとなる。
+
+		words = [];
+
 		return true;
 	}
 
@@ -5817,6 +5845,47 @@ class KAGWindowOriginal extends Window
 		return -2;
 	}
 
+	function onNewLine(conductor) {
+		if (conductor != this.conductor) return;
+
+		var clean = conductor.cleanLine();
+
+		if (clean == "") return;
+
+		if (words.count > 0) {
+			words.erase(0);
+		}
+
+		var additionalWords = clean.split(" ");
+		for (var i = 0; i < additionalWords.count; i++) {
+			words.add(additionalWords[i]);
+		}
+		if (additionalWords.count > 0) {
+			//dm("clean line: " + clean);
+			//dm("found " + additionalWords.count + " words.");
+			//dm("words queue: " + words.join("|"));
+		}
+	}
+
+	var words = [];
+	function processWordWrapping(obj)
+	{
+		if (obj.text==" " && words.count > 1) {
+			words.erase(0);
+			var nextWord = words[0];
+
+			var wordTag = %[tagname:"nextword", text:nextWord];
+			conductor.pendings.insert(0,wordTag);
+			//dm("word: ["+nextWord+"]");
+		}
+	}
+
+	function prettifyTildes(obj) {
+		if (obj.text=="~") {
+			obj.text = "〜";
+		}
+	}
+
 	//------------------------------------------------------- タグハンドラ群 --
 
 	function getHandlers()
@@ -5837,6 +5906,17 @@ class KAGWindowOriginal extends Window
 
 	//--------------------------------------- タグハンドラ群(メッセージ操作) --
 
+	nextword : function(elm)
+	{
+		historyLayer.nextWord(elm.text);
+		if(currentWithBack) current.comp.nextWord(elm.text);
+		if (current.nextWord(elm.text))
+		{
+			return showPageBreakAndClear();
+		}
+		return 0;
+	} incontextof this,
+
 	ch : function(elm)
 	{
 		// 文字表示
@@ -5845,6 +5925,10 @@ class KAGWindowOriginal extends Window
 		{
 			if(acs) { updateBeforeCh--; return -5; } else { updateBeforeCh--; }
 		}
+
+		prettifyTildes(elm);
+		processWordWrapping(elm);
+
 		var text = elm.text;
 		if(currentWithBack) current.comp.processCh(text);
 		if(current.processCh(text))
@@ -6165,6 +6249,34 @@ class KAGWindowOriginal extends Window
 		// 文字表示位置を指定
 		if(currentWithBack) current.comp.locate(elm.x, elm.y);
 		current.locate(elm.x, elm.y);
+		return 0;
+	} incontextof this,
+
+	align : function(elm)
+	{
+		if (elm.anchor !== void) {
+			var textToAlign = elm.text;
+			if(elm.rubychar != void && string(+elm.rubychar) != elm.rubychar) {
+				textToAlign = elm.rubychar;
+			}
+			historyLayer.locateAlign(elm.anchor, textToAlign);
+			if(currentWithBack) current.comp.locateAlign(elm.anchor, textToAlign);
+			current.locateAlign(elm.anchor, textToAlign);
+		}
+		if (elm.rubytext !== void) {
+			var rubyTag = %[tagname:"ruby", text:elm.rubytext];
+			rubyTag.o2o    = elm.rubyo2o    if elm.rubyo2o    !== void;
+			rubyTag.pos    = elm.rubypos    if elm.rubypos    !== void;
+			rubyTag.char   = elm.rubychar   if elm.rubychar   !== void;
+			rubyTag.offset = elm.rubyoffset if elm.rubyoffset !== void;
+			conductor.pendings.insert(0, rubyTag);
+		}
+		if (elm.text !== void) {
+			for (var i = 0; i < elm.text.length; i++) {
+				var chTag = %[tagname:"ch", text:elm.text[i]];
+				conductor.pendings.insert(i, chTag);
+			}
+		}
 		return 0;
 	} incontextof this,
 

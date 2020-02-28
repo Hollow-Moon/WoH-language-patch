@@ -42,6 +42,17 @@ Plugins.link("clipboardEx.dll");
 Scripts.execStorage("ActionManager.tjs");
 
 //	ウィンドウ機能の拡張のため
+@if(kirikiriz)
+// [XXX] typeof 参照で遅延読み込みが入る／ない場合はダミーを作成
+if (typeof global.MenuItem == "undefined")
+    /**/   global.MenuItem  = %[];
+
+if (typeof global.Pad      == "undefined")
+    /**/   global.Pad       = %[];
+
+if (typeof Debug.console   == "undefined")
+    /**/   Debug.console    = %[];
+@endif
 Plugins.link("windowEx.dll");
 
 //	読み込みに失敗したファイルの記録
@@ -135,6 +146,7 @@ class KAGWindow extends KAGWindowOriginal
 			}
 		}
 
+@if(0)
 		//	テキスト履歴のビットマップフォントを割り当てる
 		if(historyLayer.font.face == "明朝D") with(historyLayer.font)
 		{//	ビットマップフォントを割り当てる
@@ -144,6 +156,7 @@ class KAGWindow extends KAGWindowOriginal
 			.mapPrerenderedFont("筑紫明朝d_rb.tft");
 			.height	= fh;
 		}
+@endif
 
 		//	DEBUG時、確認せずに閉じる
 @if(0)

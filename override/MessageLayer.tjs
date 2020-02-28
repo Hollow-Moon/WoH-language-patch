@@ -219,11 +219,11 @@ Scripts.execStorage("MessageCharLayer.tjs");	// 文字の表示に利用する�
 
 class MessageLayer extends KAGLayer
 {
-	var wwFollowing = "%),:;]}｡｣ﾞﾟ。，、．：；゛゜ヽヾゝ"
-                "ゞ々’”）〕］｝〉》」』】°′″℃¢％‰"; // 行頭禁則文字
-	var wwFollowingWeak="!.?､･ｧｨｩｪｫｬｭｮｯｰ・？！ーぁぃぅぇぉっゃゅょゎァィ"
+	var wwFollowing = "%),:;]}｡｣ﾞﾟ。，、：；゛゜ヽヾゝ –"
+                "ゞ々’”）〕］｝〉》」』】°′″℃￠％‰"; // 行頭禁則文字
+	var wwFollowingWeak="､･ｧｨｩｪｫｬｭｮｯｰ・？！ーぁぃぅぇぉっゃゅょゎァィ"
                 "ゥェォッャュョヮヵヶ"; // 行頭(弱)禁則文字
-	var wwLeading="\\$([{｢‘“（〔［｛〈《「『【￥＄£"; // 行末禁則文字 //})
+	var wwLeading="\\$([{｢'‘’“（〔［｛〈《「『【￥＄￡0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.,:;!?–—―"; // 行末禁則文字 //})
 
 	wwFollowing += wwFollowingWeak;
 
@@ -1610,6 +1610,17 @@ class MessageLayer extends KAGLayer
 		currentColumn	= 0;	//	行頭へ
 	}
 @endif
+
+	function nextWord(word)
+	{
+		if (x+getChWidth(word)[1] >= relinexpos) {
+			if (reline()) {
+				return autoReturn;
+			}
+		}
+		return false;
+	}
+
 	function processCh(ch)
 	{
 		// 文字 ch を描画する
@@ -3128,6 +3139,21 @@ class MessageLayer extends KAGLayer
 			decideSizeChange();
 			initCharLayer();
 		}
+	}
+
+	function locateAlign(anchor, text) {
+		var right = relinexpos - marginL;
+		var x = void;
+		var anchorValue = 0;
+		if (anchor == "right") {
+			anchorValue = 1;
+		} else if (anchor == "center") {
+			anchorValue = 0.5;
+		} else if (string(+anchor) == anchor) {
+			anchorValue = +anchor;
+		}
+		x = (right - getChWidth(text)[1]) * anchorValue;
+		locate(x, void);
 	}
 
 	function processReturn()

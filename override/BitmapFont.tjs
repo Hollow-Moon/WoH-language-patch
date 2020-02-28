@@ -25,7 +25,15 @@ for(var i=0; i<bitmapFonts.count; i+=2)
 Layer.getFontList	= function(opt)
 {
 	opt	= fsfSameCharSet | fsfNoVertical if opt === void;
-	var	list	= font.getList(opt);
+	var	list	= [];
+	try
+	{
+		list = font.getList(opt);
+	}
+	catch (e)
+	{
+		list = [];
+	}
 	var	lastface= font.face, lastheight = font.height;
 	with(list)
 	{

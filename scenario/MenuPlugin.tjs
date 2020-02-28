@@ -429,18 +429,18 @@ class MenuPlugin extends BasePlugin
 
 	function clearMenuItem(item)
 	{
-		if(item != void && item isvalid && Scripts isvalid)
+		if(typeof(item) === "Object" && isvalid(item) && typeof(this) === "Object" && isvalid(this) && typeof(this.pools) === "Object" && isvalid(this.pools) && typeof(global.Scripts) === "Object" && isvalid(global.Scripts) && typeof(global.Scripts.getClassNames) === "Object" && isvalid(global.Scripts.getClassNames))
 		{
 //			dm("clearMenuItem("+item+")");
 @if(POOL_MENUITEMS)
-			var	cn	= Scripts.getClassNames(item);
+			var	cn	= global.Scripts.getClassNames(item);
 			if(cn[0] == "MenuItemLayer" && (typeof item.noNormalMenuItem == "undefined" || !item.noNormalMenuItem))
 			{
-//				dm("clearMenuItem("+item+"): index = "+pools.find(item));
-				if(pools.find(item) >= 0)
+//				dm("clearMenuItem("+item+"): index = "+this.pools.find(item));
+				if(this.pools.find(item) >= 0)
 					return;	//	二重にクリアしようとしていた
 //				dmt("clearMenuItem("+item.name+"): "+item);
-				if(pools.count >= initpoolcount)
+				if(this.pools.count >= initpoolcount)
 				{
 //					dm("invalidate: "+item.name);
 //					dmt("clearMenuItem("+item.name+"/"+(visibleChild ? "fore" : "back")+"): invalidate");// / "+item.names.join(", "));
@@ -471,8 +471,8 @@ class MenuPlugin extends BasePlugin
 						.invalidateOrgimage();
 						.invalidateByInvisible	= false;
 					}
-					pools.add(item);
-//					dm("add pools["+item+"]: "+pools.count);	countPoolItem();
+					this.pools.add(item);
+//					dm("add this.pools["+item+"]: "+this.pools.count);	countPoolItem();
 				}
 			}
 			else
@@ -2633,7 +2633,7 @@ class MenuItemLayer extends BasicCharacterLayer
 
 	property mute
 	{
-		getter { return kag.systemSEMute || (typeof this._mute == "undefined" ? false : _mute); }
+		getter { return ((typeof(global.kag) === "Object" && isvalid(global.kag)) ? (kag.systemSEMute || (typeof this._mute == "undefined" ? false : _mute)) : false); }
 		setter(v)
 		{
 //			dmt(name+".mute = "+mute+" → "+v);

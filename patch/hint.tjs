@@ -1,0 +1,48 @@
+﻿Window.hintlayer = void;
+
+Window.initHintLayer = function() {
+	hintlayer = new Layer(this,primaryLayer);
+	with (hintlayer) {
+		.visible = false;
+		.ignoreHintSensing = true;
+		.hitThreshold = 256;
+		.font.height = 9;
+	}
+
+	// hintDelay = 500; // default
+	// hintDelay = 0; // immediate
+	// hintDelay = -1; // never
+	// hintDelay = 1000; // slow
+};
+
+Window.hintHorizontalPadding = 4;
+Window.hintVerticalPadding = 6;
+Window.tooltipBorderColor = 0xffffe1;
+Window.mouseCursorSize = 20;
+
+Window.onHintChanged = function(text, x, y, isshow) {
+	initHintLayer();
+	if (isshow) {
+		var w = hintlayer.font.getTextWidth(text) + hintHorizontalPadding * 2;
+		var h = hintlayer.font.height + hintVerticalPadding * 2;
+		hintlayer.setImageSize(w, h);
+		hintlayer.setSizeToImageSize();
+
+		if ((x+w) > innerWidth) { x = innerWidth - w; }
+		if ((y+h) > innerHeight) { y = innerHeight - h; }
+		hintlayer.setPos(x, y + mouseCursorSize);
+
+		hintlayer.fillRect(0, 0, w, h, 0);
+		hintlayer.colorRect(0, 0, w, h, clInfoBk, 196);
+
+		hintlayer.colorRect(0,   0,   1, h, tooltipBorderColor);
+		hintlayer.colorRect(0,   0,   w, 1, tooltipBorderColor);
+		hintlayer.colorRect(w-1, 0,   1, h, tooltipBorderColor);
+		hintlayer.colorRect(0,   h-1, w, 1, tooltipBorderColor);
+
+		hintlayer.drawText(hintHorizontalPadding, hintVerticalPadding, text, clInfoText, 220);
+		hintlayer.visible = true;
+	} else {
+		hintlayer.visible = false;
+	}
+};

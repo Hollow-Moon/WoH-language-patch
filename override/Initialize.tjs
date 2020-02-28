@@ -169,7 +169,17 @@ System.exceptionHandler = function (e)
 {
 @if(!DEBUG)
 	Debug.logAsError();	//	ログ出力
-	kag.saveQuickToEmpty(, false);	//	クイックセーブする
+	if (typeof(global.kag) === "Object" && isvalid(global.kag) && typeof(global.kag.saveQuickToEmpty) === "Object" && isvalid(global.kag.saveQuickToEmpty))
+	{
+		try
+		{
+			global.kag.saveQuickToEmpty(, false);	//	クイックセーブする
+		}
+		catch (e)
+		{
+			// TODO: append error to traceback
+		}
+	}
 
 	var	msg;
 	msg	=  "下記の例外が発生しました。\n\n";

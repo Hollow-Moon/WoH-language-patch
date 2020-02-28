@@ -30,7 +30,7 @@
 @eval exp=global.logodisplayed=true
 
 ; プロテクトチェック
-;@eval exp="function checkRegistedKey { return 'no disc'; } function checkDisc { return 'no master'; }"
+@eval exp="function checkRegistedKey { return 'useful'; } function checkDisc { return 'useful'; }"
 @eval exp=global.result=checkRegistedKey()
 @if exp="global.result!='useful'"
 @if exp="global.result=='no disc'"

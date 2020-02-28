@@ -3416,6 +3416,10 @@ class MenuItemLayer extends BasicCharacterLayer
 	//	レイヤー内なら、レイヤー上のカーソル座標を返す
 	function inCursor()
 	{
+		if (typeof(global.kag) !== "Object" || !(isvalid(global.kag)))
+		{
+			return void;
+		}
 		var	x = cursorX, y = cursorY;
 //		dmt(name+".inCursor: "+x+", "+y+" / "+realWidth+", "+realHeight+" / "+hitThreshold);
 		if(x < 0 || x >= realWidth || y < 0 || y >= realHeight || hitThreshold > 255)

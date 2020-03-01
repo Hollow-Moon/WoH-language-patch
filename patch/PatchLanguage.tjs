@@ -1,0 +1,520 @@
+﻿// i18n
+Plugins.link("kri18n.dll");
+function __t(text)
+{
+	return text;
+}
+
+function _mt(text)
+{
+	return text;
+}
+
+var settingsDomain = "settings";
+function __s(text, context)
+{
+	return _x(text, context, settingsDomain);
+}
+
+function __si(text, context)
+{
+	return int(__s(string text, context));
+}
+
+function __sb(text, context)
+{
+	return __si(text, context) == true;
+}
+
+function __st(text, context)
+{
+	return text;
+}
+
+function __sti(text, context)
+{
+	return int(__st(text, context));
+}
+
+function loadMOs()
+{
+	removeAllMO();
+	loadMoFile("Translation.mo");
+	loadMoFile("Settings.mo", settingsDomain);
+}
+
+function refreshMenuString(menu)
+{
+	if(typeof menu.originalCaption !== "undefined") {
+		menu.caption = __(menu.originalCaption);
+	}
+
+	var children = menu.children;
+	for(var i=0; i<children.count; i++)
+		refreshMenuString(children[i]);
+}
+
+function refreshStringWithLanguage() {
+	loadMOs();
+
+	if (typeof(global.kag) !== "undefined" && typeof(global.kag.menu) !== "undefined") {
+		refreshMenuString(kag.menu);
+	}
+}
+@if(FREETYPE_FONT)
+if(typeof(global.frFreeType) !== "undefined" && typeof(global.Font.rasterizer) !== "undefined")
+{
+	global.Font.rasterizer = frFreeType;
+}
+@endif
+var loaded_language_fonts = [];
+function load_fonts(language) {
+	if (loaded_language_fonts.contains(language)) {
+		return;
+	}
+
+	var fontFiles = getFontFiles(language);
+	for (var i=0; i<fontFiles.count; i++) {
+		if (Storages.isExistentStorage(fontFiles[i]))
+		{
+@if(0)
+			if (typeof(global.Font) !== "undefined" && typeof(global.Font.addFont) !== "undefined")
+			{
+				// XXX: this doesn't work correctly, even with the names provided by this function.
+				global.Font.addFont(fontFiles[i]);
+			}
+@endif
+			if (typeof(System.addFont) === "undefined")
+			{
+				if (Storages.isExistentStorage("addFont.dll"))
+				{
+					Plugins.link("addFont.dll");
+				}
+			}
+			if (typeof(System.addFont) !== "undefined")
+			{
+				var result = System.addFont(fontFiles[i], true);
+				if (typeof(result) === "Integer" && result > 0)
+				{
+					Debug.message(("Successfully added font \"%s\"").sprintf(fontFiles[i]));
+				}
+				else
+				{
+					Debug.message(("Failed to add font file \"%s\"").sprintf(fontFiles[i]));
+				}
+			}
+		}
+		else
+		{
+			dm(("warning: font %s does not exist").sprintf(fontFiles[i]));
+		}
+	}
+
+	loaded_language_fonts.add(language);
+}
+
+
+function setFontWithLanguage(language)
+{
+	load_fonts(language);
+
+	/// Main ///
+	sf.userFont[language] = %[
+		fontface:default_font,
+		bold:false,
+		rubybold:false
+	] if sf.userFont[language] === void;
+
+	with(kag)
+	{
+		var uf = sf.userFont[language];
+		.chDefaultFace				= uf.fontface;
+		.current.defaultBold		= uf.bold;
+		.current.defaultRubyBold	= uf.rubybold;
+		.setMessageLayerUserFont();
+	}
+
+	/// History ///
+	var hf = kag.chDefaultFace !== void && historyFont[kag.chDefaultFace] !== void ? historyFont[kag.chDefaultFace] : historyFontDefault;
+
+	with(kag.historyLayer.font)
+	{
+		.face = sf.historyFont		= hf[0];
+		.bold = sf.historyFontBold	= hf[1];
+	}
+}
+
+function saveFontWithLanguage()
+{
+	with(kag)
+	{
+		sf.userFont[sf.language] = %[
+			fontface:.chDefaultFace,
+			bold:.current.defaultBold,
+			rubybold:.current.defaultRubyBold
+		];
+	}
+}
+
+var chara2displayname = %[];
+var voicesNames = %[];
+var imagesFolderName = "images";
+var subbedVideosFlagName = "subbedVideos";
+var videosFolderName = "videos";
+var japanese_patch_name = devMode? "Japanese" : mainPatchName;
+var japaneseLanguageLoaded = false;
+var languageSearchPathFile = "LanguageSearchpath.ksc";
+var languageSearchPath = [];
+
+function languagePatchName(language) {
+	return language == japaneseLanguage? japanese_patch_name : language_patch_prefix + language;
+}
+
+function languagePatchExists(language) {
+	if (language == japaneseLanguage) {
+		return true;
+	}
+	if (devMode) {
+		return Storages.isExistentDirectory(System.exePath + language + "/");
+	}
+	return patchExists(languagePatchName(language));
+}
+
+function load_language_patch(language) {
+	var languagePatchName = languagePatchName(language);
+
+	load_patches([[languagePatchName]]) if (language != japaneseLanguage || (devMode && !japaneseLanguageLoaded));
+
+	if (language != japaneseLanguage || !japaneseLanguageLoaded) {
+		if (devMode) {
+			Storages.addAutoPath(System.exePath + "../common/" + language + "/");
+		}
+		var patches_arr = [];
+
+		languageSearchPath = Storages.isExistentStorage(languageSearchPathFile)? Scripts.evalStorage(languageSearchPathFile) : [];
+		for (var i=0; i<languageSearchPath.count; i++) {
+			patches_arr.add([languagePatchName, languageSearchPath[i]]);
+		}
+
+		patches_arr.add([languagePatchName, imagesFolderName]);
+@if(HD_MODE)
+		if (typeof global.kag !== "undefined") {
+			patches_arr.add([languagePatchName, imagesFolderName + hdFolderSuffix]) if kag.isHd;
+		}
+@endif
+		if (typeof global.sf !== "undefined") {
+			patches_arr.add([languagePatchName, censoredHFolderName]) if sf[hCensoredFlagName];
+			patches_arr.add([languagePatchName, censoredMatureFolderName]) if !sf[matureFlagName];
+			patches_arr.add([languagePatchName, fullyCensoredFolderName]) if fullyCensored;
+			patches_arr.add([languagePatchName, videosFolderName]) if sf[subbedVideosFlagName];
+		}
+		load_patches(patches_arr);
+		invalidate patches_arr;
+		delete patches_arr;
+	}
+
+	refreshStringWithLanguage();
+	loadLanguageDict(language);
+	load_fonts(language);
+
+	chara2displayname = Storages.isExistentStorage("chara2displayname.dic")? Scripts.evalStorage("chara2displayname.dic") : %[];
+	voicesNames = Storages.isExistentStorage("voice-names.dic")? Scripts.evalStorage("voice-names.dic"): %[];
+	if (language == japaneseLanguage) {
+		japaneseLanguageLoaded = true;
+	}
+}
+
+function unload_language_patch(language) {
+	var languagePatchName = languagePatchName(language);
+
+	if (language != japaneseLanguage) {
+		var patches_arr = [];
+@if(HD_MODE)
+		if (typeof global.kag !== "undefined") {
+			patches_arr.add([languagePatchName, imagesFolderName + hdFolderSuffix]) if kag.isHd;
+		}
+@endif
+		patches_arr.add([languagePatchName, imagesFolderName]);
+		if (typeof global.sf !== "undefined") {
+			patches_arr.add([languagePatchName, censoredHFolderName]) if sf[hCensoredFlagName];
+			patches_arr.add([languagePatchName, censoredMatureFolderName]) if !sf[matureFlagName];
+			patches_arr.add([languagePatchName, fullyCensoredFolderName]) if fullyCensored;
+			patches_arr.add([languagePatchName, videosFolderName]) if sf[subbedVideosFlagName];
+		}
+
+		for (var i=0; i<languageSearchPath.count; i++) {
+			patches_arr.add([languagePatchName, languageSearchPath[i]]);
+		}
+
+		patches_arr.add([languagePatchName]);
+		unload_patches(patches_arr);
+		invalidate patches_arr;
+		delete patches_arr;
+
+		if (devMode) {
+			Storages.removeAutoPath(System.exePath + "../common/" + language + "/");
+		}
+	}
+
+	chara2displayname = %[];
+	voicesNames = %[];
+}
+
+function loadLanguageSettings() {
+	// system locale might be void on older windows systems (such as Windows XP), or systems other than windows (Android, Mac, etc.)
+	var systemLocale = System.readRegValue("HKEY_CURRENT_USER\\Control Panel\\International\\LocaleName");
+	var found = 0;
+	for (var i=0; i < languages.count; i++) {
+		var language = languages[i];
+		load_language_patch(language);
+
+		var locale = __s("ja_JP", "locale");
+
+		if (locale == systemLocale) {
+			default_language = language;
+			found = 2;
+		} else if (found == 0 && systemLocale !== void && locale.substr(0, 2) == systemLocale.substr(0, 2)) {
+			default_language = language;
+			found = 1;
+		}
+
+		unload_language_patch(language);
+	}
+}
+
+// constants
+var japaneseLanguage = "japanese";
+var englishLanguage = "english";
+var koreanLanguage = "korean";
+var russianLanguage = "russian";
+var languagesPatches = [englishLanguage, koreanLanguage, russianLanguage];
+
+function loadLanguagesList() {
+	if (devMode || isKirikiroid) {
+		var patches_arr = [];
+		// It's important that Japanese is first.
+		var result = [japaneseLanguage];
+		for (var i=0; i<languagesPatches.count; i++) {
+			if (languagePatchExists(languagesPatches[i])) {
+				patches_arr.add([language_patch_prefix + languagesPatches[i]]);
+				result.add(languagesPatches[i]);
+			}
+		}
+		unload_patches(patches_arr);
+		invalidate patches_arr;
+		delete patches_arr;
+		return result;
+	}
+
+	var patches_arr = [];
+	var	files = Storages.dirlist(System.exePath);
+	var loadedLanguages = [japaneseLanguage];
+	for(var i=0; i<files.count; i++) {
+		var	fn	= files[i].toLowerCase();
+		var languageRegex = new RegExp("patch_%s(.*)\.xp3".sprintf(language_patch_prefix));
+		var langugeFolderRegex = new RegExp("%s(.*)\/".sprintf(language_patch_prefix));
+		if (languageRegex.test(fn)) {
+			// The following check is because in FHA exe the "matches" member is void.
+			var languageName = languageRegex.matches !== void? languageRegex.matches[1] : languageRegex.match(fn)[1];
+			patches_arr.add([language_patch_prefix + languageName]);
+
+			if (!loadedLanguages.contains(languageName)) {
+				loadedLanguages.add(languageName); // In case there is a folder and an xp3 file, don't add twice.
+			}
+		} else if (devMode2 && langugeFolderRegex.test(fn)) {
+			// The following check is because in FHA exe the "matches" member is void.
+			var languageName = langugeFolderRegex.matches !== void? langugeFolderRegex.matches[1] : langugeFolderRegex.match(fn)[1];
+
+			if (!loadedLanguages.contains(languageName)) {
+				loadedLanguages.add(languageName); // In case there is a folder and an xp3 file, don't add twice.
+			}
+		}
+	}
+	//dm("Loaded languages: " + loadedLanguages.join(", "));
+	unload_patches(patches_arr);
+	invalidate patches_arr;
+	delete patches_arr;
+	return loadedLanguages;
+}
+
+var language_patch_prefix = devMode? "" : "lang_";
+var languageMenuItemFormat = "language%sMenuItem";
+
+var languages = loadLanguagesList();
+
+var default_language = japaneseLanguage;
+var languageSettings = %[];
+loadLanguageSettings();
+
+// If we only have a single language patch, we most probably want the game to run in that language (regardless of locale).
+if (languages.count == 2) {
+	default_language = languages[1];
+}
+
+initializeDefaultLanguage();
+
+// For convenience
+property currentLanguageSettings { getter() { return languageSettings[sf.language]; } }
+property special_characters { getter() { return currentLanguageSettings["special_characters"] !== void? currentLanguageSettings["special_characters"] : %[]; } }
+property default_history_font { getter() { return currentLanguageSettings["history_default"]; } }
+property default_history_bold { getter() { return currentLanguageSettings["history_default_bold"]; } }
+property historyFontDefault { getter() { return [ default_history_font, default_history_bold ]; } }
+property historyFont { getter() { return currentLanguageSettings["history"] !== void? currentLanguageSettings["history"] : %[]; } }
+
+property default_font { getter() { return __s(fontSettings["window"].face, "window_font_face"); } }
+
+
+function getFontFiles(language) {
+	var fontFiles = languageSettings[language]["fontFiles"];
+	return (fontFiles !== void? fontFiles : []);
+}
+
+
+function isChinese() {
+	//Catch simplified and traditional.
+	return /chinese/.test(sf.language.toLowerCase());
+}
+
+function isJapanese() {
+	return japaneseLanguage == sf.language.toLowerCase();
+}
+
+function isNoSpaceLanguage() {
+	return isJapanese() || isChinese();
+}
+
+
+function initializeDefaultLanguage() {
+	load_language_patch(default_language);
+}
+
+function initializeLanguage() {
+	if (sf.language === void) {
+		// language already loaded in initializeDefaultLanguage
+		sf.language = default_language;
+		sf.userFont = %[];
+	}
+
+	// Load/Reload language after kag is defined:
+	unload_language_patch(default_language);
+	load_language_patch(sf.language);
+
+	saveFontWithLanguage();
+	if(typeof(kag.menu) != "undefined") {
+		(addLanguageMenu incontextof kag)();
+		kag[languageMenuItemFormat.sprintf(sf.language)].checked	= true;
+	}
+}
+
+function addLanguageMenu() {
+	menu.insert(this.languageMenu = new KAGMenuItem(this, __t("言語(&Language)"), 0, void, false), patchMenuIndex);
+	for (var i = 0; i < languages.count; i++) {
+		var language = languages[i];
+		var languageMenuItemName = languageMenuItemFormat.sprintf(language);
+		this.languageMenu.add(this[languageMenuItemName] = new KAGMenuItem(this, languageSettings[language]["menu_name"], 1,
+		"kag.onLanguageMenuItemClick(kag['" + languageMenuItemName + "'],'"+language+"')", false));
+	}
+}
+
+function loadLanguageDict(language) {
+	if (languageSettings[language] === void) {
+		if (Storages.isExistentStorage("language.dic")) {
+			languageSettings[language] = Scripts.evalStorage("language.dic");
+		} else {
+			languageSettings[language] = %[];
+		}
+
+		var currentLanguageSettings = languageSettings[language];
+
+		currentLanguageSettings["menu_name"] = __s("日本語 - &Japanese", "language_menu_name");
+		currentLanguageSettings["history_default"] = __s("ＭＳ Ｐ明朝", "history_font_face");
+		currentLanguageSettings["history_default_bold"] = __sb("1", "history_font_bold");
+	}
+}
+
+Window.onLanguageMenuItemClick = function(sender, language)
+{
+	if (sf.language == language) {
+		return;
+	}
+	saveFontWithLanguage();
+	unload_language_patch(sf.language);
+	load_language_patch(language);
+	sf.language = language;
+	setFontWithLanguage(sf.language);
+	sender.checked = true;
+	extraConductor.clear(); // Fix code for AutoPath
+	onReloadScenarioMenuItemClick(sender);
+	if(typeof flow_tracker_object.flowchart !== "undefined" && flow_tracker_object.flowchart.filename !== void)
+	{
+		flow_tracker_object.isPlayOK();
+		currentPageName = f.scripttitle;
+	}
+};
+
+Window.replace_font_for_special_characters = function(elm) {
+@if(NEWMESSAGELAYER==1)
+	var originalFontFace = current.fontFace;
+@endif
+@if(NEWMESSAGELAYER!=1)
+	var originalFontFace = current.lineLayer.font.face;
+@endif
+	var special = special_characters[originalFontFace];
+	if (special !== void && special[0].contains(elm.text)) {
+		var specialCharactersFontFace = special[1];
+		tagHandlers.font(%["face" => specialCharactersFontFace]);
+		var restoreFontFaceTag = %[tagname:"font", face:"user"];
+		conductor.pendings.insert(0, restoreFontFaceTag);
+	}
+};
+
+Window.replaceCharacters = function(obj) {
+	if (obj.text=="~") {
+		obj.text = "〜";
+	}
+
+	if (sf.language == englishLanguage
+		&& obj.text=="　" 							// Japanese whitespace
+		&& !startsWith("花札", conductor.curStorage) // Not hanafuda
+		) {
+		obj.text = " ";
+	}
+};
+
+var originalSystemInform = System.inform;
+System.inform = function(text) {
+	if (text == System.title + "はすでに起動しています") {
+		text = __("%sはすでに起動しています").sprintf(System.title);
+	}
+	return originalSystemInform(text);
+};
+
+var pluralNames = %[
+ "氷室と蒔寺" => 2,
+ "桜と藤ねえ" => 2,
+ "桜とライダー" => 2,
+ "凛と桜とイリヤ" => 3,
+ "士郎とハサン" => 2,
+ "セイバーと桜" => 2,
+ "セイバーと凛とイリヤ" => 3,
+ "士郎と桜" => 2,
+ "士郎と凛とイリヤ" => 3,
+ "凛とイリヤ" => 2,
+ "セイバーと凛とキャスター" => 3,
+ "士郎と凛" => 2,
+ "セイバーとイリヤ" => 2,
+ "士郎とセイバーと慎二" => 3,
+ "士郎とセイバーと凛" => 3,
+ "士郎とイリヤ" => 2,
+ "凛と桜" => 2,
+ "道場イリヤと道場凛" => 2,
+ "士郎とセイバー" => 2,
+ "士郎とアーチャー" => 2,
+ "凛とセイバー" => 2,
+ "氷室と蒔寺と由紀香" => 3,
+ "セイバーと凛" => 2,
+ "セイバーとランサー" => 2,
+ "クラスメートたち" => 30, // dummy value - used to invoke plural form (in this case, average class size).
+ "棺の贄" => 100,     // dummy value - used to invoke plural form.
+ "others" => 100,    // dummy value - used to invoke plural form.
+];

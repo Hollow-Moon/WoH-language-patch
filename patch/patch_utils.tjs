@@ -1,0 +1,276 @@
+﻿function name_to_patch(name, isFolder=devMode) {
+	if (isFolder) {
+		return System.exePath + name;
+	} else {
+		var prefix = "patch";
+		if (name !== "" && !/^\d+$/.test(name)) { // Not empty and not a number
+			prefix += "_";
+		}
+
+		return System.exePath + prefix + name + ".xp3";
+	}
+}
+
+function name_to_patch_path(name, isFolder=devMode) {
+	var result = name_to_patch(name, isFolder);
+	if (isFolder) {
+		result += "/";
+	} else {
+		result += ">";
+	}
+	return result;
+}
+
+function patchExists(name, isFolder=devMode) {
+	if (devMode) return true;
+	var result = false;
+	if (!isFolder) {
+		result = Storages.isExistentStorage(name_to_patch(name));
+		if (devMode2) {
+			result |= Storages.isExistentDirectory(System.exePath + name + "/");
+		}
+	} else {
+		result = Storages.isExistentDirectory(System.exePath + name + "/");
+	}
+	return result;
+}
+
+function load_patches(patch_array)
+{
+	var patches_to_add = [];
+	for (var i = 0; i < patch_array.count; i += 1)
+	{
+		if (patch_array[i] === void)
+		{
+			continue;
+		}
+		var name = patch_array[i][0];
+		if (typeof(name) !== "String")
+		{
+			throw new Exception("Expected a string when loading patch");
+		}
+		var folderName = patch_array[i][1];
+		if (typeof(folderName) !== "String")
+		{
+			folderName = "";
+		}
+		folderName += "/" if folderName != "";
+		if (devMode)
+		{
+			patches_to_add.add(name_to_patch_path(name) + folderName);
+		}
+		else
+		{
+			patches_to_add.add(name_to_patch_path(name) + folderName) if Storages.isExistentStorage(name_to_patch(name));
+			if (devMode2)
+			{
+				patches_to_add.add(name_to_patch_path(name, true) + folderName);
+			}
+		}
+	}
+	for (var i = 0; i < patches_to_add.count; i += 1)
+	{
+		Storages.addAutoPath(patches_to_add[i]);
+	}
+}
+
+function unload_patches(patch_array)
+{
+	var patches_to_remove = [];
+	for (var i = 0; i < patch_array.count; i += 1)
+	{
+		if (patch_array[i] === void)
+		{
+			continue;
+		}
+		var name = patch_array[i][0];
+		if (typeof(name) !== "String")
+		{
+			throw new Exception("Expected a string when unloading patch");
+		}
+		var folderName = patch_array[i][1];
+		if (typeof(folderName) !== "String")
+		{
+			folderName = "";
+		}
+		folderName += "/" if folderName != "";
+		patches_to_remove.add(name_to_patch_path(name) + folderName);
+		if (devMode2)
+		{
+			patches_to_remove.add(name_to_patch_path(name, true) + folderName);
+		}
+	}
+	for (var i = 0; i < patches_to_remove.count; i += 1)
+	{
+		Storages.removeAutoPath(patches_to_remove[i]);
+	}
+}
+
+function getAnchorValue(anchor)
+{
+	var anchorValue = 0;
+	if (anchor == "right") {
+		anchorValue = 1;
+	} else if (anchor == "center") {
+		anchorValue = 0.5;
+	} else if (string(+anchor) == anchor) {
+		anchorValue = +anchor;
+	}
+	return anchorValue;
+}
+
+Array.contains = function(item) {
+	return this.find(item) != -1;
+};
+
+function lastIndexOf(obj, str)
+{
+	var pos = reverseStr(str).indexOf(obj);
+	if(pos)
+		return str.length - pos - 1;
+	else
+		return -1;
+}
+
+// FHA's exe doesn't have string.reverse
+function reverseStr(str)
+{
+// TODO should also use this method in RN exe.
+@if(kirikiriz)
+	return str.reverse();
+@endif
+@if(!kirikiriz)
+	var result = "";
+	for (var i=str.length-1; i>=0; i--) {
+		result += str[i];
+	}
+	return result;
+@endif
+}
+
+function startsWith(obj, str)
+{
+	var regex = new RegExp("^" + obj + ".*");
+	return regex.test(str);
+}
+
+function endsWith(obj, str)
+{
+	var regex = new RegExp(".*" + obj + "$");
+	return regex.test(str);
+}
+
+function capitalize(str)
+{
+	return str.substr(0, 1).toUpperCase() + str.substr(1);
+}
+
+function addMaskOverlay(layer, name, l=0, t=0, add=true, horizontalAlignment=void)
+{
+	var overlay = new global.Layer(layer.window, layer);
+	with (overlay) {
+		if (horizontalAlignment !== void) {
+			.horizontalAlignment = horizontalAlignment;
+		}
+		if (add) {
+			.type = ltPsAdditive;
+		}
+		.isMask = true;
+		.loadImages(name);
+		layer.operateRect(l, t, overlay, 0, 0, .imageWidth, .imageHeight);
+	}
+	invalidate overlay;
+}
+
+
+var defaultScrollbarImages =  [	//	base
+	"",//"top_horizontal",
+	"",//"base_horizontal",
+	"",//"bottom_horizontal",
+	"scroll_top_horizontal",
+	"scroll_base_horizontal",
+	"scroll_bottom_horizontal"
+];
+
+function initializeScollbar(x, y, w, h, total, moving, top, scrimgs=defaultScrollbarImages)
+{
+	mini_layer = new global.FadeLayer(window, this);
+	with(mini_layer)
+	{
+		.setPos(x, y);
+		.setSize(w, h);
+		.visible = true;
+		.hitThreshold = 0;
+		.opacity = 255;
+		.focusable = true;
+		.onMouseDown = function() {
+			parent.onMouseDown(...);
+		} incontextof mini_layer;
+		.onButtonDown = function() {
+			parent.onButtonDown(...);
+		} incontextof mini_layer;
+		.onButtonUp = function() {
+			parent.onButtonUp(...);
+		} incontextof mini_layer;
+	}
+
+	with(scrollbar = new ScrollBarLayer(window, mini_layer, w, 0, 0, false, scrimgs)) //6,6 margin if you use the horizontal background for the scroller
+	{
+		.top = top; //use top 0 if you use the horizontal background for the scroller
+		.total		= total;
+		.area		= .width;
+		.onscroll	= onScroll;
+		.current	= 0;
+		.moving		= moving;
+	}
+
+	window.org_onMouseWheel	= window.onMouseWheel;
+	window.onMouseWheel		= scrollbar.onMouseWheel;
+}
+
+
+/// 停止所有视频图层的播放 ///
+function stopAllMovies()
+{
+	for(var i=0; i<kag.movies.count; i++)
+	{
+		with(kag.movies[i])
+		{
+			if(.canWaitStop)
+				.stop();
+		}
+	}
+}
+
+function fixAndLoadDictionaryForKrkr2(filename, mode)
+{
+	var file_as_array = [];
+	file_as_array.load(filename, mode);
+	var new_file_as_array = [];
+	for (var i = 0; i < file_as_array.count; i += 1)
+	{
+		new_file_as_array[i] = file_as_array[i].replace(/\(const\)/g, "");
+	}
+	return Scripts.eval(new_file_as_array.join("\n"));
+}
+
+function showAboutKirikiriWindow()
+{
+	if (typeof(global.System.showVersion) === 'Object')
+	{
+		global.System.showVersion();
+	}
+	else
+	{
+		global.System.shellExecute(Storages.getLocalName(global.System.exeName), '-about');
+	}
+}
+
+if (typeof(System.clearGraphicCache) !== "Object")
+{
+	global.System.clearGraphicCache = function() {
+		var ccl = System.graphicCacheLimit;
+		System.graphicCacheLimit = 0;
+		System.graphicCacheLimit = ccl;
+	};
+}

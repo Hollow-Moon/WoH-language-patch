@@ -4,6 +4,8 @@
 // システムバージョン
 var kagVersion = "3.29-dev.20071022";
 
+System.setArgument("-graphicsystem", "drawdevice");
+
 @set(LOG_COPY_TO_EXCHANGE=1)	//	for DEBUG : エラーログを受け渡しに入れるかどうか
 
 @if(DEBUG==1)
@@ -461,6 +463,14 @@ if(Storages.isExistentStorage("AppConfig.tjs"))
 {
 	KAGLoadScript("AppConfig.tjs");
 }
+
+// Load patch scripts
+var devMode = false;
+var devMode2 = true;
+var isKirikiroid = false;
+var mainPatchName = "Japanese";
+KAGLoadScript("patch_utils.tjs");
+KAGLoadScript("PatchLanguage.tjs");
 
 /*
 	Config.tjs 読み込み

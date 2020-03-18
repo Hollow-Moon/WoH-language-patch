@@ -1,12 +1,31 @@
 ﻿// YesNoDialog.tjs - はい/いいえを選択するダイアログボックス
 // Copyright (C)2001-2008, W.Dee and contributors  改変・配布は自由です
 
+sf.moveCursorToDialog	= "Center" if sf.moveCursorToDialog == void;
+
 class YesNoDialogWindow extends Window
 {
 	var yesButton; // [はい] ボタン
 	var noButton; // [いいえ] ボタン
 
 	var result = false; // no:false yes:true
+
+	var	inputDevice	= "mouse";
+
+	//	表示設定
+	var	fontHeight	= 16;
+	var	textColor	= (219 << 16) | (252 << 8) | 253;
+	var	spacing		= 2;		//	行間
+	var	marginLeft	= 20;		//	メッセージ＋ボタンの領域の周り
+	var	marginRight	= 20;
+	var	marginTop	= 20;
+	var	marginBottom= 10;
+	var	tbSpacing	= 20;		//	メッセージとボタンの間
+	var	buttonSpacing= 10;		//	ボタンの間
+	var	minWidth	= 200;		//	最小幅
+	var	bgImage		= "yesnodialog";
+	var	yesImage	= "yesno_okbutton";
+	var	noImage		= "yesno_cancelbutton";
 
 	function YesNoDialogWindow(message, cap)
 	{
@@ -21,7 +40,7 @@ class YesNoDialogWindow extends Window
 			this.cursorPointed = global.Window.mainWindow.cursorPointed;
 
 		// 外見の調整
-		borderStyle = bsDialog;
+		borderStyle = bsNone;
 		innerSunken = false;
 		caption = cap;
 		showScrollBars = false;
@@ -33,13 +52,34 @@ class YesNoDialogWindow extends Window
 		if(typeof this.cursorDefault !== "undefined")
 			primaryLayer.cursor = cursorDefault;
 
-		// サイズを決定
-		var tw = primaryLayer.font.getTextWidth(message);
-		var th = primaryLayer.font.getTextHeight(message);
+		// テキストサイズを決定
+		primaryLayer.font.height	= fontHeight;
+		var	lines	= message.split(/\r\n|\r|\n/);
+		var	tw, th;
+		var	fh	= primaryLayer.font.getTextHeight("あ");
+		for(var i=0; i<lines.count; i++)
+		{
+			var	fw	= primaryLayer.font.getTextWidth(lines[i]);
+			tw	= fw if fw > tw;
+			th	+= fh + spacing;
+		}
+		th	-= spacing;
 
-		var w = tw + 40;
-		if(w<200) w = 200;
-		var h = th*2 + 60;
+		// ボタンを作成
+		add(yesButton = new AdvButtonLayer(this, primaryLayer));
+		with(yesButton)
+			.Butt_showDisableImage = .Butt_showFocusImage = .Butt_focusEqualEnter = true, .loadImages(yesImage);
+		add(noButton = new AdvButtonLayer(this, primaryLayer));
+		with(noButton)
+			.Butt_showDisableImage = .Butt_showFocusImage = .Butt_focusEqualEnter = true, .loadImages(noImage);
+/*		add(yesButton = new ExButtonLayer(this, primaryLayer, "yes",,, "yesno_okbutton",,, 0));
+		add(noButton = new ExButtonLayer(this, primaryLayer, "no",,, "yesno_cancelbutton",,, 0));
+*/		var	bw	= yesButton.width + noButton.width + buttonSpacing;
+		var	bh	= Math.max(yesButton.height, noButton.height);
+
+		// 内部サイズを決定
+		var	w = Math.max(Math.max(tw + marginLeft + marginRight, bw + marginLeft + marginRight), minWidth);
+		var	h = marginTop + th + tbSpacing + bh + marginBottom;
 
 		// 拡大率の設定
 		if (kag.fullScreen) {
@@ -51,14 +91,38 @@ class YesNoDialogWindow extends Window
 		} else {
 		  setZoom(kag.zoomNumer, kag.zoomDenom);
 		}
-		// サイズを決定
+		// ウィンドウサイズを決定
 		setInnerSize(w * zoomNumer / zoomDenom,
 			 h * zoomNumer / zoomDenom);
 
 		// プライマリレイヤのサイズを設定
 		primaryLayer.width = w;
 		primaryLayer.height = h;
-		primaryLayer.colorRect(0, 0, w, h, clBtnFace, 255);
+
+		// プライマリレイヤを描画
+		//	四隅が固定画像で、中間は1ピクセル幅の画像を拡大
+		var	layer	= new Layer(this, primaryLayer);
+		layer.loadImages(bgImage);
+		var	cw2	= layer.imageWidth - 1;
+		var	cw	= cw2 \ 2;
+		var	ch2	= layer.imageHeight - 1;
+		var	ch	= ch2 \ 2;
+		with(primaryLayer)
+		{
+			.copyRect(0, 0, layer, 0, 0, cw, ch);
+			.operateStretch(cw, 0, .width-cw2, ch, layer, cw, 0, 1, ch);
+			.copyRect(.width-cw, 0, layer, cw+1, 0, cw, ch);
+			.operateStretch(0, ch, cw, .height-ch2, layer, 0, ch, cw, 1);
+			.fillRect(cw, ch, .width-cw2, .height-ch2, 0xFF000000 | layer.getMainPixel(cw, ch));
+			.operateStretch(.width-cw, ch, cw, .height-ch2, layer, cw+1, ch, cw, 1);
+			.copyRect(0, .height-ch, layer, 0, ch+1, cw, ch);
+			.operateStretch(cw, .height-ch, .width-cw2, ch, layer, cw, ch+1, 1, ch);
+			.copyRect(.width-cw, .height-ch, layer, cw+1, ch+1, cw, ch);
+		}
+		invalidate layer;
+
+		//	リージョン設定
+		setMaskRegion(64);
 
 		// ウィンドウ位置の調整
 		if(global.Window.mainWindow !== null && global.Window.mainWindow isvalid)
@@ -67,10 +131,16 @@ class YesNoDialogWindow extends Window
 			var l, t;
 			l = ((win.width - width)>>1) + win.left;
 			t = ((win.height - height)>>1) + win.top;
-			if(l < 0) l = 0;
-			if(t < 0) t = 0;
-			if(l + width > System.screenWidth) l = System.screenWidth - width;
-			if(t + height > System.screenHeight) t = System.screenHeight - height;
+
+			//	マルチモニタ系のメソッドを利用して、画面内に入っているかを調べる(need: WindowEx.dll)
+			var	info	= System.getMonitorInfo(true, mainWindow);
+			with(info.monitor)
+			{
+				l	= .x if l < .x;
+				t	= .y if t < .y;
+				l	= .w - width if l + width > .w;
+				t	= .h - height if t + height > .h;
+			}
 			setPos(l, t);
 		}
 		else
@@ -79,28 +149,43 @@ class YesNoDialogWindow extends Window
 		}
 
 		// メッセージの描画
-		primaryLayer.drawText((w - tw)>>1, 14, message, clBtnText);
+		var	tl	= (w - tw) >> 1;
+		var	tt	= marginTop;
+		for(var i=0; i<lines.count; i++)
+		{
+			primaryLayer.drawText(tl, tt, lines[i], textColor);
+			tt	+= fh + spacing;
+		}
 
-		// Yesボタン
-		add(yesButton = new ButtonLayer(this, primaryLayer));
-		yesButton.caption = "はい";
-		yesButton.captionColor = clBtnText;
-		yesButton.width = 70;
-		yesButton.height = 25;
-		yesButton.top = th + 35;
-		yesButton.left = (w - (70*2 + 10)>>1);
-		yesButton.visible = true;
+		// ボタンを配置
+		yesButton.setPos(((w - buttonSpacing) >> 1) - yesButton.width, h - marginBottom - bh);
+		yesButton.visible	= true;
+		noButton.setPos((w + buttonSpacing) >> 1, h - marginBottom - bh);
+		noButton.visible	= true;
 
-		// Noボタン
-		add(noButton = new ButtonLayer(this, primaryLayer));
-		noButton.caption = "いいえ";
-		noButton.captionColor = clBtnText;
-		noButton.width = 70;
-		noButton.height = 25;
-		noButton.top = th + 35;
-		noButton.left = ((w - (70*2 + 10))>>1) + 70 + 10;
-		noButton.visible = true;
-
+		//	マウスを
+		var	l, t;
+		switch(sf.moveCursorToDialog)
+		{
+		//	両ボタンの間に置く
+		case "Center":
+			var	ml	= Math.min(yesButton.left, noButton.left);
+			var	mt	= Math.min(yesButton.top, noButton.top);
+			l	= ml+(Math.max(yesButton.left+yesButton.width, noButton.left+noButton.width)-ml) \ 2;
+			t	= mt+(Math.max(yesButton.top+yesButton.height, noButton.top+noButton.height)-mt) \ 2;
+			break;
+		//	はい ボタンに置く
+		case "Yes":
+			l	= yesButton.left + yesButton.width \ 2;
+			t	= yesButton.top + yesButton.height \ 2;
+			break;
+		//	いいえ ボタンに置く
+		case "No":
+			l	= noButton.left + noButton.width \ 2;
+			t	= noButton.top + noButton.height \ 2;
+			break;
+		}
+		primaryLayer.setCursorPos(l, t);
 	}
 
 	function finalize()
@@ -165,6 +250,43 @@ class YesNoDialogWindow extends Window
 			result = false;
 			close();
 		}
+	}
+}
+
+class AdvButtonLayer extends ButtonLayer
+{
+	var	Butt_showDisableImage = false;
+	var	Butt_focusEqualEnter = false;
+
+	function AdvButtonLayer()
+	{
+		super.ButtonLayer(...);
+	}
+
+	function loadImages(storage, key)
+	{
+		global.KAGLayer.loadImages(storage, key);
+		var	div	= 3;
+		div++ if Butt_showFocusImage;
+		div++ if Butt_showDisableImage;
+		global.KAGLayer.width	= imageWidth \ div;
+		global.KAGLayer.height	= imageHeight;
+		callOnPaint	= true;
+		Butt_imageLoaded	= true;
+	}
+
+	function draw()
+	{
+		if(Butt_showDisableImage && !enabled)
+			drawState(4);
+		else if(Butt_mouseDown)
+			drawState(1);
+		else if(Butt_mouseOn)
+			drawState(2);
+		else if(Butt_showFocusImage && focused)
+			drawState(Butt_focusEqualEnter ? 2 : 3);
+		else
+			drawState(0);
 	}
 }
 

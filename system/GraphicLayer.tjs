@@ -18,7 +18,7 @@ class ProvinceContext
 	function finalize() {};
 }
 
-class GraphicLayer extends AnimationLayer
+class GraphicLayerOriginal extends AnimationLayer
 {
 	// 背景/前景レイヤの基本クラス
 
@@ -32,13 +32,13 @@ class GraphicLayer extends AnimationLayer
 	var lastMouseDownX; // 最後にマウスがクリックされた X 座標
 	var lastMouseDownY; // 最後にマウスがクリックされた Y 座標
 
-	function GraphicLayer(win, par, name, id)
+	function GraphicLayerOriginal(win, par, name, id)
 	{
 		// GraphicLayer コンストラクタ
 		// win    : ウィンドウオブジェクト
 		// par    : 親レイヤ
 		// name   : レイヤの名前
-		super.AnimationLayer(win, par);
+		super.AnimationLayer(...);
 
 		this.name = name;
 		this.id = id;
@@ -326,13 +326,13 @@ class GraphicLayer extends AnimationLayer
 	}
 }
 
-class BaseLayer extends GraphicLayer
+class BaseLayerOriginal extends GraphicLayer
 {
 	// 背景レイヤ
 
-	function BaseLayer(win, par, name, id)
+	function BaseLayerOriginal(win, par, name, id)
 	{
-		super.GraphicLayer(win, par, name, id);
+		super.GraphicLayer(win, par, name, id, true);
 		type = ltCoverRect;
 		hitType = htMask;
 		hitThreshold = 0;
@@ -346,7 +346,7 @@ class BaseLayer extends GraphicLayer
 	function assign(src)
 	{
 		// assign オーバーライド
-		super.assign(src);
+		super.assign(...);
 		// 親クラスの assign は可視・不可視などをコピーしないが、
 		// 背景レイヤなのでそれでよい
 	}
@@ -474,22 +474,32 @@ class BaseLayer extends GraphicLayer
 		super.exchangeInfo();
 		window.swapBaseLayer();
 	}
+
+	//背景レイヤーではサイズ調整をしない
+	function expandLayerSize()
+	{
+	}
+
+	function reduceLayerSize()
+	{
+	}
+
+
 }
 
-class CharacterLayer extends GraphicLayer
+class CharacterLayerOriginal extends GraphicLayer
 {
 	// 前景レイヤ
 	var autoHide = false; // メッセージレイヤと一緒に隠れることができるか
 	var invisibleByUser = false; // ユーザにより一時的に不可視
 	var visibleBeforeUserInvisible  = false;
 
-	function CharacterLayer(win, par, name, id)
+	function CharacterLayerOriginal(win, par, name, id)
 	{
-		super.GraphicLayer(win, par, name, id);
-		freeImage();
+		super.GraphicLayer(...);
 		type = ltCoverRect;
 		hitType = htMask;
-		hitThreshold = 64;
+		hitThreshold = 256;
 	}
 
 	function finalize()
@@ -516,7 +526,7 @@ class CharacterLayer extends GraphicLayer
 	function assign(src)
 	{
 		// assign オーバーライド
-		super.assign(src);
+		super.assign(...);
 		assignVisibleState(src);
 		// 親クラスの assign は可視・不可視などの情報をコピーしないため
 		// ここで assignVisibleState を呼ぶ必要がある

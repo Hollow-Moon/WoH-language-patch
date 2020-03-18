@@ -1,7 +1,6 @@
 ﻿// AnimationLayer.tjs - アニメーションを行うレイヤ
 // Copyright (C)2001-2008, W.Dee and contributors  改変・配布は自由です
 
-
 /*
 -- ２つのアニメーションの種類 ---------------------------------------------
 
@@ -323,7 +322,7 @@ class AnimationConductor extends BaseConductor
 }
 
 
-class AnimationLayer extends KAGLayer
+class AnimationLayerOriginal extends KAGLayer
 {
 	var Anim_cellLayer; // セルレイヤ
 	var Anim_segments = []; // セグメントごとのコンダクタ
@@ -335,22 +334,19 @@ class AnimationLayer extends KAGLayer
 	var Anim_defaultFontInfo = %[];
 
 
-	function AnimationLayer(win, par)
+	function AnimationLayerOriginal(win, par)
 	{
 		// AnimationLayer コンストラクタ
 		super.KAGLayer(...); // スーパークラスのコンストラクタを呼ぶ
 
 		Anim_defaultFontInfo.face = font.face; // デフォルトのフォント
 		Anim_defaultFontInfo.height = font.height; // デフォルトのフォントサイズ
-
-		Anim_segments[0] = new AnimationConductor(this); // デフォルトのコンダクタ
-		Anim_segments[0].number = 0;
 	}
 
 	function finalize()
 	{
 		clearAnim(); // アニメーション情報のクリア
-		invalidate Anim_segments[0]; // デフォルトのコンダクタを無効化
+		invalidate Anim_segments[0] if Anim_segments[0] != void; // デフォルトのコンダクタを無効化
 		Anim_loadParams = void;
 		Anim_partialImageInfo = void;
 		super.finalize(...);
@@ -392,10 +388,14 @@ class AnimationLayer extends KAGLayer
 			var seg = Anim_segments[i];
 			invalidate Anim_segments[i] if seg !== void;
 		}
-		Anim_segments.count = 1;
 
-		// デフォルトのセグメントの停止
-		Anim_segments[0].stop();
+		if(Anim_segments[0] != void)
+		{
+			Anim_segments.count = 1;
+
+			// デフォルトのセグメントの停止
+			Anim_segments[0].stop();
+		}
 
 		// アニメーションセルレイヤの破棄
 		invalidate Anim_cellLayer if Anim_cellLayer !== void;
@@ -819,7 +819,7 @@ class AnimationLayer extends KAGLayer
 			{
 				for(var i = Anim_segments.count -1; i>=0; i--)
 				{
-					Anim_segments[i].interrupted = x;
+					Anim_segments[i].interrupted = x if Anim_segments[i] != void;
 				}
 				Anim_interrupted = x;
 			}
@@ -1144,14 +1144,14 @@ class AnimationLayer extends KAGLayer
 // pimage, ptext タグのように、栞の読み込み時に再構築
 // 可能な情報を復元する際に用いるハンドラ
 // (タグ名と、それに対応するハンドラを記述する)
-AnimationLayer.Anim_reconstructHandlers =
+AnimationLayerOriginal.Anim_reconstructHandlers =
 	%[
-		pimage	:	AnimationLayer.loadPartialImage,
-		ptext	:	AnimationLayer.drawReconstructibleText
+		pimage	:	AnimationLayerOriginal.loadPartialImage,
+		ptext	:	AnimationLayerOriginal.drawReconstructibleText
 	];
 
 
-class ClickGlyphLayer extends AnimationLayer
+class ClickGlyphLayer extends AnimationLayerOriginal
 {
 	// クリック待ち記号レイヤ
 	var loadedImage; // 現在読み込まれている画像
@@ -1160,7 +1160,7 @@ class ClickGlyphLayer extends AnimationLayer
 	function ClickGlyphLayer(win, par)
 	{
 		// コンストラクタ
-		super.AnimationLayer(win, par);
+		super.AnimationLayerOriginal(win, par);
 		hitType = htMask;
 		hitThreshold = 256; // マウスメッセージは完全に透過
 	}

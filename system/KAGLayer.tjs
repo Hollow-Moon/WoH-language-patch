@@ -191,7 +191,7 @@ class KAGLayer extends Layer
 		// beginTransition オーバーライド
 		// elm に従い、トランジションを開始する
 		// src にはトランジションの相手を指定
-//		stopTransition(); // 現在のトランジションは停止
+		stopTransition(); // 現在のトランジションは停止
 
 		if(elm.exchange !== void) transExchange = +elm.exchange; else transExchange = false;
 		var method = elm.method;
@@ -229,7 +229,14 @@ class KAGLayer extends Layer
 		transWithChildren = withchildren;
 		inTransition = true;
 		window.transCount++; // 進行中のトランジションの数を増やす
-		super.beginTransition(method, withchildren, src, elm);
+		try
+			super.beginTransition(method, withchildren, src, elm);
+		catch(e)
+		{
+			dm("トランジション実行失敗: "+e.message);
+//			dm(src.name+"("+src.storage+"/"+src.width+","+src.height+"/"+src.trans+","+src.useTrans+") → "+name+"("+storage+"/"+width+","+height+"/"+trans+","+useTrans+")");
+			dm(src.name+"("+src.storage+"/"+src.width+","+src.height+") → "+name+"("+storage+"/"+width+","+height+")");
+		}
 	}
 
 	function onTransitionCompleted(dest, src)

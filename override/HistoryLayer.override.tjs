@@ -7,7 +7,8 @@
 KAGLoadScript("ExButtonLayer.tjs");
 KAGLoadScript("ScrollBarLayer.tjs");
 
-class HistoryLayer extends HistoryLayerOriginal
+global.HistoryLayer_original = HistoryLayer;
+class HistoryLayer_override extends HistoryLayer_original
 {
 	var historyFontSize	= [];	//	各ページがどのフォントサイズで表示されていたかを記録
 	var historyLineSpacing	= [];	//	行間の記録
@@ -47,13 +48,18 @@ class HistoryLayer extends HistoryLayerOriginal
 	}
 @endif
 
-	function HistoryLayer()
+	function HistoryLayer_override()
 	{
-		super.HistoryLayerOriginal(...);
+		super.HistoryLayer(...);
 		historyColor			= 0xffffff;		//	履歴文字色
 		historyLabelColor		= 0x7f7f7f;		//	履歴内のラベル色
 
 		focusable	= false;
+	}
+
+	function HistoryLayer()
+	{
+		HistoryLayer_override(...);
 	}
 
 	function finalize()
@@ -1247,6 +1253,7 @@ class HistoryLayer extends HistoryLayerOriginal
 		}
 	}
 }
+global.HistoryLayer = HistoryLayer_override;
 
 //履歴画面内部で使用されるButtonLayerの機能拡張(ExButtonLayer)
 ButtonLayer.readyVisible = function()

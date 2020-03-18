@@ -2,13 +2,14 @@
 @if(__BGM_OVERRIDE_DEFINED__==0)
 @set(__BGM_OVERRIDE_DEFINED__=1)
 
-class BGM extends BGMOriginal
+global.BGM_original = BGM;
+class BGM_override extends BGM_original
 {
 	var	delayTimer;	//	遅延再生開始を実行するためのタイマー
 	var	delayElm;	//	遅延実行するパラメータ
 	var	delayFuncName;	//	遅延時間終了後に実行するメソッド
 
-	function BGM(owner)
+	function BGM_override(owner)
 	{
 		//フェード後停止の機能拡張、フェードアウトだけでなく指定ボリュームにして停止
 		global.KAGWaveSoundBuffer.org_fadeOutAndStop = global.KAGWaveSoundBuffer.fadeOutAndStop;
@@ -40,10 +41,15 @@ class BGM extends BGMOriginal
 			org_onFadeCompleted();
 		} incontextof global.KAGWaveSoundBuffer;
 
-		super.BGMOriginal(...);
+		super.BGM(...);
 
 		buf1.bgmobj = this;
 		buf2.bgmobj = this;
+	}
+
+	function BGM()
+	{
+		BGM_override(...);
 	}
 
 	function finalize()
@@ -246,5 +252,6 @@ class BGM extends BGMOriginal
 	}
 
 }
+global.BGM = BGM_override;
 
 @endif

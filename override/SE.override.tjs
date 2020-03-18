@@ -4,7 +4,8 @@
 
 @set(SE_DELAY_VERBOSE=0)
 
-class SESoundBuffer extends SESoundBufferOriginal
+global.SESoundBuffer_original = SESoundBuffer;
+class SESoundBuffer_override extends SESoundBuffer_original
 {
 	// 時間で pan が変化する機能を追加
 	var panTimer		= void;
@@ -29,9 +30,14 @@ class SESoundBuffer extends SESoundBufferOriginal
 */	var	playingStorage	= "";	//	実際に再生中の storage(currentStorage はloop時しか記憶しないので)
 	var	delayTimer	= void;
 
-	function SESoundBuffer(owner, id)
+	function SESoundBuffer_override()
 	{
-		super.SESoundBufferOriginal(...);
+		super.SESoundBuffer(...);
+	}
+
+	function SESoundBuffer()
+	{
+		SESoundBuffer_override(...);
 	}
 
 	function finalize()
@@ -509,5 +515,6 @@ class SESoundBuffer extends SESoundBufferOriginal
 	}
 
 }
+global.SESoundBuffer = SESoundBuffer_override;
 
 @endif

@@ -71,7 +71,8 @@ function addLoadErrorFiles(storage)
 }
 @endif
 
-class KAGWindow extends KAGWindowOriginal
+global.KAGWindow_original = KAGWindow;
+class KAGWindow_override extends KAGWindow_original
 {
 	var SESTARTIDX	= 0;		//SEバッファの開始インデックス(VOICE使用時は1に、未使用時は0にする)
 
@@ -128,11 +129,11 @@ class KAGWindow extends KAGWindowOriginal
 		}
 	}
 */
-	function KAGWindow()
+	function KAGWindow_override()
 	{
 		add(actmgr = new ActionManager(this));
 
-		super.KAGWindowOriginal(...);
+		super.KAGWindow(...);
 
 		for(var i=0; i<2; i++)
 		{
@@ -162,6 +163,11 @@ class KAGWindow extends KAGWindowOriginal
 @if(0)
 		askOnClose = false;
 @endif
+	}
+
+	function KAGWindow()
+	{
+		KAGWindow_override(...);
 	}
 
 	//ファイナライザにアクション関連の停止処理追加
@@ -4290,5 +4296,6 @@ class KAGWindow extends KAGWindowOriginal
 		return (!cr && chNonStopToPageBreak) || (cr && ch2ndNonStopToPageBreak);
 	}
 }
+global.KAGWindow = KAGWindow_override;
 
 @endif

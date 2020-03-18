@@ -8,7 +8,8 @@
 //	→	selfupdate=1 で余計な画面更新を抑止しようとすると、必要な画面更新が発生せずに
 //		トランジションが固まってしまうため、使用中止中
 
-class GraphicLayer extends GraphicLayerOriginal
+global.GraphicLayer_original = GraphicLayer;
+class GraphicLayer_override extends GraphicLayer_original
 {
 	var	layerID;	//	任意の数字/文字列が設定可能な識別子(GraphicLayer.idとは異なる)
 /*	var	_layerID;
@@ -29,9 +30,14 @@ class GraphicLayer extends GraphicLayerOriginal
 	var hide = false;			// アクション終了時に非表示
 	global.ID_SEPARATOR = "_";	//ID連結用記号、半角英数である事
 
-	function GraphicLayer(win, par, name, id)
+	function GraphicLayer_override()
 	{
-		GraphicLayerOriginal(...);
+		super.GraphicLayer(...);
+	}
+
+	function GraphicLayer()
+	{
+		GraphicLayer_override(...);
 	}
 
 	function finalize()
@@ -589,5 +595,6 @@ class GraphicLayer extends GraphicLayerOriginal
 		quake	= false;
 	}
 }
+global.GraphicLayer = GraphicLayer_override;
 
 @endif

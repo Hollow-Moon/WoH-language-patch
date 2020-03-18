@@ -18,7 +18,7 @@ class ProvinceContext
 	function finalize() {};
 }
 
-class GraphicLayerOriginal extends AnimationLayer
+class GraphicLayer extends AnimationLayer
 {
 	// 背景/前景レイヤの基本クラス
 
@@ -32,7 +32,7 @@ class GraphicLayerOriginal extends AnimationLayer
 	var lastMouseDownX; // 最後にマウスがクリックされた X 座標
 	var lastMouseDownY; // 最後にマウスがクリックされた Y 座標
 
-	function GraphicLayerOriginal(win, par, name, id)
+	function GraphicLayer(win, par, name, id)
 	{
 		// GraphicLayer コンストラクタ
 		// win    : ウィンドウオブジェクト
@@ -326,11 +326,11 @@ class GraphicLayerOriginal extends AnimationLayer
 	}
 }
 
-class BaseLayerOriginal extends GraphicLayer
+class BaseLayer extends GraphicLayer
 {
 	// 背景レイヤ
 
-	function BaseLayerOriginal(win, par, name, id)
+	function BaseLayer(win, par, name, id)
 	{
 		super.GraphicLayer(win, par, name, id, true);
 		type = ltCoverRect;
@@ -487,14 +487,14 @@ class BaseLayerOriginal extends GraphicLayer
 
 }
 
-class CharacterLayerOriginal extends GraphicLayer
+class CharacterLayer extends GraphicLayer
 {
 	// 前景レイヤ
 	var autoHide = false; // メッセージレイヤと一緒に隠れることができるか
 	var invisibleByUser = false; // ユーザにより一時的に不可視
 	var visibleBeforeUserInvisible  = false;
 
-	function CharacterLayerOriginal(win, par, name, id)
+	function CharacterLayer(win, par, name, id)
 	{
 		super.GraphicLayer(...);
 		type = ltCoverRect;

@@ -11,7 +11,8 @@ var	regBGKeyword= /\(([^)]+)\)/;	//	()の中を取り出す
  * あらわすようにした。
  * また前景レイヤーは背景の移動の影響を受けず、揺れ・振動にのみ反応するようにしている。
  */
-class BaseLayer extends BaseLayerOriginal
+global.BaseLayer_original = BaseLayer;
+class BaseLayer_override extends BaseLayer_original
 {
 	var usecurrent = false;
 
@@ -102,9 +103,14 @@ class BaseLayer extends BaseLayerOriginal
 		}
 	}
 
+	function BaseLayer_override()
+	{
+		super.BaseLayer(...);
+	}
+
 	function BaseLayer()
 	{
-		super.BaseLayerOriginal(...);
+		BaseLayer_override(...);
 	}
 
 	function finalize()
@@ -268,7 +274,7 @@ class BaseLayer extends BaseLayerOriginal
 		//dm("restore: [" + dic.storage + "]   this.width=" + width + " height=" + height + " imageWidth=" + imageWidth + " imageHeight=" + imageHeight);
 	}
 
-	//BaseLayerOriginalからオーバーライド、オートおよびスキップを右クリックで停止対応
+	//BaseLayerからオーバーライド、オートおよびスキップを右クリックで停止対応
 	function internalOnMouseDown(x, y, button, processprovince = true)
 	{
 		// 内部関数
@@ -505,3 +511,4 @@ class BaseLayer extends BaseLayerOriginal
 			children[i].forcePaint(...) if children[i] instanceof "BasicCharacterLayer";
 	}
 }
+global.BaseLayer = BaseLayer_override;

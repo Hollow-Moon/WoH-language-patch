@@ -91,7 +91,8 @@ var	screen_plus_alpha	= 48;
 //	特定の画像が読み込まれた時、読み込まれたとフラグを立てる画像
 var	displayedLinks	= Scripts.evalStorage("displink.txt");
 
-class AnimationLayer extends AnimationLayerOriginal
+global.AnimationLayer_original = AnimationLayer;
+class AnimationLayer_override extends AnimationLayer_original
 {
 	var	images	= [];
 
@@ -104,9 +105,9 @@ class AnimationLayer extends AnimationLayerOriginal
 	var	timeRate	= 1.0;	//	アクションの時間経過率(1.0なら等速/>1.0なら早送り/<1.0ならスロー)
 
 	//コンストラクタ
-	function AnimationLayer(win, par, name, no, screensizelayer=true)
+	function AnimationLayer_override(win, par, name, no, screensizelayer=true)
 	{
-		super.AnimationLayerOriginal(...);
+		super.AnimationLayer(...);
 		cached	= true;	//	重ね合わせの再描画を極力行わない
 		with(this)
 		{
@@ -123,6 +124,11 @@ class AnimationLayer extends AnimationLayerOriginal
 		}
 		screenSizeLayer = screensizelayer;	//	常に画面と同じサイズのレイヤー
 		hazeReset();
+	}
+
+	function AnimationLayer()
+	{
+		AnimationLayer_override(...);
 	}
 
 	//ファイナライザ
@@ -3803,6 +3809,7 @@ dispMicro(name+".loadImages("+elm.storage+")", 6);
 @endif
 
 }
+global.AnimationLayer = AnimationLayer_override;
 
 // 定数定義
 AnimationLayer.AFFINEOFFSET_CENTER = -100000;

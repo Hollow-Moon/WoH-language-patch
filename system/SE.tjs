@@ -3,7 +3,7 @@
 
 @set(VOLUME_VISIBLE=0)
 
-class SESoundBufferOriginal extends WaveSoundBuffer
+class SESoundBuffer extends WaveSoundBuffer
 {
 	// 効果音クラス ( WaveSoundBuffer を継承 )
 
@@ -15,7 +15,7 @@ class SESoundBufferOriginal extends WaveSoundBuffer
 	var currentVolume = 100; // 見かけのボリューム
 	var inFadeAndStop = false; // フェード終了時に停止するか
 
-	function SESoundBufferOriginal(owner, id)
+	function SESoundBuffer(owner, id)
 	{
 		// コンストラクタ
 		super.WaveSoundBuffer(owner);
@@ -46,7 +46,7 @@ class SESoundBufferOriginal extends WaveSoundBuffer
 			}
 			catch(e)
 			{
-				dm("SESoundBufferOriginal：メディアの総再生時間取得に失敗しました(実行は続行できます) : " + e.message);
+				dm("SESoundBuffer：メディアの総再生時間取得に失敗しました(実行は続行できます) : " + e.message);
 				return 0;
 			}
 		}

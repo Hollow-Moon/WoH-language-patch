@@ -322,7 +322,7 @@ class AnimationConductor extends BaseConductor
 }
 
 
-class AnimationLayerOriginal extends KAGLayer
+class AnimationLayer extends KAGLayer
 {
 	var Anim_cellLayer; // セルレイヤ
 	var Anim_segments = []; // セグメントごとのコンダクタ
@@ -334,7 +334,7 @@ class AnimationLayerOriginal extends KAGLayer
 	var Anim_defaultFontInfo = %[];
 
 
-	function AnimationLayerOriginal(win, par)
+	function AnimationLayer(win, par)
 	{
 		// AnimationLayer コンストラクタ
 		super.KAGLayer(...); // スーパークラスのコンストラクタを呼ぶ
@@ -1144,14 +1144,14 @@ class AnimationLayerOriginal extends KAGLayer
 // pimage, ptext タグのように、栞の読み込み時に再構築
 // 可能な情報を復元する際に用いるハンドラ
 // (タグ名と、それに対応するハンドラを記述する)
-AnimationLayerOriginal.Anim_reconstructHandlers =
+AnimationLayer.Anim_reconstructHandlers =
 	%[
-		pimage	:	AnimationLayerOriginal.loadPartialImage,
-		ptext	:	AnimationLayerOriginal.drawReconstructibleText
+		pimage	:	AnimationLayer.loadPartialImage,
+		ptext	:	AnimationLayer.drawReconstructibleText
 	];
 
 
-class ClickGlyphLayer extends AnimationLayerOriginal
+class ClickGlyphLayer extends AnimationLayer
 {
 	// クリック待ち記号レイヤ
 	var loadedImage; // 現在読み込まれている画像
@@ -1160,7 +1160,7 @@ class ClickGlyphLayer extends AnimationLayerOriginal
 	function ClickGlyphLayer(win, par)
 	{
 		// コンストラクタ
-		super.AnimationLayerOriginal(win, par);
+		super.AnimationLayer(win, par);
 		hitType = htMask;
 		hitThreshold = 256; // マウスメッセージは完全に透過
 	}

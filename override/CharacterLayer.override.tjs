@@ -4,14 +4,15 @@
 @if(__CHARACTERLAYER_OVERRIDE__==0)
 @set(__CHARACTERLAYER_OVERRIDE__=1)
 global.marginValue=0;
+global.CharacterLayer_original = CharacterLayer;
 /**
  *	以前の CharacterLayer　＋makeworld版のAffineLayer機能として単体トランジションが可能なレイヤー
  */
-class BasicCharacterLayer extends CharacterLayerOriginal
+class BasicCharacterLayer extends CharacterLayer_original
 {
 	function BasicCharacterLayer(win, par, name, id)
 	{
-		super.CharacterLayerOriginal(...);
+		super.CharacterLayer(...);
 		absolute = ( int(id) + 1 ) * 1000;
 	}
 
@@ -358,11 +359,16 @@ class BasicCharacterLayer extends CharacterLayerOriginal
 	}
 }
 
-class CharacterLayer extends BasicCharacterLayer
+class CharacterLayer_override extends BasicCharacterLayer
 {
-	function CharacterLayer()
+	function CharacterLayer_override()
 	{
 		super.BasicCharacterLayer(...);
+	}
+
+	function CharacterLayer()
+	{
+		CharacterLayer_override(...);
 	}
 
 	function finalize()
@@ -517,6 +523,7 @@ class CharacterLayer extends BasicCharacterLayer
 		getter	{ return super.basis; }
 	}
 }
+global.CharacterLayer = CharacterLayer_override;
 
 @if(DEBUG)
 function saveStockLayers()

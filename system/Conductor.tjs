@@ -1,5 +1,5 @@
 ﻿// Conductor.tjs - KAG シナリオ進行処理
-// Copyright (C)2001-2008, W.Dee and contributors  改変・配布は自由です
+// Copyright (C)2001-2009, W.Dee and contributors  改変・配布は自由です
 
 @if(kirikiriz)
 Plugins.link("KAGParser.dll");
@@ -250,6 +250,7 @@ class BaseConductor extends KAGParser
 							throw e;
 					}
 @endif
+
 					// getNextTag() の中で、pendings に追加された (iscript など)
 					if(pendings.count > 0)
 					{
@@ -295,12 +296,20 @@ class BaseConductor extends KAGParser
 						{
 						case -5: // いったんイベントを処理(現在のタグは後回し)
 							pendings.insert(0, obj);
+@if(0)
+							oneshot.mode = atmAtIdle;
+							oneshot.trigger(); // トリガ
+@endif
 							doOneshot(atmAtIdle);
 							timer.interval = 0; // タイマは停止
 							inProcessing = false;
 							reentered = false;
 							return;
 						case -4: // いったんイベントを処理
+@if(0)
+							oneshot.mode = atmAtIdle;
+							oneshot.trigger(); // トリガ
+@endif
 							doOneshot(atmAtIdle);
 							timer.interval = 0; // タイマは停止
 							inProcessing = false;
@@ -507,8 +516,14 @@ class BaseConductor extends KAGParser
 			}
 			else
 			{
+@if(0)
+				oneshot.mode = atmExclusive;
+@endif
 				doOneshot(atmExclusive);
 					// イベントが配信されるまで他の非同期イベントをブロック
+@if(0)
+				oneshot.trigger(); // トリガ
+@endif
 			}
 		}
 	}
@@ -539,13 +554,22 @@ class BaseConductor extends KAGParser
 				{
 					timer.interval = 0;
 					timer.enabled = true;
+@if(0)
+					oneshot.mode = atmExclusive;
+@endif
 					doOneshot(atmExclusive);
 						// イベントが配信されるまで他の非同期イベントをブロック
+@if(0)
+					oneshot.trigger(); // トリガ
+@endif
 				}
 			}
 			else
 			{
 				// disable
+@if(0)
+				oneshot.cancel();
+@endif
 				cancelOneshot();
 				timer.enabled = false;
 			}
@@ -580,6 +604,9 @@ class BaseConductor extends KAGParser
 	function store()
 	{
 		// store オーバーライド
+@if(0)
+		return super.store(...);
+@endif
 		var	dic	= super.store(...);
 		dic.autoCache	= autoCache;
 		return dic;

@@ -1,5 +1,5 @@
 ﻿// BGM.tjs - BGM管理
-// Copyright (C)2001-2008, W.Dee and contributors  改変・配布は自由です
+// Copyright (C)2001-2009, W.Dee and contributors  改変・配布は自由です
 
 class KAGSoundBuffer
 {
@@ -64,6 +64,9 @@ class KAGSoundBuffer
 		// 時間 time, delay でフェードアウト後、演奏を停止する
 		inFading = true;
 		inFadeAndPause = true;
+@if(0)
+		sbclass.fade(0, time, delay);
+@endif
 		sbclass.fade(1, time, delay);	// volume=0 にフェードすると、stop してしまうので、
 	}
 
@@ -75,9 +78,7 @@ class KAGSoundBuffer
 		{
 			sbclass.stop(); // inFadeAndStop ならば停止
 			inFadeAndStop = false;
-		}
-		else if (inFadeAndPause)
-		{
+		} else if (inFadeAndPause) {
 			sbclass.paused = true; // inFadeAndPause ならば一時停止
 			sbclass.volume = 0; // 音量を0にする
 			inFadeAndPause = false;
@@ -315,6 +316,9 @@ class BGM
 		{
 			if(!found)
 			{
+@if(0)
+				dm("BGM " + storage + " が見つかりません");
+@endif
 				addLoadErrorFiles(storage) if typeof global.addLoadErrorFiles != "undefined";
 				var	msg	= "BGM " + storage + " が見つかりません";
 @if(POPUP_NOTFOUND)
@@ -342,6 +346,9 @@ class BGM
 			}
 			catch(e)
 			{
+@if(0)
+				dm("BGM " + storage +" を再生できません : " + e.message);
+@endif
 				addLoadErrorFiles(storage) if typeof global.addLoadErrorFiles != "undefined";
 				var	msg	= "BGM " + storage +" を再生できません : " + e.message;
 @if(POPUP_NOTFOUND)
@@ -415,7 +422,6 @@ class BGM
 		{
 			buf1.stop();
 			buf2.stop() if buf2 !== void;
-			dm("BGM stop");
 		}
 		catch(e)
 		{

@@ -1,5 +1,5 @@
 ﻿// GraphicLayer.tjs - グラフィック系レイヤ(背景,キャラクタ)
-// Copyright (C)2001-2008, W.Dee and contributors  改変・配布は自由です
+// Copyright (C)2001-2009, W.Dee and contributors  改変・配布は自由です
 
 class ProvinceContext
 {
@@ -38,6 +38,9 @@ class GraphicLayer extends AnimationLayer
 		// win    : ウィンドウオブジェクト
 		// par    : 親レイヤ
 		// name   : レイヤの名前
+@if(0)
+		super.AnimationLayer(win, par);
+@endif
 		super.AnimationLayer(...);
 
 		this.name = name;
@@ -332,6 +335,9 @@ class BaseLayer extends GraphicLayer
 
 	function BaseLayer(win, par, name, id)
 	{
+@if(0)
+		super.GraphicLayer(win, par, name, id);
+@endif
 		super.GraphicLayer(win, par, name, id, true);
 		type = ltCoverRect;
 		hitType = htMask;
@@ -346,6 +352,9 @@ class BaseLayer extends GraphicLayer
 	function assign(src)
 	{
 		// assign オーバーライド
+@if(0)
+		super.assign(src);
+@endif
 		super.assign(...);
 		// 親クラスの assign は可視・不可視などをコピーしないが、
 		// 背景レイヤなのでそれでよい
@@ -362,6 +371,9 @@ class BaseLayer extends GraphicLayer
 			if(elm.visible !== void)
 			{
 				// visible の状態を変えられると困るので
+@if(0)
+				if(isPrimary) elm.visible = true; else elm.visible = false;
+@endif
 				if(isPrimaryBase) elm.visible = true; else elm.visible = false;
 			}
 		}
@@ -371,6 +383,9 @@ class BaseLayer extends GraphicLayer
 	function restore(dic)
 	{
 		// restore オーバーライド
+@if(0)
+		if(isPrimary) dic.visible = true; else dic.visible = false;
+@endif
 		if(isPrimaryBase) dic.visible = true; else dic.visible = false;
 		dic.absolute = 0;
 		super.restore(dic);
@@ -381,6 +396,9 @@ class BaseLayer extends GraphicLayer
 		// setOptions オーバーライド
 		if(elm.visible !== void)
 		{
+@if(0)
+			if(isPrimary) elm.visible = true; else elm.visible = false;
+@endif
 			if(isPrimaryBase) elm.visible = true; else elm.visible = false;
 		}
 		super.setOptions(elm);
@@ -396,12 +414,18 @@ class BaseLayer extends GraphicLayer
 		{
 			// 自身がプライマリレイヤならば、ウィンドウの
 			// onPrimaryClick を呼ぶ
+@if(0)
+			if(isPrimary) window.onPrimaryClick();
+@endif
 			if(isPrimaryBase) window.onPrimaryClick();
 		}
 		else if(button == mbRight)
 		{
 			// 自身がプライマリレイヤならば、ウィンドウの
 			// onPrimaryRightClick を呼ぶ
+@if(0)
+			if(isPrimary) window.onPrimaryRightClick();
+@endif
 			if(isPrimaryBase) window.onPrimaryRightClick();
 		}
 	}
@@ -496,9 +520,16 @@ class CharacterLayer extends GraphicLayer
 
 	function CharacterLayer(win, par, name, id)
 	{
+@if(0)
+		super.GraphicLayer(win, par, name, id);
+		freeImage();
+@endif
 		super.GraphicLayer(...);
 		type = ltCoverRect;
 		hitType = htMask;
+@if(0)
+		hitThreshold = 64;
+@endif
 		hitThreshold = 256;
 	}
 
@@ -526,6 +557,9 @@ class CharacterLayer extends GraphicLayer
 	function assign(src)
 	{
 		// assign オーバーライド
+@if(0)
+		super.assign(src);
+@endif
 		super.assign(...);
 		assignVisibleState(src);
 		// 親クラスの assign は可視・不可視などの情報をコピーしないため

@@ -1,5 +1,5 @@
 ﻿// Menus.tjs - メニュー作成関数の定義
-// Copyright (C)2001-2008, W.Dee and contributors  改変・配布は自由です
+// Copyright (C)2001-2009, W.Dee and contributors  改変・配布は自由です
 
 @if(kirikiriz)
 Plugins.link("menu.dll");
@@ -17,7 +17,9 @@ function KAGWindow_createMenus()
 		onShowHistoryMenuItemClick, false));
 
 	systemMenu.add(this.skipToNextStopMenuItem = new KAGMenuItem(this,
-//		autoRecordPageShowing?"次の選択肢/未読まで進む(&F)":"次の選択肢まで進む(&F)", 0,
+@if(0)
+		autoRecordPageShowing?"次の選択肢/未読まで進む(&F)":"次の選択肢まで進む(&F)", 0,
+@endif
 		"次の未読まで進む(&F)", 0,
 		onSkipToNextStopMenuItemClick, false));
 
@@ -351,6 +353,9 @@ class KAGMenuItem extends MenuItem
 	function click()
 	{
 		// click 動作
+@if(0)
+		if(command !== void)
+@endif
 		if (_accessible && _enabled && command !== void)
 		{
 			if(typeof command == "String")

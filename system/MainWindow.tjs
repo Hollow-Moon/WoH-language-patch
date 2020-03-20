@@ -1,5 +1,5 @@
 ﻿//;# MainWindow.tjs - KAG メインウィンドウ
-//;# Copyright (C)2001-2008, W.Dee and contributors	 改変・配布は自由です
+//;# Copyright (C)2001-2009, W.Dee and contributors  改変・配布は自由です
 //;<<'END_OF_TJS_SCRIPT';
 
 @if(kirikiriz)
@@ -71,6 +71,16 @@ class KAGWindow extends Window
 	var askOnClose = true; // 終了時に終了するかをユーザに聞くかどうか
 
 	var helpFile = ""; // 「ヘルプ > 目次」で開くファイル
+
+@if(0)
+	var quakeTimer; // quake 用のタイマ
+	var defaultQuakeTimeInChUnit = false;
+	/*C*/var quaking = false; // 揺れているか
+	/*C*/var quakeEndTick = 0; // 揺れを終了させる tick
+	/*C*/var quakeHorzMax = 0; // 横振幅
+	/*C*/var quakeVertMax = 0; // 縦振幅
+	/*C*/var quakePhase = 0;
+@endif
 
 	var chDefaultAntialiased; // 文字にアンチエイリアスをかけるかどうか
 	var chDefaultFace; // 文字のデフォルトのフォント
@@ -234,6 +244,8 @@ class KAGWindow extends Window
 	/*C*/var cursorWaitingClick = crArrow;	// クリック待ちのマウスカーソル
 	/*C*/var cursorDraggable = crSizeAll; // ドラッグ可能な場所用のマウスカーソル
 
+	/*C*/var supportReadingKey = VK_SPACE; // 追加の読み進みキー
+
 	/*C*/var startAnchorEnabled = false; // 「最初に戻る」が使用可能かどうか
 
 	/*C*/var storeEnabled = true; // ユーザが「栞をはさむ」メニューにアクセス可能かどうか
@@ -285,11 +297,14 @@ class KAGWindow extends Window
 
 	//------------------------------------------------------ コンストラクタ --
 
+@if(0)
+	function KAGWindow(ismain = true, width = 0, height = 0)
+@endif
 	function KAGWindow(ismain = true, width = 0, height = 0, invisible = false)
 	{
 		// コンストラクタ
 		// 引数 : ismain : メインウィンドウとして作成されるのかどうか
-		super.Window();
+		super.Window(); // 親クラスのコンストラクタを呼ぶ
 
 		// コンフィギュレーション
 		isMain = ismain;
@@ -337,7 +352,6 @@ class KAGWindow extends Window
 		createBookMarkSubMenus();
 
 		// ウィンドウ外見の調整
-		// ウィンドウ外見の調整
 		if(ismain)
 		{
 			if (typeof this.registerExEvent != "undefined") {
@@ -369,7 +383,9 @@ class KAGWindow extends Window
 		if(ismain) caption = System.title;
 
 		// システムタイトルをキャプションと同じに
-//		if(ismain) System.title = caption;
+@if(0)
+		if(ismain) System.title = caption;
+@endif
 
 		// ウィンドウサイズの調整
 		if(width != 0 && height != 0)
@@ -378,6 +394,10 @@ class KAGWindow extends Window
 			scWidth = width;
 			scHeight = height;
 		}
+@if(0)
+		setInnerSize(scWidth, scHeight);
+@endif
+
 		exWidth	 = scWidth	if (exWidth	 === void || exWidth  < scWidth );
 		pxWidth	 = scWidth	if (pxWidth	 === void || pxWidth  < scWidth );
 		pxWidth	 = exWidth	if (					 pxWidth  > exWidth );
@@ -412,17 +432,30 @@ class KAGWindow extends Window
 		}
 		add(sysbase);
 
+@if(0)
+		// quake 用タイマの作成
+		quakeTimer = new Timer(onQuakeTimerInterval, '');
+		add(quakeTimer);
+		quakeTimer.interval = 50;
+@endif
+
 		// 背景レイヤの作成
 		fore.messages = [];
 		back.messages = [];
 		fore.layers = [];
 		back.layers = [];
+@if(0)
+		fore.base = new BaseLayer(this, null, "表-背景");
+@endif
 		fore.base = new BaseLayer(this, primaryLayer, "表-背景");
 		fore.base.order = 0;
 		add(fore.base);
 		fore.base.setImageSize(scWidth, scHeight);
 		fore.base.setSizeToImageSize();
 		fore.base.visible = true;
+@if(0)
+		back.base = new BaseLayer(this, fore.base, "裏-背景");
+@endif
 		back.base = new BaseLayer(this, primaryLayer, "裏-背景");
 		back.base.order = 0;
 		add(back.base);
@@ -616,11 +649,33 @@ class KAGWindow extends Window
 			maximize() if (max && typeof this.maximize != "undefined");
 		}
 
+@if(0)
+ 		// ウィンドウ位置の調節
+		if(this.width + this.left > System.desktopLeft + System.desktopWidth)
+			left = ((System.desktopWidth - this.width) >>1) + System.desktopLeft;
+		if(this.height + this.top > System.desktopTop + System.desktopHeight)
+			top = ((System.desktopHeight - this.height) >>1) + System.desktopTop;
+@endif
+
 		// パッドボタンハンドラの作成
 		createPadKeyMap();
 
+
 		// ウィンドウを表示
+@if(0)
+		if(ismain) visible = true;
+@endif
 		if(ismain) visible = !invisible;
+
+@if(0)
+		// 画面サイズがウィンドウサイズよりも小さい場合は
+		// フルスクリーンにしてみる
+		if(ismain)
+		{
+			if(System.screenWidth <= scWidth && System.screenHeight <= scHeight)
+				onFullScreenMenuItemClick(this);
+		}
+@endif
 
 		// -fszoom が設定されていなければ、前回選択されていたものを選ぶ
 		var	fszoom	= System.getArgument("-fszoom");
@@ -638,14 +693,23 @@ class KAGWindow extends Window
 			this[fszoom+"MagnifyMenuItem"].checked	= true if typeof this[fszoom+"MagnifyMenuItem"] != "undefined";
 
 		// 前回起動時にフルスクリーンだった場合はフルスクリーンにしてみる
+@if(0)
+		if(ismain)
+@endif
 		// または画面サイズがウィンドウサイズよりも小さい場合はフルスクリーンにしてみる
 		if(ismain && visible)
 		{
+@if(0)
+			if(scflags.fullScreen !== void && +scflags.fullScreen)
+@endif
 			if ((scflags.fullScreen !== void && +scflags.fullScreen) || forcefull)
 				onFullScreenMenuItemClick(this);
 		}
 
 		// いったんシステム変数を書き出す
+@if(0)
+		if(ismain) saveSystemVariables();
+@endif
 		if(ismain) {
 			// scflags.fullScreen が破棄されてしまうため保存
 			var origfs = scflags.fullScreen;
@@ -693,6 +757,10 @@ class KAGWindow extends Window
 	function onCloseQuery()
 	{
 		saveSystemVariables();
+@if(0)
+		if(!askOnClose) { super.onCloseQuery(true); return; }
+		super.onCloseQuery(askYesNo("終了しますか？"));
+@endif
 		if(!askOnClose) {
 			// コンソールを最大化で閉じないように
 			with (Debug.console) .restoreMaximize() if (.visible && typeof .restoreMaximize != "undefined");
@@ -814,6 +882,30 @@ class KAGWindow extends Window
 	}
 
 	//---------------------------------------------------------- フック処理 --
+
+@if(0)
+	function callHook(array, arg1, arg2, arg3)
+	{
+		if(array.count)
+		{
+			var processed = false;
+			var newarray = [];
+			newarray.assign(array);
+			var arraycount = newarray.count;
+			for(var i  = 0; i < arraycount; i++)
+			{
+				var func = newarray[i];
+				var ret = func(arg1, arg2, arg3);
+				processed = processed || ret;
+			}
+			return processed;
+		}
+		else
+		{
+			return false;
+		}
+	}
+@endif
 
 	var hookMap = %[ keyDown:this.keyDownHook, leftClick:this.leftClickHook, rightClick:this.rightClickHook ];
 	function callHook(tag, *)
@@ -1432,6 +1524,9 @@ class KAGWindow extends Window
 
 	function onSkipToNextStopMenuItemClick(sender)
 	{
+@if(0)
+		skipToStop();
+@endif
 		if (skipMode) cancelSkip(); else skipToStop();
 		setMenuAccessibleAll();
 	}
@@ -1474,11 +1569,7 @@ class KAGWindow extends Window
 
 	function onAutoModeMenuItemClick(sender)
 	{
-		if(autoMode) {
-			cancelAutoMode();
-		} else {
-			enterAutoMode();
-		}
+		if(autoMode) cancelAutoMode(); else enterAutoMode();
 		setMenuAccessibleAll();
 	}
 
@@ -1755,11 +1846,17 @@ class KAGWindow extends Window
 	function onHelpAboutMenuItemClick(sender)
 	{
 		// 「このソフトについて」ウィンドウを表示
+@if(0)
+		var win = new global.KAGWindow(false, aboutWidth, aboutHeight);
+@endif
 		var win = this.helpAboutWindow = new global.KAGWindow(false, aboutWidth, aboutHeight);
 		win.debugLevel = tkdlNone;
 		win.borderStyle = bsToolWindow;
 		win.setInnerSize(aboutWidth, aboutHeight);
 		win.setPos(left + ((width - win.width)>>1), top + ((height - win.height)>>1));
+@if(0)
+		win.process('about.ks' ,,, true); // about.ks を immediate で表示
+@endif
 		win.rightClickMenuItem = new KAGMenuItem(this, "RightClick", 0, win.onRightClickMenuItemClick, false); // ESCで消せるように
 		win.process(aboutStorage ,,, true); // about.ks を immediate で表示
 		win.showModal(); // モード付きで表示
@@ -1845,12 +1942,12 @@ class KAGWindow extends Window
 
 	function canStore()
 	{
-		return storeEnabled && storeLabelPassed/* && !isRecollection*/;
+		return storeEnabled && storeLabelPassed;
 	}
 
 	function canRestore()
 	{
-		return restoreEnabled/* && !isRecollection*/;
+		return restoreEnabled;
 	}
 
 	function setMenuAccessibleAll()
@@ -1866,20 +1963,34 @@ class KAGWindow extends Window
 
 		// autoEnable が true のすべてのメニュー項目の accessible の
 		// 値を設定する
+@if(0)
+		var notmodal = !historyLayer.visible && !messageLayerHiding;
+		var state = inStable && notmodal;
+@endif
 		internalSetMenuAccessibleAll(menu, state);
 
 		// その他のメニューの使用可/不可
 		if(typeof this.skipToNextStopMenuItem != "undefined")
+@if(0)
+			skipToNextStopMenuItem.enabled = state && !inSleep && nextSkipEnabled;
+@endif
 			skipToNextStopMenuItem.enabled = canSkip;
 
 		if(typeof this.rightClickMenuItem != "undefined")
-			rightClickMenuItem.enabled = inStable && !historyLayer.visible/* && !currentDialog*/;
+			rightClickMenuItem.enabled = inStable && !historyLayer.visible;
 
 		if(typeof this.showHistoryMenuItem != "undefined")
-			showHistoryMenuItem.enabled = inStable && ((!messageLayerHiding/* && !mapSelectShowing && !transShowing && !currentDialog && !panelModal*/ &&
+@if(0)
+			showHistoryMenuItem.enabled = inStable && !messageLayerHiding &&
+				historyEnabled;
+@endif
+			showHistoryMenuItem.enabled = inStable && ((!messageLayerHiding &&
 				historyEnabled) || historyLayer.visible);
 
 		if(typeof this.autoModeMenuItem != "undefined")
+@if(0)
+			autoModeMenuItem.enabled = notmodal;
+@endif
 			autoModeMenuItem.enabled = canAuto;
 
 		if(typeof this.goBackMenuItem != "undefined")
@@ -1888,8 +1999,10 @@ class KAGWindow extends Window
 		if(typeof this.goToStartMenuItem != "undefined")
 			goToStartMenuItem.enabled = state && startAnchorEnabled;
 
-/*		if(typeof this.exitMenuItem != "undefined")
-			exitMenuItem.enabled = !currentDialog;*/
+@if(0)
+		if(typeof this.exitMenuItem != "undefined")
+			exitMenuItem.enabled = !currentDialog;
+@endif
 
 		if(typeof this.storeMenu != "undefined")
 		{
@@ -2207,6 +2320,13 @@ class KAGWindow extends Window
 		// このマークの間を編集したりしないこと。
 		// [start_store_vars]
 		f.lastSaveDataName = lastSaveDataName;
+@if(0)
+		f.quaking = quaking;
+		f.quakeEndTick = quakeEndTick;
+		f.quakeHorzMax = quakeHorzMax;
+		f.quakeVertMax = quakeVertMax;
+		f.quakePhase = quakePhase;
+@endif
 		f.historyWriteEnabled = historyWriteEnabled;
 		f.historyEnabled = historyEnabled;
 		f.numCharacterLayers = numCharacterLayers;
@@ -2237,6 +2357,7 @@ class KAGWindow extends Window
 		f.cursorPointed = cursorPointed;
 		f.cursorWaitingClick = cursorWaitingClick;
 		f.cursorDraggable = cursorDraggable;
+		f.supportReadingKey = supportReadingKey;
 		f.startAnchorEnabled = startAnchorEnabled;
 		f.storeEnabled = storeEnabled;
 		f.restoreEnabled = restoreEnabled;
@@ -2331,6 +2452,13 @@ class KAGWindow extends Window
 		// (略)
 		// [start_restore_vars]
 		lastSaveDataName = f.lastSaveDataName if f.lastSaveDataName !== void;
+@if(0)
+		quaking = f.quaking if f.quaking !== void;
+		quakeEndTick = f.quakeEndTick if f.quakeEndTick !== void;
+		quakeHorzMax = f.quakeHorzMax if f.quakeHorzMax !== void;
+		quakeVertMax = f.quakeVertMax if f.quakeVertMax !== void;
+		quakePhase = f.quakePhase if f.quakePhase !== void;
+@endif
 		historyWriteEnabled = f.historyWriteEnabled if f.historyWriteEnabled !== void;
 		historyEnabled = f.historyEnabled if f.historyEnabled !== void;
 		numCharacterLayers = f.numCharacterLayers if f.numCharacterLayers !== void;
@@ -2361,6 +2489,7 @@ class KAGWindow extends Window
 		cursorPointed = f.cursorPointed if f.cursorPointed !== void;
 		cursorWaitingClick = f.cursorWaitingClick if f.cursorWaitingClick !== void;
 		cursorDraggable = f.cursorDraggable if f.cursorDraggable !== void;
+		supportReadingKey = f.supportReadingKey if f.supportReadingKey !== void;
 		startAnchorEnabled = f.startAnchorEnabled if f.startAnchorEnabled !== void;
 		storeEnabled = f.storeEnabled if f.storeEnabled !== void;
 		restoreEnabled = f.restoreEnabled if f.restoreEnabled !== void;
@@ -2374,6 +2503,9 @@ class KAGWindow extends Window
 		autoWCWaits.assign(f.autoWCWaits) if f.autoWCWaits !== void;
 
 		// ムービー
+@if(0)
+		if( isMain )
+@endif
 		if( isMain && f.movies != void )
 		{
 			for( var i = 0; i < numMovies; i++)
@@ -2451,6 +2583,11 @@ class KAGWindow extends Window
 				back.layers[i].restore(f.backCharacterLayers[i]);
 			}
 		}
+
+@if(0)
+		// quake 関連
+		restoreQuake();
+@endif
 
 		// bgm
 		if(elm === void || elm.bgm === void || +elm.bgm)
@@ -2614,13 +2751,38 @@ class KAGWindow extends Window
 		var result;
 		if(ask)
 		{
+@if(0)
+			var prompt = "「"+ historyOfStore[0].core.currentPageName + "」まで戻りますか?";
+			result = askYesNo(prompt);
+@endif
 			var prompt = "「"+ historyOfStore[0].core.currentPageName + "」まで戻りますか？";
 			result = askYesNo(prompt, "確認", goBackYes);
 		}
 		else
 		{
+@if(0)
+			result = true;
+@endif
 			goBackYes();
 		}
+
+@if(0)
+		if(result)
+		{
+			// user と core を pflags, pcflags に戻す
+			(Dictionary.assignStruct incontextof pflags)(historyOfStore[0].user);
+			(Dictionary.assignStruct incontextof pcflags)(historyOfStore[0].core);
+
+			// 記録の先頭を削除する
+			historyOfStore.erase(0);
+
+			// データを元に、栞をたどる動作をする
+			restoreFlags();
+
+			return true;
+		}
+		return false;
+@endif
 	}
 
 	//--------------------------------------------------------------- 栞管理 --
@@ -2769,6 +2931,9 @@ class KAGWindow extends Window
 				snapshotLayer = new Layer(this, primaryLayer);
 			snapshotLayer.setImageSize(scWidth, scHeight);
 			snapshotLayer.face = dfAlpha;
+@if(0)
+			snapshotLayer.piledCopy(0, 0, kag.fore.base, 0, 0, scWidth, scHeight);
+@endif
 			snapshotLayer.piledCopy(0, 0, primaryLayer, 0, 0, scWidth, scHeight);
 		}
 		snapshotLockCount ++;
@@ -2845,9 +3010,26 @@ class KAGWindow extends Window
 			{
 				// サムネイルのサイズまで縮小
 				var size = calcThumbnailSize();
+@if(0)
+				var tmp = new Layer(this, primaryLayer);
+@endif
 				var tmp;
 				try
 				{
+@if(0)
+					tmp.setImageSize(size.width, size.height);
+					tmp.face = dfAlpha;
+					tmp.stretchCopy(0, 0, size.width, size.height, snapshotLayer,
+						0, 0, snapshotLayer.imageWidth, snapshotLayer.imageHeight, stLinear);
+					/*
+					// サムネイル画像をセピア調にして保存する場合はコメントアウトを解除
+					tmp.doGrayScale();
+					tmp.adjustGamma(
+									1.3, 0, 255,  // R gamma, floor, ceil
+									1.0, 0, 255,  // G gamma, floor, ceil
+									0.8, 0, 255); // B gamma, floor, ceil
+					*/
+@endif
 					tmp	= createThumbnail(size.width, size.height);
 
 					processThumbnail(tmp);	//	サムネイルに加工を施す
@@ -2864,8 +3046,15 @@ class KAGWindow extends Window
 					}
 					catch(e)
 					{
+@if(0)
+						invalidate tmp;
+@endif
 						invalidate tmp if tmp != void;
 						unlockSnapshot();
+@if(0)
+						System.inform("ファイルに保存できません (ファイルを開けないか、"
+							"書き込み禁止です)");
+@endif
 						readOnlyMode = true;
 						errorInform("savefail");
 						return false;
@@ -2873,6 +3062,9 @@ class KAGWindow extends Window
 				}
 				catch(e)
 				{
+@if(0)
+					invalidate tmp;
+@endif
 					invalidate tmp if tmp != void;
 					throw e;
 				}
@@ -2894,11 +3086,16 @@ class KAGWindow extends Window
 			}
 			catch(e)
 			{
+@if(0)
+				System.inform("ファイルに保存できません (ファイルを開けないか、"
+					"書き込み禁止です)");
+@endif
 				readOnlyMode = true;
 				errorInform("savefail");
 				return false;
 			}
 		}
+
 		return true;
 	}
 
@@ -2963,6 +3160,9 @@ class KAGWindow extends Window
 
 			if(data.id != saveDataID)
 			{
+@if(0)
+				System.inform("他のシステムのデータを読み込もうとしました", "エラー");
+@endif
 				errorInform("loadfail");
 				return false;
 			}
@@ -2983,6 +3183,11 @@ class KAGWindow extends Window
 		}
 		catch(e)
 		{
+@if(0)
+			System.inform("栞を読み込めないか、栞が"
+				"壊れているか、あるいは他の形式の栞データ"
+				"です(" + e.message + ")", "エラー");
+@endif
 			errorInform("loadexception", e.message);
 			return false;
 		}
@@ -3008,6 +3213,11 @@ class KAGWindow extends Window
 		if(bookMarkDates[num] != "") // bookMarkDates が空文字の場合は栞は存在しない
 			prompt += "「" + bookMarkNames[num] + "」";
 		prompt += "に「"+ pcflags.currentPageName + "」をはさみますか?";
+@if(0)
+		var result = askYesNo(prompt);
+		if(result) return saveBookMark(num);
+		return false;
+@endif
 		askYesNo(prompt, "確認", saveBookMark, void, num);
 		return true;
 	}
@@ -3021,6 +3231,11 @@ class KAGWindow extends Window
 		var prompt = "栞 ";
 		if(num < numBookMarks) prompt += (num + 1);
 		prompt += "「"+ bookMarkNames[num] + "」をたどりますか?";
+@if(0)
+		var result = askYesNo(prompt);
+		if(result) return loadBookMark(num);
+		return false;
+@endif
 		askYesNo(prompt, "確認", loadBookMark, void, num);
 		return true;
 	}
@@ -3191,6 +3406,10 @@ class KAGWindow extends Window
 	function goToStartWithAsk()
 	{
 		// 最初に戻る(確認あり)
+@if(0)
+		var result = askYesNo("最初に戻ります。よろしいですか ?");
+		if(result) goToStart();
+@endif
 		askYesNo("最初に戻ります。よろしいですか ?", "確認", goToStart);
 	}
 
@@ -3350,11 +3569,17 @@ class KAGWindow extends Window
 	function hideHistory()
 	{
 		// メッセージ履歴レイヤを非表示にする
+@if(0)
+		historyLayer.dispUninit();
+@endif
 		historyLayer.dispUninit(...);
 		historyShowing = false;
 		if(typeof this.showHistoryMenuItem != "undefined")
 			showHistoryMenuItem.checked = false;
-//		setMenuAccessibleAll();	//	フェードアウトさせるため、dispUninit で一度 invisible になった historyLayer を visible にしているので、ここで setMenuAccessibleAll を実行すると canAuto=false になってしまう
+@if(0)
+		//	フェードアウトさせるため、dispUninit で一度 invisible になった historyLayer を visible にしているので、ここで setMenuAccessibleAll を実行すると canAuto=false になってしまう
+		setMenuAccessibleAll();
+@endif
 		lastHistoryHiddenTick = System.getTickCount();
 		conductor.trigger('history'); // 'history' を送る
 	}
@@ -3480,7 +3705,6 @@ class KAGWindow extends Window
 		{
 			if(!getCurrentRead() && skipMode != 4)
 				cancelSkip(); // 未読なのでスキップを停止
-			dm("onConductorLabel: "+currentLabel+" → "+label+" / "+page+"("+(page !== void)+")");
 			currentLabel = label;
 		}
 		if(page !== void && page !== '')
@@ -3532,7 +3756,6 @@ class KAGWindow extends Window
 				returnExtraConductor(run);
 				if(elm.storage !== void) conductor.loadScenario(elm.storage);
 				if(elm.target !== void) conductor.goToLabel(elm.target);
-				dm("onConductorReturn: "+currentLabel+" → "+conductor.curLabel);
 				setRecordLabel(conductor.curStorage, currentLabel = conductor.curLabel);
 				if(run)
 				{
@@ -3584,7 +3807,6 @@ class KAGWindow extends Window
 		// コンダクタが return タグを実行した後
 		if(!usingExtraConductor)
 		{
-			dm("onConductorAfterReturn: "+currentLabel+" → "+conductor.curLabel);
 			setRecordLabel(conductor.curStorage, currentLabel = conductor.curLabel);
 		}
 		setUserSpeed();
@@ -3668,7 +3890,10 @@ class KAGWindow extends Window
 		// デフォルトの run ハンドラ
 		hideHistory();
 		hideClickGlyphs();
-//		showMessageLayerByUser();	//	テキストが表示されるときにメッセージウィンドウが可視になるので、ここでは可視にしない(ロード時、必要ないタイミングで可視になるので)
+@if(0)
+		//	テキストが表示されるときにメッセージウィンドウが可視になるので、ここでは可視にしない(ロード時、必要ないタイミングで可視になるので)
+		showMessageLayerByUser();
+@endif
 		setMenuAccessibleAll();
 	}
 
@@ -3753,11 +3978,17 @@ class KAGWindow extends Window
 			if(elm.call !== void)
 			{
 				rightClickCall = +elm.call;
+@if(0)
+				if(rightClickCall) rightClickJump = false;
+@endif
 				if(rightClickCall) rightClickJump = rightClickExp = false;
 			}
 			if(elm.jump !== void)
 			{
 				rightClickJump = +elm.jump;
+@if(0)
+				if(rightClickJump) rightClickCall = false;
+@endif
 				if(rightClickJump) rightClickCall = rightClickExp = false;
 			}
 			rightClickTarget = elm.target if elm.target !== void;
@@ -4044,7 +4275,6 @@ class KAGWindow extends Window
 	{
 		// メッセージレイヤを一時的に隠す
 		if(messageLayerHiding) return;
-//		dmt("hideMessageLayerByUser()");
 		setMessageLayerHiddenState(true);
 		if(typeof this.rightClickMenuItem !== "undefined")
 			rightClickMenuItem.checked = true;
@@ -4057,7 +4287,6 @@ class KAGWindow extends Window
 	{
 		// 一時的に隠されていたメッセージレイヤを元に戻す
 		if(!messageLayerHiding) return;
-//		dmt("showMessageLayerByUser()");
 		setMessageLayerHiddenState(false);
 		if(typeof this.rightClickMenuItem !== "undefined")
 			rightClickMenuItem.checked = false;
@@ -4502,6 +4731,9 @@ class KAGWindow extends Window
 		actualChSpeed = 0;
 	}
 
+@if(0)
+	function skipToStop()
+@endif
 	function skipToStop(force=false)
 	{
 		// 次の停止までスキップ
@@ -4529,6 +4761,9 @@ class KAGWindow extends Window
 		}
 	}
 
+@if(0)
+	function cancelSkip()
+@endif
 	function cancelSkip(byuser=false)
 	{
 		// スキップ動作をキャンセル
@@ -4663,8 +4898,140 @@ class KAGWindow extends Window
 			(elm.canskip === void || +elm.canskip) && clickSkipEnabled);
 	}
 
+@if(0)
+	//------------------------------------------------------------ quake関連 --
+
+	function doQuake(elm)
+	{
+		// elm に従って quake を開始
+		if(elm.time !== void)
+		{
+			if(defaultQuakeTimeInChUnit)
+			{
+				if(elm.timemode == 'ms')
+					quakeEndTick = System.getTickCount() + +elm.time;
+				else
+					quakeEndTick = System.getTickCount() + +elm.time * chSpeed;
+			}
+			else
+			{
+				if(elm.timemode == 'delay')
+					quakeEndTick = System.getTickCount() + +elm.time * chSpeed;
+				else
+					quakeEndTick = System.getTickCount() + +elm.time;
+			}
+		}
+		else
+		{
+			quakeEndTick = -1;
+		}
+
+		if(elm.hmax !== void) quakeHorzMax = +elm.hmax; else quakeHorzMax = 10;
+		if(elm.vmax !== void) quakeVertMax = +elm.vmax; else quakeVertMax = 10;
+
+		quakeTimer.enabled = true;
+		quaking = true;
+	}
+
+	function restoreQuake()
+	{
+		// restore から呼ばれ、栞を保存したときに揺れていた場合は揺らす
+		if(quaking && quakeEndTick == -1)
+			quakeTimer.enabled =true;
+		// MEMO: time 属性付きの quake は restore() 時に復旧されないが
+		//  セーブラベルと quake の位置によっては quaking の値が狂う場合がある。
+		//  quaking 自体あまり必要には見えないが互換性維持のためここで帳尻を合わせておく。
+		else
+		if(!quakeTimer.enabled)	// 誤って restoreQuake() が呼び出された場合の quaking 値の保護
+			quaking = false;
+	}
+
+	function stopQuake()
+	{
+		// 揺れを停止
+		setLayerPos(0, 0);
+		quakeTimer.enabled = false;
+		quaking = false;
+		conductor.trigger('quake');
+	}
+
+	function onQuakeTimerInterval()
+	{
+		// quakeTimer により呼ばれる
+		if(quakeEndTick != -1 && System.getTickCount() > quakeEndTick) { stopQuake(); return; }
+		if(historyShowing)
+		{
+			// メッセージ履歴レイヤ表示中はさすがに揺れていられない
+			setLayerPos(0, 0);
+			return;
+		}
+		var x, y;
+		if(quakeHorzMax == quakeVertMax)
+		{
+			// だいたい同じ
+			x = int(Math.random() * quakeHorzMax - quakeHorzMax);
+			y = int(Math.random() * quakeVertMax - quakeVertMax);
+		}
+		else if(quakeHorzMax < quakeVertMax)
+		{
+			// 縦揺れ
+			x = int(Math.random() * quakeHorzMax - quakeHorzMax);
+			y = int((quakePhase ? Math.random() : -Math.random()) * quakeVertMax);
+		}
+		else
+		{
+			// 横揺れ
+			x = int((quakePhase ? Math.random() : -Math.random()) * quakeHorzMax);
+			y = int(Math.random() * quakeVertMax - quakeVertMax);
+		}
+		quakePhase = !quakePhase;
+		setLayerPos(x, y);
+	}
+
+	function waitQuake(elm)
+	{
+		// 揺れが終了するまでまつ
+		if(!quaking || quakeEndTick == -1) return 0; // 揺れていなければ待たない
+		if(elm.canskip !== void && +elm.canskip && clickSkipEnabled)
+		{
+			// スキップできる場合
+			if(skipMode)
+			{
+				// スキップ中の場合
+				stopQuake();
+				return 0; // スキップ中の場合は揺れを停止させて返る
+			}
+			conductor.wait(%[
+				click : function
+				{
+					stopQuake(); // 揺れは停止する
+				} incontextof this,
+
+				quake : function
+				{
+					// やることなし
+				} incontextof this
+				]);
+		}
+		else
+		{
+			// スキップできない場合
+			conductor.wait(%[
+				quake : function
+				{
+					// やることなし
+				} incontextof this
+				]);
+		}
+		return -2;
+	}
+@endif
+
 	//------------------------------------------------------------- クリック --
 
+@if(0)
+	function onPrimaryClick()
+@endif
 	function onPrimaryClick(button=mbLeft)
 	{
 		// プライマリレイヤで「クリックの動作」がなにもフィルタリングされなかった
@@ -4682,7 +5049,9 @@ class KAGWindow extends Window
 				var runst = conductor.mRun;
 				var stopst = conductor.mStop;
 
-//				if(st != stopst && autoMode)
+@if(0)
+				if(st != stopst && autoMode)
+@endif
 				if(st != stopst && autoMode && (!cf.autoModeArrowClick || button==mbRight))
 				{
 					// 自動読みすすみの場合
@@ -4691,6 +5060,9 @@ class KAGWindow extends Window
 				else if(st != stopst && canCancelSkipByClick && skipMode && skipMode != 4)
 				{
 					// クリックによるスキップの解除が可能
+@if(0)
+					cancelSkip();
+@endif
 					cancelSkip(true);
 				}
 				else
@@ -4816,13 +5188,13 @@ class KAGWindow extends Window
 	{
 		// key が読みすすみのキー ( スペースキーかReturnキー ) の場合は
 		// キーを処理し、true を返す。そうでなければ false を返す
-		if(key == VK_RETURN || key == VK_SPACE)
+		if(key == VK_RETURN || key == supportReadingKey)
 		{
 			// キーがメッセージキューに溜まってる場合があるので
 			// 実際にそのキーが押されているのかどうかを
 			// getKeyState を用いて調べる
 			var sg = getKeyState;
-			if(sg(VK_RETURN) || sg(VK_SPACE))
+			if(sg(VK_RETURN) || sg(supportReadingKey))
 			{
 				// キーが押されてた
 				if((shift & ssRepeat) && clickSkipEnabled)
@@ -4850,14 +5222,14 @@ class KAGWindow extends Window
 	{
 		// スキップを解除する要因となるキーあるいはマウスボタンが押されているか
 		var sg = getKeyState;
-		return sg(VK_RETURN) || sg(VK_SPACE) || sg(VK_LBUTTON);
+		return sg(VK_RETURN) || sg(supportReadingKey) || sg(VK_LBUTTON);
 	}
 
 	function skipKeyPressing()
 	{
-		// VK_RETURN あるいは VK_SPACE が押されているかどうか
+		// VK_RETURN あるいは supportReadingKey が押されているかどうか
 		var sg = getKeyState;
-		return sg(VK_RETURN) || sg(VK_SPACE);
+		return sg(VK_RETURN) || sg(supportReadingKey);
 	}
 
 	function goBackByKey()
@@ -4920,11 +5292,42 @@ class KAGWindow extends Window
 		}
 	}
 
+@if(0)
+	function onMouseDown(x, y, button)
+	{
+		// フルスクリーン時の画面外クリックを判定
+		if (fullScreened)
+		{
+			// x,yは実座標のためプライマリレイヤで判定
+			var pl = primaryLayer;
+			var px = pl.cursorX;
+			var py = pl.cursorY;
+
+			if (px < 0 || py < 0 || px >= pl.width || py >= pl.height)
+			{
+				if (button == mbLeft)
+				{
+					onPrimaryClick();
+				}
+				else if (button == mbRight)
+				{
+					onPrimaryRightClick();
+				}
+			}
+		}
+		super.onMouseDown(...);
+	}
+@endif
+
 	//------------------------------------------------- クリック待ち記号処理 --
 
 	function hideClickGlyphs()
 	{
 		// クリック待ち記号を非表示に
+@if(0)
+		lineBreak.visible = false;
+		pageBreak.visible = false;
+@endif
 		if( current !== void && isvalid current )
 		{
 			current.hideGlyph();
@@ -5001,6 +5404,9 @@ class KAGWindow extends Window
 				return autoModeLineWait;
 		}
 		if(skipMode == 1) cancelSkip();
+@if(0)
+		if(skipMode == 4 && !skipKeyPressing()) cancelSkip();
+@endif
 		if(skipMode == 4 && !skipKeyPressing()) cancelSkip(true);
 		if(skipMode == 4) return -4;
 		if(skipMode) return skipCancelKeyPressing()?-4:0;
@@ -5039,6 +5445,9 @@ class KAGWindow extends Window
 		// 現在のメッセージレイヤにページ待ち記号を表示する
 		stablePosibility = true;
 		if(skipMode == 1 || skipMode == 2) cancelSkip();
+@if(0)
+		if(skipMode == 4 && !skipKeyPressing()) cancelSkip();
+@endif
 		if(skipMode == 4 && !skipKeyPressing()) cancelSkip(true);
 		if(skipMode) return -4; // いったんイベントを処理
 		if(autoMode)
@@ -5084,6 +5493,9 @@ class KAGWindow extends Window
 		// 実行再開時には MessageLayer.clear2 を呼ぶ
 		stablePosibility = true;
 		if(skipMode == 1 || skipMode == 2) cancelSkip();
+@if(0)
+		if(skipMode == 4 && !skipKeyPressing()) cancelSkip();
+@endif
 		if(skipMode == 4 && !skipKeyPressing()) cancelSkip(true);
 		var lasttagname = conductor.lastTagName;
 		if((!autoMode && ((!canIgnoreL() && lasttagname == 'l') || lasttagname == 'p')) || skipMode)
@@ -6443,6 +6855,28 @@ class KAGWindow extends Window
 		return hideMessageLayerByScenario(elm);
 	} incontextof this,
 
+@if(0)
+	quake : function(elm)
+	{
+		// 揺れ
+		doQuake(elm);
+		return 0;
+	} incontextof this,
+
+	stopquake : function(elm)
+	{
+		// 揺れの停止
+		stopQuake();
+		return 0;
+	} incontextof this,
+
+	wq : function(elm)
+	{
+		// 揺れの停止を待つ
+		return waitQuake(elm);
+	} incontextof this,
+@endif
+
 	autowc : function(elm)
 	{
 		// 自動ウェイト
@@ -6729,6 +7163,16 @@ class KAGWindow extends Window
 		return 0;
 	} incontextof this,
 
+@if(0)
+	// layer, page, fps, ox, oy
+	framemove : function(elm)
+	{
+		// フレーム指定自動移動の開始
+		getLayerFromElm(elm).beginFrameMove(elm);
+		return 0;
+	} incontextof this,
+@endif
+
 	wm : function(elm)
 	{
 		//	自動移動を待つ
@@ -6985,12 +7429,14 @@ class KAGWindow extends Window
 
 	videolayer : function(elm)
 	{
+		movies[+elm.slot].storeLayer( elm.layer, elm.page, elm.channel );
 		movies[+elm.slot].setVideoLayer(getLayerFromElm(elm),elm);
 		return 0;
 	} incontextof this,
 
 	clearvideolayer : function(elm)
 	{
+		movies[+elm.slot].cancelLayer( elm.channel );
 		movies[+elm.slot].setVideoLayer(null,elm);
 		return 0;
 	} incontextof this,

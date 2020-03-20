@@ -1,5 +1,5 @@
 ﻿// SE.tjs - 効果音管理
-// Copyright (C)2001-2008, W.Dee and contributors  改変・配布は自由です
+// Copyright (C)2001-2009, W.Dee and contributors  改変・配布は自由です
 
 @set(VOLUME_VISIBLE=0)
 
@@ -9,6 +9,9 @@ class SESoundBuffer extends WaveSoundBuffer
 
 	var owner; // オーナー
 	var id; // 効果音バッファID
+@if(0)
+	var inFading; // フェード中かどうか
+@endif
 	var _inFading; // フェード中かどうか
 	var prevstatus = "unload"; // 直前のステータス
 	var currentStorage = ""; // 見かけの演奏中のストレージ
@@ -74,6 +77,9 @@ class SESoundBuffer extends WaveSoundBuffer
 				found = false;
 		}
 		if(!found)
+@if(0)
+			throw new Exception("効果音 " + storage + " が見つかりません");
+@endif
 		{
 			addLoadErrorFiles(storage) if typeof global.addLoadErrorFiles != "undefined";
 			var	msg	= "効果音 \"" + storage + "\" が見つかりません";
@@ -102,7 +108,7 @@ class SESoundBuffer extends WaveSoundBuffer
 				(start = start.samplePosition) !== void) {
 				super.samplePosition = start;
 			}
-			super.play();//	dm("se["+id+"].play / volume = "+volume);
+			super.play();
 		}
 		catch(e)
 		{
@@ -112,12 +118,24 @@ class SESoundBuffer extends WaveSoundBuffer
 
 	function stop()
 	{
+@if(0)
+		// stop オーバーライド
+		currentStorage = "";
+		try
+		{
+			super.stop(...);
+		}
+		catch(e)
+		{
+			dm("効果音の停止に失敗しました(実行は続行できます) : " + e.message);
+		}
+		inFadeAndStop = false;
+@endif
 		/*
 		 *	フェードインして再生開始した効果音を停止して、直後に同じバッファでフェードイン再生を開始すると
 		 *	最初にポップノイズの聞こえる環境がある。この問題を回避するため、効果音再生を停止するときは
 		 *	必ずフェードアウトして停止するようにした。
 		 */
-//		dmt("se["+id+"].stop()");
 		fadeOut(%[time:1]);
 	}
 
@@ -138,11 +156,13 @@ class SESoundBuffer extends WaveSoundBuffer
 	function fade(elm)
 	{
 		// fade オーバーライド
+@if(0)
+		inFading = true;
+@endif
 		inFading++;
 		var time = elm.time === void ? 5000 : +elm.time;
 		time = 1 if time < 1;
 		var vol = +elm.volume * 1000;
-//		dm("SE: fade "+(currentVolume*1000)+" → "+vol+" ("+time+"ms)");
 		currentVolume = +elm.volume;
 		try
 		{
@@ -159,6 +179,9 @@ class SESoundBuffer extends WaveSoundBuffer
 		// フェードインしながらの再生
 		super.volume = 0;
 		play(elm, false);
+@if(0)
+		inFading = true;
+@endif
 		inFading++;
 		var time = elm.time === void ? 5000 : +elm.time;
 		time = 1 if time < 1;
@@ -175,9 +198,11 @@ class SESoundBuffer extends WaveSoundBuffer
 
 	function fadeOut(elm)
 	{
-//		dm("se["+id+"].fadeOut(): begin");
 		// フェードアウト後停止
 		currentStorage = ""; // 状態としては停止扱い
+@if(0)
+		inFading = true;
+@endif
 		inFading++;
 		inFadeAndStop = true;
 		var time = elm.time === void ? 5000 : +elm.time;
@@ -190,7 +215,6 @@ class SESoundBuffer extends WaveSoundBuffer
 		{
 			dm("効果音のフェードに失敗しました(実行は続行できます) : " + e.message);
 		}
-//		dm("se["+id+"].fadeOut(): end");
 	}
 
 	property inFading
@@ -209,7 +233,10 @@ class SESoundBuffer extends WaveSoundBuffer
 	function onFadeCompleted()
 	{
 		// onFadeCompleted オーバーライド
-//		dmt("se["+id+"].onFadeCompleted(): inFading = "+inFading, "inFadeAndStop = "+inFadeAndStop);
+@if(0)
+		inFading = false;
+		if(inFadeAndStop)
+@endif
 		inFading--;
 		if(!inFading && inFadeAndStop)
 		{
@@ -226,7 +253,6 @@ class SESoundBuffer extends WaveSoundBuffer
 	 */
 	function _onFadeCompleted()
 	{
-//		dmt("se["+id+"]._onFadeCompleted()");
 		try
 		{
 			super.volume = 0;	// 無音下でのノイズ発生を抑えるため
@@ -236,6 +262,13 @@ class SESoundBuffer extends WaveSoundBuffer
 		{
 			dm("効果音の停止に失敗しました(実行は続行できます) : " + e.message);
 		}
+@if(0)
+		{
+			inFadeAndStop = false;
+		}
+		super.onFadeCompleted(...);
+		owner.onSESoundBufferFadeCompleted(id); // フェード終了
+@endif
 	}
 
 	function onStatusChanged()
@@ -285,7 +318,6 @@ class SESoundBuffer extends WaveSoundBuffer
 	{
 		setter(x)
 		{
-//			dm("se["+id+"].volume = "+currentVolume+" → "+x+" / "+Scripts.getTraceString());
 			currentVolume = x;
 			super.volume = x * 1000;
 		}
@@ -299,7 +331,6 @@ class SESoundBuffer extends WaveSoundBuffer
 	{
 		setter(x)
 		{
-//			dmt("se["+id+"].pan = "+pan+" → "+x+"(isDelaying: "+isDelaying+")");
 			super.pan = x * 1000;
 		}
 		getter

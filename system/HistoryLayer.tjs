@@ -1,5 +1,5 @@
 ﻿// HistoryLayer.tjs - メッセージ履歴レイヤ
-// Copyright (C)2001-2008, W.Dee and contributors  改変・配布は自由です
+// Copyright (C)2001-2009, W.Dee and contributors  改変・配布は自由です
 
 class LButtonLayer extends ButtonLayer
 	// parent に onClick イベントを送るようにしたボタンレイヤ
@@ -92,10 +92,21 @@ class HistoryLayer extends Layer
 	var storeState = false; // 状態を栞に保存するか
 
 	//	禁則文字
+@if(0)
+	var wwFollowing = "%),:;]}｡｣ﾞﾟ。，、．：；゛゜ヽヾゝ"
+                "ゞ々’”）〕］｝〉》」』】°′″℃¢％‰"; // 行頭禁則文字
+@endif
 	var wwFollowing = "%),:;]}｡｣ﾞﾟ。，、：；゛゜ヽヾゝ –"
                 "ゞ々’”）〕］｝〉》」』】°′″℃￠％‰"; // 行頭禁則文字
+@if(0)
+	var wwFollowingWeak="!.?､･ｧｨｩｪｫｬｭｮｯｰ・？！ーぁぃぅぇぉっゃゅょゎァィ"
+                "ゥェォッャュョヮヵヶ"; // 行頭(弱)禁則文字
+@endif
 	var wwFollowingWeak="､･ｧｨｩｪｫｬｭｮｯｰ・？！ーぁぃぅぇぉっゃゅょゎァィ"
                 "ゥェォッャュョヮヵヶ"; // 行頭(弱)禁則文字
+@if(0)
+	var wwLeading="\\$([{｢‘“（〔［｛〈《「『【￥＄£"; // 行末禁則文字
+@endif
 	var wwLeading="\\$([{｢'‘’“（〔［｛〈《「『【￥＄￡0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.,:;!?–—―"; // 行末禁則文字 //})
 
 	wwFollowing += wwFollowingWeak;
@@ -456,6 +467,10 @@ class HistoryLayer extends Layer
 		else
 		{
 			// 自動改行を行う場合
+@if(0)
+			var len;
+			if((len = font.getTextWidth(currentLine += ch)) >= relinePos)
+@endif
 			var len = getCurrentLineWidth() + font.getTextWidth(ch);
 			currentLine += ch;
 			if(len >= relinePos)
@@ -478,6 +493,9 @@ class HistoryLayer extends Layer
 					currentLine=
 						currentLine.substring(0, currentLine.length - ch.length);	//	追加した文字を取り除く
 					reline();
+@if(0)
+					currentLine = ch;
+@endif
 					currentLine = ch != " "? ch : "";
 				}
 			}
@@ -489,6 +507,9 @@ class HistoryLayer extends Layer
 		//	改ページ
 		if(!everypage) return;
 
+@if(0)
+		if(dataPos == 0 && currentLine == "") return; // 何もデータが入っていない場合、なにもしない
+@endif
 		//Do not repage if page is empty (whitespaces count as content if you want to force an empty page).
 		var i;
 		var allEmpty = true;

@@ -1,5 +1,5 @@
 ﻿// KAGLayer.tjs - KAG のレイヤの基本クラス
-// Copyright (C)2001-2008, W.Dee and contributors  改変・配布は自由です
+// Copyright (C)2001-2009, W.Dee and contributors  改変・配布は自由です
 
 /*
  レイヤ関連のクラス階層
@@ -167,6 +167,9 @@ class KAGLayer extends Layer
 			var su = super;
 			su.visible = src.visible;
 			su.opacity = src.opacity;
+@if(0)
+			su.absolute = src.absolute if !src.isPrimary && src.parent.absoluteOrderMode;
+@endif
 			su.absolute = src.absolute if !src.isPrimaryBase && src.parent.absoluteOrderMode;
 			su.type = src.type;
 			su.setPos(src.left, src.top, src.width, src.height);
@@ -180,6 +183,9 @@ class KAGLayer extends Layer
 		// したときだけにコピーされる情報をコピー
 		visible = src.visible;
 		opacity = src.opacity;
+@if(0)
+		absolute = src.absolute if !src.isPrimary && src.parent.absoluteOrderMode;
+@endif
 		absolute = src.absolute if !src.isPrimaryBase && src.parent.absoluteOrderMode;
 		type = src.type;
 		setPos(src.left, src.top, src.width, src.height);
@@ -191,6 +197,9 @@ class KAGLayer extends Layer
 		// beginTransition オーバーライド
 		// elm に従い、トランジションを開始する
 		// src にはトランジションの相手を指定
+@if(0)
+//		stopTransition(); // 現在のトランジションは停止
+@endif
 		stopTransition(); // 現在のトランジションは停止
 
 		if(elm.exchange !== void) transExchange = +elm.exchange; else transExchange = false;
@@ -305,6 +314,31 @@ class KAGLayer extends Layer
 		if(moveObject !== void) invalidate moveObject, moveObject = void;
 	}
 
+	// フレーム番号を指定したmove
+	function beginFrameMove(elm)
+	{
+		// elm に従い自動移動を開始する
+		stopMove();
+
+		var ox = elm.ox === void ? 0 : +elm.ox;
+		var oy = elm.oy === void ? 0 : +elm.oy;
+		var fps = elm.fps === void ? 30 : +elm.fps;
+
+		// path の分解
+		var array = [].split("(), ", elm.path, , true);
+		for(var i = array.count-1; i>=0; i--) array[i+4] = +array[i];
+		array[0] = 0;
+		array[1] = left - ox;
+		array[2] = top - oy;
+		array[3] = opacity;
+
+		// 移動用オブジェクトの作成
+		moveObject = new LinearFrameMover(this, array, fps, moveFinalFunction, ox, oy );
+
+		window.moveCount++;
+		moveObject.startMove();
+	}
+
 	function store()
 	{
 		// 辞書配列に現在の状態を保存する
@@ -332,9 +366,100 @@ class KAGLayer extends Layer
 		setImagePos(dic.imageLeft, dic.imageTop);
 		opacity = dic.opacity;
 		visible = dic.visible;
+@if(0)
+		absolute = dic.absolute if !isPrimary && dic.absolute !== void;
+		type = dic.type if !isPrimary && dic.type !== void;
+@endif
 		absolute = dic.absolute if !isPrimaryBase && dic.absolute !== void;
 		type = dic.type if !isPrimaryBase && dic.type !== void;
 	}
+
+	/**
+	 * レイヤへの色反映処理
+	 * @param left
+	 * @param top
+	 * @param width
+	 * @param height
+	 * @param color 塗りつぶす色(マスク値を含む）
+	 * @param mode 合成モード
+	 */
+	function fillOperateRect(left, top, width, height, color, mode)
+	{
+		var tw = 128;
+		var th = 64;
+		var fillLayer = new global.Layer(window, this);
+		// 元々吉里吉里のものなら、不透明の一色レイヤーを、不透明度を指定して描画。
+		// PhotoShop準拠のものなら、半透明の一色レイヤーを、透明度を指定せず(opacity=255)に描画。
+		var orgmodes	= %[ltOpaque=>1,ltAlpha=>1,ltAddAlpha=>1,ltAdditive=>1,ltSubtractive=>1,ltMultiplicative=>1,ltDodge=>1,ltLighten=>1,ltDarken=>1,ltScreen=>1];
+		fillLayer.setSize(tw, th);
+		var opacity	= 255;
+		var lastface = face, lastha = holdAlpha;
+		if(orgmodes[mode])
+		{
+			fillLayer.fillRect(0, 0, tw, th, color | 0xFF000000);
+			opacity = (color >> 24) & 0xFF;
+			face	= dfOpaque;
+		}
+		else
+			fillLayer.fillRect(0, 0, tw, th, color);
+		holdAlpha	= true if !isPrimary;
+		var x = 0;
+		var y = 0;
+		while (y < height) {
+			var x2 = x;
+			while (x2 < width) {
+				//Debug.message("pos:" + x2 + "," + y);
+				global.Layer.operateRect(x2, y, fillLayer, 0, 0, tw, th, mode, opacity);
+				x2 += tw;
+			}
+			y += th;
+		}
+		face = lastface, holdAlpha = lastha;
+		// 後片付け
+		invalidate fillLayer;
+	}
+
+	/**
+	 * 影を追加する
+	 * @param dx 影のX移動量 (右にプラス)
+	 * @param dy 影のY移動量 (下にプラス)
+	 * @param blur ぼかし量
+	 * @param shadowColor 影の色
+	 * @param shadoAlpha 影の不透明度
+	 */
+	function doDropShadow(dx=10, dy=10, blur=3, shadowColor=0x000000, shadowOpacity=200)
+	{
+		var THIS = global.Layer;
+
+		// 作業用レイヤ
+		var work = new THIS(window, parent);
+		work.setImagePos(THIS.imageLeft, THIS.imageTop);
+		work.setImageSize(THIS.imageWidth, THIS.imageHeight);
+
+		// 影生成処理
+		var shadow = new THIS(window, parent);
+		shadow.assignImages(this);
+		// 塗りつぶし
+		shadow.face = dfMain;
+		shadow.holdAlpha = true;
+		shadow.fillRect(THIS.imageLeft, THIS.imageTop, THIS.imageWidth, THIS.imageHeight, shadowColor);
+		shadow.face = dfBoth;
+		shadow.holdAlpha = false;
+		// ぼかす
+		shadow.doBoxBlur(blur, blur);
+
+		// 影をコピー
+		work.operateRect(THIS.imageLeft + dx, THIS.imageTop + dy, shadow, THIS.imageLeft, THIS.imageTop, THIS.imageWidth, THIS.imageHeight, ltPsNormal, shadowOpacity);
+		// 自分をコピー
+		work.operateRect(THIS.imageLeft, THIS.imageTop, this, THIS.imageLeft, THIS.imageTop, THIS.imageWidth, THIS.imageHeight, ltPsNormal, 255);
+
+		// 画像さしかえ
+		THIS.assignImages(work);
+
+		// 後片付け
+		invalidate work;
+		invalidate shadow;
+	};
 
 	property isPrimaryBase {
 		getter() {

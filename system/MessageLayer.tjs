@@ -1,5 +1,5 @@
 ﻿//;# MessageLayer.tjs - メッセージレイヤ
-//;# Copyright (C)2001-2005, W.Dee and contributors  改変・配布は自由です
+//;# Copyright (C)2001-2009, W.Dee and contributors  改変・配布は自由です
 //;<<'END_OF_TJS_SCRIPT';
 
 // このスクリプトは有効な perl5 スクリプトでもあって、
@@ -8,6 +8,7 @@
 // で更新を行う
 // ( 処理の内容としては TJS2 でも十分書けるんだけど、あいにく
 //   perl のような実行環境が TJS2 にはないというか作ってない )
+
 @if(0)
 class LinkButtonLayer extends ButtonLayer
 {
@@ -219,10 +220,21 @@ Scripts.execStorage("MessageCharLayer.tjs");	// 文字の表示に利用する�
 
 class MessageLayer extends KAGLayer
 {
+@if(0)
+	var wwFollowing = "%),:;]}｡｣ﾞﾟ。，、．：；゛゜ヽヾゝ"
+                "ゞ々’”）〕］｝〉》」』】°′″℃¢％‰"; // 行頭禁則文字
+@endif
 	var wwFollowing = "%),:;]}｡｣ﾞﾟ。，、：；゛゜ヽヾゝ –"
                 "ゞ々’”）〕］｝〉》」』】°′″℃￠％‰"; // 行頭禁則文字
+@if(0)
+	var wwFollowingWeak="!.?､･ｧｨｩｪｫｬｭｮｯｰ・？！ーぁぃぅぇぉっゃゅょゎァィ"
+				"ゥェォッャュョヮヵヶ"; // 行頭(弱)禁則文字
+@endif
 	var wwFollowingWeak="､･ｧｨｩｪｫｬｭｮｯｰ・？！ーぁぃぅぇぉっゃゅょゎァィ"
                 "ゥェォッャュョヮヵヶ"; // 行頭(弱)禁則文字
+@if(0)
+	var wwLeading="\\$([{｢‘“（〔［｛〈《「『【￥＄£"; // 行末禁則文字
+@endif
 	var wwLeading="\\$([{｢'‘’“（〔［｛〈《「『【￥＄￡0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.,:;!?–—―"; // 行末禁則文字 //})
 
 	wwFollowing += wwFollowingWeak;
@@ -237,6 +249,7 @@ class MessageLayer extends KAGLayer
 
 	var id; // 識別子
 	var comp; // 対応する表/裏メッセージレイヤ
+
 	var lastWidth = 0;			// フレーム差し替え時に消去しないで済むか比較するための前回フレーム幅
 	var lastHeight = 0;			// フレーム差し替え時に消去しないで済むか比較するための前回フレーム高
 
@@ -262,15 +275,21 @@ class MessageLayer extends KAGLayer
 	/*C*/var isLastLine; // ページ最終行を描画中
 	/*C*/var indentxpos; // インデント左(縦書きの場合は上)位置
 	var links = []; // リンク
-//	/*C*/var linkFilled; // リンク領域画像を塗りつぶしたかどうか
-//	/*C*/var numLinks = 0; // レイヤ内のリンクの数
+@if(0)
+	/*C*/var linkFilled; // リンク領域画像を塗りつぶしたかどうか
+	/*C*/var numLinks = 0; // レイヤ内のリンクの数
+@endif
 
-//	var lastLink = -1; // 最後に選択したリンク番号
-//	var keyLink = -1; // キーボードで選択したリンク番号
+@if(0)
+	var lastLink = -1; // 最後に選択したリンク番号
+	var keyLink = -1; // キーボードで選択したリンク番号
+@endif
 	var inLink = -1; // リンクを描画中か
-//	var highlightLayer; // リンクを強調表示するためのレイヤ
-//	/*C*/var selProcessLock = false; // process 後にリンクが操作されるのを防ぐためのフラグ
-//	/*C*/var storedSelProcessLock = false; // storeSelProcessLock 時点での状態
+@if(0)
+	var highlightLayer; // リンクを強調表示するためのレイヤ
+	/*C*/var selProcessLock = false; // process 後にリンクが操作されるのを防ぐためのフラグ
+	/*C*/var storedSelProcessLock = false; // storeSelProcessLock 時点での状態
+@endif
 
 	// ↓使わないけど、Config.tjs に記述があるので
 	/*CS*/var defaultLinkColor = 0x0080ff; // デフォルトのリンク色
@@ -315,6 +334,10 @@ class MessageLayer extends KAGLayer
 	/*C*/var currentRuby = ""; // 次の文字に対するルビ
 	/*C*/var lastDrawnCh = ""; // 最後に描画した文字
 
+@if(0)
+	/*CS*/var edgeExtent = 1; // 袋文字のふとさ
+	/*CS*/var edgeEmphasis = 512; // 袋文字の強調度
+@endif
 	/*CS*/var edgeExtent = 2; // 袋文字のふとさ
 	/*CS*/var edgeEmphasis = 2048; // 袋文字の強調度
 	/*CS*/var shadowOffsetX = 2; // 影のオフセット
@@ -324,7 +347,15 @@ class MessageLayer extends KAGLayer
 
 	/*C*/var nextClearFlag = false; // 下端に達したとき、次の文字表示でレイヤをクリアするかどうか
 
-//	var lineLayerLinks = []; // lineLayer が管理しているリンク
+@if(0)
+	var lineLayer; // 行描画用のレイヤ
+	/*C*/var lineLayerBase; // ベースライン(横書き:下線位置/縦書き:中央位置)
+	/*C*/var lineLayerPos; // lineLayer 中の文字表示位置
+	/*C*/var lineLayerLength; // lineLayer 中の文字幅
+	/*C*/var lineLayerOriginX; // 表示オフセットX
+	/*C*/var lineLayerOriginY; // 表示オフセットY
+	var lineLayerLinks = []; // lineLayer が管理しているリンク
+@endif
 
 	var charLayers = []; // 文字を表示するレイヤー : [line][column]
 	var	charPool = [];	//	使っていない文字レイヤーを格納
@@ -362,8 +393,12 @@ class MessageLayer extends KAGLayer
 	var ml, mt, mw, mh; // 初期レイヤサイズ(config用)
 
 	var invisibleByUser = false; // ユーザにより一時的に不可視
+@if(0)
+	var visibleBeforeUserInvisible  = false;
+@endif
 	var visibleBeforeUserInvisible  = void;
-/*	var	_visibleBeforeUserInvisible	= void;
+@if(0)
+	var	_visibleBeforeUserInvisible	= void;
 	property visibleBeforeUserInvisible
 	{
 		setter(v)
@@ -402,8 +437,17 @@ class MessageLayer extends KAGLayer
 		}
 		getter	{ return super.absolute; }
 	}
-*/	var lastMouseDownX; // 最後にマウスがクリックされた X 座標
+@endif
+	var lastMouseDownX; // 最後にマウスがクリックされた X 座標
 	var lastMouseDownY; // 最後にマウスがクリックされた Y 座標
+
+@if(0)
+	// リンクタイプ
+	var ltNormal = 1;
+	var ltButton = 2;
+	var ltEdit = 3;
+	var ltCheckBox = 4;
+@endif
 
 	var	glyphLayer;
 
@@ -552,6 +596,7 @@ class MessageLayer extends KAGLayer
 		}
 	}
 @endif
+
 	function MessageLayer(owner, parent, name, id, do_config)
 	{
 		// MessageLayer コンストラクタ
@@ -562,6 +607,7 @@ class MessageLayer extends KAGLayer
 		// left, top, width, height : 初期位置
 		// do_config : コンフィギュレーションを行うか
 		super.KAGLayer(...);
+
 
 		this.id = id;
 		this.name = name;
@@ -647,14 +693,26 @@ class MessageLayer extends KAGLayer
 		hitType = htMask;
 		hitThreshold = 0; // マウスメッセージは全域不透過
 
+@if(0)
+		// 行描画用の浮遊レイヤを確保
+		lineLayer = new global.KAGLayer(window, this);
+		lineLayer.hitType = htMask;
+		lineLayer.hitThreshold = 256; // マウスメッセージは全域透過
+		lineLayer.face = dfAuto;
+		lineLayer.type = layerType;
+		lineLayer.name = "行描画用浮遊メッセージレイヤ";
+@endif
+
 		//	グリフレイヤー
 		glyphLayer	= new ClickGlyphLayer(window, this);
 
 		// リンクをハイライト表示するためのレイヤ
-//		highlightLayer = new global.KAGLayer(window, this);
-//		highlightLayer.type = layerType;
-//		highlightLayer.face = dfAuto;
-//		highlightLayer.hitType = htProvince;
+@if(0)
+		highlightLayer = new global.KAGLayer(window, this);
+		highlightLayer.type = layerType;
+		highlightLayer.face = dfAuto;
+		highlightLayer.hitType = htProvince;
+@endif
 			// 領域画像で当たり判定を行う
 
 		//	run ハンドラを追加
@@ -664,8 +722,11 @@ class MessageLayer extends KAGLayer
 	function finalize()
 	{
 		// invalidateLinkObjects(); // リンクに結びつけられたオブジェクトの無効化
-//		invalidateLinkObjects();
-//		invalidate highlightLayer;
+@if(0)
+		invalidateLinkObjects();
+		invalidate highlightLayer;
+		invalidate lineLayer;
+@endif
 		stopCharAction();
 		for( var i=0; i<charPool.count; i++ )
 			invalidate charPool[i] if charPool[i] != void;
@@ -697,6 +758,9 @@ class MessageLayer extends KAGLayer
 
 	function setCompLayer(lay) { comp = lay; }
 
+@if(0)
+	function clearLayer()
+@endif
 	function clearLayer(notClearUpdate=false)
 	{
 		// レイヤをクリア
@@ -726,7 +790,6 @@ class MessageLayer extends KAGLayer
 			{
 				loadImages(frameGraphic, frameKey);
 				setSizeToImageSize();
-				//dm("load");
 			}
 @if(0)
 			var	col = 0xff0000, opa = 64;
@@ -768,23 +831,29 @@ class MessageLayer extends KAGLayer
 			return;
 		}
 
-//		invalidateLinkObjects(); // リンクに関連づけられたオブジェクトを無効化
+@if(0)
+		invalidateLinkObjects(); // リンクに関連づけられたオブジェクトを無効化
+@endif
 
 		focusable = false;
 		links.clear();
-//		numLinks = 0;
-//		inLink = -1;
-//		highlightLink(lastLink, false); // ハイライトを消す
-//		highlightLayer.visible = false;
-//		lastLink = -1;
-//		keyLink = -1;
-//		linkFilled = false;
+@if(0)
+		numLinks = 0;
+		inLink = -1;
+		highlightLink(lastLink, false); // ハイライトを消す
+		highlightLayer.visible = false;
+		lastLink = -1;
+		keyLink = -1;
+		linkFilled = false;
+@endif
 		lastDrawnCh = ""; // 最後に描画した文字
 		isLastLine = false; // 最終行か
 		selClickLock = true;
 		lastMouseX = cursorX;
 		lastMouseY = cursorY;
-//		initLineLayer();
+@if(0)
+		initLineLayer();
+@endif
 		initCharLayer();
 
 		// 文字レイヤーを非表示にして、プールへ
@@ -819,6 +888,16 @@ class MessageLayer extends KAGLayer
 		// このタグが position という名前なのは相当初期の KAG
 		// がそうだったのを引きずってるのね(^^;
 		//)
+@if(0)
+		left = elm.left if elm.left !== void;
+		top = elm.top if elm.top !== void;
+ 		imageWidth = elm.width if elm.width !== void;
+ 		imageHeight = elm.height if elm.height !== void;
+ 		setSizeToImageSize();
+ 
+		frameGraphic = elm.frame if elm.frame !== void;
+		frameKey = elm.framekey if elm.framekey !== void;
+@endif
 
 		frameGraphic = elm.frame if elm.frame !== void;
 		frameKey = elm.framekey if elm.framekey !== void;
@@ -858,6 +937,9 @@ class MessageLayer extends KAGLayer
 		top = elm.top if elm.top !== void;
 		frameColor = +elm.color if elm.color !== void;
 		frameOpacity = +elm.opacity if elm.opacity !== void;
+@if(0)
+		imageModified = true; // 強制的にメッセージレイヤをクリアするために
+@endif
 		marginL = +elm.marginl if elm.marginl !== void;
 		marginT = +elm.margint if elm.margint !== void;
 		marginR = +elm.marginr if elm.marginr !== void;
@@ -866,15 +948,24 @@ class MessageLayer extends KAGLayer
 		draggable = +elm.draggable if elm.draggable !== void;
 		visible = +elm.visible if elm.visible !== void;
 
+@if(0)
+		clear();
+@endif
 		clear(notClearUpdate);
 	}
 
 	// コンフィグの設定に戻す
 	function resetPosition() { setPosition(configValues); }
 
+@if(0)
+	function clear()
+@endif
 	function clear(notClearUpdate=false)
 	{
 		// メッセージレイヤをクリアする
+@if(0)
+		clearLayer();
+@endif
 		clearLayer(notClearUpdate);
 
 		if( notClearUpdate ) return;
@@ -896,16 +987,20 @@ class MessageLayer extends KAGLayer
 		resetFont();
 		resetStyle();
 		decideSizeChange();
-//		initLineLayer();
+@if(0)
+		initLineLayer();
+@endif
 		initCharLayer();
 		currentLine = currentColumn = 0;
 		currentRuby = "";
 		resetSelection();	//	範囲選択の情報もリセット
 
-/*		clearTimeout();
+@if(0)
+		clearTimeout();
 		clearClick();
 		clearWheel();
-*/	}
+@endif
+	}
 
 	function clear2()
 	{
@@ -927,7 +1022,9 @@ class MessageLayer extends KAGLayer
 			y = marginT;
 			x = marginL + indentxpos;
 		}
-//		initLineLayer();
+@if(0)
+		initLineLayer();
+@endif
 		initCharLayer();
 		currentLine = currentColumn = 0;
 	}
@@ -940,15 +1037,27 @@ class MessageLayer extends KAGLayer
 		// 各デフォルトの設定を書き戻し
 		if(!vertical)
 		{
+@if(0)
+			lineLayer.font.face = fontFace = defaultFace == 'user' ? userFace : defaultFace;
+			lineLayer.font.angle = 0;
+@endif
 			fontFace = defaultFace == 'user' ? userFace : defaultFace;
 			fontAngle = 0;
 		}
 		else
 		{
+@if(0)
+			lineLayer.font.face = '@' + (fontFace = defaultFace == 'user' ? userFace : defaultFace);
+			lineLayer.font.angle = 2700;
+@endif
 			fontFace = defaultFace == 'user' ? userFace : defaultFace;
 			fontAngle = 2700;
 		}
 
+@if(0)
+		lineLayer.font.bold = bold = defaultBold;
+		lineLayer.font.italic=false;
+@endif
 		bold = defaultBold;
 		fontItalic = false;
 		_fontSize = defaultFontSize;
@@ -980,16 +1089,28 @@ class MessageLayer extends KAGLayer
 			var elmface = elm.face;
 			if(elmface == 'default')
 			{
+@if(0)
+				lineLayer.font.angle = 0;
+				lineLayer.font.face = fontFace =  defaultFace;
+@endif
 				fontAngle = 0;
 				fontFace =  defaultFace;
 			}
 			else if(elmface == 'user')
 			{
+@if(0)
+				lineLayer.font.angle = 0;
+				lineLayer.font.face = fontFace = userFace;
+@endif
 				fontAngle = 0;
 				fontFace =  userFace;
 			}
 			else if(elmface !== void)
 			{
+@if(0)
+				lineLayer.font.angle = 0;
+				lineLayer.font.face = fontFace = elmface;
+@endif
 				fontAngle = 0;
 				fontFace =  elmface;
 			}
@@ -998,10 +1119,31 @@ class MessageLayer extends KAGLayer
 		{
 			var elmface = elm.face;
 			if(elmface == 'default')
+@if(0)
+			{
+				var f = '@' + (fontFace = defaultFace);
+				lineLayer.font.angle = 2700;
+				lineLayer.font.face = f;
+			}
+@endif
 				fontFace	= defaultFace;
 			else if(elmface == 'user')
+@if(0)
+			{
+				var f = '@' + (fontFace = userFace);
+				lineLayer.font.angle = 2700;
+				lineLayer.font.face = f;
+			}
+@endif
 				fontFace	= userFace;
 			else if(elmface !== void)
+@if(0)
+			{
+				var f = '@' + (fontFace = elmface);
+				lineLayer.font.angle = 2700;
+				lineLayer.font.face = f;
+			}
+@endif
 				fontFace	= elmface;
 			fontAngle = 2700;
 		}
@@ -1012,13 +1154,25 @@ class MessageLayer extends KAGLayer
 			antialiased = +elm.antialiased;
 
 		if(elm.bold == 'default')
+@if(0)
+			lineLayer.font.bold = defaultBold;
+@endif
 			bold = defaultBold;
 		else if(elm.bold !== void)
+@if(0)
+			lineLayer.font.bold = +elm.bold;
+@endif
 			bold = +elm.bold;
 
 		if(elm.italic == 'default')
+@if(0)
+			lineLayer.font.italic = false;
+@endif
 			fontItalic = false;
 		else if(elm.italic !== void)
+@if(0)
+			lineLayer.font.italic = +elm.italic;
+@endif
 			fontItalic = +elm.italic;
 
 		if(elm.size == 'default')
@@ -1127,13 +1281,17 @@ class MessageLayer extends KAGLayer
 
 		if(elm.align == 'default')
 		{
-//			fixLineLayer();
+@if(0)
+			fixLineLayer();
+@endif
 			align = -1;
 			adjustAlign();
 		}
 		else if(elm.align !== void)
 		{
-//			fixLineLayer();
+@if(0)
+			fixLineLayer();
+@endif
 			if(elm.align == 'left' || elm.align == 'top')
 				align = -1;
 			else if(elm.align == 'center')
@@ -1169,6 +1327,9 @@ class MessageLayer extends KAGLayer
 	{
 		// 仮に変更されていたフォント・スタイル情報を確定
 		if(!sizeChanged) return;
+@if(0)
+		lineLayer.font.height = - _fontSize;
+@endif
 		fontSize = _fontSize;
 		rubySize = _rubySize;
 		rubyOffset = _rubyOffset;
@@ -1185,7 +1346,9 @@ class MessageLayer extends KAGLayer
 		// 行サイズが変更されたときに行描画用レイヤのサイズを変更するために
 		// 呼ばれる
 
-//		if(inLink!=-1) endLinkLine();
+@if(0)
+		if(inLink!=-1) endLinkLine();
+@endif
 		decideSizeChange();
 
 		var newlinesize = lineSize;
@@ -1399,8 +1562,243 @@ class MessageLayer extends KAGLayer
 			return t + charLayers[line][col].textHeight;
 	}
 
+@if(0)
+	function getLineLayerBaseLine()
+	{
+		// 文字表示用のベースラインを計算して返す
+		// 横書きの場合は文字の下端部分、
+		// 縦書きの場合は文字の中央線
+		if(!vertical)
+			return -getLineLayerTopOffset() + lineSpacing + lineSize;
+		else
+			// 縦書き
+			// 中央線(レイヤ左端からの位置)
+			return 4 + (lineSize>>1);
+	}
+
+	function initLineLayer()
+	{
+		// lineLayer の初期化
+		var ll = lineLayer;
+		resetLineSize();
+		lineLayerLinks.count = 0;
+		lineLayerOriginX = x;
+		lineLayerOriginY = y;
+		if(!vertical)
+			ll.imageWidth = imageWidth + 8;
+		else
+			ll.imageHeight = imageHeight + 8;
+		ll.setSizeToImageSize();
+		changeLineSize(/*forceresize=*/true);
+		lineLayerLength = 0;
+		lineLayerPos = 4;
+		ll.visible = false;
+		ll.face = dfAuto;
+		var lliw = ll.imageWidth;
+		var llih = ll.imageHeight;
+		ll.fillRect(0, 0, lliw, llih, 0);
+			// 完全透明に
+		ll.face = dfProvince;
+		ll.fillRect(0, 0, lliw, llih, 0);
+		ll.face = dfAuto;
+			// 領域をクリア
+	}
+
+	function fixLineLayer()
+	{
+		// lineLayer を現在の表示位置に確定
+		var ll = lineLayer;
+		if(ll.visible == false) return;
+
+		var llox = lineLayerOriginX + getLineLayerLeftOffset();
+		var lloy = lineLayerOriginY + getLineLayerTopOffset();
+
+		face = dfAuto;
+		operateRect(
+			llox,
+			lloy,
+			ll, 0, 0, ll.imageWidth, ll.imageHeight);
+
+		face = dfProvince;
+		var i;
+		var lll = lineLayerLinks;
+		var lllcount = lll.count;
+		for(i = 0; i<lllcount; i++)
+		{
+			var lll_i = lineLayerLinks[i];
+			var n = lll_i.number;
+			var l = lll_i.line;
+			var linkn = links[n];
+			var x = linkn.x[l] += llox;
+			var y = linkn.y[l] += lloy;
+			var w = linkn.w[l];
+			var h = linkn.h[l];
+			linkn.fixed[l] = true; // 固定された
+			colorRect(x, y, w, h, n+1); // このレイヤの該当する部分を塗りつぶす
+		}
+
+		ll.visible = false;
+	}
+
+
+	function changeLineSize(forceresize = false)
+	{
+		// 行サイズが変更されたときに行描画用レイヤのサイズを変更するために
+		// 呼ばれる
+
+		if(inLink!=-1) endLinkLine();
+		decideSizeChange();
+
+		var newlinesize = lineSize;
+		if(fontSize>lineSize) newlinesize = fontSize; // 拡張
+
+		var newlinelayersize = newlinesize + lineSpacing;
+		if(rubySize + rubyOffset > lineSpacing)
+		{
+			// ルビが上の行とかぶる
+			newlinelayersize += rubySize+rubyOffset - lineSpacing;
+		}
+
+		newlinelayersize += 8; // 袋文字・影描画用の余裕
+		if(!vertical)
+		{
+			// 横書きの場合
+			if(forceresize || lineLayer.imageHeight<newlinelayersize)
+			{
+				// 行間拡張
+				lineSize = newlinesize;
+				var oldsize = lineLayer.imageHeight;
+				lineLayer.imageHeight = newlinelayersize;
+				lineLayer.setSizeToImageSize();
+				lineLayerBase = getLineLayerBaseLine();
+				// 内容移動
+				if(!forceresize)
+				{
+					var d = lineLayer.imageHeight - oldsize;
+					lineLayer.face = dfAuto;
+					lineLayer.copyRect(0, d, lineLayer,
+						0, 0, lineLayer.imageWidth, oldsize);
+					lineLayer.fillRect(0, 0, lineLayer.imageWidth, d, 0);
+
+					lineLayer.face = dfProvince;
+					lineLayer.copyRect(0, d, lineLayer,
+						0, 0, lineLayer.imageWidth, oldsize);
+					lineLayer.colorRect(0, 0, lineLayer.imageWidth, d, 0);
+					lineLayer.face = dfAuto;
+				}
+				var i;
+				for(i = 0; i<lineLayerLinks.count; i++)
+				{
+					var n = lineLayerLinks[i].number;
+					var l = lineLayerLinks[i].line;
+					links[n].y[l] += lineLayer.imageHeight - oldsize;
+				}
+				// 位置移動
+				lineLayer.setPos(lineLayerOriginX + getLineLayerLeftOffset(),
+							lineLayerOriginY + getLineLayerTopOffset());
+			}
+		}
+		else
+		{
+			// 縦書きの場合
+			if(forceresize || lineLayer.imageWidth < newlinelayersize)
+			{
+				// 行間拡張
+				lineSize = newlinesize;
+				var oldbase = lineLayerBase;
+				var oldsize = lineLayer.imageWidth;
+				lineLayer.imageWidth = newlinelayersize;
+				lineLayer.setSizeToImageSize();
+				lineLayerBase = getLineLayerBaseLine();
+				// 内容移動
+				if(!forceresize)
+				{
+					lineLayer.face = dfAuto;
+					// oldbaseline , lineLayerBase を使って
+					// 表示内容を移動
+					lineLayer.copyRect(
+						lineLayerBase - oldbase, 0,
+						lineLayer,
+						0,0,lineLayer.imageWidth, lineLayer.imageHeight);
+					// 左端と右端を消去
+					lineLayer.fillRect(0, 0,
+						lineLayerBase - oldbase, lineLayer.imageHeight, 0);
+					lineLayer.fillRect(
+						lineLayerBase - oldbase+oldsize, 0,
+						lineLayer.imageWidth - (lineLayerBase - oldbase + oldsize),
+						lineLayer.imageHeight, 0);
+
+					lineLayer.face = dfProvince;
+					lineLayer.copyRect(
+						lineLayerBase - oldbase, 0,
+						lineLayer,
+						0, 0, lineLayer.imageWidth, lineLayer.imageHeight);
+					lineLayer.colorRect(0, 0,
+						lineLayerBase - oldbase, lineLayer.imageHeight, 0);
+					lineLayer.colorRect(
+						lineLayerBase - oldbase+oldsize, 0,
+						lineLayer.imageWidth - (lineLayerBase - oldbase + oldsize),
+						lineLayer.imageHeight, 0);
+					lineLayer.face = dfAuto;
+				}
+				var i;
+				for(i = 0; i < lineLayerLinks.count; i++)
+				{
+					var n = lineLayerLinks[i].number;
+					var l = lineLayerLinks[i].line;
+					links[n].x[l] += lineLayerBase - oldbase;
+				}
+				// 位置移動
+				lineLayer.setPos(lineLayerOriginX + getLineLayerLeftOffset(),
+							lineLayerOriginY + getLineLayerTopOffset());
+			}
+		}
+	}
+
+	function getLineLayerLeftOffset()
+	{
+		// 行描画用レイヤ内での左オフセットを取得
+		if(!vertical)
+		{
+			if(align == -1)
+				return -4;
+			else if(align == 0)
+				return ((imageWidth - marginR - marginL - lineLayerLength)>>1) - 4;
+			else if(align == 1)
+				return imageWidth - marginR - marginL - lineLayerLength - 4;
+		}
+		else
+		{
+			return -lineSize - lineSpacing - 4;
+		}
+	}
+
+	function getLineLayerTopOffset()
+	{
+		// 行描画用レイヤ内での上オフセットを取得
+		if(!vertical)
+		{
+			return -(lineLayer.imageHeight - 4 - lineSize - lineSpacing);
+		}
+		else
+		{
+			if(align == -1)
+				return -4;
+			else if(align == 0)
+				return ((imageHeight - marginB - marginT - lineLayerLength)>>1) - 4;
+			else if(align == 1)
+				return imageHeight - marginB - marginT - lineLayerLength - 4;
+			return -4;
+		}
+	}
+@endif
+
 	function adjustAlign()
 	{
+@if(0)
+		lineLayer.setPos(lineLayerOriginX + getLineLayerLeftOffset(),
+			lineLayerOriginY + getLineLayerTopOffset());
+@endif
 		// 位置移動
 		var chars	= charLayers[currentLine];
 		var rubys	= rubyLayers[currentLine];
@@ -1464,6 +1862,18 @@ class MessageLayer extends KAGLayer
 		// 改行
 		// ページを越える場合は true, 越えないで改行できる場合は false
 		var condition;
+@if(0)
+		if(vertical)
+		{
+			condition= lineLayerOriginX + getLineLayerLeftOffset() - lineSpacing -
+				lineSize <= marginL;
+		}
+		else
+		{
+			condition= lineLayerBase + lineLayerOriginY + getLineLayerTopOffset() +
+				 lineSize >= imageHeight-marginB;
+		}
+@endif
 		if(vertical)
 			condition = x - ((lineSize - lineSpacing) << 1) <= marginL;
 		else
@@ -1479,9 +1889,15 @@ class MessageLayer extends KAGLayer
 		}
 		else
 		{
-//			if(inLink != -1) endLinkLine();
+@if(0)
+			if(inLink != -1) endLinkLine();
+@endif
 
 			decideSizeChange();
+
+@if(0)
+			fixLineLayer();
+@endif
 
 			if(vertical)
 			{
@@ -1506,7 +1922,9 @@ class MessageLayer extends KAGLayer
 				isLastLine=true;
 			}
 
-//			initLineLayer();
+@if(0)
+			initLineLayer();
+@endif
 			initCharLayer();
 
 			// 次の行の先頭へ
@@ -1628,6 +2046,7 @@ class MessageLayer extends KAGLayer
 		// それ以外は false
 		var vert = vertical;
 		var doReline = false;
+
 		if((vert ?  y >= relinexpos  : x >= relinexpos ) && autoReturn)
 		{
 			if(((lastDrawnCh=="" || wwLeading.indexOf(lastDrawnCh)==-1) &&
@@ -1639,6 +2058,9 @@ class MessageLayer extends KAGLayer
 				// しかもこれから描画するのが行頭禁則文字でない
 				// 場合
 				// または弱禁則文字が連続していない場合
+@if(0)
+				if(reline()) return autoReturn;
+@endif
 				doReline	= true;
 			}
 			else if(vert ? ( y>imageHeight ) : (x>imageWidth))
@@ -1676,6 +2098,66 @@ class MessageLayer extends KAGLayer
 			}
 		}
 
+@if(0)
+		changeLineSize() if sizeChanged;
+
+		var inlink = inLink != -1;
+
+		beginLinkLine() if inlink;
+
+ 		var ll = lineLayer;
+ 		var llfont = ll.font;
+
+		var cw = llfont.getTextWidth(ch);
+
+		var dx , dy;
+
+		if(vert)
+			dx = int(lineLayerBase+(fontSize>>1)), dy = int(lineLayerPos);
+		else
+			dx = int(lineLayerPos), dy = int(lineLayerBase-fontSize);
+
+
+		if(edge)
+			ll.drawText(dx, dy, ch, chColor, 255, antialiased, edgeEmphasis, edgeColor, edgeExtent, 0, 0); // 文字
+		else if(shadow)
+			ll.drawText(dx, dy, ch, chColor, 255, antialiased, 255, shadowColor, 0, shadowOffsetX, shadowOffsetY); // 文字
+		else
+			ll.drawText(dx, dy, ch, chColor, 255, antialiased); // 文字
+
+		if(currentRuby != "")
+		{
+			// ルビがある
+			var cw = llfont.getTextWidth(ch);
+			var orgsize = llfont.height;
+			llfont.height = rubySize;
+			var rw = llfont.getTextWidth(currentRuby);
+			var rx,ry;
+			if(!vert)
+			{
+				rx = int(dx + (cw>>1) - (rw>>1));
+				ry = int(dy - rubySize - rubyOffset);
+			}
+			else
+			{
+				rx = int(dx + rubySize + rubyOffset);
+				ry = int(dy + (cw>>1) - (rw>>1));
+			}
+
+			if(edge)
+				ll.drawText(rx, ry, currentRuby, chColor, 255, antialiased, edgeEmphasis, edgeColor, edgeExtent, 0, 0); // 文字
+			else if(shadow)
+				ll.drawText(rx, ry, currentRuby, chColor, 255, antialiased, 255, shadowColor, 0, shadowOffsetX, shadowOffsetY); // 文字
+			else
+				ll.drawText(rx, ry, currentRuby, chColor, 255, antialiased); // 文字
+
+			llfont.height = orgsize;
+			currentRuby = '';
+		}
+
+		ll.visible = true;
+@endif
+
 		fadeoutLastMessage() if typeof global.fadeoutLastMessage != "undefined";
 
 		if(	(ch.length == 1 && char2graph[ch] != void) ||	// 表示文字が1文字で、登録されている文字の場合
@@ -1703,11 +2185,12 @@ class MessageLayer extends KAGLayer
 		if(window.skipMode == 1 || window.skipMode == 2)
 			window.stopAllActionsByType("char");
 
-//		var inlink = inLink != -1;
+@if(0)
+		var inlink = inLink != -1;
 
-//		beginLinkLine() if inlink;
+		beginLinkLine() if inlink;
+@endif
 
-//		dm("processCh("+currentLine+", "+currentColumn+", "+ch+")") if kag.current == this;
 		var	cw;
 		with(getCharLayer(currentLine, currentColumn))
 		{
@@ -1785,7 +2268,8 @@ class MessageLayer extends KAGLayer
 				beginContinuousAction(lastCharLayer, continuousType);
 		}
 
-/*		if(inlink)
+@if(0)
+		if(inlink)
 		{
 			// ハイパーリンクでちゅー
 			ll.face = dfProvince;
@@ -1800,11 +2284,16 @@ class MessageLayer extends KAGLayer
 			ll.face = dfAuto;
 			linkFilled = true;
 		}
-*/
-//		fillRect(x-1, y-1, 3, 3, 0xFFFF00FF);
+@endif
+
 		cw += pitch;
 
 		if(vert) y += cw; else x += cw;
+
+@if(0)
+		lineLayerPos += cw;
+		lineLayerLength += cw;
+@endif
 
 		lastDrawnCh = ch;
 
@@ -1865,7 +2354,6 @@ class MessageLayer extends KAGLayer
 
 	function drawRuby(line = currentLine, stcol, edcol, text, offset, align)
 	{
-//		dm("drawRuby("+line, stcol, edcol, text, offset, align+")");
 		with(getRubyLayer(line, edcol))
 		{
 			.name		= "[%2d][%2d]: ルビ = %s(%s)".sprintf(currentLine, currentColumn, text, .group);
@@ -1912,13 +2400,139 @@ class MessageLayer extends KAGLayer
 		}
 	}
 
+@if(0)
+	function putGraph(storage, key, ischar)
+	{
+		// 画像 storage を描画する
+
+		// テンポラリのレイヤを用意
+		var lay = window.temporaryLayer;
+
+		lay.type = ltTransparent;
+		lay.face = dfAuto;
+		lay.loadImages(storage, key); // 画像読み込み
+		var lw, lh;
+		lw = lay.imageWidth;
+		lh = lay.imageHeight;
+
+		var cw;
+		if(vertical)
+		{
+			if(lw > lineSize) lineSize = lw; // 拡張
+			cw = lh;
+		}
+		else
+		{
+			if(lh > lineSize) lineSize = lh; // 拡張
+			cw = lw;
+		}
+
+		changeLineSize();
+
+		if(inLink != -1) beginLinkLine();
+
+		var repage = false;
+
+		if(autoReturn)
+		{
+			// 改行位置に達している？
+			if(vertical ? ( y > relinexpos ) : (x > relinexpos) )
+			{
+				repage = reline();
+			}
+		}
+
+		if(repage) return true; // 文字は描画しない
+
+
+		// 描画
+		var cx,cy;
+		if(vertical)
+		{
+			cx = lineLayerBase - (lw>>1);
+			cy = lineLayerPos;
+		}
+		else
+		{
+			cx = lineLayerPos;
+			cy = lineLayerBase - lh;
+		}
+
+		if(ischar && (shadow || edge) )
+		{
+			lay.face = dfOpaque;
+			lay.holdAlpha = true;
+				// 影/袋文字の色でメインを塗りつぶす
+
+			if(edge)
+			{
+				// 袋
+				lay.fillRect(0, 0, lw, lh, edgeColor);
+				lineLayer.operateRect(cx+1, cy, lay, 0, 0, lw, lh);
+				lineLayer.operateRect(cx, cy+1, lay, 0, 0, lw, lh);
+				lineLayer.operateRect(cx-1, cy, lay, 0, 0, lw, lh);
+				lineLayer.operateRect(cx, cy-1, lay, 0, 0, lw, lh);
+			}
+			else if(shadow)
+			{
+				// 影
+				lay.fillRect(0, 0, lw, lh, shadowColor);
+				lineLayer.operateRect(cx+2, cy+2, lay, 0, 0, lw, lh);
+			}
+
+		}
+
+		if(ischar)
+		{
+			lay.face = dfOpaque;
+			lay.holdAlpha = true;
+			lay.fillRect(0, 0, lw, lh, chColor);
+				// メインを文字色で塗りつぶす
+		}
+
+		lineLayer.operateRect(cx, cy, lay, 0, 0, lw, lh); // 描画
+
+		// 描画おわり
+		lastDrawnCh="";
+
+		if(inLink!=-1)
+		{
+			// ハイパーリンクでちゅー
+			lineLayer.face = dfProvince;
+			if(vertical)
+				lineLayer.fillRect(lineLayerBase - (fontSize>>1), lineLayerPos,
+					fontSize, cw, numLinks+1);
+			else
+				lineLayer.fillRect(lineLayerPos, lineLayerBase - fontSize,
+					cw, fontSize, numLinks+1);
+			face = dfAuto;
+			lineLayer.face = dfBoth;
+			// 領域画像も塗りつぶしてやる
+			linkFilled=true;
+		}
+
+		if(vertical) y+=cw; else x+=cw;
+
+		lineLayerPos += cw;
+		lineLayerLength += cw;
+
+		lineLayer.visible = true;
+
+		if(align >= 0) adjustAlign();
+
+		return false;
+	}
+@endif
+
 	function putGraph(storage, key, ischar)
 	{
 		// 画像 storage を描画する
 
 		changeLineSize();
 
-//		if(inLink != -1) beginLinkLine();
+@if(0)
+		if(inLink != -1) beginLinkLine();
+@endif
 
 		var repage = false;
 
@@ -1951,7 +2565,6 @@ class MessageLayer extends KAGLayer
 				.setTextPos(x + int(getCharLayerLeftOffset()+(.textWidth>>1)), y + getCharLayerTopOffset());
 			else
 				.setTextPos(x + getCharLayerLeftOffset(), y + int(getCharLayerTopOffset()-.textHeight));
-//			dm("graph: "+.left+", "+.top);
 			.absolute	= currentLine * 1000 + currentColumn;
 			.pitch		= pitch;
 			.linkno		= inLink;
@@ -1996,7 +2609,8 @@ class MessageLayer extends KAGLayer
 		// 描画おわり
 		lastDrawnCh="";
 
-/*		if(inLink!=-1)
+@if(0)
+		if(inLink!=-1)
 		{
 			// ハイパーリンクでちゅー
 			lineLayer.face = dfProvince;
@@ -2011,10 +2625,17 @@ class MessageLayer extends KAGLayer
 			// 領域画像も塗りつぶしてやる
 			linkFilled=true;
 		}
-*/
+@endif
+
 		cw	+= pitch;
 		if(vertical) y+=cw; else x+=cw;
 
+@if(0)
+		lineLayerPos += cw;
+		lineLayerLength += cw;
+
+		lineLayer.visible = true;
+@endif
 		currentColumn++;
 
 		if(align >= 0) adjustAlign();
@@ -2049,7 +2670,9 @@ class MessageLayer extends KAGLayer
 		}
 
 		// リンク中の場合はリンクを開始
-//		if(inLink != -1) beginLinkLine();
+@if(0)
+		if(inLink != -1) beginLinkLine();
+@endif
 
 		// 改行/改ページ処理
 		var repage = false;
@@ -2084,7 +2707,8 @@ class MessageLayer extends KAGLayer
 		lf.face = orgfont;
 		lf.angle = organgle;
 
-/*		// ハイパーリンクの処理
+@if(0)
+		// ハイパーリンクの処理
 		if(inLink!=-1)
 		{
 			// ハイパーリンクでちゅー
@@ -2095,7 +2719,8 @@ class MessageLayer extends KAGLayer
 			ll.face = dfAuto;
 			linkFilled=true;
 		}
-*/
+@endif
+
 		// 位置更新
 		y += ch;
 		lineLayerPos += ch;
@@ -2231,6 +2856,7 @@ class MessageLayer extends KAGLayer
 		linkn.lineCount ++;
 	}
 @endif
+
 	function createSoundExpression(exp, storage, buf)
 	{
 		// サウンドを鳴らすための式を作成する
@@ -2245,6 +2871,7 @@ class MessageLayer extends KAGLayer
 			exp = seexp;
 		return exp;
 	}
+
 	function beginHyperLink(elm)
 	{
 		links.add(%[
@@ -2254,7 +2881,8 @@ class MessageLayer extends KAGLayer
 			opacity	: (elm.opacity === void) ? defaultLinkOpacity : +elm.opacity,
 		]);
 		inLink	= links.count - 1;
-/*		// 普通のリンクを開始する
+@if(0)
+		// 普通のリンクを開始する
 		links[numLinks] = %[ // 辞書配列を作成
 			type :		ltNormal,
 			storage :	elm.storage,
@@ -2274,12 +2902,13 @@ class MessageLayer extends KAGLayer
 			lineCount :	1
 			];
 		inLink = 0;
-*/	}
+@endif
+	}
 
 	function endHyperLink()
 	{
 		inLink	= -1;
-/*		inLink = -1;
+@if(0)
 		endLinkLine();
 		links[numLinks].lineCount--;
 		numLinks++;
@@ -2288,7 +2917,9 @@ class MessageLayer extends KAGLayer
 		lastMouseY = cursorY;
 		selClickLock = true;
 		setSelProcessLock(false); // 選択ロック解除
-*/	}
+@endif
+	}
+
 @if(0)
 	function findLink(x,y)
 	{
@@ -2313,9 +2944,11 @@ class MessageLayer extends KAGLayer
 		return -1;
 	}
 @endif
+
 	function addButton(elm)
 	{
-/*		// グラフィカルボタンを配置
+@if(0)
+		// グラフィカルボタンを配置
 		var object = new LinkButtonLayer(window, this);
 		object.loadImages(elm.graphic, elm.graphickey);
 		object.linkNum = numLinks;
@@ -2349,11 +2982,13 @@ class MessageLayer extends KAGLayer
 		numLinks++;
 		focusable = true; // フォーカスを受け取れるように
 		setSelProcessLock(false); // 選択ロック解除
-*/	}
+@endif
+	}
 
 	function addEdit(elm)
 	{
-/*		// 単一行エディットを配置
+@if(0)
+		// 単一行エディットを配置
 		changeLineSize() if sizeChanged;
 		var object = new LinkEditLayer(window, this, vertical);
 		var of = object.font;
@@ -2408,11 +3043,13 @@ class MessageLayer extends KAGLayer
 		numLinks ++;
 		focusable = true;
 		setSelProcessLock(false); // 選択ロック解除
-*/	}
+@endif
+	}
 
 	function addCheckBox(elm)
 	{
-/*		var object = new LinkCheckBoxLayer(window, this, vertical);
+@if(0)
+		var object = new LinkCheckBoxLayer(window, this, vertical);
 		object.linkNum = numLinks;
 		object.vertical = vertical;
 		object.checked = Scripts.eval(elm.name);
@@ -2473,7 +3110,9 @@ class MessageLayer extends KAGLayer
 		numLinks ++;
 		focusable = true;
 		setSelProcessLock(false); // 選択ロック解除
-*/	}
+@endif
+	}
+
 @if(0)
 	function highlightLink(n, b = false)
 	{
@@ -2635,12 +3274,15 @@ class MessageLayer extends KAGLayer
 		processLink(num);
 	}
 @endif
+
+
 	function setSelProcessLock(b)
 	{
 		// 選択のロックを設定
 		// 選択のロックを行うのは、いったん選択肢を選択したら
 		// 他の選択肢を選択できないようにするため
-/*		if(selProcessLock != b)
+@if(0)
+		if(selProcessLock != b)
 		{
 			selProcessLock = b;
 			var lks = links;
@@ -2659,13 +3301,16 @@ class MessageLayer extends KAGLayer
 				focusable = true;
 			}
 		}
-*/	}
+@endif
+	}
 
 	function storeSelProcessLock()
 	{
 		// 右クリックサブルーチンに入る前に呼ばれ、
 		// 現在の selProcessLock の状態を退避する
-//		storedSelProcessLock = selProcessLock;
+@if(0)
+		storedSelProcessLock = selProcessLock;
+@endif
 	}
 
 	function restoreSelProcessLock()
@@ -2673,8 +3318,11 @@ class MessageLayer extends KAGLayer
 		// 右クリックルーチンから抜けるときに呼ばれ、
 		// 右クリックルーチンに入る前の selProcessLock の状態を
 		// 取り戻す
-//		setSelProcessLock(storedSelProcessLock);
+@if(0)
+		setSelProcessLock(storedSelProcessLock);
+@endif
 	}
+
 @if(0)
 	function commit()
 	{
@@ -2709,7 +3357,8 @@ class MessageLayer extends KAGLayer
 			showParentHint = true;
 			return true; // 不透過
 		}
-/*
+
+@if(0)
 		if(selProcessLock) return false; // 透過
 
 		if(selClickLock)
@@ -2735,7 +3384,8 @@ class MessageLayer extends KAGLayer
 			cursor = window.cursorPointed;
 			return true; // 透過しない
 		}
-*/	}
+@endif
+	}
 
 	function onHitTest(x, y, b)
 	{
@@ -2747,7 +3397,8 @@ class MessageLayer extends KAGLayer
 	function internalOnMouseDown(x, y, button)
 	{
 		// onMouseDown イベントハンドラ(内部関数)
-/*		if(button == mbLeft && !selProcessLock)
+@if(0)
+		if(button == mbLeft && !selProcessLock)
 		{
 			if(!selClickLock)
 			{
@@ -2757,15 +3408,14 @@ class MessageLayer extends KAGLayer
 				{
 					processLink(n);
 					return;
-				}
-				else if (hasClick())
-				{
+				} else if (hasClick()) {
 					processClick();
 					return;
 				}
 			}
 		}
-*/
+@endif
+
 		if(isDragPos(x, y))
 		{
 			// ドラッグ可能位置の場合
@@ -2819,7 +3469,8 @@ class MessageLayer extends KAGLayer
 			return;
 		}
 
-/*
+
+@if(0)
 		if(selProcessLock)
 		{
 			// 選択ロック中は処理を行わない
@@ -2842,7 +3493,8 @@ class MessageLayer extends KAGLayer
 			lastLink = n;
 			keyLink = lastLink;
 		}
-*/	}
+@endif
+	}
 
 
 	function onMouseMove(x, y)
@@ -2856,13 +3508,16 @@ class MessageLayer extends KAGLayer
 	function onMouseLeave()
 	{
 		// onMouseLeave イベントハンドラ
-/*		if(lastLink != -1)
+@if(0)
+		if(lastLink != -1)
 		{
 			highlightLink(lastLink, false);
 			lastLink = -1;
 		}
-*/		super.onMouseLeave(...);
+@endif
+		super.onMouseLeave(...);
 	}
+
 @if(0)
 	function setFocusToLink(n, force = false)
 	{
@@ -2926,14 +3581,18 @@ class MessageLayer extends KAGLayer
 		return void;
 	}
 @endif
+
 	function onKeyDown(key, shift)
 	{
 		// キーが押された
 		if(window.preProcessKeys(key, shift)) return;
 
-//		if(!focusable || (!numLinks && !hasClick())) { return super.onKeyDown(...); }
+@if(0)
+		if(!focusable || (!numLinks && !hasClick())) { return super.onKeyDown(...); }
+@endif
+
 		if(!focusable || !hasClick()) { return super.onKeyDown(...); }
-/*
+@if(0)
 		var l, r;
 		if(vertical)
 		{
@@ -2981,18 +3640,18 @@ class MessageLayer extends KAGLayer
 		}
 		else if(key == VK_SPACE || key == VK_RETURN)
 		{
-			if(selProcessLock || keyLink == -1)
-			{
-				if (hasClick())
+			if(selProcessLock || keyLink == -1) {
+				if (hasClick()) {
 					processClick();
-				else
+				} else {
 					window.checkProceedingKey(key, shift);
-			}
-			else
+				}
+			} else
 				processLink(keyLink);
 		}
 		else
-*/		{
+@endif
+		{
 			window.processKeys(key, shift); // window に処理をまかせる
 		}
 	}
@@ -3037,6 +3696,7 @@ class MessageLayer extends KAGLayer
 		var	ln	= links[linkno];
 		Scripts.eval(ln.exp) if ln.exp != "";
 	}
+
 @if(0)
 	function findPrevFocusable(control, layer)
 	{
@@ -3110,6 +3770,7 @@ class MessageLayer extends KAGLayer
 		super.onBeforeFocus(...);
 	}
 @endif
+
 	function locate(newx, newy)
 	{
 		var dx = +newx + marginL - x;
@@ -3124,10 +3785,18 @@ class MessageLayer extends KAGLayer
 		if(!vertical && newy === void)
 		{
 			// 横位置のみの変更
+@if(0)
+			lineLayerPos += dx;
+			lineLayerLength += dx;
+@endif
 		}
 		else if(vertical && newx === void)
 		{
 			// 縦位置のみの変更
+@if(0)
+			lineLayerPos += dy;
+			lineLayerLength += dy;
+@endif
 		}
 		else
 		{
@@ -3135,8 +3804,14 @@ class MessageLayer extends KAGLayer
 			{
 				if(vertical) y = marginT; else x = marginL;
 			}
-//			if(inLink!=-1) endLinkLine();
+@if(0)
+			if(inLink!=-1) endLinkLine();
+			fixLineLayer();
+@endif
 			decideSizeChange();
+@if(0)
+			initLineLayer();
+@endif
 			initCharLayer();
 		}
 	}
@@ -3177,6 +3852,9 @@ class MessageLayer extends KAGLayer
 		var key = adjustColorKey(elm.key);
 		var char = true;
 		char = +elm.char if elm.char !== void;
+@if(0)
+		if(putGraph(elm.storage, key, char)) return autoReturn;
+@endif
 		if(putGraph(elm.storage, key, char))
 		{
 @if(MESSAGE_SCROLL_REPAGE)
@@ -3194,6 +3872,14 @@ class MessageLayer extends KAGLayer
 		// カーソル位置から cnt 文字消去
 		backspace(elm.cnt === void ? 1 : +elm.cnt);
 	}
+
+@if(0)
+	function setRuby(text)
+	{
+		// 次の文字に対するルビを設定する
+		currentRuby = text;
+	}
+@endif
 
 	function setRuby(elm)
 	{
@@ -3252,24 +3938,48 @@ class MessageLayer extends KAGLayer
 	function showBreakGlyph(glyphobj, storage, key)
 	{
 		// 画面に行待ち/ページ待ち記号を表示する
+@if(0)
+		glyphobj.parent = this; // 親を自分にする
+@endif
 		glyphobj.parent	= window.primaryLayer;
 		glyphobj.absolute	= absolute + 1;
 		glyphobj.loadImages(storage, key); // 画像を読み込む
+@if(0)
+		glyphobj.bringToFront(); // 最前面に
+@endif
 		glyphLayer.assign(glyphobj);
 		glyphLayer.setSizeToImageSize();
 		glyphLayer.bringToFront();
 
 		if(glyphFixedPosition)
 		{
+@if(0)
+			glyphobj.setPos(glyphFixedLeft, glyphFixedTop);
+@endif
 			glyphLayer.setPos(glyphFixedLeft, glyphFixedTop);
 		}
 		else
 		{
 			if(!vertical)
+@if(0)
+			{
+				glyphobj.setPos(lineLayerPos + lineLayerOriginX + getLineLayerLeftOffset(),
+					y + lineSize + lineSpacing - glyphobj.height);
+			}
+@endif
 				glyphLayer.setPos(x + getCharLayerLeftOffset(), y + getCharLayerTopOffset() - glyphLayer.height);
 			else
+@if(0)
+			{
+				glyphobj.setPos(x - lineSpacing-  (lineSize>>1) - (glyphobj.width>>1),
+					lineLayerPos + lineLayerOriginY + getLineLayerTopOffset());
+			}
+@endif
 				glyphLayer.setPos(x + getCharLayerLeftOffset() + (glyphLayer.width>>1), y + getCharLayerTopOffset());
 		}
+@if(0)
+		glyphobj.visible = true;
+@endif
 		glyphLayer.visible = true;
 	}
 
@@ -3344,7 +4054,8 @@ class MessageLayer extends KAGLayer
 
 		focusable = src.focusable;
 
-/*		// links のコピー
+@if(0)
+		// links のコピー
 		{
 			invalidateLinkObjects(); // 一応オブジェクトはすべて無効化
 			var tl = links, sl = src.links;
@@ -3395,6 +4106,7 @@ class MessageLayer extends KAGLayer
 			}
 		}
 
+
 		// lineLayerLinks のコピー
 		{
 			var tl = lineLayerLinks, sl = src.lineLayerLinks;
@@ -3404,7 +4116,20 @@ class MessageLayer extends KAGLayer
 				(Dictionary.assign incontextof (tl[i] = %[]))(sl[i]);
 			}
 		}
-*/
+
+		// lineLayer の位置、サイズ、画像、フォント情報をコピー
+		{
+			var tl = lineLayer, sl = src.lineLayer;
+			tl.assignImages(sl);
+			tl.assignVisibleState(sl);
+			var tf = tl.font, sf = sl.font;
+			tf.face = sf.face;
+			tf.angle = sf.angle;
+			tf.bold = sf.bold;
+			tf.italic = sf.italic;
+			tf.height = sf.height;
+		}
+@endif
 		//	links のコピー
 		{
 			var	tl	= links, sl = src.links;
@@ -3447,8 +4172,10 @@ class MessageLayer extends KAGLayer
 		}
 
 		// そのほか
-//		highlightLayer.visible = false;
-//		keyLink = -1;
+@if(0)
+		highlightLayer.visible = false;
+		keyLink = -1;
+@endif
 		imageModified = true;
 
 		// その他の情報のコピー
@@ -3470,12 +4197,14 @@ class MessageLayer extends KAGLayer
 		relinexpos = src.relinexpos;
 		isLastLine = src.isLastLine;
 		indentxpos = src.indentxpos;
-//		linkFilled = src.linkFilled;
-//		numLinks = src.numLinks;
-//		selProcessLock = src.selProcessLock;
-//		storedSelProcessLock = src.storedSelProcessLock;
-//		defaultLinkColor = src.defaultLinkColor;
-//		defaultLinkOpacity = src.defaultLinkOpacity;
+@if(0)
+		linkFilled = src.linkFilled;
+		numLinks = src.numLinks;
+		selProcessLock = src.selProcessLock;
+		storedSelProcessLock = src.storedSelProcessLock;
+		defaultLinkColor = src.defaultLinkColor;
+		defaultLinkOpacity = src.defaultLinkOpacity;
+@endif
 		defaultFontSize = src.defaultFontSize;
 		fontSize = src.fontSize;
 		_fontSize = src._fontSize;
@@ -3530,6 +4259,13 @@ class MessageLayer extends KAGLayer
 		fontItalic = src.fontItalic;
 		sizeChanged = src.sizeChanged;
 		nextClearFlag = src.nextClearFlag;
+@if(0)
+		lineLayerBase = src.lineLayerBase;
+		lineLayerPos = src.lineLayerPos;
+		lineLayerLength = src.lineLayerLength;
+		lineLayerOriginX = src.lineLayerOriginX;
+		lineLayerOriginY = src.lineLayerOriginY;
+@endif
 		align = src.align;
 		defaultAutoReturn = src.defaultAutoReturn;
 		autoReturn = src.autoReturn;
@@ -3571,8 +4307,10 @@ class MessageLayer extends KAGLayer
 		dic.marginR = marginR;
 		dic.marginB = marginB;
 		dic.marginRCh = marginRCh;
-//		dic.defaultLinkColor = defaultLinkColor;
-//		dic.defaultLinkOpacity = defaultLinkOpacity;
+@if(0)
+		dic.defaultLinkColor = defaultLinkColor;
+		dic.defaultLinkOpacity = defaultLinkOpacity;
+@endif
 		dic.defaultFontSize = defaultFontSize;
 		dic.defaultLineSize = defaultLineSize;
 		dic.defaultRubySize = defaultRubySize;
@@ -3732,8 +4470,10 @@ class MessageLayer extends KAGLayer
 		marginR = dic.marginR if dic.marginR !== void;
 		marginB = dic.marginB if dic.marginB !== void;
 		marginRCh = dic.marginRCh if dic.marginRCh !== void;
-//		defaultLinkColor = dic.defaultLinkColor if dic.defaultLinkColor !== void;
-//		defaultLinkOpacity = dic.defaultLinkOpacity if dic.defaultLinkOpacity !== void;
+@if(0)
+		defaultLinkColor = dic.defaultLinkColor if dic.defaultLinkColor !== void;
+		defaultLinkOpacity = dic.defaultLinkOpacity if dic.defaultLinkOpacity !== void;
+@endif
 		defaultFontSize = dic.defaultFontSize if dic.defaultFontSize !== void;
 		defaultLineSize = dic.defaultLineSize if dic.defaultLineSize !== void;
 		defaultRubySize = dic.defaultRubySize if dic.defaultRubySize !== void;
@@ -3816,6 +4556,9 @@ class MessageLayer extends KAGLayer
 		// 呼ばれる
 		if(b)
 		{
+@if(0)
+			visibleBeforeUserInvisible = visible;
+@endif
 			visibleBeforeUserInvisible = visible if visibleBeforeUserInvisible === void;
 			invisibleByUser = true; // ユーザにより一時的に不可視
 			visible = false;
@@ -3823,6 +4566,9 @@ class MessageLayer extends KAGLayer
 		else
 		{
 			invisibleByUser = false; // 可視
+@if(0)
+			visible = visibleBeforeUserInvisible;
+@endif
 			visible = visibleBeforeUserInvisible if visibleBeforeUserInvisible !== void;
 			visibleBeforeUserInvisible	= void;
 		}

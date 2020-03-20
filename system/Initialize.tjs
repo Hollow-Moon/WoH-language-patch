@@ -1,5 +1,5 @@
 ﻿// Initialize.tjs - システムの初期化
-// Copyright (C)2001-2008, W.Dee and contributors  改変・配布は自由です
+// Copyright (C)2001-2009, W.Dee and contributors  改変・配布は自由です
 
 // システムバージョン
 var kagVersion = "3.29-dev.20071022";
@@ -166,6 +166,7 @@ function getClassName( obj )
 /*
 	デフォルトの「捕捉されない例外」ハンドラ
 */
+
 var exceptionOccured	= false;	//	例外が発生したか？
 System.exceptionHandler = function (e)
 {
@@ -228,6 +229,9 @@ System.exceptionHandler = function (e)
 
 	// どこにも捕捉されない例外がシステム側で捕捉された場合、この関数が
 	// 呼ばれる。e は例外オブジェクト。
+@if(0)
+	if(e instanceof "ConductorException")
+@endif
 	if(
 @if(DEBUG && CAPTURE_EXCEPTION)
 	//	ここで例外をキャプチャすると、メソッドのトレースが正常に表示できないため、原因の追求ができない
@@ -247,6 +251,11 @@ System.exceptionHandler = function (e)
 		System.eventDisabled = true;
 			// エラーの理由を表示させている間にイベントが発生すると
 			// やっかいなのでいったんイベント発生を停止させる
+@if(0)
+		System.inform(e.message);
+		System.eventDisabled = event_disabled;
+			// イベントを発生するかどうかを元の状態に
+@endif
 		System.inform(msg);
 		System.eventDisabled = event_disabled;	// イベントを発生するかどうかを元の状態に
 @if(DEBUG)
@@ -255,14 +264,17 @@ System.exceptionHandler = function (e)
 @endif
 		return true; // true を返すと本体側で例外の処理は行わなくなる
 	}
+	else
+	{
 @if(DEBUG)
-	//	エラーログのコピーを予約
-	System.eventDisabled	= false;
-	if(typeof global.asyncCaller == "undefined")
-		Scripts.execStorage(System.exePath+"data/scenario/plugin/sub/asyncCaller.tjs");
-	asyncCaller.call(saveLogToExchange);
+		//	エラーログのコピーを予約
+		System.eventDisabled	= false;
+		if(typeof global.asyncCaller == "undefined")
+			Scripts.execStorage(System.exePath+"data/scenario/plugin/sub/asyncCaller.tjs");
+		asyncCaller.call(saveLogToExchange);
 @endif
-	return false; // false を返すと通常の例外処理
+		return false; // false を返すと通常の例外処理
+	}
 };
 
 @if(LOG_COPY_TO_EXCHANGE)
@@ -360,15 +372,15 @@ function useArchiveIfExists(name)
 	return false;
 }
 
-/*
+@if(0)
 if(Storages.isExistentStorage("KUtils.tjs"))
 	Scripts.execStorage("KUtils.tjs");
 else if(Storages.isExistentStorage("kwidgets/KUtils.tjs"))
 	Scripts.execStorage("kwidgets/KUtils.tjs");
 else
 	throw new Exception("kwidgets/KUtils.tjs が見つかりません。");
-*/
-/*
+@endif
+@if(0)
 // kwidget の初期化
 Storages.addAutoPath("kwidgets/");
 Scripts.execStorage("KInitialize.tjs");
@@ -376,8 +388,9 @@ Scripts.execStorage("KInitialize.tjs");
 // パネル処理の初期化
 Storages.addAutoPath("panel/");
 Scripts.execStorage("PanelInitialize.tjs");
-*/
-/*Storages.addAutoPath(System.exePath + "video/"); // exePath 以下の video/
+@endif
+@if(0)
+Storages.addAutoPath(System.exePath + "video/"); // exePath 以下の video/
 Storages.addAutoPath("video/"); // video フォルダ
 Storages.addAutoPath("others/"); // その他
 Storages.addAutoPath("rule/"); // ルール画像フォルダ
@@ -387,7 +400,7 @@ Storages.addAutoPath("fgimage/"); // 前景画像フォルダ
 Storages.addAutoPath("bgimage/"); // 背景画像フォルダ
 Storages.addAutoPath("scenario/"); // シナリオフォルダ
 Storages.addAutoPath("image/"); // そのほかの画像フォルダ
-//Storages.addAutoPath("system/"); // システムフォルダ
+Storages.addAutoPath("system/"); // システムフォルダ
 
 // パッチアーカイブの検索と使用
 // もしこれらの名前を持ったアーカイブが実行可能ファイルと
@@ -402,10 +415,11 @@ useArchiveIfExists("bgimage.xp3");
 useArchiveIfExists("scenario.xp3");
 useArchiveIfExists("image.xp3");
 useArchiveIfExists("system.xp3");
-*/
+@endif
+
 if(Storages.isExistentStorage("Storages.tjs"))
 	KAGLoadScript("Storages.tjs");
-/*
+@if(0)
 useArchiveIfExists("patch.xp3");
 
 // 追加のパッチ用アーカイブの検索
@@ -418,7 +432,8 @@ for(var i = 2; ; i++)
 	else
 		break;
 }
-*/
+@endif
+
 delete useArchiveIfExists; // useArchiveIfExists は使い終わったので一応消しておく
 
 /*
@@ -526,6 +541,9 @@ if(!System.createAppLock(System.exePath.replace(/[^A-Za-z]/g, '_')))
 property askYesNo { getter() { KAGLoadScript("YesNoDialog.tjs"); return global.askYesNo; } }
 property CheckBoxLayer { getter() { KAGLoadScript("CheckBoxLayer.tjs"); return global.CheckBoxLayer; } }
 property ButtonLayer { getter() { KAGLoadScript("ButtonLayer.tjs"); return global.ButtonLayer; } }
+@if(0)
+property EditLayer { getter() { KAGLoadScript("EditLayer.tjs"); return global.EditLayer; } }
+@endif
 property EditLayer { getter() { KAGLoadScript("EditLayer.tjs"); KAGLoadScript("EditLayer.override.tjs"); return global.EditLayer; } }
 property KAGPlugin { getter() { KAGLoadScript("Plugin.tjs"); return global.KAGPlugin; } }
 

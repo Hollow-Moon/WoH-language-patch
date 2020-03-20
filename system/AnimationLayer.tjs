@@ -1,5 +1,6 @@
 ﻿// AnimationLayer.tjs - アニメーションを行うレイヤ
-// Copyright (C)2001-2008, W.Dee and contributors  改変・配布は自由です
+// Copyright (C)2001-2009, W.Dee and contributors  改変・配布は自由です
+
 
 /*
 -- ２つのアニメーションの種類 ---------------------------------------------
@@ -341,11 +342,19 @@ class AnimationLayer extends KAGLayer
 
 		Anim_defaultFontInfo.face = font.face; // デフォルトのフォント
 		Anim_defaultFontInfo.height = font.height; // デフォルトのフォントサイズ
+
+@if(0)
+		Anim_segments[0] = new AnimationConductor(this); // デフォルトのコンダクタ
+		Anim_segments[0].number = 0;
+@endif
 	}
 
 	function finalize()
 	{
 		clearAnim(); // アニメーション情報のクリア
+@if(0)
+		invalidate Anim_segments[0]; // デフォルトのコンダクタを無効化
+@endif
 		invalidate Anim_segments[0] if Anim_segments[0] != void; // デフォルトのコンダクタを無効化
 		Anim_loadParams = void;
 		Anim_partialImageInfo = void;
@@ -805,6 +814,31 @@ class AnimationLayer extends KAGLayer
 			layer.colorRect(0, 0, layer.imageWidth, layer.imageHeight, +param.mcolor,
 				+param.mopacity);
 		}
+@if(0)
+		if (param.lightcolor !== void) {
+			// レイヤ合成
+			var mode = ltAlpha;
+			if(param.lighttype !== void)
+			{
+				var layertypeinfo = imageTagLayerType[param.lighttype];
+				if(layertypeinfo !== void)
+					mode = layertypeinfo.type;
+			}
+			layer.holdAlpha = true;
+			layer.fillOperateRect(0,0,layer.imageWidth, layer.imageHeight,
+								  +param.lightcolor,
+								  mode);
+		}
+		if (param.shadow !== void) {
+			// 影つけ
+			var dx = param.shadowx !== void ? +param.shadowx : 10;
+			var dy = param.shadowy !== void ? +param.shadowy : 10;
+			var blur = param.shadowblur !== void ? +param.shadowblur : 3;
+			var color = param.shadow === true ? 0 : +param.shadow;
+			var opacity = param.shadowopacity !== void ? +param.shadowopacity : 200;
+			layer.doDropShadow(dx, dy, blur, color, opacity);
+		}
+@endif
 		layer.face = orgface;
 		layer.holdAlpha = orgholdlpha;
 	}
@@ -819,6 +853,9 @@ class AnimationLayer extends KAGLayer
 			{
 				for(var i = Anim_segments.count -1; i>=0; i--)
 				{
+@if(0)
+					Anim_segments[i].interrupted = x;
+@endif
 					Anim_segments[i].interrupted = x if Anim_segments[i] != void;
 				}
 				Anim_interrupted = x;
@@ -1136,8 +1173,6 @@ class AnimationLayer extends KAGLayer
 		Scripts.eval(elm.exp); // elm.exp を式として実行
 		return 0;
 	}
-
-
 }
 
 

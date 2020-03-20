@@ -1,5 +1,6 @@
 ﻿// Config.tjs - KAG 設定
-// Copyright (C) 2001-2008 W.Dee and contributors  改変・配布は自由です
+// Copyright (C) 2001-2009 W.Dee and contributors  改変・配布は自由です
+;global.config_version = ""; // この行を消さないでください
 ;global.config_version = "3.29-dev.20071022"; // この行を消さないでください
 
 // このファイル内で設定できる項目は、すべて
@@ -14,6 +15,7 @@
 // ◆ タイトル
 // ウィンドウのキャプション(タイトル)および
 // タスクバーに表示されるものです。
+;System.title = "吉里吉里";
 ;System.title = "魔法使いの夜";
 
 
@@ -54,6 +56,8 @@ function KAGWindow_config()
 // scWidth に画面の幅、scHeight に画面の高さをピクセル単位で指定します。
 // 標準的に使われている 640x480 や 800x600 のような画面サイズではないサイズ
 // に設定すると、フルスクリーンにできない場合があります。
+;scWidth = 640;
+;scHeight = 480;
 ;scWidth = 1024;
 ;scHeight = 576;
 
@@ -76,12 +80,11 @@ function KAGWindow_config()
 // ログボックスが開き、栞を個別のファイルとして保存するモードになります。
 // この場合は 保存可能な栞の個数に制限はありません。また、
 // エクスプローラなどによる栞の管理が容易になります。
-@if(!DEBUG)
 ;freeSaveDataMode = false;
-@endif
 @if(DEBUG)
 ;freeSaveDataMode = true;
 @endif
+
 
 // ◆サムネイルを保存するか
 // false を指定すると、セーブデータの拡張子は .kdt になり、サムネイルは
@@ -89,6 +92,7 @@ function KAGWindow_config()
 // true を指定すると、セーブデータの拡張子は .bmp になり、エクスプローラや
 // 「開く」ダイアログボックスの「縮小版」表示でセーブ時点でのサムネイルを
 // 表示することができるようになります。
+;saveThumbnail = false;
 ;saveThumbnail = true;
 
 
@@ -97,6 +101,7 @@ function KAGWindow_config()
 // 設定は意味がありません。
 // 横幅はピクセル単位で指定してください。たて幅は scWidth と scHeight の
 // 比と同じ比で自動的に計算されます。
+;thumbnailWidth = 133;
 ;thumbnailWidth = 130;
 
 // ◆サムネイルの保存モード
@@ -106,6 +111,7 @@ function KAGWindow_config()
 // 24 を指定すると 24bitフルカラービットマップで保存されます。
 // 256色ビットマップの方がファイルサイズを小さく抑えることができますが、
 // 画質は悪くなります。
+;thumbnailDepth = 8;
 ;thumbnailDepth = 24;
 
 
@@ -113,6 +119,7 @@ function KAGWindow_config()
 // ここで指定した名前で始まる名前で栞関連のファイルが作成されます。
 // フリーセーブモードの場合でもシステム変数やシステムの設定を保存する
 // ファイルに影響します。
+;dataName = "data";
 ;dataName = "savedata";
 
 
@@ -129,6 +136,7 @@ function KAGWindow_config()
 //       ( 先頭の // は含まず )
 // と入力して Enter キーを押しても取得することができます。
 // ( 例 : "371a6289-a084-ee18-2885-66314a0aa19d" )
+;saveDataID = "00000000-0000-0000-0000-000000000000";
 ;saveDataID = "dd40e5c3-0794-4373-83a5-e0907cea19ac";
 
 
@@ -139,9 +147,7 @@ function KAGWindow_config()
 // 簡単には読めないようなデータになるので、栞の圧縮は暗号化を
 // 兼ねています。
 // "" を指定すると栞の暗号化や圧縮はされません。
-@if(!COMPRESS_SAVEFILE)
 ;saveDataMode = "";
-@endif
 @if(COMPRESS_SAVEFILE)
 ;saveDataMode = "z";
 @endif
@@ -156,6 +162,7 @@ function KAGWindow_config()
 // 特に 毎回マクロ定義を 作品のはじめで行うような用途では、古いマクロの情報
 // が栞の読み込みによって新しいマクロの情報に上書きされてしまうことが開発の
 // 妨げになるため、false を指定した方がよいでしょう。
+;saveMacros = true;
 ;saveMacros = false;
 
 
@@ -195,6 +202,15 @@ function KAGWindow_config()
 ;cursorDraggable = crSizeAll; // メッセージレイヤをドラッグ可能なとき
 
 
+// ◆ 追加の読み進みキーコード
+// VK_RETURN は指定しても意味がありません。
+// このキーは常に読み進みのキーとして処理します。
+// ここに指定できる値の一覧は以下のＵＲＬを参照してください。
+// http://devdoc.kikyou.info/tvp/docs/kr2doc/contents/KeyCodes.html
+// デフォルトは VK_SPACE です。
+;supportReadingKey = VK_SPACE;
+
+
 // ◆ ラベル記録
 // 自動的に「読んだ」ラベルを記録するかどうかを指定します。
 // この設定が false でなく true になっていると、ラベルを読むごとにシステム
@@ -229,27 +245,32 @@ function KAGWindow_config()
 // 1 を指定すると 保存可能なラベルを通過するごとに自動的に通過記録を行いま
 //   す。
 // 2 を指定すると選択肢 ( s タグで停止 ) ごとに通過記録を行います。
+;recordHistoryOfStore = 0;
 ;recordHistoryOfStore = 1;
 
 
 // ◆ 通過記録の最大数
 // 通過記録の最大数を指定します。最大、ここで指定した回数、前に戻る事ができ
 // ます。大きくするとセーブデータも大きくなります。
+;maxHistoryOfStore = 5;
 //;maxHistoryOfStore = 4;		//20〜40くらいを想定
 ;maxHistoryOfStore = 20;
 
-/*
+
+@if(0)
 // ◆ quake の time 属性値
 // true とすると quake の time 属性の単位が delay で指定した文字表示速度に
 // 基づくようになります。false を指定すると ms (ミリ秒) 単位で指定すること
 // になります。KAG 2.x 互換にするには true を指定してください。
 ;defaultQuakeTimeInChUnit = false;
-*/
+@endif
+
 
 // ◆ 利用可能な効果音バッファの数
 // 利用可能な効果音バッファの最大値を指定します。つまり、ここで指定した数の
 // 分だけ効果音を同時に再生できます。効果音を使用しない場合は 0 を指定して
 // かまいません。
+;numSEBuffers = 3;
 ;numSEBuffers = 15;
 
 
@@ -276,6 +297,11 @@ function KAGWindow_config()
 // image タグあるいは img タグの pos 属性で指定する前景レイヤの 位置名 (
 // left や lecft_center など ) とそれぞれに対応する 中心位置 ( x 座標 ) を
 // 指定します。;scPositionX.位置名 = 中心位置; の形式で指定します。
+;scPositionX.left = 160;
+;scPositionX.left_center = 240;
+;scPositionX.center = 320;
+;scPositionX.right_center = 400;
+;scPositionX.right = 480;
 ;scPositionX.left = int(scWidth * 0.25);
 ;scPositionX.left_center = int(scWidth * 0.375);
 ;scPositionX.center = int(scWidth * 0.5);
@@ -296,6 +322,7 @@ function KAGWindow_config()
 // ◆ 初期状態のメッセージレイヤの数
 // 前景レイヤと違って、0 を指定することはできません。これも必要な数だけ確保
 // するようにすべきです。laycount タグでシナリオ内でも変更できます。
+;numMessageLayers = 2;
 ;numMessageLayers = 1;
 
 
@@ -303,6 +330,7 @@ function KAGWindow_config()
 // true を指定するとメッセージレイヤ0が初期状態で表示状態になりますが、
 // false を指定すると初期状態ではすべてのメッセージレイヤは初期状態で非表示
 // になります。
+;initialMessageLayerVisible = true;
 ;initialMessageLayerVisible = false;
 
 
@@ -312,6 +340,7 @@ function KAGWindow_config()
 // メニューによる栞の管理を行わない場合 ( ゲーム画面中で全部栞の管理などを
 // 行う場合など ) は、numBookMarks は必要な数に設定し、restoreMenu.visible と
 // storeMenu.visible を false に設定してください。
+;numBookMarks = 10;
 ;numBookMarks = 8 * 15 + 10;	//	通常が 8ヶ15ページ、クイックが 10ヶ
 
 
@@ -324,6 +353,7 @@ function KAGWindow_config()
 // ◆ フォント選択で固定ピッチフォントのみを表示するか
 // true を指定すると、フォント選択ウィンドウで固定ピッチフォントのみを表示
 // するようになります。
+;showFixedPitchOnlyInFontSelector = false;
 ;showFixedPitchOnlyInFontSelector = true;
 
 
@@ -372,6 +402,7 @@ function Menu_visible_config()
 // ◆ 「システム > メッセージを消す」
 // このメニュー項目を非表示にしてもマウスの右クリックでのメッセージの
 // 非表示は引き続き有効です。
+;rightClickMenuItem.visible = true;
 ;rightClickMenuItem.visible = false;
 
 
@@ -388,24 +419,26 @@ function Menu_visible_config()
 
 
 // ◆ 「システム > 自動的に読み進むウェイト」
+;autoModeWaitMenu.visible = true;
 ;autoModeWaitMenu.visible = false;
 
 
 // ◆ 「システム > 前に戻る」
+;goBackMenuItem.visible = true;
 ;goBackMenuItem.visible = false;
 
 
 // ◆ 「システム > 最初に戻る」
+;goToStartMenuItem.visible = true;
 ;goToStartMenuItem.visible = false;
 
 
 // ◆ 「文字表示」
+;characterMenu.visible = true;
 @if(!DEBUG)
 ;characterMenu.visible = false;
 @endif
-@if(DEBUG)
-;characterMenu.visible = true;
-@endif
+
 
 // ◆ 「文字表示 > 表示速度 > ページ末まで一気に」
 // ユーザがこのメニュー項目をチェックすると、
@@ -429,19 +462,19 @@ function Menu_visible_config()
 ;chChangeFontMenuItem.visible = true;
 
 
-@if(!DEBUG)
 // ◆ 「栞をたどる」
+;restoreMenu.visible = true;
+@if(!DEBUG)
 ;restoreMenu.visible = false;
+@endif
+
+
 // ◆ 「栞をはさむ」
+;storeMenu.visible = true;
+@if(!DEBUG)
 ;storeMenu.visible = false;
 @endif
 
-@if(DEBUG)
-// ◆ 「栞をたどる」
-;restoreMenu.visible = true;
-// ◆ 「栞をはさむ」
-;storeMenu.visible = true;
-@endif
 
 // ◆ 「画面」
 ;displayMenu.visible = true;
@@ -456,15 +489,14 @@ function Menu_visible_config()
 
 
 // ◆ 「ヘルプ > このソフトについて ...」
+;helpAboutMenuItem.visible = false;
 ;helpAboutMenuItem.visible = true;
 
 
 // ◆ 「デバッグ」
+;debugMenu.visible = false;
 @if(DEBUG==1)
 ;debugMenu.visible = true;
-@endif
-@if(DEBUG!=1)
-;debugMenu.visible = false;
 @endif
 
 
@@ -495,14 +527,16 @@ function MessageLayer_config()
 // メッセージ枠用の画像も、ltAddAlpha 用に作成された
 // 画像を用いる必要があります (自動的には判別されません)。
 // ltAddAlpha 用の画像は画像フォーマットコンバータで作成可能です。
-layerType = ltAlpha;
+;layerType = ltAddAlpha;
+;layerType = ltAlpha;
 
 // ◆ メッセージ枠用の画像
 // メッセージ枠用の画像のファイル名を指定します。
 // "" を指定するとメッセージ枠の画像を使用しません。また、メッセージ枠用の
 // 画像を指定した場合、position タグでメッセージレイヤのサイズを変更すると
 // おかしな表示になると思います
-frameGraphic = "txtwindow01";  // position タグの frame 属性に相当
+;frameGraphic = "";  // position タグの frame 属性に相当
+;frameGraphic = "txtwindow01";  // position タグの frame 属性に相当
 
 
 // ◆ メッセージレイヤの色と不透明度
@@ -519,17 +553,25 @@ frameGraphic = "txtwindow01";  // position タグの frame 属性に相当
 // た場合は、メッセージ枠の表示範囲内に設定する必要があります。
 // これらは、position タグの marginl, maringt, marginr, marginb 属性に対応
 // します。
-marginL = 142; // 左余白
-marginR = 142; // 右余白
-marginT = 69; // 上余白
-marginB = 69; // 下余白
+;marginL = 8; // 左余白
+;marginT = 8; // 上余白
+;marginR = 8; // 右余白
+;marginB = 8; // 下余白
+;marginL = 142; // 左余白
+;marginR = 142; // 右余白
+;marginT = 69; // 上余白
+;marginB = 69; // 下余白
 
 
 // ◆ 初期位置
 // これらは、position タグのそれぞれ left top width height の属性に対応しま
 // す。
-mw = 1024;   // 幅
-mh = 576;   // 高さ
+;ml = 16;  // 左端位置
+;mt = 16;  // 上端位置
+;mw = 640-32;   // 幅
+;mh = 480-32;   // 高さ
+;mw = 1024;   // 幅
+;mh = 576;   // 高さ
 ;ml = (window.scWidth-mw)\2;  // 左端位置
 ;mt = (window.scHeight-mh)\2;  // 上端位置
 
@@ -544,25 +586,29 @@ mh = 576;   // 高さ
 // ◆ 右文字マージン
 // 禁則処理用にあけておく右端の文字数を指定します。
 // (縦書きモードでは下端の文字数であると解釈されます)
+;marginRCh = 2;
 ;marginRCh = 1;
 
 
 // ◆ 文字の大きさ
 // デフォルトの文字の大きさ ( 高さ ) を pixel 単位で指定します。
-defaultFontSize = 26;  // deffont タグの size 属性に相当
+;defaultFontSize = 24;  // deffont タグの size 属性に相当
+;defaultFontSize = 26;  // deffont タグの size 属性に相当
 					   // → HistoryLayer_configのfontHeight,lineHeightもWoHシステムでは合わせておくこと
 
 
 // ◆ 行間
 // 行間を pixel 単位で指定します。
-defaultLineSpacing = 18; // defstyle タグの linespacing 属性に相当
+;defaultLineSpacing = 6; // defstyle タグの linespacing 属性に相当
+;defaultLineSpacing = 18; // defstyle タグの linespacing 属性に相当
 
 // ◆ 字間
 // 字間を pixel 単位で指定します。
 // デフォルトは 0 で、正あるいは負のオフセットで指定します。
 // 負の数値を指定すると字間が詰まります。正の数値を指定すると字間が空きま
 // す。
-defaultPitch = 1; // defstyle タグの pitch 属性に相当
+;defaultPitch = 0; // defstyle タグの pitch 属性に相当
+;defaultPitch = 1; // defstyle タグの pitch 属性に相当
 
 
 // ◆ 文字の書体
@@ -573,6 +619,7 @@ defaultPitch = 1; // defstyle タグの pitch 属性に相当
 // (あるいはシステム変数ファイルを消してください)
 // カンマで区切って複数のフォントを指定することができます。その場合は、最初
 // の方に書いたフォントが存在すれば、優先されます。
+;userFace = "ＭＳ Ｐ明朝"; // deffont タグの face 属性に相当
 ;userFace = "明朝D"; // deffont タグの face 属性に相当
 
 
@@ -588,12 +635,13 @@ defaultPitch = 1; // defstyle タグの pitch 属性に相当
 
 // ◆ ルビサイズ
 // ルビサイズを pixel 単位で指定します。
+;defaultRubySize = 10; // deffont タグの rubysize に相当
 ;defaultRubySize = 12; // deffont タグの rubysize に相当
 
 
 // ◆ ルビ の表示オフセット
 // 負の数を指定するとその pixel 数分、本文に近い位置に表示されます。
-//;defaultRubyOffset = -2; // deffont タグの rubyoffset に相当
+;defaultRubyOffset = -2; // deffont タグの rubyoffset に相当
 ;defaultRubyOffset = 0; // deffont タグの rubyoffset に相当
 
 
@@ -608,11 +656,13 @@ defaultPitch = 1; // defstyle タグの pitch 属性に相当
 
 // ◆ 縁取りの色
 // 縁取りの色を 0xRRGGBB 形式で指定します。
+;defaultEdgeColor = 0x000000;  // deffont タグの edgecolor に属性に相当
 ;defaultEdgeColor = 0x2f2f2f;  // deffont タグの edgecolor に属性に相当
 
 
 // ◆ 影を描画するか
 // する場合は true, しない場合は false を指定します。
+;defaultShadow = true;  // deffont タグの shadow 属性に相当
 ;defaultShadow = false;  // deffont タグの shadow 属性に相当
 
 
@@ -620,6 +670,7 @@ defaultPitch = 1; // defstyle タグの pitch 属性に相当
 // する場合は true, しない場合は false を指定します。KAG3 から、縁取りと影
 // を同時に描画することができなくなりました。縁取りを指定した場合は縁取りが
 // 優先されます。
+;defaultEdge = false;  // deffont タグの edge 属性に相当
 ;defaultEdge = true;  // deffont タグの edge 属性に相当
 
 
@@ -701,6 +752,7 @@ function BGM_config()
 // "Wave"  : WaveSoundBuffer ( wav等(プラグインで再生できる物も含む) )
 // "MIDI"  : MIDISoundBuffer ( mid,smf )
 // "CDDA"  : CDDASoundBuffer ( cda )
+;type = "MIDI";
 ;type = "Wave";
 
 
@@ -719,6 +771,7 @@ function BGM_config()
 // 可能になります。
 // MIDI サウンドバッファで複数同時再生を意図していないデータを使う場合や、
 // CDDA サウンドバッファを使う場合は false に指定してください。
+;doubleBuffered = false;
 ;doubleBuffered = true;
 
 
@@ -757,18 +810,22 @@ function HistoryLayer_config()
 
 
 // ◆ フォント名
+;fontName = "ＭＳ Ｐ明朝";
 ;fontName = "明朝D";
 
 
 // ◆ フォントを太字にするか
+;fontBold = true;
 ;fontBold = false;
 
 
 // ◆ フォントのサイズ ( pixel単位)
+;fontHeight = 24;
 ;fontHeight = 26;
 
 
 // ◆ ラインの高さ
+;lineHeight = 26;
 ;lineHeight = 27;
 
 
@@ -780,6 +837,7 @@ function HistoryLayer_config()
 // ページ単位での閲覧をするようになると
 // cm ct er タグ、あるいは repage 属性が true の hr タグ
 // でメッセージ履歴の改ページを行うようになります。
+;everypage = false;
 ;everypage = true;
 
 
@@ -798,6 +856,7 @@ function HistoryLayer_config()
 // ◆ 栞にメッセージ履歴を保存するか
 // true を指定すると栞にメッセージ履歴が保存されるように
 // なりますが、栞のデータサイズが大きくなります。
+;storeState = false;
 ;storeState = true;
 
 // ◆ マージン設定

@@ -1,4 +1,4 @@
-@loadcell
+﻿@loadcell
 @loop
 ;
 ;@macro name=copyone
@@ -68,4 +68,3 @@
 @wait time="&(Math.max(1,kag.autoModePageWait/20))"
 @wait time="&(Math.max(1,kag.autoModePageWait/20))"
 @jump target=*start
-

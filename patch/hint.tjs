@@ -1,48 +1,87 @@
-﻿Window.hintlayer = void;
+﻿
+global.Window_hint_original = Window;
+class Window_hint_override extends Window_hint_original
+{
+	var hintlayer = void;
 
-Window.initHintLayer = function() {
-	hintlayer = new Layer(this,primaryLayer);
-	with (hintlayer) {
-		.visible = false;
-		.ignoreHintSensing = true;
-		.hitThreshold = 256;
-		.font.height = 9;
+	function initHintLayer()
+	{
+		hintlayer = new Layer(this, primaryLayer);
+		with (hintlayer) {
+			.visible = false;
+			.ignoreHintSensing = true;
+			.hitThreshold = 256;
+			.font.height = 9;
+			.font.face = __s("MS Shell Dlg", "hint_font_face");
+@if(WIDE_MODE)
+			._isFixedPosition = true;
+@endif
+		}
+
+		// hintDelay = 500; // default
+		// hintDelay = 0; // immediate
+		// hintDelay = -1; // never
+		// hintDelay = 1000; // slow
 	}
 
-	// hintDelay = 500; // default
-	// hintDelay = 0; // immediate
-	// hintDelay = -1; // never
-	// hintDelay = 1000; // slow
-};
+	var hintHorizontalPadding = 4;
+	var hintVerticalPadding = 6;
+	var hintLineSpacing = 6;
+	var tooltipBorderColor = 0xffffe1;
+	var mouseCursorSize = 20;
 
-Window.hintHorizontalPadding = 4;
-Window.hintVerticalPadding = 6;
-Window.tooltipBorderColor = 0xffffe1;
-Window.mouseCursorSize = 20;
+	function onHintChanged(text, x, y, isshow)
+	{
+		if (hintlayer === void) {
+			initHintLayer();
+		}
+		if (isshow) {
+			var lines = text.split("\n");
+			var longestLineIndex = 0;
+			for (var i=1; i<lines.count; i++) {
+				if (lines[i].length > lines[longestLineIndex].length) {
+					longestLineIndex = i;
+				}
+			}
 
-Window.onHintChanged = function(text, x, y, isshow) {
-	initHintLayer();
-	if (isshow) {
-		var w = hintlayer.font.getTextWidth(text) + hintHorizontalPadding * 2;
-		var h = hintlayer.font.height + hintVerticalPadding * 2;
-		hintlayer.setImageSize(w, h);
-		hintlayer.setSizeToImageSize();
+			var w = hintlayer.font.getTextWidth(lines[longestLineIndex]) + hintHorizontalPadding * 2;
+			var h = hintlayer.font.height * lines.count + hintLineSpacing * (lines.count-1) + hintVerticalPadding * 2;
+			hintlayer.setImageSize(w, h);
+			hintlayer.setSizeToImageSize();
 
-		if ((x+w) > innerWidth) { x = innerWidth - w; }
-		if ((y+h) > innerHeight) { y = innerHeight - h; }
-		hintlayer.setPos(x, y + mouseCursorSize);
+@if(HD_MODE)
+			if (typeof this.fullScreened !== "undefined" && fullScreened) {
+				var windowToScreenRatio = (innerHeight*scaleFactor) / System.screenHeight;
+				x -= (System.screenWidth - (innerWidth*wideScaleFactor / windowToScreenRatio)) / 2;
+				x *= windowToScreenRatio;
+				y *= windowToScreenRatio;
+			}
 
-		hintlayer.fillRect(0, 0, w, h, 0);
-		hintlayer.colorRect(0, 0, w, h, clInfoBk, 196);
+			x /= wideScaleFactor;
+			y /= scaleFactor;
+@endif
 
-		hintlayer.colorRect(0,   0,   1, h, tooltipBorderColor);
-		hintlayer.colorRect(0,   0,   w, 1, tooltipBorderColor);
-		hintlayer.colorRect(w-1, 0,   1, h, tooltipBorderColor);
-		hintlayer.colorRect(0,   h-1, w, 1, tooltipBorderColor);
+			if ((x+w) > innerWidth) { x = innerWidth - w; }
+			if ((y+mouseCursorSize+h) > innerHeight) { y = innerHeight - h - mouseCursorSize; }
+			hintlayer.setPos(x, y + mouseCursorSize);
 
-		hintlayer.drawText(hintHorizontalPadding, hintVerticalPadding, text, clInfoText, 220);
-		hintlayer.visible = true;
-	} else {
-		hintlayer.visible = false;
+			hintlayer.fillRect(0, 0, w, h, 0);
+			hintlayer.colorRect(0, 0, w, h, clInfoBk, 196);
+
+			hintlayer.colorRect(0,   0,   1, h, tooltipBorderColor);
+			hintlayer.colorRect(0,   0,   w, 1, tooltipBorderColor);
+			hintlayer.colorRect(w-1, 0,   1, h, tooltipBorderColor);
+			hintlayer.colorRect(0,   h-1, w, 1, tooltipBorderColor);
+
+			var lineY = hintVerticalPadding;
+			for (var i=0; i<lines.count; i++) {
+				hintlayer.drawText(hintHorizontalPadding, lineY, lines[i], clInfoText, 220);
+				lineY += hintlayer.font.height + hintLineSpacing;
+			}
+			hintlayer.visible = true;
+		} else {
+			hintlayer.visible = false;
+		}
 	}
-};
+}
+global.Window = Window_hint_override;

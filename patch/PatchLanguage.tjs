@@ -292,8 +292,10 @@ function loadLanguageSettings() {
 var japaneseLanguage = "japanese";
 var englishLanguage = "english";
 var koreanLanguage = "korean";
+var frenchLanguage = "french";
+var simplifiedChineseLanguage = "simplified_chinese";
 var russianLanguage = "russian";
-var languagesPatches = [englishLanguage, koreanLanguage, russianLanguage];
+var languagesPatches = [englishLanguage, koreanLanguage, russianLanguage, frenchLanguage, simplifiedChineseLanguage];
 
 function loadLanguagesList() {
 	if (devMode || isKirikiroid) {
@@ -465,11 +467,13 @@ class Window_PatchLanguage_override extends Window_PatchLanguage_original
 		sender.checked = true;
 		extraConductor.clear(); // Fix code for AutoPath
 		onReloadScenarioMenuItemClick(sender);
+@if(0)
 		if(typeof flow_tracker_object.flowchart !== "undefined" && flow_tracker_object.flowchart.filename !== void)
 		{
 			flow_tracker_object.isPlayOK();
 			currentPageName = f.scripttitle;
 		}
+@endif
 	}
 
 	function replace_font_for_special_characters(elm)

@@ -1,0 +1,534 @@
+﻿var opPatchName = "op";
+property opPatchExists { getter { return patchExists(opPatchName); } }
+property movieMenuPatch { getter { return opPatchExists && sf.movieMenuPatch; } }
+property playVitaOp { getter { return opPatchExists && sf.playVitaOp; } }
+
+var patchMenuIndex = -1;
+function getPatchMenuIndex(kag)
+{
+@if(kirikiriz)
+	patchMenuIndex = kag.helpMenu.index;
+@endif
+@if(!kirikiriz)
+	patchMenuIndex = 4; // No "index" member so we hardcode the number.
+@endif
+	return patchMenuIndex;
+}
+
+class GameFlag
+{
+	var holder;
+	var name;
+	var reverse;
+	var defaultValue;
+
+	property value {
+		getter { return reverse? !holder[name] : holder[name]; }
+		setter(v) { holder[name] = reverse? !v : v; }
+	}
+
+	function GameFlag(holder, name, defaultValue=void, reverse=false)
+	{
+		this.holder = holder;
+		this.name = name;
+		this.reverse = reverse;
+		this.defaultValue = defaultValue;
+
+		if (defaultValue !== void && typeof holder[name] == "undefined") {
+			value = defaultValue;
+		}
+	}
+
+	function toggleValue()
+	{
+		value = !value;
+	}
+}
+
+class ComplexGameFlag extends GameFlag
+{
+	function ComplexGameFlag() { super.GameFlag(...); }
+
+	property value
+	{
+		getter
+		{
+			// TODO code duplication between getter and setter.
+			var path = name.split(".");
+			var currentHolder = holder;
+			for (var i=0; i<path.count-1; i++) {
+				currentHolder = currentHolder[path[i]];
+			}
+			var lastPath = path[path.count-1];
+
+			return reverse? !currentHolder[lastPath] : currentHolder[lastPath];
+		}
+		setter(v)
+		{
+			var path = name.split(".");
+			var currentHolder = holder;
+			for (var i=0; i<path.count-1; i++) {
+				currentHolder = currentHolder[path[i]];
+			}
+			var lastPath = path[path.count-1];
+
+			currentHolder[lastPath] = reverse? !v : v;
+		}
+	}
+}
+
+// For some reason this can't be an instance method...
+function inverseFlag(flag)
+{
+	return new GameFlag(flag.holder, flag.name, !flag.defaultValue, !flag.reverse);
+}
+
+class CompositeAndFlag
+{
+	var flags;
+
+	function CompositeAndFlag(flags)
+	{
+		this.flags = flags;
+	}
+
+	property value {
+		getter
+		{
+			for(var i=0; i<flags.count; i++) {
+				if (!flags[i].value) {
+					return false;
+				}
+			}
+			return true;
+		}
+		setter(v)
+		{
+			for(var i=0; i<flags.count; i++) {
+				flags[i].value = v;
+			}
+		}
+	}
+
+	function toggleValue()
+	{
+		for(var i=0; i<flags.count; i++) {
+			flags[i].toggleValue();
+		}
+	}
+}
+
+class KAGFlagMenuItem extends KAGMenuItem
+{
+	var flag;
+	var radioValue;
+	var previousFlagValue;
+	var restart;
+
+	function KAGFlagMenuItem(window, name, group=0, flag, radioValue=true, restart=false)
+	{
+		super.KAGMenuItem(window, name, group, onFlagMenuItemClick, false);
+
+		this.flag = flag;
+		this.radioValue = radioValue;
+		this.restart = restart;
+		initialize();
+	}
+
+	function onFlagMenuItemClick(sender)
+	{
+		previousFlagValue = sender.flag.value;
+
+		var allowed = sender.beforeCallback(sender);
+		if (!allowed) return;
+
+		var flagValueChanged = true;
+		if (sender.radio) {
+			if (sender.flag.value === radioValue) {
+				flagValueChanged = false;
+			}
+			sender.flag.value = radioValue;
+		} else {
+			sender.flag.toggleValue();
+		}
+
+		sender.checked = sender.flag.value === radioValue;
+
+		sender.afterCallback(sender);
+
+		if (restart && flagValueChanged && restartCondition()) {
+			with (kag) {
+				.extraConductor.clear(); // Fix code for AutoPath
+				.onReloadScenarioMenuItemClick(sender);
+			}
+		}
+	}
+
+	function restartCondition() {
+		return true;
+	}
+
+	function onlyTitleRestartCondition() {
+		return kag.conductor.curStorage === "タイトル.ks" || kag.conductor.curStorage === "title.ks";
+	}
+
+	function onlyScenarioRestartCondition() {
+		return !onlyTitleRestartCondition();
+	}
+
+	function updateChecked()
+	{
+		this.checked = flag.value === radioValue;
+	}
+
+	function initialize()
+	{
+		updateChecked();
+		afterCallback(this, true);
+	}
+
+	function disableIfPatchDoesntExist(patchName)
+	{
+		if (patchName !== void && !patchExists(patchName)) {
+			if (flag.value) {
+				onFlagMenuItemClick(this);
+			}
+			this.enabled = false;
+		}
+	}
+
+	function beforeCallback(sender, firstTime=false) { return true; }
+	function afterCallback(sender, firstTime=false) { }
+}
+
+class KAGFlagFolderMenuItem extends KAGFlagMenuItem
+{
+	var patchNames;
+	var folderNames;
+	var inverseFolderNames;
+	var languageSpecific;
+
+	property patchName
+	{
+		getter
+		{
+			if (patchNames.count > 1) {
+				throw new Exception("Can't use patchName with more than one patch.");
+			}
+			return patchNames[0];
+		}
+	}
+
+	function KAGFlagFolderMenuItem(window, name, group=0, flag, patchNames="", folderNames=void, inverseFolderNames=void, languageSpecific=true)
+	{
+		if (typeof patchNames === "String") {
+			patchNames = [patchNames];
+		}
+		this.patchNames = patchNames;
+		if (folderNames === void && inverseFolderNames === void) {
+			folderNames = "";
+		}
+		if (typeof folderNames === "String") {
+			folderNames = [folderNames];
+		}
+		if (typeof inverseFolderNames === "String") {
+			inverseFolderNames = [inverseFolderNames];
+		}
+		this.folderNames = folderNames;
+		this.inverseFolderNames = inverseFolderNames;
+		this.languageSpecific = languageSpecific;
+		super.KAGFlagMenuItem(window, name, group, flag);
+		for (var i=0; i<patchNames.count; i++) {
+			disableIfPatchDoesntExist(patchNames[i]);
+		}
+	}
+
+	function afterCallback(sender, firstTime=false)
+	{
+		// Radio options that are not of boolean type should implement their own logic.
+		// if (sender.radio) return;
+
+		if (sender.flag.value) {
+			loadAllFolders(firstTime);
+		} else {
+			unloadAllFolders(firstTime); // Don't unload if wasn't ever loaded.
+		}
+	}
+
+	function loadFolders(folderNames)
+	{
+		var patches_arr = [];
+		for (var i=0; i<patchNames.count; i++) {
+			if (patchNames[i] !== void) {
+				//dm("loading: " + patchNames[i] + ">" + folderNames[i]);
+				patches_arr.add([patchNames[i], folderNames[i]]);
+@if(HD_MODE)
+				patches_arr.add([patchNames[i], folderNames[i]+hdFolderSuffix]) if owner.isHd;
+@endif
+			}
+			if (languageSpecific) {
+				patches_arr.add([languagePatchName(japaneseLanguage), folderNames[i]]);
+				patches_arr.add([languagePatchName(sf.language), folderNames[i]]) if sf.language !== void && sf.language !== japaneseLanguage;
+			}
+		}
+		load_patches(patches_arr);
+		invalidate patches_arr;
+		delete patches_arr;
+	}
+
+	function unloadFolders(folderNames)
+	{
+		var patches_arr = [];
+		for (var i=0; i<patchNames.count; i++) {
+			if (languageSpecific) {
+				patches_arr.add([languagePatchName(sf.language), folderNames[i]]) if sf.language !== void && sf.language !== japaneseLanguage;
+				patches_arr.add([languagePatchName(japaneseLanguage), folderNames[i]]);
+			}
+			if (patchNames[i] !== void) {
+				//dm("unloading: " + patchNames[i] + ">" + folderNames[i]);
+@if(HD_MODE)
+				patches_arr.add([patchNames[i], folderNames[i]+hdFolderSuffix]) if owner.isHd;
+@endif
+				patches_arr.add([patchNames[i], folderNames[i]]);
+			}
+		}
+		unload_patches(patches_arr);
+		invalidate patches_arr;
+		delete patches_arr;
+	}
+
+	function loadAllFolders(firstTime=false)
+	{
+		unloadFolders(inverseFolderNames) if inverseFolderNames !== void && !firstTime;
+		loadFolders(folderNames) if folderNames !== void;
+	}
+
+	function unloadAllFolders(firstTime=false)
+	{
+		unloadFolders(folderNames) if folderNames !== void && !firstTime;
+		loadFolders(inverseFolderNames) if inverseFolderNames !== void;
+	}
+}
+
+class KAGCensorMenuItem extends KAGMenuItem
+{
+	var hCensoredMenuItem;
+	var hUncensoredMenuItem;
+	var hDecensoredMenuItem;
+
+	var matureMenuItem;
+
+	var currentState;
+
+	var previouslyFullyCensored;
+
+
+	function KAGCensorMenuItem(window, name, hPatchName, hFlag, maturePatchName)
+	{
+		super.KAGMenuItem(window, name, 0, void, false);
+		addChildren(hPatchName, hFlag, maturePatchName);
+	}
+
+	function addChildren(hPatchName, hFlag, maturePatchName)
+	{
+		var matureFlag = new GameFlag(sf, matureFlagName, true);
+		var matureCensorFlag = inverseFlag(matureFlag);
+		var decensorFlag = new GameFlag(sf, decensoredFlagName, false);
+
+		var hCensorFlagComposite = new CompositeAndFlag([inverseFlag(hFlag), inverseFlag(decensorFlag)]);
+		var hFlagComposite = new CompositeAndFlag([hFlag, inverseFlag(decensorFlag)]);
+		var decensorFlagComposite = new CompositeAndFlag([hFlag, decensorFlag]);
+
+		this.add(this.hCensoredMenuItem = new KAGFlagFolderMenuItem(owner, __t("&Hコンテンツを検閲する"), 1, hCensorFlagComposite, hPatchName, censoredHFolderName));
+		this.hCensoredMenuItem.beforeCallback = this.beforeCallback;
+		this.hCensoredMenuItem.afterCallback = this.afterCallback;
+		this.add(this.hUncensoredMenuItem = new KAGFlagFolderMenuItem(owner, __t("Hコンテンツを検閲しない(&U)"), 1, hFlagComposite, hPatchName, uncensoredHFolderName));
+		this.hUncensoredMenuItem.beforeCallback = this.beforeCallback;
+		this.hUncensoredMenuItem.afterCallback = this.afterCallback;
+		this.add(this.hDecensoredMenuItem = new KAGFlagFolderMenuItem(owner, __t("Hコンテンツを強制的に無検閲する(&D)"), 1, decensorFlagComposite, [hPatchName, decensoredPatchName], [uncensoredHFolderName, decensoredFolderName]));
+		this.hDecensoredMenuItem.beforeCallback = this.beforeCallback;
+		this.hDecensoredMenuItem.afterCallback = this.afterCallback;
+
+		(addSeperationLine incontextof owner)(this);
+
+		this.add(this.matureMenuItem = new KAGFlagFolderMenuItem(owner, __t("成人向けコンテンツを検閲する(&M)"),, matureCensorFlag, maturePatchName, censoredMatureFolderName, uncensoredMatureFolderName));
+		this.matureMenuItem.beforeCallback = this.beforeCallback;
+		this.matureMenuItem.afterCallback = this.afterCallback;
+
+		updateCurrentState();
+	}
+
+	// Must be called incontextof window, otherwise it doesn't work for some reason.
+	function addSeperationLine(menu)
+	{
+		menu.add(new MenuItem(this, "-"));
+	}
+
+	function updateCurrentState()
+	{
+		var items = [hCensoredMenuItem, hUncensoredMenuItem, hDecensoredMenuItem];
+		for (var i=0; i<items.count; i++) {
+			if (items[i].checked) {
+				currentState = items[i];
+				break;
+			}
+		}
+		loadCurrentState();
+	}
+
+	function beforeCallback(sender)
+	{
+		if (sender == hCensoredMenuItem && isHScene()) {
+			System.inform("Cannot turn off H-scenes during an H-scene. Try changing the settings again after the scene, or from the main menu.");
+			return false;
+		}
+
+		previouslyFullyCensored = fullyCensored;
+		return true;
+	}
+
+	function afterCallback(sender)
+	{
+		if (previouslyFullyCensored && !fullyCensored) {
+			unloadFullyCensored(currentState);
+		}
+
+		if (sender === matureMenuItem) {
+			(KAGFlagFolderMenuItem.afterCallback incontextof sender)(sender);
+		} else {
+			currentState.unloadAllFolders();
+			currentState = sender;
+			loadCurrentState();
+		}
+	}
+
+	function loadCurrentState()
+	{
+		currentState.loadAllFolders();
+
+		if (!previouslyFullyCensored && fullyCensored) {
+			loadFullyCensored(currentState);
+		}
+
+		updateDecensorConfig();
+	}
+
+	function loadFullyCensored(sender)
+	{
+		load_patches([
+			[sender.patchName, fullyCensoredFolderName],
+			[languagePatchName(japaneseLanguage), fullyCensoredFolderName],
+			(sf.language !== void && sf.language !== japaneseLanguage) ? [languagePatchName(sf.language), fullyCensoredFolderName] : void,
+		]);
+	}
+
+	function unloadFullyCensored(sender)
+	{
+		unload_patches([
+			(sf.language !== void && sf.language !== japaneseLanguage) ? [languagePatchName(sf.language), fullyCensoredFolderName] : void,
+			[languagePatchName(japaneseLanguage), fullyCensoredFolderName],
+			[sender.patchName, fullyCensoredFolderName],
+		]);
+	}
+}
+
+class LoadScenarioMenuItem extends KAGMenuItem
+{
+	var scenarioFileName;
+	var labelName;
+
+	function LoadScenarioMenuItem(window, name, scenarioFileName, labelName=void)
+	{
+		super.KAGMenuItem(window, name, 0, onLoadScenarioMenuItemClick, false);
+		this.scenarioFileName = scenarioFileName;
+		this.labelName = labelName === void? labelName : "*" + labelName;
+	}
+
+	function onLoadScenarioMenuItemClick(sender)
+	{
+		if (typeof global.titlemenu_object !== "undefined") {
+			titlemenu_object.menulayer.goLabel(scenarioFileName, labelName);
+		} else {
+			kag.processCall(scenarioFileName, labelName);
+		}
+	}
+}
+
+function addPatchMenu() {
+	menu.insert(this.patchMenu = new KAGMenuItem(this, __t("パッチ(&P)"), 0, void, false), getPatchMenuIndex(this));
+	(addCensorMenu incontextof kag)(patchMenu, __t("検閲(&C)"));
+	(addVoiceMenu incontextof kag)(patchMenu);
+	(addVitaMenu incontextof kag)(patchMenu);
+	(addGalleryMenu incontextof kag)(patchMenu);
+	(addMovieMenu incontextof kag)(patchMenu);
+	(addOptionsMenu incontextof kag)(patchMenu);
+
+	(addDevelopmentMenu incontextof kag)();
+	(addPatchMenuItems incontextof kag)(patchMenu);
+}
+
+function addDevelopmentMenu() {
+	menu.add(this.devMenuItem = new KAGMenuItem(this, "&Development", 0, void, false));
+	this.devMenuItem.visible = devMode || devMode2;
+	(addDevelopmentMenuItems incontextof kag)(devMenuItem);
+}
+
+function addVoiceMenu(patchMenu) {
+	var unmatchedVoiceFlag = new GameFlag(sf, "playUnmatchedVoices", true);
+	var playUnusedVoicesFlag = new GameFlag(sf, "unusedVoices", true);
+	var customWaitvoiceFlag = new GameFlag(sf, "customWaitvoice", true);
+	var fadeBgmWithVoiceFlag = new GameFlag(cf, "fadeBgmWithVoice", false);
+	var customVoiceReplayFlag = new GameFlag(sf, "customVoiceReplay", false);
+	var disableStopVoiceWithClickFlag = new GameFlag(cf, "disableStopVoiceWithClick", false);
+
+	patchMenu.add(this.voiceMenuItem = new KAGMenuItem(this, __t("ボイス(&V)"), 0, void, false));
+	voiceMenuItem.add(this.playUnmatchedVoicesMenuItem = new KAGFlagMenuItem(this, __t("不一緻なボイスを放送する(&U)"),, unmatchedVoiceFlag));
+	voiceMenuItem.add(this.playUnusedVoicesMenuItem = new KAGFlagMenuItem(this, "Play &unused voices",, playUnusedVoicesFlag));
+	voiceMenuItem.add(this.customWaitvoiceMenuItem = new KAGFlagMenuItem(this, __t("あつらえのWait-Voiceタグを使用する(&W)"),, customWaitvoiceFlag));
+@if(FADE_BGM_WITH_VOICE==1)
+	voiceMenuItem.add(this.fadeBgmWithVoiceMenuItem = new KAGFlagMenuItem(this, __t("ボイス再生中に&BGM音量を下げる"),, fadeBgmWithVoiceFlag));
+@endif
+	voiceMenuItem.add(this.customVoiceReplayIconsMenuItem = new KAGFlagMenuItem(this, __t("あつらえのボイス再生アイコンを使用する(&R)"),, customVoiceReplayFlag));
+	voiceMenuItem.add(this.disableStopVoiceWithClickMenuItem = new KAGFlagMenuItem(this, __t("クリックすると現在のボイスが停止しません(&V)"),, disableStopVoiceWithClickFlag));
+
+	(addVoiceMenuItems incontextof kag)(voiceMenuItem);
+}
+
+function addVitaMenu(patchMenu) {
+	var playVitaOpFlag = new GameFlag(sf, "playVitaOp", opPatchExists);
+	var vitaMovieMenuFlag = new GameFlag(sf, "movieMenuPatch", opPatchExists);
+	var vitaAboutFlag = new GameFlag(sf, "aboutPatch", vitaPatchExists);
+
+	patchMenu.add(this.vitaMenuItem = new KAGMenuItem(this, __t("&Vitaコンテンツ"), 0, void, false));
+	vitaMenuItem.add(this.vitaOPMenuItem = new KAGFlagMenuItem(this, __t("Vitaの&OPをゲーム中に再生する"),, playVitaOpFlag));
+	this.vitaOPMenuItem.disableIfPatchDoesntExist(opPatchName);
+	vitaMenuItem.add(this.vitaMovieMenuItem = new KAGFlagFolderMenuItem(this, __t("Vitaのムービーメニュ(&M)"),, vitaMovieMenuFlag, opPatchName, "override",, false));
+	this.vitaMovieMenuItem.disableIfPatchDoesntExist(opPatchName);
+	vitaMenuItem.add(this.vitaAboutMenuItem = new KAGFlagMenuItem(this, __t("Vitaの「このスフとについて」ページ(&A)"),, vitaAboutFlag));
+
+	(addVitaMenuItems incontextof kag)(vitaMenuItem);
+}
+
+function addMovieMenu(patchMenu) {
+	var subbedVideosFlag = new GameFlag(sf, subbedVideosFlagName, true);
+	var skipMoviesFlag = new GameFlag(sf, "skipMovies", false);
+	var forceMpvPlaybackFlag = new GameFlag(sf, "forceMpvPlayback", false);
+
+	patchMenu.add(this.movieMenuItem = new KAGMenuItem(this, __t("ムービー(&M)"), 0, void, false));
+	movieMenuItem.add(this.subbedVideosMenuItem = new KAGFlagFolderMenuItem(this, __t("ムービー再生中に字幕を表示する(&S)"),, subbedVideosFlag,,videosFolderName));
+	movieMenuItem.add(this.skipMoviesMenuItem = new KAGFlagMenuItem(this, __t("ゲーム中にムービーをスキップする(&K)"),,skipMoviesFlag));
+	movieMenuItem.add(this.forceMpvPlaybackMenuItem = new KAGFlagMenuItem(this, "Force movie playback using mpv",,forceMpvPlaybackFlag));
+	if(typeof(global.playVideoMPV) == "undefined") {
+		this.forceMpvPlaybackMenuItem.enabled = false;
+	}
+}
+
+function addOptionsMenu(patchMenu) {
+	var historyTitleFlag = new GameFlag(sf, "historyTitle", false);
+	
+	patchMenu.add(this.patchOptionsMenuItem = new KAGMenuItem(this, __t("設定(&O)"), 0, void, false));
+	patchOptionsMenuItem.add(this.historyTitleMenuItem = new KAGFlagMenuItem(this, __t("メッセージ歴史でシーンのタイトルを表示する(&H)"),, historyTitleFlag));
+	patchOptionsMenuItem.add(this.engineConfigurationItem = new KAGMenuItem(this, "Open engine configuration dialog", 1, "global.System.shellExecute(Storages.getLocalName(global.System.exeName), '-userconf')",false));
+
+	(addOptionsMenuItems incontextof kag)(patchOptionsMenuItem);
+}

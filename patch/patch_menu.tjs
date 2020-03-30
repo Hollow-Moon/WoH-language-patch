@@ -1,0 +1,73 @@
+﻿
+property vitaPatchExists { getter { return true; } }
+
+property bgmPatchExists { getter { return true; } }
+
+KAGLoadScript("patch_menu_base.tjs");
+
+function addPatchMenuItems(patchMenu)
+{
+}
+
+function addDevelopmentMenuItems(devMenuItem)
+{
+}
+
+function addCensorMenu(patchMenu, censorMenuName)
+{
+}
+
+function addVoiceMenuItems(patchMenu)
+{
+}
+
+function addVitaMenuItems(vitaMenuItem)
+{
+}
+
+function addGalleryMenu(patchMenu)
+{
+}
+
+function setRouteAutomaticallyMenuCallback(sender)
+{
+}
+
+function setRouteMenuCallback(sender)
+{
+}
+
+function setTitleClearStateAutomaticallyMenuCallback(sender)
+{
+}
+
+function setTitleClearStateMenuCallback(sender)
+{
+}
+
+function addOptionsMenuItems(patchOptionsMenuItem)
+{
+}
+
+function initialize_patch_menu() {
+	if(typeof(kag.menu) != "undefined")
+		(addPatchMenu incontextof kag)();
+
+	kag.enableRestartMenus = function() {
+		if(typeof(this.menu) != "undefined") {
+			if(typeof(this.languageMenu) != "undefined")
+			{
+				this.languageMenu.enabled = true;
+			}
+		}
+	};
+
+	kag.disableRestartMenus = function() {
+		if(typeof(this.menu) != "undefined") {
+			if(typeof(this.languageMenu) != "undefined")
+			{
+				this.languageMenu.enabled = false;
+			}
+		}
+	};
+}

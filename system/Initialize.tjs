@@ -484,8 +484,14 @@ var devMode = false;
 var devMode2 = true;
 var isKirikiroid = false;
 var mainPatchName = "Japanese";
+KAGLoadScript("patch_censor.tjs");
 KAGLoadScript("patch_utils.tjs");
 KAGLoadScript("PatchLanguage.tjs");
+KAGLoadScript("patch_menu.tjs");
+var fontSettings	= %[
+	"basic"	=> %[size:27,rubysize:12, rubyoffset:-2,color:0xFFFFFF,edge:true],
+	"window"=> %[size:27,rubysize:12,rubyoffset:-2,face:__st("ＭＳ ゴシック", "window_font_face"),color:0xFFFFFF,edge:true, context:"window_font"],
+];
 
 /*
 	Config.tjs 読み込み
@@ -654,6 +660,8 @@ if(Storages.isExistentStorage("AfterInit.tjs"))
 	KAGLoadScript("AfterInit.tjs");
 if(Storages.isExistentStorage(System.exePath + "AfterInit2.tjs"))
 	KAGLoadScript(System.exePath + "AfterInit2.tjs");
+initialize_patch_menu();
+initializeLanguage();
 
 /*
 	コマンドラインパラメータとして -ovr が指定されていれば

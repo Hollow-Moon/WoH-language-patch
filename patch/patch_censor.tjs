@@ -1,0 +1,123 @@
+﻿// Patch names
+var hPatchName = "h";
+var decensoredPatchName = "decensor";
+var maturePatchName = devMode? "mature" : mainPatchName;
+
+// Flag names
+var hFlagName = "ghentai";
+var hCensoredFlagName = "censored";
+var matureFlagName = "gmature";
+var decensoredFlagName = "decensor";
+
+property hPatchExists { getter { return patchExists(hPatchName); } }
+property isHCensored { getter { return sf[hCensoredFlagName] !== void? sf[hCensoredFlagName] : !sf[hFlagName]; } } // RN uses hFlagName while HA uses hCensoredFlagName
+property isMatureCensored { getter { return !sf[matureFlagName]; } }
+property fullyCensored { getter { return isHCensored && isMatureCensored; } }
+property isDecensored { getter { return sf[decensoredFlagName]; } };
+
+// Folder names
+var fullyCensoredFolderName = "censored";
+
+var censoredHFolderName = "censored_h";
+var censoredMatureFolderName = "censored_mature";
+
+var uncensoredHFolderName = "h";
+var uncensoredMatureFolderName = "mature";
+
+var decensoredFolderName = "decensored";
+
+function getTextCensored(text) {
+	if (text == void) return text;
+	if (text.indexOf("|") >=0)
+	{
+		var splitText = [].split("|", text);
+		if (sf[splitText[2]])
+			return splitText[0];
+		return splitText[1];
+	}
+	return text;
+}
+
+function isHScene()
+{
+	var name = f.scriptlabel;
+	if (name == void || name == "") return false;
+
+	name = Storages.chopStorageExt(name);
+	name = name.replace(/trail_/g,"");
+	var split = [].split("-",name);
+
+	return split[1].length == 3;
+}
+
+function updateDecensorConfig()
+{
+	var decensor_types = [void, "bishopcruz", "Bellandy", "original"];
+	var decensor_config_file_name = "decensor_config.dic";
+
+	var decensor_config;
+	var custom_decensor_config_file_path = System.exePath + decensor_config_file_name;
+	if (Storages.isExistentStorage(custom_decensor_config_file_path))
+	{
+		decensor_config = Scripts.evalStorage(custom_decensor_config_file_path);
+	}
+	else if (Storages.isExistentStorage(decensor_config_file_name))
+	{
+		decensor_config = Scripts.evalStorage(decensor_config_file_name);
+	}
+
+	if (decensor_config === void) {
+		return;
+	}
+
+	var decensoredImages = Scripts.getObjectKeys(decensor_config);
+
+	for(var i=0; i<decensoredImages.count; i++)
+	{
+		var currentDecensorType = decensor_types[+decensor_config[decensoredImages[i]]];
+
+		for (var j=1; j<decensor_types.count; j++)
+		{
+			var decensor_type = decensor_types[j];
+			var decensor_version_path = decensoredFolderName + "/" + decensoredImages[i] + "/" + decensor_type;
+@if(HD_MODE)
+			var decensor_version_path_hd = decensoredFolderName + hdFolderSuffix + "/" + decensoredImages[i] + "/" + decensor_type;
+@endif
+			if(decensor_type == currentDecensorType)
+			{
+				if(isDecensored)
+				{
+					load_patches([
+						[decensoredPatchName, decensor_version_path],
+@if(HD_MODE)
+						kag.isHd ? [decensoredPatchName, decensor_version_path_hd] : void,
+@endif
+					]);
+					unload_patches([
+@if(HD_MODE)
+						(!kag.isHd) ? [decensoredPatchName, decensor_version_path_hd] : void,
+@endif
+					]);
+				}
+				else
+				{
+					unload_patches([
+						[decensoredPatchName, decensor_version_path],
+@if(HD_MODE)
+						kag.isHd ? [decensoredPatchName, decensor_version_path_hd] : void,
+@endif
+					]);
+				}
+			}
+			else
+			{
+				unload_patches([
+					[decensoredPatchName, decensor_version_path],
+@if(HD_MODE)
+					kag.isHd ? [decensoredPatchName, decensor_version_path_hd] : void,
+@endif
+				]);
+			}
+		}
+	}
+}

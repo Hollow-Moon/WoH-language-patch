@@ -499,6 +499,12 @@ class BaseLayer extends GraphicLayer
 		window.swapBaseLayer();
 	}
 
+    property isPrimary {
+        getter() {
+            return this === window.fore.base;
+        }
+    }
+
 	//背景レイヤーではサイズ調整をしない
 	function expandLayerSize()
 	{

@@ -31,7 +31,7 @@
 // ◆ 画像キャッシュ制限
 // 画像キャッシュの制限値を MB 単位で指定します。
 // gcsAuto を指定すると、自動的に決定されます。
-;System.graphicCacheLimit = gcsAuto; // 画像キャッシュ制限
+;System.graphicCacheLimit = gcsAuto; // 画像キャッシュリミット = 自動
 
 
 // ◆ global 追加の設定
@@ -200,15 +200,6 @@ function KAGWindow_config()
 ;cursorPointed = crHandPoint; // リンクなどをポイントしたとき
 ;cursorWaitingClick = crArrow; // クリック待ちの時
 ;cursorDraggable = crSizeAll; // メッセージレイヤをドラッグ可能なとき
-
-
-// ◆ 追加の読み進みキーコード
-// VK_RETURN は指定しても意味がありません。
-// このキーは常に読み進みのキーとして処理します。
-// ここに指定できる値の一覧は以下のＵＲＬを参照してください。
-// http://devdoc.kikyou.info/tvp/docs/kr2doc/contents/KeyCodes.html
-// デフォルトは VK_SPACE です。
-;supportReadingKey = VK_SPACE;
 
 
 // ◆ ラベル記録
@@ -481,15 +472,16 @@ function Menu_visible_config()
 
 
 // ◆ 「ヘルプ」
+;helpMenu.visible = false;
 ;helpMenu.visible = true;
 
 
 // ◆ 「ヘルプ > 目次 ...」
+;helpIndexMenuItem.visible = true;
 ;helpIndexMenuItem.visible = false;
 
 
 // ◆ 「ヘルプ > このソフトについて ...」
-;helpAboutMenuItem.visible = false;
 ;helpAboutMenuItem.visible = true;
 
 
@@ -715,7 +707,7 @@ function MessageLayer_config()
 // ◆ 縦書きモード
 // メッセージレイヤを標準で縦書きモードにする場合は false ではなく true を
 // 指定してください。
-;vertical = false;  // position タグの vertical 属性に相当
+;vertical = false;
 
 
 // ◆ マウスでドラッグ可能か
@@ -744,26 +736,6 @@ function MessageLayer_config()
 function BGM_config()
 {
 // BGM の設定です。
-// CD-DA, Wave, MIDI のいずれかを BGM として再生することができます。
-
-// ◆ BGM再生メディア
-// type 変数に設定する文字列で、使用するサウンドバッファを決めることができ
-// ます。
-// "Wave"  : WaveSoundBuffer ( wav等(プラグインで再生できる物も含む) )
-// "MIDI"  : MIDISoundBuffer ( mid,smf )
-// "CDDA"  : CDDASoundBuffer ( cda )
-;type = "MIDI";
-;type = "Wave";
-
-
-// ◆ CDDA再生ボリュームラベル
-// "CDDA" を指定した場合は、cdVolume 変数に、再生する CD のボリュームラベル
-// を指定します。ボリュームシリアル番号ではありません。
-// KAG は、このボリュームラベルを持った CD の挿入された CD-ROM ドライブで
-// CD-DA を再生します。特にマシンに複数のCD-ROMドライブが装着されている場合
-// にこれを元にしてドライブの区別を行います。
-;cdVolume = "xxxx";
-
 
 // ◆ クロスフェードを行うか
 // doubleBuffered 変数には、サウンドバッファを２つ使用するかどうかを指定し
@@ -771,21 +743,7 @@ function BGM_config()
 // 可能になります。
 // MIDI サウンドバッファで複数同時再生を意図していないデータを使う場合や、
 // CDDA サウンドバッファを使う場合は false に指定してください。
-;doubleBuffered = false;
 ;doubleBuffered = true;
-
-
-// ◆ MIDI 再生開始前に送るメッセージ
-// MIDI データの再生を開始する前に MIDI 音源に送るメッセージです。
-// <% %> を指定すると メッセージは送られません。
-// <% f0 7e 7f 09 01 f7 ff 00 %> は GM System On です。
-// ほかに
-// <% f0 41 10 42 12 40 00 7f 00 41 f7 ff 00 %> GS reset
-// <% f0 43 10 4c 00 00 7e 00 f7 ff 00 %> XG on
-// など。
-// ff 00 を途中に挿入するとその時点で 50ms のウェイトが入ります。
-// 音源初期化などでウェイトが必要な場合に挿入します。
-;midiInitialMessage = <% f0 7e 7f 09 01 f7 ff 00 %>;
 
 
 // ◆ BGM 追加の設定

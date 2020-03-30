@@ -396,6 +396,11 @@ class KAGWindow extends Window
 		}
 @if(0)
 		setInnerSize(scWidth, scHeight);
+
+		// quake 用タイマの作成
+		quakeTimer = new Timer(onQuakeTimerInterval, '');
+		add(quakeTimer);
+		quakeTimer.interval = 50;
 @endif
 
 		exWidth	 = scWidth	if (exWidth	 === void || exWidth  < scWidth );
@@ -409,16 +414,23 @@ class KAGWindow extends Window
 		add(_primaryLayer = new Layer(this, null));
 		with (_primaryLayer) {
 			.name = "プライマリレイヤ";
+@if(0)
+			.setSize(scWidth, scHeight);
+			.fillRect(0,0,.width,.height,0);
+			.type = ltOpaque;
+			.visible = true;
+@endif
 			.setSize(exWidth, exHeight);
 			.fillRect(0,0,exWidth, exHeight,0);
 			.hasImage = false;
 			//	画像のない領域でもマウスクリックが効くように
-			.onMouseDown	= function(x, y, button)
-			{
-				if(button == mbLeft)
-					window.onPrimaryClick();
-				else if(button == mbRight)
-					window.onPrimaryRightClick();
+			//.hasImage = false;
+			.onMouseDown = function (x, y, btn) {
+				switch (btn) {
+				case mbLeft:  window.onPrimaryClick();      break;
+				case mbRight: window.onPrimaryRightClick(); break;
+				}
+				return (global.Layer.onMouseDown incontextof this)(...);
 			} incontextof _primaryLayer;
 		}
 		// ベースになるレイヤ
@@ -432,20 +444,13 @@ class KAGWindow extends Window
 		}
 		add(sysbase);
 
-@if(0)
-		// quake 用タイマの作成
-		quakeTimer = new Timer(onQuakeTimerInterval, '');
-		add(quakeTimer);
-		quakeTimer.interval = 50;
-@endif
-
 		// 背景レイヤの作成
 		fore.messages = [];
 		back.messages = [];
 		fore.layers = [];
 		back.layers = [];
 @if(0)
-		fore.base = new BaseLayer(this, null, "表-背景");
+		fore.base = new BaseLayer(this, _primaryLayer, "表-背景");
 @endif
 		fore.base = new BaseLayer(this, primaryLayer, "表-背景");
 		fore.base.order = 0;
@@ -454,7 +459,7 @@ class KAGWindow extends Window
 		fore.base.setSizeToImageSize();
 		fore.base.visible = true;
 @if(0)
-		back.base = new BaseLayer(this, fore.base, "裏-背景");
+		back.base = new BaseLayer(this, _primaryLayer, "裏-背景");
 @endif
 		back.base = new BaseLayer(this, primaryLayer, "裏-背景");
 		back.base.order = 0;
@@ -650,11 +655,13 @@ class KAGWindow extends Window
 		}
 
 @if(0)
+@if (kirikiriz==0)
  		// ウィンドウ位置の調節
 		if(this.width + this.left > System.desktopLeft + System.desktopWidth)
 			left = ((System.desktopWidth - this.width) >>1) + System.desktopLeft;
 		if(this.height + this.top > System.desktopTop + System.desktopHeight)
 			top = ((System.desktopHeight - this.height) >>1) + System.desktopTop;
+@endif
 @endif
 
 		// パッドボタンハンドラの作成
@@ -4577,6 +4584,10 @@ class KAGWindow extends Window
 		current = (currentPage?back:fore).messages[currentNum]; // current は設定し直し
 		forEachEventHook('onExchangeForeBack',
 				function(handler, f) { handler(); } incontextof this);
+
+		// 強制表示変更
+		fore.base.visible = true;
+		back.base.visible = false;
 	}
 
 	function swapBaseLayer()
@@ -4944,10 +4955,20 @@ class KAGWindow extends Window
 			quaking = false;
 	}
 
+    /**
+     * レイヤ位置の調整
+     */
+	function setBaseLayerPos(x, y) {
+		(global.Layer.setPos incontextof fore.base)(x,y);
+		(global.Layer.setPos incontextof back.base)(x,y);
+		forEachEventHook('setBaseLayerPos',
+						 function(handler, info) { handler(info.x, info.y); } incontextof this, %[x:x, y:y]);
+	}
+
 	function stopQuake()
 	{
 		// 揺れを停止
-		setLayerPos(0, 0);
+		setBaseLayerPos(0, 0);
 		quakeTimer.enabled = false;
 		quaking = false;
 		conductor.trigger('quake');
@@ -4960,7 +4981,7 @@ class KAGWindow extends Window
 		if(historyShowing)
 		{
 			// メッセージ履歴レイヤ表示中はさすがに揺れていられない
-			setLayerPos(0, 0);
+			setBaseLayerPos(0, 0);
 			return;
 		}
 		var x, y;
@@ -4983,7 +5004,7 @@ class KAGWindow extends Window
 			y = int(Math.random() * quakeVertMax - quakeVertMax);
 		}
 		quakePhase = !quakePhase;
-		setLayerPos(x, y);
+		setBaseLayerPos(x, y);
 	}
 
 	function waitQuake(elm)

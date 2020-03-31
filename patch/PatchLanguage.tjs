@@ -369,7 +369,18 @@ property default_history_bold { getter() { return currentLanguageSettings["histo
 property historyFontDefault { getter() { return [ default_history_font, default_history_bold ]; } }
 property historyFont { getter() { return currentLanguageSettings["history"] !== void? currentLanguageSettings["history"] : %[]; } }
 
-property default_font { getter() { return __s(fontSettings["window"].face, "window_font_face"); } }
+property default_font
+{
+	getter()
+	{
+		var font_face_to_use = "ＭＳ ゴシック";
+		if (typeof(global.fontSettings) === "Object")
+		{
+			font_face_to_use = fontSettings["window"].face;
+		}
+		return __s(font_face_to_use, "window_font_face");
+	}
+}
 
 
 function getFontFiles(language) {

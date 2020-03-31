@@ -929,10 +929,10 @@ class MessageLayer extends KAGLayer
 @if(0)
 		imageModified = true; // 強制的にメッセージレイヤをクリアするために
 @endif
-		marginL = +elm.marginl if elm.marginl !== void;
-		marginT = +elm.margint if elm.margint !== void;
-		marginR = +elm.marginr if elm.marginr !== void;
-		marginB = +elm.marginb if elm.marginb !== void;
+		marginL = __si(+elm.marginl, "marginl_%s".sprintf(elm.context)) if elm.marginl !== void;
+		marginT = __si(+elm.margint, "margint_%s".sprintf(elm.context)) if elm.margint !== void;
+		marginR = __si(+elm.marginr, "marginr_%s".sprintf(elm.context)) if elm.marginr !== void;
+		marginB = __si(+elm.marginb, "marginb_%s".sprintf(elm.context)) if elm.marginb !== void;
 		vertical = +elm.vertical if elm.vertical !== void;
 		draggable = +elm.draggable if elm.draggable !== void;
 		visible = +elm.visible if elm.visible !== void;
@@ -1218,7 +1218,7 @@ class MessageLayer extends KAGLayer
 	function setDefaultFont(elm)
 	{
 		// デフォルトフォントの設定
-		defaultFace = elm.face if elm.face !== void;
+		defaultFace = __s(elm.face, "%s_face".sprintf(elm.context)) if elm.face !== void;
 		defaultAntialiased = +elm.antialiased if elm.antialiased !== void;
 		defaultBold = +elm.bold if elm.bold !== void;
 		defaultFontSize = +elm.size if elm.size !== void;
@@ -1299,7 +1299,7 @@ class MessageLayer extends KAGLayer
 	function setDefaultStyle(elm)
 	{
 		// デフォルトのスタイルの設定
-		defaultLineSpacing = +elm.linespacing if elm.linespacing !== void;
+		defaultLineSpacing = __si(+elm.linespacing, "linespacing_%s".sprintf(elm.context)) if elm.linespacing !== void;
 		defaultPitch = +elm.pitch if elm.pitch !== void;
 		defaultLineSize = +elm.linesize if elm.linesize !== void;
 		defaultAutoReturn = +elm.autoreturn if elm.autoreturn !== void;
@@ -2627,7 +2627,7 @@ class MessageLayer extends KAGLayer
 		throw new Exception("縦中横は未実装です。");
 @if(0)
 		// 縦中横を描画する
-		if(!vertical) throw new Exception("縦書きモードでないと使用できません");
+		if(!vertical) throw new Exception(__("縦書きモードでないと使用できません"));
 
 		// フォントを設定し直す
 		var ll = lineLayer;
@@ -2932,7 +2932,7 @@ class MessageLayer extends KAGLayer
 		object.loadImages(elm.graphic, elm.graphickey);
 		object.linkNum = numLinks;
 		object.setPos(x, y);
-		object.hint = elm.hint;
+		object.hint = __(elm.hint);
 		object.visible = true;
 		object.onenter = createSoundExpression(elm.onenter, elm.enterse, elm.entersebuf);
 		object.onleave = createSoundExpression(elm.onleave, elm.leavese, elm.leavesebuf);

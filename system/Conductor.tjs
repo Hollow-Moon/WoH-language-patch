@@ -280,8 +280,7 @@ class BaseConductor extends KAGParser
 					// onTag を呼ぶ
 					var step = onTag(obj);
 					if(step === void)
-						throw new Exception("onTag が void を返しました (" + obj.tagname + ")"
-							"( おそらくタグハンドラの戻り値を返し忘れた )");
+						throw new Exception(__("onTag が void を返しました (%s)( おそらくタグハンドラの戻り値を返し忘れた )").sprintf(obj.tagname));
 					step = int step; // step を数値に
 //					dm(obj.tagname+" = "+step) if obj.tagname != "copy" && obj.tagname != "ch" && obj.tagname != "wait";
 					if(step == 0)
@@ -372,11 +371,8 @@ class BaseConductor extends KAGParser
 			timerEnabled =false;
 			onStop();
 			inProcessing = false;
-			var msg = "エラーが発生しました\n"
-				"ファイル : " + curStorage + "   行 : " + (curLine+1) + "\n"
-				"タグ : " + (obj === void ? "不明" : obj.tagname)
-				+ " ( ← エラーの発生した前後のタグを示している場合もあります )\n"
-				+ e.message;
+			var msg = __("エラーが発生しました\nファイル : %s   行 : %s\nタグ : %s ( ← エラーの発生した前後のタグを示している場合もあります )\n%s")
+					.sprintf(curStorage, curLine+1, obj === void ? __("不明") : obj.tagname, e.message);
 			if((typeof e.trace) != "undefined") dm("trace : " + e.trace);
 			dm(msg);
 			throw new ConductorException(msg);
@@ -1034,9 +1030,7 @@ class Conductor extends BaseConductor
 		}
 		catch(e)
 		{
-			throw new Exception(scriptname + " の 行 " + lineofs + " から始まる"
-				" iscript ブロックでエラーが発生しました。"
-				"\n( 詳細はコンソールを参照してください )\n" + e.message);
+			throw new Exception(__("%s の 行 %s から始まる iscript ブロックでエラーが発生しました。\n( 詳細はコンソールを参照してください )\n%s").sprintf(scriptname, lineofs, e.message));
 		}
 		return true;
 	}

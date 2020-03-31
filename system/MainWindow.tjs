@@ -2138,8 +2138,7 @@ class KAGWindow extends Window
 		}
 		catch(e)
 		{
-			throw new Exception("システム変数データを読み込めないか、"
-				"あるいはシステム変数データが壊れています(" + e.message + ")");
+			throw new Exception(__("システム変数データを読み込めないか、あるいはシステム変数データが壊れています(%s)").sprintf(e.message));
 		}
 	}
 
@@ -2949,7 +2948,7 @@ class KAGWindow extends Window
 	{
 		// スナップショットのロックを解除する
 		if(snapshotLockCount == 0)
-			throw new Exception("snapshotLockCount がアンダーフローしました");
+			throw new Exception(__("snapshotLockCount がアンダーフローしました"));
 		snapshotLockCount --;
 		if(snapshotLockCount == 0)
 		{
@@ -3167,7 +3166,7 @@ class KAGWindow extends Window
 			if(data.id != saveDataID)
 			{
 @if(0)
-				System.inform("他のシステムのデータを読み込もうとしました", "エラー");
+				System.inform(__("他のシステムのデータを読み込もうとしました"), __("エラー"));
 @endif
 				errorInform("loadfail");
 				return false;
@@ -3214,11 +3213,11 @@ class KAGWindow extends Window
 		// そのとき、設定するかどうかをたずねる
 		if(readOnlyMode) return false;
 		if(bookMarkProtectedStates[num]) return false;
-		var prompt = "栞 ";
-		if(num < numBookMarks) prompt += (num + 1);
-		if(bookMarkDates[num] != "") // bookMarkDates が空文字の場合は栞は存在しない
-			prompt += "「" + bookMarkNames[num] + "」";
-		prompt += "に「"+ pcflags.currentPageName + "」をはさみますか?";
+		var prompt = __("栞 %s%sに「%s」をはさみますか?").sprintf(
+			(num < numBookMarks) ? (num + 1) : "",
+			(bookMarkDates[num] != "") ? "「" + bookMarkNames[num] + "」" : "", // bookMarkDates が空文字の場合は栞は存在しない
+			pcflags.currentPageName
+		);
 @if(0)
 		var result = askYesNo(prompt);
 		if(result) return saveBookMark(num);
@@ -3234,9 +3233,10 @@ class KAGWindow extends Window
 		// そのとき、読み出すかどうかをたずねる
 		if(num < numBookMarks && bookMarkDates[num] == "") // bookMarkDates が空文字の場合は栞は存在しない
 			return false;
-		var prompt = "栞 ";
-		if(num < numBookMarks) prompt += (num + 1);
-		prompt += "「"+ bookMarkNames[num] + "」をたどりますか?";
+		var prompt = __("栞 %s「%s」をたどりますか?").sprintf(
+			(num < numBookMarks) ? (num + 1) : "",
+			bookMarkNames[num]
+		);
 @if(0)
 		var result = askYesNo(prompt);
 		if(result) return loadBookMark(num);
@@ -3295,10 +3295,10 @@ class KAGWindow extends Window
 
 		// 保存するファイル名を得る
 		var selectdata = %[
-			title:"栞をはさむ",
+			title:__("栞をはさむ"),
 			filter: [saveThumbnail ?
-					"サムネイル画像付き栞データ(*.bmp)|*.bmp" :
-					"栞データ(*.kdt)|*.kdt"],
+					__("サムネイル画像付き栞データ(*.bmp)|*.bmp") :
+					__("栞データ(*.kdt)|*.kdt")],
 			filterIndex : 1,
 			name : initialname,
 			initialDir : "",
@@ -3321,10 +3321,10 @@ class KAGWindow extends Window
 			initialdir = saveDataLocation + "/";
 
 		var selectdata = %[
-			title:"栞をたどる",
+			title:__("栞をたどる"),
 			filter: [saveThumbnail ?
-					"サムネイル画像付き栞データ(*.bmp)|*.bmp" :
-					"栞データ(*.kdt)|*.kdt"],
+					__("サムネイル画像付き栞データ(*.bmp)|*.bmp") :
+					__("栞データ(*.kdt)|*.kdt")],
 			filterIndex : 1,
 			name : lastSaveDataNameGlobal,
 			initialDir : initialdir,
@@ -3721,8 +3721,7 @@ class KAGWindow extends Window
 			pushHistoryOfStore();
 			stablePosibility = false;
 			dm(conductor.curStorage + " : ラベル/ページ : " + label + "/" + currentPageName);
-			if(usingExtraConductor) throw new Exception("右クリックサブルーチン内/extraCondutor"
-				"サブルーチン内では保存可能なラベルを記述できません");
+			if(usingExtraConductor) throw new Exception(__("右クリックサブルーチン内/extraCondutorサブルーチン内では保存可能なラベルを記述できません"));
 			storeFlags(), storeLabelPassed = true, setMenuAccessibleAll();
 			if(recordHistoryOfStore == 1) // 1 : 保存可能なラベルごと
 				setToRecordHistory();
@@ -3831,9 +3830,7 @@ class KAGWindow extends Window
 		}
 		catch(e)
 		{
-			throw new Exception(scriptname + " の 行 " + lineofs + " から始まる"
-				" iscript ブロックでエラーが発生しました。"
-				"\n( 詳細はコンソールを参照してください )\n" + e.message);
+			throw new Exception(__("%s の 行 %s から始まる iscript ブロックでエラーが発生しました。\n( 詳細はコンソールを参照してください )\n%s").sprintf(scriptname, lineofs, e.message));
 		}
 		return true;
 	}
@@ -3841,7 +3838,7 @@ class KAGWindow extends Window
 	function onConductorUnknownTag(tagname, elm)
 	{
 		// 不明なタグがあった場合
-		throw new Exception("タグ/マクロ \"" + tagname + "\" は存在しません");
+		throw new Exception(__("タグ/マクロ \"%s\" は存在しません").sprintf(tagname));
 		return 0; // この戻り値は、各タグハンドラが返す物とおなじ
 	}
 
@@ -4329,8 +4326,8 @@ class KAGWindow extends Window
 		fore.base.font.height = -20;
 		var flags = fsfSameCharSet | fsfNoVertical | fsfTrueTypeOnly | fsfUseFontFace;
 		if(showFixedPitchOnlyInFontSelector) flags |= fsfFixedPitch;
-		if(fore.base.font.doUserSelect(flags, "フォントの選択",
-			"フォントを選択してください", "ABCDEFGHIあいうえお亜胃宇絵御"))
+		if(fore.base.font.doUserSelect(flags, __("フォントの選択"),
+			__("フォントを選択してください"), "ABCDEFGHIあいうえお亜胃宇絵御"))
 		{
 			chDefaultFace = fore.base.font.face;
 			setMessageLayerUserFont();

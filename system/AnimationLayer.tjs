@@ -304,9 +304,7 @@ class AnimationConductor extends BaseConductor
 		}
 		catch(e)
 		{
-			throw new Exception(scriptname + " の 行 " + lineofs + " から始まる"
-				" iscript ブロックでエラーが発生しました。"
-				"\n( 詳細はコンソールを参照してください )\n" + e.message);
+			throw new Exception( __("%s の 行 %s から始まる iscript ブロックでエラーが発生しました。\n( 詳細はコンソールを参照してください )\n%s").sprintf(scriptname, lineofs, e.message) );
 		}
 		return true;
 	}
@@ -418,8 +416,7 @@ class AnimationLayer extends KAGLayer
 		// Anim_storageName に入っているファイル名のファイルを読み込む
 		if(Anim_storageName == '')
 			throw new Exception(
-				(Anim_loadParams !== void ? Anim_loadParams.storage + "に対する" : "") +
-				"アニメーション情報がありません");
+				__("%sアニメーション情報がありません").sprintf(Anim_loadParams !== void ? __("%sに対する").sprintf(Anim_loadParams.storage) : ""));
 
 		var seg;
 		if(Anim_segments[segment] === void)

@@ -31,7 +31,7 @@ switch(f.chapter)
 case 5:
 	//	次に進める状態になるまではポップアップする
 	if(sf.scenario1_5_1==0 && sf.scenario1_5_2==0 && sf.scenario1_5_3==0 && sf.scenario1_5_4==0)
-		popupMessage("新しく本が書庫へ追加されました。必読の書です。",,, 20000);
+		popupMessage(__("新しく本が書庫へ追加されました。必読の書です。"),,, 20000);
 	break;
 */
 case 2:
@@ -40,7 +40,7 @@ case 9:
 	//	一度だけ表示する
 	if(!sf["popupedChapter"+f.chapter])
 	{
-		popupMessage("新しく本が書庫へ追加されました。",,, 5000);
+		popupMessage(__("新しく本が書庫へ追加されました。"),,, 5000);
 		sf["popupedChapter"+f.chapter]	= true;
 	}
 	break;
@@ -60,7 +60,7 @@ case 9:
 @history enabled=true
 ;付け焼刃でおかしくなるので
 ;;シーンタイトルに章が表示されるように
-;@eval exp="tracer_object.title_format='第'+f.chapter+'章 %s'"
+;@eval exp="tracer_object.title_format=__('第%s章 %s').sprintf(f.chapter, '%s')"
 @return
 
 ;from archive

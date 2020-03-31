@@ -1,4 +1,4 @@
-﻿@title name="このソフトについて"
+﻿@title name=&(__("このソフトについて"))
 @clickskip enabled=false
 @rclick enabled=false
 @bg storage=about page=fore left=0 top=0
@@ -7,9 +7,9 @@
 @font size=10 shadow=0 edge=0 bold=0 color=0x000000
 @nowait
 [r]
-吉里吉里 Ver.[emb exp=System.versionString][r]
-魔法使いの夜 Ver.[emb exp=mahoyoVersion][r]
-サポートページ: [link exp="System.shellExecute('https://www.typemoon.com/users/')"]https://www.typemoon.com/users/[endlink]
+[emb exp="__('%s Ver.%s').sprintf(__('吉里吉里'), System.versionString)"][r]
+[emb exp="__('%s Ver.%s').sprintf(System.title, mahoyoVersion)"][r]
+[emb exp="__('サポートページ: ')"][link exp="System.shellExecute('https://www.typemoon.com/users/')"]https://www.typemoon.com/users/[endlink]
 @rclick target=*exit
 @waitclick
 *exit

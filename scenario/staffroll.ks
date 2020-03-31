@@ -8,7 +8,7 @@
 @image page=back layer=base storage=white
 @trans method=crossfade time=2000
 @eval exp=.sttime=System.getTickCount()
-@eval exp=".face='ＭＳ Ｐ明朝',.faces='Times,ＭＳ Ｐ明朝'"
+@eval exp=".face=__s('ＭＳ Ｐ明朝', 'staffroll_font_face'),.faces=__s('Times,ＭＳ Ｐ明朝', 'staffroll_font_faces')"
 @staffrolltext face=&face size=18 y=626 text="■企画"
 @staffrolltext face=&faces size=11 y=18 text="Planning"
 @staffrolltext face=&face size=18 y=32 text="武内崇"

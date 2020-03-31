@@ -766,7 +766,7 @@ class KAGWindow extends Window
 		saveSystemVariables();
 @if(0)
 		if(!askOnClose) { super.onCloseQuery(true); return; }
-		super.onCloseQuery(askYesNo("終了しますか？"));
+		super.onCloseQuery(askYesNo(__("終了しますか？")));
 @endif
 		if(!askOnClose) {
 			// コンソールを最大化で閉じないように
@@ -774,7 +774,7 @@ class KAGWindow extends Window
 			return super.onCloseQuery(true);
 		}
 		showRestore() if _minimized;	//	最小化状態を解除
-		askYesNo("終了しますか？", "確認", onCloseYes);
+		askYesNo(__("終了しますか？"), "確認", onCloseYes);
 		super.onCloseQuery(false);
 	}
 
@@ -1840,7 +1840,7 @@ class KAGWindow extends Window
 	function onHelpSupportMenuItemClick(sender)
 	{
 		// サポートツールを起動する
-		askYesNo("サポートツールを起動してゲームを終了します。よろしいですか？\n(サポートツールの結果を反映させるため、ゲームの再起動が必要です)",
+		askYesNo(__("サポートツールを起動してゲームを終了します。よろしいですか？\n(サポートツールの結果を反映させるため、ゲームの再起動が必要です)"),
 			"確認", function { global.System.shellExecute(global.Storages.getLocalName(global.System.exePath) + "SupportTools.exe"); global.System.exit(); });
 	}
 
@@ -2758,11 +2758,10 @@ class KAGWindow extends Window
 		var result;
 		if(ask)
 		{
+			var prompt = __("「%s」まで戻りますか？").sprintf(historyOfStore[0].core.currentPageName);
 @if(0)
-			var prompt = "「"+ historyOfStore[0].core.currentPageName + "」まで戻りますか?";
 			result = askYesNo(prompt);
 @endif
-			var prompt = "「"+ historyOfStore[0].core.currentPageName + "」まで戻りますか？";
 			result = askYesNo(prompt, "確認", goBackYes);
 		}
 		else
@@ -2848,7 +2847,7 @@ class KAGWindow extends Window
 				{
 					// 栞が存在しない
 					var item = children[i];
-					item.caption = "(未設定)";
+					item.caption = __("(未設定)");
 					item.enabled = false;
 					item.orgEnabled = !bookMarkProtectedStates[i];
 				}
@@ -2875,7 +2874,7 @@ class KAGWindow extends Window
 				else
 				{
 					var item = restoreMenu.children[i];
-					item.caption = "(未設定)";
+					item.caption = __("(未設定)");
 					item.enabled = false;
 					item.orgEnabled = false;
 				}
@@ -2911,7 +2910,7 @@ class KAGWindow extends Window
 		// 栞番号 num のブックマーク名を得る
 		if(bookMarkDates[num] != '') // 空文字列の場合は栞がないということ
 			return bookMarkNames[num];
-		return "(未設定)";
+		return __("(未設定)");
 	}
 
 	function getBookMarkDate(num)
@@ -3414,10 +3413,10 @@ class KAGWindow extends Window
 	{
 		// 最初に戻る(確認あり)
 @if(0)
-		var result = askYesNo("最初に戻ります。よろしいですか ?");
+		var result = askYesNo(__("最初に戻ります。よろしいですか ?"));
 		if(result) goToStart();
 @endif
-		askYesNo("最初に戻ります。よろしいですか ?", "確認", goToStart);
+		askYesNo(__("最初に戻ります。よろしいですか ?"), "確認", goToStart);
 	}
 
 	function tempSave(num)
@@ -7633,7 +7632,7 @@ class KAGWindow extends Window
 		}
 		if (skipNoDispWin !== void) {
 			skipNoDispWin.visible = true;
-			var title = "次の選択肢までスキップ中:%s".sprintf(currentPageName);
+			var title = __("次の選択肢までスキップ中:%s").sprintf(currentPageName);
 			skipNoDispWin.fillRect(0, 0, skipNoDispWin.width, skipNoDispWin.height, 0xa0000000);
 			skipNoDispWin.drawText(10, 10, title , 0xffffff);
 		}

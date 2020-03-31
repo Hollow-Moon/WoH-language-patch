@@ -402,7 +402,7 @@ function openArchiveMenu(page="fore")
 		if(existUnread)
 		{
 			var	transtime	= 800;
-			popupMessage("新しい蔵書が入庫しました。"+(f.chapter==5 ? "是非、ご覧ください。" : "お暇なときに、どうぞ。"),,, transtime+5000);
+			popupMessage(__("新しい蔵書が入庫しました。%s").sprintf((f.chapter==5 ? __("是非、ご覧ください。") : __("お暇なときに、どうぞ。"))),,, transtime+5000);
 @if(ARCHIVE_UNREAD_DELAY_APPEAR)
 			//	あと、トランジション後に「メッセージ表示→未読の本がフェードイン」を行う
 			for(var i=0; i<unreadList.count; i++)
@@ -476,7 +476,7 @@ function openArchiveSelectWindow(no, button)
 		//	シーンのリストを追加する
 		var	layer	= .addMenuItem(%["class" => "ArchiveListMenuItemLayer", page:"fore", id:8765, name:"scenariolist",
 			width:409, height:127, center:405, vcenter:317, opacity:1, absolute:1210000, visible:1,
-			fontbold:false, fontface:"ＭＳ ゴシック", lineheight:32, mainfontheight:18, subfontheight:11,
+			fontbold:false, fontface:__s("ＭＳ ゴシック", "archive_menu_font_face"), lineheight:32, mainfontheight:18, subfontheight:11,
 			textcolor:0xFF000000, cursorcolor:0x80FF8000, chosecolor:0x80FF0000,
 			ondoubleclick:"startArchive()",
 			sliderstorage:"archive_windowスクロール", sliderviewarea:"0/0/17/31", slidercenter:626]);

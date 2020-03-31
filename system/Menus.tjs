@@ -8,159 +8,159 @@ function KAGWindow_createMenus()
 {
 	// この関数は MainWindow クラスのオブジェクトのコンテキスト上で実行されます
 
-	menu.add(this.systemMenu = new KAGMenuItem(this, "システム(&S)", 0, "", false));
+	menu.add(this.systemMenu = new KAGMenuItem(this, __("システム(&S)"), 0, "", false));
 
-	systemMenu.add(this.rightClickMenuItem = new KAGMenuItem(this, "メッセージを消す(&S)", 0,
+	systemMenu.add(this.rightClickMenuItem = new KAGMenuItem(this, __("メッセージを消す(&S)"), 0,
 		onRightClickMenuItemClick, false));
 
-	systemMenu.add(this.showHistoryMenuItem = new KAGMenuItem(this, "メッセージ履歴の表示(&H)", 0,
+	systemMenu.add(this.showHistoryMenuItem = new KAGMenuItem(this, __("メッセージ履歴の表示(&H)"), 0,
 		onShowHistoryMenuItemClick, false));
 
 	systemMenu.add(this.skipToNextStopMenuItem = new KAGMenuItem(this,
 @if(0)
 		autoRecordPageShowing?"次の選択肢/未読まで進む(&F)":"次の選択肢まで進む(&F)", 0,
 @endif
-		"次の未読まで進む(&F)", 0,
+		__("次の未読まで進む(&F)"), 0,
 		onSkipToNextStopMenuItemClick, false));
 
-	systemMenu.add(this.autoModeMenuItem = new KAGMenuItem(this, "自動的に読み進む(&A)", 0,
+	systemMenu.add(this.autoModeMenuItem = new KAGMenuItem(this, __("自動的に読み進む(&A)"), 0,
 		onAutoModeMenuItemClick, false));
 
-	systemMenu.add(this.autoModeWaitMenu = new KAGMenuItem(this, "自動的に読み進むウェイト(&D)", 0,
+	systemMenu.add(this.autoModeWaitMenu = new KAGMenuItem(this, __("自動的に読み進むウェイト(&D)"), 0,
 		void, false));
 
-		autoModeWaitMenu.add(this.autoModeFastMenuItem = new KAGMenuItem(this, "短い(&1)", 1,
+		autoModeWaitMenu.add(this.autoModeFastMenuItem = new KAGMenuItem(this, __("短い(&1)"), 1,
 			onAutoModeWaitMenuClick, false));
 		autoModeFastMenuItem.wait = autoModePageWaits.fast;
 		autoModeFastMenuItem.lwait = autoModeLineWaits.fast;
-		autoModeWaitMenu.add(this.autoModeFasterMenuItem = new KAGMenuItem(this, "やや短い(&2)", 1,
+		autoModeWaitMenu.add(this.autoModeFasterMenuItem = new KAGMenuItem(this, __("やや短い(&2)"), 1,
 			onAutoModeWaitMenuClick, false));
 		autoModeFasterMenuItem.wait = autoModePageWaits.faster;
 		autoModeFasterMenuItem.lwait = autoModeLineWaits.faster;
-		autoModeWaitMenu.add(this.autoModeMediumMenuItem = new KAGMenuItem(this, "普通(&3)", 1,
+		autoModeWaitMenu.add(this.autoModeMediumMenuItem = new KAGMenuItem(this, __("普通(&3)"), 1,
 			onAutoModeWaitMenuClick, false));
 		autoModeMediumMenuItem.wait = autoModePageWaits.medium;
 		autoModeMediumMenuItem.lwait = autoModeLineWaits.medium;
-		autoModeWaitMenu.add(this.autoModeSlowerMenuItem = new KAGMenuItem(this, "やや長い(&4)", 1,
+		autoModeWaitMenu.add(this.autoModeSlowerMenuItem = new KAGMenuItem(this, __("やや長い(&4)"), 1,
 			onAutoModeWaitMenuClick, false));
 		autoModeSlowerMenuItem.wait = autoModePageWaits.slower;
 		autoModeSlowerMenuItem.lwait = autoModeLineWaits.slower;
-		autoModeWaitMenu.add(this.autoModeSlowMenuItem = new KAGMenuItem(this, "長い(&5)", 1,
+		autoModeWaitMenu.add(this.autoModeSlowMenuItem = new KAGMenuItem(this, __("長い(&5)"), 1,
 			onAutoModeWaitMenuClick, false));
 		autoModeSlowMenuItem.wait = autoModePageWaits.slow;
 		autoModeSlowMenuItem.lwait = autoModeLineWaits.slow;
 
 	systemMenu.add(new MenuItem(this, "-"));
 
-	systemMenu.add(this.goBackMenuItem = new KAGMenuItem(this, "前に戻る(&B)", 0,
+	systemMenu.add(this.goBackMenuItem = new KAGMenuItem(this, __("前に戻る(&B)"), 0,
 		onBackStartMenuItemClick, false));
 
-	systemMenu.add(this.goToStartMenuItem = new KAGMenuItem(this, "最初に戻る(&R)", 0,
+	systemMenu.add(this.goToStartMenuItem = new KAGMenuItem(this, __("最初に戻る(&R)"), 0,
 		onGoToStartMenuItemClick, false));
 
 	systemMenu.add(new MenuItem(this, "-"));
 
-	systemMenu.add(this.exitMenuItem = new KAGMenuItem(this, "終了(&X)", 0, onExitMenuItemClick, false));
+	systemMenu.add(this.exitMenuItem = new KAGMenuItem(this, __("終了(&X)"), 0, onExitMenuItemClick, false));
 
-	menu.add(this.characterMenu = new KAGMenuItem(this, "文字表示(&C)", 0, void, false));
+	menu.add(this.characterMenu = new KAGMenuItem(this, __("文字表示(&C)"), 0, void, false));
 
-		characterMenu.add(this.chSpeedMenu = new KAGMenuItem(this, "表示速度(&C)", 0, void, false));
+		characterMenu.add(this.chSpeedMenu = new KAGMenuItem(this, __("表示速度(&C)"), 0, void, false));
 
-			chSpeedMenu.add(this.chNoWaitMenuItem = new KAGMenuItem(this, "ノーウェイト(&W)", 1,
+			chSpeedMenu.add(this.chNoWaitMenuItem = new KAGMenuItem(this, __("ノーウェイト(&W)"), 1,
 				onChSpeedMenuItemClick, false));
 			chNoWaitMenuItem.speed = 0;
-			chSpeedMenu.add(this.chFastMenuItem = new KAGMenuItem(this, "高速(&F)", 1,
+			chSpeedMenu.add(this.chFastMenuItem = new KAGMenuItem(this, __("高速(&F)"), 1,
 				onChSpeedMenuItemClick, false));
 			chFastMenuItem.speed = chSpeeds.fast;
-			chSpeedMenu.add(this.chNormalMenuItem = new KAGMenuItem(this, "普通(&N)", 1,
+			chSpeedMenu.add(this.chNormalMenuItem = new KAGMenuItem(this, __("普通(&N)"), 1,
 				onChSpeedMenuItemClick, false));
 			chNormalMenuItem.speed = chSpeeds.normal;
-			chSpeedMenu.add(this.chSlowMenuItem = new KAGMenuItem(this, "遅い(&S)", 1,
+			chSpeedMenu.add(this.chSlowMenuItem = new KAGMenuItem(this, __("遅い(&S)"), 1,
 				onChSpeedMenuItemClick, false));
 			chSlowMenuItem.speed = chSpeeds.slow;
 
 			chSpeedMenu.add(new MenuItem(this, "-"));
 
-			chSpeedMenu.add(this.chNonStopToPageBreakItem = new KAGMenuItem(this, "ページ末まで一気に(&P)", 0,
+			chSpeedMenu.add(this.chNonStopToPageBreakItem = new KAGMenuItem(this, __("ページ末まで一気に(&P)"), 0,
 				onChNonStopToPageBreakItemClick, false));
 
-		characterMenu.add(this.ch2ndSpeedMenu = new KAGMenuItem(this, "一度読んだところは(&I)", 0, void, false));
+		characterMenu.add(this.ch2ndSpeedMenu = new KAGMenuItem(this, __("一度読んだところは(&I)"), 0, void, false));
 
-			ch2ndSpeedMenu.add(this.ch2ndNoWaitMenuItem = new KAGMenuItem(this, "ノーウェイト(&W)", 1,
+			ch2ndSpeedMenu.add(this.ch2ndNoWaitMenuItem = new KAGMenuItem(this, __("ノーウェイト(&W)"), 1,
 				onCh2ndSpeedMenuItemClick, false));
 			ch2ndNoWaitMenuItem.speed = 0;
-			ch2ndSpeedMenu.add(this.ch2ndFastMenuItem = new KAGMenuItem(this, "高速(&F)", 1,
+			ch2ndSpeedMenu.add(this.ch2ndFastMenuItem = new KAGMenuItem(this, __("高速(&F)"), 1,
 				onCh2ndSpeedMenuItemClick, false));
 			ch2ndFastMenuItem.speed = chSpeeds.fast;
-			ch2ndSpeedMenu.add(this.ch2ndNormalMenuItem = new KAGMenuItem(this, "普通(&N)", 1,
+			ch2ndSpeedMenu.add(this.ch2ndNormalMenuItem = new KAGMenuItem(this, __("普通(&N)"), 1,
 				onCh2ndSpeedMenuItemClick, false));
 			ch2ndNormalMenuItem.speed = chSpeeds.normal;
-			ch2ndSpeedMenu.add(this.ch2ndNoChangeMenuItem = new KAGMenuItem(this, "変えない(&M)", 1,
+			ch2ndSpeedMenu.add(this.ch2ndNoChangeMenuItem = new KAGMenuItem(this, __("変えない(&M)"), 1,
 				onCh2ndSpeedMenuItemClick, false));
 			ch2ndNoChangeMenuItem.speed = -1; // 変えない
 
 			ch2ndSpeedMenu.add(new MenuItem(this, "-"));
 
-			ch2ndSpeedMenu.add(this.ch2ndNonStopToPageBreakItem = new KAGMenuItem(this, "ページ末まで一気に(&P)", 0,
+			ch2ndSpeedMenu.add(this.ch2ndNonStopToPageBreakItem = new KAGMenuItem(this, __("ページ末まで一気に(&P)"), 0,
 				onCh2ndNonStopToPageBreakItemClick, false));
 
 		characterMenu.add(new MenuItem(this, "-"));
 
-		characterMenu.add(this.chAntialiasMenuItem = new KAGMenuItem(this, "アンチエイリアス(&A)", 0,
+		characterMenu.add(this.chAntialiasMenuItem = new KAGMenuItem(this, __("アンチエイリアス(&A)"), 0,
 			onChAntialiasMenuItemClick, false));
 
-		characterMenu.add(this.chChangeFontMenuItem = new KAGMenuItem(this, "フォント(&D) ...", 0,
+		characterMenu.add(this.chChangeFontMenuItem = new KAGMenuItem(this, __("フォント(&D) ..."), 0,
 			onChChangeFontMenuItem, false));
 
 	if(freeSaveDataMode)
 	{
 		// フリーセーブモードの場合
-		menu.add(this.bookMarkMenu = new KAGMenuItem(this, "栞(&J)", 0, void, false));
-		bookMarkMenu.add(this.restoreMenu = new KAGMenuItem(this, "栞をたどる(&J) ...", 0, onRestoreMenuClick, false));
-		bookMarkMenu.add(this.storeMenu = new KAGMenuItem(this, "栞をはさむ(&M) ...", 0, onStoreMenuClick, false));
+		menu.add(this.bookMarkMenu = new KAGMenuItem(this, __("栞(&J)"), 0, void, false));
+		bookMarkMenu.add(this.restoreMenu = new KAGMenuItem(this, __("栞をたどる(&J) ..."), 0, onRestoreMenuClick, false));
+		bookMarkMenu.add(this.storeMenu = new KAGMenuItem(this, __("栞をはさむ(&M) ..."), 0, onStoreMenuClick, false));
 	}
 	else
 	{
-		menu.add(this.restoreMenu = new KAGMenuItem(this, "栞をたどる(&J)", 0, onRestoreMenuClick, false));
-		menu.add(this.storeMenu = new KAGMenuItem(this, "栞をはさむ(&M)", 0, onStoreMenuClick, false));
+		menu.add(this.restoreMenu = new KAGMenuItem(this, __("栞をたどる(&J)"), 0, onRestoreMenuClick, false));
+		menu.add(this.storeMenu = new KAGMenuItem(this, __("栞をはさむ(&M)"), 0, onStoreMenuClick, false));
 	}
 
-	menu.add(this.quickMenu = new KAGMenuItem(this, "クイック(&Q)", 0, void, false));
+	menu.add(this.quickMenu = new KAGMenuItem(this, __("クイック(&Q)"), 0, void, false));
 
-		quickMenu.add(this.quickSaveMenuItem = new KAGMenuItem(this, "クイックセーブ(&S)", 1,
+		quickMenu.add(this.quickSaveMenuItem = new KAGMenuItem(this, __("クイックセーブ(&S)"), 1,
 			saveQuickToEmpty, false));
 
 		quickMenu.add(new MenuItem(this, "-"));
 
-		quickMenu.add(this.quickLoadMenuItem = new KAGMenuItem(this, "クイックロード(&L)", 1,
+		quickMenu.add(this.quickLoadMenuItem = new KAGMenuItem(this, __("クイックロード(&L)"), 1,
 			"kag.loadQuickFromLast()", false));
 
-		quickMenu.add(this.quickMenuItem = new KAGMenuItem(this, "クイックロードメニュー(&M)", 1,
+		quickMenu.add(this.quickMenuItem = new KAGMenuItem(this, __("クイックロードメニュー(&M)"), 1,
 			"openQuickMenu()", false));
 
-	menu.add(this.displayMenu = new KAGMenuItem(this, "画面(&V)", 0, void, false));
+	menu.add(this.displayMenu = new KAGMenuItem(this, __("画面(&V)"), 0, void, false));
 
-		displayMenu.add(this.windowedMenuItem = new KAGMenuItem(this, "ウィンドウ表示(&W)", 1,
+		displayMenu.add(this.windowedMenuItem = new KAGMenuItem(this, __("ウィンドウ表示(&W)"), 1,
 			onWindowedMenuItemClick, false));
-		displayMenu.add(this.fullScreenMenuItem = new KAGMenuItem(this, "フルスクリーン(&F)", 1,
+		displayMenu.add(this.fullScreenMenuItem = new KAGMenuItem(this, __("フルスクリーン(&F)"), 1,
 			onFullScreenMenuItemClick, false));
 
 		displayMenu.add(new MenuItem(this, "-"));
 
-		displayMenu.add(this.fullscreenMenu = new KAGMenuItem(this, "フルスクリーン時の拡大表示(&M)", 0, void, false));
+		displayMenu.add(this.fullscreenMenu = new KAGMenuItem(this, __("フルスクリーン時の拡大表示(&M)"), 0, void, false));
 
-			fullscreenMenu.add(this.innerMagnifyMenuItem = new KAGMenuItem(this, "モニタ内にフィットさせる(&I)", 1,
+			fullscreenMenu.add(this.innerMagnifyMenuItem = new KAGMenuItem(this, __("モニタ内にフィットさせる(&I)"), 1,
 				onInnerMagnifyMenuItemClick, false));
 
-			fullscreenMenu.add(this.outerMagnifyMenuItem = new KAGMenuItem(this, "モニタいっぱいに拡大する(&O)", 1,
+			fullscreenMenu.add(this.outerMagnifyMenuItem = new KAGMenuItem(this, __("モニタいっぱいに拡大する(&O)"), 1,
 				onOuterMagnifyMenuItemClick, false));
 
-			fullscreenMenu.add(this.noneMagnifyMenuItem = new KAGMenuItem(this, "拡大しない(&N)", 1,
+			fullscreenMenu.add(this.noneMagnifyMenuItem = new KAGMenuItem(this, __("拡大しない(&N)"), 1,
 				onNoneMagnifyMenuItemClick, false));
 
-		displayMenu.add(this.windowSizeMenu = new KAGMenuItem(this, "ウィンドウ内部のサイズ指定(&S)", 0, void, false));
+		displayMenu.add(this.windowSizeMenu = new KAGMenuItem(this, __("ウィンドウ内部のサイズ指定(&S)"), 0, void, false));
 
-			windowSizeMenu.add(this.window1024MenuItem = new KAGMenuItem(this, "1024x576 (デフォルト)", 1,
+			windowSizeMenu.add(this.window1024MenuItem = new KAGMenuItem(this, __("1024x576 (デフォルト)"), 1,
 				"kag.onWindowSizeMenuItemClick(,1024)", false));
 
 			windowSizeMenu.add(new MenuItem(this, "-"));
@@ -185,77 +185,77 @@ function KAGWindow_createMenus()
 
 			windowSizeMenu.add(new MenuItem(this, "-"));
 
-			windowSizeMenu.add(this.windowResizeableMenuItem = new KAGMenuItem(this, "サイズを固定する", 1,
+			windowSizeMenu.add(this.windowResizeableMenuItem = new KAGMenuItem(this, __("サイズを固定する"), 1,
 				"kag.onWindowSizeMenuItemClick(,0)", false));
 			windowResizeableMenuItem.radio = false;
 
-	menu.add(this.operateMenu = new KAGMenuItem(this, "動作設定(&O)", 0, void, false));
-		operateMenu.add(this.operateMouseMoveMenuItem = new KAGMenuItem(this, "確認ダイアログの自動移動(&M)", 0, void, false));
-			operateMouseMoveMenuItem.add(this.moveToYesMenuItem = new KAGMenuItem(this, "「はい」へ移動", 1,
+	menu.add(this.operateMenu = new KAGMenuItem(this, __("動作設定(&O)"), 0, void, false));
+		operateMenu.add(this.operateMouseMoveMenuItem = new KAGMenuItem(this, __("確認ダイアログの自動移動(&M)"), 0, void, false));
+			operateMouseMoveMenuItem.add(this.moveToYesMenuItem = new KAGMenuItem(this, __("「はい」へ移動"), 1,
 				onMoveToYesMenuItemClick, false));
-			operateMouseMoveMenuItem.add(this.moveToNoMenuItem = new KAGMenuItem(this, "「いいえ」へ移動", 1,
+			operateMouseMoveMenuItem.add(this.moveToNoMenuItem = new KAGMenuItem(this, __("「いいえ」へ移動"), 1,
 				onMoveToNoMenuItemClick, false));
-			operateMouseMoveMenuItem.add(this.moveToCenterMenuItem = new KAGMenuItem(this, "中間へ移動", 1,
+			operateMouseMoveMenuItem.add(this.moveToCenterMenuItem = new KAGMenuItem(this, __("中間へ移動"), 1,
 				onMoveToCenterMenuItemClick, false));
 
-	menu.add(this.helpMenu = new KAGMenuItem(this, "ヘルプ(&H)", 0, void, false));
+	menu.add(this.helpMenu = new KAGMenuItem(this, __("ヘルプ(&H)"), 0, void, false));
 
-		helpMenu.add(this.helpCallSupportMenuItem = new KAGMenuItem(this, "サポートツールを起動(&S)", 0,
+		helpMenu.add(this.helpCallSupportMenuItem = new KAGMenuItem(this, __("サポートツールを起動(&S)"), 0,
 			onHelpSupportMenuItemClick, false));
-		helpMenu.add(this.helpIndexMenuItem = new KAGMenuItem(this, "目次(&I) ...", 0,
+		helpMenu.add(this.helpIndexMenuItem = new KAGMenuItem(this, __("目次(&I) ..."), 0,
 			onHelpIndexMenuItemClick, false));
-		helpMenu.add(this.helpAboutMenuItem = new KAGMenuItem(this, "このソフトについて(&A) ...", 0,
+		helpMenu.add(this.helpAboutMenuItem = new KAGMenuItem(this, __("このソフトについて(&A) ..."), 0,
 			onHelpAboutMenuItemClick, false));
 
-	menu.add(this.debugMenu = new KAGMenuItem(this, "デバッグ(&D)", 0, void, false));
+	menu.add(this.debugMenu = new KAGMenuItem(this, __("デバッグ(&D)"), 0, void, false));
 
-		debugMenu.add(this.loadScenarioMenuItem = new KAGMenuItem(this, "シナリオの読込み(&R)", 1,
+		debugMenu.add(this.loadScenarioMenuItem = new KAGMenuItem(this, __("シナリオの読込み(&R)"), 1,
 			onExecDialogMenuItemClick, false));
-		debugMenu.add(this.reloadScenarioMenuItem = new KAGMenuItem(this, "シナリオの再読込み(&R)", 1,
+		debugMenu.add(this.reloadScenarioMenuItem = new KAGMenuItem(this, __("シナリオの再読込み(&R)"), 1,
 			onReloadScenarioMenuItemClick, false));
-		debugMenu.add(this.loadLastScenarioMenuItem = new KAGMenuItem(this, "前回「シナリオの読込み」をもう一度(&L)", 1,
+		debugMenu.add(this.loadLastScenarioMenuItem = new KAGMenuItem(this, __("前回「シナリオの読込み」をもう一度(&L)"), 1,
 			onLoadLastScenarionMenuItemClick, false));
-		debugMenu.add(this.showConsoleMenuItem = new KAGMenuItem(this, "コンソール(&C)\tShift+F4", 1,
+		debugMenu.add(this.showConsoleMenuItem = new KAGMenuItem(this, __("コンソール(&C)\tShift+F4"), 1,
 			onShowConsoleMenuItemClick, false));
-		debugMenu.add(this.showControllerMenuItem = new KAGMenuItem(this, "コントローラ(&S)\tShift+F1", 1,
+		debugMenu.add(this.showControllerMenuItem = new KAGMenuItem(this, __("コントローラ(&S)\tShift+F1"), 1,
 			onShowContollerMenuItemClick, false));
 
         debugMenu.add(new MenuItem(this, "-"));
 
-		debugMenu.add(this.showControllerMenuItem = new KAGMenuItem(this, "システムリセット", 1,
+		debugMenu.add(this.showControllerMenuItem = new KAGMenuItem(this, __("システムリセット"), 1,
 																	resetAll, false));
         debugMenu.add(new MenuItem(this, "-"));
 
-		debugMenu.add(this.debugLevelNoneMenuItem = new KAGMenuItem(this, "デバッグレベル:なし", 2,
+		debugMenu.add(this.debugLevelNoneMenuItem = new KAGMenuItem(this, __("デバッグレベル:なし"), 2,
 			onDebugLevelNoneMenuItemClick, false));
-		debugMenu.add(this.debugLevelSimpleMenuItem = new KAGMenuItem(this, "デバッグレベル:シンプル", 2,
+		debugMenu.add(this.debugLevelSimpleMenuItem = new KAGMenuItem(this, __("デバッグレベル:シンプル"), 2,
 			onDebugLevelSimpleMenuItemClick, false));
-		debugMenu.add(this.debugLevelVerboseMenuItem = new KAGMenuItem(this, "デバッグレベル:詳細", 2,
+		debugMenu.add(this.debugLevelVerboseMenuItem = new KAGMenuItem(this, __("デバッグレベル:詳細"), 2,
 			onDebugLevelVerboseMenuItemClick, false));
 
         debugMenu.add(new MenuItem(this, "-"));
 
-		debugMenu.add(this.debugWinMenuItem = new KAGMenuItem(this, "デバッグ窓表示", 0,
+		debugMenu.add(this.debugWinMenuItem = new KAGMenuItem(this, __("デバッグ窓表示"), 0,
 			onDebugWinMenuItemClick, false));
 
         debugMenu.add(new MenuItem(this, "-"));
 
-        debugMenu.add(this.autoLabelSaveModeMenuItem = new KAGMenuItem(this, "自動ラベルセーブ", 0,
+        debugMenu.add(this.autoLabelSaveModeMenuItem = new KAGMenuItem(this, __("自動ラベルセーブ"), 0,
 			onAutoLabelSaveModeMenuItemClick, false));
 
-		debugMenu.add(this.skipToPrevLabelMenuItem = new KAGMenuItem(this, "前のラベルに戻る\tAlt+←", 0,
+		debugMenu.add(this.skipToPrevLabelMenuItem = new KAGMenuItem(this, __("前のラベルに戻る\tAlt+←"), 0,
 			onSkipToPrevLabelMenuItemClick, false));
 
-		debugMenu.add(this.skipToNextLabelMenuItem = new KAGMenuItem(this, "次のラベルに進む\tAlt+→", 0,
+		debugMenu.add(this.skipToNextLabelMenuItem = new KAGMenuItem(this, __("次のラベルに進む\tAlt+→"), 0,
 			onSkipToNextLabelMenuItemClick, false));
 
         debugMenu.add(new MenuItem(this, "-"));
 
 
-		debugMenu.add(this.chDebugLogMenuItem = new KAGMenuItem(this, "KAGEXログモード", 0,
+		debugMenu.add(this.chDebugLogMenuItem = new KAGMenuItem(this, __("KAGEXログモード"), 0,
 			onChDebugLogMenuItemClick, false));
 
-        debugMenu.add(this.outputDebugLogMenuItem = new KAGMenuItem(this, "KAGEXログを出力する", 0,
+        debugMenu.add(this.outputDebugLogMenuItem = new KAGMenuItem(this, __("KAGEXログを出力する"), 0,
 			onOutputDebugLogMenuItemClick, false));
 
         debugMenu.add(new MenuItem(this, "-"));

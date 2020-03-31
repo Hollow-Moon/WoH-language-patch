@@ -108,7 +108,7 @@ function eraseQuickMenu(no)
 {
 	var	no		= tf.qm_list[no][0];
 	var	pgname	= kag.getQuickPage(no);
-	askYesNo("「"+pgname+"」のデータを[r]削除してもよろしいですか？",, doEraseQuickMenu,, no);
+	askYesNo(__("「%s」のデータを[r]削除してもよろしいですか？").sprintf(pgname),, doEraseQuickMenu,, no);
 }
 function doEraseQuickMenu(no)
 {
@@ -122,7 +122,7 @@ function loadQuickMenu(no)
 {
 	var	no		= tf.qm_list[no][0];
 	var	pgname	= kag.getQuickPage(no);
-	askYesNo("「"+pgname+"」を[r]ロードしてもよろしいですか？",, doLoadQuickMenu,, no);
+	askYesNo(__("「%s」を[r]ロードしてもよろしいですか？").sprintf(pgname),, doLoadQuickMenu,, no);
 	QLcmd("release", no);
 }
 function QLcmd(cmd, no)

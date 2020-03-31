@@ -16,7 +16,7 @@
 // ウィンドウのキャプション(タイトル)および
 // タスクバーに表示されるものです。
 ;System.title = "吉里吉里";
-;System.title = "魔法使いの夜";
+;System.title = __("魔法使いの夜");
 
 
 // ◆ シナリオ解析モード
@@ -549,10 +549,10 @@ function MessageLayer_config()
 ;marginT = 8; // 上余白
 ;marginR = 8; // 右余白
 ;marginB = 8; // 下余白
-;marginL = 142; // 左余白
-;marginR = 142; // 右余白
-;marginT = 69; // 上余白
-;marginB = 69; // 下余白
+;marginL = __si("142", "marginl_basic"); // 左余白
+;marginR = __si("142", "marginr_basic"); // 右余白
+;marginT = __si("69", "margint_basic"); // 上余白
+;marginB = __si("69", "marginb_basic"); // 下余白
 
 
 // ◆ 初期位置
@@ -585,14 +585,14 @@ function MessageLayer_config()
 // ◆ 文字の大きさ
 // デフォルトの文字の大きさ ( 高さ ) を pixel 単位で指定します。
 ;defaultFontSize = 24;  // deffont タグの size 属性に相当
-;defaultFontSize = 26;  // deffont タグの size 属性に相当
+;defaultFontSize = __si("26", "fontsize_basic");  // deffont タグの size 属性に相当
 					   // → HistoryLayer_configのfontHeight,lineHeightもWoHシステムでは合わせておくこと
 
 
 // ◆ 行間
 // 行間を pixel 単位で指定します。
 ;defaultLineSpacing = 6; // defstyle タグの linespacing 属性に相当
-;defaultLineSpacing = 18; // defstyle タグの linespacing 属性に相当
+;defaultLineSpacing = __si("18", "linespacing_basic"); // defstyle タグの linespacing 属性に相当
 
 // ◆ 字間
 // 字間を pixel 単位で指定します。
@@ -600,7 +600,7 @@ function MessageLayer_config()
 // 負の数値を指定すると字間が詰まります。正の数値を指定すると字間が空きま
 // す。
 ;defaultPitch = 0; // defstyle タグの pitch 属性に相当
-;defaultPitch = 1; // defstyle タグの pitch 属性に相当
+;defaultPitch = __si("1", "defaultpitch_basic"); // defstyle タグの pitch 属性に相当
 
 
 // ◆ 文字の書体
@@ -612,7 +612,7 @@ function MessageLayer_config()
 // カンマで区切って複数のフォントを指定することができます。その場合は、最初
 // の方に書いたフォントが存在すれば、優先されます。
 ;userFace = "ＭＳ Ｐ明朝"; // deffont タグの face 属性に相当
-;userFace = "明朝D"; // deffont タグの face 属性に相当
+;userFace = __s("明朝D", "window_font_face"); // deffont タグの face 属性に相当
 
 
 // ◆ 文字の色
@@ -623,12 +623,13 @@ function MessageLayer_config()
 // ◆ 文字をボールドにするか
 // する場合は true, しない場合は false を指定します。
 ;defaultBold = true; // deffont タグの bold 属性に相当
+;defaultBold = __sb("1", "defaultbold_basic");
 
 
 // ◆ ルビサイズ
 // ルビサイズを pixel 単位で指定します。
 ;defaultRubySize = 10; // deffont タグの rubysize に相当
-;defaultRubySize = 12; // deffont タグの rubysize に相当
+;defaultRubySize = __si("12", "defaultrubysize_basic"); // deffont タグの rubysize に相当
 
 
 // ◆ ルビ の表示オフセット
@@ -726,6 +727,9 @@ function MessageLayer_config()
 
 //[start-messagelayer-additionals]
 
+// Extra stuff that needs to be changed for i18n
+;displaysInFixedPitchAlsoByVariable = __si("0", "displaysinfixedpitchalsobyvariable_basic"); // defstyle タグの pitch 属性に相当
+
 //[end-messagelayer-additionals]
 
 }
@@ -769,17 +773,17 @@ function HistoryLayer_config()
 
 // ◆ フォント名
 ;fontName = "ＭＳ Ｐ明朝";
-;fontName = "明朝D";
+;fontName = __s("明朝D", "history_font_face");
 
 
 // ◆ フォントを太字にするか
 ;fontBold = true;
-;fontBold = false;
+;fontBold = __sb("0", "font_bold_history");
 
 
 // ◆ フォントのサイズ ( pixel単位)
 ;fontHeight = 24;
-;fontHeight = 26;
+;fontHeight = __si("26", "font_height_history");
 
 
 // ◆ ラインの高さ
@@ -819,10 +823,10 @@ function HistoryLayer_config()
 
 // ◆ マージン設定
 // メッセージレイヤーと同じにする
-;marginL = 142; // 左余白
-;marginR = 142; // 右余白
-;marginT = 69; // 上余白
-;marginB = 69; // 下余白
+;marginL = __si("142", "marginl_history"); // 左余白
+;marginR = __si("142", "marginr_history"); // 右余白
+;marginT = __si("69", "margint_history"); // 上余白
+;marginB = __si("69", "marginb_history"); // 下余白
 
 // ◆ 右文字マージン
 // 禁則処理用にあけておく右端の文字数を指定します。

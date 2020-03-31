@@ -465,7 +465,7 @@ function CFopenSystem(firsttime=false)
 			"page"=>PRIMARY,"class"=>"MessageMenuItemLayer","left"=>465,"top"=>293,"width"=>490,"height"=>85,
 			"absolute"=>9000+CFbaseAbsolute,"opacity"=>1,"name"=>"フェードサンプル表示","margin"=>0,
 			"framecolor"=>0,"frameopacity"=>0,"linespacing"=>9,"msgdelay"=>1500, "ibv"=>false, "visible"=>true,
-			enabled:!cf.lme_disable, str:"魔法使いの夜 ABC abc 012", cont:cont
+			enabled:!cf.lme_disable, str:__("魔法使いの夜 ABC abc 012"), cont:cont
 		]));
 		sample.updateTextInfo	= function
 		{
@@ -536,7 +536,7 @@ function configChgWindowStyle(item)
 			item.release();
 			return;
 		}
-		askYesNo("フルスクリーン表示に変更しますか？",, CFtoFullScreen, configChgWindowStyleNo, item);
+		askYesNo(__("フルスクリーン表示に変更しますか？"),, CFtoFullScreen, configChgWindowStyleNo, item);
 	}
 	else if(item.name == "ウィンドウ表示")
 	{
@@ -545,7 +545,7 @@ function configChgWindowStyle(item)
 			item.release();
 			return;
 		}
-		askYesNo("ウィンドウ表示に変更しますか？",, CFtoWindow, configChgWindowStyleNo, item);
+		askYesNo(__("ウィンドウ表示に変更しますか？"),, CFtoWindow, configChgWindowStyleNo, item);
 	}
 	else
 	{
@@ -765,7 +765,7 @@ function changeUserChSpeedWithCheck(value)
 	tf.lastUserChSpeed	= last if tf.lastUserChSpeed === void;
 	if(!sf.userChSpeedChecked && value < RecommendedSettings.userChSpeed)
 	{
-		askYesNo("未読メッセージ表示間隔を推奨以下に設定した場合、一部演出がカットされることがあります。\n変更してもよろしいですか？",
+		askYesNo(__("未読メッセージ表示間隔を推奨以下に設定した場合、一部演出がカットされることがあります。\n変更してもよろしいですか？"),
 			"設定変更確認", onFastUserChSpeed, cancelFastUserChSpeed);
 		return tf.newUserChSpeed = value;
 	}
@@ -824,7 +824,7 @@ function CFopenMessage(firsttime=false)
 			"mouseup"=> cmd1, keydown:cmd1, mousemove:cmd2,
 			upItems:["システム"], downItems:["未読ページ末一気"], leftItems:[void], rightItems:[void],
 			value:kag.userChSpeed, cont:cont,
-			"hint"=>"未読メッセージの表示間隔(ミリ秒)を変更します[推奨: "+RecommendedSettings.userChSpeed+"]"
+			"hint"=>__("未読メッセージの表示間隔(ミリ秒)を変更します[推奨: %s]").sprintf(RecommendedSettings.userChSpeed)
 		]));
 
 		var	lastabsolute	= .getProp("フォント変更", "absolute", PRIMARY);
@@ -844,7 +844,7 @@ function CFopenMessage(firsttime=false)
 			"mouseup"=> cmd, keydown:cmd, mousemove:cmd,
 			upItems:["フォント変更"], downItems:["既読ページ末一気"], leftItems:[void], rightItems:[void],
 			value:kag.userCh2ndSpeed, cont:cont,
-			"hint"=>"既読メッセージの表示間隔(ミリ秒)を変更します[推奨: "+RecommendedSettings.userCh2ndSpeed+"]"
+			"hint"=>__("既読メッセージの表示間隔(ミリ秒)を変更します[推奨: %s]").sprintf(RecommendedSettings.userCh2ndSpeed)
 		]));
 
 		lastabsolute	= .getProp("既読ページ末一気", "absolute", PRIMARY);
@@ -865,7 +865,7 @@ function CFopenMessage(firsttime=false)
 			"mouseup"=> cmd, keydown:cmd, mousemove:cmd,
 			upItems:["既読ページ末一気"], downItems:["オート改行切替時間変更"], leftItems:[void], rightItems:[void],
 			value:kag.autoModePageWait \ 50, cont:cont,
-			"hint"=>"オートモード時のページ切替時間(ミリ秒)を変更します[推奨: "+RecommendedSettings.autoModePageWait+"]"
+			"hint"=>__("オートモード時のページ切替時間(ミリ秒)を変更します[推奨: %s]").sprintf(RecommendedSettings.autoModePageWait)
 		]));
 
 		items.add(.addMenuItem(%[
@@ -885,7 +885,7 @@ function CFopenMessage(firsttime=false)
 			"mouseup"=> cmd, keydown:cmd, mousemove:cmd,
 			upItems:["オートページ切替時間変更"], downItems:["Back"], leftItems:[void], rightItems:[void],
 			value:kag.autoModeLineWait \ 10, cont:cont,
-			"hint"=>"オートモード時の改行待ち時間(ミリ秒)を変更します[推奨: "+RecommendedSettings.autoModeLineWait+"]"
+			"hint"=>__("オートモード時の改行待ち時間(ミリ秒)を変更します[推奨: %s]").sprintf(RecommendedSettings.autoModeLineWait)
 		]));
 
 		items.add(item = .addMenuItem(%[
@@ -941,7 +941,7 @@ function CFopenMessage(firsttime=false)
 			"page"=>PRIMARY,"class"=>"MessageMenuItemLayer","left"=>79,"top"=>180,"width"=>394,"height"=>42,
 			"absolute"=>baseabsolute+10,"opacity"=>1,"name"=>"メッセージサンプル表示","margin"=>2,
 			"framecolor"=>0,"frameopacity"=>0,"linespacing"=>9,"msgdelay"=>1500, "ibv"=>false, "visible"=>true,
-			text:"<w500>魔法使いの夜 ABC abc 012<w1000>", cont:cont
+			text:__("<w500>魔法使いの夜 ABC abc 012<w1000>"), cont:cont
 		]));
 
 		var	delay	= 100;
@@ -1038,7 +1038,7 @@ function configMessageMouseUp(item)
 	case "未読ページ末一気":
 		if(!item.on && !sf.nonStopToPageBreakChecked)
 		{
-			askYesNo("メッセージをページ末まで一気に表示する場合、一部演出がカットされることがあります。\n変更してもよろしいですか？",
+			askYesNo(__("メッセージをページ末まで一気に表示する場合、一部演出がカットされることがあります。\n変更してもよろしいですか？"),
 				"設定変更確認",  onNonStopToPageBreak, cancelNonStopToPageBreak);
 			item.on	= true;
 			break;
@@ -1249,10 +1249,10 @@ function CFopenFontSelect()
 		{
 			.updateTestRuby	= function
 			{
-				setRuby(%[text:"まほうつかいのよる ABC 012", char:length]);
+				setRuby(%[text:__("まほうつかいのよる ABC 012"), char:length]);
 				update();
 			} incontextof item;
-			.text	= "魔法使いの夜 ABC 012"+"<s>";
+			.text	= __("魔法使いの夜 ABC 012<s>");
 			.length	= .text.length - 3;
 			.updateTestRuby();
 			.ssact(time, "zoom", 100);
@@ -1377,7 +1377,7 @@ function CFopenSound(firsttime=false)
 			"mouseup"=> "kag.bgmPropVolume=int(this.value+0.5);",
 			"keydown"=>"kag.bgmPropVolume=int(this.value+0.5);",
 			upItems:[ "システム" ], downItems:[ "BGMミュート" ], cont:cont,
-			"hint"=>"BGMボリュームを変更します"
+			"hint"=>__("BGMボリュームを変更します")
 		]));
 		item.value	= kag.bgmPropVolume;
 		var	lastabsolute= .getProp("BGMミュート", "absolute", PRIMARY);
@@ -1390,7 +1390,7 @@ function CFopenSound(firsttime=false)
 			"mouseup"=> "kag.sePropVolume=int(this.value+0.5);",
 			"keydown"=> "kag.sePropVolume=int(this.value+0.5);",
 			upItems:[ "BGMミュート" ], downItems:[ "SEミュート" ], cont:cont,
-			"hint"=>"効果音ボリュームを変更します"
+			"hint"=>__("効果音ボリュームを変更します")
 		]));
 		item.value	= kag.sePropVolume;
 		lastabsolute= .getProp("SE再生テスト", "absolute", PRIMARY);
@@ -1403,7 +1403,7 @@ function CFopenSound(firsttime=false)
 			"mouseup"=> "kag.systemSEVolume=int(this.value+0.5);",
 			"keydown"=> "kag.systemSEVolume=int(this.value+0.5);",
 			upItems:["SE再生テスト"], downItems:[ "SYSSEミュート" ], cont:cont,
-			"hint"=>"システム効果音ボリュームを変更します"
+			"hint"=>__("システム効果音ボリュームを変更します")
 		]));
 		item.value	= kag.systemSEVolume;
 		items.add(item = .addMenuItem(%[
@@ -1447,7 +1447,7 @@ function CFopenSound(firsttime=false)
 			"mousemove"=>"kag.drawSpeedProp=int(this.value+0.5);",
 			"mouseup"=> "kag.drawSpeedProp=int(this.value+0.5);",
 			upItems:[ "ショートカットキー" ], downItems:[ "演出スキップする" ], cont:cont,
-			"hint"=>"演出速度を変更します"
+			"hint"=>__("演出速度を変更します")
 		]));
 		item.value	= kag.drawSpeedProp;
 		items.add(item = .addMenuItem(%[
@@ -1523,7 +1523,7 @@ function configSeMouseUp(item)
 	case "特殊効果表示しない":
 		if(!sf.speffectChecked)
 		{
-			askYesNo("特殊効果を表示しない場合、一部演出がカットされることがあります。\n変更してもよろしいですか？",
+			askYesNo(__("特殊効果を表示しない場合、一部演出がカットされることがあります。\n変更してもよろしいですか？"),
 				"設定変更確認", onNoSPEffect, cancelNoSPEffect);
 			item.on	= true;
 			break;

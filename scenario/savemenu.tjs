@@ -380,7 +380,7 @@ function askSaveBySaveMenu(no)
 			pgname	= pgname.substr(pgname.indexOf("]")+1);	//	先頭の [*] は削除する
 			place	= "archive";
 		}
-		askYesNo("現在の状態を"+place+"「"+pgname+"」へ[r]上書き保存してもよろしいですか？",, saveBySaveMenu,, [no, sf.last_svld_pageno], );
+		askYesNo(__("現在の状態を%s「%s」へ[r]上書き保存してもよろしいですか？").sprintf(place, pgname),, saveBySaveMenu,, [no, sf.last_svld_pageno], );
 	}
 	else
 		saveBySaveMenu([no, sf.last_svld_pageno]);
@@ -600,7 +600,7 @@ function askDeleteBySaveMenu(no, prefix="Save")
 		pgname	= pgname.substr(pgname.indexOf("]")+1);	//	先頭の [*] は削除する
 		place	= "archive";
 	}
-	askYesNo(place+"「"+pgname+"」を[r]削除してもよろしいですか？",, deleteBySaveMenu,, [no, prefix]);
+	askYesNo(__("%s「%s」を[r]削除してもよろしいですか？").sprintf(place, pgname),, deleteBySaveMenu,, [no, prefix]);
 }
 //	セーブデータを削除する
 function deleteBySaveMenu(param)

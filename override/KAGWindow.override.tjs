@@ -148,12 +148,12 @@ class KAGWindow_override extends KAGWindow_original
 		}
 
 		//	テキスト履歴のビットマップフォントを割り当てる
-		if(historyLayer.font.face == "明朝D") with(historyLayer.font)
+		if(historyLayer.font.face == __s("明朝D", "history_prerendered_font_face")) with(historyLayer.font)
 		{//	ビットマップフォントを割り当てる
-			.mapPrerenderedFont("筑紫明朝d.tft");
+			.mapPrerenderedFont(__s("筑紫明朝d.tft", "history_prerendered_font_file"));
 			var	fh	= .height;
 			.height	= current.defaultRubySize;
-			.mapPrerenderedFont("筑紫明朝d_rb.tft");
+			.mapPrerenderedFont(__s("筑紫明朝d_rb.tft", "history_prerendered_ruby_font_file"));
 			.height	= fh;
 		}
 
@@ -1298,9 +1298,9 @@ class KAGWindow_override extends KAGWindow_original
 		if(skipMode == 3 && last != 3)
 		{
 			if(cf.ch2ndSkip)
-				popupMessage("オート既読スキップを開始します");
+				popupMessage(__("オート既読スキップを開始します"));
 			else
-				popupMessage("未読シーンまでスキップします");
+				popupMessage(__("未読シーンまでスキップします"));
 		}
 	}
 
@@ -1330,10 +1330,10 @@ class KAGWindow_override extends KAGWindow_original
 			if(cf.ch2ndSkip && byuser && !f.do_archive)
 			{
 				cf.ch2ndSkip	= false;
-				popupMessage("オート既読スキップを解除しました");
+				popupMessage(__("オート既読スキップを解除しました"));
 			}
 			else
-				popupMessage("既読スキップを解除しました");
+				popupMessage(__("既読スキップを解除しました"));
 		}
 //		storeFlags() if skipMode != 0;	//	スキップを解除した時点で状態保存が必要
 
@@ -1344,7 +1344,7 @@ class KAGWindow_override extends KAGWindow_original
 	{
 //		dmt("kag.cancelAutoMode()");
 @if(!USE_RECORD)
-		popupMessage("自動再生を解除しました") if autoMode && notify;
+		popupMessage(__("自動再生を解除しました")) if autoMode && notify;
 @endif
 		super.cancelAutoMode();
 	}
@@ -1352,7 +1352,7 @@ class KAGWindow_override extends KAGWindow_original
 	function enterAutoMode(notify=true)
 	{
 @if(!USE_RECORD)
-		popupMessage("自動再生を開始します") if !autoMode && notify;
+		popupMessage(__("自動再生を開始します")) if !autoMode && notify;
 @endif
 		super.enterAutoMode();
 	}
@@ -1491,7 +1491,7 @@ class KAGWindow_override extends KAGWindow_original
 	{
 		if(historyLayer.dataPages < 1)
 		{
-			popupMessage("表示すべき履歴がまだ存在しません。");
+			popupMessage(__("表示すべき履歴がまだ存在しません。"));
 			return;		//	履歴がまだ無い状態では表示させない
 		}
 
@@ -2039,7 +2039,7 @@ class KAGWindow_override extends KAGWindow_original
 			with(kag.conductor)
 				Clipboard.asText	= "位置: \""+.curStorage+"\",\""+.curLabel+"\","+.curLine+","+.curLineStr+","+fn+"\n"+"-".repeat(80)+"\n";
 
-			popupMessage("セーブし、クリップボードに場所を示すテキストを入れました。");
+			popupMessage(__("セーブし、クリップボードに場所を示すテキストを入れました。"));
 		}
 @endif
 		else
@@ -2851,11 +2851,8 @@ class KAGWindow_override extends KAGWindow_original
 		if(num < numBookMarks && !Storages.isExistentStorage(getBookMarkFileNameAtNum(num)))
 			return false;
 		// そのとき、削除しても良いかをたずねる
-		var prompt;
-		if(bookMarkProtectedStates[num])
-			prompt	= "上書き禁止のデータですが、";
+		var prompt = __("%s「%s」を削除しますか？").sprintf(bookMarkProtectedStates[num] ? __("上書き禁止のデータですが、") : "", bookMarkNames[num]);
 //		prompt += "「"+ bookMarkNames[num] + "」\n[記録日時:"+bookMarkDates[num]+"]を削除しますか？";
-		prompt += "「"+ bookMarkNames[num] + "」を削除しますか？";
 		askYesNo(prompt, "確認", eraseBookMarkAskOk,, num, func);
 	}
 	function eraseBookMarkAskOk(num)
@@ -2909,13 +2906,13 @@ class KAGWindow_override extends KAGWindow_original
 		var	last	= list[list.count - 1];
 		saveQuick(last[0]);
 //		bookMarkComments[last[0] + normalBookMarks]	= comment if comment != "";
-		popupMessage("QuickSaveしました") if notify && typeof global.popupMessage != "undefined";
+		popupMessage(__("QuickSaveしました")) if notify && typeof global.popupMessage != "undefined";
 	}
 
 	//	クイックロードする
 	function loadQuick(num)
 	{
-		askYesNo("「"+getQuickPage(num)+"」を[r]ロードしてもよろしいですか？",, doLoadQuick,, num);
+		askYesNo(__("「%s」を[r]ロードしてもよろしいですか？").sprintf(getQuickPage(num)),, doLoadQuick,, num);
 	}
 
 	function doLoadQuick(num)
@@ -4279,7 +4276,7 @@ class KAGWindow_override extends KAGWindow_original
 		{//	セーブデータのロードに失敗したら、タイトル画面へ戻る
 			conductor.loadScenario("first.ks");
 			conductor.goToLabel("*titlemenu");
-			popupMessage("セーブデータが破損しているため、タイトル画面へ移動します。");
+			popupMessage(__("セーブデータが破損しているため、タイトル画面へ移動します。"));
 		}
 		dm("処理を開始します");
 		if(conductor.status != conductor.mRun) conductor.run();

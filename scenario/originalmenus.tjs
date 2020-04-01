@@ -257,6 +257,7 @@ function inMenu(name, vismsg=false)
 //	dmt("inMenu("+name, vismsg+"): "+__menuStack.count);
 	if(__menuStack.count == 0) with(kag)
 	{
+		global.kag.disableRestartMenus();
 		__lastStable	= true;
 		.inStable <-> __lastStable;	//	停止状態にする
 		.setHistoryOptions(%[enabled:false]);	//	テキスト履歴を無効化
@@ -322,6 +323,7 @@ function outMenu(name, force=false, vismsg=true)
 				.messageLayerHiding	= false;
 			.setMenuAccessibleAll();
 			.enableEffectSkip	= true;		//	瞬間表示を許可する
+			global.kag.enableRestartMenus();
 		}
 	}
 }

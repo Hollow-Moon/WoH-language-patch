@@ -5,17 +5,17 @@
  *	右クリックメニュー
  */
 var	RClickTips	= %[
-	savemenu	:__("進行状況を保存します"),
-	loadmenu	:__("保存した地点に復帰します"),
-	configmenu	:__("各種設定を行います"),
-	autoplay	:__("自動再生を開始します"),
-	startskip	:__("未読文章までのスキップを開始します"),
-	backlog		:__("テキスト履歴を表示します"),
-	returntitle	:__("タイトルへ戻ります"),
-	returnarchive:__("Archive へ戻ります"),
-	graphic		:__("このメニューを隠して、画像のみにします"),
-	exitgame	:__("ゲームを終了します"),
-	rclick_back	:__("一つ前に戻ります"),
+	savemenu	:__t("進行状況を保存します"),
+	loadmenu	:__t("保存した地点に復帰します"),
+	configmenu	:__t("各種設定を行います"),
+	autoplay	:__t("自動再生を開始します"),
+	startskip	:__t("未読文章までのスキップを開始します"),
+	backlog		:__t("テキスト履歴を表示します"),
+	returntitle	:__t("タイトルへ戻ります"),
+	returnarchive:__t("Archive へ戻ります"),
+	graphic		:__t("このメニューを隠して、画像のみにします"),
+	exitgame	:__t("ゲームを終了します"),
+	rclick_back	:__t("一つ前に戻ります"),
 ];
 //	右クリックしたとき
 function doRClick()
@@ -339,7 +339,7 @@ function gotoArchive()
 //	tips 表示指定
 function drawRClickTips(text)
 {
-	tf.rclick_tips	= text;
+	tf.rclick_tips	= __(text);
 	asyncCaller.callOnce(updateRClickTips);
 }
 //	tips 消去指定

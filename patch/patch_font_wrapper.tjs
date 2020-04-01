@@ -1,0 +1,275 @@
+﻿class FontWrapper
+{
+	var font;
+	var layer;
+
+@if(HD_MODE)
+	var originalHeight;
+
+	property widthScale { getter { return layer.widthScale; } }
+	property heightScale { getter { return layer.heightScale; } }
+@endif
+
+	function FontWrapper(font, layer)
+	{
+		this.font = font;
+		this.layer = layer;
+@if(HD_MODE)
+		originalHeight = font.height;
+@endif
+		global.automapPrerenderedFont(font) if typeof global.automapPrerenderedFont !== "undefined";
+	}
+
+	property height
+	{
+		getter
+		{
+@if(HD_MODE)
+			return originalHeight;
+@endif
+@if(!HD_MODE)
+			return font.height;
+@endif
+		}
+		setter(v)
+		{
+@if(HD_MODE)
+			if (Math.abs(v) != originalHeight || font.height != (v * heightScale))
+@endif
+@if(!HD_MODE)
+			if (v != font.height)
+@endif
+			{
+@if(HD_MODE)
+				originalHeight = Math.abs(v);
+				font.height = v * heightScale;
+@endif
+@if(!HD_MODE)
+				font.height = v;
+@endif
+				global.automapPrerenderedFont(font) if typeof global.automapPrerenderedFont !== "undefined";
+			}
+		}
+	}
+
+	property face
+	{
+		getter
+		{
+			return font.face;
+		}
+		setter(v)
+		{
+			if (v != font.face)
+			{
+				font.face = v;
+				global.automapPrerenderedFont(font) if typeof global.automapPrerenderedFont !== "undefined";
+			}
+		}
+	}
+
+	property angle
+	{
+		getter
+		{
+			return font.angle;
+		}
+		setter(v)
+		{
+			if (v != font.angle)
+			{
+				font.angle = v;
+				global.automapPrerenderedFont(font) if typeof global.automapPrerenderedFont !== "undefined";
+			}
+
+		}
+	}
+
+	property bold
+	{
+		getter
+		{
+			return font.bold;
+		}
+		setter(v)
+		{
+			if (v != font.bold)
+			{
+				font.bold = v;
+				global.automapPrerenderedFont(font) if typeof global.automapPrerenderedFont !== "undefined";
+			}
+		}
+	}
+
+	property italic
+	{
+		getter
+		{
+			return font.italic;
+		}
+		setter(v)
+		{
+			if (v != font.italic)
+			{
+				font.italic = v;
+				global.automapPrerenderedFont(font) if typeof global.automapPrerenderedFont !== "undefined";
+			}
+		}
+	}
+
+	property strikeout
+	{
+		getter
+		{
+			return font.strikeout;
+		}
+		setter(v)
+		{
+			if (v != font.strikeout)
+			{
+				font.strikeout = v;
+				global.automapPrerenderedFont(font) if typeof global.automapPrerenderedFont !== "undefined";
+			}
+		}
+	}
+
+	property underline
+	{
+		getter
+		{
+			return font.underline;
+		}
+		setter(v)
+		{
+			if (v != font.underline)
+			{
+				font.underline = v;
+				global.automapPrerenderedFont(font) if typeof global.automapPrerenderedFont !== "undefined";
+			}
+		}
+	}
+
+	function getTextHeight(text)
+	{
+@if(HD_MODE)
+		return font.getTextHeight(text) / heightScale;
+@endif
+@if(!HD_MODE)
+		return font.getTextHeight(text);
+@endif
+	}
+
+	function getList(flags)
+	{
+		return font.getList(flags);
+	}
+
+	function mapPrerenderedFont(fontstorage)
+	{
+		return font.mapPrerenderedFont(fontstorage);
+	}
+
+	function unmapPrerenderedFont()
+	{
+		return font.unmapPrerenderedFont();
+	}
+
+@if(!DRAWTEXT_ESCAPE)
+	function getTextWidth(text)
+	{
+@if(HD_MODE)
+		return font.getTextWidth(text) / widthScale;
+@endif
+@if(!HD_MODE)
+		return font.getTextWidth(text);
+@endif
+	}
+@endif
+
+@if(DRAWTEXT_ESCAPE)
+	function getTextWidth(text, language=sf.language)
+	{
+		var fontToSpecialCharacters = languageSettings[language]["special_characters"];
+		fontToSpecialCharacters = %[] if fontToSpecialCharacters === void;
+		if (fontToSpecialCharacters[font.face] === void) {
+@if(HD_MODE)
+			return font.getTextWidth(text) / widthScale;
+@endif
+@if(!HD_MODE)
+			return font.getTextWidth(text);
+@endif
+		}
+		var specialCharacters = fontToSpecialCharacters[font.face][0];
+		var alternativeFontFace = fontToSpecialCharacters[font.face][1];
+
+		var width = 0;
+		for (var i=0; i<text.length; i++) {
+			var character = text[i];
+			if (specialCharacters.contains(character)) {
+				var previousFontFace = font.face;
+				font.face = alternativeFontFace;
+				width += font.getTextWidth(character);
+				font.face = previousFontFace;
+			} else {
+				width += font.getTextWidth(character);
+			}
+		}
+@if(HD_MODE)
+		return width / widthScale;
+@endif
+@if(!HD_MODE)
+		return width;
+@endif
+	}
+@endif
+
+	function getGlyphDrawRect(text)
+	{
+		var rect = font.getGlyphDrawRect(text);
+@if(HD_MODE)
+		rect.setSize(rect.width / widthScale, rect.height / widthScale);
+@endif
+		return rect;
+	}
+
+	function getEscWidthX(text)
+	{
+@if(HD_MODE)
+		return font.getEscWidthX(text) / widthScale;
+@endif
+@if(!HD_MODE)
+		return font.getEscWidthX(text);
+@endif
+	}
+
+	function getEscWidthY(text)
+	{
+@if(HD_MODE)
+		return font.getEscWidthY(text) / widthScale;
+@endif
+@if(!HD_MODE)
+		return font.getEscWidthY(text);
+@endif
+	}
+
+	function getEscHeightX(text)
+	{
+@if(HD_MODE)
+		return font.getEscHeightX(text) / heightScale;
+@endif
+@if(!HD_MODE)
+		return font.getEscHeightX(text);
+@endif
+	}
+
+	function getEscHeightY(text)
+	{
+@if(HD_MODE)
+		return font.getEscHeightY(text) / heightScale;
+@endif
+@if(!HD_MODE)
+		return font.getEscHeightY(text);
+@endif
+	}
+
+}

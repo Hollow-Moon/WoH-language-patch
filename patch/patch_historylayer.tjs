@@ -1,0 +1,87 @@
+﻿
+global.HistoryLayer_patch_historylayer_original = HistoryLayer;
+class HistoryLayer_patch_historylayer_override extends HistoryLayer_patch_historylayer_original
+{
+	function HistoryLayer_patch_historylayer_override()
+	{
+		super.HistoryLayer(...);
+	}
+
+	function HistoryLayer()
+	{
+		HistoryLayer_patch_historylayer_override(...);
+	}
+
+	function repage()
+	{
+		//Do not repage if page is empty (whitespaces count as content if you want to force an empty page).
+		var i;
+		var allEmpty = true;
+		for(i=0; i<data[dataPage].count; i++)
+		{
+			if(data[dataPage][i] != "")
+			{
+				allEmpty = false;
+			}
+		}
+		if(allEmpty && currentLine == "") return; // 何もデータが入っていない場合、なにもしない
+		super.repage();
+	}
+
+	function getCurrentLineWidth()
+	{
+		return font.getTextWidth(currentLine);
+	}
+
+	function store(ch)
+	{
+		if(!autoReturn)
+		{
+			// 自動改行を行わない場合
+			currentLine += ch;
+		}
+		else
+		{
+			// 自動改行を行う場合
+@if(0)
+			var len;
+			if((len = font.getTextWidth(currentLine += ch)) >= relinePos)
+@endif
+			var len = getCurrentLineWidth() + font.getTextWidth(ch);
+			currentLine += ch;
+			if(len >= relinePos)
+			{
+				var curlen = currentLine.length;
+				var lastch = curlen >= 2 ? currentLine[curlen - 2] : '';
+
+				if(((lastch=='' || wwLeading.indexOf(lastch)==-1) &&
+					wwFollowing.indexOf(ch)==-1) ||
+					(lastch!='' && wwFollowingWeak.indexOf(lastch)!=-1 &&
+						wwFollowingWeak.indexOf(ch)!=-1) || len > limitPos)
+				{
+					// 最後に描画したのが行末禁則文字でない場合
+					// しかもこれから描画するのが行頭禁則文字でない
+					// 場合
+					// または弱禁則文字が連続していない場合
+					// はたまたこれから描画するのが強禁則文字ではなくて、
+					// 確実に 右端を越える場合
+					// ( この場合は余白は考えない )
+					currentLine=
+						currentLine.substring(0, currentLine.length - ch.length);	//	追加した文字を取り除く
+					reline();
+@if(0)
+					currentLine = ch;
+@endif
+					currentLine = ch != " "? ch : "";
+				}
+			}
+		}
+	}
+
+	function beginIndent()
+	{
+		super.beginIndent();
+		indentPos += lineStart[dataPage][dataPos];
+	}
+}
+global.HistoryLayer = HistoryLayer_patch_historylayer_override;

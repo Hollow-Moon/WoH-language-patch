@@ -1,0 +1,407 @@
+﻿@if(__WORDWRAP_DEFINED__==0)
+@set(__WORDWRAP_DEFINED__=1)
+
+KAGLoadScript("patch_conductor.tjs");
+
+global.HistoryLayer_patch_wordwrap_original = HistoryLayer;
+class HistoryLayer_patch_wordwrap_override extends HistoryLayer_patch_wordwrap_original
+{
+	function HistoryLayer_patch_wordwrap_override()
+	{
+		super.HistoryLayer(...);
+	}
+
+	function HistoryLayer()
+	{
+		HistoryLayer_patch_wordwrap_override(...);
+	}
+
+	function nextWord(word)
+	{
+		var currentWordWidth = font.getTextWidth(word);
+		if ((getCurrentLineWidth() + currentWordWidth) >= relinePos && currentWordWidth < relinePos) {
+			if (reline())
+				return autoReturn;
+		}
+		return false;
+	}
+}
+global.HistoryLayer = HistoryLayer_patch_wordwrap_override;
+
+global.MessageLayer_patch_wordwrap_original = MessageLayer;
+class MessageLayer_patch_wordwrap_override extends MessageLayer_patch_wordwrap_original
+{
+	function MessageLayer_patch_wordwrap_override()
+	{
+		super.MessageLayer(...);
+	}
+
+	function MessageLayer()
+	{
+		MessageLayer_patch_wordwrap_override(...);
+	}
+
+	function nextWord(word)
+	{
+		var layer_to_check;
+		if (typeof(this.lineLayer) === "Object")
+		{
+			layer_to_check = this.lineLayer;
+		}
+		else if (typeof(this.getCharLayer) === "Object")
+		{
+			layer_to_check = this.getCharLayer();
+			layer_to_check.setFont(fontFace, fontAngle, bold, fontItalic, fontSize);
+		}
+		var currentWordWidth = layer_to_check.font.getTextWidth(word);
+		if ((x + currentWordWidth) >= relinexpos && currentWordWidth < relinexpos) {
+			if (reline())
+				return autoReturn;
+		}
+		return false;
+	}
+}
+global.MessageLayer = MessageLayer_patch_wordwrap_override;
+
+global.KAGWindow_patch_wordwrap_original = KAGWindow;
+class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_original
+{
+	function KAGWindow_patch_wordwrap_override()
+	{
+		super.KAGWindow(...);
+	}
+
+	function KAGWindow()
+	{
+		KAGWindow_patch_wordwrap_override(...);
+	}
+
+	function onConductorScenarioLoad()
+	{
+		words = [];
+		inQuotes = 0;
+		return super.onConductorScenarioLoad();
+	}
+
+	var words = [];
+
+	//Chinese
+	var currentWordIndex = 0;
+	var currentCharPos = 0;
+
+	function onNewLine()
+	{
+		processQuotedLine();
+
+		if (isChinese()) {
+			words = [];
+		}
+
+		var clean = conductor.cleanLine();
+		if (sf.language == englishLanguage && !startsWith("花札", conductor.curStorage)) {
+			clean = clean.replace(/　/, " ");
+		}
+
+		if (clean == "") return;
+
+		if (isChinese()) {
+			onNewLineWordWrapChinese(clean);
+		} else if (!isJapanese()) {
+			onNewLineWordWrapSpace(clean);
+		}
+	}
+
+	function onNewLineWordWrapSpace(clean)
+	{
+		if (words.count > 0) {
+			words.erase(0);
+		}
+
+		var additionalWords = clean.split(" ");
+		for (var i = 0; i < additionalWords.count; i++) {
+			words.add(additionalWords[i]);
+		}
+		/*if (additionalWords.count > 0) {
+			dm("clean line: " + clean);
+			dm("found " + additionalWords.count + " words.");
+			dm("words queue: " + words.join("|"));
+		}*/
+	}
+
+	function onNewLineWordWrapChinese(clean)
+	{
+		//	Use continuous English characters as separators to split the line into an array of substrings. / 中英文分词
+		words = clean.split(/([A-zＡ-ｚ-]+)/);
+		currentWordIndex = 0;
+		currentCharPos = -2;
+
+		/*if (words.count > 0) {
+			dm("clean line: " + clean);
+			dm("found " + words.count + " words.");
+
+			for(var i=0; i<words.count; i++) {
+				dm("word: ['"+words[i]+"', "+i%2+"]");
+			}
+		}*/
+	}
+
+	function processWordWrapping(elm)
+	{
+		if (isChinese()) {
+			return processWordWrappingChinese(elm);
+		} else if (!isJapanese()) {
+			return processWordWrappingSpace(elm);
+		}
+		return false;
+	}
+
+	var nextWordTagName = "nextword";
+	function processWordWrappingSpace(elm)
+	{
+		if (elm.text==" " && words.count > 1) {
+			words.erase(0);
+			var nextWord = words[0];
+
+			var wordTag = %[tagname:nextWordTagName, text:nextWord];
+			conductor.pendings.insert(0,wordTag);
+			//dm("word: ["+nextWord+"]");
+		}
+		return false;
+	}
+
+	function getHandlers()
+	{
+		var handlers = super.getHandlers();
+		handlers[nextWordTagName] = function(elm)
+		{
+			if (processNextWord(elm.text))
+			{
+				return showPageBreakAndClear();
+			}
+			return 0;
+		} incontextof this;
+		handlers.ch_patch_wordwrap_original = handlers.ch;
+		handlers.ch = function(elm)
+		{
+			// 文字表示
+			var acs = actualChSpeed;
+			if(updateBeforeCh)
+			{
+				if(acs) { updateBeforeCh--; return -5; } else { updateBeforeCh--; }
+			}
+
+			if (conductor.isNewLine()) {
+				onNewLine();
+			}
+			replaceCharacters(elm);
+			if(processWordWrapping(elm)) {
+				return showPageBreakAndClear();
+			}
+
+			var text = elm.text;
+			if(currentWithBack) current.comp.processCh(text);
+			if(current.processCh(text))
+			{
+				return showPageBreakAndClear();
+			}
+			if(historyWriteEnabled) historyLayer.store(text);
+
+			processQuotesIndent(elm);
+
+			if(autoWCEnabled)
+			{
+				// 自動ウェイト
+				var ind;
+				if((ind = autoWCChars.indexOf(text)) != -1)
+				{
+					return int(acs * autoWCWaits[ind]);
+				}
+			}
+			return acs;
+		} incontextof this;
+		return handlers;
+	}
+
+	function processWordWrappingChinese(elm)
+	{
+		if(words.count > 1) {
+	//			dm(@"words[${currentWordIndex}] = ${words[currentWordIndex]}");
+			switch(currentCharPos)
+			{	//	Lookup the position of the first occurrence of current character in the current word. / 在当前词组中查找该字符第一次出现的位置
+				case -3: // 禁用
+					return false;
+				case -1:
+					break;
+				case -2:	//	This is a new word or need start from 0 position. / 新词组
+					currentCharPos++;
+				default:
+					currentCharPos = words[currentWordIndex].indexOf(elm.text, currentCharPos+1);
+					break;
+			}
+			if(currentCharPos == -1) {	//	To determine the current word needs to be processed. / 处理
+				while(currentWordIndex++ <= words.count) {
+					if(words[currentWordIndex] === void)
+					{
+						currentCharPos = -3;
+						return false;
+					}
+					else if(words[currentWordIndex].indexOf(elm.text) != -1)
+					{
+						currentCharPos = -2;
+						if(currentWordIndex%2)
+							return processNextWord(words[currentWordIndex]);
+						return false;
+					}
+				}
+			}
+			//	End of the word, the next word should be determined it needs to process. / 到该词组末尾，下一词组需要处理
+			if(currentCharPos == words[currentWordIndex].length - 1) currentCharPos = -1;
+		}
+		return false;
+	}
+
+	function processNextWord(text)
+	{
+		historyLayer.nextWord(text);
+		if(currentWithBack) current.comp.nextWord(text);
+		return current.nextWord(text);
+	}
+
+	var quotesIndentedLeft = 1;
+	var afterQuotesIndentedRight = 2;
+	var quotesMethod = 0;
+	var inQuotes = 0;
+	var openingQuote = "“";
+	var endingQuote = "”";
+	var lineStartsWithOpeningQuoteRegex = new RegExp(" {2}"+openingQuote);
+	var lineInSpeechRegex = new RegExp("^ {3}");
+
+	function processQuotesIndent(obj)
+	{
+		with (obj) {
+			if (.text == openingQuote) {
+				inQuotes++;
+				onOpeningQuote();
+			} else if (.text == endingQuote) {
+				inQuotes--;
+				onEndingQuote();
+			}
+		}
+	}
+
+	var quoteIndentation = false;
+	function processQuotedLine()
+	{
+		if ([quotesIndentedLeft, afterQuotesIndentedRight].find(quotesMethod) == -1) {
+			return;
+		}
+
+		if (!quoteIndentation) {
+			quoteIndentation = lineStartsWithOpeningQuoteRegex.test(conductor.curLineStr);
+		}
+
+		if (!quoteIndentation) return;
+
+		if (quotesMethod == afterQuotesIndentedRight) {
+			if (lineInSpeechRegex.test(conductor.curLineStr)) {
+				for (var i = 0; i < 3; i++) {
+					conductor.getNextTag();
+				}
+			}
+		}
+	}
+
+	function onOpeningQuote()
+	{
+		if (quotesMethod == afterQuotesIndentedRight && quoteIndentation) {
+			tagHandlers.indent();
+		}
+	}
+
+	function onEndingQuote()
+	{
+		if (inQuotes == 0 && quoteIndentation) {
+			quoteIndentation = false;
+			if (quotesMethod == afterQuotesIndentedRight) {
+				tagHandlers.endindent();
+			}
+		}
+	}
+}
+global.KAGWindow = KAGWindow_patch_wordwrap_override;
+
+
+// Splits text into an array of lines with wordwrapping on spaces.
+// Offset is an amount to add to the first line if you want it to be shorter
+// than the rest of the lines (negative number for longer).
+// Preserves leading spaces. Breaks lines at end of word and discards the first space between words.
+// Words longer than one line break at the first character that is over the limit.
+// If maxlines is reached, the rest of the string is returned in the last line regardless of length.
+// Note: Breaking on characters other than space (e.g. tab, hyphen) is not supported.
+function wordWrapSplit(text, maxWidth, font, offset=0, maxLines=0, directiveCharacters="")
+{
+	var directiveCharactersRegex = directiveCharacters != ""? new RegExp("["+directiveCharacters+"]", "g") : void;
+
+	var totalTextToTest = directiveCharactersRegex === void? text : text.replace(directiveCharactersRegex, "");
+	var textwidth = font.getTextWidth(totalTextToTest);
+	if (textwidth+offset < maxWidth || maxLines == 1) {
+		return [text];
+	}
+
+	var out = [];
+	var words = [].split(" ", text);
+
+	var tmp = "";
+	for (var i = 0; i < words.count; i++)
+	{
+		var space = i != 0 ? " " : "";
+		var word = space + words[i];
+		var textToTest = directiveCharactersRegex === void? (tmp+word) : (tmp+word).replace(directiveCharactersRegex, "");
+		if (font.getTextWidth(textToTest)+offset < maxWidth) {
+			tmp += word;
+		} else {
+			out.add(tmp);
+
+			if (out.count == maxLines) {
+				for (var j = i; j < words.count; j++) {
+					out[out.count-1] += space + words[j];
+				}
+				return out;
+			} else {
+				offset = 0;
+				tmp = words[i]; //No need to add space here.
+			}
+		}
+	}
+	if (tmp != "") out.add(tmp);
+	return out;
+}
+
+
+function wordWrapSplitLines(lines, maxWidth, font, offset=0, maxLines=0)
+{
+	if (typeof lines == "String") {
+		lines = lines.split("\n");
+	}
+	var out = [];
+	for (var i=0; i<lines.count; i++) {
+		var sublines = wordWrapSplit(lines[i], maxWidth, font, offset, maxLines);
+		for (var j=0; j<sublines.count; j++) {
+			out.add(sublines[j]);
+		}
+	}
+	return out;
+}
+
+function wordWrapSplitParagraphs(paragraphs, maxWidth, font, offset=0, maxLines=0) {
+	if (typeof paragraphs == "String") {
+		paragraphs = paragraphs.replace(/\n\n/g, "\v");
+		paragraphs = paragraphs.split("\v");
+	}
+	for (var p = 0; p < paragraphs.count; p++) {
+		paragraphs[p] = wordWrapSplitLines(paragraphs[p], maxWidth, font, offset, maxLines);
+	}
+	return paragraphs;
+}
+
+@endif

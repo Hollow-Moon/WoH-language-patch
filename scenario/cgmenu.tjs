@@ -709,7 +709,7 @@ function updateCGThumbnail(thumb, fn, cascade=false)
 			if(isDisplayedPicture(fn))
 			{
 				var	tfn	= "t_" + fn;
-				if(Storages.isExistentStorage(tfn+".tlg"))
+				if(Storages.isExistentImage(tfn))
 					cgThumbnailLoader.loadImages(tfn);
 				else
 					cgThumbnailLoader.fillRect(0, 0, cgThumbnailLoader.width, cgThumbnailLoader.height, 0xffffffff);
@@ -1347,11 +1347,15 @@ class CGImageLayer extends Layer
 //		dm("CGImageLayer.loadImages("+this.storage+" → "+storage, pos+")");
 		if(this.storage != storage)
 		{
+@if(0)
 			var	exts	= [ ".tlg", ".png", ".jpg" ];
+@endif
 			var	loaded	= false;
+@if(0)
 			for(var i=0; i<exts.count; i++)
+@endif
 			{
-				if(Storages.isExistentStorage(storage+exts[i]))
+				if(Storages.isExistentImage(storage))
 				{
 //					dm(storage+exts[i]+" = "+Storages.getPlacedPath(storage+exts[i]));
 					loader.loadImages(this.storage = storage);
@@ -1366,7 +1370,9 @@ class CGImageLayer extends Layer
 						invalidate layer;
 					}
 					loaded	= true;
+@if(0)
 					break;
+@endif
 				}
 			}
 			if(!loaded) with(loader)

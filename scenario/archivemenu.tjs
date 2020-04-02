@@ -512,7 +512,7 @@ function openArchiveSelectWindow(no, button)
 //	サムネイル画像のファイル名
 function AMgetThumbnailName(script)
 {
-	return Storages.chopStorageExt(Storages.extractStorageName(script)) + ".tlg";
+	return Storages.chopStorageExt(Storages.extractStorageName(script));
 }
 
 //	カーソルの示す項目が変更された
@@ -533,7 +533,7 @@ function ASWchangeCursor(no, item)
 		{
 			var	fn	= AMgetThumbnailName(list[no][i]);
 
-			if(Storages.isExistentStorage(fn))
+			if(Storages.isExistentImage(fn))
 			{
 				var	layer	= new Layer(kag, kag.primaryLayer);
 				layer.loadImages(fn);

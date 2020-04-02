@@ -66,17 +66,21 @@ class ToolWindow extends Window
 		storage	= Storages.extractStorageName(Storages.chopStorageExt(storage));
 		if(!images[storage])
 		{
+@if(0)
 			var	exts	= [ ".png", ".tlg", ".jpg", ".bmp" ];
 			for(var i=0; i<exts.count; i++)
+@endif
 			{
-				if(Storages.isExistentStorage(storage + exts[i]))
+				if(Storages.isExistentImage(storage))
 				{
 					with(images[storage] = new Layer(this, primaryLayer))
 					{
-						.loadImages(storage + exts[i]);
+						.loadImages(storage);
 						.setSizeToImageSize();
 					}
+@if(0)
 					break;
+@endif
 				}
 			}
 		}

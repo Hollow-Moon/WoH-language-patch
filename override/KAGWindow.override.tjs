@@ -2885,9 +2885,16 @@ class KAGWindow_override extends KAGWindow_original
 
 	function onReloadScenarioMenuItemClick(sender)
 	{
-		saveBookMark(1000);
-		tf.load_no = 1000;
-		process("call.ks", "*load");
+		if (__menuStack.count !== 0 && __menuStack[__menuStack.count - 1] === "title")
+		{
+			kag.process('call.ks','*rclick2title');
+		}
+		else
+		{
+			saveBookMark(1000);
+			tf.load_no = 1000;
+			process("call.ks", "*load");
+		}
 	}
 
 	//	クイックセーブのリストを取得

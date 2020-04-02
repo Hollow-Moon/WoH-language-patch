@@ -71,3 +71,46 @@ function initialize_patch_menu() {
 		}
 	};
 }
+
+global.menu_management_override = function() {
+	global.inMenu_patch_menu_original = global.inMenu;
+	global.inMenu = function(name, vismsg=false)
+	{
+		global.inMenu_patch_menu_original(name, vismsg);
+		if (__menuStack.count !== 0)
+		{
+			if (__menuStack[__menuStack.count - 1] === "title")
+			{
+				kag.enableRestartMenus();
+			}
+			else
+			{
+				kag.disableRestartMenus();
+			}
+		}
+		else
+		{
+			kag.enableRestartMenus();
+		}
+	};
+	global.outMenu_patch_menu_original = global.outMenu;
+	global.outMenu = function(name, force=false, vismsg=true)
+	{
+		global.outMenu_patch_menu_original(name, force, vismsg);
+		if (__menuStack.count !== 0)
+		{
+			if (__menuStack[__menuStack.count - 1] === "title")
+			{
+				kag.enableRestartMenus();
+			}
+			else
+			{
+				kag.disableRestartMenus();
+			}
+		}
+		else
+		{
+			kag.enableRestartMenus();
+		}
+	};
+};

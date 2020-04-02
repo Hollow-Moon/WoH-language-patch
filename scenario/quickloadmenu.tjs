@@ -76,7 +76,7 @@ function openQuickMenu()
 				for(var p=0; p<=420; p+=420)
 				{
 					panel.drawImage2Area(p+11, 12, 80, 45, fn);
-					panel.drawText2Area(p+99, 13, 305, 20, kag.getQuickPage(dt[0]), 20, color);
+					panel.drawText2Area(p+99, 13, 305, 20, __(kag.getQuickPage(dt[0])), 20, color);
 					panel.drawText2Area(p+155, 46, 161, 18, kag.getFormatDate(dt[1]), 18, color, "lc");
 				}
 			}
@@ -108,7 +108,7 @@ function eraseQuickMenu(no)
 {
 	var	no		= tf.qm_list[no][0];
 	var	pgname	= kag.getQuickPage(no);
-	askYesNo(__("「%s」のデータを[r]削除してもよろしいですか？").sprintf(pgname),, doEraseQuickMenu,, no);
+	askYesNo(__("「%s」のデータを[r]削除してもよろしいですか？").sprintf(__(pgname)),, doEraseQuickMenu,, no);
 }
 function doEraseQuickMenu(no)
 {
@@ -122,7 +122,7 @@ function loadQuickMenu(no)
 {
 	var	no		= tf.qm_list[no][0];
 	var	pgname	= kag.getQuickPage(no);
-	askYesNo(__("「%s」を[r]ロードしてもよろしいですか？").sprintf(pgname),, doLoadQuickMenu,, no);
+	askYesNo(__("「%s」を[r]ロードしてもよろしいですか？").sprintf(__(pgname)),, doLoadQuickMenu,, no);
 	QLcmd("release", no);
 }
 function QLcmd(cmd, no)

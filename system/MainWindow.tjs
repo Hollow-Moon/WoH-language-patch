@@ -2757,7 +2757,7 @@ class KAGWindow extends Window
 		var result;
 		if(ask)
 		{
-			var prompt = __("「%s」まで戻りますか？").sprintf(historyOfStore[0].core.currentPageName);
+			var prompt = __("「%s」まで戻りますか？").sprintf(__(historyOfStore[0].core.currentPageName));
 @if(0)
 			result = askYesNo(prompt);
 @endif
@@ -3216,7 +3216,7 @@ class KAGWindow extends Window
 		var prompt = __("栞 %s%sに「%s」をはさみますか?").sprintf(
 			(num < numBookMarks) ? (num + 1) : "",
 			(bookMarkDates[num] != "") ? "「" + bookMarkNames[num] + "」" : "", // bookMarkDates が空文字の場合は栞は存在しない
-			pcflags.currentPageName
+			__(pcflags.currentPageName)
 		);
 @if(0)
 		var result = askYesNo(prompt);
@@ -3256,7 +3256,7 @@ class KAGWindow extends Window
 
 		var initialname = saveDataLocation + "/";
 		var through = false;
-		var orgname = currentPageName;
+		var orgname = __(currentPageName);
 
 		if(lastSaveDataNameGlobal != "")
 		{
@@ -7629,7 +7629,7 @@ class KAGWindow extends Window
 		}
 		if (skipNoDispWin !== void) {
 			skipNoDispWin.visible = true;
-			var title = __("次の選択肢までスキップ中:%s").sprintf(currentPageName);
+			var title = __("次の選択肢までスキップ中:%s").sprintf(__(currentPageName));
 			skipNoDispWin.fillRect(0, 0, skipNoDispWin.width, skipNoDispWin.height, 0xa0000000);
 			skipNoDispWin.drawText(10, 10, title , 0xffffff);
 		}

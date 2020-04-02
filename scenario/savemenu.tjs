@@ -231,7 +231,7 @@ function openSaveMenu(snapwithmenuitem=false)
 					drawImage2Area(l, 2, 13, 17, "archive_本アイコン",, 21 * (icon-1), 0, 21, 24);
 					l	+= 14;
 				}
-				drawText2Area(l, 1, 238, 18, pagename, 18, 0xFFFFFF, "lc",,,false);	//１行のみ
+				drawText2Area(l, 1, 238, 18, __(pagename), 18, 0xFFFFFF, "lc",,,false);	//１行のみ
 				drawText2Area(5, 21, 238, 18, kag.getBookMarkDate(dno), 18, 0xFFFFFF, "lc");
 				var	edit	= Menu_object.find("コメント編集", PRIMARY);
 				var	cmt	= kag.getBookMarkComment(dno);
@@ -380,7 +380,7 @@ function askSaveBySaveMenu(no)
 			pgname	= pgname.substr(pgname.indexOf("]")+1);	//	先頭の [*] は削除する
 			place	= "archive";
 		}
-		askYesNo(__("現在の状態を%s「%s」へ[r]上書き保存してもよろしいですか？").sprintf(place, pgname),, saveBySaveMenu,, [no, sf.last_svld_pageno], );
+		askYesNo(__("現在の状態を%s「%s」へ[r]上書き保存してもよろしいですか？").sprintf(place, __(pgname)),, saveBySaveMenu,, [no, sf.last_svld_pageno], );
 	}
 	else
 		saveBySaveMenu([no, sf.last_svld_pageno]);
@@ -600,7 +600,7 @@ function askDeleteBySaveMenu(no, prefix="Save")
 		pgname	= pgname.substr(pgname.indexOf("]")+1);	//	先頭の [*] は削除する
 		place	= "archive";
 	}
-	askYesNo(__("%s「%s」を[r]削除してもよろしいですか？").sprintf(place, pgname),, deleteBySaveMenu,, [no, prefix]);
+	askYesNo(__("%s「%s」を[r]削除してもよろしいですか？").sprintf(place, __(pgname)),, deleteBySaveMenu,, [no, prefix]);
 }
 //	セーブデータを削除する
 function deleteBySaveMenu(param)

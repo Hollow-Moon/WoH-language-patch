@@ -157,7 +157,7 @@ function openLoadMenu()
 					drawImage2Area(l, 2, 13, 17, "archive_本アイコン",, 21 * (icon-1), 0, 21, 24);
 					l	+= 14;
 				}
-				drawText2Area(l, 1, 238, 18, pagename, 18, 0xFFFFFF, "lc",,,false);	//１行のみ
+				drawText2Area(l, 1, 238, 18, __(pagename), 18, 0xFFFFFF, "lc",,,false);	//１行のみ
 				drawText2Area(5, 21, 238, 18, kag.getBookMarkDate(dno), 18, 0xFFFFFF, "lc");
 				var	cmt	= kag.getBookMarkComment(dno);
 				cmt = cmt.replace(/\n/, "[r]") if cmt != void;
@@ -227,7 +227,7 @@ function loadByLoadMenu(no)
 		pgname	= pgname.substr(pgname.indexOf("]")+1);	//	先頭の [*] は削除する
 		place	= "archive";
 	}
-	askYesNo(__("%s「%s」を[r]ロードしてもよろしいですか？").sprintf(place, pgname),, doLoadByLoadMenu,, no);
+	askYesNo(__("%s「%s」を[r]ロードしてもよろしいですか？").sprintf(place, __(pgname)),, doLoadByLoadMenu,, no);
 }
 function doLoadByLoadMenu(no)
 {

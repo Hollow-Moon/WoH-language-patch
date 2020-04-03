@@ -99,6 +99,10 @@ Layer.getFontList	= function(opt)
 
 Layer.setFontFace	= function(face, height=font.height, italic=font.italic)
 {
+	if (typeof(global.load_prerendered_fonts) === "Object")
+	{
+		global.load_prerendered_fonts(sf.language);
+	}
 	var	fh	= Math.abs(font.height);
 	var	nh	= Math.abs(height);
 //	dm(name+": "+font.face+" !== "+face+" || "+fh+" !== "+nh+" || "+font.italic+" !== "+italic);

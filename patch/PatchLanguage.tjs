@@ -113,6 +113,30 @@ function load_fonts(language) {
 	loaded_language_fonts.add(language);
 }
 
+var loaded_language_prerendered_fonts = [];
+function load_prerendered_fonts(language) {
+	if (loaded_language_prerendered_fonts.contains(language)) {
+		return;
+	}
+
+	if (typeof(global.bitmapFonts) === "Object")
+	{
+		var prerenderedFontFiles = getPrerenderedFontFiles(language);
+		for (var i = 0; i < prerenderedFontFiles.count; i += 2)
+		{
+			dm(("Adding prerendered font %s").sprintf(prerenderedFontFiles[i]));
+			global.bitmapFonts.push(prerenderedFontFiles[i]);
+			global.bitmapFonts.push(prerenderedFontFiles[i + 1]);
+		}
+		for (var i = 0; i < global.bitmapFonts.count; i += 2)
+		{
+			global.loadedBitmapFonts[global.bitmapFonts[i]] = global.bitmapFonts[i + 1];
+		}
+	}
+
+	loaded_language_prerendered_fonts.add(language);
+}
+
 
 function setFontWithLanguage(language)
 {
@@ -388,6 +412,11 @@ function getFontFiles(language) {
 	return (fontFiles !== void? fontFiles : []);
 }
 
+function getPrerenderedFontFiles(language) {
+	var fontFiles = languageSettings[language]["prerenderedFontFiles"];
+	return (fontFiles !== void? fontFiles : []);
+}
+
 
 function isChinese() {
 	//Catch simplified and traditional.
@@ -478,13 +507,11 @@ class Window_PatchLanguage_override extends Window_PatchLanguage_original
 		sender.checked = true;
 		extraConductor.clear(); // Fix code for AutoPath
 		onReloadScenarioMenuItemClick(sender);
-@if(0)
 		if(typeof flow_tracker_object.flowchart !== "undefined" && flow_tracker_object.flowchart.filename !== void)
 		{
 			flow_tracker_object.isPlayOK();
 			currentPageName = f.scripttitle;
 		}
-@endif
 	}
 
 	function replace_font_for_special_characters(elm)

@@ -25,6 +25,7 @@ for(var i=0; i<bitmapFonts.count; i+=2)
 Layer.getFontList	= function(opt)
 {
 	opt	= fsfSameCharSet | fsfNoVertical if opt === void;
+	opt = void;
 	var	list	= [];
 	try
 	{
@@ -40,7 +41,31 @@ Layer.getFontList	= function(opt)
 		.remove("FixedSys");
 		.remove("System");
 		.remove("Terminal");
+		.remove("Small Fonts");
+		.remove("Apple Color Emoji");
+		.remove("Courier");
+		.remove("@FixedSys");
+		.remove("GB18030 Bitmap");
+		.remove("MS Sans Serif");
+		.remove("@Small Fonts");
+		.remove("@System");
+		.remove("Fira Mono");
+		.remove("Fira Mono Medium");
 	}
+	for (var i = 0; i < list.count; i += 1)
+	{
+		try
+		{
+			font.face = list[i];
+			font.getTextWidth("A");
+			(global.Layer.drawText incontextof this)(0, 0, "A", 0, 0);
+		}
+		catch ()
+		{
+			throw new Exception(("An error occurred while attempting to enumerate the font \"%s\".").sprintf(list[i]));
+		}
+	}
+
 	for(var i=0; i<bitmapFonts.count; i+=2)
 	{
 		var	fc	= bitmapFonts[i];

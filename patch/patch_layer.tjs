@@ -99,6 +99,50 @@ class Layer_patch_layer_override extends Layer_patch_layer_original
 		}
 	}
 
+	var large_image_warning = false;
+
+	function resize(w, h)
+	{
+		if (w > 65535 || h > 65535)
+		{
+			if (!large_image_warning)
+			{
+				large_image_warning = true;
+				dm(("warning: Large resize attempt; w is %s and h is %s").sprintf(w, h));
+			}
+			return 0;
+		}
+		return super.resize(...);
+	}
+
+	function setImageSize(w, h)
+	{
+		if (w > 65535 || h > 65535)
+		{
+			if (!large_image_warning)
+			{
+				large_image_warning = true;
+				dm(("warning: Large resize attempt; w is %s and h is %s").sprintf(w, h));
+			}
+			return 0;
+		}
+		return super.setImageSize(...);
+	}
+
+	function setSize(w, h)
+	{
+		if (w > 65535 || h > 65535)
+		{
+			if (!large_image_warning)
+			{
+				large_image_warning = true;
+				dm(("warning: Large resize attempt; w is %s and h is %s").sprintf(w, h));
+			}
+			return 0;
+		}
+		return super.setSize(...);
+	}
+
 	function loadImages(storage, key)
 	{
 		var file_name = global.getFullPathFromStorageIdentifier(storage);

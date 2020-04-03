@@ -2054,12 +2054,23 @@ class KAGWindow_override extends KAGWindow_original
 			with(captureLayer)
 			{
 				.setSize(primaryLayer.width, primaryLayer.height);
+				var	ml;
+				if(singleMessageLayer)
+				{
+					ml	= new Layer(this, fore.base);
+					ml.setSize(current.width, current.height);
+					ml.piledCopy(0, 0, current, current.left, current.top, current.width, current.height);
+					ml.visible	= true;
+				}
 				.piledCopy(0, 0, fore.base, 0, 0, primaryLayer.width, primaryLayer.height);
+				invalidate ml if ml != void;
+@if(0)
 				var	copyright	= "(C)TYPE-MOON All Rights Reserved.";
 				var	margin		= 8;
 				var	fw	= .font.getTextWidth(copyright);
 				var	fh	= .font.getTextHeight(copyright);
 				.drawText(.imageWidth - fw - 8, .imageHeight - fh - 8, copyright, 0x000000, 255, true, 2048, 0xFFFFFF, 1);
+@endif
 				Clipboard.setAsBitmap(captureLayer);
 			}
 			invalidate captureLayer;

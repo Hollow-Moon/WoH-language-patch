@@ -1,8 +1,20 @@
 ﻿// Storages.tjs - パスの初期化
 
 //	リソースのあるディレクトリ名/XP3アーカイブ名
-var resourceList	= [ "bg", "bgm", "fg", "image", "event", "others", "override",
-						"rule", "scenario", "sound", "video", "voice" ];
+var resourceList = [
+	"bg",
+	"bgm",
+	"fg",
+	"image",
+	"event",
+	"others",
+	"override",
+	"rule",
+	"scenario",
+	"sound",
+	"video",
+	"voice"
+];
 
 @if(DEBUG)
 resourceList.add("debug");
@@ -55,7 +67,14 @@ Storages.addAutoPath(System.exePath+"plugin/");
 		useArchiveIfExists(resourceList[i]+".xp3");
 
 	//	個別にxp3化しないフォルダは autopath に追加
-	var	addpaths	= [ "others", "scenario", "video", "image", "patch", "update" ];
+	var	addpaths = [
+		"others",
+		"scenario",
+		"video",
+		"image",
+		"patch",
+		"update"
+	];
 	for(var i=0; i<addpaths.count; i++)
 		Storages.addAutoPath(addpaths[i]+"/");
 }

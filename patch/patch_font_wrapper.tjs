@@ -1,4 +1,12 @@
-﻿class FontWrapper
+﻿
+global.font_remap_list = %[
+	"ＭＳ Ｐゴシック" => "MS PGothic",
+	"ＭＳ ゴシック" => "MS Gothic",
+	"ＭＳ Ｐ明朝" => "MS PMincho",
+	"ＭＳ 明朝" => "MS Mincho",
+];
+
+class FontWrapper
 {
 	var font;
 	var layer;
@@ -17,6 +25,10 @@
 @if(HD_MODE)
 		originalHeight = font.height;
 @endif
+		if (typeof(global.font_remap_list[font.face]) !== "undefined")
+		{
+			font.face = global.font_remap_list[font.face];
+		}
 		global.automapPrerenderedFont(font) if typeof global.automapPrerenderedFont !== "undefined";
 	}
 
@@ -63,6 +75,10 @@
 			if (v != font.face)
 			{
 				font.face = v;
+				if (typeof(global.font_remap_list[font.face]) !== "undefined")
+				{
+					font.face = global.font_remap_list[font.face];
+				}
 				global.automapPrerenderedFont(font) if typeof global.automapPrerenderedFont !== "undefined";
 			}
 		}

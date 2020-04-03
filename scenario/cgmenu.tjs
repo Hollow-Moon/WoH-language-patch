@@ -341,6 +341,7 @@ function openCGMenu(page="fore")
 	if(tf.cg_opened)
 		return;
 	tf.cg_opened	= true;
+	inMenu("cg");
 	sf.cgMenuPageNo	= +sf.cgMenuPageNo;
 	sf.cgMenuLineNos= [] if sf.cgMenuLineNos == void;
 	sf.displayedPictures	= %[] if sf.displayedPictures == void;
@@ -529,6 +530,8 @@ function closeCGMenu()
 	delete tf.cg_no;
 	invalidate cgPageDatas if cgPageDatas != void;
 	invalidate cgChapters if cgChapters != void;
+
+	outMenu("cg");
 
 	//	まだエクストラメニューからのトランジション中なら、トランジションを停止する
 	kag.fore.base.stopTransition();

@@ -129,6 +129,8 @@ function openSoundMenu(page="fore")
 	tf.sm_randomplayed	= [];	//	曲をランダム再生したかどうか
 	tf.sm_randomplaylist	= [];	//	曲をランダム再生した順番
 
+	inMenu("sound");
+
 	//	ボリュームを記憶
 	if(tf.sm_lastbgmvolume === void)
 		tf.sm_lastbgmvolume	= kag.bgmVolume;
@@ -498,6 +500,8 @@ function closeSoundMenu()
 	delete tf.sm_playedbgms;
 	delete tf.sm_randomplayed;
 	delete tf.sm_randomplaylist;
+
+	outMenu("sound");
 
 	//	まだエクストラメニューからのトランジション中なら、トランジションを停止する
 	kag.fore.base.stopTransition();

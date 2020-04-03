@@ -153,6 +153,14 @@ function setFontWithLanguage(language)
 	{
 		var uf = sf.userFont[language];
 		.chDefaultFace				= uf.fontface;
+		if (typeof(.chDefaultBold) === "Integer")
+		{
+			.chDefaultBold				= uf.bold;
+		}
+		if (typeof(.chDefaultRubyBold) === "Integer")
+		{
+			.chDefaultRubyBold				= uf.rubybold;
+		}
 		.current.defaultBold		= uf.bold;
 		.current.defaultRubyBold	= uf.rubybold;
 		.setMessageLayerUserFont();
@@ -170,12 +178,30 @@ function setFontWithLanguage(language)
 
 function saveFontWithLanguage()
 {
+	var bold = false;
+	var rubybold = false;
 	with(kag)
 	{
+		if (typeof(.chDefaultBold) === "Integer")
+		{
+			bold = .chDefaultBold;
+		}
+		else
+		{
+			bold = .current.defaultBold;
+		}
+		if (typeof(.chDefaultRubyBold) === "Integer")
+		{
+			rubybold = .chDefaultRubyBold;
+		}
+		else
+		{
+			rubybold = .current.defaultRubyBold;
+		}
 		sf.userFont[sf.language] = %[
 			fontface:.chDefaultFace,
-			bold:.current.defaultBold,
-			rubybold:.current.defaultRubyBold
+			bold:bold,
+			rubybold:rubybold
 		];
 	}
 }

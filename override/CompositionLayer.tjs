@@ -320,7 +320,7 @@ class CompositionLayer extends Layer
 			{
 				;	//	パーツ名が空文字列
 			}
-			else if((idx = monoList.find(pn)) >= 0)
+			else if(typeof(this.monoList) === "Object" && (idx = monoList.find(pn)) >= 0)
 			{
 				layer	= new global.Layer(window, this) if layer == void;
 				pfn		= path + __Layer_monoPartsFormat.sprintf(orgstorage);
@@ -338,7 +338,7 @@ class CompositionLayer extends Layer
 				drawNormalMono	= false;	//	monoパーツを描画したので、通常のmonoパーツを描画する必要はない
 //				dm("\t\t\tdraw mono: "+pn);
 			}
-			else if(multiList.find(pn) >= 0)
+			else if(typeof(this.multiList) === "Object" && multiList.find(pn) >= 0)
 			{
 				layer	= new global.Layer(window, this) if layer == void;
 				pfn		= path + __Layer_individualFormat.sprintf(orgstorage, pn);

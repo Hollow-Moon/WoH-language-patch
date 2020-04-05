@@ -5,6 +5,8 @@
 @if(__FADELAYER_DEFINED__==0)
 @set(__FADELAYER_DEFINED__=1)
 
+@set(__USE_CONTINUOUSHANDLER=1)
+
 class FadeLayer extends KAGLayer
 {
 	var	startopac, endopac;
@@ -23,7 +25,12 @@ class FadeLayer extends KAGLayer
 
 	function finalize()
 	{
+@if(__USE_CONTINUOUSHANDLER==0)
 		invalidate timer if timer != void;
+@endif
+@if(__USE_CONTINUOUSHANDLER==1)
+		System.removeContinuousHandler(fade_handler);
+@endif
 		super.finalize(...);
 	}
 
@@ -34,7 +41,12 @@ class FadeLayer extends KAGLayer
 	//		: endfunc	フェード終了時に呼び出す関数
 	function fade(opac, time, accel, endfunc)
 	{
+@if(__USE_CONTINUOUSHANDLER==0)
 		invalidate	timer if timer != void;
+@endif
+@if(__USE_CONTINUOUSHANDLER==1)
+		System.removeContinuousHandler(fade_handler);
+@endif
 
 		if(!this isvalid)
 			return;
@@ -46,8 +58,13 @@ class FadeLayer extends KAGLayer
 		this.endfunc= endfunc;
 
 		starttick	= System.getTickCount();
+@if(__USE_CONTINUOUSHANDLER==0)
 		with(timer = new Timer(fade_handler, ""))
 			.interval = fadeInterval, .capacity = 1, .enabled = true;
+@endif
+@if(__USE_CONTINUOUSHANDLER==1)
+		System.addContinuousHandler(fade_handler);
+@endif
 	}
 
 	//	フェードの実行
@@ -70,11 +87,18 @@ class FadeLayer extends KAGLayer
 	//	フェードの停止
 	function stopfade()
 	{
+@if(__USE_CONTINUOUSHANDLER==0)
 		if(timer != void)
+@endif
 		{
 			opacity	= endopac;
+@if(__USE_CONTINUOUSHANDLER==0)
 			invalidate timer;
 			timer	= void;
+@endif
+@if(__USE_CONTINUOUSHANDLER==1)
+			System.removeContinuousHandler(fade_handler);
+@endif
 			endfunc(this) if endfunc != void;
 		}
 	}

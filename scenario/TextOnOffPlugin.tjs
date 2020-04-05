@@ -6,6 +6,8 @@
 @set(__TEXT_ON_OFF_PLUGIN__=1)
 dm("load TextOnOffPlugin.tjs");
 
+@set(__USE_CONTINUOUSHANDLER=1)
+
 // メッセージレイヤーの表示設定
 f.messageAlways	= "default" if typeof f.messageAlways == "undefined";
 
@@ -26,22 +28,38 @@ class TextOnOffPlugin extends KAGPlugin
 	{
 		super.KAGPlugin();
 
+@if(__USE_CONTINUOUSHANDLER==0)
 		timer	= new Timer(handler, "");
 		timer.interval	= default_interval;
+@endif
+@if(__USE_CONTINUOUSHANDLER==1)
+		timer = false;
+@endif
 	}
 
 	function finalize()
 	{
 		stop();
+@if(__USE_CONTINUOUSHANDLER==1)
+		System.removeContinuousHandler(handler);
+@endif
 		super.finalize(...);
 
+@if(__USE_CONTINUOUSHANDLER==0)
 		invalidate timer if timer != void;
+@endif
 	}
 
 	property turning
 	{
+@if(__USE_CONTINUOUSHANDLER==0)
 		setter(d)	{ timer.enabled	= d; }
 		getter		{ return timer.enabled; }
+@endif
+@if(__USE_CONTINUOUSHANDLER==1)
+		setter(d)	{ timer	= d; (d ? System.addContinuousHandler : System.removeContinuousHandler)(handler); }
+		getter		{ return timer; }
+@endif
 	}
 
 	property turning_on		{ getter { return turning && tovisible; } }
@@ -184,7 +202,9 @@ class TextOnOffPlugin extends KAGPlugin
 		//	更新間隔、フェード時間が記録されていれば、復帰する
 		default_fadetime	= f.textonoffplugin_default_fadetime if f.textonoffplugin_default_fadetime !== void;
 		default_interval	= f.textonoffplugin_default_interval if f.textonoffplugin_default_interval !== void;
+@if(__USE_CONTINUOUSHANDLER==0)
 		timer.interval		= default_interval;
+@endif
 	}
 }
 // プラグインオブジェクトを作成し、登録する

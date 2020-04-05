@@ -1,6 +1,8 @@
 ﻿@if(__MOUSECURSOR_PLUGIN_DEFINED__==0)
 @set(__MOUSECURSOR_PLUGIN_DEFINED__=1)
 
+@set(__USE_CONTINUOUSHANDLER=1)
+
 /*-----------------------------------------------------------------------------
 /	加速度をもった進行度の変化
 /	in	: per	進行度(0.0〜1.0)
@@ -53,7 +55,13 @@ class MouseCursorPlugin extends KAGPlugin
 
 	function finalize()
 	{
+@if(__USE_CONTINUOUSHANDLER==0)
 		invalidate moveTimer if moveTimer != void;
+@endif
+@if(__USE_CONTINUOUSHANDLER==1)
+		System.removeContinuousHandler(onTimeout4MouseMove);
+		moveTimer = false;
+@endif
 		invalidate hideTimer if hideTimer != void;
 		super.finalize(...);
 	}
@@ -90,6 +98,7 @@ class MouseCursorPlugin extends KAGPlugin
 			return false;
 		}
 
+@if(__USE_CONTINUOUSHANDLER==0)
 		if(moveTimer == void)
 		{
 			moveTimer	= new Timer(onTimeout4MouseMove, "");
@@ -99,6 +108,15 @@ class MouseCursorPlugin extends KAGPlugin
 		if(moveTimer.enabled)
 			return;
 		moveTimer.enabled	= true;
+@endif
+@if(__USE_CONTINUOUSHANDLER==1)
+		if (moveTimer)
+		{
+			return;
+		}
+		moveTimer = true;
+		System.addContinuousHandler(onTimeout4MouseMove);
+@endif
 
 		moveTime	= time === void ? defaultMoveTime : time;
 		moveAccel	= accel === void ? defaultMoveAccel : accel;
@@ -153,7 +171,13 @@ class MouseCursorPlugin extends KAGPlugin
 	{
 		if(moveTimer != void)
 		{
+@if(__USE_CONTINUOUSHANDLER==0)
 			moveTimer.enabled	= false;
+@endif
+@if(__USE_CONTINUOUSHANDLER==1)
+			System.removeContinuousHandler(onTimeout4MouseMove);
+			moveTimer = false;
+@endif
 			lastx = lasty = void;
 		}
 	}

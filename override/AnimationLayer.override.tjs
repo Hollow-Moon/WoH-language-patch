@@ -19,6 +19,8 @@
 //	レイヤーのガンマ値を指定できるようにするか
 @set(USE_GAMMA=0)
 
+@set(__USE_CONTINUOUSHANDLER=1)
+
 //Plugins.link("../../../krkrPlugins/layerExFilter/Debug/layerExFilter.dll");
 //Plugins.link("../../../krkrPlugins/layerExFilter/Release/layerExFilter.dll");
 @if(0)
@@ -161,11 +163,16 @@ class AnimationLayer_override extends AnimationLayer_original
 	//ファイナライザ
 	function finalize()
 	{
+@if(__USE_CONTINUOUSHANDLER==0)
 		if(updateTimer != void)
 		{
 			updateTimer.enabled	= false;
 			invalidate updateTimer;
 		}
+@endif
+@if(__USE_CONTINUOUSHANDLER==1)
+		System.removeContinuousHandler(onUpdateTimeout);
+@endif
 		clearImages(true);
 		super.finalize();
 	}
@@ -3718,27 +3725,44 @@ dispMicro(name+".loadImages("+elm.storage+")", 6);
 	{
 		if(haze || noise)
 		{
+@if(__USE_CONTINUOUSHANDLER==0)
 			updateTimer	= new Timer(onUpdateTimeout, "") if updateTimer == void;
 			var	iv	= Math.min(haze ? hazeInterval : 1000, noise ? noiseInterval : 1000);
 			iv	= 16 if iv < 16;
 			updateTimer.interval	= iv;
 			updateTimer.enabled		= true;
 			updateTimer.capacity	= 1;
+@endif
+@if(__USE_CONTINUOUSHANDLER==1)
+			System.addContinuousHandler(onUpdateTimeout);
+@endif
 		}
 		else
+@if(__USE_CONTINUOUSHANDLER==0)
 			updateTimer.enabled		= false;
+@endif
+@if(__USE_CONTINUOUSHANDLER==1)
+			System.removeContinuousHandler(onUpdateTimeout);
+@endif
 	}
 
 	function cancelUpdateTimer()
 	{
+@if(__USE_CONTINUOUSHANDLER==0)
 		updateTimer.enabled	= false if updateTimer != void;
+@endif
+@if(__USE_CONTINUOUSHANDLER==1)
+		System.removeContinuousHandler(onUpdateTimeout);
+@endif
 	}
 
-	function onUpdateTimeout()
+	function onUpdateTimeout(tick)
 	{
+@if(__USE_CONTINUOUSHANDLER==0)
 		var	tick	= System.getTickCount();
 		if(	(haze && tick > lastHazeTick + hazeInterval) ||
 			(noise && tick > lastNoiseTick + noiseInterval))
+@endif
 		{
 			update(0,0,1,1);
 		}

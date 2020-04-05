@@ -4,6 +4,8 @@
 
 @set(SE_DELAY_VERBOSE=0)
 
+@set(__USE_CONTINUOUSHANDLER=1)
+
 global.SESoundBuffer_original = SESoundBuffer;
 class SESoundBuffer_override extends SESoundBuffer_original
 {
@@ -42,11 +44,17 @@ class SESoundBuffer_override extends SESoundBuffer_original
 
 	function finalize()
 	{
+@if(__USE_CONTINUOUSHANDLER==0)
 		if(panTimer != void)
 		{
 			panTimer.enabled	= false;
 			invalidate panTimer;
 		}
+@endif
+@if(__USE_CONTINUOUSHANDLER==1)
+		System.removeContinuousHandler(continuePan);
+		panTimer = false;
+@endif
 		if(delayTimer != void)
 		{
 			delayTimer.enabled	= false;
@@ -353,12 +361,14 @@ class SESoundBuffer_override extends SESoundBuffer_original
 		if( elm.chgloop !== void )
 			chgloop = elm.chgloop;
 
+@if(__USE_CONTINUOUSHANDLER==0)
 		if(panTimer == void)
 		{
 			panTimer	= new Timer(continuePan, "");
 			panTimer.capacity	= 1;
 			panTimer.interval	= 16;
 		}
+@endif
 
 		panStartTick= System.getTickCount();
 		panTime		= elm.time === void ? 1000 : +elm.time;
@@ -366,13 +376,21 @@ class SESoundBuffer_override extends SESoundBuffer_original
 		pan1st		= elm.firstpan === void ? pan : +elm.firstpan;
 		pan2nd		= elm.pan === void ? -pan : +elm.pan;
 
+@if(__USE_CONTINUOUSHANDLER==0)
 		panTimer.enabled	= true;
+@endif
+@if(__USE_CONTINUOUSHANDLER==1)
+		System.addContinuousHandler(continuePan);
+		panTimer = true;
+@endif
 		//dm(" SE startPan: pan1st=" + pan1st + " time=" + panTime + " pan2nd=" + pan2nd + " chgloop=" + chgloop);
 	}
 
-	function continuePan()
+	function continuePan(tick)
 	{
+@if(__USE_CONTINUOUSHANDLER==0)
 		var	tick	= System.getTickCount();
+@endif
 		var	past	= tick - panStartTick;
 		if(past > panTime)
 			stopPan();
@@ -393,11 +411,25 @@ class SESoundBuffer_override extends SESoundBuffer_original
 			chgloop = void;
 		}
 
+@if(__USE_CONTINUOUSHANDLER==0)
 		if(panTimer == void || !panTimer.enabled)
 			return;
+@endif
+@if(__USE_CONTINUOUSHANDLER==1)
+		if (!panTimer)
+		{
+			return;
+		}
+@endif
 
 		pan		= pan2nd;
+@if(__USE_CONTINUOUSHANDLER==0)
 		panTimer.enabled	= false;
+@endif
+@if(__USE_CONTINUOUSHANDLER==1)
+		System.removeContinuousHandler(continuePan);
+		panTimer = false;
+@endif
 		paned	= true;
 		owner.onSESoundBufferPanStop(id);	// パンの停止を通知
 	}

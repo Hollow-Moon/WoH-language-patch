@@ -12,6 +12,8 @@ Scripts.execStorage("PluginObject.tjs");
 Scripts.execStorage("PluginLayer.tjs");
 @endif
 
+@set(__USE_CONTINUOUSHANDLER=1)
+
 /*
  *	プラグインの原型
  */
@@ -651,6 +653,7 @@ class AsyncAnimationBasePlugin extends BasePlugin
 
 	function startTimer()
 	{
+@if(__USE_CONTINUOUSHANDLER==0)
 		if(timer == void)
 		{
 			with(timer = new Timer(onTimer, ""))
@@ -662,11 +665,24 @@ class AsyncAnimationBasePlugin extends BasePlugin
 		}
 		timer.enabled	= true;
 		timer.refCount++;
+@endif
+@if(__USE_CONTINUOUSHANDLER==1)
+		if (!timer)
+		{
+			timer = 0;
+		}
+		timer++;
+		if (timer === 1)
+		{
+			System.addContinuousHandler(onTimer);
+		}
+@endif
 	}
 
 	function stopTimer()
 	{
 //		dm(name+".stopTimer = "+Scripts.getTraceString());
+@if(__USE_CONTINUOUSHANDLER==0)
 		timer.enabled	= false;
 		timer.refCount--;
 		if(timer.refCount == 0)
@@ -674,6 +690,14 @@ class AsyncAnimationBasePlugin extends BasePlugin
 			invalidate timer;
 			timer	= void;
 		}
+@endif
+@if(__USE_CONTINUOUSHANDLER==1)
+		timer--;
+		if (timer === 0)
+		{
+			System.removeContinuousHandler(onTimer);
+		}
+@endif
 	}
 
 	function onTimer()
@@ -751,12 +775,18 @@ class AsyncAnimationBasePlugin extends BasePlugin
 	//	情報の破棄と共に、処理を停止する
 	function clear()
 	{
+@if(__USE_CONTINUOUSHANDLER==0)
 		if(timer != void)
 		{
 			timer.enabled	= false;
 			invalidate timer;
 			timer	= void;
 		}
+@endif
+@if(__USE_CONTINUOUSHANDLER==1)
+		timer = 0;
+		System.removeContinuousHandler(onTimer);
+@endif
 		super.clear();
 	}
 @if(IS_TLE)

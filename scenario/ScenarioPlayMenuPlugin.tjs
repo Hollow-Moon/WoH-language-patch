@@ -73,6 +73,8 @@
 @if(__SCENARIOPLAYMENUPLUGIN_DEFINED__==0)
 @set(__SCENARIOPLAYMENUPLUGIN_DEFINED__=1)
 
+@set(__USE_CONTINUOUSHANDLER=1)
+
 Scripts.execStorage("BasicMenuPluginClass.tjs");
 Scripts.execStorage("PushButtonLayer.tjs");
 
@@ -672,18 +674,29 @@ class AutoAlignPushButtonLayer extends PushButtonLayer
 	{
 		super.PushButtonLayer(...);
 
+@if(__USE_CONTINUOUSHANDLER==0)
 		with(move_timer = new Timer(onMoveTimeout, ""))
 			.interval	= interval, .enabled	= false;
+@endif
+@if(__USE_CONTINUOUSHANDLER==1)
+		move_timer = false;
+@endif
 	}
 
 	function finalize()
 	{
+@if(__USE_CONTINUOUSHANDLER==0)
 		if(move_timer != void)
 		{
 			move_timer.enabled	= false;
 			invalidate move_timer;
 			move_timer	= void;
 		}
+@endif
+@if(__USE_CONTINUOUSHANDLER==1)
+		System.removeContinuousHandler(onMoveTimeout);
+		move_timer = false;
+@endif
 		super.finalize();
 	}
 
@@ -717,17 +730,32 @@ class AutoAlignPushButtonLayer extends PushButtonLayer
 		endLeft		= l;
 		endTop		= t;
 
+@if(__USE_CONTINUOUSHANDLER==0)
 		move_timer.enabled	= true;
+@endif
+@if(__USE_CONTINUOUSHANDLER==1)
+		System.addContinuousHandler(onMoveTimeout);
+		move_timer = true;
+@endif
 	}
 
-	function onMoveTimeout()
+	function onMoveTimeout(tick)
 	{
-		var	past	= System.getTickCount() - starttick;
+@if(__USE_CONTINUOUSHANDLER==0)
+		var tick = System.getTickCount();
+@endif
+		var	past	= tick - starttick;
 		if(past > time)
 		{
 			left	= endLeft;
 			top		= endTop;
+@if(__USE_CONTINUOUSHANDLER==0)
 			move_timer.enabled	= false;
+@endif
+@if(__USE_CONTINUOUSHANDLER==1)
+			System.removeContinuousHandler(onMoveTimeout);
+			move_timer = false;
+@endif
 		}
 		else
 		{
@@ -749,8 +777,16 @@ class AutoAlignPushButtonLayer extends PushButtonLayer
 	function onMouseMove()
 	{
 		//	ボタンが自動移動している間
+@if(__USE_CONTINUOUSHANDLER==0)
 		if(!move_timer.enabled)
 			return;
+@endif
+@if(__USE_CONTINUOUSHANDLER==1)
+		if (!move_timer)
+		{
+			return;
+		}
+@endif
 
 		//	ボタン上でマウスが動いているなら、Enterしたことにする
 		if(focusable && window.focusedLayer != this) focus(); else enter();
@@ -759,8 +795,16 @@ class AutoAlignPushButtonLayer extends PushButtonLayer
 	function onMouseEnter()
 	{
 		//	自動移動している間は、Enterしてもしてないことにする
+@if(__USE_CONTINUOUSHANDLER==0)
 		if(move_timer.enabled)
 			return;
+@endif
+@if(__USE_CONTINUOUSHANDLER==1)
+		if (move_timer)
+		{
+			return;
+		}
+@endif
 
 		if(focusable && window.focusedLayer != this) focus(); else enter();
 	}

@@ -8,6 +8,8 @@
 Scripts.execStorage("BasePlugin.tjs");
 Plugins.link("layerExYADraw.dll");	//	集中線等を描画
 
+@set(__USE_CONTINUOUSHANDLER=1)
+
 class FocusLinePlugin extends AsyncAnimationBasePlugin
 {
 	var	name	= "focusline";
@@ -361,7 +363,9 @@ class FocusLineImageLayer extends Layer
 @if(!IS_TLE)
 		updateName();
 		setImageSize(parent.width, parent.height);
+@if(__USE_CONTINUOUSHANDLER==0)
 		this.timer	= new Timer(onTimeout, "");
+@endif
 		init();
 @endif
 		setSizeToImageSize();
@@ -394,11 +398,16 @@ class FocusLineImageLayer extends Layer
 
 	function finalize()
 	{
+@if(__USE_CONTINUOUSHANDLER==0)
 		if(typeof this.timer != "undefined" && timer != void && timer isvalid)
 		{
 			timer.enabled	= false;
 			invalidate timer;
 		}
+@endif
+@if(__USE_CONTINUOUSHANDLER==1)
+		System.removeContinuousHandler(onTimeout);
+@endif
 		super.finalize(...);
 	}
 
@@ -464,8 +473,14 @@ class FocusLineImageLayer extends Layer
 
 	property interval
 	{
+@if(__USE_CONTINUOUSHANDLER==0)
 		setter(v)	{ timer.interval = v; }
 		getter		{ return timer.interval; }
+@endif
+@if(__USE_CONTINUOUSHANDLER==1)
+		setter(v)	{ timer = v; }
+		getter		{ return timer; }
+@endif
 	}
 
 	var	_status	= "stop";
@@ -478,7 +493,12 @@ class FocusLineImageLayer extends Layer
 //				dm("FocusLineImageLayer.status = "+_status+" → "+v);
 //				dm(Scripts.getTraceString());
 				_status	= v;
+@if(__USE_CONTINUOUSHANDLER==0)
 				timer.enabled	= v == "play";
+@endif
+@if(__USE_CONTINUOUSHANDLER==1)
+				((v == "play") ? System.addContinuousHandler : System.removeContinuousHandler)(onTimeout);
+@endif
 			}
 		}
 		getter	{ return _status; }

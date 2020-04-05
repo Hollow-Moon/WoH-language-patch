@@ -14,6 +14,8 @@
 Scripts.execStorage("BasePlugin.tjs");
 Plugins.link("layerExFilter.dll") if typeof Layer.drawNoise == "undefined";
 
+@set(__USE_CONTINUOUSHANDLER=1)
+
 class NoisePlugin extends AsyncAnimationBasePlugin
 {
 	var name = "Noise";
@@ -570,8 +572,14 @@ class NoiseLayer extends Layer
 	var	_interval;
 	property interval
 	{
+@if(__USE_CONTINUOUSHANDLER==0)
 		setter(v)	{ _interval = +v; timer.interval = _interval * kag.drawspeed; }
 		getter		{ return _interval; }
+@endif
+@if(__USE_CONTINUOUSHANDLER==1)
+		setter(v)	{ _interval = +v; }
+		getter		{ return _interval; }
+@endif
 	}
 @endif
 	var _monocro = true;
@@ -588,8 +596,10 @@ class NoiseLayer extends Layer
 	{
 		super.Layer(...);
 @if(!IS_TLE)
+@if(__USE_CONTINUOUSHANDLER==0)
 		this.timer	= new Timer(onTimeout, "");
 		timer.interval = 0;
+@endif
 		updateName();
 @endif
 		parent = par;
@@ -613,7 +623,9 @@ class NoiseLayer extends Layer
 		fillRect( 0, 0, imageWidth, imageHeight, 0xFF7F7F7F );
 
 @if(!IS_TLE)
+@if(__USE_CONTINUOUSHANDLER==0)
 		timer.interval = 50;
+@endif
 @endif
 		update();
 		//dm("construcer obj=" + this + " / p=" + parent.name);
@@ -643,11 +655,16 @@ class NoiseLayer extends Layer
 	function finalize()
 	{
 		//dm("finalize obj=" + this + " / p=" + parent.name);
+@if(__USE_CONTINUOUSHANDLER==0)
 		if(typeof this.timer != "undefined" && timer != void && timer isvalid)
 		{
 			timer.enabled	= false;
 			invalidate timer;
 		}
+@endif
+@if(__USE_CONTINUOUSHANDLER==1)
+		System.removeContinuousHandler(onTimeout);
+@endif
 		super.finalize(...);
 	}
 
@@ -945,7 +962,12 @@ class NoiseLayer extends Layer
 				_noiseOnce = false if v == "stop";							//停止時にはクリア
 				_noiseOnceDone = false if v == "stop" || v == "play";		//開始時と終了時にクリア
 
+@if(__USE_CONTINUOUSHANDLER==0)
 				timer.enabled = (v == "play");	//play状態でしか更新をかけない
+@endif
+@if(__USE_CONTINUOUSHANDLER==1)
+				((v == "play") ? System.addContinuousHandler : System.removeContinuousHandler)(onTimeout);
+@endif
 				visible = ( v != "stop" );		//playとpause状態で表示
 				starttick = void if v == "stop";
 				draw() if v != "stop";

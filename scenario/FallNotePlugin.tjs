@@ -1,4 +1,7 @@
 ﻿//	お札が降ってくるプラグイン
+
+@set(__USE_CONTINUOUSHANDLER=1)
+
 class FallNotePlugin extends KAGPlugin
 {
 	var	owner;
@@ -68,8 +71,10 @@ class FallNotePlugin extends KAGPlugin
 			kag.fore.notes	= [];
 			kag.back.notes	= [];
 		}
+@if(__USE_CONTINUOUSHANDLER==0)
 		if(timer == void)
 			(timer = new Timer(onAnimate, "")).interval = 16;
+@endif
 		if(area == void) with(kag.fore.base)
 		{
 			area	= %[];
@@ -95,7 +100,13 @@ class FallNotePlugin extends KAGPlugin
 		}
 
 		//	アニメーション開始
+@if(__USE_CONTINUOUSHANDLER==0)
 		timer.enabled	= true;
+@endif
+@if(__USE_CONTINUOUSHANDLER==1)
+		System.addContinuousHandler(onAnimate);
+		timer = true;
+@endif
 		lasttick	= System.getTickCount();
 
 		//	振らせるのも開始
@@ -112,7 +123,13 @@ class FallNotePlugin extends KAGPlugin
 
 	function stop()
 	{
+@if(__USE_CONTINUOUSHANDLER==0)
 		timer.enabled	= false if timer != void;	//	アニメーションを停止
+@endif
+@if(__USE_CONTINUOUSHANDLER==1)
+		System.removeContinuousHandler(onAnimate);
+		timer = false;
+@endif
 		falling			= false;	//	降るのは当然停止
 		clearNotes(kag.fore.notes);	//	全てのレイヤーを破棄
 		clearNotes(kag.back.notes);
@@ -263,7 +280,12 @@ class FallNotePlugin extends KAGPlugin
 		// 栞を保存する際に呼ばれる
 		// f = 保存先の栞データ ( Dictionary クラスのオブジェクト )
 		// elm = tempsave 時のオプション ( 現在は常に void )
+@if(__USE_CONTINUOUSHANDLER==0)
 		if(timer.enabled)
+@endif
+@if(__USE_CONTINUOUSHANDLER==1)
+		if(timer)
+@endif
 		{
 			f.notesAnimating= true;
 			f.notesFalling	= falling;
@@ -314,7 +336,13 @@ class FallNotePlugin extends KAGPlugin
 			}
 			falling	= f.notesFalling;
 			lasttick= lasttick + System.getTickCount();
+@if(__USE_CONTINUOUSHANDLER==0)
 			timer.enabled	= true;
+@endif
+@if(__USE_CONTINUOUSHANDLER==1)
+			System.addContinuousHandler(onAnimate);
+			timer = true;
+@endif
 		}
 	}
 

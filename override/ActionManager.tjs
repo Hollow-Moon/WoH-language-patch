@@ -4,6 +4,8 @@
 @if(__ACTION_MANAGER_DEFINED__==0)
 @set(__ACTION_MANAGER_DEFINED__=1)
 
+@set(__USE_CONTINUOUSHANDLER=1)
+
 //Plugins.link("microcount.dll");
 
 class ActionManager
@@ -643,10 +645,15 @@ class ActionManager
 	{
 		if(!flipping)
 		{
+@if(__USE_CONTINUOUSHANDLER==0)
 			timer	= new Timer(onFlipTimerInterval, "");
 			timer.interval	= int(Math.max(3, interval - 3));
 			timer.capacity	= 1;
 			timer.enabled	= true;
+@endif
+@if(__USE_CONTINUOUSHANDLER==1)
+			System.addContinuousHandler(onFlipTimerInterval);
+@endif
 //			initMicroCount(); caption = window.caption;
 			flipping	= true;
 @if(DEBUG)
@@ -660,12 +667,17 @@ class ActionManager
 	{
 		if(flipping)
 		{
+@if(__USE_CONTINUOUSHANDLER==0)
 			if(timer != void)
 			{
 				timer.enabled	= false;
 				invalidate timer;
 				timer	= void;
 			}
+@endif
+@if(__USE_CONTINUOUSHANDLER==1)
+			System.removeContinuousHandler(onFlipTimerInterval);
+@endif
 //			window.caption	= caption;
 			flipping	= false;
 @if(DEBUG)
@@ -679,18 +691,22 @@ class ActionManager
 	var	endTickCallback;
 @endif
 	var	lasttick;
-	function onFlipTimerInterval()
+	function onFlipTimerInterval(tick)
 	{
-		var	tick= System.getTickCount();
+@if(__USE_CONTINUOUSHANDLER==0)
+		var tick= System.getTickCount();
+@endif
 @if(DEBUG)
 		tick= tickCallback(tick) if tickCallback != void;
 @endif
 		var	past= tick - lasttick;
+@if(__USE_CONTINUOUSHANDLER==0)
 @if(DEBUG)
 		if(Math.abs(tick - lasttick) > interval)
 @endif
 @if(!DEBUG)
 		if(tick - lasttick >= interval)
+@endif
 @endif
 		{
 @if(DEBUG)
@@ -698,10 +714,14 @@ class ActionManager
 @endif
 			update(tick);
 			lasttick	= tick;
+@if(__USE_CONTINUOUSHANDLER==0)
 			timer.interval	= interval - 3;
+@endif
 		}
+@if(__USE_CONTINUOUSHANDLER==0)
 		else
 			timer.interval	= 1;
+@endif
 
 		if(count == 0)
 			stopFlip();

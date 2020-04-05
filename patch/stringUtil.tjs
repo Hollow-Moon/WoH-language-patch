@@ -1,0 +1,115 @@
+﻿
+function isNumber(v)
+{
+	if (typeof(v) !== "String")
+	{
+		return true;
+	}
+	var l = v.length;
+	if (l < 1)
+	{
+		return false;
+	}
+	var c = v[0];
+	if(c == '-' || c >= '0' && c <= '9')
+	{
+		for (var i = 1; i < l; ++i)
+		{
+			c = v[i];
+			if (c != '.' && (c < '0' || c > '9'))
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+	return false;
+}
+
+function initSpline(keys)
+{
+	var count = keys.count;
+	var arr1 = [];
+	var arr2 = [];
+	arr2[0] = 0.0;
+	arr2[count - 1] = 0.0;
+	var prev = keys[count - 1][1];
+	for (var i = count - 2; i >= 0 ; --i)
+	{
+		var n = keys[i][1];
+		arr1[i + 1] = prev - n;
+		prev = n;
+	}
+	var p = 1;
+	arr2[1] = arr1[2] - arr1[1] - arr2[0];
+	arr1[1] = 4.0;
+	if ( count > 3 )
+	{
+		if ( count > 6 )
+		{
+			var n1 = 3;
+			var n = ((count - 7) >> 2) + 1;
+			var n2 = 5;
+			p = 4 * n + 1;
+			for (; n > 0; --n)
+			{
+				var v20 = 1.0 / arr1[n1 - 2];
+				n1 += 4;
+				n2 += 4;
+				arr2[n1 - 5] = arr1[n1 - 4] - arr1[n1 - 5] - arr1[n1 - 6] * v20;
+				var v21 = 4.0 - v20;
+				arr1[n1 - 5] = v21;
+				var v22 = 1.0 / v21;
+				arr2[n1 - 4] = arr1[n1 - 3] - arr1[n1 - 4] - arr1[n1 - 5] * v22;
+				var v23 = 4.0 - v22;
+				arr1[n1 - 4] = v23;
+				var v24 = 1.0 / v23;
+				arr2[n2 - 5] = arr1[n1 - 2] - arr1[n1 - 3] - arr1[n1 - 4] * v24;
+				var v25 = 4.0 - v24;
+				arr1[n1 - 3] = v25;
+				var v26 = 1.0 / v25;
+				arr2[n2 - 4] = arr1[n1 - 1] - arr1[n1 - 2] - arr1[n1 - 3] * v26;
+				arr1[n1 - 2] = 4.0 - v26;
+			}
+		}
+		if ( p < count - 2 )
+		{
+			var n = p + 1;
+			for (var i = count - 2 - p; i > 0; --i)
+			{
+				var v30 = 1.0 / arr1[n - 1];
+				++n;
+				arr2[n - 1] = arr1[n] - arr1[n - 1] - arr1[n - 2] * v30;
+				arr1[n - 1] = 4.0 - v30;
+			}
+		}
+	}
+	var r = count - 2;
+	arr2[r] = arr2[r] - arr2[r + 1];
+	if ( r >= 4 )
+	{
+		var n1 = r - 3;
+		var n = ((r - 4) >> 2) + 1;
+		var n2 = r - 1;
+		r -= 4 * n;
+		for (; n > 0; --n)
+		{
+			var v34 = arr2[n2+1];
+			n2 -= 4;
+			n1 -= 4;
+			var v35 = (v34 - arr2[n2+6]) / arr1[n1+7];
+			arr2[n2+5] = v35;
+			var v36 = (arr2[n2+4] - v35) / arr1[n2+4];
+			arr2[n2+4] = v36;
+			var v37 = (arr2[n2+3] - v36) / arr1[n1+5];
+			arr2[n2+3] = v37;
+			arr2[n2+2] = (arr2[n2+2] - v37) / arr1[n1+4];
+		}
+	}
+	for (; r > 0; --r)
+	{
+		arr2[r] = (arr2[r] - arr2[r + 1]) / arr1[r];
+	}
+	arr2.pop();
+	return arr2;
+}

@@ -7,7 +7,7 @@
 
 dm("load: KeyFrameActionHandler.tjs");
 
-Plugins.link("stringUtil.dll");	//	isNumber, parseKeyFrame, initSpline
+KAGLoadScript("stringUtil.tjs");	//	isNumber, parseKeyFrame, initSpline
 
 //	キーフレームアクションについて詳細を出力する
 @set(KEYFRAMEACTION_VERVOSE=0)
@@ -29,7 +29,7 @@ function dmv{return;}
 @set(USE_EQUATIONS=1)
 
 @if(USE_EQUATIONS)
-Plugins.link("Equations.dll");
+KAGLoadScript("equations.tjs");
 var	equations	= new Equations();
 @endif
 
@@ -457,7 +457,6 @@ class LoopKeyFrameAction extends KeyFrameAction
 
 //	キーフレームの解析
 //		"(...)(...)(...)" となっているところの"..."(要素)のみを取り出す
-/*
 function parseKeyFrame(keyframe)
 {
 @if(0)
@@ -530,7 +529,6 @@ function parseKeyFrame(keyframe)
 	}
 	return keys;
 }
-*/
 
 /**
  *	キーフレームに沿った変化を行なうアクションを生成するモジュール

@@ -6678,7 +6678,10 @@ class KAGWindow extends Window
 		notifyStable();
 
 		// メッセージレイヤタイムアウト呼び出し開始
-		current.startTimeout();
+		if (typeof(this) === "Object" && isvalid(this) && typeof(this.current) === "Object" && isvalid(this.current))
+		{
+			current.startTimeout();
+		}
 
 		return -1;
 	} incontextof this,

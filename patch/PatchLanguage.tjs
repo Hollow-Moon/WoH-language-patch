@@ -57,6 +57,10 @@ function refreshMenuString(menu)
 function refreshStringWithLanguage() {
 	loadMOs();
 
+	if (typeof(global.System) === "Object" && typeof(global.System.update_title) === "Object")
+	{
+		global.System.update_title();
+	}
 	if (typeof(global.kag) !== "undefined" && typeof(global.kag.menu) !== "undefined") {
 		refreshMenuString(kag.menu);
 	}
@@ -605,6 +609,31 @@ global.Window = Window_PatchLanguage_override;
 global.System_PatchLanguage_original = System;
 class System_PatchLanguage_override extends System_PatchLanguage_original
 {
+	property title
+	{
+		setter(v)
+		{
+			global.System.original_title = v;
+			if (typeof(v) === "String")
+			{
+				super.title = __(v);
+			}
+			else
+			{
+				super.title = v;
+			}
+		}
+		getter { return global.System.original_title; }
+	}
+
+	function update_title()
+	{
+		if (typeof(global.System.original_title) === "String")
+		{
+			super.title = __(global.System.original_title);
+		}
+	}
+
 	function inform(text)
 	{
 		if (text === System.title + "はすでに起動しています")

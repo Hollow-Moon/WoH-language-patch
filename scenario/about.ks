@@ -8,7 +8,7 @@
 @nowait
 [r]
 [link hint="open Kirikiri about window" exp="global.showAboutKirikiriWindow()"][emb exp="__('%s Ver.%s').sprintf(__('吉里吉里'), System.versionString)"][endlink][r]
-[emb exp="__('%s Ver.%s').sprintf(System.title, mahoyoVersion)"][r]
+[emb exp="__('%s Ver.%s').sprintf(__(System.title), mahoyoVersion)"][r]
 [emb exp="__('サポートページ: ')"][link exp="System.shellExecute('https://www.typemoon.com/users/')"]https://www.typemoon.com/users/[endlink]
 @rclick target=*exit
 @waitclick

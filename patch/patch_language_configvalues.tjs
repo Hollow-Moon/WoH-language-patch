@@ -1,0 +1,214 @@
+﻿
+
+global.MessageLayer_patch_language_configvalues_original = MessageLayer;
+class MessageLayer_patch_language_configvalues_override extends MessageLayer_patch_language_configvalues_original
+{
+	property marginL
+	{
+		setter(v)
+		{
+			if (ignore_margin_changes)
+			{
+				return;
+			}
+			super.marginL = v;
+		}
+		getter { return super.marginL; }
+	}
+
+	property marginT
+	{
+		setter(v)
+		{
+			if (ignore_margin_changes)
+			{
+				return;
+			}
+			super.marginT = v;
+		}
+		getter { return super.marginT; }
+	}
+
+	property marginR
+	{
+		setter(v)
+		{
+			if (ignore_margin_changes)
+			{
+				return;
+			}
+			super.marginR = v;
+		}
+		getter { return super.marginR; }
+	}
+
+	property marginB
+	{
+		setter(v)
+		{
+			if (ignore_margin_changes)
+			{
+				return;
+			}
+			super.marginB = v;
+		}
+		getter { return super.marginB; }
+	}
+
+	property defaultBold
+	{
+		setter(v)
+		{
+			if (ignore_font_changes)
+			{
+				return;
+			}
+			super.defaultBold = v;
+		}
+		getter { return super.defaultBold; }
+	}
+
+	property defaultFontSize
+	{
+		setter(v)
+		{
+			if (ignore_font_changes)
+			{
+				return;
+			}
+			super.defaultFontSize = v;
+		}
+		getter { return super.defaultFontSize; }
+	}
+
+	property defaultRubySize
+	{
+		setter(v)
+		{
+			if (ignore_font_changes)
+			{
+				return;
+			}
+			super.defaultRubySize = v;
+		}
+		getter { return super.defaultRubySize; }
+	}
+
+	property bold
+	{
+		setter(v)
+		{
+			if (ignore_font_changes)
+			{
+				return;
+			}
+			super.bold = v;
+		}
+		getter { return super.bold; }
+	}
+
+	property _fontSize
+	{
+		setter(v)
+		{
+			if (ignore_font_changes)
+			{
+				return;
+			}
+			super._fontSize = v;
+		}
+		getter { return super._fontSize; }
+	}
+
+	property _rubySize
+	{
+		setter(v)
+		{
+			if (ignore_font_changes)
+			{
+				return;
+			}
+			super._rubySize = v;
+		}
+		getter { return super._rubySize; }
+	}
+
+	property lineSpacing
+	{
+		setter(v)
+		{
+			if (ignore_style_changes)
+			{
+				return;
+			}
+			super.lineSpacing = v;
+		}
+		getter { return super.lineSpacing; }
+	}
+
+	property pitch
+	{
+		setter(v)
+		{
+			if (ignore_style_changes)
+			{
+				return;
+			}
+			super.pitch = v;
+		}
+		getter { return super.pitch; }
+	}
+
+	property defaultLineSpacing
+	{
+		setter(v)
+		{
+			if (ignore_style_changes)
+			{
+				return;
+			}
+			super.defaultLineSpacing = v;
+		}
+		getter { return super.defaultLineSpacing; }
+	}
+
+	property defaultPitch
+	{
+		setter(v)
+		{
+			if (ignore_style_changes)
+			{
+				return;
+			}
+			super.defaultPitch = v;
+		}
+		getter { return super.defaultPitch; }
+	}
+
+	var ignore_margin_changes = false;
+	var ignore_font_changes = false;
+	var ignore_style_changes = false;
+
+	function MessageLayer_patch_language_configvalues_override()
+	{
+		super.MessageLayer(...);
+	}
+
+	function MessageLayer()
+	{
+		MessageLayer_patch_language_configvalues_override(...);
+	}
+
+	function restore(dic)
+	{
+		ignore_margin_changes = true;
+		ignore_font_changes = true;
+		ignore_style_changes = true;
+		super.restore(dic);
+		ignore_margin_changes = false;
+		ignore_font_changes = false;
+		ignore_style_changes = false;
+	}
+
+}
+global.MessageLayer = MessageLayer_patch_language_configvalues_override;

@@ -2289,7 +2289,7 @@ class KAGWindow_override extends KAGWindow_original
 				"sc.ksd";
 			if(Storages.isExistentStorage(fn))
 			{
-				scflags = Scripts.evalStorage(fn);
+				scflags = global.safeEvalStorage(fn);
 				if( scflags === void )
 				{
 					scflags = SystemVariables_configCf();
@@ -2316,7 +2316,7 @@ class KAGWindow_override extends KAGWindow_original
 				"su.ksd";
 			if(Storages.isExistentStorage(fn))
 			{
-				sflags = Scripts.evalStorage(fn);
+				sflags = global.safeEvalStorage(fn);
 				if( sflags === void )
 				{
 					sflags = %[];
@@ -2536,7 +2536,7 @@ class KAGWindow_override extends KAGWindow_original
 			}
 
 			dm("loadBookMarkFromFile: fn=" + fn);
-			data = Scripts.evalStorage(fn, modestr);
+			data = global.safeEvalStorage(fn, modestr);
 			if(data.id != saveDataID)
 			{
 				System.inform("他のシステムのデータを読み込もうとしました", "エラー");

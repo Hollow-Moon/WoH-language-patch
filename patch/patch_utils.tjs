@@ -276,6 +276,65 @@ function fixAndLoadDictionaryForKrkr2(filename, mode)
 	return Scripts.eval(new_file_as_array.join("\n"));
 }
 
+global.krkrzDictionaryReplace = function(matcharr)
+{
+	return matcharr[1];
+};
+
+function fixAndLoadDictionaryForKrkrZ(filename, mode)
+{
+	var file_as_array = [];
+	file_as_array.load(filename, mode);
+	var new_file_as_array = [];
+	for (var i = 0; i < file_as_array.count; i += 1)
+	{
+		new_file_as_array[i] = file_as_array[i].replace(new RegExp("real 0x\\d\\.[A-F0-9][A-F0-9][A-F0-9][A-F0-9][A-F0-9][A-F0-9][A-F0-9][A-F0-9][A-F0-9][A-F0-9][A-F0-9][A-F0-9][A-F0-9]p-?\\d* /\\* (\\d*?\\.?\\d*) \\*/", "g"), global.krkrzDictionaryReplace).replace(new RegExp("real [-\+]?0\.0 /\\* ([-\+]?\\d*?\\.?\\d*) \\*/", "g"), "0.0").replace(/int ([-\+]?\d*)/g, global.krkrzDictionaryReplace).replace(/string (".*")/g, global.krkrzDictionaryReplace).replace(/\%\[$/g, "(const) %[").replace(/[^%"A-Za-z0-9]\[$/g, " (const) [");
+	}
+	return Scripts.eval("(const) [ " + new_file_as_array.join("\n") + " ]")[0];
+}
+
+// Avoid CVE-2015-5672
+function safeEvalStorage(filename, mode)
+{
+	if (typeof(global.Dictionary) === "Object" && typeof(global.Dictionary.loadStruct) === "Object")
+	{
+		var ret;
+		try
+		{
+			ret = global.Dictionary.loadStruct(filename, mode);
+		}
+		catch (e)
+		{
+			if (e !== void && e.message.indexOf("Invalid argument") !== -1)
+			{
+				dm("Attempting to fix " + filename + " for Kirikiri Z...");
+				return global.fixAndLoadDictionaryForKrkrZ(filename, mode);
+			}
+			throw e;
+		}
+		return ret;
+	}
+	else
+	{
+		var ret;
+		try
+		{
+			ret = global.Scripts.evalStorage(filename, mode);
+		}
+		catch (e)
+		{
+			if (e !== void && e.message.indexOf("const") !== -1)
+			{
+				dm("Attempting to fix " + filename + " for Kirikiri 2...");
+				return global.fixAndLoadDictionaryForKrkr2(filename, mode);
+			}
+			
+			throw e;
+		}
+		return ret;
+	}
+}
+
 function showAboutKirikiriWindow()
 {
 	if (typeof(global.System.showVersion) === 'Object')

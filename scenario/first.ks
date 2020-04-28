@@ -7,8 +7,6 @@
 ; 初期処理を行なって
 *start
 @store enabled=false
-@call storage=macro.ks
-@call storage=loadPlugins.ks
 
 ; フローチャートからの戻り位置を指定
 @settracerreturn storage=first.ks target=*titlemenu

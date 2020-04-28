@@ -87,4 +87,5 @@ with(alternative_object)
 ;@call storage="alphamovie.ks"
 
 ;戻る
+@s
 @return

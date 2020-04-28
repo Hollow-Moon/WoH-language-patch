@@ -87,8 +87,8 @@
 	"global.testmode = 0;",
 	"property isCleared { getter { return get_isRouteCleared(global.kag); } };",
 	["マクロ.ks", void, void, void, "GAME_FATE"],
-	["macro.ks", void, void, void, "GAME_FATE||GAME_FHAT"],
-	["loadPlugins.ks", void, void, void, "GAME_FATE||GAME_FHAT"],
+	"macro.ks",
+	"loadPlugins.ks",
 
 	[void, void, void, void, void, "Scripts after KAG macros and plugins"],
 	["InfoPopPlugin.tjs", void, void, void, "GAME_FATE"],

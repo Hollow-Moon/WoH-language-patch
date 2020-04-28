@@ -1,0 +1,160 @@
+﻿@if(__PATCH_INITIALIZED__==0)
+@set(__PATCH_INITIALIZED__=1)
+
+@if(GAME_FATE==0 && GAME_FHAT==0 && GAME_WOHN==0)
+@set(GAME_FATE=1)
+global.GameID = "FATE";
+@endif
+
+@if(GAME_FATE)
+global.PatchVersion = [1, 0, 0];
+global.PatchDescription = ("Ultimate Patch v%i.%i.%i").sprintf(PatchVersion[0], PatchVersion[1], PatchVersion[2]);
+global.PatchInfoURL = "https://forums.nrvnqsr.com/showthread.php/8229";
+@endif
+
+@if(GAME_FHAT)
+global.PatchVersion = [1, 0, 2];
+global.PatchDescription = ("Voice Patch v%i.%i.%i").sprintf(PatchVersion[0], PatchVersion[1], PatchVersion[2]);
+global.PatchInfoURL = "https://forums.nrvnqsr.com/showthread.php/7705";
+@endif
+
+@if(GAME_WOHN)
+global.PatchVersion = [0, 0, 1];
+global.PatchDescription = ("Language Patch v%i.%i.%i").sprintf(PatchVersion[0], PatchVersion[1], PatchVersion[2]);
+global.PatchInfoURL = "https://forums.nrvnqsr.com/showthread.php/8586";
+@endif
+
+if ((typeof(global.PatchVersion) !== "Object") || (typeof(global.PatchDescription) !== "String") || (typeof(global.PatchInfoURL) !== "String"))
+{
+	throw new Exception("Patch was not initialized in a correct manner.");
+}
+
+System.exceptionHandler = function(e)
+{
+	Debug.logAsError();
+
+	if (typeof(global.kag) === "Object" && isvalid(global.kag) && typeof(global.kag.fullScreened) === "Integer" && global.kag.fullScreened && typeof(global.kag.onWindowedMenuItemClick) === "Object" && isvalid(global.kag.onWindowedMenuItemClick))
+	{
+		global.kag.onWindowedMenuItemClick();
+	}
+
+	var exception_message = "Unknown error";
+	if (typeof(e) === "Object" && isvalid(e))
+	{
+		if (typeof(e.message) == "String")
+		{
+			exception_message = e.message;
+		}
+	}
+	Debug.message("Exception: " + exception_message);
+	var trace_string = Scripts.getTraceString();
+	if (trace_string !== "")
+	{
+		Debug.message("Trace: " + trace_string);
+	}
+	var msg = ("The following script error occurred early in initialization.\n\n--------------------------------------------------------------------------------\n%s\n--------------------------------------------------------------------------------\n\n\"krkr.console.log\" and \"hwexcept.log\" have been created in either the game's or savedata directory.\nPlease contact the support forum thread with the save data that caused the error, along with the above files and an explanation of when and how it occurred.\nSupport forum thread: %s\n\n").sprintf(exception_message, global.PatchInfoURL);
+	System.inform(msg);
+
+@if(!KIRIKIROID)
+	if (typeof(global.kag) === "Object" && isvalid(global.kag) && typeof(global.kag.visible) == "Integer" && global.kag.visible == false)
+	{
+		System.exit(127);
+	}
+@endif
+
+@if(KIRIKIROID)
+	global.System.exitOnNoWindowStartup = false;
+@endif
+
+	return true;
+};
+
+// Ensure patch version gets placed in the log
+Debug.notice(("Patch Description: %s").sprintf(global.PatchDescription));
+
+function dmt(msg*) { Debug.message(msg.join(", ")+": "+Scripts.getTraceString()); }
+
+var devMode = Storages.isExistentStorage(System.exePath + "dev.txt");
+var devMode2 = Storages.isExistentStorage(System.exePath + "dev2.txt");
+var forceLog = Storages.isExistentStorage(System.exePath + "forceLog.txt");
+
+// Default settings
+//プラグインへのイベント配信時にエラー停止しないよう暫定的にトラップさせる=1 / させない=0
+@set(__PLUGIN_EVENT_ERROR_TRAP__=0)
+@set(NEWSTAFFROLLPLUGIN=1)
+@set(NEWER4WINDOWMODE=1)
+@set(SCENEMENU=0)
+@set(ED_BUTTONS=1)
+@set(BGM_SELECTION=1)
+@set(FADE_BGM_WITH_VOICE=1)
+@set(TEXT_DRAWER=1)
+@set(COMMUNE=1)
+@set(MOBILE_MODE=1)
+@set(HISTORY_CURRENT_PAGE=0)
+@set(SAVE_FONT_TAG=0)
+@set(HANAFUDA_TRACKGIRLS=1)
+@set(HANAFUDA_SCENEMENU=0)
+@set(HANAFUDA_STORE_FULL_VOICE_IN_HISTORY=0)
+@set(SONY_ATRAC=0)
+@set(LE_LOOP=1)
+@set(DRAWTEXT_ESCAPE=1)
+@set(ENABLE_LINKS=1)
+@set(USE_BYTECODE=0)
+@set(SMOOTH_ANIMATIONS=1)
+@set(YESNOLAYER_RELATIVE_TO_CURSOR=0)
+@set(FREETYPE_FONT=0)
+@set(PRERENDERED_FONTS=0)
+@set(CHECK_INTERVAL=0)
+@set(USE_WUFFMPEG=1)
+
+@if(__SELECT_TEXTWINDOW__!=2)
+@set(FONT_MENU_OPACITY=1)
+@endif
+
+@if(kirikiriz)
+@set(ZOOM_WINDOW=1)
+@endif
+
+@set(PATCH_RUBY=1)
+
+@if(GAME_FHAT||GAME_WOHN)
+@set(PREFER_PNG=1)
+@endif
+
+@if(GAME_FATE)
+@set(HD_MODE=1)
+@set(HD_COMPATIBLE_SAVES=1)
+@set(GALLERY_DYNAMIC_THUMBNAIL=1)
+@endif
+// Wide mode should be independent of hd mode, but this is currently not the case.
+@if(HD_MODE)
+@set(WIDE_MODE=1)
+@endif
+@set(CROP_MODE=0)
+
+// Override settings
+var settingsPath = System.exePath + "settings.tjs";
+Scripts.evalStorage(settingsPath) if Storages.isExistentStorage(settingsPath);
+
+@if(GAME_FHAT)
+var mainPatchName = "3";
+@endif
+@if(GAME_FATE||GAME_WOHN)
+var mainPatchName = "";
+@endif
+
+if (forceLog)
+{
+	Debug.startLogToFile(false);
+}
+
+if (devMode) {
+	Storages.addAutoPath(System.exePath + "../common/data/");
+	Storages.addAutoPath(System.exePath + "../common/patch/");
+	Storages.addAutoPath(System.exePath + "../common/plugin/");
+	Storages.addAutoPath(System.exePath + "../common/plugin_patch/");
+}
+
+KAGLoadScript("patch_initialize.tjs");
+
+@endif

@@ -1,0 +1,16 @@
+﻿// Kirikiroid support
+var kirikiroidOsNames = ["android", "iphone", "ipad"];
+
+function checkIfKirikiroid() {
+	for (var i=0; i<kirikiroidOsNames.count; i++) {
+		if (System.osName.substr(0, kirikiroidOsNames[i].length).toLowerCase() == kirikiroidOsNames[i]) {
+			return true;
+		}
+	}
+	return false;
+}
+
+var isKirikiroid = checkIfKirikiroid();
+if (isKirikiroid) {
+	Scripts.eval("@set(KIRIKIROID=1)");
+}

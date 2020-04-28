@@ -1,0 +1,297 @@
+﻿
+global.initialize_patch_entered = false;
+
+global.dm_old = Debug.message;
+
+delete global.dm;
+global.dm = function(){};
+
+global.System.createAppLock_old = global.System.createAppLock;
+global.System.createAppLock = function()
+{
+	return true;
+};
+
+delete global.KAGLoadScript;
+global.KAGLoadScript = function(name)
+{
+	if (global.initialize_patch_entered == false)
+	{
+		return;
+	}
+	dm("Loading " + name);
+	var result;
+	var start = System.getTickCount();
+	try
+	{
+		result = Scripts.execStorage(name);
+	}
+	catch (e)
+	{
+		var end = System.getTickCount();
+		dm(name + " failed to load in " + (end - start) + "ms");
+		var exception_message = "Unknown error";
+		if (typeof(e) === "Object" && isvalid(e))
+		{
+			if (typeof(e.message) === "String")
+			{
+				exception_message = e.message;
+			}
+			dm("Exception: " + exception_message);
+		}
+		var trace_string = Scripts.getTraceString();
+		if (trace_string !== "")
+		{
+			dm("Trace: " + trace_string);
+		}
+		throw e;
+	}
+	var end = System.getTickCount();
+	dm(name + " was loaded in " + (end - start) + "ms");
+	return result;
+};
+
+global.RootDirectory = Storages.getPlacedPath(".") + "/";
+
+// Stub KAGWindow
+class KAGWindow
+{
+	var flags = %[];
+	var sflags = %[];
+	var tflags = %[];
+	var scflags = %[];
+	var isHd = false;
+	var visible = false;
+
+	function KAGWindow() {
+		global.KAGWindowStub = global.KAGWindow;
+		global.KAGWindow = null;
+		delete global.KAGWindow;
+	}
+
+	function process(name)
+	{
+		(global.initialize_patch incontextof global)();
+	}
+}
+
+if (typeof(global.initialize_patch) === "Object")
+{
+	Debug.message("global.initialize_patch already exists; not setting it.");
+	return;
+}
+else
+{
+	Debug.message("global.initialize_patch does not exist.");
+}
+
+global.initialize_patch = function()
+{
+	Debug.message("Reached top of initialize_patch.");
+
+	global.kag = void;
+	delete global.kag;
+	global.initialize_patch_entered = true;
+	global.dm = global.dm_old;
+	global.System.createAppLock = global.System.createAppLock_old;
+
+	if (typeof(global.initialize_patch_override) === "Object")
+	{
+		return global.initialize_patch_override();
+	}
+
+	dm("Loading patch_loadlist.arr...");
+
+	var start = System.getTickCount();
+
+	var to_load = Scripts.evalStorage("patch_loadlist.arr");
+
+	dm("Loaded patch_loadlist.arr in " + (System.getTickCount() - start) + "ms.");
+
+	start = System.getTickCount();
+
+	var current_category = "";
+
+	for (var i = 0; i < to_load.count; i += 1)
+	{
+		var load = to_load[i];
+		var filename = "";
+		var loadastype = "";
+		var tjs_expression = "";
+		var optional = 0;
+		var preprocessor_expression = "";
+		var category = "";
+		if (typeof(load) === "String")
+		{
+			filename = load;
+		}
+		else if (typeof(load) === "Object")
+		{
+			filename += load[0];
+			loadastype += load[1];
+			tjs_expression += load[2];
+			optional |= load[3];
+			preprocessor_expression += load[4];
+			category += load[5];
+		}
+		if (category !== "")
+		{
+			if (current_category !== "")
+			{
+				dm("Category " + current_category + " finished in " + (System.getTickCount() - start) + "ms.");
+			}
+			current_category = category;
+			dm("Category " + current_category + " loading...");
+			start = System.getTickCount();
+			continue;
+		}
+		if (loadastype === "")
+		{
+			loadastype = Storages.extractStorageExt(filename);
+		}
+		if (optional !== 0)
+		{
+			if (!Storages.isExistentStorage(filename))
+			{
+				continue;
+			}
+		}
+		if (tjs_expression !== "")
+		{
+			if (!Scripts.eval(tjs_expression))
+			{
+				continue;
+			}
+		}
+		if (preprocessor_expression !== "")
+		{
+			if (!Scripts.eval(("@if(%s)\ntrue\n@endif\n").sprintf(preprocessor_expression)))
+			{
+				continue;
+			}
+		}
+		if (filename !== "")
+		{
+			if (filename.charAt(filename.length - 1) === ";")
+			{
+				try
+				{
+					Scripts.exec(filename);
+					dm("The following executed: " + filename);
+				}
+				catch (e)
+				{
+					dm("The following failed to execute: " + filename);
+					var exception_message = "Unknown error";
+					if (typeof(e) === "Object" && isvalid(e))
+					{
+						if (typeof(e.message) === "String")
+						{
+							exception_message = e.message;
+						}
+						dm("Exception: " + exception_message);
+					}
+					var trace_string = Scripts.getTraceString();
+					if (trace_string !== "")
+					{
+						dm("Trace: " + trace_string);
+					}
+					throw e;
+				}
+			}
+			else
+			{
+				var start = System.getTickCount();
+				dm("Loading " + filename);
+				try
+				{
+					if (loadastype === ".ks")
+					{
+						global.kag.process(filename, "", false, true);
+					}
+					else if (loadastype === ".dll")
+					{
+						Plugins.link(filename);
+					}
+					else if (loadastype === ".tjs")
+					{
+						Scripts.execStorage(filename);
+					}
+				}
+				catch (e)
+				{
+					var end = System.getTickCount();
+					dm(filename + " failed to load in " + (end - start) + "ms");
+					var exception_message = "Unknown error";
+					if (typeof(e) === "Object" && isvalid(e))
+					{
+						if (typeof(e.message) === "String")
+						{
+							exception_message = e.message;
+						}
+						dm("Exception: " + exception_message);
+					}
+					var trace_string = Scripts.getTraceString();
+					if (trace_string !== "")
+					{
+						dm("Trace: " + trace_string);
+					}
+					dm("Full path: " + Storages.getPlacedPath(filename));
+					throw e;
+				}
+				var end = System.getTickCount();
+				dm(filename + " was loaded in " + (end - start) + "ms");
+			}
+		}
+
+	}
+
+	if (System.getArgument('-testexecuteonly') === "true")
+	{
+		System.terminate(0);
+	}
+	else
+	{
+		var jumpscenario = System.getArgument('-jumpscenario');
+		var jumplabel = System.getArgument('-jumplabel');
+		if (typeof(jumpscenario) === "String")
+		{
+			var skipscenario = System.getArgument('-skipscenario');
+			if (typeof(skipscenario) === "String")
+			{
+				global.kag.skipToScenario = skipscenario;
+			}
+			var skiplabel = System.getArgument('-skiplabel');
+			if (typeof(skiplabel) === "String")
+			{
+				global.kag.skipToLabel = skiplabel;
+			}
+			var skipimmediate = System.getArgument('-skipimmediate');
+			if (typeof(skipimmediate) !== "void")
+			{
+				global.kag.process(jumpscenario, (typeof(jumplabel) === "String") ? jumplabel : void, true, true);
+				while ((typeof(global.kag.skipToScenario) === "String") || (typeof(global.kag.skipToLabel) === "String"))
+				{
+					global.kag.conductor.run(true);
+				}
+			}
+			else
+			{
+				global.kag.process(jumpscenario, (typeof(jumplabel) === "String") ? jumplabel : void, true, false);
+			}
+		}
+		else
+		{
+			global.kag.process("first.ks", '', true, true);
+		}
+@if(GAME_WOHN)
+		global.menu_management_override();
+@endif
+		if (!global.kag.fullScreen)
+		{
+			global.kag.visible = true;
+		}
+	}
+
+	dm("Reached end of initialize_patch.");
+};

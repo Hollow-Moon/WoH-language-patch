@@ -1,0 +1,220 @@
+﻿
+{
+	Storages.isExistentStorage_patch_storages_original = Storages.isExistentStorage;
+	Storages.isExistentStorage = function(storage)
+	{
+		if ((storage === void) || (storage == null) || (storage.trim() === ""))
+		{
+			return false;
+		}
+
+		return isExistentStorage_patch_storages_original(...);
+	} incontextof Storages;
+}
+
+{
+	// TODO: clean out the auto path table
+	var paths_to_add = [];
+	var paths = [
+		"voice",
+		"video",
+		"others",
+		"etc",
+		"rule",
+		"sound",
+		"bgm",
+		"fg",
+		"fgimage",
+		"bg",
+		"bgimage",
+		"event",
+		"scenario",
+		"image",
+		"system",
+		"plugin",
+		"k2compat",
+		"override",
+		"update",
+		"patch"
+	];
+	var arcdelim = System.getArgument("-arcdelim");
+	if (!arcdelim)
+	{
+		arcdelim = ">";
+	}
+	if ((typeof(Storages.dirlist) !== "Object") || (typeof(Storages.isExistentDirectory) !== "Object"))
+	{
+		if (Storages.isExistentStorage("fstat.dll"))
+		{
+			Plugins.link("fstat.dll");
+		}
+	}
+
+	for (var i = 2; i < 50; i += 1)
+	{
+		var path = "patch" + i;
+		var paths_to_search = [
+			System.exePath + "data/" + path,
+			System.exePath + path + ".xp3",
+			System.exePath + path,
+			System.exePath + "content-data/" + path,
+			System.exePath + "patch/" + path,
+		];
+		var found = false;
+		for (var j = 0; j < paths_to_search.count && typeof(paths_to_search[j]) === "String"; j += 1)
+		{
+			var path = paths_to_search[j];
+			{
+@if(!KIRIKIROID)
+				if (Storages.isExistentDirectory(path + "/"))
+				{
+					found = true;
+					break;
+				}
+@endif
+				if (Storages.isExistentStorage(path))
+				{
+					found = true;
+					break;
+				}
+			}
+		}
+		if (found)
+		{
+			paths.add(path);
+		}
+		else
+		{
+			break;
+		}
+	}
+
+	for (var i = 0; i < paths.count; i += 1)
+	{
+		var path = paths[i];
+		var paths_to_search = [
+			System.exePath + "data.xp3" + arcdelim + path,
+			System.exePath + "data/" + path,
+			System.exePath + path + ".xp3",
+			System.exePath + path,
+			System.exePath + "content-data/" + path,
+			System.exePath + "patch/" + path,
+		];
+		for (var j = 0; j < paths_to_search.count && typeof(paths_to_search[j]) === "String"; j += 1)
+		{
+			var path = paths_to_search[j];
+			var spos = path.indexOf(arcdelim);
+			if (spos !== -1)
+			{
+				if (Storages.isExistentStorage(path.substring(0, spos)))
+				{
+					paths_to_add.add(path + "/");
+				}
+			}
+			else
+			{
+@if(!KIRIKIROID)
+				if (Storages.isExistentDirectory(path + "/"))
+				{
+					paths_to_add.add(path + "/");
+				}
+@endif
+				if (Storages.isExistentStorage(path))
+				{
+					paths_to_add.add(path + arcdelim);
+				}
+			}
+		}
+	}
+
+	if (devMode)
+	{
+		var devpaths = [
+			"../common/patch/k2compat",
+			"../common/plugin",
+			"../common/plugin_patch",
+			"../common/imageshistory",
+			"patch",
+			"etc",
+			"others",
+			"voice",
+			"rule",
+			"sound",
+			"se",
+			"bgm",
+			"fgimage",
+			"bgimage",
+			"scenario",
+			"image",
+			"video",
+			"system",
+			"plugin",
+			"plugin_patch",
+			"op",
+			"ImagesPatch",
+			"ImagesConfig",
+@if(GAME_FHAT)
+			"voicehanafuda",
+			"voicehanafuda2",
+			"imagesvita",
+			"imageshanafuda",
+			"bgm_patch",
+			"bgm_vita",
+@endif
+@if(GAME_FATE)
+			"bgm_patch",
+			"ImagesClassic",
+			"ImagesPS2",
+			"ImagesTitle",
+			"ImagesSD",
+			"ImagesScene",
+			"ImagesTrial",
+			"BGM_Classic",
+			"BGM_Remixed",
+			"BGM_PS2",
+			"Voice_patch",
+			"SoundPatch",
+			"Decensor",
+@endif
+		];
+		for (var i = 0; i < devpaths.count && typeof(devpaths[i]) === "String"; i += 1)
+		{
+			var path = System.exePath + devpaths[i] + "/";
+@if(!KIRIKIROID)
+			if (Storages.isExistentDirectory(path))
+			{
+				paths_to_add.add(path);
+			}
+@endif
+		}
+	}
+
+@if(!DEBUG)
+	var dir = System.exePath;
+	if (Storages.isExistentDirectory(dir))
+	{
+		var files = Storages.dirlist(dir);
+		var patches = [];
+		for (var i = 0; i < files.count; i += 1)
+		{
+			var fn = files[i];
+			if (fn.substr(0, 6) == "patch_" && Storages.extractStorageExt(fn) == ".xp3" && Storages.isExistentStorage(dir + fn))
+			{
+				patches.add(fn);
+			}
+		}
+		patches.sort("a");
+		for (var i = 0; i < patches.count; i += 1)
+		{
+			paths_to_add.add(dir + patches[i] + arcdelim);
+		}
+	}
+@endif
+
+	for (var i = 0; i < paths_to_add.count; i += 1)
+	{
+		Storages.removeAutoPath(paths_to_add[i]);
+		Storages.addAutoPath(paths_to_add[i]);
+		Debug.message("Adding to auto path: " + paths_to_add[i]);
+	}
+}

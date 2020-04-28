@@ -417,8 +417,7 @@ useArchiveIfExists("image.xp3");
 useArchiveIfExists("system.xp3");
 @endif
 
-if(Storages.isExistentStorage("Storages.tjs"))
-	KAGLoadScript("Storages.tjs");
+KAGLoadScript("Storages.tjs");
 @if(0)
 useArchiveIfExists("patch.xp3");
 
@@ -474,10 +473,7 @@ function KAGLoadScriptOnce(name)
 /*
 	AppConfig.tjs 読み込み
 */
-if(Storages.isExistentStorage("AppConfig.tjs"))
-{
-	KAGLoadScript("AppConfig.tjs");
-}
+KAGLoadScript("AppConfig.tjs");
 
 // Load patch scripts
 var devMode = false;
@@ -546,14 +542,13 @@ if(!System.createAppLock(System.exePath.replace(/[^A-Za-z]/g, '_')))
 */
 
 
+@if(0)
 property askYesNo { getter() { KAGLoadScript("YesNoDialog.tjs"); return global.askYesNo; } }
 property CheckBoxLayer { getter() { KAGLoadScript("CheckBoxLayer.tjs"); return global.CheckBoxLayer; } }
 property ButtonLayer { getter() { KAGLoadScript("ButtonLayer.tjs"); return global.ButtonLayer; } }
-@if(0)
 property EditLayer { getter() { KAGLoadScript("EditLayer.tjs"); return global.EditLayer; } }
-@endif
-property EditLayer { getter() { KAGLoadScript("EditLayer.tjs"); KAGLoadScript("EditLayer.override.tjs"); return global.EditLayer; } }
 property KAGPlugin { getter() { KAGLoadScript("Plugin.tjs"); return global.KAGPlugin; } }
+@endif
 
 /*
 	各システム読み込み
@@ -562,46 +557,38 @@ dm("KAG System スクリプトを読み込んでいます...");
 
 KAGLoadScript("LayerEx.tjs");
 KAGLoadScript("Utils.tjs");
-if(Storages.isExistentStorage("Layer.override.tjs"))
-	KAGLoadScript("Layer.override.tjs");
+KAGLoadScript("Layer.override.tjs");
 KAGLoadScript("KAGLayer.tjs");
-//	KAGLayer のオーバーライド		layopt で storage, effect, contrast, blur 等のプロパティ指定可能
-if(Storages.isExistentStorage("KAGLayer.override.tjs")){
-	KAGLoadScript("KAGLayer.override.tjs");
-}
 KAGLoadScript("HistoryLayer.tjs");
 KAGLoadScript("BGM.tjs");
 //	BGM のオーバーライド
-if(Storages.isExistentStorage("BGM.override.tjs")){
-	KAGLoadScript("BGM.override.tjs");
-}
+KAGLoadScript("BGM.override.tjs");
 KAGLoadScript("SE.tjs");
 //	SESoundBuffer のオーバーライド
-if(Storages.isExistentStorage("SE.override.tjs")){
-	KAGLoadScript("SE.override.tjs");
-}
+KAGLoadScript("SE.override.tjs");
 KAGLoadScript("Movie.tjs");
 KAGLoadScript("Conductor.tjs");
 KAGLoadScript("AnimationLayer.tjs");
 //	AnimationLayer のオーバーライド		storage, effect, contrast, blur 等のプロパティを追加
-if(Storages.isExistentStorage("AnimationLayer.override.tjs")){
-	KAGLoadScript("AnimationLayer.override.tjs");
-}
+KAGLoadScript("AnimationLayer.override.tjs");
 KAGLoadScript("GraphicLayer.tjs");
 //	GraphicLayer, BaseLayer, CharacterLayer のオーバーライド	前景レイヤー指定変更など
-if(Storages.isExistentStorage("GraphicLayer.override.tjs")){
-	KAGLoadScript("GraphicLayer.override.tjs");
-}
+KAGLoadScript("GraphicLayer.override.tjs");
 KAGLoadScript("MessageLayer.tjs");
 KAGLoadScript("Menus.tjs");
 KAGLoadScript("DefaultMover.tjs");
-KAGLoadScript("BitmapFont.tjs") if Storages.isExistentStorage("BitmapFont.tjs");
+KAGLoadScript("BitmapFont.tjs");
 KAGLoadScript("MainWindow.tjs");
+
+KAGLoadScript("YesNoDialog.tjs");
+KAGLoadScript("CheckBoxLayer.tjs");
+KAGLoadScript("ButtonLayer.tjs");
+KAGLoadScript("EditLayer.tjs");
+KAGLoadScript("EditLayer.override.tjs");
+KAGLoadScript("Plugin.tjs");
+
 KAGLoadScript("patch_historylayer.tjs");
-if(Storages.isExistentStorage("Override.tjs"))
-	KAGLoadScript("Override.tjs");
-if(Storages.isExistentStorage(System.exePath + "Override2.tjs"))
-	KAGLoadScript(System.exePath + "Override2.tjs");
+KAGLoadScript("Override.tjs");
 KAGLoadScript("patch_language_configvalues.tjs");
 KAGLoadScript("patch_wordwrap.tjs");
 
@@ -661,10 +648,12 @@ delete parseStartTick;
 /*
 	AfterInit.tjs が存在すれば実行
 */
+@if(0)
 if(Storages.isExistentStorage("AfterInit.tjs"))
 	KAGLoadScript("AfterInit.tjs");
 if(Storages.isExistentStorage(System.exePath + "AfterInit2.tjs"))
 	KAGLoadScript(System.exePath + "AfterInit2.tjs");
+@endif
 
 /*
 	コマンドラインパラメータとして -ovr が指定されていれば

@@ -138,10 +138,13 @@ class Layer_patch_layer_override extends Layer_patch_layer_original
 	}
 
 @if(DRAWTEXT_ESCAPE)
-	function drawText(left, top, text, color, opacity, aa, slevel, scolor, swidth, sofsx, sofxy, language=sf.language)
+	function drawText(left, top, text, color, opacity, aa, slevel, scolor, swidth, sofsx, sofxy, language=global.kag.sflags.language)
 	{
 		var fontToSpecialCharacters = languageSettings[language]["special_characters"];
-		if (fontToSpecialCharacters === void || fontToSpecialCharacters[font.face] === void) {
+@if(!KIRIKIROID)
+		if (fontToSpecialCharacters === void || fontToSpecialCharacters[font.face] === void)
+@endif
+		{
 			return super.drawText(left, top, text, color, opacity, aa, slevel, scolor, swidth, sofsx, sofxy);
 		}
 		var specialCharacters = fontToSpecialCharacters[font.face][0];

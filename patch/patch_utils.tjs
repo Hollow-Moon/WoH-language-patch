@@ -252,7 +252,7 @@ function initializeScollbar(x, y, w, h, total, moving, top, scrimgs=defaultScrol
 
 
 /// 停止所有视频图层的播放 ///
-function stopAllMovies()
+function stopAllMovies(kag=global.kag)
 {
 	for(var i=0; i<kag.movies.count; i++)
 	{
@@ -296,6 +296,7 @@ function fixAndLoadDictionaryForKrkrZ(filename, mode)
 // Avoid CVE-2015-5672
 function safeEvalStorage(filename, mode)
 {
+@if(!KIRIKIROID)
 	if (typeof(global.Dictionary) === "Object" && typeof(global.Dictionary.loadStruct) === "Object")
 	{
 		var ret;
@@ -315,6 +316,7 @@ function safeEvalStorage(filename, mode)
 		return ret;
 	}
 	else
+@endif
 	{
 		var ret;
 		try

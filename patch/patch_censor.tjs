@@ -9,11 +9,11 @@ var hCensoredFlagName = "censored";
 var matureFlagName = "gmature";
 var decensoredFlagName = "decensor";
 
-property hPatchExists { getter { return patchExists(hPatchName); } }
-property isHCensored { getter { return sf[hCensoredFlagName] !== void? sf[hCensoredFlagName] : !sf[hFlagName]; } } // RN uses hFlagName while HA uses hCensoredFlagName
-property isMatureCensored { getter { return !sf[matureFlagName]; } }
-property fullyCensored { getter { return isHCensored && isMatureCensored; } }
-property isDecensored { getter { return sf[decensoredFlagName]; } };
+function get_hPatchExists() { { return patchExists(hPatchName); } }
+function get_isHCensored(kag=global.kag) { { return kag.sflags[hCensoredFlagName] !== void? kag.sflags[hCensoredFlagName] : !kag.sflags[hFlagName]; } } // RN uses hFlagName while HA uses hCensoredFlagName
+function get_isMatureCensored(kag=global.kag) { { return !kag.sflags[matureFlagName]; } }
+function get_fullyCensored(kag=global.kag) { { return get_isHCensored(kag) && get_isMatureCensored(kag); } }
+function get_isDecensored(kag=global.kag) { { return kag.sflags[decensoredFlagName]; } };
 
 // Folder names
 var fullyCensoredFolderName = "censored";
@@ -26,21 +26,21 @@ var uncensoredMatureFolderName = "mature";
 
 var decensoredFolderName = "decensored";
 
-function getTextCensored(text) {
+function getTextCensored(text, kag=global.kag) {
 	if (text == void) return text;
 	if (text.indexOf("|") >=0)
 	{
 		var splitText = [].split("|", text);
-		if (sf[splitText[2]])
+		if (kag.sflags[splitText[2]])
 			return splitText[0];
 		return splitText[1];
 	}
 	return text;
 }
 
-function isHScene()
+function isHScene(kag=global.kag)
 {
-	var name = f.scriptlabel;
+	var name = kag.flags.scriptlabel;
 	if (name == void || name == "") return false;
 
 	name = Storages.chopStorageExt(name);
@@ -50,7 +50,7 @@ function isHScene()
 	return split[1].length == 3;
 }
 
-function updateDecensorConfig()
+function updateDecensorConfig(kag=global.kag)
 {
 	var decensor_types = [void, "bishopcruz", "Bellandy", "original"];
 	var decensor_config_file_name = "decensor_config.dic";
@@ -85,7 +85,7 @@ function updateDecensorConfig()
 @endif
 			if(decensor_type == currentDecensorType)
 			{
-				if(isDecensored)
+				if(get_isDecensored(kag))
 				{
 					load_patches([
 						[decensoredPatchName, decensor_version_path],

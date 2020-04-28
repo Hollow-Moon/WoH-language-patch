@@ -54,14 +54,21 @@ function refreshMenuString(menu)
 		refreshMenuString(children[i]);
 }
 
-function refreshStringWithLanguage() {
+function refreshStringWithLanguage(kag) {
 	loadMOs();
+
+	var patch_info_url = __s("https://example.com/", "patch_info_url");
+	if (patch_info_url !== "https://example.com/")
+	{
+		global.PatchInfoURL = patch_info_url;
+	}
 
 	if (typeof(global.System) === "Object" && typeof(global.System.update_title) === "Object")
 	{
 		global.System.update_title();
 	}
-	if (typeof(global.kag) !== "undefined" && typeof(global.kag.menu) !== "undefined") {
+	if ((typeof(kag) === "Object") && (typeof(kag.menu) === "Object"))
+	{
 		refreshMenuString(kag.menu);
 	}
 }
@@ -142,20 +149,20 @@ function load_prerendered_fonts(language) {
 }
 
 
-function setFontWithLanguage(language)
+function setFontWithLanguage(language, kag=global.kag)
 {
 	load_fonts(language);
 
 	/// Main ///
-	sf.userFont[language] = %[
-		fontface:default_font,
+	kag.sflags.userFont[language] = %[
+		fontface:get_default_font(),
 		bold:false,
 		rubybold:false
-	] if sf.userFont[language] === void;
+	] if kag.sflags.userFont[language] === void;
 
 	with(kag)
 	{
-		var uf = sf.userFont[language];
+		var uf = .sflags.userFont[language];
 		.chDefaultFace				= uf.fontface;
 		if (typeof(.chDefaultBold) === "Integer")
 		{
@@ -171,16 +178,16 @@ function setFontWithLanguage(language)
 	}
 
 	/// History ///
-	var hf = kag.chDefaultFace !== void && historyFont[kag.chDefaultFace] !== void ? historyFont[kag.chDefaultFace] : historyFontDefault;
+	var hf = kag.chDefaultFace !== void && get_historyFont(kag)[kag.chDefaultFace] !== void ? get_historyFont(kag)[kag.chDefaultFace] : get_historyFontDefault(kag);
 
 	with(kag.historyLayer.font)
 	{
-		.face = sf.historyFont		= hf[0];
-		.bold = sf.historyFontBold	= hf[1];
+		.face = kag.sflags.historyFont		= hf[0];
+		.bold = kag.sflags.historyFontBold	= hf[1];
 	}
 }
 
-function saveFontWithLanguage()
+function saveFontWithLanguage(kag=global.kag)
 {
 	var bold = false;
 	var rubybold = false;
@@ -190,6 +197,10 @@ function saveFontWithLanguage()
 		{
 			bold = .chDefaultBold;
 		}
+		else if (typeof(.current) !== "Object")
+		{
+			return;
+		}
 		else
 		{
 			bold = .current.defaultBold;
@@ -198,11 +209,15 @@ function saveFontWithLanguage()
 		{
 			rubybold = .chDefaultRubyBold;
 		}
+		else if (typeof(.current) !== "Object")
+		{
+			return;
+		}
 		else
 		{
 			rubybold = .current.defaultRubyBold;
 		}
-		sf.userFont[sf.language] = %[
+		.sflags.userFont[.sflags.language] = %[
 			fontface:.chDefaultFace,
 			bold:bold,
 			rubybold:rubybold
@@ -234,7 +249,7 @@ function languagePatchExists(language) {
 	return patchExists(languagePatchName(language));
 }
 
-function load_language_patch(language) {
+function load_language_patch(language, kag) {
 	var languagePatchName = languagePatchName(language);
 	var patches_arr = [];
 
@@ -249,22 +264,16 @@ function load_language_patch(language) {
 			patches_arr.add([languagePatchName, "", System.exePath + "../Common/"]);
 		}
 
-		languageSearchPath = Storages.isExistentStorage(languageSearchPathFile)? Scripts.evalStorage(languageSearchPathFile) : [];
-		for (var i=0; i<languageSearchPath.count; i++) {
-			patches_arr.add([languagePatchName, languageSearchPath[i]]);
-		}
-
 		patches_arr.add([languagePatchName, imagesFolderName]);
+		if (typeof(kag) === "Object")
+		{
 @if(HD_MODE)
-		if (typeof global.kag !== "undefined") {
 			patches_arr.add([languagePatchName, imagesFolderName + hdFolderSuffix]) if kag.isHd;
-		}
 @endif
-		if (typeof global.sf !== "undefined") {
-			patches_arr.add([languagePatchName, censoredHFolderName]) if sf[hCensoredFlagName];
-			patches_arr.add([languagePatchName, censoredMatureFolderName]) if !sf[matureFlagName];
-			patches_arr.add([languagePatchName, fullyCensoredFolderName]) if fullyCensored;
-			patches_arr.add([languagePatchName, videosFolderName]) if sf[subbedVideosFlagName];
+			patches_arr.add([languagePatchName, censoredHFolderName]) if kag.sflags[hCensoredFlagName];
+			patches_arr.add([languagePatchName, censoredMatureFolderName]) if !kag.sflags[matureFlagName];
+			patches_arr.add([languagePatchName, fullyCensoredFolderName]) if get_fullyCensored(kag);
+			patches_arr.add([languagePatchName, videosFolderName]) if kag.sflags[subbedVideosFlagName];
 		}
 	}
 
@@ -272,7 +281,16 @@ function load_language_patch(language) {
 	invalidate patches_arr;
 	delete patches_arr;
 
-	refreshStringWithLanguage();
+	var patch_subfolders = [];
+	languageSearchPath = Storages.isExistentStorage(languageSearchPathFile)? Scripts.evalStorage(languageSearchPathFile) : [];
+	for (var i=0; i<languageSearchPath.count; i++) {
+		patch_subfolders.add([languagePatchName, languageSearchPath[i]]);
+	}
+	load_patches(patch_subfolders);
+	invalidate patch_subfolders;
+	delete patch_subfolders;
+
+	refreshStringWithLanguage(kag);
 	loadLanguageDict(language);
 	load_fonts(language);
 
@@ -283,22 +301,24 @@ function load_language_patch(language) {
 	}
 }
 
-function unload_language_patch(language) {
+function unload_language_patch(language, kag) {
 	var languagePatchName = languagePatchName(language);
 	var patches_arr = [];
 
 	if (language != japaneseLanguage) {
 @if(HD_MODE)
-		if (typeof global.kag !== "undefined") {
+		if (typeof(kag) === "Object")
+		{
 			patches_arr.add([languagePatchName, imagesFolderName + hdFolderSuffix]) if kag.isHd;
 		}
 @endif
 		patches_arr.add([languagePatchName, imagesFolderName]);
-		if (typeof global.sf !== "undefined") {
-			patches_arr.add([languagePatchName, censoredHFolderName]) if sf[hCensoredFlagName];
-			patches_arr.add([languagePatchName, censoredMatureFolderName]) if !sf[matureFlagName];
-			patches_arr.add([languagePatchName, fullyCensoredFolderName]) if fullyCensored;
-			patches_arr.add([languagePatchName, videosFolderName]) if sf[subbedVideosFlagName];
+		if (typeof(kag) === "Object")
+		{
+			patches_arr.add([languagePatchName, censoredHFolderName]) if kag.sflags[hCensoredFlagName];
+			patches_arr.add([languagePatchName, censoredMatureFolderName]) if !kag.sflags[matureFlagName];
+			patches_arr.add([languagePatchName, fullyCensoredFolderName]) if get_fullyCensored(kag);
+			patches_arr.add([languagePatchName, videosFolderName]) if kag.sflags[subbedVideosFlagName];
 		}
 
 		for (var i=0; i<languageSearchPath.count; i++) {
@@ -326,7 +346,7 @@ function loadLanguageSettings() {
 	var found = 0;
 	for (var i=0; i < languages.count; i++) {
 		var language = languages[i];
-		load_language_patch(language);
+		load_language_patch(language, void);
 
 		var locale = __s("ja_JP", "locale");
 
@@ -338,7 +358,7 @@ function loadLanguageSettings() {
 			found = 1;
 		}
 
-		unload_language_patch(language);
+		unload_language_patch(language, void);
 	}
 }
 
@@ -416,16 +436,15 @@ if (languages.count == 2) {
 initializeDefaultLanguage();
 
 // For convenience
-property currentLanguageSettings { getter() { return languageSettings[sf.language]; } }
-property special_characters { getter() { return currentLanguageSettings["special_characters"] !== void? currentLanguageSettings["special_characters"] : %[]; } }
-property default_history_font { getter() { return currentLanguageSettings["history_default"]; } }
-property default_history_bold { getter() { return currentLanguageSettings["history_default_bold"]; } }
-property historyFontDefault { getter() { return [ default_history_font, default_history_bold ]; } }
-property historyFont { getter() { return currentLanguageSettings["history"] !== void? currentLanguageSettings["history"] : %[]; } }
+function get_currentLanguageSettings(kag=global.kag) { { return languageSettings[kag.sflags.language]; } }
+function get_special_characters(kag=global.kag) { { return get_currentLanguageSettings(kag)["special_characters"] !== void? get_currentLanguageSettings(kag)["special_characters"] : %[]; } }
+function get_default_history_font(kag=global.kag) { { return get_currentLanguageSettings(kag)["history_default"]; } }
+function get_default_history_bold(kag=global.kag) { { return get_currentLanguageSettings(kag)["history_default_bold"]; } }
+function get_historyFontDefault(kag=global.kag) { { return [ get_default_history_font(kag), get_default_history_bold(kag) ]; } }
+function get_historyFont(kag=global.kag) { { return get_currentLanguageSettings(kag)["history"] !== void? get_currentLanguageSettings(kag)["history"] : %[]; } }
 
-property default_font
+function get_default_font()
 {
-	getter()
 	{
 		var font_face_to_use = "ＭＳ ゴシック";
 		if (typeof(global.fontSettings) === "Object")
@@ -448,39 +467,40 @@ function getPrerenderedFontFiles(language) {
 }
 
 
-function isChinese() {
+function isChinese(kag=global.kag) {
 	//Catch simplified and traditional.
-	return /chinese/.test(sf.language.toLowerCase());
+	return /chinese/.test(kag.sflags.language.toLowerCase());
 }
 
-function isJapanese() {
-	return japaneseLanguage == sf.language.toLowerCase();
+function isJapanese(kag=global.kag) {
+	return japaneseLanguage == kag.sflags.language.toLowerCase();
 }
 
-function isNoSpaceLanguage() {
-	return isJapanese() || isChinese();
+function isNoSpaceLanguage(kag=global.kag) {
+	return isJapanese(kag) || isChinese(kag);
 }
 
 
 function initializeDefaultLanguage() {
-	load_language_patch(default_language);
+	load_language_patch(default_language, void);
 }
 
-function initializeLanguage() {
-	if (sf.language === void) {
+function initializeLanguage(kag=global.kag) {
+	if (kag.sflags.language === void) {
 		// language already loaded in initializeDefaultLanguage
-		sf.language = default_language;
-		sf.userFont = %[];
+		kag.sflags.language = default_language;
+		kag.sflags.userFont = %[];
 	}
 
 	// Load/Reload language after kag is defined:
-	unload_language_patch(default_language);
-	load_language_patch(sf.language);
+	unload_language_patch(default_language, kag);
+	load_language_patch(kag.sflags.language, kag);
 
-	saveFontWithLanguage();
-	if(typeof(kag.menu) != "undefined") {
+	saveFontWithLanguage(kag);
+	if ((typeof(kag) === "Object") && (typeof(kag.menu) === "Object"))
+	{
 		(addLanguageMenu incontextof kag)();
-		kag[languageMenuItemFormat.sprintf(sf.language)].checked	= true;
+		kag[languageMenuItemFormat.sprintf(kag.sflags.language)].checked	= true;
 	}
 }
 
@@ -490,7 +510,8 @@ function addLanguageMenu() {
 		var language = languages[i];
 		var languageMenuItemName = languageMenuItemFormat.sprintf(language);
 		this.languageMenu.add(this[languageMenuItemName] = new KAGMenuItem(this, languageSettings[language]["menu_name"], 1,
-		"kag.onLanguageMenuItemClick(kag['" + languageMenuItemName + "'],'"+language+"')", false));
+		function (sender) { sender.owner.onLanguageMenuItemClick(sender, sender.language); }, false));
+		this[languageMenuItemName].language = language;
 	}
 }
 
@@ -556,15 +577,15 @@ class Window_PatchLanguage_override extends Window_PatchLanguage_original
 
 	function onLanguageMenuItemClick(sender, language)
 	{
-		if (sf.language == language)
+		if (this.sflags.language == language)
 		{
 			return;
 		}
-		saveFontWithLanguage();
-		unload_language_patch(sf.language);
-		load_language_patch(language);
-		sf.language = language;
-		setFontWithLanguage(sf.language);
+		saveFontWithLanguage(this);
+		unload_language_patch(this.sflags.language, this);
+		load_language_patch(language, this);
+		this.sflags.language = language;
+		setFontWithLanguage(this.sflags.language, this);
 		sender.checked = true;
 		extraConductor.clear(); // Fix code for AutoPath
 		onReloadScenarioMenuItemClick(sender);
@@ -578,7 +599,7 @@ class Window_PatchLanguage_override extends Window_PatchLanguage_original
 	function replace_font_for_special_characters(elm)
 	{
 		var originalFontFace = current.lineLayer.font.face;
-		var special = special_characters[originalFontFace];
+		var special = get_special_characters(this)[originalFontFace];
 		if (special !== void && special[0].contains(elm.text))
 		{
 			var specialCharactersFontFace = special[1];
@@ -595,7 +616,7 @@ class Window_PatchLanguage_override extends Window_PatchLanguage_original
 			obj.text = "〜";
 		}
 
-		if (sf.language == englishLanguage
+		if (this.sflags.language == englishLanguage
 			&& obj.text=="　" 							// Japanese whitespace
 			&& !startsWith("花札", conductor.curStorage) // Not hanafuda
 			)
@@ -623,7 +644,14 @@ class System_PatchLanguage_override extends System_PatchLanguage_original
 				super.title = v;
 			}
 		}
-		getter { return global.System.original_title; }
+		getter
+		{
+			if (typeof(global.System.original_title) === "String")
+			{
+				return global.System.original_title;
+			}
+			return super.title;
+		}
 	}
 
 	function update_title()

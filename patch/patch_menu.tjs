@@ -1,7 +1,7 @@
 ﻿
-property vitaPatchExists { getter { return true; } }
+function get_vitaPatchExists() { { return true; } }
 
-property bgmPatchExists { getter { return true; } }
+function get_bgmPatchExists() { { return true; } }
 
 KAGLoadScript("patch_menu_base.tjs");
 
@@ -50,10 +50,10 @@ function addOptionsMenuItems(patchOptionsMenuItem)
 }
 
 function initialize_patch_menu() {
-	if(typeof(kag.menu) != "undefined")
-		(addPatchMenu incontextof kag)();
+	if(typeof(this.menu) != "undefined")
+		(addPatchMenu incontextof this)();
 
-	kag.enableRestartMenus = function() {
+	this.enableRestartMenus = function() {
 		if(typeof(this.menu) != "undefined") {
 			if(typeof(this.languageMenu) != "undefined")
 			{
@@ -62,7 +62,7 @@ function initialize_patch_menu() {
 		}
 	};
 
-	kag.disableRestartMenus = function() {
+	this.disableRestartMenus = function() {
 		if(typeof(this.menu) != "undefined") {
 			if(typeof(this.languageMenu) != "undefined")
 			{

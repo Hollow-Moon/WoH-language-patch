@@ -98,7 +98,7 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 		}
 
 		var clean = conductor.cleanLine();
-		if (sf.language == englishLanguage && !startsWith("花札", conductor.curStorage)) {
+		if (typeof(global.kag) === "Object" && isvalid(global.kag) && global.kag.sflags.language == englishLanguage && !startsWith("花札", conductor.curStorage)) {
 			clean = clean.replace(/　/, " ");
 		}
 

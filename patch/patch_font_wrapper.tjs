@@ -22,15 +22,25 @@ class FontWrapper
 
 	function FontWrapper(font, layer)
 	{
+		if (typeof(font) !== "Object")
+		{
+			font = new Font();
+		}
+		if (typeof(font.face) !== "String")
+		{
+			font.face = "This is an unset font face";
+		}
 		this.font = font;
 		this.layer = layer;
 @if(HD_MODE)
 		originalHeight = font.height;
 @endif
+@if(0)
 		if (typeof(global.font_remap_list[font.face]) !== "undefined")
 		{
 			font.face = global.font_remap_list[font.face];
 		}
+@endif
 		global.automapPrerenderedFont(font) if typeof global.automapPrerenderedFont !== "undefined";
 	}
 
@@ -77,10 +87,12 @@ class FontWrapper
 			if (v != font.face)
 			{
 				font.face = v;
+@if(0)
 				if (typeof(global.font_remap_list[font.face]) !== "undefined")
 				{
 					font.face = global.font_remap_list[font.face];
 				}
+@endif
 				global.automapPrerenderedFont(font) if typeof global.automapPrerenderedFont !== "undefined";
 			}
 		}
@@ -205,11 +217,14 @@ class FontWrapper
 @endif
 
 @if(DRAWTEXT_ESCAPE)
-	function getTextWidth(text, language=sf.language)
+	function getTextWidth(text, language=global.kag.sflags.language)
 	{
 		var fontToSpecialCharacters = languageSettings[language]["special_characters"];
 		fontToSpecialCharacters = %[] if fontToSpecialCharacters === void;
-		if (fontToSpecialCharacters[font.face] === void) {
+@if(!KIRIKIROID)
+		if (fontToSpecialCharacters[font.face] === void)
+@endif
+		{
 @if(HD_MODE)
 			return font.getTextWidth(text) / widthScale;
 @endif

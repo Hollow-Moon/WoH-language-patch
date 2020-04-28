@@ -546,6 +546,19 @@ class KAGWindow extends Window
 			setBookMarkMenuCaptions();
 		}
 
+		if (ismain)
+		{
+			(initialize_patch_menu incontextof this)();
+			initializeLanguage(this);
+			if (devMode || devMode2)
+			{
+				if (typeof(this.debugMenu) !== "undefined")
+				{
+					this.debugMenu.visible = true;
+				}
+			}
+		}
+
 		// メッセージレイヤのクリア
 		clearMessageLayers(false);
 

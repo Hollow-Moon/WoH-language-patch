@@ -48,8 +48,18 @@ with(tracer_object)
 	f.av_readall= 0;
 	f.lastscripttitle	=f.scripttitle;
 	var	block	= .getBlockFromScript(f.av_storage[0]);
-	.title_format	= "["+block.data+"]%s";
-	f.scripttitle	= .title_format.sprintf(block.title);
+	var blockdata = "?";
+	if (typeof(block) === "Object" && typeof(block.data) === "String")
+	{
+		blockdata = block.data;
+	}
+	.title_format	= "["+blockdata+"]%s";
+	var blocktitle = "?";
+	if (typeof(block) === "Object" && typeof(block.title) === "String")
+	{
+		blocktitle = block.title;
+	}
+	f.scripttitle	= .title_format.sprintf(blocktitle);
 }
 @endscript
 *archive_repeat|&f.scripttitle

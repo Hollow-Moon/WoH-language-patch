@@ -17,6 +17,8 @@
 @setmessageappearaction page=fore type=opaque timerate=3
 @setmessageappearaction page=back type=opaque timerate=3
 
+@eval exp="startArchiveWithScenario(System.getArgument('-archiveopenscenario'))" cond="System.getArgument('-archiveopenscenario')!==void"
+
 *normalstart
 
 ; 右クリック/クイックセーブロード一時無効化

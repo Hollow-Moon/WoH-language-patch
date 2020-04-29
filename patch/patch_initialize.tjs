@@ -252,38 +252,7 @@ global.initialize_patch = function()
 	}
 	else
 	{
-		var jumpscenario = System.getArgument('-jumpscenario');
-		var jumplabel = System.getArgument('-jumplabel');
-		if (typeof(jumpscenario) === "String")
-		{
-			var skipscenario = System.getArgument('-skipscenario');
-			if (typeof(skipscenario) === "String")
-			{
-				global.kag.skipToScenario = skipscenario;
-			}
-			var skiplabel = System.getArgument('-skiplabel');
-			if (typeof(skiplabel) === "String")
-			{
-				global.kag.skipToLabel = skiplabel;
-			}
-			var skipimmediate = System.getArgument('-skipimmediate');
-			if (typeof(skipimmediate) !== "void")
-			{
-				global.kag.process(jumpscenario, (typeof(jumplabel) === "String") ? jumplabel : void, true, true);
-				while ((typeof(global.kag.skipToScenario) === "String") || (typeof(global.kag.skipToLabel) === "String"))
-				{
-					global.kag.conductor.run(true);
-				}
-			}
-			else
-			{
-				global.kag.process(jumpscenario, (typeof(jumplabel) === "String") ? jumplabel : void, true, false);
-			}
-		}
-		else
-		{
-			global.kag.process("first.ks", '', true, true);
-		}
+		global.kag.process("first.ks", '', true, true);
 @if(GAME_WOHN)
 		global.menu_management_override();
 @endif

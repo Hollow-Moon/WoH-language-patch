@@ -1,5 +1,4 @@
 ﻿// i18n
-Plugins.link("kri18n.dll");
 function __t(text)
 {
 	return text;
@@ -95,13 +94,6 @@ function load_fonts(language) {
 				global.Font.addFont(fontFiles[i]);
 			}
 @endif
-			if (typeof(System.addFont) === "undefined")
-			{
-				if (Storages.isExistentStorage("addFont.dll"))
-				{
-					Plugins.link("addFont.dll");
-				}
-			}
 			if (typeof(System.addFont) !== "undefined")
 			{
 				var result = System.addFont(fontFiles[i], true);

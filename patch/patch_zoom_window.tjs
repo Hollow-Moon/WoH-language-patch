@@ -1,0 +1,823 @@
+﻿
+global.KAGWindow_patch_zoom_window_original = KAGWindow;
+class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_original
+{
+@if(ZOOM_WINDOW)
+	var exWidth, exHeight; // 拡張画面サイズ⇒sysbase/fore.base/back.baseレイヤサイズ
+	var pxWidth, pxHeight; // 現在のサイズ（sc～exまでの値）
+@endif
+
+	function KAGWindow_patch_zoom_window_override()
+	{
+		super.KAGWindow(...);
+	}
+
+	function KAGWindow()
+	{
+		KAGWindow_patch_zoom_window_override(...);
+	}
+
+	function init_zoom_window()
+	{
+		var forcefull = false; // 強制フルスクリーンフラグ
+		with (System) {
+			// 座標・サイズを決定
+			var x = left,  y = top;          // ウィンドウ座標
+			var w = width, h = height;       // ウィンドウサイズ
+			var pw = pxWidth, ph = pxHeight; // 実サイズ
+			var iw = pw, ih = ph;            // インナーサイズ
+			var mw = 0, mh = 0;              // 最小補正サイズ
+			//	フルスクリーン状態で終了した後、再起動後にウィンドウへ切り替えると、フルスクリーン状態の拡大率のまま
+			//	ウィンドウに戻ってしまうので、フルスクリーンだった場合は拡大率を復帰させない
+			var	numer = 1, denom = 1;
+			if(!scflags.fullScreen)
+			{
+				numer = scflags.zoomNumer;
+				denom = scflags.zoomDenom;
+			}
+			var zoom  = (numer > 0 && denom > 0) ? (numer / denom) : 0;
+			var max;
+
+			if (isMain) {
+				// ウィンドウ実サイズ
+				iw = pw * zoom if (zoom > 0);
+				ih = ph * zoom if (zoom > 0);
+
+				// 位置を復帰
+				if (System.getArgument("-restorewindowpos") != "no") with (scflags) {
+					x = .windowLeft	  if (.windowLeft	 !== void);
+					y = .windowTop	  if (.windowTop	 !== void);
+					w = .windowWidth  if (.windowWidth	 !== void);
+					h = .windowHeight if (.windowHeight	 !== void);
+					max = .windowMaximized;
+				}
+			}
+			w = iw if (w <= 0);
+			h = ih if (h <= 0);
+			mw = w\3, mh = h\3 if (isMain);
+
+			// モニタ情報の取得
+			var info;
+			var desktop = %[ /**/  x:.desktopLeft,	 y:.desktopTop,
+							 /**/  w:.desktopWidth,	 h:.desktopHeight ];
+			var screen	= %[ /**/  x: 0,			 y: 0,
+							 /**/  w:.screenWidth,	 h:.screenHeight  ];
+
+			// WindowExプラグインが使える場合はそちらを使用する
+			if (typeof .getMonitorInfo != "undefined") {
+				var info = .getMonitorInfo(true, x, y, w, h);
+				if (typeof info == "Object") {
+					(Dictionary.assign incontextof desktop)(info.work,	  true);
+					(Dictionary.assign incontextof screen )(info.monitor, true);
+				}
+			}
+
+			// ズーム状態補正
+			var sw = screen.w, sh = screen.h;
+			var over = (iw > sw || ih >= sh);
+			if (!isMain || over || !zoom) {
+				numer = denom = 1;
+				// 標準サイズでも画面からはみ出す場合
+				if (isMain && over && (pw > sw || ph >= sh)) {
+					// 3/4～1/4 まで縮小できるか試す
+					for (numer=3, denom=4; numer > 1; numer--)
+						if (pw*numer/denom < sw && ph*numer/denom < sh) break;
+					// 強制でフルスクリーン
+					forcefull = true;
+				}
+			}
+			setZoom(numer, denom);
+
+			// ウィンドウ位置の調節
+			with (desktop) {
+				x = .x+.w - w if (x	  + mw > .x+.w);
+				y = .y+.h - h if (y	  + mh > .y+.h);
+				x = .x		  if (x+w - mw < .x	  );
+				y = .y		  if (y		   < .y	  );
+			}
+			setPos(x, y) if (left != x || top != y);
+			maximize() if (max && typeof this.maximize != "undefined");
+		}
+	}
+
+@if(ZOOM_WINDOW)
+	var hookMap = %[ keyDown:this.keyDownHook, leftClick:this.leftClickHook, rightClick:this.rightClickHook ];
+	function callHook(tag, *)
+	{
+		// 文字列を渡されたときはテーブルから参照
+		var array = (typeof tag == "String" && tag != "") ? hookMap[tag] : tag;
+		if (typeof array != "Object" || array.count <= 0) return false;
+
+		// 順番に呼び出し
+		var ret = false, tmp = [];
+		tmp.assign(array);
+		for (var i = 0, cnt = tmp.count; i < cnt; i++) {
+			var func = tmp[i];
+			ret |= func(*) if (typeof func == "Object");
+		}
+		return !!ret;
+	}
+	function addHook(tag, func) {
+		var array = tag;
+		if (typeof tag == "String" && tag != "") {
+			array = hookMap[tag];
+			array = hookMap[tag] = [] if (array === void);
+		}
+		array.add(func) if (typeof array == "Object");
+	}
+	function removeHook(tag, func) {
+		var array = (typeof tag == "String" && tag != "") ? hookMap[tag] : tag;
+		array.remove(func, true) if (typeof array == "Object");
+	}
+@endif
+
+@if(ZOOM_WINDOW)
+	//------------------------------------------ フルスクリーン・ズーム処理 --
+
+	property fullScreenMode { getter {
+		var tag = System.getArgument("-fullscreenmode");
+		var map = %[ auto:-1, primaryonly:0, usepseudo:1, pseudoall:3 ];
+		return (tag != "" && typeof map[tag] != "undefined") ? map[tag] : -1;
+	} }
+
+	function isPseudoMode() {
+		if (pseudoFullScreened) return true;
+		var info, mode = fullScreenMode;
+		mode = 0 if (!exEventEnabled);
+		switch (mode) {
+		case -1:
+			// マルチモニタ環境の場合は擬似フルスクリーン
+			mode = (typeof  System.getDisplayMonitors != "undefined" &&
+					(info = System.getDisplayMonitors()) !== void &&
+					(info.count > 1));
+			break;
+		case 1:
+			// ウィンドウがセカンダリ以降なら擬似フルスクリーン
+			mode = (typeof  System.getMonitorInfo != "undefined" &&
+					(info = System.getMonitorInfo(true, this)) !== void &&
+					!info.primary);
+			break;
+		}
+		return !!mode;
+	}
+
+	var _pseudoFullScreen;
+	property pseudoFullScreened { getter { return (_pseudoFullScreen !== void); } }
+
+	var _lastWindowSize;
+	property fullScreen {
+		getter { return super.fullScreen || pseudoFullScreened; }
+		setter(v) {
+			if (!fullScreen == !v) return;
+			if (typeof this.screenModeChangedTrigger == "undefined") {
+				add(   this.screenModeChangedTrigger = new AsyncTrigger(this, "screenModeChanged"));
+				with (      screenModeChangedTrigger) .cached = true, .mode = atmAtIdle, .trigged = false;
+			}
+			var trig =      screenModeChangedTrigger;
+			with (trig) {
+				.maximize = .resetIcon = .callResize = .windowPos = void;
+				if (.trigged) throw new Exception("Cant set fullScreen, changed trigger not completed.");
+			}
+
+			// フック
+			callHook("prepareChangeScreenMode", v);
+			//onMovieScreenChanging(v);
+
+			// フルスクリーンモードチェック
+			if (v) {
+				var min = 1;
+				_lastWindowSize = %[
+					/**/window: ((typeof this.getNormalRect == "Object") ? getNormalRect() :
+								 /**/%[ x:left, y:top, w:width, h:height ]) ];
+				_lastWindowSize.window	= %[ x:left, y:top, w:width, h:height ] if _lastWindowSize.window.left === void;
+				if (isPseudoMode()) {
+					// 擬似フルスクリーン
+					var max = (typeof this.maximized != "undefined") ? maximized : false;
+					_pseudoFullScreen =
+						%[	/**/x:left, y:top, w:width, h:height,
+							/**/max:max, restmax:(System.getArgument("-restoremaximizebyf2w") == "yes"),
+							/**/rect:getNormalRect(), bs:borderStyle, //menu:menu.visible,
+							/**/shortcut:(menuBarEnable ? makePseudoMenuTable(menu) : void) ];
+					if (!max) {
+						visible = false;
+						trig.maximize = true;
+					}
+					if(typeof(this.menu) != "undefined")
+						menu.visible = false;
+					borderStyle = bsNone;
+				}
+				else
+				{
+					// プライマリフルスクリーン
+					setInnerSize(pxWidth, pxHeight);
+					resetPrimaryPos();
+					trig = void;
+					if(exEventEnabled)
+						if(typeof(this.menu) != "undefined")
+							menu.visible = menuBarEnable && menuBarState;
+					super.fullScreen = true;
+					min = -1;
+					// 解像度が変わる場合があるので
+					_lastWindowSize.fullscreen = %[
+						/**/w:System.screenWidth, h:System.screenHeight, x:0, y:0 ];
+				}
+				updateMenuBarState();
+			} else {
+				super.fullScreen = false;
+				if (pseudoFullScreened) with (_pseudoFullScreen) {
+					visible = false;
+					setPos (.x, .y);
+					setSize(.w, .h);
+					// menu.visible	= .menu;
+					borderStyle	= .bs;
+
+					trig.callResize = true;
+					if (.max) {
+						trig.windowPos = .rect;
+						trig.maximize = .restmax;;
+					}
+					showRestore();
+					_pseudoFullScreen = void;
+				}
+				else
+				{
+					setZoom(origZoomNumer, origZoomDenom);
+					trig.resetIcon = true;
+				}
+
+				// メニューを消す
+				updateMenuBarState();
+				_lastWindowSize = void;
+			}
+			if (typeof(this.windowSizeMenu) === "Object")
+			{
+				this.windowSizeMenu.enabled	= !fullScreen;	//	ウィンドウサイズの設定はウィンドウ表示のときのみ
+			}
+			if (trig !== void) with (trig) {
+				.trigged = true;
+				.trigger();
+			}
+			else
+				callHook("afterChangeScreenMode");
+		}
+	}
+	function screenModeChanged() {
+		with (screenModeChangedTrigger) {
+			resetWindowIcon() if (.resetIcon && typeof this.resetWindowIcon != "undefined");
+			if (.windowPos !== void) with (.windowPos) {
+				setPos (.x, .y);
+				setSize(.w, .h);
+			}
+			if (	 .maximize	) maximize();
+			else if (.callResize) onResize();
+
+			.maximize = .resetIcon = .callResize = .windowPos = void;
+			.trigged = false;
+		}
+		visible = true if !visible;
+
+		// フック
+		callHook("afterChangeScreenMode");
+	}
+	function resetPrimaryPos(z = 0, w, h) {
+		with (_primaryLayer) {
+			if (z > 0) {
+				var x = (innerWidth  - w) / (z*2);
+				var y = (innerHeight - h) / (z*2);
+				w = Math.ceil(innerWidth  / z);
+				h = Math.ceil(innerHeight / z);
+				sysbase.setPos(x, y);
+				.hasImage = true;
+				.setImageSize(w, h);
+				.fillRect(0, 0, w, h, 0);
+				.setSize(w, h);
+			} else {
+				sysbase.setPos(0, 0);
+				.hasImage = false;
+				.setSize(pxWidth, pxHeight);
+			}
+		}
+		//with (sysbase) onMoviePrimaryPosChanged(.left, .top);
+	}
+
+	var _zoomNumer, _zoomDenom;
+	property origZoomNumer { setter(v) { super.zoomNumer = v; } getter { return tempZoomed ? _zoomNumer : super.zoomNumer; } }
+	property origZoomDenom { setter(v) { super.zoomDenom = v; } getter { return tempZoomed ? _zoomDenom : super.zoomDenom; } }
+	property tempZoomed    { getter { return _zoomNumer !== void; } }
+	function setZoom(numer, denom, resize = true) {
+		if (super.fullScreen) return;
+		_zoomNumer = _zoomDenom = void;
+		var zn = super.zoomNumer;
+		var zd = super.zoomDenom;
+		super.setZoom(numer, denom);
+		var z = zoomNumer / zoomDenom;
+		var w = pxWidth  * z;
+		var h = pxHeight * z;
+		if (resize) {
+			setInnerSize(w, h);
+			resetPrimaryPos();
+		} else {
+			resetPrimaryPos(z, w, h);
+			_zoomNumer = zn;
+			_zoomDenom = zd;
+		}
+		top++, top--; // VCRなムービーが追従するようにおまじない XXX
+	}
+
+	var menuBarMode = 1; // 0:固定・変更不可，1:固定・変更可（menuBarState準拠）
+	var menuBarEnable = false;   // メニューバー有効
+	var menuBarState;  // 現在のメニューの表示状態(0:非表示，1:表示，-1:自動表示）
+	var defaultMenuBarState = 1; // 初期状態
+	var menuBarHideButtonVisible = true; // メニューバーに消す・復帰ボタンを表示する
+	var menuBarHideAutoVisible   = true; // 自動表示の有効フラグ
+	var menuBarRightClickEnabled = true; // メニューバー上の右クリックを有効
+	var menuBarTempMenuEnabled   = true; // 一時メニュー表示を有効
+
+	var menuBarHideMenuItem;
+	var menuBarHidePopupMenu;
+	var menuBarHideSysMenu;
+	var menuBarHidePseudoShortcut;
+	property menuBarHideModeEnable { getter { return menuBarMode && menuBarEnable; } }
+	function updateMenuBarState() {
+		if (!menuBarHideModeEnable) return;
+		menuBarState = (int)menuBarState;
+		menuBarState = -1 if (menuBarState < 0);
+		menuBarState =  1 if (menuBarState > 0 || (!menuBarHideAutoVisible && menuBarState < 0));
+
+		if(typeof(this.menu) != "undefined")
+			menu.visible = (menuBarState > 0) if (!fullScreen);
+		var list = menuBarHidePopupMenu;
+		for (var i = list.count-1; i >= 0; i--)
+			 with (list[i]) .checked = (.state == menuBarState);
+		if (!menuBarHideAutoVisible) {
+			list = menuBarHideSysMenu;
+			for (var i = list.count-1; i >= 0; i--)
+				with (list[i]) if (typeof .state != "undefined") .checked = (.state == menuBarState);
+		}
+		if (menuBarHideMenuItem !== void) with (menuBarHideMenuItem) {
+			if (fullScreen) .visible = false;
+			else {
+				.caption = (menuBarState > 0) ? "x" : "+";
+				.visible = true;
+//				.bmpItem = MenuItem[(menuBarState > 0) ? "biPopupClose" : "biPopupRestore"];
+				.rightJustify = true;
+			}
+		}
+	}
+	function getMenuBarPseudoShortcut() {
+		return (menuBarHideModeEnable && menuBarState <= 0) ? menuBarHidePseudoShortcut : void;
+	}
+	function changeMenuBarState(stat) {
+		if (!menuBarHideModeEnable) return;
+		menuBarState = stat;
+		if(typeof(this.menu) != "undefined")
+			menuBarHidePseudoShortcut = makePseudoMenuTable(menu) if (menuBarState <= 0 && menuBarHidePseudoShortcut === void);
+		updateMenuBarState();
+		onResize();
+	}
+	function toggleMenuBarState(sender) {
+		if (!menuBarHideModeEnable) return;
+		var state = (menuBarState <= 0) ? 1 : (menuBarHideAutoVisible ? -1 : 0);
+		state = sender.state if (sender !== void && typeof sender.state == "Integer");
+		changeMenuBarState(state);
+	}
+	function createMenuBarHideMenu() {
+		if (!menuBarHideModeEnable) return;
+		if (menuBarHideAutoVisible) {
+			menuBarHidePopupMenu = [
+				%[  caption:"常に表示",   group:1, state: 1 ],
+				%[  caption:"常に非表示", group:1, state: 0 ],
+				%[  caption:"動的に表示", group:1, state:-1 ] ];
+			menuBarHideSysMenu = [
+				%[  caption:"-" ],
+				%[  caption:"メニューバー", children:menuBarHidePopupMenu ] ];
+		} else {
+			menuBarHidePopupMenu = [
+				%[  caption:"表示",   group:1, state: 1 ],
+				%[  caption:"非表示", group:1, state: 0 ] ];
+			menuBarHideSysMenu = [
+				%[  caption:"-" ],
+				%[  caption:"メニューバーを表示",   group:1, state: 1 ],
+				%[  caption:"メニューバーを非表示", group:1, state: 0 ] ];
+		}
+		exSystemMenu = menuBarHideSysMenu;
+		if (menuBarHideButtonVisible && typeof(this.menu) != "undefined") {
+			menu.add(menuBarHideMenuItem  = new KAGMenuItem(this, "x", 0, toggleMenuBarState, false));
+			/**/     menuBarHideMenuItem.visible = false;
+		}
+	}
+	function onExSystemMenuSelected(sel) {
+		if (sel && typeof sel == "Object") changeMenuBarState(sel.state);
+	}
+	var _ncCaptionClick;
+	function onNcMouseDown(x, y, btn, rg) {
+		_ncCaptionClick = (btn == mbRight && rg == global.Window.nchtMenu);
+		if (typeof this.toggleMenuBarState == "Object" && btn == mbMiddle && rg == global.Window.nchtCaption) {
+			toggleMenuBarState();
+			_ncCaptionMove = false;
+		}
+	}
+	function onNcMouseUp(x, y, btn, rg, cb) {
+		if (_ncCaptionClick && btn == mbRight && rg == global.Window.nchtMenu && menuBarRightClickEnabled) {
+			var pop = MenuItem.popupEx(tpmRightButton, void, void, this, void, menuBarHidePopupMenu);
+			if (pop !== void) {
+				changeMenuBarState(pop.state);
+				cb() if (cb !== void);
+			}
+		}
+		_ncCaptionClick = void;
+	}
+	function onMouseLeave  () { checkMenuBarHideTrackPseudoMenu(); }
+	function onNcMouseLeave() { checkMenuBarHideTrackPseudoMenu(); }
+	function checkMenuBarHideTrackPseudoMenu() {
+		if (_ncCaptionMove || trackTempMenuShowing > 0) {
+			var cur = System.getCursorPos();
+			if (trackTempMenuShowing > 0) {
+				trackTempMenu(false) if (ncHitTest(cur.x, cur.y) != global.Window.nchtMenu);
+			} else {
+				var rect = getClientRect();
+				if (cur.x >= rect.x        && cur.y >= rect.y &&
+					cur.x <  rect.x+rect.w && cur.y <  rect.y+System.getSystemMetrics("CYMENU")) {
+					trackMenuByMouse(true);
+				}
+			}
+		}
+		_ncCaptionMove = false;
+	}
+	var _ncCaptionMove;
+	function onNcMouseMove(x, y, rg) {
+		if (!menuBarHideModeEnable || menuBarState >= 0 || fullScreen) return;
+		with (global.Window) {
+			_ncCaptionMove = (rg == .nchtCaption || rg == .nchtSysMenu);
+			if (trackTempMenuShowing > 0 && rg != .nchtMenu) trackTempMenu(false);
+		}
+	}
+	function onMouseMove(x, y) {
+		if (pseudoFullScreened && y == 0 && menuBarEnable && menuBarState) trackPseudoMenu();
+		else if (trackTempMenuShowing) checkMenuBarHideTrackPseudoMenu();
+		return super.onMouseMove(...);
+	}
+
+	// MenuItem.shortcut からテーブルを作成
+	function makePseudoMenuTable(menu, table) {
+		var list = menu.children, first = (table === void);
+		table = %[] if (first);
+		for (var i = list.count-1; i >= 0; i--) {
+			var item = list[i];
+			if (item.children.count > 0) makePseudoMenuTable(item, table);
+			else if (item.shortcut != "") {
+				var sc = item.shortcut.split("+");
+				var key = sc[sc.count-1], sft = 0, vk;
+				if (key == "") continue;
+				sc.erase(sc.count-1);
+				key = key.toUpperCase();
+				vk  = shortcutTextToVirtualKeyString[key];
+				key = vk if (vk != "");
+				if (typeof global["VK_"+key] == "undefined") continue;
+				key =     +global["VK_"+key];
+				table[key] = %[] if (table[key] === void);
+				for (var j = sc.count-1; j >= 0; j--) {
+					var tag = sc[j];
+					tag = tag.toLowerCase() if (tag != "");
+					switch (tag) {
+					case "shift":   sft |= ssShift; break;
+					case "ctrl":    sft |= ssCtrl;  break;
+					case "alt":     sft |= ssAlt;   break;
+					}
+				}
+				table[key][sft] = item.onClick;
+			}
+		}
+		if (first && !exEventEnabled) {
+			var f10 = table[VK_F10];
+			f10 = table[VK_F10] = %[] if (f10 === void);
+			f10[0] = trackMenuByKey;
+		}
+		return table;
+	}
+	// shortcut ⇒ VK_* 例外変換用テーブル
+	var shortcutTextToVirtualKeyString = (const)%[
+		"DEL"=>"DELETE",
+		"ENTER"=>"RETURN",
+		"PAGEUP"=>"PRIOR",
+		"PAGEDOWN"=>"NEXT"//,
+		];
+	// 擬似フルスクリーン時ショートカットキー処理
+	function pseudoMenuShortcut(key, shift) {
+		var table = pseudoFullScreened ? _pseudoFullScreen.shortcut : getMenuBarPseudoShortcut();
+		if (table !== void) {
+			shift &= ~ssRepeat if (shift & ssAlt); // [XXX] ALTでリピートフラグが正しく立たない
+			var info = table[key], func;
+			if ((info !== void) &&
+				(func  = info[+shift]) !== void &&
+				!(shift & ssRepeat))
+			{
+				func();
+				return true;
+			}
+		}
+		return false;
+	}
+	function onAccelKeyMenu(key, f) {
+		var info, table = pseudoFullScreened ? _pseudoFullScreen.shortcut : getMenuBarPseudoShortcut();
+		return  table !== void && (info = table[key]) !== void && info[+ssAlt] !== void;
+	}
+	function onStartKeyMenu(key) {
+		if (key || ((typeof(this.menu) != "undefined") && menu.visible)) return;
+		return (trackMenuByKey(true) <= 0);
+	}
+
+	var ignoreTrackPseudoMenu = false, trackTempMenuShowing = 0;
+	function trackPseudoMenu(bykey, rclick) {
+		if ((!bykey && ignoreTrackPseudoMenu) || trackTempMenuShowing) return;
+		rclick &= exEventEnabled;
+		var popup = new PopupMenuWindow(this, bykey ? 1: -1,/*x*/,/*y*/,/*w*/, !rclick);
+		if (rclick) with (popup) {
+			._ncCaptionClick = void;
+			.menuBarHidePopupMenu = menuBarHidePopupMenu;
+			.menuBarRightClickEnabled = menuBarRightClickEnabled;
+			.changeMenuBarState   = changeMenuBarState;
+			.onNcMouseDown = (onNcMouseDown incontextof popup);
+			.onNcMouseUp__ = (onNcMouseUp   incontextof popup);
+			.onNcMouseUp   = function(x, y, btn, rg) { onNcMouseUp__(x, y, btn, rg, close); } incontextof popup;
+			.showModal();
+		}
+		invalidate popup;
+	}
+	function closeTempMenu() { trackTempMenu(false,, true); }
+	function trackTempMenu(vis, bykey, force) {
+		if (vis && !bykey && ignoreTrackPseudoMenu) return;
+		var old = trackTempMenuShowing;
+		trackTempMenuShowing = !vis ? 0 : bykey ? -1 : 1;
+		if ((force || !old != !vis) && (typeof(this.menu) != "undefined")) {
+			if  (vis) menu.visible = true;
+			else {
+				menu.visible = false if (pseudoFullScreened);
+				updateMenuBarState();
+			}
+		}
+	}
+	function onExitMenuLoop() {
+		if (trackTempMenuShowing) {
+			trackTempMenuShowing = false;
+			var trig;
+			if (typeof this.closeTempMenuTrigger == "Object") {
+				trig = this.closeTempMenuTrigger;
+			} else {
+				trig = this.closeTempMenuTrigger = new AsyncTrigger(closeTempMenu, "");
+				trig.mode = atmAtIdle;
+				trig.cached = true;
+				add(trig);
+			}
+			trig.trigger();
+		}
+	}
+	function trackMenuByMouse() {
+		if (menuBarTempMenuEnabled) trackTempMenu(true);
+		else trackPseudoMenu(false, menuBarRightClickEnabled);
+	}
+	function trackMenuByKey(delay) {
+		var  fs = super.fullScreen;
+		if (!fs && menuBarEnable && (menuBarState/* || pseudoFullScreened*/)) {
+			if (menuBarTempMenuEnabled && !pseudoFullScreened) trackTempMenu(true, true);
+			else {
+				trackPseudoMenu(true);
+				return -1;
+			}
+		} else return fs;
+		return true;
+	}
+
+	// スクリーンセーバー抑制
+	function onScreenSave()       { return true; }
+	function onMonitorPower(mode) { return (mode > 0); }
+
+	//-------------------------------------------------------- リサイズ処理 --
+
+	property maximizeMode { getter {
+		var tag = System.getArgument("-maximizemode");
+		var map = %[ auto:-1, maximize:0, fullscreen:1 ];
+		return (tag != "" && typeof map[tag] != "undefined") ? map[tag] : -1;
+	} }
+
+	function onMaximizeQuery() {
+		if (pseudoFullScreened) return;
+		var mode = maximizeMode;
+		if (!mode || (mode < 0 && windowResizeable)) return;
+		onFullScreenMenuItemClick();
+		return true;
+	}
+	var _minimized;
+	function onMinimize() { _minimized = true;  }
+	function onHide()     { _minimized = true;  }
+	function onShow()     { _minimized = false; }
+
+	var _lastInnerSize;
+	var _onResizeProcess = true;
+	function onResize() {
+		if (trackTempMenuShowing) return super.onResize();
+//		dm("onResize", innerWidth, innerHeight);
+		if (!_minimized && _onResizeProcess && _resizeSnapshot === void)
+		{
+			_onResizeProcess = false;
+			var numer = innerWidth, denom = pxWidth;
+			var max = (typeof this.maximized != "undefined") ? maximized : false;
+			if (max) {
+				var vert = (innerWidth/innerHeight > pxWidth/pxHeight);
+				var zoom = System.getArgument("-fszoom");
+				if (!pseudoFullScreened) {
+					var mz = System.getArgument("-maximizezoom");
+					zoom = mz if (mz != "fszoom");
+				}
+				switch (zoom) {
+				case "outer": vert = !vert; break;
+				case "no":
+				case "none":	numer = denom = 1; vert = false; break;
+				case "middle": // 中間拡大
+					var per = System.getArgument("-mzpercent");
+					per = (per == "") ? 50 : (int)(+per);
+					if (per < 0) {
+						numer = -per;
+						denom = 100;
+					} else {
+						per = 100 if (per > 100);
+						var iw = innerWidth, ih = innerHeight;
+						var pw =    pxWidth, ph =    pxHeight;
+						if (vert) iw <-> ih, pw <-> ph;
+						numer = (int)(iw + (ih - iw) * per / 100);
+						denom = (int)(pw + (ph - pw) * per / 100);
+					}
+					vert = false;
+					break;
+				}
+				if (vert) numer = innerHeight, denom = pxHeight;
+			}
+			setZoom(numer, denom, !max);
+			callResizeHook();
+			_onResizeProcess = true;
+		}
+		return super.onResize();
+	}
+	var _windowResizeable = true; // フレームを掴んでリサイズ可能かどうか
+	property windowResizeable {
+		getter { return _windowResizeable; }
+		setter(v) {
+			_windowResizeable = v;
+			if (exEventEnabled){
+				disableResize = !v;
+			} else {
+				var x = (v ? left-5 : left+5), y = (v ? top-5 : top+5);
+
+				borderStyle = v ? bsSizeable : bsSingle;
+				setPos(x, y);
+				setZoom(origZoomNumer, origZoomDenom);
+			}
+			callHook("afterChangeWindowResizeable");
+		}
+	}
+	function onResizing(rect) {
+		if (_resizeSnapshot === void) onMoveSizeBegin();
+		if (!windowResizeable) {
+			with (_resizeSnapshot.window) {
+				rect.x = .x;
+				rect.y = .y;
+				rect.w = .w;
+				rect.h = .h;
+			}
+			return true;
+		}
+		var w, h, dw, dh, cw, ch;
+		with (_resizeSnapshot) dw=.dw, dh=.dh, cw=.cw, ch=.ch;
+		with (rect) {
+			w = .w - dw;
+			h = .h - dh;
+			var sel;
+			switch (.type) {
+			case 1: case 2: sel = true;  break;
+			case 3: case 6: sel = false; break;
+			default: sel = (w / h) > (pxWidth / pxHeight); break;
+			}
+			if (sel) h = w * pxHeight \ pxWidth;
+			else     w = h * pxWidth  \ pxHeight;
+			if (w < pxWidth\4) {
+				w = pxWidth\4;
+				h = w * pxHeight \ pxWidth;
+			}
+			w += dw;
+			h += dh;
+			const repos = function(type, p, o, n, sel) {
+				switch (type % 3) {
+				case 0:	 return sel ? p+(o-n)\2 : p;
+				case 1:	 return p+o-n;
+				default: return p;
+				}
+			};
+			var x = repos(.type,   .x, .w, w, true);
+			var y = repos(.type\3, .y, .h, h, false);
+			if (.x == x && .y == y && .w == w && .h == h) return false;
+			.x = x;
+			.y = y;
+			.w = w;
+			.h = h;
+		}
+		return true;
+	}
+	var _resizeSnapshot = void;
+	function onMoveSizeBegin() {
+		_resizeSnapshot = %[
+		window:		 getWindowRect(),
+		client:		 getClientRect(),
+		innerWidth:	 innerWidth,
+		innerHeight: innerHeight
+			];
+		with (_resizeSnapshot) {
+			.dw = .window.w  - .innerWidth;
+			.dh = .window.h - .innerHeight;
+		}
+	}
+	function onMoveSizeEnd() {
+		if(_onResizeProcess)
+			setZoom(innerWidth, pxWidth);
+//		dm("onResizeEnd/zoomed", innerWidth, innerHeight);
+		callHook("onMoveSizeEndHook", this, _resizeSnapshot);
+		_resizeSnapshot = void;
+		callResizeHook();
+	}
+	function callResizeHook() {
+//		dm("callResizeHook");
+		callHook("onWindowResizeHook", this, innerWidth, innerHeight);
+		updateWindowSizeChecked(fullScreen ? 0 : innerWidth);
+	}
+	function onDisplayChanged() {
+//		dm("callDisplayChanged");
+		callHook("onDisplayChangedHook", this);
+	}
+
+	function fullScreenAfterChangeScreenMode()
+	{
+		this.fullScreen = true;
+		this.removeHook("afterChangeScreenMode", fullScreenAfterChangeScreenMode);
+	}
+@endif
+
+@if(ZOOM_WINDOW)
+	function onWindowSizeMenuItemClick(sender, w)
+	{
+		if(!w)
+		{
+			windowResizeable = !windowResizeable;
+			updateWindowResizeable();
+			return;
+		}
+		if(!fullScreen)
+			setInnerSize(w, (w * 3) \ 4);
+	}
+
+	var	windowWidthes	= [ 800, 1024, 1280, 1440, 640 ];
+	function updateWindowSizeChecked(size)
+	{
+		if(typeof this["window"+windowWidthes[0]+"MenuItem"] != "undefined")
+		{
+			for(var i=0; i<windowWidthes.count; i++)
+				this["window"+windowWidthes[i]+"MenuItem"].checked	= size == windowWidthes[i];
+		}
+		updateWindowResizeable();
+	}
+
+	function updateWindowResizeable()
+	{
+		if(typeof this["windowResizeableMenuItem"] != "undefined")
+			this["windowResizeableMenuItem"].checked = !windowResizeable;
+	}
+@endif
+
+	function setSystemStateFromSystemVariables()
+	{
+		super.setSystemStateFromSystemVariables();
+@if(ZOOM_WINDOW)
+		windowResizeable = scflags.windowResizeable !== void ? scflags.windowResizeable : false;
+@endif
+@if(ZOOM_WINDOW)
+		changeMenuBarState(scflags.menuBarState !== void ? scflags.menuBarState : defaultMenuBarState);
+@endif
+	}
+
+	function onMouseMove(x, y)
+	{
+@if(kirikiriz)
+		if (fullScreened) {
+			if (y > 0) {
+				if(typeof(this.menu) != "undefined")
+					menu.visible = false;
+			}
+			else if (y == 0) {
+				if(typeof(this.menu) != "undefined")
+					menu.visible = true;
+			}
+		}
+@endif
+		super.onMouseMove(...);
+	}
+}
+global.KAGWindow = KAGWindow_patch_zoom_window_override;
+

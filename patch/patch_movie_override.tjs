@@ -1,0 +1,144 @@
+﻿
+@if(kirikiriz)
+var versionTmp = System.versionString.split(".");
+var isNewMovieKrkrz = versionTmp.count >=2 && versionTmp[0] >=1 && versionTmp[1] >=4;
+delete versionTmp;
+@endif
+
+global.Movie_patch_movie_override_original = Movie;
+class Movie_patch_movie_override_override extends Movie_patch_movie_override_original
+{
+	var isWide = false; // Cannot be a property as this causes issues when stopping a movie in full screen in the movie menu.
+	var haskrdslavf = false;
+
+	function Movie_patch_movie_override_override()
+	{
+		super.Movie(...);
+
+		var videosubsystem = System.getArgument("-videosubsystem");
+		if (!haskrdslavf)
+		{
+			if ((videosubsystem === void) || (videosubsystem == "krdslavf"))
+			{
+				try
+				{
+					Plugins.link("krdslavf.dll");
+					haskrdslavf = true;
+				}
+				catch(e)
+				{
+					haskrdslavf = false;
+					if (videosubsystem == "krdslavf")
+					{
+						throw e;
+					}
+				}
+			}
+		}
+	}
+
+	function Movie()
+	{
+		Movie_patch_movie_override_override(...);
+	}
+
+	function finalize()
+	{
+		if (haskrdslavf)
+		{
+			if (lastStatus == "play")
+			{
+				stop();
+			}
+			Plugins.unlink("krdslavf.dll");
+			haskrdslavf = false;
+		}
+		super.finalize(...);
+	}
+
+	function onStatusChanged(status)
+	{
+@if(kirikiriz)
+		if (isNewMovieKrkrz && this.mode == vomMFEVR && status == "ready")
+		{
+			_onOpen();
+		}
+		else if (lastStatus == "ready" && status == "play")
+		{
+			lastStatus = status; // TODO kinda duplicate, but the assignment is needed before the callback.
+			onPlay();
+		}
+		else
+@endif
+		{
+			super.onStatusChanged(status);
+		}
+
+		lastStatus = status;
+	}
+
+	function open(storage)
+	{
+		this.storageName = storage;
+
+@if(kirikiriz)
+		if (isNewMovieKrkrz) {
+			if(/\.mp4$/i.test(storage)) {
+				if (this.mode != vomMFEVR) this.mode = vomMFEVR;
+			} else {
+				this.mode = vomOverlay;
+			}
+			if (haskrdslavf) {
+				this.mode = vomOverlay;
+			}
+		}
+		var videosubsystem = System.getArgument("-videosubsystem");
+		if (videosubsystem) {
+			if (videosubsystem == "mediafoundation") {
+				this.mode = vomMFEVR;
+			}
+			else if (videosubsystem == "overlay") {
+				this.mode = vomOverlay;
+			}
+		}
+@endif
+
+		// open オーバーライド
+		try
+		{
+			super.open(storage);
+@if(kirikiriz)
+			if (!isNewMovieKrkrz || this.mode != vomMFEVR)
+@endif
+			{
+				_onOpen();
+			}
+
+		}
+		catch(e)
+		{
+			if(e.message.indexOf(".dll") != -1) throw e;
+			dm("ムービー " + storage + " を再生できません : " +
+				e.message);
+			return;
+		}
+	}
+
+	function _onOpen()
+	{
+		opened = true;
+		isWide = (originalWidth / originalHeight) > 1.7;
+		onOpen();
+	}
+
+	function onOpen()
+	{
+		// can override.
+	}
+
+	function onPlay()
+	{
+		// can override.
+	}
+}
+global.Movie = Movie_patch_movie_override_override;

@@ -1,0 +1,71 @@
+﻿
+global.KAGSoundBuffer_patch_fade_bgm_with_voice_override_original = KAGSoundBuffer;
+class KAGSoundBuffer_patch_fade_bgm_with_voice_override_override extends KAGSoundBuffer_patch_fade_bgm_with_voice_override_original
+{
+	var fadeStatus; // 记录渐变的状态
+
+	function KAGSoundBuffer_patch_fade_bgm_with_voice_override_override()
+	{
+		super.KAGSoundBuffer(...);
+	}
+
+	function KAGSoundBuffer()
+	{
+		KAGSoundBuffer_patch_fade_bgm_with_voice_override_override(...);
+	}
+
+	function fade(endVolume, time, delay = 0)
+	{
+		// fade オーバーライド
+		inFading = true;
+		fadeStatus = %[startTick:System.getTickCount(), startVolume:volume, endVolume:endVolume, time:time, delay:delay];
+		sbclass.fade(endVolume, time, delay);
+	}
+
+	function fadeOutAndStop(time, delay = 0)
+	{
+		fadeStatus = %[startTick:System.getTickCount(), startVolume:volume, endVolume:0, time:time, delay:delay];
+		super.fadeOutAndStop(time, delay);
+	}
+
+	function onFadeCompleted()
+	{
+		fadeStatus = void;
+		super.onFadeCompleted(...);
+	}
+}
+global.KAGSoundBuffer = KAGSoundBuffer_patch_fade_bgm_with_voice_override_override;
+
+global.BGM_patch_fade_bgm_with_voice_override_original = BGM;
+class BGM_patch_fade_bgm_with_voice_override_override extends BGM_patch_fade_bgm_with_voice_override_original
+{
+	function BGM_patch_fade_bgm_with_voice_override_override()
+	{
+		super.BGM(...);
+	}
+
+	function BGM()
+	{
+		BGM_patch_fade_bgm_with_voice_override_override(...);
+	}
+
+	function fade(elm)
+	{
+		// 指定音量までフェード
+		var time = elm.time === void ? 5000 : +elm.time;
+		var vol = +elm.volume * 1000;
+		var delay = elm.delay === void ? 0 : +elm.delay;
+//		stopFade();
+		if(_enabled)
+		{
+			currentBuffer.fade(vol, time, delay);
+		}
+		volume = vol;
+	}
+
+	property fadeStatus
+	{
+		getter { return  currentBuffer.fadeStatus; }
+	}
+}
+global.BGM = BGM_patch_fade_bgm_with_voice_override_override;

@@ -1,0 +1,69 @@
+﻿
+global.Conductor_patch_fix_call_stack_original = Conductor;
+class Conductor_patch_fix_call_stack_override extends Conductor_patch_fix_call_stack_original
+{
+	function Conductor_patch_fix_call_stack_override()
+	{
+		super.Conductor(...);
+	}
+
+	function Conductor()
+	{
+		Conductor_patch_fix_call_stack_override(...);
+	}
+
+	var flow_tracker_object_storage;
+	var flow_tracker_object_label;
+
+	var flow_tracker_object_offset;
+	var flow_tracker_object_orig_line_str;
+
+	function restore(dic)
+	{
+		if (typeof(dic) === "Object" && typeof(dic.callStack) === "Object" && dic.callStack.count === 1)
+		{
+			if (typeof(global.Conductor.flow_tracker_object_offset) === "Integer" && typeof(global.Conductor.flow_tracker_object_orig_line_str) === "String")
+			{
+				var frame = dic.callStack[0];
+				if (frame.storage === global.Conductor.flow_tracker_object_storage && frame.label === global.Conductor.flow_tracker_object_label)
+				{
+					frame.offset = global.Conductor.flow_tracker_object_offset;
+					frame.orgLineStr = global.Conductor.flow_tracker_object_orig_line_str;
+				}
+			}
+		}
+		super.restore(...);
+	}
+}
+global.Conductor = Conductor_patch_fix_call_stack_override;
+
+{
+	global.Conductor.flow_tracker_object_storage = "FlowTrackerPlugin.ks";
+	global.Conductor.flow_tracker_object_label = "*sceneplay";
+	var call_line = '@call storage="&flow_tracker_object.scriptfile"';
+	var label_offset;
+	var call_line_offset;
+	var lines = [];
+	lines.load(global.Conductor.flow_tracker_object_storage);
+	for (var i = 0; i < lines.count; i += 1)
+	{
+		if (lines[i] === global.Conductor.flow_tracker_object_label)
+		{
+			label_offset = i;
+			break;
+		}
+	}
+	for (var i = label_offset; i < lines.count; i += 1)
+	{
+		if (lines[i] === call_line && typeof(label_offset) === "Integer")
+		{
+			call_line_offset = i;
+			break;
+		}
+	}
+	if (typeof(label_offset) === "Integer" && typeof(call_line_offset) === "Integer")
+	{
+		global.Conductor.flow_tracker_object_offset = call_line_offset - label_offset + 1;
+		global.Conductor.flow_tracker_object_orig_line_str = lines[call_line_offset + 1];
+	}
+}

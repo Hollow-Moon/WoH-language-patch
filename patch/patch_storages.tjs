@@ -3,10 +3,16 @@
 	Storages.isExistentStorage_patch_storages_original = Storages.isExistentStorage;
 	Storages.isExistentStorage = function(storage)
 	{
-		if ((storage === void) || (storage == null) || (storage.trim() === ""))
+		if ((storage === void) || (storage == null))
 		{
 			return false;
 		}
+@if(kirikiriz)
+		if (storage.trim() === "")
+		{
+			return false;
+		}
+@endif
 
 		return isExistentStorage_patch_storages_original(...);
 	} incontextof Storages;

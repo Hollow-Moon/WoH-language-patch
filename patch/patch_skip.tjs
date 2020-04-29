@@ -14,42 +14,51 @@ class Conductor_patch_skip_override extends Conductor_patch_skip_original
 
 	function onTag(elm)
 	{
-		if (typeof(owner.skipToScenario) === "String")
+		if (elm.exp !== "timeline_object.loadByData(global.__tmp_tla,global.__tla_name)")
 		{
-			if (owner.skipToScenario === this.curStorage)
+			if (typeof(owner.skipToScenario) === "String")
 			{
-				owner.skipToScenario = void;
+				if (owner.skipToScenario === this.curStorage)
+				{
+					owner.skipToScenario = void;
+				}
+			}
+			else if (typeof(owner.skipToLabel) === "String")
+			{
+				if (owner.skipToLabel === this.curLabel)
+				{
+					owner.skipToLabel = void;
+				}
+			}
+			else if (typeof(owner.skipToLine) === "Integer")
+			{
+				if (owner.skipToLine < this.curLine)
+				{
+					owner.skipToLine = void;
+				}
+			}
+			else
+			{
+				if (typeof(owner.isSkippingToTarget) === "Integer")
+				{
+					owner.isSkippingToTarget = false;
+				}
 			}
 		}
-		else if (typeof(owner.skipToLabel) === "String")
+		if (typeof(owner.isSkippingToTarget) === "Integer")
 		{
-			if (owner.skipToLabel === this.curLabel)
+			if (owner.isSkippingToTarget)
 			{
-				owner.skipToLabel = void;
+				if (owner.skipMode !== 3)
+				{
+					owner.skipToStop();
+				}
 			}
-		}
-		else if (typeof(owner.skipToLine) === "Integer")
-		{
-			if (owner.skipToLine < this.curLine)
+			else
 			{
-				owner.skipToLine = void;
+				owner.isSkippingToTarget = void;
+				owner.cancelSkip();
 			}
-		}
-		else
-		{
-			owner.isSkippingToTarget = false;
-		}
-		if (owner.isSkippingToTarget)
-		{
-			if (owner.skipMode !== 3)
-			{
-				owner.skipToStop();
-			}
-		}
-		else if (owner.isSkippingToTarget === false)
-		{
-			owner.isSkippingToTarget = void;
-			owner.cancelSkip();
 		}
 		return super.onTag(...);
 	}
@@ -114,7 +123,7 @@ class KAGWindow_patch_skip_override extends KAGWindow_patch_skip_original
 		}
 		if (typeof(this.skipToScenario) !== "String" && typeof(this.skipToLabel) !== "String" && typeof(this.skipToLine) !== "Integer")
 		{
-			this.isSkippingToTarget = false;
+			this.isSkippingToTarget = void;
 		}
 	}
 
@@ -128,10 +137,10 @@ class KAGWindow_patch_skip_override extends KAGWindow_patch_skip_original
 
 	function process(storage)
 	{
-		if (typeof(this.jumpToScenario) === "String" && storage === "first.ks" && isMain)
+		if ((typeof(this.jumpToScenario) === "String" || System.getArgument('-archiveopenscenario') !== void) && storage === "first.ks" && isMain)
 		{
 			this.set_skip(System.getArgument('-skipscenario'), System.getArgument('-skiplabel'), System.getArgument('-skipline'));
-			var ret = super.process(this.jumpToScenario, (typeof(this.jumpToLabel) === "String") ? this.jumpToLabel : void, true, typeof(this.shouldSkipImmediate) === "String");
+			var ret = super.process((typeof(this.jumpToScenario) === "String") ? this.jumpToScenario : storage, (typeof(this.jumpToLabel) === "String") ? this.jumpToLabel : void, true, typeof(this.shouldSkipImmediate) === "String");
 			if (typeof(this.shouldSkipImmediate) === "String")
 			{
 				this.do_immediate_skip();

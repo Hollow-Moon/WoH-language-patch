@@ -1,0 +1,113 @@
+﻿function Noise_patch_hd_plugins_override(param)
+{
+	param.layer.absoluteMode = true;
+	global.Noise_patch_hd_plugins_original(param);
+	param.layer.absoluteMode = false;
+}
+
+function initSlideOpen_patch_hd_plugins_override(plugin)
+{
+	if (global.kag.wideScreen) return; // Plugin doesn't work in wide screen for some reason.
+
+	plugin.src.absoluteMode = true;
+	plugin.dest.absoluteMode = true;
+	global.initSlideOpen_patch_hd_plugins_original(plugin);
+	plugin.src.absoluteMode = false;
+	plugin.dest.absoluteMode = false;
+}
+
+
+function drawSlideOpen_patch_hd_plugins_override()
+{
+	if (global.kag.wideScreen) return;
+	return global.drawSlideOpen_patch_hd_plugins_original(...);
+}
+
+function finishSlideOpen_patch_hd_plugins_override()
+{
+	if (global.kag.wideScreen) return;
+	return global.finishSlideOpen_patch_hd_plugins_original(...);
+}
+
+
+function drawLine_patch_hd_plugins_override(layer, x0, y0, cx, cy, lc)
+{
+	layer.absoluteMode = true;
+	global.drawLine_patch_hd_plugins_original(layer, x0*layer.widthScale, y0*layer.heightScale, cx*layer.widthScale, cy*layer.heightScale, lc);
+	layer.absoluteMode = false;
+}
+
+
+function drawAALine_patch_hd_plugins_override(layer, x0, y0, cx, cy, lc)
+{
+	layer.absoluteMode = true;
+	global.drawAALine_patch_hd_plugins_original(layer, x0*layer.widthScale, y0*layer.heightScale, cx*layer.widthScale, cy*layer.heightScale, lc);
+	layer.absoluteMode = false;
+}
+
+function Contrast_patch_hd_plugins_override(elm)
+{
+	elm.layer.absoluteMode = true;
+	global.Contrast_patch_hd_plugins_original(elm);
+	elm.layer.absoluteMode = false;
+}
+
+function doHaze_patch_hd_plugins_override(elm)
+{
+	elm.src.absoluteMode = true;
+	elm.dest.absoluteMode = true;
+	global.doHaze_patch_hd_plugins_original(elm);
+	elm.src.absoluteMode = false;
+	elm.dest.absoluteMode = false;
+}
+
+global.Plugins_patch_hd_plugins_original = Plugins;
+class Plugins_patch_hd_plugins_override extends Plugins_patch_hd_plugins_original
+{
+	function link(name)
+	{
+		super.link(name);
+		if (name == "filter.dll")
+		{
+			if (typeof global.Noise_patch_hd_plugins_original == "undefined") {
+				global.Noise_patch_hd_plugins_original = Noise;
+				global.Noise = Noise_patch_hd_plugins_override;
+			}
+			if (typeof global.Contrast_patch_hd_plugins_original == "undefined")
+			{
+				global.Contrast_patch_hd_plugins_original = Contrast;
+				global.Contrast = Contrast_patch_hd_plugins_override;
+			}
+			if (typeof global.doHaze_patch_hd_plugins_original == "undefined")
+			{
+				global.doHaze_patch_hd_plugins_original = doHaze;
+				global.doHaze = doHaze_patch_hd_plugins_override;
+			}
+		}
+		else if (name == "slideopen.dll" && typeof global.initSlideOpen_patch_hd_plugins_original == "undefined")
+		{
+			global.initSlideOpen_patch_hd_plugins_original = initSlideOpen;
+			global.initSlideOpen = initSlideOpen_patch_hd_plugins_override;
+
+			global.drawSlideOpen_patch_hd_plugins_original = drawSlideOpen;
+			global.drawSlideOpen = drawSlideOpen_patch_hd_plugins_override;
+
+			global.finishSlideOpen_patch_hd_plugins_original = finishSlideOpen;
+			global.finishSlideOpen = finishSlideOpen_patch_hd_plugins_override;
+		}
+		else if (name == "drawer.dll")
+		{
+			if (typeof global.drawAALine_patch_hd_plugins_original == "undefined")
+			{
+				global.drawAALine_patch_hd_plugins_original = drawAALine;
+				global.drawAALine = drawAALine_patch_hd_plugins_override;
+			}
+			if (typeof global.drawLine_patch_hd_plugins_original == "undefined")
+			{
+				global.drawLine_patch_hd_plugins_original = drawLine;
+				global.drawLine = drawLine_patch_hd_plugins_override;
+			}
+		}
+	}
+}
+global.Plugins = Plugins_patch_hd_plugins_override;

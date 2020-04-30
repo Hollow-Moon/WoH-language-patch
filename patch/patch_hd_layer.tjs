@@ -1,0 +1,1320 @@
+﻿
+var hdExtension = ".webp";
+@if(GAME_FATE)
+var upscaledFactor = 1.6;
+@endif
+@if(GAME_FHAT)
+var upscaledFactor = 2;
+@endif
+
+var originalToHdName = %[
+	"01空・雨(夜)" => "01空・雨（夜）", // Different parentheses
+	"fate" => "fate2",
+	"el_タイガー0段階" => "30_tiger_00a",
+	"el_タイガー1段階" => "30_tiger_01a",
+	"el_タイガー2段階" => "30_tiger_02a",
+	"el_タイガー3段階" => "30_tiger_03a",
+	"el_タイガー4段階" => "30_tiger_04a",
+];
+var messageLayerImages = ["tw_ノーマル(薄い)", "tw_ノーマル(通常)", "tw_ノーマル(濃い)", "tw_たいがー(通常)", "tw_たいがー(模様)"];
+var messageBreakImages = ["linebreak_a", "pagebreak_a"];
+
+var imageNameToNumberOfImages = %[
+	"pt_number" => 10,
+	"linebreak_a" => 21,
+	"pagebreak_a" => 16,
+	"pagebreak_a.png" => 21, // 21 in low res
+
+	// scrollbar
+	"scroll_basetop" => 4,
+	"scroll_base" => 4,
+	"scroll_basebottom" => 4,
+	"scroll_slidertop" => 4,
+	"scroll_slidertop4fnt" => 4,
+	"scroll_slider" => 4,
+	"scroll_slider4fnt" => 4,
+	"scroll_sliderbottom" => 4,
+	"scroll_sliderbottom4fnt" => 4,
+
+	"voicescroll_basetop" => 4,
+	"voicescroll_base" => 4,
+	"voicescroll_basebottom" => 4,
+	"voicescroll_slidertop" => 4,
+	"voicescroll_slider" => 4,
+	"voicescroll_sliderbottom" => 4,
+
+	// horizontal scrollbar
+	"scroll_top_horizontal" => 4,
+	"scroll_base_horizontal" => 4,
+	"scroll_bottom_horizontal" => 4,
+
+	// music menu scrollbar
+	"music_tab_t" => 4,
+	"music_tab_c" => 4,
+	"music_tab_b" => 4,
+
+	"qs_f1" => 2,
+	"qs_f2" => 2,
+	"qs_f3" => 2,
+	"qs_f4" => 2,
+	"qs_f5" => 2,
+	"qs_f6" => 2,
+	"qs_f7" => 2,
+	"qs_f8" => 2,
+	"qs_f9" => 2,
+	"qs_f10" => 2,
+	"qs_f11" => 2,
+	"qs_f12" => 2,
+
+	"wp_選択バー" => 2,
+
+	"fnt_opacnum" => 10,
+	"scroll_slidertop4fnt" => 4,
+	"scroll_slider4fnt" => 4,
+	"scroll_sliderbottom4fnt" => 4,
+
+	"scroll_slidertop4opac" => 4,
+	"scroll_sliderbottom4opac" => 4,
+	"scroll_slider4opac" => 4
+];
+
+var fixedBgImages = [
+	"black" // Sometimes used for letter-boxing, in which case it needs a special treatment.
+];
+var movingBgImages = [
+	"c_cs16(03落石)", "cs29アンリマユ崩壊(01落石大)",
+	"csラストep04(雲01)", "csラストep04(雲02)", "csラストep04(雲03)", "csラストep04(雲04)"
+];
+var bottomImages = [
+	"cs29アンリマユ崩壊(04手前岩盤・右)" // A bottom aligned image moving from negative to positive top position, in which case it needs a special treatment.
+];
+
+function round(v)
+{
+	return int(v + (v<0 ? -0.5 : 0.5));
+}
+
+function transformDiscrete(v, scale)
+{
+	// To avoids rounding errors when summing, rounding should occur only after scaling.
+	// Using "round" is probably better than "int" but it causes tearing in the yes/no button when you hover over it.
+	return int(v*scale)/scale;
+}
+
+global.Layer_patch_hd_layer_original	= Layer;
+class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
+{
+	var imageStorage = void;
+	var isHd = false;
+
+	var originalLeft = 0;
+	var originalTop = 0;
+	var originalImageLeft = 0;
+	var originalImageTop = 0;
+	var originalWidth = void;
+	var originalHeight = void;
+	var originalImageWidth = void;
+	var originalImageHeight = void;
+	var originalClipLeft = 0;
+	var originalClipTop = 0;
+	var originalClipWidth = void;
+	var originalClipHeight = void;
+
+	var isbg = false;
+	var fullScreenBg = false; // For bg images that occupy the whole screen.
+	var fixedbg = false; // Used for bg images that are fixed.
+	var movingbg = false; // Used for fixed bg images that move.
+	var bottomImage = false; // Used for images that are bottom aligned (most cases are handled automatically - this is for exceptions).
+	var stretch = void;
+	var isMask = false; // Set to true to suppress automatic determination of isbg.
+	var isThumbnail = false;
+
+	var _isFixedPosition = void;
+	var _horizontalAlignment = 0.5;
+	var _verticalAlignment = 0;
+
+	var numberOfImages = 1;
+
+	var absoluteMode = false;
+
+	property horizontalAlignment
+	{
+		getter
+		{
+			return _horizontalAlignment;
+		}
+		setter(v)
+		{
+			_horizontalAlignment = v;
+			left = left;
+		}
+	}
+
+	property verticalAlignment
+	{
+		getter
+		{
+			return _verticalAlignment;
+		}
+		setter(v)
+		{
+			_verticalAlignment = v;
+			top = top;
+		}
+	}
+
+	property leftOriginal { getter {return super.left; } }
+	property topOriginal { getter {return super.top; } }
+	property widthOriginal { getter {return super.width; } }
+	property heightOriginal { getter {return super.height; } }
+	property imageWidthOriginal { getter { return super.imageWidth; } }
+	property imageHeightOriginal { getter { return super.imageHeight; } }
+
+	property left
+	{
+		getter
+		{
+			return originalLeft;
+		}
+		setter(v)
+		{
+			originalLeft = transformDiscrete(v, leftScale());
+			super.left = transformLeft(originalLeft);
+		}
+	}
+
+	property top
+	{
+		getter
+		{
+			return originalTop;
+		}
+		setter(v)
+		{
+			originalTop = transformDiscrete(v, topScale());
+			super.top = transformTop(originalTop);
+		}
+	}
+
+	property imageLeft
+	{
+		getter
+		{
+			return originalImageLeft;
+		}
+		setter(v)
+		{
+			originalImageLeft = transformDiscrete(v, widthScale);
+			super.imageLeft = v*widthScale;
+		}
+	}
+
+	property imageTop
+	{
+		getter
+		{
+			return originalImageTop;
+		}
+		setter(v)
+		{
+			originalImageTop = transformDiscrete(v, heightScale);
+			super.imageTop = v*heightScale;
+		}
+	}
+
+	property clipLeft
+	{
+		getter
+		{
+			return originalClipLeft;
+		}
+		setter(v)
+		{
+			originalClipLeft = transformDiscrete(v, widthScale);
+			super.clipLeft = v*widthScale;
+		}
+	}
+
+	property clipTop
+	{
+		getter
+		{
+			return originalClipTop;
+		}
+		setter(v)
+		{
+			originalClipTop = transformDiscrete(v, heightScale);
+			super.clipTop = v*heightScale;
+		}
+	}
+
+
+	property clipWidth
+	{
+		getter
+		{
+			return originalClipWidth;
+		}
+		setter(v)
+		{
+			originalClipWidth = transformDiscrete(v, widthScale);
+			super.clipWidth = v*widthScale;
+		}
+	}
+
+	property clipHeight
+	{
+		getter
+		{
+			return originalClipHeight;
+		}
+		setter(v)
+		{
+			originalClipHeight = transformDiscrete(v, heightScale);
+			super.clipHeight = v*heightScale;
+		}
+	}
+
+	property cursorX
+	{
+		getter
+		{
+			return super.cursorX / cursorXScale;
+		}
+		setter(v)
+		{
+			var originalCursorX = transformDiscrete(v, cursorXScale);
+			super.cursorX = transformCursorX(originalCursorX);
+		}
+	}
+
+	property cursorY
+	{
+		getter
+		{
+			return (super.cursorY - cursorYOffset() * wideScaleFactor) / cursorYScale;
+		}
+		setter(v)
+		{
+			var originalCursorY = transformDiscrete(v, cursorYScale);
+			super.cursorY = transformCursorY(originalCursorY);
+		}
+	}
+
+	property width
+	{
+		getter
+		{
+			if (absoluteMode) {
+				return super.width;
+			}
+			return originalWidth;
+		}
+		setter(v)
+		{
+			originalWidth = transformDiscrete(v, widthScale);
+			super.width = v * widthScale;
+		}
+	}
+
+	property height
+	{
+		getter
+		{
+			if (absoluteMode) {
+				return super.height;
+			}
+			return originalHeight;
+		}
+		setter(v)
+		{
+			originalHeight = transformDiscrete(v, heightScale);
+			super.height = v * heightScale;
+		}
+	}
+
+	property imageWidth
+	{
+		getter
+		{
+			if (absoluteMode) {
+				return super.imageWidth;
+			}
+			return originalImageWidth;
+		}
+		setter(v)
+		{
+			originalImageWidth = transformDiscrete(v, widthScale);
+			super.imageWidth = v * widthScale;
+		}
+	}
+
+	property imageHeight
+	{
+		getter
+		{
+			if (absoluteMode) {
+				return super.imageHeight;
+			}
+			return originalImageHeight;
+		}
+		setter(v)
+		{
+			originalImageHeight = transformDiscrete(v, heightScale);
+			super.imageHeight = v * heightScale;
+		}
+	}
+
+	function leftScale(parent=this.parent)
+	{
+		if (parent === null) {
+			return 1;
+		}
+		return parent.widthScale;
+	}
+
+	function topScale(parent=this.parent)
+	{
+		if (parent === null) {
+			return 1;
+		}
+		if (isbg) {
+			if (fixedbg || fullScreenBg) {
+				return scaleFactor;
+			}
+			return parent.heightScale;
+		}
+		return scaleFactor;
+	}
+
+	property cursorXScale { getter { return wideScaleFactor; } }
+	property cursorYScale { getter { return scaleFactor; } }
+
+	property widthScale
+	{
+		getter
+		{
+			if (isbg || shouldStretch) {
+				return wideScaleFactor;
+			}
+			return scaleFactor;
+		}
+	}
+
+	property heightScale
+	{
+		getter
+		{
+			if (isbg) {
+				return wideScaleFactor;
+			}
+			if (isMessageLayer && isCropped) {
+				return scaleFactor*cropFactor;
+			}
+			return scaleFactor;
+		}
+	}
+
+	property leftOffset
+	{
+		getter
+		{
+			if (!window.wideScreen) return 0;
+			if (isSysBase) {
+				return -window.transformedScrollXOffset;
+			}
+			if ((!isbg || fixedbg) && isFixedPosition) {
+				return window.transformedScrollXOffset;
+			}
+			return 0;
+		}
+	}
+
+	function topOffset(parent=this.parent)
+	{
+		if (!window.wideScreen) return 0;
+		if (isSysBase) {
+			return -window.transformedScrollYOffset;
+		}
+		if ((!isbg || fixedbg) && isFixedPosition && (parent != null && parent.isbg)) {
+			return window.transformedScrollYOffset;
+		}
+		return 0;
+	}
+
+	function cursorYOffset(parent=this.parent)
+	{
+		var offset = 0;
+		if (isPrimary) {
+			offset = window.transformedScrollYOffset;
+		}
+		return offset;
+	}
+
+	function leftPivot(parent=this.parent)
+	{
+		var result = 0;
+		if (!shouldStretch && !isbg && (parent !== null && (parent.isbg || parent.shouldStretch) && !parent.isLineLayer )) {
+			result = width*(wideFactor-1)*horizontalAlignment/wideFactor;
+
+			// Applying the correction only to sprites, otherwise the blur function is buggy (I'm pretty sure it's only applied to sprites anyway...)
+			if (typeof this.correctleft !== "undefined") {
+				result += correctleft/wideFactor;
+			}
+		}
+		return result;
+	}
+
+	function topPivot(top, parent=this.parent)
+	{
+		// TODO fix left pivot for negative values (use effective value like here).
+		// For BG Images used as regular images
+		if (isbg && fixedbg) {
+			var effectiveVerticalAlignment = verticalAlignment;
+			if (bottomImage) {
+				effectiveVerticalAlignment = verticalAlignment-1;
+			}
+			else if (!movingbg) {
+				effectiveVerticalAlignment = top>=0? verticalAlignment : verticalAlignment-1;
+			}
+			//var effectiveVerticalAlignment = Math.atan(top)/Math.PI-0.5; // Smoothing function
+			return height*(wideFactor-1)*effectiveVerticalAlignment;
+		}
+		return 0;
+	}
+
+	property scaleAlgorithm
+	{
+		getter
+		{
+			if (isExButtonLayer) {
+				return stLinear;
+			}
+			return stCubic;
+		}
+	}
+
+	property shouldStretch { getter {
+		if (stretch !== void) {
+			return stretch;
+		}
+		if (typeof window.sflags !== "undefined" && !window.sflags.wideStrechWindow && (isMessageLayer || isLineLayer)) {
+			return false;
+		}
+		return isMessageLayer || isLineLayer || isHistoryLayer || isCinescoLayer || isYesNoBackground || isGameMenuLayer || isShortcutBaseLayer;
+	} }
+
+	property isHistoryLayer { getter {
+		return this instanceof "HistoryLayer";
+	} }
+
+	property isMessageLayer { getter {
+		return this instanceof "MessageLayer";
+	} }
+
+	property isLineLayer { getter {
+		return parent instanceof "MessageLayer" && !isClickGlyphLayer;
+	} }
+
+	property isGameMenuLayer { getter {
+		return this instanceof "GameMenuLayer";
+	} }
+
+	property isShortcutBaseLayer { getter {
+		return this instanceof "ShortcutBaseLayer";
+	} }
+
+	property isCharacterLayer { getter {
+		return this instanceof "CharacterLayer";
+	} }
+
+	property isBaseLayer { getter {
+		return this instanceof "BaseLayer" || parent === null;
+	} }
+
+	property isExButtonLayer { getter {
+		return this instanceof "ExButtonLayer";
+	} }
+
+	property isPopupLayer { getter {
+		return this instanceof "PopUpLayer";
+	} }
+
+	property isClickGlyphLayer { getter {
+		return this instanceof "ClickGlyphLayer";
+	} }
+
+	property isCinescoLayer { getter {
+		return name.substr(0,7) == "Cinesco";
+	} }
+
+	property isDateTitleLayer { getter {
+		return name == "DateTitle用テンポラリ";
+	} }
+
+	property isYesNoLayer { getter {
+		return this instanceof "YesNoLayer";
+	} }
+
+	property isYesNoBackground { getter {
+		return imageStorage !== void && ["汎用左", "汎用中", "汎用右"].contains(imageStorage);
+	} }
+
+	property isFlowChartLayer { getter {
+		return this instanceof "FlowChartLayer";
+	} }
+
+	property isFlagListLayer { getter {
+		return this instanceof "FlagListLayer";
+	} }
+
+	property isSceneDetailLayer { getter {
+		return this instanceof "SceneDetailLayer";
+	} }
+
+	property isPushButtonLayer { getter {
+		return this instanceof "PushButtonLayer";
+	} }
+
+	property isFixedPosition {
+		getter {
+			if (this._isFixedPosition !== void) {
+				return this._isFixedPosition;
+			}
+			// Only message layer and not its children.
+			return isCharacterLayer || this instanceof "MessageLayer" || isHistoryLayer || isGameMenuLayer || isShortcutBaseLayer || isPopupLayer || isCinescoLayer || isDateTitleLayer || isFlowChartLayer || isFlagListLayer || isYesNoLayer || isSceneDetailLayer || isPushButtonLayer;
+		}
+		setter(v) {
+			this._isFixedPosition = v;
+		}
+	}
+
+	property isSysBase {
+		getter {
+			return name == "トップレイヤ";
+		}
+	}
+
+	function Layer_patch_hd_layer_override()
+	{
+		super.Layer(...);
+		isbg = isBaseLayer;
+		originalWidth = super.width / widthScale;
+		originalHeight = super.height / heightScale;
+		originalImageWidth = super.imageWidth / widthScale;
+		originalImageHeight = super.imageHeight / heightScale;
+	}
+
+	function Layer()
+	{
+		Layer_patch_hd_layer_override(...);
+	}
+
+	function transformLeft(left, parent=this.parent)
+	{
+		return (left + leftOffset + leftPivot(parent))*leftScale(parent);
+	}
+
+	function transformTop(top, parent=this.parent)
+	{
+		return (top + topPivot(top))*topScale(parent) + topOffset(parent)*wideScaleFactor;
+	}
+
+	function transformCursorX(cursorX, parent=this.parent)
+	{
+		return cursorX * cursorXScale;
+	}
+
+	function transformCursorY(cursorY, parent=this.parent)
+	{
+		return cursorY * cursorYScale + cursorYOffset(parent) * wideScaleFactor;
+	}
+
+	function updateBg(width, height, fromloadImages=false)
+	{
+		if (isBaseLayer) {
+			// Used for dialogs.
+			isbg = !shouldStretch;
+			fullScreenBg = isbg;
+			fixedbg = false;
+			movingbg = false;
+			bottomImage = false;
+		} else if (!shouldStretch && !isMask && !isMessageLayer) {
+			fullScreenBg = (width == originalResWidth && height == originalResHeight);
+			fullScreenBg |= (width == transformDiscrete(originalResWidth, wideScaleFactor) && height == transformDiscrete(originalResHeight, wideScaleFactor));
+
+			fixedbg = !fullScreenBg;
+			movingbg = false;
+			bottomImage = false;
+
+			if (fromloadImages) {
+				// When loading an image, a bg can have many sizes - this check is only for bg that are not in the bgimage folder.
+				isbg |= fullScreenBg;
+				fixedbg |= fixedBgImages.contains(imageStorage);
+				movingbg = movingBgImages.contains(imageStorage);
+				bottomImage = bottomImages.contains(imageStorage);
+			} else {
+				// When manually setting the size (setSize or setImageSize) it's a bg only when the dimensions match.
+				isbg = fullScreenBg;
+			}
+		}
+		// background settings affect position.
+		(global.Layer.setPos incontextof this)(originalLeft, originalTop);
+	}
+
+	function updateMessageLayerMobile() {
+		if (isMessageLayer && messageLayerImages.contains(imageStorage) && window.sflags !== "undefined") {
+			if (window.sflags.mobileWindow) {
+				type = ltAlpha;
+				lineLayer.type = ltTransparent;
+			} else {
+				type = ltAddAlpha;
+				lineLayer.type = ltAddAlpha;
+			}
+		}
+	}
+
+	function loadImages(storage, key)
+	{
+		storage = storage.toLowerCase();
+		var storageName = Storages.chopStorageExt(storage);
+		var storageExt = Storages.extractStorageExt(storage);
+
+		imageStorage = storageName;
+		if (window.isHd) {
+			// Some HD assets have slightly different names (but the images are the same).
+			imageStorage = originalToHdName[imageStorage] if originalToHdName[imageStorage] !== void;
+		}
+
+		if (messageLayerImages.contains(imageStorage) && typeof window.sflags !== "undefined" && !window.sflags.mobileWindow) {
+			storageExt = ".png";
+		} else if (messageBreakImages.contains(imageStorage) && typeof window.sflags !== "undefined" && !window.sflags.mobileWindow) {
+			storageExt = ".png";
+		}
+
+		updateMessageLayerMobile();
+
+@if(GAME_FATE)
+		// Check to see if an HD version exists.
+		isHd = Storages.isExistentStorage(imageStorage + hdExtension) || imageStorage != storageName;
+@endif
+@if(GAME_FHAT)
+		isHd = true;
+@endif
+
+		var chosenExt = storageExt;
+		if (storageExt == "") {
+			for (var i=0; i < global.image_extensions.count; i++) {
+				var currentExtension = global.image_extensions[i];
+				if (currentExtension === hdExtension)
+				{
+					continue;
+				}
+				var currentStorage = storageName + currentExtension;
+				if (!Storages.isExistentStorage(currentStorage)) {
+					continue;
+				}
+
+				var currentPath = Storages.getPlacedPath(currentStorage);
+
+				if (!isBaseLayer && !isMessageLayer && !isMask) {
+					isbg = /bgimage/.test(currentPath); // TODO only works in dev mode
+				}
+
+				if (/hd/.test(currentPath)) {
+					// TODO the /hd/.test is being used twice in this method, find a way to optimize...
+					isHd = true;
+				}
+
+				if (isHd) {
+					var tmp = new global.Layer(window, this);
+					(Layer_patch_hd_layer_original.loadImages incontextof tmp)(currentStorage);
+					originalImageWidth = tmp.imageWidthOriginal;
+					originalImageHeight = tmp.imageHeightOriginal;
+					invalidate tmp;
+
+					if (imageStorage == "pagebreak_a") {
+						// low resolution image has 21 images, but HD has 16.
+						originalImageWidth = originalImageWidth / 21 * 16;
+					} else if (imageStorage == "c31") {
+						// 2 HD versions: png and webp - the png has a higher resolution.
+						isbg = true;
+						originalImageWidth = originalImageWidth / (window.isHd? upscaledFactor : 1);
+						originalImageHeight = originalImageHeight / (window.isHd? upscaledFactor : 1);
+					} else if (/hd/.test(currentPath)) {
+						// HD versions of patch assets (mostly the HD masks for the status menu).
+						originalImageWidth = originalImageWidth / (window.isHd? upscaledFactor : 1);
+						originalImageHeight = originalImageHeight / (window.isHd? upscaledFactor : 1);
+					}
+				} else {
+					// Load images based on file extension priority (according to global.image_extensions).
+					chosenExt = currentExtension;
+				}
+				break;
+			}
+		}
+
+		var taginfo = super.loadImages(imageStorage+chosenExt, key);
+
+		// Mainly used for 藤02a腕b(中) and 藤02g腕b(中) since the HD version's width is larger than expected because of redundant transparent padding, but there might be other cases so the condition is generic.
+		if (isHd && isCharacterLayer && !isbg) {
+			var w = originalImageWidth*widthScale;
+			var h = originalImageHeight*heightScale;
+			var leftDiff = (super.imageWidth - w) \ 2;
+			if (leftDiff > 0) {
+				var tmp = new global.Layer(window, this);
+				(Layer_patch_hd_layer_original.loadImages incontextof tmp)(imageStorage+chosenExt, key);
+
+				super.fillRect(0, 0, w, h, 0x00000000);
+				(Layer_patch_hd_layer_original.operateRect)(0, 0, tmp, leftDiff, 0, w, h);
+				(Layer_patch_hd_layer_original.setImageSize)(w, h);
+
+				invalidate tmp;
+			}
+		}
+
+		if (isThumbnail) {
+			originalImageWidth = 120;
+			originalImageHeight = 90;
+		} else if (!isHd || storageExt != "") {
+			originalImageWidth = super.imageWidth;
+			originalImageHeight = super.imageHeight;
+
+			if (imageStorage == "csラストep08b") {
+				isbg = true;
+			}
+		}
+
+		updateBg(originalImageWidth, originalImageHeight, true);
+
+		if (isExButtonLayer) {
+			numberOfImages = septByMode[mode];
+		} else if (imageStorage == "pagebreak_a" && storageExt == ".png") {
+			numberOfImages = imageNameToNumberOfImages[imageStorage + storageExt];
+		} else {
+			numberOfImages = imageNameToNumberOfImages[imageStorage] if imageNameToNumberOfImages[imageStorage] !== void;
+		}
+
+		upscale();
+
+		if (numberOfImages == 1) {
+			originalImageWidth = transformDiscrete(originalImageWidth, widthScale);
+			originalImageHeight = transformDiscrete(originalImageHeight, heightScale);
+		}
+
+		return taginfo;
+	}
+
+	function setSize(width, height)
+	{
+		updateBg(width, height);
+
+		originalWidth = transformDiscrete(width, widthScale);
+		originalHeight = transformDiscrete(height, heightScale);
+
+		super.setSize(width * widthScale, height * heightScale);
+
+		updateImageSize();
+	}
+
+	function setImageSize(imageWidth, imageHeight)
+	{
+		updateBg(imageWidth, imageHeight);
+
+		originalImageWidth = transformDiscrete(imageWidth, widthScale);
+		originalImageHeight = transformDiscrete(imageHeight, heightScale);
+
+		super.setImageSize(imageWidth * widthScale, imageHeight * heightScale);
+	}
+
+	function updateImageSize()
+	{
+		if (hasImage) {
+			if (originalImageWidth < originalWidth) {
+				originalImageWidth = super.imageWidth / widthScale;
+			}
+			if (originalImageHeight < originalHeight) {
+				originalImageHeight = super.imageHeight / heightScale;
+			}
+			if (originalImageWidth + originalImageLeft < originalWidth) {
+				originalImageLeft = originalWidth - originalImageWidth;
+			}
+			if (originalImageHeight + originalImageTop < originalHeight) {
+				originalImageTop = originalHeight - originalImageHeight;
+			}
+		}
+	}
+
+	function setSizeToImageSize()
+	{
+		originalWidth = originalImageWidth;
+		originalHeight = originalImageHeight;
+		super.setSizeToImageSize();
+	}
+
+	function upscale()
+	{
+		var scaleWidth = originalImageWidth * widthScale;
+		var scaleHeight = originalImageHeight * heightScale;
+		if (super.imageWidth == scaleWidth && super.imageHeight == scaleHeight) return;
+
+		var scale = scaleWidth / super.imageWidth;
+		var singleWidth = super.imageWidth \ numberOfImages;
+		var roundedUpscaledSingleWidth = int(singleWidth * scale);
+		scaleWidth = roundedUpscaledSingleWidth * numberOfImages;
+
+		var tmp = new global.Layer(window, this);
+		(Layer_patch_hd_layer_original.setImageSize incontextof tmp)(scaleWidth, scaleHeight);
+
+		for (var i = 0; i < numberOfImages; i++) {
+			(Layer_patch_hd_layer_original.stretchCopy incontextof tmp)(roundedUpscaledSingleWidth*i, 0, roundedUpscaledSingleWidth, scaleHeight, this, singleWidth*i, 0, singleWidth, super.imageHeight, scaleAlgorithm);
+		}
+
+		super.setImageSize(scaleWidth, scaleHeight);
+
+		super.fillRect(0, 0, super.imageWidth, super.imageHeight, 0x00000000);
+
+		if (face == dfProvince) {
+			super.operateRect(0, 0, tmp, 0, 0, scaleWidth, scaleHeight, face);
+		} else {
+			super.operateRect(0, 0, tmp, 0, 0, scaleWidth, scaleHeight);
+		}
+
+		invalidate tmp;
+	}
+
+	function setPos(left, top, width, height)
+	{
+		originalLeft = left;
+		originalTop = top;
+
+		if (width !== void) {
+			originalWidth = width;
+			width = width * widthScale;
+		}
+		if (height !== void) {
+			originalHeight = height;
+			height = height * heightScale;
+		}
+
+		super.setPos(transformLeft(left), transformTop(top), width, height);
+	}
+
+	function setImagePos(left, top)
+	{
+		originalImageLeft = left;
+		originalImageTop = top;
+		super.setImagePos(left*widthScale, top*heightScale);
+	}
+
+	function setCursorPos(cursorX, cursorY)
+	{
+		var originalCursorX = transformDiscrete(cursorX, cursorXScale);
+		var originalCursorY = transformDiscrete(cursorY, cursorYScale);
+		super.setCursorPos(transformCursorX(originalCursorX), transformCursorY(originalCursorY));
+	}
+
+	function updateBgFromSource(src, swidth, sheight)
+	{
+		// When copying a background image, set this layer to be background as well
+		if (src.isbg && src.imageWidth == swidth && src.imageHeight == sheight) {
+			isbg = src.isbg;
+			fullScreenBg = src.fullScreenBg;
+			fixedbg = src.fixedbg;
+			movingbg = src.movingbg;
+
+			isMask = true;
+			setSize(src.imageWidth, src.imageHeight);
+			isMask = false;
+		}
+	}
+
+	function operateRect(left, top, src, sleft, stop, swidth, sheight, mode, opacity)
+	{
+		super.operateRect(src.transformLeft(left, this), src.transformTop(top, this), src, sleft*src.widthScale, stop*src.heightScale, swidth*src.widthScale, sheight*src.heightScale, mode, opacity);
+	}
+
+	function copyRect(left, top, src, sleft, stop, swidth, sheight)
+	{
+		updateBgFromSource(src, swidth, sheight);
+		super.copyRect(src.transformLeft(left, this), src.transformTop(top, this), src, sleft*src.widthScale, stop*src.heightScale, swidth*src.widthScale, sheight*src.heightScale);
+	}
+
+	function operateStretch(left, top, width, height, src, sleft, stop, swidth, sheight, mode, opacity, type)
+	{
+		super.operateStretch(src.transformLeft(left, this), src.transformTop(top, this), width*widthScale, height*heightScale, src, sleft*src.widthScale, stop*src.heightScale, swidth*src.widthScale, sheight*src.heightScale, mode, opacity, type);
+	}
+
+	function transformSLeft(src, sleft, swidth)
+	{
+		if (src.numberOfImages > 1) {
+			var imageIndex = sleft / swidth;
+			return imageIndex * int(swidth * src.widthScale);
+		}
+		return sleft*src.widthScale;
+	}
+
+	function stretchCopy(left, top, width, height, src, sleft, stop, swidth, sheight, type)
+	{
+		sleft = transformSLeft(src, sleft, swidth);
+
+		super.stretchCopy(src.transformLeft(left, this), src.transformTop(top, this), width*widthScale, height*heightScale, src, sleft, stop*src.heightScale, swidth*src.widthScale, sheight*src.heightScale, type);
+	}
+
+	function stretchCopyAA(left, top, width, height, src, sleft, stop, swidth, sheight, type)
+	{
+		sleft = transformSLeft(src, sleft, swidth);
+
+		super.stretchCopyAA(src.transformLeft(left, this), src.transformTop(top, this), width*widthScale, height*heightScale, src, sleft, stop*src.heightScale, swidth*src.widthScale, sheight*src.heightScale, type);
+	}
+
+	function shrinkCopy(left, top, width, height, src, sleft, stop, swidth, sheight)
+	{
+		left = src.transformLeft(left, this);
+		top = src.transformTop(top, this);
+		width = width*widthScale;
+		height = height*heightScale;
+		sleft = sleft*src.widthScale;
+		stop = stop*src.heightScale;
+		swidth = swidth*src.widthScale;
+		sheight = sheight*src.heightScale;
+
+		absoluteMode = true;
+		src.absoluteMode = true;
+		super.shrinkCopy(left, top, width, height, src, sleft, stop, swidth, sheight);
+		absoluteMode = false;
+		src.absoluteMode = false;
+	}
+
+	function piledCopy(left, top, src, sleft, stop, swidth, sheight)
+	{
+		updateBgFromSource(src, swidth, sheight);
+		super.piledCopy(src.transformLeft(left, this), src.transformTop(top, this), src, sleft*src.widthScale, stop*src.heightScale, swidth*src.widthScale, sheight*src.heightScale);
+	}
+
+	function affineCopy(src, sx, sy, sw, sh, affine, a, b, c, d, tx, ty, type)
+	{
+		super.affineCopy(src, sx*src.widthScale, sy*src.heightScale, sw*src.widthScale, sh*src.heightScale, affine, a, b, c, d, tx*widthScale, ty*heightScale, type);
+	}
+
+	function operateAffine(src, sx, sy, sw, sh, affine, a, b, c, d, tx, ty, mode, opa, type)
+	{
+		super.operateAffine(src, sx*src.widthScale, sy*src.heightScale, sw*src.widthScale, sh*src.heightScale, affine, a, b, c, d, tx*widthScale, ty*heightScale, mode, opa, type);
+	}
+
+	function fillRect(left, top, width, height, color)
+	{
+		super.fillRect(left*widthScale, top*heightScale, width*widthScale, height*heightScale, color);
+	}
+
+	function colorRect(left, top, width, height, color, opacity)
+	{
+		super.colorRect(left*widthScale, top*heightScale, width*widthScale, height*heightScale, color, opacity);
+	}
+
+	function setClip(clipLeft, clipTop, clipWidth, clipHeight)
+	{
+		originalClipLeft = transformDiscrete(clipLeft, widthScale);
+		originalClipTop = transformDiscrete(clipTop, heightScale);
+		originalClipWidth = transformDiscrete(clipWidth, widthScale);
+		originalClipHeight = transformDiscrete(clipHeight, heightScale);
+
+		super.setClip(clipLeft*widthScale, clipTop*heightScale, clipWidth*widthScale, clipHeight*heightScale);
+	}
+
+	function setAttentionPos(left, top)
+	{
+		super.setAttentionPos(left*widthScale, top*heightScale);
+	}
+
+	function assignImages(src)
+	{
+		super.assignImages(src);
+		originalImageWidth = src.originalImageWidth;
+		originalImageHeight = src.originalImageHeight;
+		imageStorage = src.imageStorage;
+		isbg = src.isbg;
+	}
+
+	function setMainPixel(x, y, color)
+	{
+		super.setMainPixel(x*widthScale, y*heightScale, color);
+	}
+
+	function drawText(left, top, text, color, opacity, aa, slevel, scolor, swidth, sofsx, sofxy)
+	{
+		super.drawText(left*widthScale, top*heightScale, text, color, opacity, aa, slevel, scolor, swidth, sofsx, sofxy);
+	}
+
+	// TODO figure out if necessary
+	/*
+	function update(left, top, width, height)
+	{
+		super.update(left*leftScale, top*topScale, width*widthScale, height*heightScale);
+	}
+
+	function redraw(left, top)
+	{
+		super.redraw(left*widthScale, top*heightScale);
+	}*/
+}
+global.Layer = Layer_patch_hd_layer_override;
+
+
+global.Window_patch_hd_layer_original = Window;
+class Window_patch_hd_layer_override extends Window_patch_hd_layer_original
+{
+	var originalLeft;
+	var originalTop;
+	var originalWidth;
+	var originalHeight;
+	var originalInnerWidth;
+	var originalInnerHeight;
+
+	var scrollXOffset = 0;
+	var scrollYOffset = 0;
+
+	property transformedScrollXOffset { getter { return scrollXOffset; } }
+
+	// Under normal conditions result=-scrollYOffset, but this transformation considers different scale/wide factors.
+	property transformedScrollYOffset { getter {
+		var scale = scrollYOffset / 150; // 0: image unchanged, 150: image scrolled all the way to the bottom.
+		var factor = wideScreen? wideFactor : cropFactor;
+		var result = originalResHeight * Math.abs(1 - factor)*scale/wideFactor;
+		return result;
+	} }
+
+	property widthScale { getter { return wideScaleFactor; } }
+	property heightScale { getter { return scaleFactor * (isMainWindow? cropFactor : 1); } }
+	property isMainWindow { getter { return this === global.Window.mainWindow; } }
+	property body { getter() { return fore; } }
+
+	property isHd
+	{
+		getter
+		{
+			if (!hdPatchExists) {
+				return false;
+			}
+			if (!isMainWindow) {
+				return mainWindow.scflags[hdFlagName];
+			}
+			return this.scflags[hdFlagName];
+		}
+		setter(v)
+		{
+			this.scflags[hdFlagName] = v;
+		}
+	}
+
+	property wideScreen
+	{
+		getter
+		{
+			if (!hdPatchExists) {
+				return false;
+			}
+			if (!isMainWindow) {
+				// return mainWindow.scflags[wideScreenFlagName];
+				return false;
+			}
+			return this.scflags[wideScreenFlagName];
+		}
+		setter(v)
+		{
+			this.scflags[wideScreenFlagName] = v;
+		}
+	}
+
+	property wideRatio
+	{
+		getter
+		{
+			if (!wideScreen) {
+				return cubicRatio;
+			}
+			if (this.scflags[autoWideRatioFlagName]) {
+				return systemRatio;
+			}
+			return this.scflags[wideRatioFlagName] != void? this.scflags[wideRatioFlagName] : systemRatio;
+		}
+	}
+
+	property left
+	{
+		getter
+		{
+			if (isMainWindow) {
+				return super.left;
+			} else {
+				return originalLeft;
+			}
+		}
+		setter(v)
+		{
+			if (isMainWindow) {
+				super.left = v;
+			} else {
+				originalLeft = v;
+				super.left = (v-mainWindow.left) * widthScale + mainWindow.left;
+			}
+		}
+	}
+
+	property top
+	{
+		getter
+		{
+			if (isMainWindow) {
+				return super.top;
+			} else {
+				return originalTop;
+			}
+		}
+		setter(v)
+		{
+			if (isMainWindow) {
+				super.top = v;
+			} else {
+				originalTop = v;
+				super.top = (v-mainWindow.top) * heightScale + mainWindow.top;
+			}
+		}
+	}
+
+	property width
+	{
+		getter
+		{
+			return originalWidth;
+		}
+		setter(v)
+		{
+			originalWidth = v;
+			super.width = v * widthScale;
+		}
+	}
+
+	property height
+	{
+		getter
+		{
+			return originalHeight;
+		}
+		setter(v)
+		{
+			originalHeight = v;
+			super.height = v * heightScale;
+		}
+	}
+
+	property innerWidth
+	{
+		getter
+		{
+			return originalInnerWidth;
+		}
+		setter(v)
+		{
+			originalInnerWidth = v;
+			super.innerWidth = v * widthScale;
+		}
+	}
+
+	property innerHeight
+	{
+		getter
+		{
+			return originalInnerHeight;
+		}
+		setter(v)
+		{
+			originalInnerHeight = v;
+			super.innerHeight = v * heightScale;
+		}
+	}
+
+	function Window_patch_hd_layer_override()
+	{
+		super.Window(...);
+		originalLeft = super.left;
+		originalTop = super.top;
+		originalWidth = super.width;
+		originalHeight = super.height;
+		originalInnerWidth = super.innerWidth;
+		originalInnerHeight = super.innerHeight;
+	}
+
+	function Window()
+	{
+		Window_patch_hd_layer_override(...);
+	}
+
+	function setPos(left, top)
+	{
+		if (isMainWindow) {
+			super.setPos(left, top);
+		} else {
+			originalLeft = left;
+			originalTop = top;
+			super.setPos((left-mainWindow.left) * widthScale + mainWindow.left, (top-mainWindow.top) * heightScale + mainWindow.top);
+		}
+	}
+
+	function setInnerSize(innerWidth, innerHeight)
+	{
+		originalInnerWidth = innerWidth;
+		originalInnerHeight = innerHeight;
+		super.setInnerSize(innerWidth * widthScale, innerHeight * heightScale);
+
+		originalWidth = super.width / widthScale;
+		originalHeight = super.height / heightScale;
+	}
+
+	function setSize(width, height)
+	{
+		originalWidth = width;
+		originalHeight = height;
+		super.setSize(width * widthScale, height * heightScale);
+
+		originalInnerWidth = super.innerWidth / widthScale;
+		originalInnerHeight = super.innerHeight / heightScale;
+	}
+}
+global.Window = Window_patch_hd_layer_override;
+
+global.VideoOverlay_patch_hd_layer_original = VideoOverlay;
+class VideoOverlay_patch_hd_layer_override extends VideoOverlay_patch_hd_layer_original
+{
+	function VideoOverlay_patch_hd_layer_override()
+	{
+		super.VideoOverlay(...);
+	}
+
+	function VideoOverlay()
+	{
+		VideoOverlay_patch_hd_layer_override(...);
+	}
+
+	property originalWidth
+	{
+		getter
+		{
+			return super.originalWidth / wideScaleFactor;
+		}
+	}
+
+	property originalHeight
+	{
+		getter
+		{
+			return super.originalHeight / scaleFactor;
+		}
+	}
+
+	function setBounds(left, top, width, height)
+	{
+		return super.setBounds(left*wideScaleFactor, top*scaleFactor, width*wideScaleFactor, height*scaleFactor);
+	}
+}
+global.VideoOverlay = VideoOverlay_patch_hd_layer_override;

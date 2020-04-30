@@ -1,0 +1,263 @@
+﻿@if(GAME_FATE||GAME_FHAT)
+var originalResWidth = 800;
+var originalResHeight = 600;
+@endif
+@if(GAME_WOHN)
+var originalResWidth = 1024;
+var originalResHeight = 576;
+@endif
+@if(GAME_FATE)
+var highResWidth = 1280;
+var highResHeight = 960;
+@endif
+@if(GAME_FHAT)
+var highResWidth = 1600;
+var highResHeight = 1200;
+@endif
+@if(GAME_WOHN)
+var highResWidth = 2048;
+var highResHeight = 1152;
+@endif
+var defaultScaleFactor = highResWidth / originalResWidth;
+var isCropped = false;
+var scaleFactor = 1;
+var wideFactor = 1;
+var cropFactor = 1;
+var cubicRatio = 4/3;
+var standardWideRatio = 16/9;
+var systemRatio = System.screenWidth / System.screenHeight;
+var loadedWebpPlugin = false;
+
+var hdFolderSuffix = "-hd";
+
+var hdPatchName = devMode? "ImagesHD" : "HD";
+
+var wideRulePatchName = devMode? "RuleWide" : hdPatchName;
+var wideRuleFolderName = devMode? "" : "RuleWide";
+
+var hdFlagName = "isHd";
+var wideScreenFlagName = "wideScreen";
+var autoWideRatioFlagName = "autoWideRatio";
+var wideRatioFlagName = "wideRatio";
+
+var devHdImageFolders = ["BGImageHD", "FGImageHD", "ImageHD", "ImagesClassicHD", "ImagesConfigHD", "ImagesMobile", "ImagesPatchHD", "ImagesPS2HD", "ImagesTitleHD", "ImagesTrialHD", "ImagesHanafudaHD", "RuleHD"];
+
+property hdPatchExists { getter { return patchExists(hdPatchName); } }
+
+property inverseScaleFactor { getter() { return 1/scaleFactor; } }
+property inverseWideFactor { getter() { return 1/wideFactor; } }
+property inverseCubicRatio { getter() { return 1/cubicRatio; } }
+property wideScaleFactor { getter() { return scaleFactor * wideFactor; } }
+
+
+function loadHdPatch(kag=global.kag)
+{
+	if (!loadedWebpPlugin) {
+		Plugins.link("ifwebp.spi");
+		loadedWebpPlugin = true;
+	}
+	var patches_arr = [];
+	patches_arr.add([hdPatchName]);
+	if (devMode) {
+		for (var i=0; i<devHdImageFolders.count; i++) {
+			patches_arr.add([devHdImageFolders[i]]);
+		}
+	}
+	patches_arr.add([opPatchName, 'hd']) if get_opPatchExists();
+	if (typeof(kag) === "Object")
+	{
+		patches_arr.add([maturePatchName, uncensoredMatureFolderName + hdFolderSuffix]) if kag.sflags[matureFlagName];
+		patches_arr.add([hPatchName, uncensoredHFolderName + hdFolderSuffix]) if kag.sflags[hFlagName];
+
+		patches_arr.add([languagePatchName(japaneseLanguage), imagesFolderName + hdFolderSuffix]);
+		patches_arr.add([languagePatchName(kag.sflags.language), imagesFolderName + hdFolderSuffix]) if kag.sflags.language !== void && kag.sflags.language !== japaneseLanguage;
+	}
+
+	load_patches(patches_arr);
+	invalidate patches_arr;
+	delete patches_arr;
+
+	if (typeof(kag) === "Object")
+	{
+		updateDecensorConfig(kag);
+	}
+}
+
+function unloadHdPatch(kag=global.kag)
+{
+	var patches_arr = [];
+	patches_arr.add([hdPatchName]);
+	if (devMode) {
+		for (var i=0; i<devHdImageFolders.count; i++) {
+			patches_arr.add([devHdImageFolders[i]]);
+		}
+	}
+	patches_arr.add([opPatchName, 'hd']) if get_opPatchExists();
+	if (typeof(kag) !== "Object")
+	{
+		patches_arr.add([maturePatchName, uncensoredMatureFolderName + hdFolderSuffix]) if kag.sflags[matureFlagName];
+		patches_arr.add([hPatchName, uncensoredHFolderName + hdFolderSuffix]) if kag.sflags[hFlagName];
+
+		patches_arr.add([languagePatchName(japaneseLanguage), imagesFolderName + hdFolderSuffix]);
+		patches_arr.add([languagePatchName(kag.sflags.language), imagesFolderName + hdFolderSuffix]) if kag.sflags.language !== void && kag.sflags.language !== japaneseLanguage;
+	}
+
+	unload_patches(patches_arr);
+	invalidate patches_arr;
+	delete patches_arr;
+
+	if (typeof(kag) === "Object")
+	{
+		updateDecensorConfig(kag);
+	}
+}
+
+function initializeQuality(scale, firsttime=false) {
+	isHd = scale > 1;
+	scaleFactor = scale;
+
+	if (isHd) {
+		loadHdPatch(this);
+	} else {
+		unloadHdPatch(this);
+	}
+}
+
+function initializeWide(ratio, firsttime=false) {
+	wideScreen = ratio > cubicRatio;
+	wideFactor = originalResHeight * ratio / originalResWidth;
+
+	if (wideScreen) {
+		load_patches([[wideRulePatchName, wideRuleFolderName]]);
+	} else {
+		unload_patches([[wideRulePatchName, wideRuleFolderName]]);
+	}
+}
+
+function onQualityMenuItemClick(sender, quality) {
+	with (sender.owner) {
+		var changed = false;
+		if (quality == "low" && .isHd) {
+			.extraConductor.clear();
+			.lineBreak.loadedImage = null;
+			.pageBreak.loadedImage = null;
+			.saveBookMark(1000, true);
+			(initializeQuality incontextof sender.owner)(1);
+			changed = true;
+			sender.checked = true;
+		} else if (quality == "high" && !.isHd) {
+			.extraConductor.clear();
+			.lineBreak.loadedImage = null;
+			.pageBreak.loadedImage = null;
+			.saveBookMark(1000, true);
+			(initializeQuality incontextof sender.owner)(defaultScaleFactor);
+			changed = true;
+			sender.checked = true;
+		}
+		if (changed) {
+			changeResolution(sender.owner);
+			.loadBookMark(1000);
+		}
+	}
+}
+
+function onWideMenuItemClick(sender, ratio, cropped=false) {
+	if (ratio == "standard") {
+		ratio = cubicRatio;
+	} else if (ratio == "wide") {
+		ratio = sender.owner.scflags[autoWideRatioFlagName]? systemRatio : (sender.owner.scflags[wideRatioFlagName] != void? sender.owner.scflags[wideRatioFlagName] : systemRatio);
+	}
+	if (ratio !== void && ratio != sender.owner.wideRatio)
+	{
+		with (sender.owner) {
+			.extraConductor.clear();
+			.saveBookMark(1000, true);
+			(initializeWide incontextof sender.owner)(ratio);
+			changeResolution(sender.owner);
+			.loadBookMark(1000);
+		}
+	}
+	if (cropped != isCropped)
+	{
+		with (sender.owner) {
+			if (cropped) {
+				isCropped = true;
+				cropFactor = 1/cubicRatio;
+			} else {
+				isCropped = false;
+				cropFactor = 1;
+			}
+
+			.extraConductor.clear();
+			.saveBookMark(1000, true);
+
+			.setSize(.width, .height);
+
+			.loadBookMark(1000);
+		}
+	}
+
+	sender.checked = true;
+}
+
+function changeResolution(win) {
+	with (win) {
+		(updateResolution incontextof win)(%[]);
+		if (typeof(.primaryLayer) === "Object")
+		{
+			.primaryLayer.setSize(originalResWidth, originalResHeight);
+			.primaryLayer.fillRect(0, 0, .primaryLayer.width, .primaryLayer.height, 0x000000);
+		}
+		if (typeof(.fore) === "Object" && typeof(.fore.base) === "Object")
+		{
+			.fore.base.setImageSize(originalResWidth, originalResHeight);
+			.fore.base.setSizeToImageSize();
+		}
+		if (typeof(.back) === "Object" && typeof(.back.base) === "Object")
+		{
+			.back.base.setImageSize(originalResWidth, originalResHeight);
+			.back.base.setSizeToImageSize();
+		}
+		if (typeof(.historyLayer) === "Object")
+		{
+			.historyLayer.setImageSize(originalResWidth, originalResHeight);
+			.historyLayer.setSizeToImageSize();
+		}
+		if (typeof(.hintlayer) === "Object")
+		{
+			invalidate .hintlayer;
+			.hintlayer = void;
+		}
+		if (typeof(global.flow_tracker_object) === "Object" && typeof(global.flow_tracker_object.isTest) === "Integer" && global.flow_tracker_object.isTest)
+		{
+			global.flow_tracker_object.isTest = false;
+			global.flow_tracker_object.isTest = true;
+		}
+	}
+}
+
+function updateResolution(mp)
+{
+	isPossibleChangeScreen	= true if mp.changescreen === true;
+	var curfullscreen	= false;
+	curfullscreen <-> fullScreen;	//	フルスクリーン状態を解除
+	//pxWidth = exWidth = size[0];
+	//pxHeight = exHeight = size[1];
+	setInnerSize(innerWidth, innerHeight);	//	ウィンドウのクライアントサイズを変更
+
+@if(ZOOM_WINDOW)
+	addHook("afterChangeScreenMode", fullScreenAfterChangeScreenMode) if curfullscreen;
+@endif
+@if(!ZOOM_WINDOW)
+	curfullscreen <-> fullScreen;	//	フルスクリーン状態を復帰
+@endif
+
+	isPossibleChangeScreen	= false if mp.changescreen === false;
+}
+
+
+function initializeHDPatch() {
+	(initializeQuality incontextof this)(isHd? defaultScaleFactor : 1, true);
+	(initializeWide incontextof this)(wideRatio, true);
+	changeResolution(this);
+}

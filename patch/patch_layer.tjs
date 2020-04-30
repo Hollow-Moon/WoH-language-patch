@@ -1,32 +1,51 @@
 ﻿
-function getFullPathFromStorageIdentifier(storage)
-{
-	var image_extensions = [".webp", ".png", ".tlg", ".jpg", ".bmp"];
-	var file_name = storage;
-@if(PREFER_PNG)
-	// 特殊 - 先尝试载入PNG 开发用
-	var png_file_name = Storages.chopStorageExt(file_name) + ".png";
-	if (Storages.isExistentStorage(png_file_name))
-	{
-		file_name = png_file_name;
-	}
-@endif
+global.image_extensions = [".webp", ".png", ".tlg", ".jpg", ".bmp"];
 
-	if (image_extensions.find(Storages.extractStorageExt(file_name)) === -1)
+function get_file_name_of_image_with_extension_that_exists(storage)
+{
+	var image_extensions = global.image_extensions;
+
+	var file_name_no_ext = global.Storages.chopStorageExt(storage);
+	for (var i = 0; i < image_extensions.count; i += 1)
 	{
-		var file_name_no_ext = Storages.chopStorageExt(storage);
-		for (var i = 0; i < image_extensions.count; i += 1)
+		var fn = file_name_no_ext + image_extensions[i];
+		if (global.Storages.isExistentStorage(fn))
 		{
-			var fn = file_name_no_ext + image_extensions[i];
-			if (Storages.isExistentStorage(fn))
-			{
-				file_name = fn;
-				break;
-			}
+			return fn;
 		}
 	}
 
-	return Storages.getPlacedPath(file_name);
+	return void;
+}
+
+function check_if_image_exists(storage)
+{
+	return global.Storages.isExistentStorage(global.get_file_name_of_image_with_extension_that_exists(storage));
+}
+
+function get_full_path_of_image(storage)
+{
+	var path = global.get_file_name_of_image_with_extension_that_exists(storage);
+	if (path === void)
+	{
+		return path;
+	}
+	return global.Storages.getPlacedPath(path);
+}
+
+global.Storages.isExistentImage = function(storage)
+{
+	return global.check_if_image_exists(storage);
+};
+
+function isExistentImage(storage)
+{
+	return global.check_if_image_exists(storage);
+}
+
+function getExistImageName(storage)
+{
+	return global.get_full_path_of_image(storage);
 }
 
 global.System_patch_layer_original = System;
@@ -37,7 +56,7 @@ class System_patch_layer_override extends System_patch_layer_original
 		var storage_fixed = [];
 		for (var i = 0; i < storage.count; i += 1)
 		{
-			var file_name = global.getFullPathFromStorageIdentifier(storage[i]);
+			var file_name = global.get_full_path_of_image(storage[i]);
 			if (file_name !== "")
 			{
 				storage_fixed.push(file_name);
@@ -129,7 +148,7 @@ class Layer_patch_layer_override extends Layer_patch_layer_original
 
 	function loadImages(storage, key)
 	{
-		var file_name = global.getFullPathFromStorageIdentifier(storage);
+		var file_name = global.get_full_path_of_image(storage);
 		if (file_name === "")
 		{
 			throw new Exception(("Image \"%s\" not found").sprintf(storage));

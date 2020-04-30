@@ -1,0 +1,92 @@
+﻿
+var nonMandotoryPlugins = %[
+	"util.dll" => ["patch_plugin_util.tjs", "global.enumFont"],
+	"menu.dll" => [void, "global.MenuItem"],
+	"filter.dll" => ["patch_plugin_filter.tjs", "global.Smudge"],
+	"slideopen.dll" => ["patch_plugin_slideopn.tjs", "global.initSlideOpen"],
+	"drawer.dll" => ["patch_plugin_drawer.tjs", "global.drawLine"],
+	"firespark.dll" => ["patch_plugin_firespark.tjs", "global.initFireSpark"],
+	"kri18n.dll" => ["i18n.tjs", "global.__"],
+	"dirlist.dll" => ["patch_plugin_dirlist.tjs", "global.getDirList"],
+	"resize.dll" => ["patch_plugin_resize.tjs", "global.AreaAverageReducation"],
+];
+
+var loadedPlugins = %[];
+
+function hasAlternativeMethodForPlugin(name)
+{
+	var val = Scripts.foreach(nonMandotoryPlugins, function(key, value, name)
+	{
+		if (key === name)
+		{
+			return true;
+		}
+	}, name);
+	return (val == true);
+}
+
+function loadAlternativeMethodForPlugin(name)
+{
+	if (hasAlternativeMethodForPlugin(name))
+	{ // can't use contains cause Scripts.getObjectKeys doesn't return an Array class.
+		var fileName = nonMandotoryPlugins[name][0];
+		KAGLoadScript(fileName) if fileName !== void && !loadedPlugins[fileName];
+		if (Scripts.eval(("typeof(%s)").sprintf(nonMandotoryPlugins[name][1])) !== "undefined")
+		{
+			loadedPlugins[fileName] = true;
+			return true;
+		}
+	}
+	return false;
+}
+
+global.Plugins_patch_plugins_original = Plugins;
+class Plugins_patch_plugins_override extends Plugins_patch_plugins_original
+{
+	function link(name)
+	{
+		try
+		{
+			super.link(name);
+		}
+		catch(e)
+		{
+			if (loadAlternativeMethodForPlugin(name))
+			{
+				dm("Loaded alternative method for plugin: " + name);
+			}
+			else
+			{
+				throw e;
+			}
+		}
+		if (hasAlternativeMethodForPlugin(name) && Scripts.eval(("typeof(%s)").sprintf(nonMandotoryPlugins[name][1])) === "undefined")
+		{
+			if (loadAlternativeMethodForPlugin(name))
+			{
+				dm("Loaded alternative method for plugin: " + name);
+			}
+		}
+	}
+
+	function unlink(name)
+	{
+		try
+		{
+			return super.unlink(name);
+		}
+		catch(e)
+		{
+			if (hasAlternativeMethodForPlugin(name))
+			{
+				dm("Plugins.unlink was called on the following plugin: " + name);
+			}
+			else
+			{
+				throw e;
+			}
+		}
+		return false;
+	}
+}
+global.Plugins = Plugins_patch_plugins_override;

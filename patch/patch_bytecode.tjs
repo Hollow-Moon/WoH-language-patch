@@ -1,0 +1,191 @@
+﻿
+if (typeof(Storages.getLastModifiedFileTime) == "undefined")
+{
+	if (Storages.isExistentStorage("fstat.dll"))
+	{
+		Plugins.link("fstat.dll");
+	}
+}
+
+if (typeof(Storages.getLastModifiedFileTime) != "undefined" && typeof(Scripts.compileStorage) != "undefined" && typeof(global.GameID) != "undefined")
+{
+	global.Scripts.execStorageOld = global.Scripts.execStorage;
+	global.Scripts.evalStorageOld = global.Scripts.evalStorage;
+
+	global.scriptsLoaded = %[];
+	global.scriptsBytecodeExclusions = ["MessageLayer", "patch_hd", "patch_hd_layer"];
+@if(0)
+	global.Scripts.execStorage = function(storage, mode, context)
+	{
+		if (mode == void)
+		{
+			mode = "";
+		}
+		if (context == void)
+		{
+			context = global;
+		}
+		return global.Scripts.execStorageOld(storage, mode, context);
+	};
+	global.Scripts.evalStorage = function(storage, mode, context)
+	{
+		if (mode == void)
+		{
+			mode = "";
+		}
+		if (context == void)
+		{
+			context = global;
+		}
+		return global.Scripts.evalStorageOld(storage, mode, context);
+	};
+@endif
+@if(0)
+	global.Scripts.execStorage = global.Scripts.execStorageOld;
+	global.Scripts.evalStorage = global.Scripts.evalStorageOld;
+@endif
+@if(1)
+	global.Scripts.execStorage = function(storage, mode, context)
+	{
+		if (mode == void && context == void)
+		{
+			var arcdelim = System.getArgument("-arcdelim");
+			if (!arcdelim)
+				arcdelim = ">";
+
+			var full_location = Storages.getPlacedPath(storage);
+			if (full_location != "")
+			{
+				var full_path = Storages.extractStoragePath(full_location);
+				if (full_path != "")
+				{
+					var full_location_noext = Storages.chopStorageExt(full_location);
+					var full_location_noext_basename = Storages.extractStorageName(full_location_noext);
+					var full_location_extonly = Storages.extractStorageExt(full_location);
+					var full_location_bytecode = ("%s.%s%sb").sprintf(full_location_noext, global.GameID, full_location_extonly);
+					if (global.scriptsLoaded[full_location_noext_basename] == true)
+					{
+						return;
+					}
+					var script_excluded = false;
+					for (var i = 0; i < global.scriptsBytecodeExclusions.count; i += 1)
+					{
+						if (global.scriptsBytecodeExclusions[i].toLowerCase() == full_location_noext_basename.toLowerCase())
+						{
+							dm(full_location_noext_basename + " script excluded");
+							script_excluded = true;
+							break;
+						}
+					}
+					if (!script_excluded)
+					{
+						if (full_path.indexOf(arcdelim) == -1)
+						{
+							if ((!Storages.isExistentStorage(full_location_bytecode)) || (Storages.getLastModifiedFileTime(full_location_bytecode) < Storages.getLastModifiedFileTime(full_location)))
+							{
+								Scripts.compileStorage(full_location, full_location_bytecode, true, false, false);
+							}
+						}
+						if (Storages.isExistentStorage(full_location_bytecode))
+						{
+							global.scriptsLoaded[full_location_noext_basename] = true;
+							return global.Scripts.execStorageOld(full_location_bytecode);
+						}
+					}
+				}
+			}
+		}
+		return global.Scripts.execStorageOld(storage, mode, context);
+	};
+
+	global.Scripts.evalStorage = function(storage, mode, context)
+	{
+		if (mode == void && context == void)
+		{
+			var arcdelim = System.getArgument("-arcdelim");
+			if (!arcdelim)
+				arcdelim = ">";
+
+			var full_location = Storages.getPlacedPath(storage);
+			if (full_location != "")
+			{
+				var full_path = Storages.extractStoragePath(full_location);
+				if (full_path != "")
+				{
+					var full_location_noext = Storages.chopStorageExt(full_location);
+					var full_location_extonly = Storages.extractStorageExt(full_location);
+					var full_location_bytecode = ("%s.%s%sb").sprintf(full_location_noext, global.GameID, full_location_extonly);
+					if (full_path.indexOf(arcdelim) == -1)
+					{
+						if ((!Storages.isExistentStorage(full_location_bytecode)) || (Storages.getLastModifiedFileTime(full_location_bytecode) < Storages.getLastModifiedFileTime(full_location)))
+						{
+							Scripts.compileStorage(full_location, full_location_bytecode, true, false, true);
+						}
+					}
+					if (Storages.isExistentStorage(full_location_bytecode))
+					{
+						return global.Scripts.evalStorageOld(full_location_bytecode);
+					}
+				}
+			}
+		}
+		return global.Scripts.evalStorageOld(storage, mode, context);
+	};
+
+	global.KAGLoadScript = function(name)
+	{
+		dm("Loading " + name);
+		var start = System.getTickCount();
+		try
+		{
+			var full_location = Storages.getPlacedPath(name);
+			var full_location_noext = Storages.chopStorageExt(full_location);
+			var full_location_noext_basename = Storages.extractStorageName(full_location_noext);
+			var script_excluded = false;
+			for (var i = 0; i < global.scriptsBytecodeExclusions.count; i += 1)
+			{
+				if (global.scriptsBytecodeExclusions[i].toLowerCase() == full_location_noext_basename.toLowerCase())
+				{
+					script_excluded = true;
+					break;
+				}
+			}
+			if (script_excluded)
+			{
+				dm(name + " script excluded");
+				Scripts.execStorageOld(name);
+			}
+			else
+			{
+				Scripts.execStorage(name);
+			}
+		}
+		catch (e)
+		{
+			var end = System.getTickCount();
+			dm(name + " failed to load in " + (end - start) + "ms");
+			throw e;
+		}
+		var end = System.getTickCount();
+		dm(name + " was loaded in " + (end - start) + "ms");
+	};
+@endif
+}
+else
+{
+	var msg = "";
+	msg += "patch_bytecode: failed to initialize for the following reasons:\n";
+	if (typeof(Storages.getLastModifiedFileTime) == "undefined")
+	{
+		msg += "patch_bytecode: getLastModifiedFileTime function not found\n";
+	}
+	if (typeof(Scripts.compileStorage) == "undefined")
+	{
+		msg += "patch_bytecode: compileStorage function not found (probably not Kirikiri Z)\n";
+	}
+	if (typeof(global.GameID) == "undefined")
+	{
+		msg += "patch_bytecode: GameID variable not found\n";
+	}
+	Debug.message(msg);
+}

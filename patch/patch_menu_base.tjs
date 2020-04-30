@@ -463,9 +463,17 @@ function addPatchMenu() {
 	(addVitaMenu incontextof this)(patchMenu);
 	(addGalleryMenu incontextof this)(patchMenu);
 	(addMovieMenu incontextof this)(patchMenu);
-	(addOptionsMenu incontextof this)(patchMenu);
 
 	(addDevelopmentMenu incontextof this)();
+@if(ZOOM_WINDOW)
+	(addWindowSizeMenu incontextof this)(this.displayMenu);
+@endif
+@if(HD_MODE)
+	(addHdMenu incontextof this)(this.displayMenu);
+	(addMessageWindowMenu incontextof this)(patchMenu);
+@endif
+
+	(addOptionsMenu incontextof this)(patchMenu);
 	(addPatchMenuItems incontextof this)(patchMenu);
 }
 
@@ -527,10 +535,124 @@ function addMovieMenu(patchMenu) {
 
 function addOptionsMenu(patchMenu) {
 	var historyTitleFlag = new GameFlag(this, this.sflags, "historyTitle", false);
-	
+
 	patchMenu.add(this.patchOptionsMenuItem = new KAGMenuItem(this, __t("設定(&O)"), 0, void, false));
 	patchOptionsMenuItem.add(this.historyTitleMenuItem = new KAGFlagMenuItem(this, __t("メッセージ歴史でシーンのタイトルを表示する(&H)"),, historyTitleFlag));
 	patchOptionsMenuItem.add(this.engineConfigurationItem = new KAGMenuItem(this, "Open engine configuration dialog", 1, function() { global.System.shellExecute(Storages.getLocalName(global.System.exeName), '-userconf'); },false));
 
 	(addOptionsMenuItems incontextof this)(patchOptionsMenuItem);
+}
+
+function addWindowSizeMenu(displayMenu) {
+	displayMenu.add(new MenuItem(this, "-"));
+
+		displayMenu.add(this.windowSizeMenu = new KAGMenuItem(this, __t("ウィンドウ内部のサイズ指定(&S)"), 0, void, false));
+
+@if(!HD_MODE)
+			windowSizeMenu.add(this.window800MenuItem = new KAGMenuItem(this, __t("800x600 (デフォルト)"), 1,
+				function(sender) { sender.owner.onWindowSizeMenuItemClick(,800); }, false));
+@endif
+@if(HD_MODE)
+			windowSizeMenu.add(this.window800MenuItem = new KAGMenuItem(this, __t("1.00x (デフォルト)"), 1,
+				function(sender) { sender.owner.onWindowSizeMenuItemClick(,800); }, false));
+@endif
+
+			windowSizeMenu.add(new MenuItem(this, "-"));
+
+@if(!HD_MODE)
+			windowSizeMenu.add(this.window1024MenuItem = new KAGMenuItem(this, "1024x768", 1,
+				function(sender) { sender.owner.onWindowSizeMenuItemClick(,1024); }, false));
+
+			windowSizeMenu.add(this.window1280MenuItem = new KAGMenuItem(this, "1280x960", 1,
+				function(sender) { sender.owner.onWindowSizeMenuItemClick(,1280); }, false));
+
+			windowSizeMenu.add(this.window1440MenuItem = new KAGMenuItem(this, "1440x1080", 1,
+				function(sender) { sender.owner.onWindowSizeMenuItemClick(,1440); }, false));
+
+			windowSizeMenu.add(this.window640MenuItem = new KAGMenuItem(this, "640x480", 1,
+				function(sender) { sender.owner.onWindowSizeMenuItemClick(,640); }, false));
+@endif
+@if(HD_MODE)
+			windowSizeMenu.add(this.window1024MenuItem = new KAGMenuItem(this, "1.28x", 1,
+				function(sender) { sender.owner.onWindowSizeMenuItemClick(,1024); }, false));
+
+			windowSizeMenu.add(this.window1280MenuItem = new KAGMenuItem(this, "1.60x", 1,
+				function(sender) { sender.owner.onWindowSizeMenuItemClick(,1280); }, false));
+
+			windowSizeMenu.add(this.window1440MenuItem = new KAGMenuItem(this, "1.80x", 1,
+				function(sender) { sender.owner.onWindowSizeMenuItemClick(,1440); }, false));
+
+			windowSizeMenu.add(this.window640MenuItem = new KAGMenuItem(this, "0.80x", 1,
+				function(sender) { sender.owner.onWindowSizeMenuItemClick(,640); }, false));
+@endif
+
+			windowSizeMenu.add(new MenuItem(this, "-"));
+
+			windowSizeMenu.add(this.windowResizeableMenuItem = new KAGMenuItem(this, "Fixed Size", 0,
+				function(sender) { sender.owner.onWindowSizeMenuItemClick(,0); }, false));
+}
+
+function addHdMenu(displayMenu) {
+	var wideResolutions = %[ "&Wide (16:9)" => standardWideRatio];
+
+	displayMenu.add(new MenuItem(this, "-"));
+
+	displayMenu.add(this.qualityMenu = new KAGMenuItem(this, "&Quality", 0, void, false));
+	this.qualityMenu.enabled = false;
+
+		qualityMenu.add(this.lqMenuItem = new KAGMenuItem(this, "Low", 1,
+			function(sender) { onQualityMenuItemClick(sender.owner.lqMenuItem,'low'); }, false));
+
+		qualityMenu.add(this.hqMenuItem = new KAGMenuItem(this, "High", 1,
+			function(sender) { onQualityMenuItemClick(sender.owner.hqMenuItem,'high'); }, false));
+		this.hqMenuItem.enabled = hdPatchExists;
+
+	displayMenu.add(this.wideMenu = new KAGMenuItem(this, "&Aspect Ratio", 0, void, false));
+	this.wideMenu.enabled = false;
+
+		wideMenu.add(this.notWideMenuItem = new KAGMenuItem(this, "&Standard (4:3)", 1,
+			function(sender) { onWideMenuItemClick(sender.owner.notWideMenuItem,'standard'); }, false));
+
+		wideMenu.add(this.wideMenuItem = new KAGMenuItem(this, "&Match desktop", 1,
+			function(sender) { onWideMenuItemClick(sender.owner.wideMenuItem,'wide'); }, false));
+
+		var keys = Scripts.getObjectKeys(wideResolutions);
+		for (var i=0; i<keys.count; i++) {
+			var key = keys[i];
+			var ratio = wideResolutions[key];
+			if (ratio == systemRatio) {
+				continue;
+			}
+			var wideMenuItemName = "wideRatio"+key.replace(/[:&\() ]/g, "")+"MenuItem";
+			this.wideMenu.add(this[wideMenuItemName] = new KAGMenuItem(this, key, 1, function(sender) { onWideMenuItemClick(sender.owner.wideMenuItem, sender.ratio); }));
+			this[wideMenuItemName].ratio = ratio;
+		}
+
+@if(CROP_MODE)
+		wideMenu.add(this.wideCroppedMenuItem = new KAGMenuItem(this, "Wide (&cropped)", 1,
+			function(sender) { onWideMenuItemClick(sender.owner.wideCroppedMenuItem,'standard',true) }, false));
+@endif
+
+	if (isHd) {
+		this.hqMenuItem.checked = true;
+	} else {
+		this.lqMenuItem.checked = true;
+	}
+	if (wideScreen) {
+		this.wideMenuItem.checked = true;
+	} else {
+		this.notWideMenuItem.checked = true;
+	}
+}
+
+function addMessageWindowMenu(patchMenu)
+{
+	var mobileWindowFlag = new GameFlag(this, this.sflags, "mobileWindow", false);
+	var wideStrechWindowFlag = new GameFlag(this, this.sflags, "wideStrechWindow", true);
+
+	patchMenu.add(this.messageWindowMenuItem = new KAGMenuItem(this, "&Message Window", 0, void, false));
+
+	messageWindowMenuItem.add(this.mobileMessageWindowMenuItem = new KAGFlagMenuItem(this, "&Mobile message window",, mobileWindowFlag,,true));
+	this.mobileMessageWindowMenuItem.restartCondition = this.mobileMessageWindowMenuItem.onlyScenarioRestartCondition;
+	messageWindowMenuItem.add(this.wideMessageStretchMenuItem = new KAGFlagMenuItem(this, "4:3 message window in &wide mode",, inverseFlag(wideStrechWindowFlag),,true));
 }

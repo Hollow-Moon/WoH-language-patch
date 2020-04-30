@@ -1,0 +1,59 @@
+﻿// util.dll
+function enumFont(win, fonts) { Debug.message("plugin method: enumFont"); }
+
+function DeleteFile(filepath) {
+	Storages.deleteFile(filepath);
+}
+
+function MoveFile(from, to) {
+	Storages.moveFile(from, to);
+}
+
+function CopyFile(from, to) {
+	Storages.copyFile(from, to, false);
+}
+
+function GetFileSize(filepath) {
+	if(!Storages.isExistentStorage(filepath)) {
+		return -1;
+	}
+	return Storages.fstat(filepath).size;
+}
+
+function GetFileTime() { return 0; }
+function enabledIME() { Debug.message("plugin method: enabledIME"); }
+
+// TODO check if those are actually necessary (they are for RN)
+//var ___scrsize = %['vga'=>[640,480],'VGA'=>[640,480],'svga'=>[800,600],'SVGA'=>[800,600]];
+//&Window.mouseCursorState = mcsVisible;
+
+function SetClipboardText() { }
+
+function GetDatetime() {
+	var d = new Date();
+	var ret = %[];
+	ret.mon = d.getMonth();
+	ret.day = d.getDay();
+	ret.hour = d.getHours();
+	ret.minute = d.getMinutes();
+	ret.second = d.getSeconds();
+	return ret;
+}
+
+function CreateDirectory(dir) {
+	Storages.createDirectory(dir);
+}
+
+function IsActiveWindow(win) {
+	return true;
+}
+
+function SelectDirectory(_title, initdir) {
+	return Storages.extractStoragePath(
+		Storages.selectFile(%[initialDir: initdir, title: _title])
+	);
+}
+
+function ExistDirectory(dir) {
+	return Storages.isExistentDirectory(dir) == true;
+}

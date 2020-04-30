@@ -4,7 +4,7 @@
 	"patch_storages.tjs",
 	[void, void, void, void, void, "initial native plugins"],
 	"fstat.dll",
-	["scriptsEx.dll", void, void, void, "GAME_FATE||GAME_FHAT"],
+	"scriptsEx.dll",
 	["wuffmpeg.dll", void, void, void, "USE_WUFFMPEG&&(GAME_FATE||GAME_FHAT)"],
 	["wuvorbis.dll", void, void, void, "!USE_WUFFMPEG&&(GAME_FATE||GAME_FHAT)"],
 	["kropus.dll", void, void, true, "!USE_WUFFMPEG&&(GAME_FATE||GAME_FHAT)"],
@@ -109,7 +109,7 @@
 	"global.tf = kag.tflags;",
 	"global.cf = kag.scflags;",
 	"property mp { getter { return global.kag.conductor.macroParams; } };",
-	["mobile.tjs", void, void, void, "GATE_FATE||GAME_FHAT"],
+	["mobile.tjs", void, void, void, "GAME_FATE||GAME_FHAT"],
 	["AfterInit.tjs", void, void, true],
 
 	[void, void, void, void, void, "KAG macros and plugins"],

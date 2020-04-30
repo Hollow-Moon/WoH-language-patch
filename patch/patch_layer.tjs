@@ -5,17 +5,21 @@ function get_file_name_of_image_with_extension_that_exists(storage)
 {
 	var image_extensions = global.image_extensions;
 
-	var file_name_no_ext = global.Storages.chopStorageExt(storage);
-	for (var i = 0; i < image_extensions.count; i += 1)
+	if (image_extensions.find(Storages.extractStorageExt(storage)) === -1)
 	{
-		var fn = file_name_no_ext + image_extensions[i];
-		if (global.Storages.isExistentStorage(fn))
+		var file_name_no_ext = global.Storages.chopStorageExt(storage);
+		for (var i = 0; i < image_extensions.count; i += 1)
 		{
-			return fn;
+			var fn = file_name_no_ext + image_extensions[i];
+			if (global.Storages.isExistentStorage(fn))
+			{
+				return fn;
+			}
 		}
 	}
 
-	return void;
+
+	return storage;
 }
 
 function check_if_image_exists(storage)

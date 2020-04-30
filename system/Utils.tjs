@@ -209,20 +209,5 @@ function foreach(dict, func, *) {
  */
 function getExistImageName(storage)
 {
-	var test;
-	if(!Storages.isExistentStorage(storage)) {
-		if (test = storage + ".png", Storages.isExistentStorage(test))
-			storage = test;
-		else if (test = storage + ".tlg", Storages.isExistentStorage(test))
-			storage = test;
-		else if (test = storage + ".tlg5", Storages.isExistentStorage(test))
-			storage = test;
-		else if (test = storage + ".tlg6", Storages.isExistentStorage(test))
-			storage = test;
-		else if (test = storage + ".bmp", Storages.isExistentStorage(test))
-			storage = test;
-		else
-			storage = void;
-	}
-	return storage;
+	return global.get_full_path_of_image(storage);
 }

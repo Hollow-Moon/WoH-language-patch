@@ -486,17 +486,4 @@ class CompositionLayer extends Layer
 	}
 }
 
-//	画像系の拡張子を足して、ファイルが存在するかチェックする
-Storages.isExistentImage	= function(storage)
-{
-	storage	= Storages.chopStorageExt(storage);
-	var	imgexts	= [ ".tlg", ".png", ".bmp", ".jpg", ".jpeg" ];
-	for(var i=0; i<imgexts.count; i++)
-	{
-		if(Storages.isExistentStorage(storage + imgexts[i]))
-			return true;
-	}
-	return false;
-} if typeof Storages.isExistentImage == "undefined";
-
 @endif

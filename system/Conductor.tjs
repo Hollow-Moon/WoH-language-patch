@@ -31,7 +31,6 @@ var	isSoundTags	= %[
 var	isActionTags= %[
 	action:1, bgact:1, fgact:1, partbgact:1
 ];
-var	imageExts	= %[".jpg"=>1, ".bmp"=>1, ".png"=>1, ".tlg"=>1];
 //	トランジションを行うタグ
 var	isTransTag	= %[
 	trans:1, bg:1, fg:1, clfg:1, chgfg:1, partbg:1, clpartbg:1, chgpartbg:1,
@@ -454,7 +453,7 @@ class BaseConductor extends KAGParser
 			else if(obj.tagname == "playtimeline")
 				timeline_object.getCacheStorageList(obj.scene, list);	//	シーンで使われる画像
 			else if(obj.storage != void && !isSoundTags[obj.tagname] &&	//	storage があり、サウンド関連のタグでなく、
-				((ext = Storages.extractStorageExt(obj.storage)) == "" || imageExts[ext]))	//	拡張子がない場合は、画像としておく
+				((ext = Storages.extractStorageExt(obj.storage)) == "" || (global.image_extensions.find(ext) !== -1)))	//	拡張子がない場合は、画像としておく
 				addTouchList(list, obj.storage);	// storage 属性は画像の可能性がある
 		}
 

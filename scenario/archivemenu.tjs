@@ -733,10 +733,14 @@ class ArchiveListMenuItemLayer extends ListMenuItemLayer
 				avur, 0, 0, avur.width, avur.height);
 		}
 		l	+= avbk.width + 7;
+		var hide_subtitle = __sb("0", "archivemenu_hide_subtitle");
 		font.height	= mainfontheight;
-		drawText(l, y + 1, title[0], textcolor & 0xFFFFFF, opac);
-		font.height	= subfontheight;
-		drawText(l + 1, y + lineheight - font.height - 1, title[1], textcolor & 0xFFFFFF, opac);
+		drawText(l, y + 1 + (hide_subtitle ? 7 : 0), title[0], textcolor & 0xFFFFFF, opac);
+		if (!hide_subtitle)
+		{
+			font.height	= subfontheight;
+			drawText(l + 1, y + lineheight - font.height - 1, title[1], textcolor & 0xFFFFFF, opac);
+		}
 		fillRect(0, y + lineheight - 1, width, 1, bordercolor) if idx < list.count - 1 || (list.count < 4 && idx == list.count - 1);
 		if(entered && idx === cursorno)
 			colorRect(0, y - margint, width, h - 1, cursorcolor & 0xFFFFFF, (cursorcolor >> 24) & 0xFF);

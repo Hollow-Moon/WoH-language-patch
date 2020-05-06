@@ -82,20 +82,29 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 		return false;
 	}
 
+	function getNextTag()
+	{
+		var ret = super.getNextTag(...);
+		ret.__patch_conductor_storage = this.curStorage;
+		ret.__patch_conductor_line = this.curLine;
+		ret.__patch_conductor_line_str = this.curLineStr;
+		return ret;
+	}
+
 	function onTag(elm)
 	{
-		var this_line = typeof(elm.__from_conductor_line) === void ? curLine : elm.__from_conductor_line;
-		var this_line_string = typeof(elm.__from_conductor_line_str) === void ? curLineStr : elm.__from_conductor_line_str;
-		if (curStorage != conductorPrevStorage || this_line != conductorPrevLine || (isInQuiz() && lastQuizdataQuestion != quizdata.question))
+		if (elm.tagname === "ch" && elm.__patch_conductor_storage !== void && elm.__patch_conductor_line !== void)
 		{
-			// if (cleanLine() !== "")
+			if (elm.__patch_conductor_storage != conductorPrevStorage || elm.__patch_conductor_line != conductorPrevLine || (isInQuiz() && lastQuizdataQuestion != quizdata.question))
 			{
-				hasNewLineSinceLastCall = true;
-				conductorPrevStorage = curStorage;
-				conductorPrevLine = this_line;
-				conductorPrevLineStr = this_line_string;
-				if (isInQuiz() && lastQuizdataQuestion != quizdata.question) {
-					lastQuizdataQuestion = quizdata.question;
+				{
+					hasNewLineSinceLastCall = true;
+					conductorPrevStorage = elm.__patch_conductor_storage;
+					conductorPrevLine = elm.__patch_conductor_line;
+					conductorPrevLineStr = elm.__patch_conductor_line_str;
+					if (isInQuiz() && lastQuizdataQuestion != quizdata.question) {
+						lastQuizdataQuestion = quizdata.question;
+					}
 				}
 			}
 		}

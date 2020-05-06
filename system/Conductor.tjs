@@ -241,8 +241,6 @@ class BaseConductor extends KAGParser
 					{
 @endif
 					obj = getNextTag(); // 次のタグを得る
-					obj.__from_conductor_line = curLine;
-					obj.__from_conductor_line_str = curLineStr;
 @if(DEBUG)
 					}
 					catch(e)
@@ -410,8 +408,6 @@ class BaseConductor extends KAGParser
 			var ntag = getNextTag();
 			if(ntag === void)
 				break;
-			ntag.__from_conductor_line = curLine;
-			ntag.__from_conductor_line_str = curLineStr;
 //			dm("touchNextImages: "+ntag.tagname);
 
 			//	タグを複製して pendings へ

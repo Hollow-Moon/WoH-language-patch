@@ -87,7 +87,7 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 	var currentWordIndex = 0;
 	var currentCharPos = 0;
 
-	function onNewLine()
+	function onNewLine(elm)
 	{
 		processQuotedLine();
 
@@ -95,7 +95,7 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 			words = [];
 		}
 
-		var clean = conductor.cleanLine();
+		var clean = conductor.cleanLine(elm.__patch_conductor_line_str);
 		if (typeof(global.kag) === "Object" && isvalid(global.kag) && global.kag.sflags.language == englishLanguage && !startsWith("花札", conductor.curStorage)) {
 			clean = clean.replace(/　/, " ");
 		}
@@ -189,7 +189,7 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 			}
 
 			if (conductor.isNewLine()) {
-				onNewLine();
+				onNewLine(elm);
 			}
 			replaceCharacters(elm);
 			if(processWordWrapping(elm)) {

@@ -21,6 +21,7 @@
 {
 	// TODO: clean out the auto path table
 	var paths_to_add = [];
+	var paths_to_remove = [];
 	var paths = [
 		"voice",
 		"video",
@@ -60,11 +61,11 @@
 	{
 		var path = "patch" + i;
 		var paths_to_search = [
-			System.exePath + "data/" + path,
 			System.exePath + path + ".xp3",
+			System.exePath + "data/" + path,
 			System.exePath + path,
-			System.exePath + "content-data/" + path,
 			System.exePath + "patch/" + path,
+			System.exePath + "content-data/" + path,
 		];
 		var found = false;
 		for (var j = 0; j < paths_to_search.count && typeof(paths_to_search[j]) === "String"; j += 1)
@@ -94,22 +95,23 @@
 			break;
 		}
 	}
+	var paths_to_search = [
+		"%sdata.xp3" + arcdelim + "%s",
+		"%s%s.xp3",
+		"%sdata/%s",
+		"%s%s",
+		"%spatch/%s",
+		"%scontent-data/%s",
+	];
 
-	for (var i = 0; i < paths.count; i += 1)
+	for (var i = 0; i < paths_to_search.count && typeof(paths_to_search[i]) === "String"; i += 1)
 	{
-		var path = paths[i];
-		var paths_to_search = [
-			System.exePath + "data.xp3" + arcdelim + path,
-			System.exePath + "data/" + path,
-			System.exePath + path + ".xp3",
-			System.exePath + path,
-			System.exePath + "content-data/" + path,
-			System.exePath + "patch/" + path,
-		];
-		for (var j = 0; j < paths_to_search.count && typeof(paths_to_search[j]) === "String"; j += 1)
+		for (var j = 0; j < paths.count; j += 1)
 		{
-			var path = paths_to_search[j];
+			var path = paths_to_search[i].sprintf(System.exePath, paths[j]);
 			var spos = path.indexOf(arcdelim);
+			paths_to_remove.add(path + "/");
+			paths_to_remove.add(path + arcdelim);
 			if (spos !== -1)
 			{
 				if (Storages.isExistentStorage(path.substring(0, spos)))
@@ -187,6 +189,7 @@
 		for (var i = 0; i < devpaths.count && typeof(devpaths[i]) === "String"; i += 1)
 		{
 			var path = System.exePath + devpaths[i] + "/";
+			paths_to_remove.add(path);
 @if(!KIRIKIROID)
 			if (Storages.isExistentDirectory(path))
 			{
@@ -213,14 +216,19 @@
 		patches.sort("a");
 		for (var i = 0; i < patches.count; i += 1)
 		{
-			paths_to_add.add(dir + patches[i] + arcdelim);
+			var path = dir + patches[i] + arcdelim;
+			paths_to_remove.add(path);
+			paths_to_add.add(path);
 		}
 	}
 @endif
+	for (var i = 0; i < paths_to_remove.count; i += 1)
+	{
+		Storages.removeAutoPath(paths_to_remove[i]);
+	}
 
 	for (var i = 0; i < paths_to_add.count; i += 1)
 	{
-		Storages.removeAutoPath(paths_to_add[i]);
 		Storages.addAutoPath(paths_to_add[i]);
 		Debug.message("Adding to auto path: " + paths_to_add[i]);
 	}

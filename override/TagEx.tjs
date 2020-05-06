@@ -584,9 +584,11 @@ KAGWindow.getHandlers		= function()
 					var	rx	= (cws[1] - rws[1]) \ 2;
 					var	thres = cws[1] / .text.length;
 					var	cp	= thres, rp = 0, l = 0;
+					var pendings_to_insert = [];
+					var ruby_count = 0;
 					cws	= cws[0];
 					rws	= rws[0];
-					for(var i=0, ip=0; i<.char.length; i++)
+					for(var i=0; i<.char.length; i++)
 					{
 						var	ruby	= "";
 						var	lrp		= rp;
@@ -597,8 +599,9 @@ KAGWindow.getHandlers		= function()
 						}
 						if(ruby != "")
 						{
+							ruby_count += ruby.length;
 //							dm(.char[i]+"["+i+"] to ruby: "+ruby, l, rx, cws[i]);
-							conductor.pendings.insert(ip++, %[tagname:"ruby", char:1, text:ruby, pos:"l", offset:rx]);
+							pendings_to_insert.add(%[tagname:"ruby", char:1, text:ruby, pos:"l", offset:rx]);
 							while(lrp < rp)
 								rx	+= rws[lrp++];
 						}
@@ -606,7 +609,20 @@ KAGWindow.getHandlers		= function()
 						cp	+= cw;
 						l	+= cw;
 						rx	-= cw;
-						conductor.pendings.insert(ip++, %[tagname:"ch", text:.char[i]]);
+						pendings_to_insert.add(%[tagname:"ch", text:.char[i]]);
+					}
+					if (ruby_count !== .text.length)
+					{
+						pendings_to_insert.clear();
+						pendings_to_insert.add(%[tagname:"ruby", char:.char.length, text:.text]);
+						for (var i = 0; i < .char.length; i += 1)
+						{
+							pendings_to_insert.add(%[tagname:"ch", text:.char[i]]);
+						}
+					}
+					for (var i = 0; i < pendings_to_insert.count; i += 1)
+					{
+						conductor.pendings.insert(i, pendings_to_insert[i]);
 					}
 				}
 				else

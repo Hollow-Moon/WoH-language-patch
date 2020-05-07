@@ -333,6 +333,9 @@ class MenuPlugin extends BasePlugin
 	var	pools	= [];
 	var	initpoolcount	= 0;	//	MenuItem 予備数
 
+	var default_enterse = "basicchoice";
+	var default_pressse = "basicdecide";
+
 	function MenuPlugin()
 	{
 		super.BasePlugin(...);
@@ -354,6 +357,14 @@ class MenuPlugin extends BasePlugin
 //		countPoolItem();
 @endif
 @endif
+		if (Storages.isExistentStorage("【システム】カーソル１.ogg"))
+		{
+			default_enterse = "【システム】カーソル１";
+		}
+		if (Storages.isExistentStorage("【システム】切替１.ogg"))
+		{
+			default_pressse = "【システム】切替１";
+		}
 	}
 
 	function finalize()
@@ -2657,7 +2668,7 @@ class MenuItemLayer extends BasicCharacterLayer
 	{
 		//	一つの操作で複数回再生されることを避けるため、遅延して一回だけ再生するようにした
 //		dmt(name+".playEnterSE()");
-		asyncPlaySE(typeof this.enterse != "undefined" ? enterse : "basicchoice");
+		asyncPlaySE(typeof this.enterse != "undefined" ? enterse : Menu_object.default_enterse);
 	}
 
 	function playPressSE()
@@ -2680,7 +2691,7 @@ class MenuItemLayer extends BasicCharacterLayer
 
 		//	再生指定時にmuteされていないなら、その後muteされても強制的に再生する
 //		dmt(name+".playPressSE()");
-		asyncPlaySE(typeof this.pressse != "undefined" ? pressse : "basicdecide", other);
+		asyncPlaySE(typeof this.pressse != "undefined" ? pressse : Menu_object.default_pressse, other);
 	}
 
 	//	表示範囲を示す番号

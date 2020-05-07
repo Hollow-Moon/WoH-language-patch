@@ -41,7 +41,10 @@ function askYesNo(message, caption, yesFunc, noFunc, param, doneFunc, automove=0
 	Scripts.execStorage("system_window.ttd");
 	var	tdata	= __get_system_window_timelinedata(7);
 	var	name2pos= tdata[0], creates = tdata[1], actions = tdata[2];
-	setCreateProp(creates[name2pos["YESボタン"]], "disabled", false);	//	連続して確認ウィンドウが表示されるとき、上の
+	setCreateProps(creates[name2pos["YESボタン"]], %[
+		disabled:false,
+		pressse:""
+	], 2);	//	連続して確認ウィンドウが表示されるとき、上の
 	setCreateProps(creates[name2pos["NOボタン"]], %[					//	setDisfocusableAll で disabled=true にされているかも
 		disabled:false,
 		pressse:""
@@ -115,7 +118,17 @@ function doneAskYesNo(yes=false)
 
 	//	どちらかが選ばれた
 	if(yes)
+	{
 		tf.yn_yesfunc(tf.yn_param) if typeof tf.yn_yesfunc != "undefined";
+		if (Storages.isExistentStorage("【システム】決定３.ogg"))
+		{
+			Menu_object.playSE("【システム】決定３");
+		}
+		else
+		{
+			Menu_object.playSE(Menu_object.default_pressse);
+		}
+	}
 	else
 	{
 		tf.yn_nofunc(tf.yn_param) if typeof tf.yn_nofunc != "undefined";

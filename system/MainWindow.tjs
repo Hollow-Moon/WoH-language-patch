@@ -816,9 +816,6 @@ class KAGWindow extends Window
 			conductor.interrupt();
 			// コンダクタが走行中の時は
 			// コンダクタに中断を伝える
-		global.System.eventDisabled = true;
-		super.onCloseQuery(true);
-		global.System.exit();
 	}
 
 	function handleShutdown()
@@ -829,6 +826,9 @@ class KAGWindow extends Window
 		askOnClose = false;
 		close();
 		if(this isvalid) askOnClose = askOnClose_save;
+		global.System.eventDisabled = true;
+		global.Window.onCloseQuery(true);
+		global.System.terminate();
 	}
 
 	function closeByScript(elm)

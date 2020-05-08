@@ -159,7 +159,7 @@ class Equations
 	}
 	function easeInBounce(t, b, c, d)
 	{
-		return c - easeOutBounce (x, d-t, 0, c, d) + b;
+		return c - easeOutBounce (d-t, 0, c, d) + b;
 	}
 	function easeOutBounce(t, b, c, d)
 	{
@@ -175,8 +175,8 @@ class Equations
 	}
 	function easeInOutBounce(t, b, c, d)
 	{
-		if (t < d/2) return easeInBounce (x, t*2, 0, c, d) * .5 + b;
-		return easeOutBounce (x, t*2-d, 0, c, d) * .5 + c*.5 + b;
+		if (t < d/2) return easeInBounce (t*2, 0, c, d) * .5 + b;
+		return easeOutBounce (t*2-d, 0, c, d) * .5 + c*.5 + b;
 	}
 	function calc(n, a1, a2, a3, a4)
 	{

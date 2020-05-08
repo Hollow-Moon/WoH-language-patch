@@ -104,7 +104,9 @@ class FGPlugin extends KAGPlugin
 						lno	= i;	//	先に選んでいたのが非表示だったので
 					else
 					{
+@if(0)
 						throw new Exception("同じキャラクターが複数存在するため、レイヤーを特定できません。\n特定する為に必要な情報を指定してください。");
+@endif
 						return void;
 					}
 				}
@@ -501,7 +503,9 @@ class FGPlugin extends KAGPlugin
 				if(.layer === void)
 				{
 					dm(getDebugStringFromElm(elm,"chgfg: elm="));
+@if(0)
 					throw new Exception("対応するレイヤーが見つかりません。("+.storage+"/"+.last+")");
+@endif
 					return 0;
 				}
 				copy_param(elm, kag[searchpage].layers[.layer]);	//	一部のパラメータのみコピー
@@ -535,7 +539,9 @@ class FGPlugin extends KAGPlugin
 			if(layer === void)
 			{
 				dm(getDebugStringFromElm(elm,"movefg: elm="));
+@if(0)
 				throw new Exception("対象となるレイヤー("+(.storage != "" ? "storage="+.storage : (.layer !== void ? "layer="+.layer : "no arg"))+"/"+.page+")が存在しません。");
+@endif
 				return 0;
 			}
 			if(.pos !== void)

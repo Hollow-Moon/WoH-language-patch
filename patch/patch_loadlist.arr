@@ -48,7 +48,7 @@
 	"patch_censor.tjs",
 	"kri18n.dll",
 	"patch_language.tjs",
-	["patch_exceptionhandler.tjs", void, void, void, "GAME_FATE||GAME_FHAT"],
+	"patch_exceptionhandler.tjs",
 	"patch_menu_base.tjs",
 	"patch_menu.tjs",
 	["VideoMPV.tjs", void, void, void, "0"],

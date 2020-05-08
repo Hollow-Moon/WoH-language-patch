@@ -340,7 +340,7 @@ class AffineSourceLayer extends CompositionLayer
 					if(opacity == 255)
 						(global.Layer.copyRect incontextof target)(l, t, this, il, it, w, h);
 					else
-						(global.Layer.pileRect incontextof target)(l, t, this, il, it, w, h, opacity);
+						(global.Layer.operateRect incontextof target)(l, t, this, il, it, w, h, omAuto, opacity);
 				}
 				else
 				{
@@ -349,7 +349,7 @@ class AffineSourceLayer extends CompositionLayer
 					if(opacity == 255)
 						(global.Layer.stretchCopy incontextof target)(l, t, w, h, this, il, it, area[2], area[3], stCubic /*type*/);
 					else
-						(global.Layer.stretchBlend incontextof target)(l, t, w, h, this, il, it, area[2], area[3], opacity, stCubic /*type*/);
+						(global.Layer.operateStretch incontextof target)(l, t, w, h, this, il, it, area[2], area[3], omOpaque, opacity, stCubic /*type*/);
 				}
 				_clearRegion.update(l, t, w, h);
 			}
@@ -361,14 +361,14 @@ class AffineSourceLayer extends CompositionLayer
 					if(opacity == 255)
 						(global.Layer.copyRect incontextof target)(l, t, this, -imageLeft, -imageTop, this.width, this.height);
 					else
-						(global.Layer.pileRect incontextof target)(l, t, this, -imageLeft, -imageTop, this.width, this.height, opacity);
+						(global.Layer.operateRect incontextof target)(l, t, this, -imageLeft, -imageTop, this.width, this.height, omAuto, opacity);
 				}
 				else
 				{
 					if(opacity == 255)
 						(global.Layer.stretchCopy incontextof target)(l, t, width, height, this, -imageLeft, -imageTop, this.width, this.height, stCubic /*type*/);
 					else
-						(global.Layer.stretchBlend incontextof target)(l, t, width, height, this, -imageLeft, -imageTop, this.width, this.height, opacity, stCubic /*type*/);
+						(global.Layer.operateStretch incontextof target)(l, t, width, height, this, -imageLeft, -imageTop, this.width, this.height, omOpaque, opacity, stCubic /*type*/);
 				}
 				_clearRegion.update(l, t, width, height);
 			}
@@ -542,7 +542,7 @@ class AffineSourceLayer extends CompositionLayer
 			if(opacity == 255)
 				(global.Layer.copyRect incontextof target)(l, t, this, srcleft-imageLeft, srctop-imageTop, width, height);
 			else
-				(global.Layer.pileRect incontextof target)(l, t, this, srcleft-imageLeft, srctop-imageTop, width, height, opacity);
+				(global.Layer.operateRect incontextof target)(l, t, this, srcleft-imageLeft, srctop-imageTop, width, height, omAuto, opacity);
 			_regions[_regionCount].update(l, t, width, height);
 		}
 		else

@@ -2002,14 +2002,14 @@ class PartBgLayer extends BasicCharacterLayer
 					.affineCopy(ai, hw, 0,  hw, hh,  false, sw,  t,   l+w, t,   sw,  tbs, stFastLinear);	//	右上
 					.affineCopy(ai, 0,  hh, hw, 1,   false, l,   tbs, lbs, tbs, l,   sh,  stFastLinear);	//	左
 
-					.affinePile(aii, 0,  0,  hw, hh, false, lbs,  tbs,  lbs2,  tbs,  lbs,  tbs2,, stFastLinear);	//	左上
-					.affinePile(aii, hw, 0,  1,  hh, false, lbs2, tbs,  sw2,   tbs,  lbs2, tbs2,, stFastLinear);	//	上
-					.affinePile(aii, hw, 0,  hw, hh, false, sw2,  tbs,  sw,    tbs,  sw2,  tbs2,, stFastLinear);	//	右上
-					.affinePile(aii, 0,  hh, hw, 1,  false, lbs,  tbs2, lbs2,  tbs2, lbs,  sh2, , stFastLinear);	//	左
-					.affinePile(aii, hw, hh, hw, 1,  false, sw2,  tbs2, sw,    tbs2, sw2,  sh2, , stFastLinear);	//	右
-					.affinePile(aii, 0,  hh, hw, hh, false, lbs,  sh2,  lbs2,  sh2,  lbs,  sh,  , stFastLinear);	//	左下
-					.affinePile(aii, hw, hh, 1,  hh, false, lbs2, sh2,  sw2,   sh2,  lbs2, sh,  , stFastLinear);	//	下
-					.affinePile(aii, hw, hh, hw, hh, false, sw2,  sh2,  sw,    sh2,  sw2,  sh,  , stFastLinear);	//	右下
+					.operateAffine(aii, 0,  0,  hw, hh, false, lbs,  tbs,  lbs2,  tbs,  lbs,  tbs2, omAuto, 255, stFastLinear);	//	左上
+					.operateAffine(aii, hw, 0,  1,  hh, false, lbs2, tbs,  sw2,   tbs,  lbs2, tbs2, omAuto, 255, stFastLinear);	//	上
+					.operateAffine(aii, hw, 0,  hw, hh, false, sw2,  tbs,  sw,    tbs,  sw2,  tbs2, omAuto, 255, stFastLinear);	//	右上
+					.operateAffine(aii, 0,  hh, hw, 1,  false, lbs,  tbs2, lbs2,  tbs2, lbs,  sh2,  omAuto, 255, stFastLinear);	//	左
+					.operateAffine(aii, hw, hh, hw, 1,  false, sw2,  tbs2, sw,    tbs2, sw2,  sh2,  omAuto, 255, stFastLinear);	//	右
+					.operateAffine(aii, 0,  hh, hw, hh, false, lbs,  sh2,  lbs2,  sh2,  lbs,  sh,   omAuto, 255, stFastLinear);	//	左下
+					.operateAffine(aii, hw, hh, 1,  hh, false, lbs2, sh2,  sw2,   sh2,  lbs2, sh,   omAuto, 255, stFastLinear);	//	下
+					.operateAffine(aii, hw, hh, hw, hh, false, sw2,  sh2,  sw,    sh2,  sw2,  sh,   omAuto, 255, stFastLinear);	//	右下
 
 					.affineCopy(ai, hw, hh, hw, 1,   false, sw,  tbs, l+w, tbs, sw,  sh,  stFastLinear);	//	右
 					.affineCopy(ai, 0,  hh, hw, hh,  false, l,   sh,  lbs, sh,  l,   t+h, stFastLinear);	//	左下
@@ -2029,8 +2029,8 @@ class PartBgLayer extends BasicCharacterLayer
 						.colorRect(lbs+i, 0, 1, ih, bordercolor, layer.getMaskPixel(i, 0));
 						.colorRect(rbs+i, 0, 1, ih, bordercolor, layer.getMaskPixel(bs+i, 0));
 					}
-//					.affinePile(aii, 0,  hh, hw, 1, false, lbs,  t, lbs2,  t, lbs,  ih, , stFastLinear);//	左
-//					.affinePile(aii, hw, hh, hw, 1, false, sw2,  t, sw,    t, sw2,  ih, , stFastLinear);//	右
+//					.operateAffine(aii, 0,  hh, hw, 1, false, lbs,  t, lbs2,  t, lbs,  ih, omAuto, 255, stFastLinear);//	左
+//					.operateAffine(aii, hw, hh, hw, 1, false, sw2,  t, sw,    t, sw2,  ih, omAuto, 255, stFastLinear);//	右
 					.affineCopy(ai, hw, hh, hw, 1,  false, sw,  t, l+w, t, sw,  ih,  stFastLinear);		//	右
 				}
 			}
@@ -2047,8 +2047,8 @@ class PartBgLayer extends BasicCharacterLayer
 					.colorRect(0, tbs+i, iw, 1, bordercolor, layer.getMaskPixel(0, i));
 					.colorRect(0, bbs+i, iw, 1, bordercolor, layer.getMaskPixel(0, bs+i));
 				}
-//				.affinePile(aii, hw, 0,  1,  hh, false, l, tbs,  iw,   tbs,  l, tbs2, , stFastLinear);	//	上
-//				.affinePile(aii, hw, hh, 1,  hh, false, l, sh2,  iw,   sh2,  l, sh,   , stFastLinear);	//	下
+//				.operateAffine(aii, hw, 0,  1,  hh, false, l, tbs,  iw,   tbs,  l, tbs2, omAuto, 255, stFastLinear);	//	上
+//				.operateAffine(aii, hw, hh, 1,  hh, false, l, sh2,  iw,   sh2,  l, sh,   omAuto, 255, stFastLinear);	//	下
 				.affineCopy(ai, hw, hh, 1,  hh,  false, l, sh,  iw,  sh,  l, t+h, stFastLinear);		//	下
 			}
 		}
@@ -2491,14 +2491,14 @@ class PartBgLayer extends BasicCharacterLayer
 				.fillRect( il+subW-1, it+subH-1, bs+1, bs+1, color );
 
 				.face = dfAlpha;
-				.stretchPile( il+bs*2, it+bs, subW2-bs*2, bs, aii, halfW2, 0, 1, halfH2,,stCubic );
-				.stretchPile( il+bs*2, it+subH2, subW2-bs*2, bs, aii, halfW2, halfH2, 1, halfH2,,stCubic );
-				.stretchPile( il+bs, it+bs*2, bs, subH2-bs*2, aii, 0, halfH2, halfW2, 1,,stCubic );
-				.stretchPile( il+subW2, it+bs*2, bs, subH2-bs*2, aii, halfW2, halfH2, halfW2, 1,,stCubic );
-				.stretchPile( il+bs, it+bs, bs, bs, aii, 0, 0, halfW2, halfH2,,stCubic );
-				.stretchPile( il+subW2, it+bs, bs, bs, aii, halfW2, 0, halfW2, halfH2,,stCubic );
-				.stretchPile( il+bs, it+subH2, bs, bs, aii, 0, halfH2, halfW2, halfH2,,stCubic );
-				.stretchPile( il+subW2, it+subH2, bs, bs, aii, halfW2, halfH2, halfW2, halfH2,,stCubic );
+				.operateStretch( il+bs*2,  it+bs,    subW2-bs*2, bs,         aii,    halfW2, 0,      1,      halfH2, omAuto, 255, stCubic );
+				.operateStretch( il+bs*2,  it+subH2, subW2-bs*2, bs,         aii,    halfW2, halfH2, 1,      halfH2, omAuto, 255, stCubic );
+				.operateStretch( il+bs,    it+bs*2,  bs,         subH2-bs*2, aii,    0,      halfH2, halfW2, 1,      omAuto, 255, stCubic );
+				.operateStretch( il+subW2, it+bs*2,  bs,         subH2-bs*2, aii,    halfW2, halfH2, halfW2, 1,      omAuto, 255, stCubic );
+				.operateStretch( il+bs,    it+bs,    bs,         bs,         aii,    0,      0,      halfW2, halfH2, omAuto, 255, stCubic );
+				.operateStretch( il+subW2, it+bs,    bs,         bs,         aii,    halfW2, 0,      halfW2, halfH2, omAuto, 255, stCubic );
+				.operateStretch( il+bs,    it+subH2, bs,         bs,         aii,    0,      halfH2, halfW2, halfH2, omAuto, 255, stCubic );
+				.operateStretch( il+subW2, it+subH2, bs,         bs,         aii,    halfW2, halfH2, halfW2, halfH2, omAuto, 255, stCubic );
 			}
 			else
 			{
@@ -2516,19 +2516,19 @@ class PartBgLayer extends BasicCharacterLayer
 						.fillRect( il, it+subH, .width, bs, color );
 
 						.face = dfAlpha;
-						.stretchPile( il, it+bs, .width, bs, aii, halfW2, 0, 1, halfH2,,stCubic );
-						.stretchPile( il, it+subH2, .width, bs, aii, halfW2, halfH2, 1, halfH2,,stCubic );
+						.operateStretch( il, it+bs,    .width, bs, aii, halfW2,      0, 1, halfH2, omAuto, 255, stCubic );
+						.operateStretch( il, it+subH2, .width, bs, aii, halfW2, halfH2, 1, halfH2, omAuto, 255, stCubic );
 					}
 					//左右のみ
 					if( height >= limitY )
 					{
 						.face = dfOpaque;
-						.fillRect( il, it, bs, .height, color );
+						.fillRect( il,      it, bs, .height, color );
 						.fillRect( il+subW, it, bs, .height, color );
 
 						.face = dfAlpha;
-						.stretchPile( il+bs, it, bs, .height, aii, 0, halfH2, halfW2, 1,,stCubic );
-						.stretchPile( il+subW2, it, bs, .height, aii, halfW2, halfH2, halfW2, 1,,stCubic );
+						.operateStretch( il+bs,    it, bs, .height, aii,      0, halfH2, halfW2, 1, omAuto, 255, stCubic );
+						.operateStretch( il+subW2, it, bs, .height, aii, halfW2, halfH2, halfW2, 1, omAuto, 255, stCubic );
 					}
 				}
 			}
@@ -2689,11 +2689,11 @@ class PartBgLayer extends BasicCharacterLayer
 						var	lastface = .face, lastha = .holdAlpha;
 						.face		= dfOpaque;
 						.holdAlpha	= false;
-						.affineBlend(_orgimage, 0, 0, tw, th, false,
+						.operateAffine(_orgimage, 0, 0, tw, th, false,
 									extPos[0][0],extPos[0][1],
 									extPos[1][0],extPos[1][1],
 									extPos[2][0],extPos[2][1],
-									srcopacity, stFastLinear|stRefNoClip);
+									omOpaque, srcopacity, stFastLinear|stRefNoClip);
 						.face		= lastface;
 						.holdAlpha	= lastha;
 					}

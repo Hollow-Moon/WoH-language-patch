@@ -209,6 +209,11 @@ function openArchiveMenu(page="fore")
 		closeArchiveMenu();
 		return;
 	}
+	if (System.getArgument("-archiveautoquitonend") !== void && page === "back")
+	{
+		kag.process("call.ks", "*quit");
+		return;
+	}
 	tf.av_opened	= true;
 	inMenu("archive");
 	f.doArchiveMenu	= true;

@@ -816,6 +816,9 @@ class KAGWindow extends Window
 			conductor.interrupt();
 			// コンダクタが走行中の時は
 			// コンダクタに中断を伝える
+		global.System.eventDisabled = true;
+		global.Window.onCloseQuery(true);
+		global.System.exit();
 	}
 
 	function handleShutdown()

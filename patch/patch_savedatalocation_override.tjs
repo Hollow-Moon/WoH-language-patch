@@ -1,0 +1,163 @@
+﻿
+global.KAGWindow_patch_savedatalocation_override_original = KAGWindow;
+class KAGWindow_patch_savedatalocation_override_override extends KAGWindow_patch_savedatalocation_override_original
+{
+	var wanted_save_data_location;
+	var __saveDataLocation;
+	var disable_system_save_data_write;
+	function get_or_prompt_save_data_location()
+	{
+		this.disable_system_save_data_write = System.getArgument('-disablesystemsavedatawrite') !== void;
+		var saveDataLocation;
+		//	セーブディレクトリの位置をユーザーが任意に指定できるようにする
+		var	configconfigfile	= System.exePath+"config.ksc";
+		var	config;
+		while (true)
+		{
+			if (Storages.isExistentStorage(configconfigfile))
+			{
+				var success = false;
+				var test_save_data_location = this.wanted_save_data_location;
+				try
+				{
+					config = global.safeEvalStorage(configconfigfile);
+					//	設定済みの値を用いる
+					if (typeof(config.saveDataLocation) === "String")
+					{
+						test_save_data_location = config.saveDataLocation;
+					}
+						//	config.saveDataLocation == void なら、デフォルトの値を使用する
+					var test_paths = [];
+					if (test_save_data_location.indexOf(":") === -1)
+					{
+						test_paths.add(System.exePath + test_save_data_location);
+						test_paths.add(System.dataPath + test_save_data_location);
+						test_paths.add(System.personalPath + test_save_data_location);
+						test_paths.add(System.appDataPath + test_save_data_location);
+					}
+					else
+					{
+						test_paths.add(test_save_data_location);
+					}
+					for (var i = 0; i < test_paths.count; i += 1)
+					{
+						if (Storages.isExistentDirectory(test_paths[i] + "/"))
+						{
+							if (this.disable_system_save_data_write)
+							{
+								test_save_data_location = test_paths[i];
+								success = true;
+								break;
+							}
+							var test_file_contents = ["This test file can safely be deleted."];
+							var test_file_path = test_paths[i] + "/TESTFILE.TXT";
+							test_file_contents.save(test_file_path);
+							var test_file_size = Storages.fstat(test_file_path).size;
+							if (Storages.fstat(test_file_path).size === ((test_file_contents[0].length + 3) * 2))
+							{
+								if (Storages.deleteFile(test_file_path) && System.createAppLock(test_paths[i].replace(/[^A-Za-z]/g, '_')))
+								{
+									test_save_data_location = test_paths[i];
+									success = true;
+									break;
+								}
+							}
+						}
+					}
+				}
+				catch (e) {}
+				if (success)
+				{
+					saveDataLocation = test_save_data_location;
+					break;
+				}
+			}
+			{//	初回起動時
+				//	ユニークなフォルダ名を取得("Fate_Savedata"等)
+				var	savefolder	= this.wanted_save_data_location;
+				var	pos, chr = "/";
+				for(pos=savefolder.length-1; pos>=0; pos--)
+				{
+					if(savefolder[pos] == chr)
+					{
+						savefolder	= savefolder.substr(pos+1);
+						break;
+					}
+				}
+
+				//	ディレクトリ選択ダイアログを開いて、指定してもらう
+		//		Debug.console.visible	= true;
+				var	dir	= this.wanted_save_data_location;
+				dir	= dir.substr(0, dir.indexOf(savefolder));
+
+				var dirinfo = %[name: dir, title: __("セーブフォルダ(%s)の作成先を指定してください。\n(キャンセルした場合、インストールフォルダに作成します。)").sprintf(savefolder)];
+				var dirselected = Storages.selectDirectory(dirinfo);
+				if (dirselected)
+				{
+					dir	= dirinfo.name;
+				}
+				else
+				{
+					dir	= System.exePath;
+				}
+				dir	= Storages.getFullPath(dir);
+
+				//	指定されたディレクトリ名を保存
+				config	= %[saveDataLocation:(dir+"/"+savefolder)];
+				if (!Storages.isExistentDirectory(config.saveDataLocation + "/"))
+				{
+					Storages.createDirectory(config.saveDataLocation + "/");
+				}
+				(Dictionary.saveStruct incontextof config)(configconfigfile);
+			}
+		}
+		return saveDataLocation;
+	}
+	property saveDataLocation
+	{
+		getter ()
+		{
+			if (typeof(this.__saveDataLocation) === "String")
+			{
+				return this.__saveDataLocation;
+			}
+			if (this.isMain)
+			{
+				this.__saveDataLocation = (this.get_or_prompt_save_data_location incontextof this)();
+				if (typeof(global.Debug) === "Object" && typeof(global.Debug.logLocation) === "String")
+				{
+					global.Debug.logLocation = this.__saveDataLocation;
+				}
+				return this.__saveDataLocation;
+			}
+			return global.System.exePath + "savedata";
+		}
+		setter (v)
+		{
+			if (typeof(this.__saveDataLocation) !== "String")
+			{
+				wanted_save_data_location = v;
+			}
+		}
+	}
+
+	function KAGWindow_patch_savedatalocation_override_override()
+	{
+		super.KAGWindow(...);
+	}
+
+	function KAGWindow()
+	{
+		KAGWindow_patch_savedatalocation_override_override(...);
+	}
+
+	function saveSystemVariables()
+	{
+		if (this.disable_system_save_data_write)
+		{
+			return;
+		}
+		return super.saveSystemVariables();
+	}
+}
+global.KAGWindow = KAGWindow_patch_savedatalocation_override_override;

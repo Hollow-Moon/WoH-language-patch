@@ -75,6 +75,23 @@ class KAGWindow_patch_skip_override extends KAGWindow_patch_skip_original
 	var skipToLine;
 	var isSkippingToTarget;
 	var shouldSkipImmediate;
+	var __patch_skip_shutting_down;
+
+	property visible
+	{
+		getter
+		{
+			return super.visible;
+		}
+		setter (v)
+		{
+			if (typeof(this.__patch_skip_shutting_down) === "Integer")
+			{
+				return;
+			}
+			super.visible = v;
+		}
+	}
 
 	function KAGWindow_patch_skip_override(ismain, width, height)
 	{
@@ -132,7 +149,18 @@ class KAGWindow_patch_skip_override extends KAGWindow_patch_skip_original
 		while (this.isSkippingToTarget)
 		{
 			this.conductor.run(true);
+			if (typeof(this.actmgr) === "Object")
+			{
+				this.actmgr.update(System.getTickCount());
+			}
 		}
+	}
+
+	function shutdown()
+	{
+		this.isSkippingToTarget = false;
+		this.__patch_skip_shutting_down = true;
+		return super.shutdown(...);
 	}
 
 	function process(storage)

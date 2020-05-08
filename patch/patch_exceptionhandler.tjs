@@ -330,7 +330,10 @@ System.exceptionHandler = function(e)
 		msg_components.add(__("Pキーでタイトルへ戻るか、通常の手順で終了してください。"));
 	}
 
-	System.inform(msg_components.join("\n"));
+	if (System.getArgument('-noshowexceptiondialog') === void)
+	{
+		System.inform(msg_components.join("\n"));
+	}
 
 	//	イベント再開
 	System.eventDisabled	= ed;
@@ -357,7 +360,7 @@ System.exceptionHandler = function(e)
 		}
 	}
 
-	if (typeof(global.kag) === "Object" && isvalid(global.kag) && typeof(global.kag.visible) == "Integer" && global.kag.visible == false)
+	if ((typeof(global.kag) === "Object" && isvalid(global.kag) && typeof(global.kag.visible) == "Integer" && global.kag.visible == false) || System.getArgument('-quitonexception') !== void)
 	{
 		System.exit(127);
 	}

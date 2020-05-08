@@ -364,7 +364,7 @@ class ActionManager
 	 */
 	function stopAllFore(all=false)
 	{
-		stopAll(all, function(info) { return info.target == window.fore.base || info.target.parent == window.fore.base; } incontextof this);
+		stopAll(all, function(info) { return info.target == window.fore.base || (typeof(info.target.parent) === "Object" ? info.target.parent == window.fore.base : false); } incontextof this);
 	}
 
 	/**
@@ -372,7 +372,7 @@ class ActionManager
 	 */
 	function stopAllBack(all=false)
 	{
-		stopAll(all, function(info) { return info.target == window.back.base || info.target.parent == window.back.base; } incontextof this);
+		stopAll(all, function(info) { return info.target == window.back.base || (typeof(info.target.parent) === "Object" ? info.target.parent == window.back.base : false); } incontextof this);
 	}
 
 	/**

@@ -481,6 +481,8 @@ function addDevelopmentMenu() {
 	menu.add(this.devMenuItem = new KAGMenuItem(this, "&Development", 0, void, false));
 	this.devMenuItem.visible = devMode || devMode2;
 	(addDevelopmentMenuItems incontextof this)(devMenuItem);
+	devMenuItem.add(this.throwExceptionItem = new KAGMenuItem(this, "Throw Exception", 1, function(sender) { throw new Exception("This is a test Exception."); }, false));
+	devMenuItem.add(this.throwConductorExceptionItem = new KAGMenuItem(this, "Throw ConductorException", 1, function(sender) { throw new ConductorException("This is a test ConductorException."); }, false));
 }
 
 function addVoiceMenu(patchMenu) {
@@ -647,12 +649,15 @@ function addHdMenu(displayMenu) {
 
 function addMessageWindowMenu(patchMenu)
 {
-	var mobileWindowFlag = new GameFlag(this, this.sflags, "mobileWindow", false);
-	var wideStrechWindowFlag = new GameFlag(this, this.sflags, "wideStrechWindow", true);
-
 	patchMenu.add(this.messageWindowMenuItem = new KAGMenuItem(this, "&Message Window", 0, void, false));
-
+@if(GAME_FATE)
+	var mobileWindowFlag = new GameFlag(this, this.sflags, "mobileWindow", false);
 	messageWindowMenuItem.add(this.mobileMessageWindowMenuItem = new KAGFlagMenuItem(this, "&Mobile message window",, mobileWindowFlag,,true));
 	this.mobileMessageWindowMenuItem.restartCondition = this.mobileMessageWindowMenuItem.onlyScenarioRestartCondition;
+	var mobileBreakGlyphsFlag = new GameFlag(this, this.sflags, "mobileBreakGlyphs", false);
+	messageWindowMenuItem.add(this.mobileBreakGlyphsMenuItem = new KAGFlagMenuItem(this, "Mobile text &break glyphs",, mobileBreakGlyphsFlag,,true));
+	this.mobileBreakGlyphsMenuItem.restartCondition = this.mobileBreakGlyphsMenuItem.onlyScenarioRestartCondition;
+@endif
+	var wideStrechWindowFlag = new GameFlag(this, this.sflags, "wideStrechWindow", true);
 	messageWindowMenuItem.add(this.wideMessageStretchMenuItem = new KAGFlagMenuItem(this, "4:3 message window in &wide mode",, inverseFlag(wideStrechWindowFlag),,true));
 }

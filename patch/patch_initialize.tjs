@@ -12,6 +12,9 @@ global.System.createAppLock = function()
 	return true;
 };
 
+global.Storages.addAutoPath_old = global.Storages.addAutoPath;
+global.Storages.addAutoPath = function(){};
+
 delete global.KAGLoadScript;
 global.KAGLoadScript = function(name)
 {
@@ -94,6 +97,7 @@ global.initialize_patch = function()
 	global.initialize_patch_entered = true;
 	global.dm = global.dm_old;
 	global.System.createAppLock = global.System.createAppLock_old;
+	global.Storages.addAutoPath = global.Storages.addAutoPath_old;
 
 	if (typeof(global.initialize_patch_override) === "Object")
 	{

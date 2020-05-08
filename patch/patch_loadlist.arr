@@ -54,7 +54,6 @@
 	["VideoMPV.tjs", void, void, void, "0"],
 	["patch_merge.tjs", void, void, void, "GAME_FATE"],
 	["VideoMPV2.tjs", void, void, void, "GAME_FATE||GAME_FHAT"],
-	"global.check_app_lock();",
 	[void, void, void, void, void, "KAG system scripts"],
 	"Config.tjs",
 
@@ -99,6 +98,7 @@
 	["patch_zoom_window.tjs", void, void, void, "ZOOM_WINDOW"],
 	["patch_fix_call_stack.tjs", void, void, void, "GAME_FATE||GAME_FHAT"],
 	"patch_skip.tjs",
+	"patch_savedatalocation_override.tjs",
 	[void, void, void, void, void, "KAG main window"],
 
 	"global.kag = new KAGWindow();",

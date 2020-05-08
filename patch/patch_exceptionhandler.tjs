@@ -65,18 +65,22 @@ System.exceptionHandler = function(e)
 
 	//	"script exception"が発生したら、処理しない
 	var exception_message = "Unknown error";
+	var trace_string = "";
 	if (typeof(e) === "Object" && isvalid(e))
 	{
 		if (typeof(e.message) === "String")
 		{
 			exception_message = e.message;
 		}
+		if (typeof(e.trace) === "String")
+		{
+			trace_string = e.trace;
+		}
 		dm("Exception: " + exception_message);
-	}
-	var trace_string = Scripts.getTraceString();
-	if (trace_string !== "")
-	{
-		dm("Trace: " + trace_string);
+		if (trace_string !== "")
+		{
+			dm("Trace: " + trace_string);
+		}
 	}
 @if(0)
 	if (e instanceof "ConductorException" && typeof(global.kag) === "Object" && isvalid(global.kag) && typeof(global.kag.mainWindow) === "Object" && isvalid(global.kag.mainWindow) && global.kag === global.kag.mainWindow)
@@ -90,11 +94,21 @@ System.exceptionHandler = function(e)
 		now = "%04d%02d%02d%02d%02d%02d".sprintf(.getYear(), .getMonth(), .getDay(), .getHours(), .getMinutes(), .getSeconds());
 
 	//	セーブデータディレクトリの存在チェックと作成
-	var dir, ticketfile, savefile, systemfile;
-	if (typeof(global.kag) === "Object" && isvalid(global.kag) && typeof(global.kag.saveDataLocation) === "String")
+	var dir;
+	var saveDataLocation;
+	try
+	{
+		if (typeof(global.kag) === "Object" && isvalid(global.kag) && typeof(global.kag.saveDataLocation) === "String")
+		{
+			saveDataLocation = global.kag.saveDataLocation;
+		}
+	}
+	catch (e) {}
+	var exception_files = [];
+	if (typeof(saveDataLocation) === "String")
 	{
 		var success = true;
-		dir	= global.kag.saveDataLocation;
+		dir	= saveDataLocation;
 		if (!endsWith("/", dir)) {
 			dir += "/";
 		}
@@ -132,17 +146,20 @@ System.exceptionHandler = function(e)
 		if (success) try
 		{
 @if(!KIRIKIROID)
-			if (Storages.isExistentStorage(logpath + logname))
+			if (typeof(global.Debug) === "Object" && typeof(global.Debug.logLocation) === "String")
 			{
-				if (typeof(global.Debug) === "Object" && typeof(global.Debug.logLocation) === "String")
+				global.Debug.logLocation = dir;
+				Debug.startLogToFile(true);
+				exception_files.add(logpath + logname);
+			}
+			else if (Storages.isExistentStorage(logpath + logname))
+			{
+				if (typeof(Storages.copyFile) === "Object")
 				{
-					global.Debug.logLocation = dir;
 					Debug.startLogToFile(true);
-				}
-				else if (typeof(Storages.copyFile) === "Object")
-				{
-					Debug.startLogToFile(true);
-					Storages.copyFile(logpath + logname, dir + "krkr.console.log", false);
+					var log_file = dir + "krkr.console.log";
+					Storages.copyFile(logpath + logname, log_file, false);
+					exception_files.add(log_file);
 				}
 			}
 @endif
@@ -158,7 +175,9 @@ System.exceptionHandler = function(e)
 			{
 				if (typeof(Storages.moveFile) === "Object")
 				{
-					Storages.moveFile(hwexceptpath + hwexceptname, dir + "hwexcept.log");
+					var hwexcept_file = dir + "hwexcept.log";
+					Storages.moveFile(hwexceptpath + hwexceptname, hwexcept_file);
+					exception_files.add(hwexcept_file);
 				}
 			}
 		}
@@ -170,33 +189,34 @@ System.exceptionHandler = function(e)
 			global.kag.dataName = "excepted/" + now + "/" + lastdataname;
 			try
 			{
+				var ticketfile;
 				if (typeof(global.TicketFileName) === "String")
 				{
 					ticketfile = TicketFileName + CurrentTicketNo + ".bmp";
 				}
 				if (typeof(global.makeTicketFile) === "String")
 				{
-					global.makeTicketFile(dir + ticketfile);
+					var ticket_file = dir + ticketfile;
+					global.makeTicketFile(ticket_file);
+					exception_files.add(ticket_file);
 				}
 			}
 			catch (e) {}
 			try
 			{
-				savefile = "data.kdt";
 				if (global.kag.storeEnabled)
 				{
-					global.kag.saveBookMarkToFile(dir + savefile);
-				}
-				else
-				{
-					savefile = "";
+					var save_file = dir + "data.kdt";
+					global.kag.saveBookMarkToFile(save_file);
+					exception_files.add(save_file);
 				}
 			}
 			catch (e) {}
 			try
 			{
-				systemfile = dir + "datas?.ksd";
 				global.kag.saveSystemVariables();
+				exception_files.add(dir + "datasc.ksd");
+				exception_files.add(dir + "datasu.ksd");
 			}
 			catch (e) {}
 			global.kag.dataName = lastdataname;
@@ -204,77 +224,57 @@ System.exceptionHandler = function(e)
 
 	}
 
+	var exception_information_in_clipboard = false;
+
 	//	イベント停止
 	var ed	= System.eventDisabled;
 	System.eventDisabled	= true;
-/*
-	//	メッセージ表示
-	var msg;
-	msg	= "下記の例外が発生しました。\n\n";
-	msg	+= exception_message+"\n\n";
-	msg	+= "※ 現在の進行状況を\n";
-	msg	+= "     ・"+dir+ticketfile+"\n";
-	msg	+= "     ・"+dir+savefile+"\n" if savefile != "";
-	msg	+= "     ・"+systemfile+"\n";
-	msg	+= "   に保存しましたので、問題が取り除かれた後に復帰してください。\n";
-	msg	+= "-- trace --\n"+e.trace if e.trace != "";
-*/
-	var msg, endmsg;
-@if(GAME_FHAT)
-	var errorSaveFile = _x("     ・%s%s\n", "error_save_file").sprintf(dir ? dir : "", savefile ? savefile : "");
-	var errorTrace = _x("-- trace --\n%s", "error_trace").sprintf(e.trace);
-	msg = __("下記の例外が発生しました。\n\n%s\n\n※ 現在の進行状況を\n     ・%s%s\n%s     ・%s\n   に保存しましたので、問題が取り除かれた後に復帰してください。\n%s").sprintf(exception_message, dir ? dir : "", ticketfile ? ticketfile : "", savefile ? errorSaveFile : "", systemfile ? systemfile : "", e.trace != ""? errorTrace : "");
-@endif
-@if(GAME_FATE)
-	if(e instanceof "ConductorException")
+	var msg_components = [];
+	
+	if (e instanceof "ConductorException")
 	{
-		//	KAGスクリプト上での例外
-		//	※ココでの例外では、再起動し直してもうまく動かない可能性が高い。
-		// msg	= "下記のスクリプトエラーが発生しました。\n";
-		// msg	+="\n";
-		// msg	+="--------------------------------------------------------------------------------\n";
-		// msg	+=exception_message+"\n";
-		// msg	+="--------------------------------------------------------------------------------\n";
-		// msg	+="\n";
-		// msg	+="Fateのインストールディレクトリに作成されている\"fate.exe.console.log\"と\"hwexcept.log\"、\n";
-		// msg	+="エラーの発生するセーブデータを、発生した時の状況/操作手順などと共にTYPE-MOON\n";
-		// msg	+="サポート掲示板までご連絡ください。\n\n";
-		// msg	+="※情報が不十分ですと回答できませんので、必ずファイル・情報をご提供ください。\n\n";
-		// msg	+="TYPE-MOONサポート掲示板: http://www.typemoon.com/support/bbs.php\n\n";
-		// endmsg	= "Pキーでタイトルへ戻るか、通常の手順で終了してください。";
-
-		msg = __("下記のスクリプトエラーが発生しました。\n\n--------------------------------------------------------------------------------\n%s\n--------------------------------------------------------------------------------\n\nFateのインストールディレクトリに作成されている\"fate.exe.console.log\"と\"hwexcept.log\"、\nエラーの発生するセーブデータを、発生した時の状況/操作手順などと共にTYPE-MOON\nサポート掲示板までご連絡ください。\n\n※情報が不十分ですと回答できませんので、必ずファイル・情報をご提供ください。\n\nTYPE-MOONサポート掲示板: %s\n\n").sprintf(exception_message, global.PatchInfoURL);
-		endmsg = __("Pキーでタイトルへ戻るか、通常の手順で終了してください。");
+		msg_components.add(__("下記のスクリプトエラーが発生しました。"));
 	}
 	else
 	{
-		//	それ以外の例外
-		//	※再起動し直せばうまく動く可能性がある。
-		// msg	= "下記のエラーが発生しました。\n";
-		// msg	+="\n";
-		// msg	+="--------------------------------------------------------------------------------\n";
-		// msg	+=exception_message+"\n";
-		// msg	+="--------------------------------------------------------------------------------\n";
-		// msg	+="\n";
-		// msg	+="アンチウィルスソフトその他の常駐アプリケーションを終了してゲームを再起動することでエラーを\n";
-		// msg	+="回避できる可能性があります。繰り返し同じようなエラーが発生する場合には、\n";
-		// msg	+="Fateのインストールディレクトリに作成されている\"fate.exe.console.log\"と\"hwexcept.log\"、\n";
-		// msg	+="エラーの発生するセーブデータを、発生した時の状況/操作手順などと共にTYPE-MOON\n";
-		// msg	+="サポート掲示板までご連絡ください。\n\n";
-		// msg	+="※情報が不十分ですと回答できませんので、必ずファイル・情報をご提供ください。\n\n";
-		// msg	+="TYPE-MOONサポート掲示板: http://www.typemoon.com/support/bbs.php\n\n";
-		// endmsg	= "";
-
-		msg = __("下記のエラーが発生しました。\n\n--------------------------------------------------------------------------------\n%s\n--------------------------------------------------------------------------------\n\nアンチウィルスソフトその他の常駐アプリケーションを終了してゲームを再起動することでエラーを\n回避できる可能性があります。繰り返し同じようなエラーが発生する場合には、\nFateのインストールディレクトリに作成されている\"fate.exe.console.log\"と\"hwexcept.log\"、\nエラーの発生するセーブデータを、発生した時の状況/操作手順などと共にTYPE-MOON\nサポート掲示板までご連絡ください。\n\n※情報が不十分ですと回答できませんので、必ずファイル・情報をご提供ください。\n\nTYPE-MOONサポート掲示板: %s\n\n").sprintf(exception_message, global.PatchInfoURL);
-		endmsg = "";
+		msg_components.add(__("下記の例外が発生しました。"));
 	}
+	msg_components.add("--------------------------------------------------------------------------------");
+	msg_components.add(exception_message);
+	msg_components.add("--------------------------------------------------------------------------------");
+	if (!(e instanceof "ConductorException"))
+	{
+		msg_components.add(__("アンチウィルスソフトその他の常駐アプリケーションを終了してゲームを再起動することでエラーを回避できる可能性があります。"));
+	}
+	if (exception_files.count > 0)
+	{
+		msg_components.add(__("次のファイルには、保存データと例外情報が含まれています："));
+		for (var i = 0; i < exception_files.count; i += 1)
+		{
+			msg_components.add(__("     ・%s").sprintf(exception_files[i]));
+		}
+		msg_components.add(__("※情報が不十分ですと回答できませんので、必ずファイル・情報をご提供ください。"));
+		if (exception_information_in_clipboard)
+		{
+			msg_components.add(__("上記のファイルの内容はクリップボードに配置されているので、サポートフォーラムのスレッドに貼り付けてください。"));
+		}
+		msg_components.add(__("このダイアログボックスのスクリーンショットは送信しないでください。"));
+	}
+	if (trace_string !== "")
+	{
+		msg_components.add(__("-- trace --"));
+		msg_components.add(trace_string);
+	}
+	msg_components.add(__("上記のファイルを添えて、いつどのようにエラーが発生したかを説明したサポート掲示板にご連絡ください。"));
+	msg_components.add(__("サポート掲示板: %s").sprintf(global.PatchInfoURL));
 
+@if(GAME_FATE)
 	//	ゲーム本編中なら、セーブしておく
 	if (typeof(global.kag) === "Object" && isvalid(global.kag) && typeof(global.kag.pcflags) === "Object" && isvalid(global.kag.pcflags) && global.kag.pcflags.currentPageName !== "タイトル")
 	{
 		try {
 			//	空いているセーブ領域を探して、セーブする
-			msg	+="--------------------------------------------------------------------------------\n";
+			msg_components.add("--------------------------------------------------------------------------------");
 			var win = global.kag;
 			var saved	= false;
 			var quickcount	= 10;
@@ -290,12 +290,8 @@ System.exceptionHandler = function(e)
 					win.bookMarkNames[no]	= key+win.bookMarkNames[no];
 					win.saveBookMark(no);
 					saved	= true;
-					// msg	+="現在の状況をクイックセーブの"+i+"番目に保存しました。\n";
-					// msg	+="セーブデータのファイル名は、\n「";
-					// msg	+=Storages.getLocalName(Storages.getFullPath(win.getBookMarkFileNameAtNum(no)))+
-					// 	"」\nとなります。\n";
-					msg += __("現在の状況をクイックセーブの%s番目に保存しました。\nセーブデータのファイル名は、\n「%s」\nとなります。\n")
-					.sprintf(i, Storages.getLocalName(Storages.getFullPath(win.getBookMarkFileNameAtNum(no))));
+					msg_components.add(__("現在の状況をクイックセーブの%s番目に保存しました。").sprintf(i));
+					msg_components.add(__("セーブデータのファイル名は、\n「%s」\nとなります。").sprintf(Storages.getLocalName(Storages.getFullPath(win.getBookMarkFileNameAtNum(no)))));
 					break;
 				}
 			}
@@ -311,47 +307,43 @@ System.exceptionHandler = function(e)
 						win.saveBookMark(no);
 						var pos = global.kag.sflags.convertSaveNoToFileNo[no];
 						saved	= true;
-						// msg	+="現在の状況をセーブメニューの「"+(pos\20+1)+"ページ "+(pos%20\5+1)+"行 "+
-						// 	(pos%5+1)+"列目」に保存しました。";
-						// msg	+="セーブデータのファイル名は、\n「";
-						// msg	+=Storages.getLocalName(Storages.getFullPath(win.getBookMarkFileNameAtNum(no)))+
-						// 	"」\nとなります。\n";
-						msg += __("現在の状況をセーブメニューの「%sページ %s行 %s列目」に保存しました。セーブデータのファイル名は、\n「%s」\nとなります。\n").sprintf(pos\20+1, pos%20\5+1, pos%5+1, Storages.getLocalName(Storages.getFullPath(win.getBookMarkFileNameAtNum(no))));
+						msg_components.add(__("現在の状況をセーブメニューの「%sページ %s行 %s列目」に保存しました。").sprintf(pos\20+1, pos%20\5+1, pos%5+1));
+						msg_components.add(__("セーブデータのファイル名は、\n「%s」\nとなります。").sprintf(Storages.getLocalName(Storages.getFullPath(win.getBookMarkFileNameAtNum(no)))));
 						break;
 					}
 				}
 				if(!saved)
 				{
 					//	セーブデータが一杯なので、保存先を選んでもらう
-					// msg	+="セーブデータに空きがありません。\n";
-					// msg	+="セーブメニューを開きますので、適当な場所に保存してください。\n";
-					msg += __("セーブデータに空きがありません。\nセーブメニューを開きますので、適当な場所に保存してください。\n");
+					msg_components.add(__("セーブデータに空きがありません。"));
+					msg_components.add(__("セーブメニューを開きますので、適当な場所に保存してください。"));
 					global.shortcut_object.show("save");	//	セーブメニューを開く
 				}
 			}
 		}
 		catch(e) {}
 	}
-	if(endmsg!="")
-	{
-		msg	+=__("--------------------------------------------------------------------------------\n");
-		msg	+=endmsg;
-	}
 @endif
+	if (e instanceof "ConductorException")
+	{
+		msg_components.add("--------------------------------------------------------------------------------");
+		msg_components.add(__("Pキーでタイトルへ戻るか、通常の手順で終了してください。"));
+	}
 
-	System.inform(msg);
+	System.inform(msg_components.join("\n"));
 
 	//	イベント再開
 	System.eventDisabled	= ed;
 	exceptionOccured	= true;	//	例外が発生しているので、終了時点での確認→データ保存を行わない
 
 @if(!KIRIKIROID)
-	if (!devMode && !devMode2) {
-		if (System.getArgument('-openlogdironerror') !== "no")
+	if (!devMode && !devMode2)
+	{
+		if (System.getArgument('-openlogdironerror') !== "no" && !exception_information_in_clipboard)
 		{
-			if (typeof(logpath) === "String")
+			if (typeof(dir) === "String")
 			{
-				var localpath = Storages.getLocalName(logpath);
+				var localpath = Storages.getLocalName(dir);
 				if (localpath !== "")
 				{
 					System.shellExecute(("\"%s\"").sprintf(localpath));

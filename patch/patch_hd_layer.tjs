@@ -128,6 +128,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 	var stretch = void;
 	var isMask = false; // Set to true to suppress automatic determination of isbg.
 	var isThumbnail = false;
+	var isTicketThumbnail = false;
 
 	var _isFixedPosition = void;
 	var _horizontalAlignment = 0.5;
@@ -314,6 +315,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		{
 			originalWidth = transformDiscrete(v, widthScale);
 			super.width = v * widthScale;
+			updateImageSize();
 		}
 	}
 
@@ -330,6 +332,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		{
 			originalHeight = transformDiscrete(v, heightScale);
 			super.height = v * heightScale;
+			updateImageSize();
 		}
 	}
 
@@ -776,6 +779,9 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		if (isThumbnail) {
 			originalImageWidth = 120;
 			originalImageHeight = 90;
+		} else if (isTicketThumbnail) {
+			originalImageWidth = 128;
+			originalImageHeight = 96;
 		} else if (!isHd || storageExt != "") {
 			originalImageWidth = super.imageWidth;
 			originalImageHeight = super.imageHeight;
@@ -831,10 +837,10 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 	{
 		if (hasImage) {
 			if (originalImageWidth < originalWidth) {
-				originalImageWidth = super.imageWidth / widthScale;
+				originalImageWidth = originalWidth;
 			}
 			if (originalImageHeight < originalHeight) {
-				originalImageHeight = super.imageHeight / heightScale;
+				originalImageHeight = originalHeight;
 			}
 			if (originalImageWidth + originalImageLeft < originalWidth) {
 				originalImageLeft = originalWidth - originalImageWidth;

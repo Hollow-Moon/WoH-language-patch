@@ -85,9 +85,12 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 	function getNextTag()
 	{
 		var ret = super.getNextTag(...);
-		ret.__patch_conductor_storage = this.curStorage;
-		ret.__patch_conductor_line = this.curLine;
-		ret.__patch_conductor_line_str = this.curLineStr;
+		if (typeof(ret) === "Object")
+		{
+			ret.__patch_conductor_storage = this.curStorage;
+			ret.__patch_conductor_line = this.curLine;
+			ret.__patch_conductor_line_str = this.curLineStr;
+		}
 		return ret;
 	}
 

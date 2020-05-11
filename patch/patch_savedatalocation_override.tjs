@@ -31,9 +31,18 @@ class KAGWindow_patch_savedatalocation_override_override extends KAGWindow_patch
 					if (test_save_data_location.indexOf(":") === -1)
 					{
 						test_paths.add(System.exePath + test_save_data_location);
-						test_paths.add(System.dataPath + test_save_data_location);
-						test_paths.add(System.personalPath + test_save_data_location);
-						test_paths.add(System.appDataPath + test_save_data_location);
+						if (typeof(System.dataPath) === "String")
+						{
+							test_paths.add(System.dataPath + test_save_data_location);
+						}
+						if (typeof(System.personalPath) === "String")
+						{
+							test_paths.add(System.personalPath + test_save_data_location);
+						}
+						if (typeof(System.appDataPath) === "String")
+						{
+							test_paths.add(System.appDataPath + test_save_data_location);
+						}
 					}
 					else
 					{

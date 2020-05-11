@@ -71,6 +71,14 @@ class System_patch_layer_override extends System_patch_layer_original
 }
 global.System = System_patch_layer_override;
 
+global.layer_tagdata_replacement = %[];
+
+@if(GAME_WOHN)
+{
+	global.layer_tagdata_replacement = global.Dictionary.loadStruct("patch_wohn_image_tagdata.ksc");
+}
+@endif
+
 // Layer 类覆盖
 global.Layer_patch_layer_original	= Layer;
 class Layer_patch_layer_override extends Layer_patch_layer_original
@@ -172,7 +180,17 @@ class Layer_patch_layer_override extends Layer_patch_layer_original
 		{
 			throw new Exception(("Image \"%s\" not found").sprintf(storage));
 		}
-		return super.loadImages(file_name, key);
+		var res = super.loadImages(file_name, key);
+		var replacement_tagdata = global.layer_tagdata_replacement[Storages.chopStorageExt(Storages.extractStorageName(file_name))];
+		if (replacement_tagdata !== void)
+		{
+			if (res === null)
+			{
+				res = %[];
+			}
+			(global.Dictionary.assign incontextof res)(replacement_tagdata, false);
+		}
+		return res;
 	}
 
 @if(DRAWTEXT_ESCAPE)

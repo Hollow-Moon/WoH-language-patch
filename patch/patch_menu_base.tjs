@@ -325,13 +325,13 @@ class KAGCensorMenuItem extends KAGMenuItem
 	var previouslyFullyCensored;
 
 
-	function KAGCensorMenuItem(window, name, hPatchName, hFlag, maturePatchName)
+	function KAGCensorMenuItem(window, name, hFlag, hPatchName, hCensorPatchName, maturePatchName)
 	{
 		super.KAGMenuItem(window, name, 0, void, false);
-		addChildren(hPatchName, hFlag, maturePatchName);
+		addChildren(hFlag, hPatchName, hCensorPatchName, maturePatchName);
 	}
 
-	function addChildren(hPatchName, hFlag, maturePatchName)
+	function addChildren(hFlag, hPatchName, hCensorPatchName, maturePatchName)
 	{
 		var matureFlag = new GameFlag(owner, owner.sflags, matureFlagName, true);
 		var matureCensorFlag = inverseFlag(matureFlag);
@@ -341,13 +341,22 @@ class KAGCensorMenuItem extends KAGMenuItem
 		var hFlagComposite = new CompositeAndFlag([hFlag, inverseFlag(decensorFlag)]);
 		var decensorFlagComposite = new CompositeAndFlag([hFlag, decensorFlag]);
 
-		this.add(this.hCensoredMenuItem = new KAGFlagFolderMenuItem(owner, __t("&Hコンテンツを検閲する"), 1, hCensorFlagComposite, hPatchName, censoredHFolderName));
+		this.add(this.hCensoredMenuItem = new KAGFlagFolderMenuItem(owner, __t("&Hコンテンツを検閲する"), 1, hCensorFlagComposite, hCensorPatchName, censoredHFolderName));
 		this.hCensoredMenuItem.beforeCallback = this.beforeCallback;
 		this.hCensoredMenuItem.afterCallback = this.afterCallback;
 		this.add(this.hUncensoredMenuItem = new KAGFlagFolderMenuItem(owner, __t("Hコンテンツを検閲しない(&U)"), 1, hFlagComposite, hPatchName, uncensoredHFolderName));
 		this.hUncensoredMenuItem.beforeCallback = this.beforeCallback;
 		this.hUncensoredMenuItem.afterCallback = this.afterCallback;
-		this.add(this.hDecensoredMenuItem = new KAGFlagFolderMenuItem(owner, __t("Hコンテンツを強制的に無検閲する(&D)"), 1, decensorFlagComposite, [hPatchName, decensoredPatchName], [uncensoredHFolderName, decensoredFolderName]));
+		this.add(this.hDecensoredMenuItem = new KAGFlagFolderMenuItem(owner, __t("Hコンテンツを強制的に無検閲する(&D)"), 1, decensorFlagComposite,
+@if(GAME_FATE)
+		[hPatchName, decensoredPatchName], [uncensoredHFolderName, decensoredFolderName]));
+@endif
+@if(GAME_FHAT)
+		decensoredPatchName, decensoredFolderName));
+@endif
+@if(GAME_WOHN)
+		[], []));
+@endif
 		this.hDecensoredMenuItem.beforeCallback = this.beforeCallback;
 		this.hDecensoredMenuItem.afterCallback = this.afterCallback;
 
@@ -360,7 +369,6 @@ class KAGCensorMenuItem extends KAGMenuItem
 		updateCurrentState();
 	}
 
-	// Must be called incontextof window, otherwise it doesn't work for some reason.
 	function addSeperationLine(menu)
 	{
 		menu.add(new MenuItem(this, "-"));
@@ -550,6 +558,11 @@ function addWindowSizeMenu(displayMenu) {
 
 		displayMenu.add(this.windowSizeMenu = new KAGMenuItem(this, __t("ウィンドウ内部のサイズ指定(&S)"), 0, void, false));
 
+@if(GAME_WOHN)
+			windowSizeMenu.add(this.window1024MenuItem = new KAGMenuItem(this, __t("1024x576 (デフォルト)"), 1,
+				function(sender) { sender.owner.onWindowSizeMenuItemClick(,1024); }, false));
+@endif
+@if(GAME_FATE||GAME_FHAT)
 @if(!HD_MODE)
 			windowSizeMenu.add(this.window800MenuItem = new KAGMenuItem(this, __t("800x600 (デフォルト)"), 1,
 				function(sender) { sender.owner.onWindowSizeMenuItemClick(,800); }, false));
@@ -558,9 +571,30 @@ function addWindowSizeMenu(displayMenu) {
 			windowSizeMenu.add(this.window800MenuItem = new KAGMenuItem(this, __t("1.00x (デフォルト)"), 1,
 				function(sender) { sender.owner.onWindowSizeMenuItemClick(,800); }, false));
 @endif
+@endif
 
 			windowSizeMenu.add(new MenuItem(this, "-"));
 
+@if(GAME_WOHN)
+			windowSizeMenu.add(this.window1280MenuItem = new KAGMenuItem(this, "1280x720", 1,
+				function(sender) { sender.owner.onWindowSizeMenuItemClick(,1280); }, false));
+
+			windowSizeMenu.add(this.window1440MenuItem = new KAGMenuItem(this, "1440x810", 1,
+				function(sender) { sender.owner.onWindowSizeMenuItemClick(,1440); }, false));
+
+			windowSizeMenu.add(this.window1600MenuItem = new KAGMenuItem(this, "1600x900", 1,
+				function(sender) { sender.owner.onWindowSizeMenuItemClick(,1600); }, false));
+
+			windowSizeMenu.add(this.window1920MenuItem = new KAGMenuItem(this, "1920x1080", 1,
+				function(sender) { sender.owner.onWindowSizeMenuItemClick(,1920); }, false));
+
+			windowSizeMenu.add(this.window640MenuItem = new KAGMenuItem(this, "640x360", 1,
+				function(sender) { sender.owner.onWindowSizeMenuItemClick(,640); }, false));
+
+			windowSizeMenu.add(this.window800MenuItem = new KAGMenuItem(this, "800x450", 1,
+				function(sender) { sender.owner.onWindowSizeMenuItemClick(,800); }, false));
+@endif
+@if(GAME_FATE||GAME_FHAT)
 @if(!HD_MODE)
 			windowSizeMenu.add(this.window1024MenuItem = new KAGMenuItem(this, "1024x768", 1,
 				function(sender) { sender.owner.onWindowSizeMenuItemClick(,1024); }, false));
@@ -587,10 +621,11 @@ function addWindowSizeMenu(displayMenu) {
 			windowSizeMenu.add(this.window640MenuItem = new KAGMenuItem(this, "0.80x", 1,
 				function(sender) { sender.owner.onWindowSizeMenuItemClick(,640); }, false));
 @endif
+@endif
 
 			windowSizeMenu.add(new MenuItem(this, "-"));
 
-			windowSizeMenu.add(this.windowResizeableMenuItem = new KAGMenuItem(this, "Fixed Size", 0,
+			windowSizeMenu.add(this.windowResizeableMenuItem = new KAGMenuItem(this, __t("サイズを固定する"), 0,
 				function(sender) { sender.owner.onWindowSizeMenuItemClick(,0); }, false));
 }
 

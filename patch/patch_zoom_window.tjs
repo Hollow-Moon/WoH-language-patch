@@ -100,6 +100,41 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 		}
 	}
 
+	function zoom_window_save_system_variables()
+	{
+		scflags.zoomNumer = origZoomNumer;
+		scflags.zoomDenom = origZoomDenom;
+
+		scflags.fszoom = System.getArgument("-fszoom");
+
+		scflags.menuBarState = menuBarState;
+		scflags.windowResizeable = windowResizeable;
+		scflags.windowMaximized  = false;
+		var rect;
+		if (typeof this.maximized != "undefined" && maximized) {
+			scflags.windowMaximized	 = !fullScreen;
+			if (_pseudoFullScreen !== void) with (_pseudoFullScreen) {
+				rect = .rect;
+				scflags.windowMaximized = .max && .restmax;
+			} else
+			if (typeof getNormalRect != "undefined")
+				rect = getNormalRect();
+		} else if (fullScreened && typeof _lastWindowSize == "Object") {
+			rect = _lastWindowSize.window; //if (!pseudoFullScreened);
+		}
+		if (rect !== void) {
+			scflags.windowLeft	 = rect.x;
+			scflags.windowTop	 = rect.y;
+			scflags.windowWidth	 = rect.w;
+			scflags.windowHeight = rect.h;
+		} else {
+			scflags.windowLeft	 = left;
+			scflags.windowTop	 = top;
+			scflags.windowWidth	 = width;
+			scflags.windowHeight = height;
+		}
+	}
+
 @if(ZOOM_WINDOW)
 	var hookMap = %[ keyDown:this.keyDownHook, leftClick:this.leftClickHook, rightClick:this.rightClickHook ];
 	function callHook(tag, *)
@@ -222,6 +257,10 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 						/**/w:System.screenWidth, h:System.screenHeight, x:0, y:0 ];
 				}
 				updateMenuBarState();
+				if (typeof(global.SetWindowControlMenu) === "Object")
+				{
+					SetWindowControlMenu(this, min, 0, 1, 1);
+				}
 			} else {
 				super.fullScreen = false;
 				if (pseudoFullScreened) with (_pseudoFullScreen) {
@@ -247,6 +286,10 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 
 				// メニューを消す
 				updateMenuBarState();
+				if (typeof(global.SetWindowControlMenu) === "Object")
+				{
+					SetWindowControlMenu(this, min, 0, 1, 1);
+				}
 				_lastWindowSize = void;
 			}
 			if (typeof(this.windowSizeMenu) === "Object")
@@ -322,6 +365,9 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 			_zoomDenom = zd;
 		}
 		top++, top--; // VCRなムービーが追従するようにおまじない XXX
+@if(GAME_WOHN)
+		callHook("afterChangeWindowSize");
+@endif
 	}
 
 	var menuBarMode = 1; // 0:固定・変更不可，1:固定・変更可（menuBarState準拠）
@@ -612,10 +658,48 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 	function onHide()     { _minimized = true;  }
 	function onShow()     { _minimized = false; }
 
+	function limitSize(mon)
+	{
+		var	szchg	= false;
+		if(!fullScreen)
+		{
+			mon	= System.getMonitorInfo(true, this) if mon == void;
+			var	ml	= mon.work.x, mt = mon.work.y;
+			var	mw	= mon.work.w, mh = mon.work.h;
+			if(mw < width)
+			{
+				var rate = innerHeight / innerWidth;
+				width	= mw;
+				innerHeight	= int(rate * innerWidth);
+				szchg	= true;
+			}
+			if(mh < height)
+			{
+				var rate = innerWidth / innerHeight;
+				height	= mh;
+				innerWidth	= int(rate * innerHeight);
+				szchg	= true;
+			}
+			if(left < ml)
+				left	= ml;
+			else if(left + width > ml + mw)
+				left	= ml + mw - width;
+			if(top < mt)
+				top	= mt;
+			else if(top + height > mt + mh)
+				top	= mt + mh - height;
+		}
+		return szchg;
+	}
+
 	var _lastInnerSize;
 	var _onResizeProcess = true;
 	function onResize() {
 		if (trackTempMenuShowing) return super.onResize();
+@if(GAME_WOHN)
+		if(limitSize())
+			return;
+@endif
 //		dm("onResize", innerWidth, innerHeight);
 		if (!_minimized && _onResizeProcess && _resizeSnapshot === void)
 		{
@@ -770,10 +854,20 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 			return;
 		}
 		if(!fullScreen)
+@if(GAME_WOHN)
+			setInnerSize(w, (w * 9) \ 16);
+@endif
+@if(GAME_FATE||GAME_FHAT)
 			setInnerSize(w, (w * 3) \ 4);
+@endif
 	}
 
+@if(GAME_WOHN)
+	var	windowWidthes	= [ 1024, 1280, 1440, 1600, 1920, 640, 800 ];
+@endif
+@if(GAME_FATE||GAME_FHAT)
 	var	windowWidthes	= [ 800, 1024, 1280, 1440, 640 ];
+@endif
 	function updateWindowSizeChecked(size)
 	{
 		if(typeof this["window"+windowWidthes[0]+"MenuItem"] != "undefined")
@@ -818,5 +912,31 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 @endif
 		super.onMouseMove(...);
 	}
+
+
+@if(GAME_WOHN)
+	function onMove()
+	{
+		var	mon	= System.getMonitorInfo(true, this);
+		var	mw	= mon.work.w, mh = mon.work.h;
+
+		//	zoomNumer == zoomDenom 以外のときは、複数のモニターに重ならないよう修正する
+		if(!fullScreen && zoomNumer != zoomDenom && limitSize(mon))
+			return;
+
+		//	表示されているモニタが変化したか、そのウィンドウサイズにできるかを調べ、メニューを更新
+		var	bw	= width - innerWidth, bh = height - innerHeight;	//	ウィンドウの枠のサイズ
+		for(var i=0; i<windowWidthes.count; i++)
+		{
+			var	w	= windowWidthes[i];
+			var	h	= (w * 9) \ 16;
+//			dm("monitor: "+mw+", "+mh+" / "+w+", "+h);
+			if (typeof(this["window"+w+"MenuItem"]) === "Object")
+			{
+				this["window"+w+"MenuItem"].enabled	= mw >= w + bw && mh >= h + bh;
+			}
+		}
+	}
+@endif
 }
 global.KAGWindow = KAGWindow_patch_zoom_window_override;

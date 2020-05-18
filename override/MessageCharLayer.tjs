@@ -174,10 +174,24 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 		setPos(l - ea, t - ea);
 	}
 
-	function resize(w, h)
+	function resize(w, h, esc_w, esc_h)
 	{
-		textWidth	= w;
-		textHeight	= h;
+		if (esc_w !== void)
+		{
+			textWidth = esc_w;
+		}
+		else
+		{
+			textWidth = w;
+		}
+		if (esc_h !== void)
+		{
+			textHeight = esc_h;
+		}
+		else
+		{
+			textHeight = h;
+		}
 		w	+= (ea << 1);
 		h	+= (ea << 1);
 		if(imageWidth != w || imageHeight != h)
@@ -198,7 +212,12 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 
 	function resizeByText(ch, vert, max, min)
 	{
+@if(0)
 		var	w = font.getTextWidth(ch), h = font.getTextHeight(ch);
+@endif
+		var rect = font.getGlyphDrawRect(ch);
+		var	w = rect.right, h = rect.bottom;
+		var	txt_w = font.getEscWidthX(ch), txt_h = font.getTextHeight(ch);
 		var	ret = 0;
 		if(ch.length == 1 || max === void || min === void)
 			;	// 1文字なら関係ない
@@ -232,7 +251,7 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 				w = min, ret = -1;	//	均等割付
 		}
 //		dm("resizeByText("+ch+", "+vert+", "+max+", "+min+"): "+w+", "+h);
-		resize(w, h);
+		resize(w, h, txt_w, txt_h);
 		return ret;
 	}
 

@@ -26,51 +26,84 @@ Layer.getFontList	= function(opt)
 {
 	opt	= fsfSameCharSet | fsfNoVertical if opt === void;
 	opt = void;
+	var tmp_layer = new global.Layer(this.window, this);
+	tmp_layer.face = dfMain;
+	tmp_layer.holdAlpha = false;
 	var	list	= [];
 	try
 	{
-		list = font.getList(opt);
+		list = tmp_layer.font.getList(opt);
 	}
 	catch (e)
 	{
 		list = [];
 	}
-	var	lastface= font.face, lastheight = font.height;
-	with(list)
+	var	lastface= tmp_layer.font.face, lastheight = tmp_layer.font.height;
+	var removes = [
+		"FixedSys",
+		"System",
+		"Terminal",
+		"Small Fonts",
+		"Apple Color Emoji",
+		"Courier",
+		"GB18030 Bitmap",
+		"MS Sans Serif",
+		"Fira Mono",
+		"Fira Mono Medium",
+		"Fixedsys",
+		"Modern",
+		"Script",
+		"Roman",
+		"MS Serif"
+	];
+	for (var i = 0; i < list.count; i += 1)
 	{
-		.remove("FixedSys");
-		.remove("System");
-		.remove("Terminal");
-		.remove("Small Fonts");
-		.remove("Apple Color Emoji");
-		.remove("Courier");
-		.remove("@FixedSys");
-		.remove("GB18030 Bitmap");
-		.remove("MS Sans Serif");
-		.remove("@Small Fonts");
-		.remove("@System");
-		.remove("Fira Mono");
-		.remove("Fira Mono Medium");
-		.remove("Fixedsys");
-		.remove("@Terminal");
-		.remove("Modern");
-		.remove("Script");
-		.remove("Roman");
-		.remove("MS Serif");
+		if (list[i].length > 1 && list[i][0] === "@")
+		{
+			removes.add(list[i]);
+		}
 	}
+	for (var i = 0; i < removes.count; i += 1)
+	{
+		list.remove(removes[i]);
+	}
+	removes.clear();
 	for (var i = 0; i < list.count; i += 1)
 	{
 		try
 		{
-			font.face = list[i];
-			font.getTextWidth("A");
-			(global.Layer.drawText incontextof this)(0, 0, "A", 0, 0);
+			tmp_layer.font.face = list[i];
+			var font_width = tmp_layer.font.getTextWidth("A");
+			var font_height = tmp_layer.font.getTextHeight("A");
+			tmp_layer.setImageSize(font_width, font_height);
+			tmp_layer.setSize(font_width, font_height);
+			tmp_layer.colorRect(0, 0, tmp_layer.width, tmp_layer.height, 0x000000);
+			(global.Layer.drawText incontextof tmp_layer)(0, 0, "A", 0xFFFFFF, 255);
+			var has_drawn = false;
+			for (var j = 0; j < tmp_layer.width - 1; j += 1)
+			{
+				if (tmp_layer.getMainPixel(j, tmp_layer.height \ 2) !== 0x000000)
+				{
+					has_drawn = true;
+					break;
+				}
+			}
+			if (!has_drawn)
+			{
+				removes.add(list[i]);
+			}
 		}
-		catch ()
+		catch (e)
 		{
 			throw new Exception(("An error occurred while attempting to enumerate the font \"%s\".").sprintf(list[i]));
 		}
 	}
+	for (var i = 0; i < removes.count; i += 1)
+	{
+		list.remove(removes[i]);
+	}
+	invalidate removes;
+	delete removes;
 
 	for(var i=0; i<bitmapFonts.count; i+=2)
 	{
@@ -83,23 +116,25 @@ Layer.getFontList	= function(opt)
 		{
 			var	fh	= keys[i];
 			var	st	= keys[i+1]+fontFileExt;
-			font.face	= fc;
-			font.height	= fh;
+			tmp_layer.font.face	= fc;
+			tmp_layer.font.height	= fh;
 			if(Storages.isExistentStorage(st))
-				font.mapPrerenderedFont(st);
+				tmp_layer.font.mapPrerenderedFont(st);
 
 			//	イタリックフォントが存在したら、それも追加
 			st	= keys[i+1] + fontItalicSuffix + fontFileExt;
 			if(Storages.isExistentStorage(st))
 			{
-				font.italic	= true;
-				font.mapPrerenderedFont(st);
-				font.italic	= false;
+				tmp_layer.font.italic	= true;
+				tmp_layer.font.mapPrerenderedFont(st);
+				tmp_layer.font.italic	= false;
 			}
 		}
 	}
-	font.face	= lastface;
-	font.height	= lastheight;
+	tmp_layer.font.face	= lastface;
+	tmp_layer.font.height	= lastheight;
+	invalidate tmp_layer;
+	delete tmp_layer;
 	return list;
 };
 

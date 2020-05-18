@@ -39,6 +39,7 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 		super.Layer(...);
 		hitThreshold	= 256;
 
+@if(0)
 		if(global.fonts == void)
 		{
 			if(typeof getFontList != "undefined")
@@ -53,6 +54,7 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 				}
 			}
 		}
+@endif
 	}
 
 	function finalize()
@@ -459,7 +461,15 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 	//	描画されている文字のフォントを変更する
 	function changeFont(face)
 	{
+@if(1)
+		if(face === void)
+		{
+			return;
+		}
+@endif
+@if(0)
 		face	= global.fonts[int(global.fonts.count * Math.random())] if face === void;
+@endif
 		setFontFace((font.angle == 2700 ? "@" : "") + face);
 
 		redraw();	//	再描画

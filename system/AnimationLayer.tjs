@@ -341,7 +341,7 @@ class AnimationLayer extends KAGLayer
 		Anim_defaultFontInfo.face = font.face; // デフォルトのフォント
 		Anim_defaultFontInfo.height = font.height; // デフォルトのフォントサイズ
 
-@if(0)
+@if(!GAME_WOHN)
 		Anim_segments[0] = new AnimationConductor(this); // デフォルトのコンダクタ
 		Anim_segments[0].number = 0;
 @endif
@@ -350,10 +350,12 @@ class AnimationLayer extends KAGLayer
 	function finalize()
 	{
 		clearAnim(); // アニメーション情報のクリア
-@if(0)
+@if(!GAME_WOHN)
 		invalidate Anim_segments[0]; // デフォルトのコンダクタを無効化
 @endif
+@if(GAME_WOHN)
 		invalidate Anim_segments[0] if Anim_segments[0] != void; // デフォルトのコンダクタを無効化
+@endif
 		Anim_loadParams = void;
 		Anim_partialImageInfo = void;
 		super.finalize(...);
@@ -396,7 +398,9 @@ class AnimationLayer extends KAGLayer
 			invalidate Anim_segments[i] if seg !== void;
 		}
 
+@if(GAME_WOHN)
 		if(Anim_segments[0] != void)
+@endif
 		{
 			Anim_segments.count = 1;
 
@@ -811,7 +815,7 @@ class AnimationLayer extends KAGLayer
 			layer.colorRect(0, 0, layer.imageWidth, layer.imageHeight, +param.mcolor,
 				+param.mopacity);
 		}
-@if(0)
+@if(!GAME_WOHN)
 		if (param.lightcolor !== void) {
 			// レイヤ合成
 			var mode = ltAlpha;
@@ -850,10 +854,12 @@ class AnimationLayer extends KAGLayer
 			{
 				for(var i = Anim_segments.count -1; i>=0; i--)
 				{
-@if(0)
+@if(!GAME_WOHN)
 					Anim_segments[i].interrupted = x;
 @endif
+@if(GAME_WOHN)
 					Anim_segments[i].interrupted = x if Anim_segments[i] != void;
+@endif
 				}
 				Anim_interrupted = x;
 			}

@@ -167,10 +167,12 @@ class KAGLayer extends Layer
 			var su = super;
 			su.visible = src.visible;
 			su.opacity = src.opacity;
-@if(0)
+@if(!GAME_WOHN)
 			su.absolute = src.absolute if !src.isPrimary && src.parent.absoluteOrderMode;
 @endif
+@if(GAME_WOHN)
 			su.absolute = src.absolute if !src.isPrimaryBase && src.parent.absoluteOrderMode;
+@endif
 			su.type = src.type;
 			su.setPos(src.left, src.top, src.width, src.height);
 			su.setImagePos(src.imageLeft, src.imageTop);
@@ -183,10 +185,12 @@ class KAGLayer extends Layer
 		// したときだけにコピーされる情報をコピー
 		visible = src.visible;
 		opacity = src.opacity;
-@if(0)
+@if(!GAME_WOHN)
 		absolute = src.absolute if !src.isPrimary && src.parent.absoluteOrderMode;
 @endif
+@if(GAME_WOHN)
 		absolute = src.absolute if !src.isPrimaryBase && src.parent.absoluteOrderMode;
+@endif
 		type = src.type;
 		setPos(src.left, src.top, src.width, src.height);
 		setImagePos(src.imageLeft, src.imageTop);
@@ -197,10 +201,12 @@ class KAGLayer extends Layer
 		// beginTransition オーバーライド
 		// elm に従い、トランジションを開始する
 		// src にはトランジションの相手を指定
-@if(0)
+@if(!GAME_WOHN)
 //		stopTransition(); // 現在のトランジションは停止
 @endif
+@if(GAME_WOHN)
 		stopTransition(); // 現在のトランジションは停止
+@endif
 
 		if(elm.exchange !== void) transExchange = +elm.exchange; else transExchange = false;
 		var method = elm.method;
@@ -238,14 +244,18 @@ class KAGLayer extends Layer
 		transWithChildren = withchildren;
 		inTransition = true;
 		window.transCount++; // 進行中のトランジションの数を増やす
+@if(GAME_WOHN)
 		try
+@endif
 			super.beginTransition(method, withchildren, src, elm);
+@if(GAME_WOHN)
 		catch(e)
 		{
 			dm("トランジション実行失敗: "+e.message);
 //			dm(src.name+"("+src.storage+"/"+src.width+","+src.height+"/"+src.trans+","+src.useTrans+") → "+name+"("+storage+"/"+width+","+height+"/"+trans+","+useTrans+")");
 			dm(src.name+"("+src.storage+"/"+src.width+","+src.height+") → "+name+"("+storage+"/"+width+","+height+")");
 		}
+@endif
 	}
 
 	function onTransitionCompleted(dest, src)
@@ -366,12 +376,14 @@ class KAGLayer extends Layer
 		setImagePos(dic.imageLeft, dic.imageTop);
 		opacity = dic.opacity;
 		visible = dic.visible;
-@if(0)
+@if(!GAME_WOHN)
 		absolute = dic.absolute if !isPrimary && dic.absolute !== void;
 		type = dic.type if !isPrimary && dic.type !== void;
 @endif
+@if(GAME_WOHN)
 		absolute = dic.absolute if !isPrimaryBase && dic.absolute !== void;
 		type = dic.type if !isPrimaryBase && dic.type !== void;
+@endif
 	}
 
 	/**
@@ -461,9 +473,11 @@ class KAGLayer extends Layer
 		invalidate shadow;
 	};
 
+@if(GAME_WOHN)
 	property isPrimaryBase {
 		getter() {
             return this === window.fore.base;
 		}
 	}
+@endif
 }

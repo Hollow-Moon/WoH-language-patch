@@ -2,8 +2,10 @@
 //;# Copyright (C)2001-2009, W.Dee and contributors  改変・配布は自由です
 //;<<'END_OF_TJS_SCRIPT';
 
+@if(GAME_WOHN)
 //	左右同時押しで自動実行を開始するか？
 @set(ATONCECLICK_TO_AUTOMODE=0)
+@endif
 
 // このスクリプトは有効な perl5 スクリプトでもある
 
@@ -20,7 +22,9 @@ class KAGWindow extends Window
 
 	var aboutWidth = 320; // 「このソフトについて」ウィンドウの横幅
 	var aboutHeight = 200; // 同縦幅
+@if(GAME_WOHN)
 	var aboutStorage = "about.ks";
+@endif
 
 	var isFirstProcess = true; // 一番最初の process の呼び出しかどうか
 
@@ -66,7 +70,7 @@ class KAGWindow extends Window
 
 	var helpFile = ""; // 「ヘルプ > 目次」で開くファイル
 
-@if(0)
+@if(!GAME_WOHN)
 	var quakeTimer; // quake 用のタイマ
 	var defaultQuakeTimeInChUnit = false;
 	/*C*/var quaking = false; // 揺れているか
@@ -90,10 +94,17 @@ class KAGWindow extends Window
 	/*C*/var numCharacterLayers = 0; // 前景レイヤの数
 	/*C*/var numMessageLayers = 1; // メッセージレイヤの数
 
+@if(GAME_WOHN)
 	var sysbase;  // ベースレイヤ
+@endif
 	var _primaryLayer;
+@if(!GAME_WOHN)
+	property primaryLayer { getter { return fore.base; } };
+@endif
+@if(GAME_WOHN)
 	property primaryLayer { getter { return sysbase; } };
 	var exEventEnabled = false; // registerExEvent されたかどうか
+@endif
 
 	var fore = %[]; // 表レイヤ
 	var back = %[]; // 裏レイヤ
@@ -152,6 +163,12 @@ class KAGWindow extends Window
 
 	/*C*/var clickSkipEnabled = true; // クリックスキップが有効か
 	/*C*/var nextSkipEnabled = true; // 次の選択肢(/未読)まで進むが有効か
+@if(!GAME_WOHN)
+	var skipMode = 0; // スキップのモード
+		// 0=スキップなし, 1=クリック待ち記号まで, 2=改ページ待ち記号まで, 3=次の停止まで
+		// 4=早送り
+@endif
+@if(GAME_WOHN)
 @set(CHECK_CHANGE_SKIPMODE=0)
 @if(!CHECK_CHANGE_SKIPMODE)
 	var skipMode = 0; // スキップのモード
@@ -172,6 +189,7 @@ class KAGWindow extends Window
 			}
 		}
 	}
+@endif
 @endif
 	var autoMode = false; // 自動読みすすみモードかどうか
 	var autoModePageWait = 350; // 自動読みすすみモード時の改ページ時のウェイト
@@ -218,7 +236,9 @@ class KAGWindow extends Window
 	/*C*/var rightClickEnabled = true; // 右クリックが有効か
 	/*C*/var rightClickCall = false; // 右クリックで特定のルーチンを呼ぶか
 	/*C*/var rightClickJump = false; // 右クリックかで特定のラベルにジャンプするか
+@if(GAME_WOHN)
 	/*C*/var rightClickExp = ""; // 右クリックで実行するスクリプト
+@endif
 	/*C*/var rightClickTarget = ""; // 右クリックでの呼び出し先
 	/*C*/var rightClickStorage = ""; // 右クリックでの呼び出し先
 	/*C*/var rightClickName = "default"; // 右クリックのメニュー表示名
@@ -291,10 +311,12 @@ class KAGWindow extends Window
 
 	//------------------------------------------------------ コンストラクタ --
 
-@if(0)
+@if(!GAME_WOHN)
 	function KAGWindow(ismain = true, width = 0, height = 0)
 @endif
+@if(GAME_WOHN)
 	function KAGWindow(ismain = true, width = 0, height = 0, invisible = false)
+@endif
 	{
 		// コンストラクタ
 		// 引数 : ismain : メインウィンドウとして作成されるのかどうか
@@ -320,15 +342,19 @@ class KAGWindow extends Window
 		if(saveDataLocation.indexOf(":") == -1)
 			saveDataLocation = System.exePath + saveDataLocation;
 
+@if(GAME_WOHN)
 		// セーブ可能かどうかの確認
 		checkSave();
+@endif
 
 		// ログの出力先を saveDataLocation にする
 		if(ismain) Debug.logLocation = saveDataLocation;
 
 		// メニューアイテムの作成
 		if(ismain) (KAGWindow_createMenus incontextof this)();
+@if(GAME_WOHN)
 		noneMagnifyMenuItem.enabled	= false if System.getArgument("-fullscreenmode") == "primaryonly";
+@endif
 		if(typeof this.rightClickMenuItem != "undefined")
 			rightClickDefaultName = rightClickCurrentMenuName = rightClickMenuItem.caption;
 
@@ -395,7 +421,7 @@ class KAGWindow extends Window
 		if(ismain) caption = System.title;
 
 		// システムタイトルをキャプションと同じに
-@if(0)
+@if(!GAME_WOHN)
 		if(ismain) System.title = caption;
 @endif
 
@@ -406,7 +432,7 @@ class KAGWindow extends Window
 			scWidth = width;
 			scHeight = height;
 		}
-@if(0)
+@if(!GAME_WOHN)
 		setInnerSize(scWidth, scHeight);
 
 		// quake 用タイマの作成
@@ -472,20 +498,24 @@ class KAGWindow extends Window
 		back.messages = [];
 		fore.layers = [];
 		back.layers = [];
-@if(0)
+@if(!GAME_WOHN)
 		fore.base = new BaseLayer(this, _primaryLayer, "表-背景");
 @endif
+@if(GAME_WOHN)
 		fore.base = new BaseLayer(this, primaryLayer, "表-背景");
 		fore.base.order = 0;
+@endif
 		add(fore.base);
 		fore.base.setImageSize(scWidth, scHeight);
 		fore.base.setSizeToImageSize();
 		fore.base.visible = true;
-@if(0)
+@if(!GAME_WOHN)
 		back.base = new BaseLayer(this, _primaryLayer, "裏-背景");
 @endif
+@if(GAME_WOHN)
 		back.base = new BaseLayer(this, primaryLayer, "裏-背景");
 		back.base.order = 0;
+@endif
 		add(back.base);
 		back.base.setImageSize(scWidth, scHeight);
 		back.base.setSizeToImageSize();
@@ -569,6 +599,7 @@ class KAGWindow extends Window
 			setBookMarkMenuCaptions();
 		}
 
+@if(GAME_WOHN)
 		if (ismain)
 		{
 			(initialize_patch_menu incontextof this)();
@@ -581,6 +612,7 @@ class KAGWindow extends Window
 				}
 			}
 		}
+@endif
 
 		// メッセージレイヤのクリア
 		clearMessageLayers(false);
@@ -620,6 +652,7 @@ class KAGWindow extends Window
 		}
 @endif
 
+@if(GAME_WOHN)
 		// -fszoom が設定されていなければ、前回選択されていたものを選ぶ
 		var	fszoom	= System.getArgument("-fszoom");
 		dm("-fszoom = "+fszoom+" / scflags.fszoom = "+scflags.fszoom);
@@ -634,6 +667,7 @@ class KAGWindow extends Window
 		}
 		else
 			this[fszoom+"MagnifyMenuItem"].checked	= true if typeof this[fszoom+"MagnifyMenuItem"] != "undefined";
+@endif
 
 		// 前回起動時にフルスクリーンだった場合はフルスクリーンにしてみる
 @if(0)
@@ -653,6 +687,7 @@ class KAGWindow extends Window
 @if(0)
 		if(ismain) saveSystemVariables();
 @endif
+@if(GAME_WOHN)
 		if(ismain) {
 			// scflags.fullScreen が破棄されてしまうため保存
 			var origfs = scflags.fullScreen;
@@ -662,6 +697,7 @@ class KAGWindow extends Window
 			// !visible 時は scflags.fullScreen を復帰
 			scflags.fullScreen = origfs if (!visible);
 		}
+@endif
 	}
 
 	//------------------------------------------------------------- finalize --
@@ -693,20 +729,23 @@ class KAGWindow extends Window
 
 	//-------------------------------------------------- onCloseQuery/close --
 
+@if(GAME_WOHN)
 	function onCloseYes() {
 @if(0)
 		shutdown();
 @endif
 		process("call.ks", "*quit");
 	}
+@endif
 
 	function onCloseQuery()
 	{
 		saveSystemVariables();
-@if(0)
+@if(!GAME_WOHN)
 		if(!askOnClose) { super.onCloseQuery(true); return; }
 		super.onCloseQuery(askYesNo(__("終了しますか？")));
 @endif
+@if(GAME_WOHN)
 		if(!askOnClose) {
 			// コンソールを最大化で閉じないように
 			with (Debug.console) .restoreMaximize() if (.visible && typeof .restoreMaximize != "undefined");
@@ -715,6 +754,7 @@ class KAGWindow extends Window
 		showRestore() if _minimized;	//	最小化状態を解除
 		askYesNo(__("終了しますか？"), "確認", onCloseYes);
 		super.onCloseQuery(false);
+@endif
 	}
 
 	function close()
@@ -741,10 +781,12 @@ class KAGWindow extends Window
 			conductor.interrupt();
 			// コンダクタが走行中の時は
 			// コンダクタに中断を伝える
+@if(GAME_WOHN)
 		this.visible = false;
 		global.System.eventDisabled = true;
 		global.Window.onCloseQuery(true);
 		global.System.exit();
+@endif
 	}
 
 	function handleShutdown()
@@ -755,10 +797,12 @@ class KAGWindow extends Window
 		askOnClose = false;
 		close();
 		if(this isvalid) askOnClose = askOnClose_save;
+@if(GAME_WOHN)
 		this.visible = false;
 		global.System.eventDisabled = true;
 		global.Window.onCloseQuery(true);
 		global.System.exit();
+@endif
 	}
 
 	function closeByScript(elm)
@@ -837,7 +881,7 @@ class KAGWindow extends Window
 
 	//---------------------------------------------------------- フック処理 --
 
-@if(0)
+@if(!GAME_WOHN)
 	function callHook(array, arg1, arg2, arg3)
 	{
 		if(array.count)
@@ -974,14 +1018,16 @@ class KAGWindow extends Window
 
 	function onSkipToNextStopMenuItemClick(sender)
 	{
-@if(0)
+@if(!GAME_WOHN)
 		skipToStop();
 @endif
+@if(GAME_WOHN)
 		if (skipMode) cancelSkip(); else skipToStop();
 		setMenuAccessibleAll();
+@endif
 	}
 
-
+@if(GAME_WOHN)
 	function onAutoLabelSaveModeMenuItemClick(sender)
 	{
 		autoLabelSaveMode = !autoLabelSaveMode;
@@ -1016,11 +1062,14 @@ class KAGWindow extends Window
 			System.shellExecute(exefile, param);
 		}
 	}
+@endif
 
 	function onAutoModeMenuItemClick(sender)
 	{
 		if(autoMode) cancelAutoMode(); else enterAutoMode();
+@if(GAME_WOHN)
 		setMenuAccessibleAll();
+@endif
 	}
 
 	function onAutoModeWaitMenuClick(sender)
@@ -1040,6 +1089,7 @@ class KAGWindow extends Window
 		goToStartWithAsk();
 	}
 
+@if(GAME_WOHN)
 	function onAllSkipMenuItemClick(sender)
 	{
 		sender.checked = true;
@@ -1060,6 +1110,7 @@ class KAGWindow extends Window
 		cancelSkipWhenClick = sender.cancel;
 		saveSystemVariables();
 	}
+@endif
 
 	function onChSpeedMenuItemClick(sender)
 	{
@@ -1165,6 +1216,7 @@ class KAGWindow extends Window
 		saveSystemVariables();
 	}
 
+@if(GAME_WOHN)
 	function resetFullScreen()
 	{
 		if(fullScreened)
@@ -1257,6 +1309,7 @@ class KAGWindow extends Window
 		askYesNo(__("サポートツールを起動してゲームを終了します。よろしいですか？\n(サポートツールの結果を反映させるため、ゲームの再起動が必要です)"),
 			"確認", function { global.System.shellExecute(global.Storages.getLocalName(global.System.exePath) + "SupportTools.exe"); global.System.exit(); });
 	}
+@endif
 
 	function onHelpIndexMenuItemClick(sender)
 	{
@@ -1267,25 +1320,34 @@ class KAGWindow extends Window
 	function onHelpAboutMenuItemClick(sender)
 	{
 		// 「このソフトについて」ウィンドウを表示
-@if(0)
+@if(!GAME_WOHN)
 		var win = new global.KAGWindow(false, aboutWidth, aboutHeight);
 @endif
+@if(GAME_WOHN)
 		var win = this.helpAboutWindow = new global.KAGWindow(false, aboutWidth, aboutHeight);
 		win.debugLevel = tkdlNone;
 		win.borderStyle = bsToolWindow;
 		win.setInnerSize(aboutWidth, aboutHeight);
+@endif
 		win.setPos(left + ((width - win.width)>>1), top + ((height - win.height)>>1));
-@if(0)
+@if(!GAME_WOHN)
 		win.process('about.ks' ,,, true); // about.ks を immediate で表示
 @endif
+@if(GAME_WOHN)
 		win.rightClickMenuItem = new KAGMenuItem(this, "RightClick", 0, win.onRightClickMenuItemClick, false); // ESCで消せるように
 		win.process(aboutStorage ,,, true); // about.ks を immediate で表示
+@endif
 		win.showModal(); // モード付きで表示
+@if(GAME_WOHN)
 		invalidate win.rightClickMenuItem;
+@endif
 		invalidate win;
+@if(GAME_WOHN)
 		delete this.helpAboutWindow;
+@endif
 	}
 
+@if(GAME_WOHN)
 	// シナリオ実行ダイアログ呼び出し
 	function onExecDialogMenuItemClick(sender)
 	{
@@ -1319,6 +1381,7 @@ class KAGWindow extends Window
 	function onOutputDebugLogMenuItemClick(sender) {
 		outputLog();
 	}
+@endif
 
 	function onReloadScenarioMenuItemClick(sender)
 	{
@@ -1326,6 +1389,7 @@ class KAGWindow extends Window
 		loadBookMark(1000);
 	}
 
+@if(GAME_WOHN)
 	//	前回「シナリオの読込み」したシナリオを再度読み込む
 	function onLoadLastScenarionMenuItemClick(sender)
 	{
@@ -1336,6 +1400,7 @@ class KAGWindow extends Window
 			process(sf.lastloadedscenario, "");
 		}
 	}
+@endif
 
 	function onShowConsoleMenuItemClick(sender)
 	{
@@ -1375,16 +1440,18 @@ class KAGWindow extends Window
 	{
 		// メニュー項目の使用可/不可を設定する
 
+@if(GAME_WOHN)
 		var modal = historyLayer.visible || messageLayerHiding/* || currentDialog || panelModal*/;
 		var state = inStable && !modal;
 //		var selShow = selectShowing ||	mapSelectShowing ||	 transShowing ||  panelShowing;
 		var canRun	= !modal && !inSleep/*	&& !selShow*/;
 		var canSkip = canRun && (inStable || skipMode) && nextSkipEnabled && (/*allskip || */getCurrentRead());
 		var canAuto = canRun && (inStable || autoMode) && !skipMode;
+@endif
 
 		// autoEnable が true のすべてのメニュー項目の accessible の
 		// 値を設定する
-@if(0)
+@if(!GAME_WOHN)
 		var notmodal = !historyLayer.visible && !messageLayerHiding;
 		var state = inStable && notmodal;
 @endif
@@ -1392,27 +1459,33 @@ class KAGWindow extends Window
 
 		// その他のメニューの使用可/不可
 		if(typeof this.skipToNextStopMenuItem != "undefined")
-@if(0)
+@if(!GAME_WOHN)
 			skipToNextStopMenuItem.enabled = state && !inSleep && nextSkipEnabled;
 @endif
+@if(GAME_WOHN)
 			skipToNextStopMenuItem.enabled = canSkip;
+@endif
 
 		if(typeof this.rightClickMenuItem != "undefined")
 			rightClickMenuItem.enabled = inStable && !historyLayer.visible;
 
 		if(typeof this.showHistoryMenuItem != "undefined")
-@if(0)
+@if(!GAME_WOHN)
 			showHistoryMenuItem.enabled = inStable && !messageLayerHiding &&
 				historyEnabled;
 @endif
+@if(GAME_WOHN)
 			showHistoryMenuItem.enabled = inStable && ((!messageLayerHiding &&
 				historyEnabled) || historyLayer.visible);
+@endif
 
 		if(typeof this.autoModeMenuItem != "undefined")
-@if(0)
+@if(!GAME_WOHN)
 			autoModeMenuItem.enabled = notmodal;
 @endif
+@if(GAME_WOHN)
 			autoModeMenuItem.enabled = canAuto;
+@endif
 
 		if(typeof this.goBackMenuItem != "undefined")
 			goBackMenuItem.enabled = state && isHistoryOfStoreAlive();
@@ -1420,7 +1493,7 @@ class KAGWindow extends Window
 		if(typeof this.goToStartMenuItem != "undefined")
 			goToStartMenuItem.enabled = state && startAnchorEnabled;
 
-@if(0)
+@if(!GAME_WOHN)
 		if(typeof this.exitMenuItem != "undefined")
 			exitMenuItem.enabled = !currentDialog;
 @endif
@@ -1449,10 +1522,12 @@ class KAGWindow extends Window
 			}
 		}
 
+@if(GAME_WOHN)
 		// 全制御
 		if (this == global.Window.mainWindow && typeof global.onModeChange !== "undefined") {
 			global.onModeChange(this, autoMode, skipMode, canAuto, canSkip, selShow, modal, canRun);
 		}
+@endif
 	}
 
 	//----------------------------------------------- マウスキーを有効にする --
@@ -1477,6 +1552,7 @@ class KAGWindow extends Window
 
 	//----------------------------------------------------- システム変数関連 --
 
+@if(GAME_WOHN)
 	/**
 	 * 書き込みテストを行う
 	 */
@@ -1520,6 +1596,7 @@ class KAGWindow extends Window
 			dm("セーブデータ保存場所:" + saveDataLocation );
 		}
 	}
+@endif
 
 	function loadSystemVariables()
 	{
@@ -1646,7 +1723,9 @@ class KAGWindow extends Window
 			se[i].restoreSystemState(scflags);
 		}
 
+@if(GAME_WOHN)
 		updateMoveToMenuItemChecked();
+@endif
 	}
 
 	function clearSystemVariables()
@@ -1713,7 +1792,7 @@ class KAGWindow extends Window
 		// このマークの間を編集したりしないこと。
 		// [start_store_vars]
 		f.lastSaveDataName = lastSaveDataName;
-@if(0)
+@if(!GAME_WOHN)
 		f.quaking = quaking;
 		f.quakeEndTick = quakeEndTick;
 		f.quakeHorzMax = quakeHorzMax;
@@ -1740,7 +1819,9 @@ class KAGWindow extends Window
 		f.rightClickEnabled = rightClickEnabled;
 		f.rightClickCall = rightClickCall;
 		f.rightClickJump = rightClickJump;
+@if(GAME_WOHN)
 		f.rightClickExp = rightClickExp;
+@endif
 		f.rightClickTarget = rightClickTarget;
 		f.rightClickStorage = rightClickStorage;
 		f.rightClickName = rightClickName;
@@ -1845,7 +1926,7 @@ class KAGWindow extends Window
 		// (略)
 		// [start_restore_vars]
 		lastSaveDataName = f.lastSaveDataName if f.lastSaveDataName !== void;
-@if(0)
+@if(!GAME_WOHN)
 		quaking = f.quaking if f.quaking !== void;
 		quakeEndTick = f.quakeEndTick if f.quakeEndTick !== void;
 		quakeHorzMax = f.quakeHorzMax if f.quakeHorzMax !== void;
@@ -1872,7 +1953,9 @@ class KAGWindow extends Window
 		rightClickEnabled = f.rightClickEnabled if f.rightClickEnabled !== void;
 		rightClickCall = f.rightClickCall if f.rightClickCall !== void;
 		rightClickJump = f.rightClickJump if f.rightClickJump !== void;
+@if(GAME_WOHN)
 		rightClickExp = f.rightClickExp if f.rightClickExp !== void;
+@endif
 		rightClickTarget = f.rightClickTarget if f.rightClickTarget !== void;
 		rightClickStorage = f.rightClickStorage if f.rightClickStorage !== void;
 		rightClickName = f.rightClickName if f.rightClickName !== void;
@@ -1896,10 +1979,12 @@ class KAGWindow extends Window
 		autoWCWaits.assign(f.autoWCWaits) if f.autoWCWaits !== void;
 
 		// ムービー
-@if(0)
+@if(!GAME_WOHN)
 		if( isMain )
 @endif
+@if(GAME_WOHN)
 		if( isMain && f.movies != void )
+@endif
 		{
 			for( var i = 0; i < numMovies; i++)
 				movies[i].restore(f.movies[i]);
@@ -1977,7 +2062,7 @@ class KAGWindow extends Window
 			}
 		}
 
-@if(0)
+@if(!GAME_WOHN)
 		// quake 関連
 		restoreQuake();
 @endif
@@ -2118,6 +2203,7 @@ class KAGWindow extends Window
 		return historyOfStore.count;
 	}
 
+@if(GAME_WOHN)
 	function goBackYes() {
 		// user と core を pflags, pcflags に戻す
 		(Dictionary.assignStruct incontextof pflags)(historyOfStore[0].user);
@@ -2133,6 +2219,7 @@ class KAGWindow extends Window
 		// データを元に、栞をたどる動作をする
 		restoreFlags();
 	}
+@endif
 
 	function goBackHistory(ask = true)
 	{
@@ -2145,20 +2232,24 @@ class KAGWindow extends Window
 		if(ask)
 		{
 			var prompt = __("「%s」まで戻りますか？").sprintf(__(historyOfStore[0].core.currentPageName));
-@if(0)
+@if(!GAME_WOHN)
 			result = askYesNo(prompt);
 @endif
+@if(GAME_WOHN)
 			result = askYesNo(prompt, "確認", goBackYes);
+@endif
 		}
 		else
 		{
-@if(0)
+@if(!GAME_WOHN)
 			result = true;
 @endif
+@if(GAME_WOHN)
 			goBackYes();
+@endif
 		}
 
-@if(0)
+@if(!GAME_WOHN)
 		if(result)
 		{
 			// user と core を pflags, pcflags に戻す
@@ -2323,10 +2414,12 @@ class KAGWindow extends Window
 				snapshotLayer = new Layer(this, primaryLayer);
 			snapshotLayer.setImageSize(scWidth, scHeight);
 			snapshotLayer.face = dfAlpha;
-@if(0)
+@if(!GAME_WOHN)
 			snapshotLayer.piledCopy(0, 0, kag.fore.base, 0, 0, scWidth, scHeight);
 @endif
+@if(GAME_WOHN)
 			snapshotLayer.piledCopy(0, 0, primaryLayer, 0, 0, scWidth, scHeight);
+@endif
 		}
 		snapshotLockCount ++;
 	}
@@ -2371,6 +2464,7 @@ class KAGWindow extends Window
 			invalidate snapshotLayer, snapshotLayer = void;
 	}
 
+@if(GAME_WOHN)
 	function createThumbnail(w, h)
 	{
 		var tmp = new Layer(this, primaryLayer);
@@ -2380,6 +2474,7 @@ class KAGWindow extends Window
 			0, 0, snapshotLayer.imageWidth, snapshotLayer.imageHeight, stLinear);
 		return tmp;
 	}
+@endif
 
 	function saveBookMarkToFile(fn, savehist = true)
 	{
@@ -2402,13 +2497,15 @@ class KAGWindow extends Window
 			{
 				// サムネイルのサイズまで縮小
 				var size = calcThumbnailSize();
-@if(0)
+@if(!GAME_WOHN)
 				var tmp = new Layer(this, primaryLayer);
 @endif
+@if(GAME_WOHN)
 				var tmp;
+@endif
 				try
 				{
-@if(0)
+@if(!GAME_WOHN)
 					tmp.setImageSize(size.width, size.height);
 					tmp.face = dfAlpha;
 					tmp.stretchCopy(0, 0, size.width, size.height, snapshotLayer,
@@ -2422,9 +2519,11 @@ class KAGWindow extends Window
 									0.8, 0, 255); // B gamma, floor, ceil
 					*/
 @endif
+@if(GAME_WOHN)
 					tmp	= createThumbnail(size.width, size.height);
 
 					processThumbnail(tmp);	//	サムネイルに加工を施す
+@endif
 
 					try
 					{
@@ -2438,26 +2537,32 @@ class KAGWindow extends Window
 					}
 					catch(e)
 					{
-@if(0)
+@if(!GAME_WOHN)
 						invalidate tmp;
 @endif
+@if(GAME_WOHN)
 						invalidate tmp if tmp != void;
+@endif
 						unlockSnapshot();
-@if(0)
+@if(!GAME_WOHN)
 						System.inform("ファイルに保存できません (ファイルを開けないか、"
 							"書き込み禁止です)");
 @endif
+@if(GAME_WOHN)
 						readOnlyMode = true;
 						errorInform("savefail");
+@endif
 						return false;
 					}
 				}
 				catch(e)
 				{
-@if(0)
+@if(!GAME_WOHN)
 					invalidate tmp;
 @endif
+@if(GAME_WOHN)
 					invalidate tmp if tmp != void;
+@endif
 					throw e;
 				}
 				invalidate tmp;
@@ -2478,12 +2583,14 @@ class KAGWindow extends Window
 			}
 			catch(e)
 			{
-@if(0)
+@if(!GAME_WOHN)
 				System.inform("ファイルに保存できません (ファイルを開けないか、"
 					"書き込み禁止です)");
 @endif
+@if(GAME_WOHN)
 				readOnlyMode = true;
 				errorInform("savefail");
+@endif
 				return false;
 			}
 		}
@@ -2491,11 +2598,13 @@ class KAGWindow extends Window
 		return true;
 	}
 
+@if(GAME_WOHN)
 	function processThumbnail(thumbnail)
 	{
 		//	サムネイルに追加の加工を施す
 		//	例) Hシーンのサムネイルをモザイク加工
 	}
+@endif
 
 	function saveBookMark(num, savehist = true)
 	{
@@ -2552,10 +2661,12 @@ class KAGWindow extends Window
 
 			if(data.id != saveDataID)
 			{
-@if(0)
+@if(!GAME_WOHN)
 				System.inform(__("他のシステムのデータを読み込もうとしました"), __("エラー"));
 @endif
+@if(GAME_WOHN)
 				errorInform("loadfail");
+@endif
 				return false;
 			}
 
@@ -2575,12 +2686,14 @@ class KAGWindow extends Window
 		}
 		catch(e)
 		{
-@if(0)
+@if(!GAME_WOHN)
 			System.inform("栞を読み込めないか、栞が"
 				"壊れているか、あるいは他の形式の栞データ"
 				"です(" + e.message + ")", "エラー");
 @endif
+@if(GAME_WOHN)
 			errorInform("loadexception", e.message);
+@endif
 			return false;
 		}
 
@@ -2605,13 +2718,15 @@ class KAGWindow extends Window
 			(bookMarkDates[num] != "") ? "「" + bookMarkNames[num] + "」" : "", // bookMarkDates が空文字の場合は栞は存在しない
 			__(pcflags.currentPageName)
 		);
-@if(0)
+@if(!GAME_WOHN)
 		var result = askYesNo(prompt);
 		if(result) return saveBookMark(num);
 		return false;
 @endif
+@if(GAME_WOHN)
 		askYesNo(prompt, "確認", saveBookMark, void, num);
 		return true;
+@endif
 	}
 
 	function loadBookMarkWithAsk(num)
@@ -2799,11 +2914,13 @@ class KAGWindow extends Window
 	function goToStartWithAsk()
 	{
 		// 最初に戻る(確認あり)
-@if(0)
+@if(!GAME_WOHN)
 		var result = askYesNo(__("最初に戻ります。よろしいですか ?"));
 		if(result) goToStart();
 @endif
+@if(GAME_WOHN)
 		askYesNo(__("最初に戻ります。よろしいですか ?"), "確認", goToStart);
+@endif
 	}
 
 	function tempSave(num)
@@ -2962,14 +3079,16 @@ class KAGWindow extends Window
 	function hideHistory()
 	{
 		// メッセージ履歴レイヤを非表示にする
-@if(0)
+@if(!GAME_WOHN)
 		historyLayer.dispUninit();
 @endif
+@if(GAME_WOHN)
 		historyLayer.dispUninit(...);
+@endif
 		historyShowing = false;
 		if(typeof this.showHistoryMenuItem != "undefined")
 			showHistoryMenuItem.checked = false;
-@if(0)
+@if(!GAME_WOHN)
 		//	フェードアウトさせるため、dispUninit で一度 invisible になった historyLayer を visible にしているので、ここで setMenuAccessibleAll を実行すると canAuto=false になってしまう
 		setMenuAccessibleAll();
 @endif
@@ -3071,7 +3190,6 @@ class KAGWindow extends Window
 		// ファイルの代わりに使うようになるので、ここにフィルタを書くこ
 		// とができる。
 		// true を返すと通常のシナリオファイル読み込みとなる。
-
 		return true;
 	}
 
@@ -3278,7 +3396,7 @@ class KAGWindow extends Window
 		// デフォルトの run ハンドラ
 		hideHistory();
 		hideClickGlyphs();
-@if(0)
+@if(!GAME_WOHN)
 		//	テキストが表示されるときにメッセージウィンドウが可視になるので、ここでは可視にしない(ロード時、必要ないタイミングで可視になるので)
 		showMessageLayerByUser();
 @endif
@@ -3356,28 +3474,34 @@ class KAGWindow extends Window
 	{
 		// 右クリックのオプションを設定する
 		rightClickEnabled = +elm.enabled if elm.enabled !== void;
+@if(GAME_WOHN)
 		if(elm.exp !== void)
 		{
 			rightClickExp = elm.exp;
 			if(rightClickExp != void) rightClickJump = rightClickCall = false;
 		}
 		else
+@endif
 		{
 			if(elm.call !== void)
 			{
 				rightClickCall = +elm.call;
-@if(0)
+@if(!GAME_WOHN)
 				if(rightClickCall) rightClickJump = false;
 @endif
+@if(GAME_WOHN)
 				if(rightClickCall) rightClickJump = rightClickExp = false;
+@endif
 			}
 			if(elm.jump !== void)
 			{
 				rightClickJump = +elm.jump;
-@if(0)
+@if(!GAME_WOHN)
 				if(rightClickJump) rightClickCall = false;
 @endif
+@if(GAME_WOHN)
 				if(rightClickJump) rightClickCall = rightClickExp = false;
+@endif
 			}
 			rightClickTarget = elm.target if elm.target !== void;
 			rightClickStorage = elm.storage if elm.storage !== void;
@@ -3410,6 +3534,7 @@ class KAGWindow extends Window
 		lockMessageLayerSelProcess(); // 選択肢ロック
 	}
 
+@if(GAME_WOHN)
 	function executeRightClickFunction()
 	{
 		if(rightClickExp == void)
@@ -3426,6 +3551,7 @@ class KAGWindow extends Window
 
 		lockMessageLayerSelProcess(); // 選択肢ロック
 	}
+@endif
 
 	function restoreFromRightClick()
 	{
@@ -3475,8 +3601,10 @@ class KAGWindow extends Window
 					jumpToRightClickTarget();
 				else if(rightClickCall && conductor == mainConductor)
 					callRightClickSubRoutine();
+@if(GAME_WOHN)
 				else if(rightClickExp != void)
 					executeRightClickFunction();
+@endif
 				else
 					switchMessageLayerHiddenByUser();
 			}
@@ -4123,47 +4251,65 @@ class KAGWindow extends Window
 		actualChSpeed = 0;
 	}
 
-@if(0)
+@if(!GAME_WOHN)
 	function skipToStop()
 @endif
+@if(GAME_WOHN)
 	function skipToStop(force=false)
+@endif
 	{
 		// 次の停止までスキップ
+@if(GAME_WOHN)
 		kag.showMessageLayerByUser() if force;
 		var	h	= messageLayerHiding;
+@endif
 		onPrimaryClick(); // クリックの動作をエミュレートする
+@if(GAME_WOHN)
 		if(!h)
-		{//	メッセージレイヤーが隠れていれば、スキップは開始しない
+@endif
+		{
+			//	メッセージレイヤーが隠れていれば、スキップは開始しない
 			skipMode = 3;
 			actualChSpeed = 0;
+@if(GAME_WOHN)
 			if(typeof this.skipToNextStopMenuItem != "undefined")
 				skipToNextStopMenuItem.checked = true;
+@endif
 		}
 	}
 
 	function skipToStop2()
 	{
 		// 次の停止までスキップ(早送りモード)
+@if(GAME_WOHN)
 		var	h	= messageLayerHiding;
+@endif
 		onPrimaryClick();
+@if(GAME_WOHN)
 		if(!h)
-		{//	メッセージレイヤーが隠れていれば、スキップは開始しない
+@endif
+		{
+			//	メッセージレイヤーが隠れていれば、スキップは開始しない
 			skipMode = 4;
 			actualChSpeed = 0;
 		}
 	}
 
-@if(0)
+@if(!GAME_WOHN)
 	function cancelSkip()
 @endif
+@if(GAME_WOHN)
 	function cancelSkip(byuser=false)
+@endif
 	{
 		// スキップ動作をキャンセル
 		if(skipMode == 4) skipKeyRepressed = false;
 		skipMode = 0;
 		actualChSpeed = chSpeed;
+@if(GAME_WOHN)
 		if(typeof this.skipToNextStopMenuItem != "undefined")
 			skipToNextStopMenuItem.checked = false;
+@endif
 	}
 
 	function enterNoWait()
@@ -4290,7 +4436,7 @@ class KAGWindow extends Window
 			(elm.canskip === void || +elm.canskip) && clickSkipEnabled);
 	}
 
-@if(0)
+@if(!GAME_WOHN)
 	//------------------------------------------------------------ quake関連 --
 
 	function doQuake(elm)
@@ -4431,10 +4577,12 @@ class KAGWindow extends Window
 
 	//------------------------------------------------------------- クリック --
 
-@if(0)
+@if(!GAME_WOHN)
 	function onPrimaryClick()
 @endif
+@if(GAME_WOHN)
 	function onPrimaryClick(button=mbLeft)
+@endif
 	{
 		// プライマリレイヤで「クリックの動作」がなにもフィルタリングされなかった
 		// とき、プライマリレイヤから呼ばれる。
@@ -4451,10 +4599,12 @@ class KAGWindow extends Window
 				var runst = conductor.mRun;
 				var stopst = conductor.mStop;
 
-@if(0)
+@if(!GAME_WOHN)
 				if(st != stopst && autoMode)
 @endif
+@if(GAME_WOHN)
 				if(st != stopst && autoMode && (!cf.autoModeArrowClick || button==mbRight))
+@endif
 				{
 					// 自動読みすすみの場合
 					cancelAutoMode();
@@ -4462,10 +4612,12 @@ class KAGWindow extends Window
 				else if(st != stopst && canCancelSkipByClick && skipMode && skipMode != 4)
 				{
 					// クリックによるスキップの解除が可能
-@if(0)
+@if(!GAME_WOHN)
 					cancelSkip();
 @endif
+@if(GAME_WOHN)
 					cancelSkip(true);
+@endif
 				}
 				else
 				{
@@ -4694,7 +4846,7 @@ class KAGWindow extends Window
 		}
 	}
 
-@if(0)
+@if(!GAME_WOHN)
 	function onMouseDown(x, y, button)
 	{
 		// フルスクリーン時の画面外クリックを判定
@@ -4726,15 +4878,17 @@ class KAGWindow extends Window
 	function hideClickGlyphs()
 	{
 		// クリック待ち記号を非表示に
-@if(0)
+@if(!GAME_WOHN)
 		lineBreak.visible = false;
 		pageBreak.visible = false;
 @endif
+@if(GAME_WOHN)
 		if( current !== void && isvalid current )
 		{
 			current.hideGlyph();
 			current.comp.hideGlyph() if currentWithBack && current.comp !== void && isvalid current.comp;
 		}
+@endif
 		if(conductor == mainConductor)
 		{
 			// クリック待ち記号の状態を記録
@@ -4784,7 +4938,9 @@ class KAGWindow extends Window
 		return chNonStopToPageBreak || (getCurrentRead() && ch2ndNonStopToPageBreak);
 	}
 
+@if(GAME_WOHN)
 	property breakWithBack	{ getter { return currentWithBack && transCount > 0; } }
+@endif
 
 	function showLineBreak(elm)
 	{
@@ -4799,25 +4955,31 @@ class KAGWindow extends Window
 		if(autoMode)
 		{
 			// 自動読みすすみの場合
+@if(GAME_WOHN)
 			cancelSkip();
 			if(cf.autoModeArrowClick)
 				return doWait(%[time:autoModeLineWait,norapid:true,canskip:true]);
 			else
+@endif
 				return autoModeLineWait;
 		}
 		if(skipMode == 1) cancelSkip();
-@if(0)
+@if(!GAME_WOHN)
 		if(skipMode == 4 && !skipKeyPressing()) cancelSkip();
 @endif
+@if(GAME_WOHN)
 		if(skipMode == 4 && !skipKeyPressing()) cancelSkip(true);
+@endif
 		if(skipMode == 4) return -4;
 		if(skipMode) return skipCancelKeyPressing()?-4:0;
 			// スキップ中(スキップをキャンセルするようなキーがあればスキップ解除
 			// のためのイベント処理の機会を与える)
 
 		current.showLineBreakGlyph(lineBreak);
+@if(GAME_WOHN)
 		current.comp.showLineBreakGlyph(lineBreak) if breakWithBack;
 			//	トランジション中は逆のメッセージレイヤーにも待ち記号を表示する
+@endif
 		storeClickGlyphState("line");
 
 		if(!current.nodeVisible)
@@ -4847,23 +5009,29 @@ class KAGWindow extends Window
 		// 現在のメッセージレイヤにページ待ち記号を表示する
 		stablePosibility = true;
 		if(skipMode == 1 || skipMode == 2) cancelSkip();
-@if(0)
+@if(!GAME_WOHN)
 		if(skipMode == 4 && !skipKeyPressing()) cancelSkip();
 @endif
+@if(GAME_WOHN)
 		if(skipMode == 4 && !skipKeyPressing()) cancelSkip(true);
+@endif
 		if(skipMode) return -4; // いったんイベントを処理
 		if(autoMode)
 		{
 			// 自動読みすすみの場合
+@if(GAME_WOHN)
 			if(cf.autoModeArrowClick)
 				return doWait(%[time:autoModePageWait,norapid:true,canskip:true]);
 			else
+@endif
 				return autoModePageWait;
 		}
 
 		current.showPageBreakGlyph(pageBreak);
+@if(GAME_WOHN)
 		current.comp.showPageBreakGlyph(lineBreak) if breakWithBack;
 			//	トランジション中は逆のメッセージレイヤーにも待ち記号を表示する
+@endif
 		storeClickGlyphState("page");
 
 		if(!current.nodeVisible)
@@ -4895,10 +5063,12 @@ class KAGWindow extends Window
 		// 実行再開時には MessageLayer.clear2 を呼ぶ
 		stablePosibility = true;
 		if(skipMode == 1 || skipMode == 2) cancelSkip();
-@if(0)
+@if(!GAME_WOHN)
 		if(skipMode == 4 && !skipKeyPressing()) cancelSkip();
 @endif
+@if(GAME_WOHN)
 		if(skipMode == 4 && !skipKeyPressing()) cancelSkip(true);
+@endif
 		var lasttagname = conductor.lastTagName;
 		if((!autoMode && ((!canIgnoreL() && lasttagname == 'l') || lasttagname == 'p')) || skipMode)
 		{// いったんイベントを処理(タグは後回し)
@@ -5000,16 +5170,20 @@ class KAGWindow extends Window
 		bgmStopTarget  = void;
 	}
 
+@if(GAME_WOHN)
 	// BGM 停止時拡張ハンドラ
 	var bgmStopHandler;
+@endif
 
 	function onBGMStop()
 	{
 		// BGM が停止した
 		conductor.trigger('bgmstop');
+@if(GAME_WOHN)
 		if (bgmStopHandler !== void) {
 			bgmStopHandler();
 		}
+@endif
 		if (bgmStopExp !== void || bgmStopStorage !== void || bgmStopTarget !== void) {
 			global.stopBgmTrigger = new AsyncTrigger(handleBgmStop, '');
 			global.stopBgmTrigger.cached = true;
@@ -5032,17 +5206,23 @@ class KAGWindow extends Window
 		}
 	}
 
+@if(GAME_WOHN)
 	// BGM 停止時拡張ハンドラ
 	var bgmLabelHandler;
+@endif
 
 	function onBGMLabel(label) {
+@if(GAME_WOHN)
 		// ディレイ実行展開
 		conductor.extractDelay(label);
+@endif
 		// BGM のラベル通過処理
 		conductor.trigger('bgmlabel_' + label);
+@if(GAME_WOHN)
 		if (bgmLabelHandler !== void) {
 			bgmLabelHandler(label);
 		}
+@endif
 		var obj = bgmLabelInfos[label];
 		if (obj !== void) {
 			bgmLabelInfo = obj;
@@ -5151,6 +5331,7 @@ class KAGWindow extends Window
 		return -2;
 	}
 
+@if(GAME_WOHN)
 	function waitBGMLabel(elm)
 	{
 		// BGM のラベル通過を待つ
@@ -5178,13 +5359,16 @@ class KAGWindow extends Window
 		}
 		return -2;
 	}
+@endif
 
 	//----------------------------------------------------------- 効果音処理 --
 
+@if(GAME_WOHN)
 	function onSELabel(label) {
 		// ディレイ実行展開
 		conductor.extractDelay(label);
 	}
+@endif
 
 	function onSESoundBufferFadeCompleted(id)
 	{
@@ -5196,9 +5380,11 @@ class KAGWindow extends Window
 	{
 		// 効果音の再生が終了した
 		conductor.trigger('sestop' + id);
+@if(GAME_WOHN)
 		if (typeof this.seStopHandler == "Object") {
 			seStopHandler(id);
 		}
+@endif
 	}
 
 	function waitSEFade(elm)
@@ -5295,6 +5481,7 @@ class KAGWindow extends Window
 		return -2;
 	}
 
+@if(GAME_WOHN)
 	// 効果音タグ共通処理
 	function commonSEmethod(elm, method, *) {
 		var bufs = [];
@@ -5317,9 +5504,11 @@ class KAGWindow extends Window
 		}
 		return 0;
 	}
+@endif
 
 	//--------------------------------------------------------- ムービー関連 --
 
+@if(GAME_WOHN)
 	// 保持してるムービーレイヤ
 	var movieLayers = [];
 
@@ -5487,6 +5676,7 @@ class KAGWindow extends Window
 		// ムービーの再生を開始した
 		onMovieStatusChanged("play", id);
 	}
+@endif
 	function onMovieStop(id)
 	{
 		// ムービーの再生が終了した
@@ -5715,10 +5905,12 @@ class KAGWindow extends Window
 			if(acs) { updateBeforeCh--; return -5; } else { updateBeforeCh--; }
 		}
 		if(currentWithBack) current.comp.processGraph(elm);
+@if(GAME_WOHN)
 // 追加ここから
 		elm.acs	= acs;	//	1文字の描画時間
 		acs		*= elm.count if elm.count != void;	//	このグラフィックを何文字分として処理するか(指定がなければ1文字分)
 // 追加ここまで
+@endif
 		if(current.processGraph(elm))
 		{
 			return showPageBreakAndClear();
@@ -6010,6 +6202,7 @@ class KAGWindow extends Window
 		return 0;
 	} incontextof this,
 
+@if(GAME_WOHN)
 	align : function(elm)
 	{
 		var textToAlign = elm.text;
@@ -6080,6 +6273,7 @@ class KAGWindow extends Window
 		}
 		return 0;
 	} incontextof this,
+@endif
 
 	glyph : function(elm)
 	{
@@ -6131,7 +6325,9 @@ class KAGWindow extends Window
 		notifyStable();
 
 		// メッセージレイヤタイムアウト呼び出し開始
+@if(GAME_WOHN)
 		if (typeof(this) === "Object" && isvalid(this) && typeof(this.current) === "Object" && isvalid(this.current))
+@endif
 		{
 			current.startTimeout();
 		}
@@ -6247,7 +6443,7 @@ class KAGWindow extends Window
 		return hideMessageLayerByScenario(elm);
 	} incontextof this,
 
-@if(0)
+@if(!GAME_WOHN)
 	quake : function(elm)
 	{
 		// 揺れ
@@ -6555,7 +6751,7 @@ class KAGWindow extends Window
 		return 0;
 	} incontextof this,
 
-@if(0)
+@if(!GAME_WOHN)
 	// layer, page, fps, ox, oy
 	framemove : function(elm)
 	{
@@ -6873,7 +7069,9 @@ class KAGWindow extends Window
 		var exp = elm.exp;
 		var result = Scripts.eval(exp);
 
-		if (result instanceof "Dictionary") {
+@if(GAME_WOHN)
+		if (result instanceof "Dictionary")
+		{
 			dm("▼[trace] expression=\"" + exp + "\"");
 			var names = [];
 			names.assign(result);
@@ -6883,14 +7081,19 @@ class KAGWindow extends Window
 				dm("▼[trace] name=\"" + name + "\" type of value=" + typeof value +
 				   " value=" + value);
 			}
-		} else if (result instanceof "Array") {
+		}
+		else if (result instanceof "Array")
+		{
 			dm("▼[trace] expression=\"" + exp +  "\"");
 			for (var i=0; i<result.count; i++) {
 				var value = result[i];
 				dm("▼[trace] idx=\"" + i + "\" type of value=" + typeof value +
 				   " value=" + value);
 			}
-		} else {
+		}
+		else
+@endif
+		{
 			dm("▼[trace] expression=\"" + exp + "\" type of result=" + typeof result +
 			   " result=" + result);
 		}
@@ -6933,6 +7136,7 @@ class KAGWindow extends Window
 	// エラーログ処理
 	// ----------------------------------------------------------
 
+@if(GAME_WOHN)
 	// デバッグレベル初期値
 	var _debugLevel = tkdlNone;
 
@@ -7170,6 +7374,7 @@ class KAGWindow extends Window
 
 		setMenuAccessibleAll();
 	}
+@endif
 }
 
 

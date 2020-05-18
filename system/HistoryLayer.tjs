@@ -463,9 +463,6 @@ class HistoryLayer extends Layer
 					currentLine=
 						currentLine.substring(0, currentLine.length - ch.length);	//	追加した文字を取り除く
 					reline();
-@if(0)
-					currentLine = ch;
-@endif
 					currentLine = ch;
 				}
 			}
@@ -562,6 +559,7 @@ class HistoryLayer extends Layer
 		indentPos = 0;
 	}
 
+@if(GAME_WOHN)
 	function locateAlign(anchor, text, offsetText="", offsetTextDirection=0) {
 		var right = relinePos;
 		var x = void;
@@ -578,6 +576,7 @@ class HistoryLayer extends Layer
 		limitPos = limitPos_org - x;
 		relinePos = relinePos_org - x;
 	}
+@endif
 
 	function clearBack(n)
 	{

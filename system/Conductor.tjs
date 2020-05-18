@@ -7,11 +7,13 @@ Plugins.link("KAGParser.dll");
 @endif
 @endif
 
+@if(GAME_WOHN)
 //	タグ属性の未定義チェックを行うか
 @set(USE_CHECK_TAG_PARAM=1)
 
 //	デバッグレベルの設定
 @set(CONDUCTOR_VERBOSE=0)
+@endif
 
 class ConductorException extends Exception
 {
@@ -21,6 +23,7 @@ class ConductorException extends Exception
 	function finalize() { super.finalize(...); }
 };
 
+@if(GAME_WOHN)
 var	isStopTag	= %[
 	l:1, lr:1, p:1, pg:1, s:1, stopcache:1, autocache:1,	//	コンダクタが解釈してしまうタグ以外(macro を登録しても、先にコンダクタが元のタグに分解してしまう)
 ];
@@ -138,6 +141,7 @@ function outputUndefinedTagParams()
 }
 @endif
 @endif
+@endif
 
 class BaseConductor extends KAGParser
 {
@@ -150,7 +154,9 @@ class BaseConductor extends KAGParser
 	var inProcessing = false; // timerCallback を処理中かどうか
 	var reentered = false; // timerCallback 中に 再入したか
 	var nextTimerTick = 0; // 次にタイマーが発動されるはずの tick
+@if(GAME_WOHN)
 	var autoCache = false; // 自動キャッシュの有効/無効
+@endif
 
 	function BaseConductor()
 	{
@@ -182,6 +188,7 @@ class BaseConductor extends KAGParser
 		super.clear();
 	}
 
+@if(GAME_WOHN)
 	function doOneshot(mode)
 	{
 		oneshot.mode= mode;
@@ -196,8 +203,10 @@ class BaseConductor extends KAGParser
 	}
 
 	var	_doOneshot	= false;	//	timer.enabled=false でも、oneshot で実行されたときは処理を行うためのフラグ
+@endif
 	function timerCallback()
 	{
+@if(GAME_WOHN)
 		if(!timer.enabled)
 		{
 			if(!_doOneshot)
@@ -211,6 +220,7 @@ class BaseConductor extends KAGParser
 				_doOneshot	= false;
 			}
 		}
+@endif
 
 		// 次の要素を得る
 		nextTimerTick = timer.interval + System.getTickCount();
@@ -236,11 +246,14 @@ class BaseConductor extends KAGParser
 				else
 				{
 					// 後回しにされたタグがないので次のタグを得る
+@if(GAME_WOHN)
 @if(DEBUG)
 					try
 					{
 @endif
+@endif
 					obj = getNextTag(); // 次のタグを得る
+@if(GAME_WOHN)
 @if(DEBUG)
 					}
 					catch(e)
@@ -250,6 +263,7 @@ class BaseConductor extends KAGParser
 						else
 							throw e;
 					}
+@endif
 @endif
 
 					// getNextTag() の中で、pendings に追加された (iscript など)
@@ -283,7 +297,9 @@ class BaseConductor extends KAGParser
 					if(step === void)
 						throw new Exception(__("onTag が void を返しました (%s)( おそらくタグハンドラの戻り値を返し忘れた )").sprintf(obj.tagname));
 					step = int step; // step を数値に
+@if(GAME_WOHN)
 //					dm(obj.tagname+" = "+step) if obj.tagname != "copy" && obj.tagname != "ch" && obj.tagname != "wait";
+@endif
 					if(step == 0)
 					{
 						// ウェイトを掛けずに次へ
@@ -296,40 +312,54 @@ class BaseConductor extends KAGParser
 						{
 						case -5: // いったんイベントを処理(現在のタグは後回し)
 							pendings.insert(0, obj);
-@if(0)
+@if(!GAME_WOHN)
 							oneshot.mode = atmAtIdle;
 							oneshot.trigger(); // トリガ
 @endif
+@if(GAME_WOHN)
 							doOneshot(atmAtIdle);
+@endif
 							timer.interval = 0; // タイマは停止
 							inProcessing = false;
 							reentered = false;
 							return;
 						case -4: // いったんイベントを処理
-@if(0)
+@if(!GAME_WOHN)
 							oneshot.mode = atmAtIdle;
 							oneshot.trigger(); // トリガ
 @endif
+@if(GAME_WOHN)
 							doOneshot(atmAtIdle);
+@endif
 							timer.interval = 0; // タイマは停止
 							inProcessing = false;
 							reentered = false;
+@if(GAME_WOHN)
 							touchNextImages() if isStopTag[obj.tagname]; // タグを先読みして次で使用する画像をキャッシュする
+@endif
 							return;
 						case -3: // 後回ししてブレーク
 							pendings.insert(0, obj);
+@if(GAME_WOHN)
 							cancelOneshot();
+@endif
 							timer.interval = 0; // タイマは停止
 							inProcessing = false;
 							reentered = false;
+@if(GAME_WOHN)
 							touchNextImages() if isStopTag[obj.tagname]; // タグを先読みして次で使用する画像をキャッシュする
+@endif
 							return;
 						case -2: // ブレーク
+@if(GAME_WOHN)
 							cancelOneshot();
+@endif
 							timer.interval = 0; // タイマは停止
 							inProcessing = false;
 							reentered = false;
+@if(GAME_WOHN)
 							touchNextImages() if isStopTag[obj.tagname]; // タグを先読みして次で使用する画像をキャッシュする
+@endif
 							return;
 						case -1: // シナリオ終了
 							timer.interval = 0;
@@ -349,12 +379,14 @@ class BaseConductor extends KAGParser
 							timer.interval = step;
 							nextTimerTick = step + System.getTickCount();
 						}
+@if(GAME_WOHN)
 						// 処理したのが p タグなら時間が指定されていても自動実行中だと思われるので、タグの先読みだけ行う
 						if(obj.tagname == "p")
 							touchNextImages(step - 150);
 						// 次の処理まで多少時間が出来たので、先ほど読み込みきれなかった画像を読み込む
 						else if(step > 200 && lastTouchImages.count > 0)
 							touchImages(lastTouchImages, step - 150);	//	立ち絵全だと150ミリ秒近く掛かってしまうので、余裕を見て
+@endif
 
 						inProcessing = false;
 						reentered = false;
@@ -381,6 +413,7 @@ class BaseConductor extends KAGParser
 		}
 	}
 
+@if(GAME_WOHN)
 	property doCache
 	{
 		getter	{ return autoCache; }// && kag.actionCount == 0; }
@@ -478,6 +511,7 @@ class BaseConductor extends KAGParser
 //		dm("touchImages("+timeout+"): "+storages.join(", "));
 		System.touchImages(storages,, timeout);
 	}
+@endif
 
 	function onTag()
 	{
@@ -513,12 +547,14 @@ class BaseConductor extends KAGParser
 			}
 			else
 			{
-@if(0)
+@if(!GAME_WOHN)
 				oneshot.mode = atmExclusive;
 @endif
+@if(GAME_WOHN)
 				doOneshot(atmExclusive);
+@endif
 					// イベントが配信されるまで他の非同期イベントをブロック
-@if(0)
+@if(!GAME_WOHN)
 				oneshot.trigger(); // トリガ
 @endif
 			}
@@ -551,12 +587,14 @@ class BaseConductor extends KAGParser
 				{
 					timer.interval = 0;
 					timer.enabled = true;
-@if(0)
+@if(!GAME_WOHN)
 					oneshot.mode = atmExclusive;
 @endif
+@if(GAME_WOHN)
 					doOneshot(atmExclusive);
+@endif
 						// イベントが配信されるまで他の非同期イベントをブロック
-@if(0)
+@if(!GAME_WOHN)
 					oneshot.trigger(); // トリガ
 @endif
 				}
@@ -564,10 +602,12 @@ class BaseConductor extends KAGParser
 			else
 			{
 				// disable
-@if(0)
+@if(!GAME_WOHN)
 				oneshot.cancel();
 @endif
+@if(GAME_WOHN)
 				cancelOneshot();
+@endif
 				timer.enabled = false;
 			}
 			_interrupted = x;
@@ -601,12 +641,14 @@ class BaseConductor extends KAGParser
 	function store()
 	{
 		// store オーバーライド
-@if(0)
+@if(!GAME_WOHN)
 		return super.store(...);
 @endif
+@if(GAME_WOHN)
 		var	dic	= super.store(...);
 		dic.autoCache	= autoCache;
 		return dic;
+@endif
 	}
 
 	function restore(dic)
@@ -635,6 +677,7 @@ class BaseConductor extends KAGParser
 	{
 		pendings.add(tag);
 	}
+@if(GAME_WOHN)
 @if(DEBUG)
 	function dispPendings()
 	{
@@ -644,6 +687,7 @@ class BaseConductor extends KAGParser
 			dm(i+": "+tag.tagname);
 		}
 	}
+@endif
 @endif
 }
 
@@ -667,16 +711,21 @@ class Conductor extends BaseConductor
 		// コンストラクタ
 		super.BaseConductor();
 		ignoreCR = global.ignoreCR;
+		debugLevel = tkdlVerbose;
+@if(GAME_WOHN)
 @if(CONDUCTOR_VERBOSE)
 		debugLevel = tkdlVerbose;
 @endif
 @if(!CONDUCTOR_VERBOSE)
 		debugLevel = tkdlNone;
 @endif
+@endif
 		this.owner = owner;
 		this.handlers = handlers;
 		timeOutTimer = new Timer(onTimeOut, '');
+@if(GAME_WOHN)
 		timeOutTimer.enabledPause	= false;
+@endif
 	}
 
 	function finalize()
@@ -724,7 +773,9 @@ class Conductor extends BaseConductor
 		(Dictionary.assign incontextof waitUntil)(until);
 		timeOutTimer.interval = timeout;
 		timeOutTimer.enabled = true;
+@if(GAME_WOHN)
 		timeOutTimer.enabledPause = false;
+@endif
 	}
 
 	function onTimeOut()
@@ -734,6 +785,7 @@ class Conductor extends BaseConductor
 		trigger('timeout'); // 自分自身で timeout をトリガする
 	}
 
+@if(GAME_WOHN)
 	function waitWithTimeOutAndPause(until, timeout)
 	{
 		// 待ちを行うが、タイムアウトとタイムアウトの一時停止がある
@@ -759,6 +811,7 @@ class Conductor extends BaseConductor
 			timeOutTimer.startTick	= System.getTickCount();	//	resume した時刻を記録
 		}
 	}
+@endif
 
 	function trigger(name)
 	{
@@ -768,7 +821,7 @@ class Conductor extends BaseConductor
 		// それを引数としてハンドラに渡す
 		// waitUntil はクリアされる
 		if(status != mWait) return false;
-@if(0)
+@if(!GAME_WOHN)
 		//	引かれたトリガと待っているものを表示する
 		var	keys	= [];
 		keys.assign(waitUntil);
@@ -791,6 +844,7 @@ class Conductor extends BaseConductor
 		}
 	}
 
+@if(GAME_WOHN)
 @if(DEBUG)
 	//デバッグ用の高速セーブ／ロードでペンディングせず即時実施するタグかどうか確認する
 	//	ペンディングで良い:true, 即時実行しないといけない:false
@@ -812,9 +866,11 @@ class Conductor extends BaseConductor
 		return true;
 	}
 @endif
+@endif
 
 	function onTag(elm)
 	{
+@if(GAME_WOHN)
 //		dm("onTag("+elm.tagname+")");
 @if(DEBUG)
 		if( typeof global.load_by_ss == "undefined" )
@@ -915,6 +971,7 @@ class Conductor extends BaseConductor
 		if( load_by_ss || ss_by_label )
 			dm("＠ onTag exec tagname=" + elm.tagname) if elm.tagname != "ch";
 @endif
+@endif
 		// タグの処理
 		var tagname = elm.tagname;
 		var handler = handlers[tagname];
@@ -927,6 +984,7 @@ class Conductor extends BaseConductor
 		return onUnknownTag(tagname, elm);
 	}
 
+@if(GAME_WOHN)
 	property doCache
 	{
 		getter	{ return super.doCache && owner.previousCache; }
@@ -1013,6 +1071,7 @@ class Conductor extends BaseConductor
 			touchAsyncCaller.trigger() if lastTouchImages.count > 0;
 		}
 	}
+@endif
 
 	function onStop()
 	{
@@ -1095,6 +1154,7 @@ class Conductor extends BaseConductor
 	}
 }
 
+@if(GAME_WOHN)
 //	画像をリストへ入れる
 //	立ち絵ならパーツ画像も入れる
 function addTouchList(list, storage)
@@ -1111,3 +1171,4 @@ function addTouchList(list, storage)
 	}
 	list.add(storage) if list.find(storage) < 0;
 }
+@endif

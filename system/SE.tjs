@@ -1,7 +1,9 @@
 ﻿// SE.tjs - 効果音管理
 // Copyright (C)2001-2009, W.Dee and contributors  改変・配布は自由です
 
+@if(GAME_WOHN)
 @set(VOLUME_VISIBLE=0)
+@endif
 
 class SESoundBuffer extends WaveSoundBuffer
 {
@@ -9,10 +11,12 @@ class SESoundBuffer extends WaveSoundBuffer
 
 	var owner; // オーナー
 	var id; // 効果音バッファID
-@if(0)
+@if(!GAME_WOHN)
 	var inFading; // フェード中かどうか
 @endif
+@if(GAME_WOHN)
 	var _inFading; // フェード中かどうか
+@endif
 	var prevstatus = "unload"; // 直前のステータス
 	var currentStorage = ""; // 見かけの演奏中のストレージ
 	var currentVolume = 100; // 見かけのボリューム
@@ -25,7 +29,9 @@ class SESoundBuffer extends WaveSoundBuffer
 
 		this.owner = owner;
 		this.id = id;
+@if(GAME_WOHN)
 		super.volume = 0;
+@endif
 	}
 
 	function finalize()
@@ -34,6 +40,7 @@ class SESoundBuffer extends WaveSoundBuffer
 		super.finalize(...);
 	}
 
+@if(GAME_WOHN)
 	//サウンドデバイスが動作していない状態でゼロ除算ハード例外が出る問題の回避
 	property totalTime
 	{
@@ -54,13 +61,16 @@ class SESoundBuffer extends WaveSoundBuffer
 			}
 		}
 	}
+@endif
 
 	function play(elm, resetvolume = true)
 	{
 		// play オーバーライド
 		super.stop();
 		stopFade();
+@if(GAME_WOHN)
 		asyncCaller.cancel(_onFadeCompleted);	//	予約されているフェード後の停止をキャンセル
+@endif
 		var storage = elm.storage;
 		var start = elm.start;
 		var found = true;
@@ -79,9 +89,10 @@ class SESoundBuffer extends WaveSoundBuffer
 				found = false;
 		}
 		if(!found)
-@if(0)
+@if(!GAME_WOHN)
 			throw new Exception(__("効果音 %s が見つかりません").sprintf(storage));
 @endif
+@if(GAME_WOHN)
 		{
 			addLoadErrorFiles(storage) if typeof global.addLoadErrorFiles != "undefined";
 			var	msg	= __("効果音 \"%s\" が見つかりません").sprintf(storage);
@@ -93,6 +104,7 @@ class SESoundBuffer extends WaveSoundBuffer
 @endif
 			return false;
 		}
+@endif
 		var loop = elm.loop === void ? false : +elm.loop;
 		looping = loop;
 		if(loop)
@@ -120,7 +132,7 @@ class SESoundBuffer extends WaveSoundBuffer
 
 	function stop()
 	{
-@if(0)
+@if(!GAME_WOHN)
 		// stop オーバーライド
 		currentStorage = "";
 		try
@@ -133,12 +145,14 @@ class SESoundBuffer extends WaveSoundBuffer
 		}
 		inFadeAndStop = false;
 @endif
+@if(GAME_WOHN)
 		/*
 		 *	フェードインして再生開始した効果音を停止して、直後に同じバッファでフェードイン再生を開始すると
 		 *	最初にポップノイズの聞こえる環境がある。この問題を回避するため、効果音再生を停止するときは
 		 *	必ずフェードアウトして停止するようにした。
 		 */
 		fadeOut(%[time:1]);
+@endif
 	}
 
 	function stopFade()
@@ -158,12 +172,16 @@ class SESoundBuffer extends WaveSoundBuffer
 	function fade(elm)
 	{
 		// fade オーバーライド
-@if(0)
+@if(!GAME_WOHN)
 		inFading = true;
 @endif
+@if(GAME_WOHN)
 		inFading++;
+@endif
 		var time = elm.time === void ? 5000 : +elm.time;
+@if(GAME_WOHN)
 		time = 1 if time < 1;
+@endif
 		var vol = +elm.volume * 1000;
 		currentVolume = +elm.volume;
 		try
@@ -181,12 +199,16 @@ class SESoundBuffer extends WaveSoundBuffer
 		// フェードインしながらの再生
 		super.volume = 0;
 		play(elm, false);
-@if(0)
+@if(!GAME_WOHN)
 		inFading = true;
 @endif
+@if(GAME_WOHN)
 		inFading++;
+@endif
 		var time = elm.time === void ? 5000 : +elm.time;
+@if(GAME_WOHN)
 		time = 1 if time < 1;
+@endif
 		var vol = currentVolume * 1000;
 		try
 		{
@@ -202,13 +224,17 @@ class SESoundBuffer extends WaveSoundBuffer
 	{
 		// フェードアウト後停止
 		currentStorage = ""; // 状態としては停止扱い
-@if(0)
+@if(!GAME_WOHN)
 		inFading = true;
 @endif
+@if(GAME_WOHN)
 		inFading++;
+@endif
 		inFadeAndStop = true;
 		var time = elm.time === void ? 5000 : +elm.time;
+@if(GAME_WOHN)
 		time = 1 if time < 1;
+@endif
 		try
 		{
 			super.fade(0, time);
@@ -219,6 +245,7 @@ class SESoundBuffer extends WaveSoundBuffer
 		}
 	}
 
+@if(GAME_WOHN)
 	property inFading
 	{
 		setter(v)
@@ -231,14 +258,16 @@ class SESoundBuffer extends WaveSoundBuffer
 		}
 		getter	{ return _inFading; }
 	}
+@endif
 
 	function onFadeCompleted()
 	{
 		// onFadeCompleted オーバーライド
-@if(0)
+@if(!GAME_WOHN)
 		inFading = false;
 		if(inFadeAndStop)
 @endif
+@if(GAME_WOHN)
 		inFading--;
 		if(!inFading && inFadeAndStop)
 		{
@@ -255,16 +284,19 @@ class SESoundBuffer extends WaveSoundBuffer
 	 */
 	function _onFadeCompleted()
 	{
+@endif
 		try
 		{
+@if(GAME_WOHN)
 			super.volume = 0;	// 無音下でのノイズ発生を抑えるため
+@endif
 			super.stop(); // 再生停止
 		}
 		catch(e)
 		{
 			dm("効果音の停止に失敗しました(実行は続行できます) : " + e.message);
 		}
-@if(0)
+@if(!GAME_WOHN)
 		{
 			inFadeAndStop = false;
 		}
@@ -285,8 +317,11 @@ class SESoundBuffer extends WaveSoundBuffer
 		{
 			currentStorage = "";
 			owner.onSESoundBufferStop(id); // play => stop : 演奏が停止した
+@if(GAME_WOHN)
 			super.volume = 0;	// 無音下でトランジションするとノイズが流れるため、再生していない間は音量を0にしておく
+@endif
 		}
+@if(GAME_WOHN)
 @if(VOLUME_VISIBLE)
 		if(status == "play")
 			startDisplayVolume();
@@ -307,6 +342,7 @@ class SESoundBuffer extends WaveSoundBuffer
 	function displayVolume()
 	{
 		dm("se["+id+"].volume = "+(super.volume \ 1000));
+@endif
 @endif
 	}
 

@@ -18,7 +18,9 @@ class KAGSoundBuffer
 	{
 		this.sbclass = sbclass;
 		this.owner = owner;
+@if(GAME_WOHN)
 		volume	= 0;
+@endif
 	}
 
 	function finalize()
@@ -48,7 +50,9 @@ class KAGSoundBuffer
 		sbclass.stop(...);
 		inFadeAndStop = false;
 		inFadeAndPause = false;
+@if(GAME_WOHN)
 		volume = 0; // 無音時にノイズが発生するため(環境による？)
+@endif
 	}
 
 	function fadeOutAndStop(time, delay = 0)
@@ -64,10 +68,12 @@ class KAGSoundBuffer
 		// 時間 time, delay でフェードアウト後、演奏を停止する
 		inFading = true;
 		inFadeAndPause = true;
-@if(0)
+@if(!GAME_WOHN)
 		sbclass.fade(0, time, delay);
 @endif
+@if(GAME_WOHN)
 		sbclass.fade(1, time, delay);	// volume=0 にフェードすると、stop してしまうので、
+@endif
 	}
 
 	function onFadeCompleted()
@@ -80,7 +86,9 @@ class KAGSoundBuffer
 			inFadeAndStop = false;
 		} else if (inFadeAndPause) {
 			sbclass.paused = true; // inFadeAndPause ならば一時停止
+@if(GAME_WOHN)
 			sbclass.volume = 0; // 音量を0にする
+@endif
 			inFadeAndPause = false;
 		}
 		sbclass.onFadeCompleted(...);
@@ -116,6 +124,7 @@ class KAGWaveSoundBuffer extends WaveSoundBuffer, KAGSoundBuffer
 		owner.owner.onBGMLabel(label);
 	}
 
+@if(GAME_WOHN)
 	//サウンドデバイスが動作していない状態でゼロ除算ハード例外が出る問題の回避
 	property totalTime
 	{
@@ -134,6 +143,7 @@ class KAGWaveSoundBuffer extends WaveSoundBuffer, KAGSoundBuffer
 			}
 		}
 	}
+@endif
 }
 
 
@@ -219,9 +229,10 @@ class BGM
 		{
 			if(!found)
 			{
-@if(0)
+@if(!GAME_WOHN)
 				dm("BGM " + storage + " が見つかりません");
 @endif
+@if(GAME_WOHN)
 				addLoadErrorFiles(storage) if typeof global.addLoadErrorFiles != "undefined";
 				var	msg	= "BGM " + storage + " が見つかりません";
 @if(POPUP_NOTFOUND)
@@ -229,6 +240,7 @@ class BGM
 @endif
 @if(!POPUP_NOTFOUND)
 				dm(msg);
+@endif
 @endif
 				return;
 			}
@@ -249,9 +261,10 @@ class BGM
 			}
 			catch(e)
 			{
-@if(0)
+@if(!GAME_WOHN)
 				dm("BGM " + storage +" を再生できません : " + e.message);
 @endif
+@if(GAME_WOHN)
 				addLoadErrorFiles(storage) if typeof global.addLoadErrorFiles != "undefined";
 				var	msg	= "BGM " + storage +" を再生できません : " + e.message;
 @if(POPUP_NOTFOUND)
@@ -259,6 +272,7 @@ class BGM
 @endif
 @if(!POPUP_NOTFOUND)
 				dm(msg);
+@endif
 @endif
 				return;
 			}

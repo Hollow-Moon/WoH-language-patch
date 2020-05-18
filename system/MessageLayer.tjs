@@ -9,7 +9,7 @@
 // ( 処理の内容としては TJS2 でも十分書けるんだけど、あいにく
 //   perl のような実行環境が TJS2 にはないというか作ってない )
 
-@if(0)
+@if(!GAME_WOHN)
 class LinkButtonLayer extends ButtonLayer
 {
 	// グラフィカルボタンとして動作するためのレイヤ
@@ -213,10 +213,12 @@ class LinkEditLayer extends EditLayer
 }
 @endif
 
+@if(GAME_WOHN)
 Scripts.execStorage("MessageCharLayer.tjs");	// 文字の表示に利用するレイヤー
 
 //	文字数のみで改ページが必要になったとき、すべてクリアするのではなく、一行上へずらすことで表示の余地を広げる
 @set(MESSAGE_SCROLL_REPAGE=0)
+@endif
 
 class MessageLayer extends KAGLayer
 {
@@ -239,8 +241,10 @@ class MessageLayer extends KAGLayer
 	var id; // 識別子
 	var comp; // 対応する表/裏メッセージレイヤ
 
+@if(GAME_WOHN)
 	var lastWidth = 0;			// フレーム差し替え時に消去しないで済むか比較するための前回フレーム幅
 	var lastHeight = 0;			// フレーム差し替え時に消去しないで済むか比較するための前回フレーム高
+@endif
 
 	// 以下、/*C*/ の記号のついたものは、assign のときに自動的にコピーされるもの。
 	// /*S*/ の記号のついたものは、store/resto の時に自動的にコピーされるもの。
@@ -264,17 +268,17 @@ class MessageLayer extends KAGLayer
 	/*C*/var isLastLine; // ページ最終行を描画中
 	/*C*/var indentxpos; // インデント左(縦書きの場合は上)位置
 	var links = []; // リンク
-@if(0)
+@if(!GAME_WOHN)
 	/*C*/var linkFilled; // リンク領域画像を塗りつぶしたかどうか
 	/*C*/var numLinks = 0; // レイヤ内のリンクの数
 @endif
 
-@if(0)
+@if(!GAME_WOHN)
 	var lastLink = -1; // 最後に選択したリンク番号
 	var keyLink = -1; // キーボードで選択したリンク番号
 @endif
 	var inLink = -1; // リンクを描画中か
-@if(0)
+@if(!GAME_WOHN)
 	var highlightLayer; // リンクを強調表示するためのレイヤ
 	/*C*/var selProcessLock = false; // process 後にリンクが操作されるのを防ぐためのフラグ
 	/*C*/var storedSelProcessLock = false; // storeSelProcessLock 時点での状態
@@ -296,7 +300,9 @@ class MessageLayer extends KAGLayer
 	/*CS*/var defaultRubyOffset = -2; // デフォルトのルビのオフセット
 	/*C*/var rubyOffset; // ルビのオフセット
 	/*C*/var _rubyOffset; // 仮ルビオフセット
+@if(GAME_WOHN)
 	/*C*/var rubyBold; // ルビの太字指定
+@endif
 
 	/*CS*/var defaultLineSpacing = 6; // デフォルトの行間
 	/*C*/var lineSpacing; // 行間
@@ -323,12 +329,14 @@ class MessageLayer extends KAGLayer
 	/*C*/var currentRuby = ""; // 次の文字に対するルビ
 	/*C*/var lastDrawnCh = ""; // 最後に描画した文字
 
-@if(0)
+@if(!GAME_WOHN)
 	/*CS*/var edgeExtent = 1; // 袋文字のふとさ
 	/*CS*/var edgeEmphasis = 512; // 袋文字の強調度
 @endif
+@if(GAME_WOHN)
 	/*CS*/var edgeExtent = 2; // 袋文字のふとさ
 	/*CS*/var edgeEmphasis = 2048; // 袋文字の強調度
+@endif
 	/*CS*/var shadowOffsetX = 2; // 影のオフセット
 	/*CS*/var shadowOffsetY = 2; // 影のオフセット
 
@@ -336,7 +344,7 @@ class MessageLayer extends KAGLayer
 
 	/*C*/var nextClearFlag = false; // 下端に達したとき、次の文字表示でレイヤをクリアするかどうか
 
-@if(0)
+@if(!GAME_WOHN)
 	var lineLayer; // 行描画用のレイヤ
 	/*C*/var lineLayerBase; // ベースライン(横書き:下線位置/縦書き:中央位置)
 	/*C*/var lineLayerPos; // lineLayer 中の文字表示位置
@@ -346,6 +354,7 @@ class MessageLayer extends KAGLayer
 	var lineLayerLinks = []; // lineLayer が管理しているリンク
 @endif
 
+@if(GAME_WOHN)
 	var charLayers = []; // 文字を表示するレイヤー : [line][column]
 	var	charPool = [];	//	使っていない文字レイヤーを格納
 	var	maxCharPoolCount	= 50; // 使ってない文字レイヤーを保存しておく最大数
@@ -358,6 +367,7 @@ class MessageLayer extends KAGLayer
 	/*C*/var lineOriginY;
 
 	var rubyLayers = []; // ルビを表示するレイヤー : [line][column] → ルビが割り付けられている文字の行・桁
+@endif
 
 	/*C*/var align=-1; // -1=左/上そろえ  0=中央揃え   1=右/下そろえ
 	/*CS*/var defaultAutoReturn = true; // デフォルトで自動改行を行うかどうか
@@ -382,11 +392,13 @@ class MessageLayer extends KAGLayer
 	var ml, mt, mw, mh; // 初期レイヤサイズ(config用)
 
 	var invisibleByUser = false; // ユーザにより一時的に不可視
-@if(0)
+@if(!GAME_WOHN)
 	var visibleBeforeUserInvisible  = false;
 @endif
+@if(GAME_WOHN)
 	var visibleBeforeUserInvisible  = void;
-@if(0)
+@endif
+@if(!GAME_WOHN)
 	var	_visibleBeforeUserInvisible	= void;
 	property visibleBeforeUserInvisible
 	{
@@ -430,7 +442,7 @@ class MessageLayer extends KAGLayer
 	var lastMouseDownX; // 最後にマウスがクリックされた X 座標
 	var lastMouseDownY; // 最後にマウスがクリックされた Y 座標
 
-@if(0)
+@if(!GAME_WOHN)
 	// リンクタイプ
 	var ltNormal = 1;
 	var ltButton = 2;
@@ -438,6 +450,7 @@ class MessageLayer extends KAGLayer
 	var ltCheckBox = 4;
 @endif
 
+@if(GAME_WOHN)
 	var	glyphLayer;
 
 	/*C*/var displaysInFixedPitchAlsoByVariable	= true;	// 常時固定ピッチで表示するか
@@ -458,7 +471,7 @@ class MessageLayer extends KAGLayer
 //	var ltButton = 2;
 //	var ltEdit = 3;
 //	var ltCheckBox = 4;
-@if(1)
+@endif
 	// タイムアウト処理用
 	var timeoutTimer;
 	var timeoutTime;
@@ -584,7 +597,6 @@ class MessageLayer extends KAGLayer
 			}
 		}
 	}
-@endif
 
 	function MessageLayer(owner, parent, name, id, do_config)
 	{
@@ -603,8 +615,10 @@ class MessageLayer extends KAGLayer
 
 		imageModified = true;
 
+@if(GAME_WOHN)
 //scrollbaseプロパティを追加したため２重に補正となってしまうのでコメントアウト
 //		notMoveAsParentAction = true;	//baseの移動系アクションに逆方向移動を行い、客観位置を固定する
+@endif
 
 		// コンフィギュレーション
 		if(do_config)
@@ -613,6 +627,7 @@ class MessageLayer extends KAGLayer
 			(MessageLayer_config_override incontextof this)()
 				if typeof global.MessageLayer_config_override != "undefined";
 
+@if(GAME_WOHN)
 			//セーブ時に冗長なデータにならないようConfig.tjs定義内容を保持しておいて保存／復元時に使う
 			with(configValues)
 			{
@@ -655,6 +670,7 @@ class MessageLayer extends KAGLayer
 				.defaultLinkColor = defaultLinkColor;
 				.defaultLinkOpacity = defaultLinkOpacity;
 			}
+@endif
 
 			// 初期サイズは mw mh に入っているので
 			setPos(ml, mt);
@@ -669,8 +685,10 @@ class MessageLayer extends KAGLayer
 			setImageSize(parent.width, parent.height);
 			setSize(parent.width, parent.height);
 		}
+@if(GAME_WOHN)
 		lastWidth = width;
 		lastHeight = height;
+@endif
 
 		// config 用一時変数の消去
 		delete ml; delete mt; delete mw; delete mh;
@@ -682,7 +700,7 @@ class MessageLayer extends KAGLayer
 		hitType = htMask;
 		hitThreshold = 0; // マウスメッセージは全域不透過
 
-@if(0)
+@if(!GAME_WOHN)
 		// 行描画用の浮遊レイヤを確保
 		lineLayer = new global.KAGLayer(window, this);
 		lineLayer.hitType = htMask;
@@ -692,11 +710,13 @@ class MessageLayer extends KAGLayer
 		lineLayer.name = "行描画用浮遊メッセージレイヤ";
 @endif
 
+@if(GAME_WOHN)
 		//	グリフレイヤー
 		glyphLayer	= new ClickGlyphLayer(window, this);
+@endif
 
 		// リンクをハイライト表示するためのレイヤ
-@if(0)
+@if(!GAME_WOHN)
 		highlightLayer = new global.KAGLayer(window, this);
 		highlightLayer.type = layerType;
 		highlightLayer.face = dfAuto;
@@ -704,18 +724,21 @@ class MessageLayer extends KAGLayer
 @endif
 			// 領域画像で当たり判定を行う
 
+@if(GAME_WOHN)
 		//	run ハンドラを追加
 		owner.runHandlers.add(runHandler);
+@endif
 	}
 
 	function finalize()
 	{
 		// invalidateLinkObjects(); // リンクに結びつけられたオブジェクトの無効化
-@if(0)
+@if(!GAME_WOHN)
 		invalidateLinkObjects();
 		invalidate highlightLayer;
 		invalidate lineLayer;
 @endif
+@if(GAME_WOHN)
 		stopCharAction();
 		for( var i=0; i<charPool.count; i++ )
 			invalidate charPool[i] if charPool[i] != void;
@@ -736,21 +759,26 @@ class MessageLayer extends KAGLayer
 			}
 			invalidate layers[k];
 		}
+@endif
 
+@if(GAME_WOHN)
 		invalidate glyphLayer if glyphLayer != void;
 
 		//	run ハンドラを削除
 		window.runHandlers.remove(runHandler);
+@endif
 
 		super.finalize();
 	}
 
 	function setCompLayer(lay) { comp = lay; }
 
-@if(0)
+@if(!GAME_WOHN)
 	function clearLayer()
 @endif
+@if(GAME_WOHN)
 	function clearLayer(notClearUpdate=false)
+@endif
 	{
 		// レイヤをクリア
 		window.updateBeforeCh = 1;
@@ -780,7 +808,7 @@ class MessageLayer extends KAGLayer
 				loadImages(frameGraphic, frameKey);
 				setSizeToImageSize();
 			}
-@if(0)
+@if(!GAME_WOHN)
 			var	col = 0xff0000, opa = 64;
 			colorRect(0, 0, width, marginT, col, opa);
 			colorRect(0, marginT, marginL, height-marginT, col, opa);
@@ -795,6 +823,7 @@ class MessageLayer extends KAGLayer
 
 		imageModified = false;
 
+@if(GAME_WOHN)
 		if( notClearUpdate )
 		{
 			//	元々のテキストウィンドウに書き込まれていた文字を再現する
@@ -819,14 +848,15 @@ class MessageLayer extends KAGLayer
 			_removeCharLayer(char);
 			return;
 		}
+@endif
 
-@if(0)
+@if(!GAME_WOHN)
 		invalidateLinkObjects(); // リンクに関連づけられたオブジェクトを無効化
 @endif
 
 		focusable = false;
 		links.clear();
-@if(0)
+@if(!GAME_WOHN)
 		numLinks = 0;
 		inLink = -1;
 		highlightLink(lastLink, false); // ハイライトを消す
@@ -840,9 +870,10 @@ class MessageLayer extends KAGLayer
 		selClickLock = true;
 		lastMouseX = cursorX;
 		lastMouseY = cursorY;
-@if(0)
+@if(!GAME_WOHN)
 		initLineLayer();
 @endif
+@if(GAME_WOHN)
 		initCharLayer();
 
 		// 文字レイヤーを非表示にして、プールへ
@@ -869,6 +900,7 @@ class MessageLayer extends KAGLayer
 
 		//	グリフを隠す
 		glyphLayer.visible	= false;
+@endif
 	}
 
 	function setPosition(elm)
@@ -877,7 +909,7 @@ class MessageLayer extends KAGLayer
 		// このタグが position という名前なのは相当初期の KAG
 		// がそうだったのを引きずってるのね(^^;
 		//)
-@if(0)
+@if(!GAME_WOHN)
 		left = elm.left if elm.left !== void;
 		top = elm.top if elm.top !== void;
  		imageWidth = elm.width if elm.width !== void;
@@ -888,6 +920,7 @@ class MessageLayer extends KAGLayer
 		frameKey = elm.framekey if elm.framekey !== void;
 @endif
 
+@if(GAME_WOHN)
 		frameGraphic = elm.frame if elm.frame !== void;
 		frameKey = elm.framekey if elm.framekey !== void;
 		imageModified = true; // 強制的にメッセージレイヤをクリアするために
@@ -924,9 +957,10 @@ class MessageLayer extends KAGLayer
 
 		left = elm.left if elm.left !== void;
 		top = elm.top if elm.top !== void;
+@endif
 		frameColor = +elm.color if elm.color !== void;
 		frameOpacity = +elm.opacity if elm.opacity !== void;
-@if(0)
+@if(!GAME_WOHN)
 		imageModified = true; // 強制的にメッセージレイヤをクリアするために
 @endif
 		marginL = __si(+elm.marginl, "marginl_%s".sprintf(elm.context)) if elm.marginl !== void;
@@ -937,27 +971,33 @@ class MessageLayer extends KAGLayer
 		draggable = +elm.draggable if elm.draggable !== void;
 		visible = +elm.visible if elm.visible !== void;
 
-@if(0)
+@if(!GAME_WOHN)
 		clear();
 @endif
+@if(GAME_WOHN)
 		clear(notClearUpdate);
+@endif
 	}
 
 	// コンフィグの設定に戻す
 	function resetPosition() { setPosition(configValues); }
 
-@if(0)
+@if(!GAME_WOHN)
 	function clear()
 @endif
+@if(GAME_WOHN)
 	function clear(notClearUpdate=false)
+@endif
 	{
 		// メッセージレイヤをクリアする
-@if(0)
+@if(!GAME_WOHN)
 		clearLayer();
 @endif
+@if(GAME_WOHN)
 		clearLayer(notClearUpdate);
 
 		if( notClearUpdate ) return;
+@endif
 
 		// 表示位置を初期位置に
 		if(vertical)
@@ -976,15 +1016,19 @@ class MessageLayer extends KAGLayer
 		resetFont();
 		resetStyle();
 		decideSizeChange();
-@if(0)
+@if(!GAME_WOHN)
 		initLineLayer();
 @endif
+@if(GAME_WOHN)
 		initCharLayer();
 		currentLine = currentColumn = 0;
+@endif
 		currentRuby = "";
+@if(GAME_WOHN)
 		resetSelection();	//	範囲選択の情報もリセット
+@endif
 
-@if(0)
+@if(!GAME_WOHN)
 		clearTimeout();
 		clearClick();
 		clearWheel();
@@ -1011,11 +1055,13 @@ class MessageLayer extends KAGLayer
 			y = marginT;
 			x = marginL + indentxpos;
 		}
-@if(0)
+@if(!GAME_WOHN)
 		initLineLayer();
 @endif
+@if(GAME_WOHN)
 		initCharLayer();
 		currentLine = currentColumn = 0;
+@endif
 	}
 
 	function resetFont()
@@ -1026,36 +1072,44 @@ class MessageLayer extends KAGLayer
 		// 各デフォルトの設定を書き戻し
 		if(!vertical)
 		{
-@if(0)
+@if(!GAME_WOHN)
 			lineLayer.font.face = fontFace = defaultFace == 'user' ? userFace : defaultFace;
 			lineLayer.font.angle = 0;
 @endif
+@if(GAME_WOHN)
 			fontFace = defaultFace == 'user' ? userFace : defaultFace;
 			fontAngle = 0;
+@endif
 		}
 		else
 		{
-@if(0)
+@if(!GAME_WOHN)
 			lineLayer.font.face = '@' + (fontFace = defaultFace == 'user' ? userFace : defaultFace);
 			lineLayer.font.angle = 2700;
 @endif
+@if(GAME_WOHN)
 			fontFace = defaultFace == 'user' ? userFace : defaultFace;
 			fontAngle = 2700;
+@endif
 		}
 
-@if(0)
+@if(!GAME_WOHN)
 		lineLayer.font.bold = bold = defaultBold;
 		lineLayer.font.italic=false;
 @endif
+@if(GAME_WOHN)
 		bold = defaultBold;
 		fontItalic = false;
+@endif
 		_fontSize = defaultFontSize;
 		antialiased = defaultAntialiased;
 
 		chColor = defaultChColor;
 		_rubySize = defaultRubySize;
 		_rubyOffset = defaultRubyOffset;
+@if(GAME_WOHN)
 		rubyBold = defaultRubyBold;
+@endif
 		shadow = defaultShadow;
 		edge = defaultEdge;
 		shadowColor = defaultShadowColor;
@@ -1078,63 +1132,77 @@ class MessageLayer extends KAGLayer
 			var elmface = elm.face;
 			if(elmface == 'default')
 			{
-@if(0)
+@if(!GAME_WOHN)
 				lineLayer.font.angle = 0;
 				lineLayer.font.face = fontFace =  defaultFace;
 @endif
+@if(GAME_WOHN)
 				fontAngle = 0;
 				fontFace =  defaultFace;
+@endif
 			}
 			else if(elmface == 'user')
 			{
-@if(0)
+@if(!GAME_WOHN)
 				lineLayer.font.angle = 0;
 				lineLayer.font.face = fontFace = userFace;
 @endif
+@if(GAME_WOHN)
 				fontAngle = 0;
 				fontFace =  userFace;
+@endif
 			}
 			else if(elmface !== void)
 			{
-@if(0)
+@if(!GAME_WOHN)
 				lineLayer.font.angle = 0;
 				lineLayer.font.face = fontFace = elmface;
 @endif
+@if(GAME_WOHN)
 				fontAngle = 0;
 				fontFace =  elmface;
+@endif
 			}
 		}
 		else
 		{
 			var elmface = elm.face;
 			if(elmface == 'default')
-@if(0)
+@if(!GAME_WOHN)
 			{
 				var f = '@' + (fontFace = defaultFace);
 				lineLayer.font.angle = 2700;
 				lineLayer.font.face = f;
 			}
 @endif
+@if(GAME_WOHN)
 				fontFace	= defaultFace;
+@endif
 			else if(elmface == 'user')
-@if(0)
+@if(!GAME_WOHN)
 			{
 				var f = '@' + (fontFace = userFace);
 				lineLayer.font.angle = 2700;
 				lineLayer.font.face = f;
 			}
 @endif
+@if(GAME_WOHN)
 				fontFace	= userFace;
+@endif
 			else if(elmface !== void)
-@if(0)
+@if(!GAME_WOHN)
 			{
 				var f = '@' + (fontFace = elmface);
 				lineLayer.font.angle = 2700;
 				lineLayer.font.face = f;
 			}
 @endif
+@if(GAME_WOHN)
 				fontFace	= elmface;
+@endif
+@if(GAME_WOHN)
 			fontAngle = 2700;
+@endif
 		}
 
 		if(elm.antialiased == 'default')
@@ -1143,26 +1211,34 @@ class MessageLayer extends KAGLayer
 			antialiased = +elm.antialiased;
 
 		if(elm.bold == 'default')
-@if(0)
+@if(!GAME_WOHN)
 			lineLayer.font.bold = defaultBold;
 @endif
+@if(GAME_WOHN)
 			bold = defaultBold;
+@endif
 		else if(elm.bold !== void)
-@if(0)
+@if(!GAME_WOHN)
 			lineLayer.font.bold = +elm.bold;
 @endif
+@if(GAME_WOHN)
 			bold = +elm.bold;
+@endif
 
 		if(elm.italic == 'default')
-@if(0)
+@if(!GAME_WOHN)
 			lineLayer.font.italic = false;
 @endif
+@if(GAME_WOHN)
 			fontItalic = false;
+@endif
 		else if(elm.italic !== void)
-@if(0)
+@if(!GAME_WOHN)
 			lineLayer.font.italic = +elm.italic;
 @endif
+@if(GAME_WOHN)
 			fontItalic = +elm.italic;
+@endif
 
 		if(elm.size == 'default')
 			_fontSize = defaultFontSize;
@@ -1184,10 +1260,12 @@ class MessageLayer extends KAGLayer
 		else if(elm.rubyoffset !== void)
 			_rubyOffset = +elm.rubyoffset;
 
+@if(GAME_WOHN)
 		if(elm.rubybold == 'default')
 			rubyBold = defaultRubyBold;
 		else if(elm.rubybold !== void)
 			rubyBold = +elm.rubybold;
+@endif
 
 		if(elm.shadow == 'default')
 			shadow = defaultShadow;
@@ -1225,7 +1303,9 @@ class MessageLayer extends KAGLayer
 		defaultChColor = +elm.color if elm.color !== void;
 		defaultRubySize = +elm.rubysize if elm.rubysize !== void;
 		defaultRubyOffset = +elm.rubyoffset if elm.rubyoffset !== void;
+@if(GAME_WOHN)
 		defaultRubyBold = +elm.rubybold if elm.rubybold !== void;
+@endif
 		defaultShadow = +elm.shadow if elm.shadow !== void;
 		defaultShadowColor = +elm.shadowcolor if elm.shadowcolor !== void;
 		defaultEdge = +elm.edge if elm.edge !== void;
@@ -1270,7 +1350,7 @@ class MessageLayer extends KAGLayer
 
 		if(elm.align == 'default')
 		{
-@if(0)
+@if(!GAME_WOHN)
 			fixLineLayer();
 @endif
 			align = -1;
@@ -1278,7 +1358,7 @@ class MessageLayer extends KAGLayer
 		}
 		else if(elm.align !== void)
 		{
-@if(0)
+@if(!GAME_WOHN)
 			fixLineLayer();
 @endif
 			if(elm.align == 'left' || elm.align == 'top')
@@ -1316,7 +1396,7 @@ class MessageLayer extends KAGLayer
 	{
 		// 仮に変更されていたフォント・スタイル情報を確定
 		if(!sizeChanged) return;
-@if(0)
+@if(!GAME_WOHN)
 		lineLayer.font.height = - _fontSize;
 @endif
 		fontSize = _fontSize;
@@ -1325,6 +1405,7 @@ class MessageLayer extends KAGLayer
 		sizeChanged = false;
 	}
 
+@if(GAME_WOHN)
 	function initCharLayer()
 	{
 		resetLineSize();
@@ -1550,8 +1631,9 @@ class MessageLayer extends KAGLayer
 		else
 			return t + charLayers[line][col].textHeight;
 	}
+@endif
 
-@if(0)
+@if(!GAME_WOHN)
 	function getLineLayerBaseLine()
 	{
 		// 文字表示用のベースラインを計算して返す
@@ -1784,10 +1866,11 @@ class MessageLayer extends KAGLayer
 
 	function adjustAlign()
 	{
-@if(0)
+@if(!GAME_WOHN)
 		lineLayer.setPos(lineLayerOriginX + getLineLayerLeftOffset(),
 			lineLayerOriginY + getLineLayerTopOffset());
 @endif
+@if(GAME_WOHN)
 		// 位置移動
 		var chars	= charLayers[currentLine];
 		var rubys	= rubyLayers[currentLine];
@@ -1843,6 +1926,7 @@ class MessageLayer extends KAGLayer
 				}
 			}
 		}
+@endif
 	}
 
 
@@ -1851,7 +1935,7 @@ class MessageLayer extends KAGLayer
 		// 改行
 		// ページを越える場合は true, 越えないで改行できる場合は false
 		var condition;
-@if(0)
+@if(!GAME_WOHN)
 		if(vertical)
 		{
 			condition= lineLayerOriginX + getLineLayerLeftOffset() - lineSpacing -
@@ -1863,6 +1947,7 @@ class MessageLayer extends KAGLayer
 				 lineSize >= imageHeight-marginB;
 		}
 @endif
+@if(GAME_WOHN)
 		if(vertical)
 			condition = x - ((lineSize - lineSpacing) << 1) <= marginL;
 		else
@@ -1870,6 +1955,7 @@ class MessageLayer extends KAGLayer
 
 		// 改行したら、直前に表示した文字はクリア
 		lastCh	= "";
+@endif
 
 		if(condition)
 		{
@@ -1878,13 +1964,13 @@ class MessageLayer extends KAGLayer
 		}
 		else
 		{
-@if(0)
+@if(!GAME_WOHN)
 			if(inLink != -1) endLinkLine();
 @endif
 
 			decideSizeChange();
 
-@if(0)
+@if(!GAME_WOHN)
 			fixLineLayer();
 @endif
 
@@ -1911,19 +1997,22 @@ class MessageLayer extends KAGLayer
 				isLastLine=true;
 			}
 
-@if(0)
+@if(!GAME_WOHN)
 			initLineLayer();
 @endif
+@if(GAME_WOHN)
 			initCharLayer();
 
 			// 次の行の先頭へ
 			currentLine++;
 			currentColumn	= 0;
+@endif
 
 //			if(inLink!=-1) beginLinkLine();
 		}
 		return false;
 	}
+@if(GAME_WOHN)
 @if(MESSAGE_SCROLL_REPAGE)
 	function scrollLines()
 	{
@@ -2017,6 +2106,7 @@ class MessageLayer extends KAGLayer
 		currentColumn	= 0;	//	行頭へ
 	}
 @endif
+@endif
 
 	function processCh(ch)
 	{
@@ -2024,7 +2114,9 @@ class MessageLayer extends KAGLayer
 		// 改行が行われ、かつそれがページ末端を越える場合は true を返す
 		// それ以外は false
 		var vert = vertical;
+@if(GAME_WOHN)
 		var doReline = false;
+@endif
 
 		if((vert ?  y >= relinexpos  : x >= relinexpos ) && autoReturn)
 		{
@@ -2037,18 +2129,26 @@ class MessageLayer extends KAGLayer
 				// しかもこれから描画するのが行頭禁則文字でない
 				// 場合
 				// または弱禁則文字が連続していない場合
-@if(0)
+@if(!GAME_WOHN)
 				if(reline()) return autoReturn;
 @endif
+@if(GAME_WOHN)
 				doReline	= true;
+@endif
 			}
 			else if(vert ? ( y>imageHeight ) : (x>imageWidth))
 			{
 				// これから描画するのが強禁則文字ではなくて、
 				// 確実に 右端を越える場合
 				// ( この場合は余白は考えない )
+@if(!GAME_WOHN)
+				if(reline()) return autoReturn;
+@endif
+@if(GAME_WOHN)
 				doReline	= true;
+@endif
 			}
+@if(GAME_WOHN)
 			if(doReline)
 			{
 				// ルビを割り付けるべき文字が既に表示されている場合
@@ -2075,9 +2175,10 @@ class MessageLayer extends KAGLayer
 				if(reline()) return autoReturn;
 @endif
 			}
+@endif
 		}
 
-@if(0)
+@if(!GAME_WOHN)
 		changeLineSize() if sizeChanged;
 
 		var inlink = inLink != -1;
@@ -2137,6 +2238,7 @@ class MessageLayer extends KAGLayer
 		ll.visible = true;
 @endif
 
+@if(GAME_WOHN)
 		fadeoutLastMessage() if typeof global.fadeoutLastMessage != "undefined";
 
 		if(	(ch.length == 1 && char2graph[ch] != void) ||	// 表示文字が1文字で、登録されている文字の場合
@@ -2246,8 +2348,9 @@ class MessageLayer extends KAGLayer
 			if(continuousType != void && continuousActions[continuousType] != void)
 				beginContinuousAction(lastCharLayer, continuousType);
 		}
+@endif
 
-@if(0)
+@if(!GAME_WOHN)
 		if(inlink)
 		{
 			// ハイパーリンクでちゅー
@@ -2269,20 +2372,23 @@ class MessageLayer extends KAGLayer
 
 		if(vert) y += cw; else x += cw;
 
-@if(0)
+@if(!GAME_WOHN)
 		lineLayerPos += cw;
 		lineLayerLength += cw;
 @endif
 
 		lastDrawnCh = ch;
 
+@if(GAME_WOHN)
 		currentColumn++;
+@endif
 
 		adjustAlign() if(align >= 0);
 
 		return false;
 	}
 
+@if(GAME_WOHN)
 	property enabledCharAppearAction
 	{
 		getter
@@ -2378,8 +2484,9 @@ class MessageLayer extends KAGLayer
 			}
 		}
 	}
+@endif
 
-@if(0)
+@if(!GAME_WOHN)
 	function putGraph(storage, key, ischar)
 	{
 		// 画像 storage を描画する
@@ -2503,6 +2610,7 @@ class MessageLayer extends KAGLayer
 	}
 @endif
 
+@if(GAME_WOHN)
 	function putGraph(storage, key, ischar)
 	{
 		// 画像 storage を描画する
@@ -2621,11 +2729,14 @@ class MessageLayer extends KAGLayer
 
 		return false;
 	}
+@endif
 
 	function putHorizonCh(text, expand = false)
 	{
+@if(GAME_WOHN)
 		throw new Exception("縦中横は未実装です。");
-@if(0)
+@endif
+@if(!GAME_WOHN)
 		// 縦中横を描画する
 		if(!vertical) throw new Exception(__("縦書きモードでないと使用できません"));
 
@@ -2715,6 +2826,7 @@ class MessageLayer extends KAGLayer
 @endif
 	}
 
+@if(GAME_WOHN)
 	function backspace(cnt = 1)
 	{
 		// 文字消去(改行は文字としない)
@@ -2769,8 +2881,9 @@ class MessageLayer extends KAGLayer
 				removeCharLayer(currentLine, currentColumn, rubyLayers);
 		}
 	}
+@endif
 
-@if(0)
+@if(!GAME_WOHN)
 	function invalidateLinkObjects()
 	{
 		// リンクアイテムにオブジェクトが割り当てられていた場合無効化
@@ -2853,6 +2966,7 @@ class MessageLayer extends KAGLayer
 
 	function beginHyperLink(elm)
 	{
+@if(GAME_WOHN)
 		links.add(%[
 			exp		: createSoundExpression(elm.exp, elm.clickse, elm.clicksebuf),
 			hint	: elm.hint,
@@ -2860,7 +2974,8 @@ class MessageLayer extends KAGLayer
 			opacity	: (elm.opacity === void) ? defaultLinkOpacity : +elm.opacity,
 		]);
 		inLink	= links.count - 1;
-@if(0)
+@endif
+@if(!GAME_WOHN)
 		// 普通のリンクを開始する
 		links[numLinks] = %[ // 辞書配列を作成
 			type :		ltNormal,
@@ -2887,7 +3002,7 @@ class MessageLayer extends KAGLayer
 	function endHyperLink()
 	{
 		inLink	= -1;
-@if(0)
+@if(!GAME_WOHN)
 		endLinkLine();
 		links[numLinks].lineCount--;
 		numLinks++;
@@ -2899,7 +3014,7 @@ class MessageLayer extends KAGLayer
 @endif
 	}
 
-@if(0)
+@if(!GAME_WOHN)
 	function findLink(x,y)
 	{
 		// x, y 位置にあるリンクをさがし、見つかれば そのリンク番号を返す
@@ -2926,7 +3041,7 @@ class MessageLayer extends KAGLayer
 
 	function addButton(elm)
 	{
-@if(0)
+@if(!GAME_WOHN)
 		// グラフィカルボタンを配置
 		var object = new LinkButtonLayer(window, this);
 		object.loadImages(elm.graphic, elm.graphickey);
@@ -2966,7 +3081,7 @@ class MessageLayer extends KAGLayer
 
 	function addEdit(elm)
 	{
-@if(0)
+@if(!GAME_WOHN)
 		// 単一行エディットを配置
 		changeLineSize() if sizeChanged;
 		var object = new LinkEditLayer(window, this, vertical);
@@ -3027,7 +3142,7 @@ class MessageLayer extends KAGLayer
 
 	function addCheckBox(elm)
 	{
-@if(0)
+@if(!GAME_WOHN)
 		var object = new LinkCheckBoxLayer(window, this, vertical);
 		object.linkNum = numLinks;
 		object.vertical = vertical;
@@ -3092,7 +3207,7 @@ class MessageLayer extends KAGLayer
 @endif
 	}
 
-@if(0)
+@if(!GAME_WOHN)
 	function highlightLink(n, b = false)
 	{
 		// n 番目のリンクを
@@ -3260,7 +3375,7 @@ class MessageLayer extends KAGLayer
 		// 選択のロックを設定
 		// 選択のロックを行うのは、いったん選択肢を選択したら
 		// 他の選択肢を選択できないようにするため
-@if(0)
+@if(!GAME_WOHN)
 		if(selProcessLock != b)
 		{
 			selProcessLock = b;
@@ -3287,7 +3402,7 @@ class MessageLayer extends KAGLayer
 	{
 		// 右クリックサブルーチンに入る前に呼ばれ、
 		// 現在の selProcessLock の状態を退避する
-@if(0)
+@if(!GAME_WOHN)
 		storedSelProcessLock = selProcessLock;
 @endif
 	}
@@ -3297,12 +3412,12 @@ class MessageLayer extends KAGLayer
 		// 右クリックルーチンから抜けるときに呼ばれ、
 		// 右クリックルーチンに入る前の selProcessLock の状態を
 		// 取り戻す
-@if(0)
+@if(!GAME_WOHN)
 		setSelProcessLock(storedSelProcessLock);
 @endif
 	}
 
-@if(0)
+@if(!GAME_WOHN)
 	function commit()
 	{
 		// フォーム要素の内容をコミット
@@ -3337,7 +3452,7 @@ class MessageLayer extends KAGLayer
 			return true; // 不透過
 		}
 
-@if(0)
+@if(!GAME_WOHN)
 		if(selProcessLock) return false; // 透過
 
 		if(selClickLock)
@@ -3376,7 +3491,7 @@ class MessageLayer extends KAGLayer
 	function internalOnMouseDown(x, y, button)
 	{
 		// onMouseDown イベントハンドラ(内部関数)
-@if(0)
+@if(!GAME_WOHN)
 		if(button == mbLeft && !selProcessLock)
 		{
 			if(!selClickLock)
@@ -3449,7 +3564,7 @@ class MessageLayer extends KAGLayer
 		}
 
 
-@if(0)
+@if(!GAME_WOHN)
 		if(selProcessLock)
 		{
 			// 選択ロック中は処理を行わない
@@ -3487,7 +3602,7 @@ class MessageLayer extends KAGLayer
 	function onMouseLeave()
 	{
 		// onMouseLeave イベントハンドラ
-@if(0)
+@if(!GAME_WOHN)
 		if(lastLink != -1)
 		{
 			highlightLink(lastLink, false);
@@ -3497,7 +3612,7 @@ class MessageLayer extends KAGLayer
 		super.onMouseLeave(...);
 	}
 
-@if(0)
+@if(!GAME_WOHN)
 	function setFocusToLink(n, force = false)
 	{
 		// マウスカーソルを リンク番号 n の位置に移動させたり、
@@ -3566,12 +3681,14 @@ class MessageLayer extends KAGLayer
 		// キーが押された
 		if(window.preProcessKeys(key, shift)) return;
 
-@if(0)
+@if(!GAME_WOHN)
 		if(!focusable || (!numLinks && !hasClick())) { return super.onKeyDown(...); }
 @endif
 
+@if(GAME_WOHN)
 		if(!focusable || !hasClick()) { return super.onKeyDown(...); }
-@if(0)
+@endif
+@if(!GAME_WOHN)
 		var l, r;
 		if(vertical)
 		{
@@ -3635,6 +3752,7 @@ class MessageLayer extends KAGLayer
 		}
 	}
 
+@if(GAME_WOHN)
 	function execSameLinkChar(linkno, func, args*)
 	{
 		for(var i=0; i<charLayers.count; i++)
@@ -3675,8 +3793,9 @@ class MessageLayer extends KAGLayer
 		var	ln	= links[linkno];
 		Scripts.eval(ln.exp) if ln.exp != "";
 	}
+@endif
 
-@if(0)
+@if(!GAME_WOHN)
 	function findPrevFocusable(control, layer)
 	{
 		if(control.linkNum != 0) return this; else return prevFocusable;
@@ -3764,7 +3883,7 @@ class MessageLayer extends KAGLayer
 		if(!vertical && newy === void)
 		{
 			// 横位置のみの変更
-@if(0)
+@if(!GAME_WOHN)
 			lineLayerPos += dx;
 			lineLayerLength += dx;
 @endif
@@ -3772,7 +3891,7 @@ class MessageLayer extends KAGLayer
 		else if(vertical && newx === void)
 		{
 			// 縦位置のみの変更
-@if(0)
+@if(!GAME_WOHN)
 			lineLayerPos += dy;
 			lineLayerLength += dy;
 @endif
@@ -3783,18 +3902,21 @@ class MessageLayer extends KAGLayer
 			{
 				if(vertical) y = marginT; else x = marginL;
 			}
-@if(0)
+@if(!GAME_WOHN)
 			if(inLink!=-1) endLinkLine();
 			fixLineLayer();
 @endif
 			decideSizeChange();
-@if(0)
+@if(!GAME_WOHN)
 			initLineLayer();
 @endif
+@if(GAME_WOHN)
 			initCharLayer();
+@endif
 		}
 	}
 
+@if(GAME_WOHN)
 	function locateAlign(anchor, text, offsetText="", offsetTextDirection=0)
 	{
 		var right = relinexpos - marginL;
@@ -3810,17 +3932,23 @@ class MessageLayer extends KAGLayer
 		x = (right - getChWidth(text)[1]) * anchorValue + getChWidth(offsetText)[1]*offsetTextDirection;
 		locate(x, void);
 	}
+@endif
 
 	function processReturn()
 	{
 		// 改行を処理する
 		if(reline())
 		{
+@if(!GAME_WOHN)
+			return autoReturn;
+@endif
+@if(GAME_WOHN)
 @if(MESSAGE_SCROLL_REPAGE)
 			scrollLines();
 @endif
 @if(!MESSAGE_SCROLL_REPAGE)
 			return autoReturn;
+@endif
 @endif
 		}
 		return false;
@@ -3832,9 +3960,10 @@ class MessageLayer extends KAGLayer
 		var key = adjustColorKey(elm.key);
 		var char = true;
 		char = +elm.char if elm.char !== void;
-@if(0)
+@if(!GAME_WOHN)
 		if(putGraph(elm.storage, key, char)) return autoReturn;
 @endif
+@if(GAME_WOHN)
 		if(putGraph(elm.storage, key, char))
 		{
 @if(MESSAGE_SCROLL_REPAGE)
@@ -3844,16 +3973,19 @@ class MessageLayer extends KAGLayer
 			return autoReturn;
 @endif
 		}
+@endif
 		return false;
 	}
 
+@if(GAME_WOHN)
 	function processBackspace(elm)
 	{
 		// カーソル位置から cnt 文字消去
 		backspace(elm.cnt === void ? 1 : +elm.cnt);
 	}
+@endif
 
-@if(0)
+@if(!GAME_WOHN)
 	function setRuby(text)
 	{
 		// 次の文字に対するルビを設定する
@@ -3861,6 +3993,7 @@ class MessageLayer extends KAGLayer
 	}
 @endif
 
+@if(GAME_WOHN)
 	function setRuby(elm)
 	{
 		if(elm.o2o != void)
@@ -3914,53 +4047,66 @@ class MessageLayer extends KAGLayer
 			return [ rw, tw ];
 		}
 	}
+@endif
 
 	function showBreakGlyph(glyphobj, storage, key)
 	{
 		// 画面に行待ち/ページ待ち記号を表示する
-@if(0)
+@if(!GAME_WOHN)
 		glyphobj.parent = this; // 親を自分にする
 @endif
+@if(GAME_WOHN)
 		glyphobj.parent	= window.primaryLayer;
 		glyphobj.absolute	= absolute + 1;
+@endif
 		glyphobj.loadImages(storage, key); // 画像を読み込む
-@if(0)
+@if(!GAME_WOHN)
 		glyphobj.bringToFront(); // 最前面に
 @endif
+@if(GAME_WOHN)
 		glyphLayer.assign(glyphobj);
 		glyphLayer.setSizeToImageSize();
 		glyphLayer.bringToFront();
+@endif
 
 		if(glyphFixedPosition)
 		{
-@if(0)
+@if(!GAME_WOHN)
 			glyphobj.setPos(glyphFixedLeft, glyphFixedTop);
 @endif
+@if(GAME_WOHN)
 			glyphLayer.setPos(glyphFixedLeft, glyphFixedTop);
+@endif
 		}
 		else
 		{
 			if(!vertical)
-@if(0)
+@if(!GAME_WOHN)
 			{
 				glyphobj.setPos(lineLayerPos + lineLayerOriginX + getLineLayerLeftOffset(),
 					y + lineSize + lineSpacing - glyphobj.height);
 			}
 @endif
+@if(GAME_WOHN)
 				glyphLayer.setPos(x + getCharLayerLeftOffset(), y + getCharLayerTopOffset() - glyphLayer.height);
+@endif
 			else
-@if(0)
+@if(!GAME_WOHN)
 			{
 				glyphobj.setPos(x - lineSpacing-  (lineSize>>1) - (glyphobj.width>>1),
 					lineLayerPos + lineLayerOriginY + getLineLayerTopOffset());
 			}
 @endif
+@if(GAME_WOHN)
 				glyphLayer.setPos(x + getCharLayerLeftOffset() + (glyphLayer.width>>1), y + getCharLayerTopOffset());
+@endif
 		}
-@if(0)
+@if(!GAME_WOHN)
 		glyphobj.visible = true;
 @endif
+@if(GAME_WOHN)
 		glyphLayer.visible = true;
+@endif
 	}
 
 	function showLineBreakGlyph(glyphobj)
@@ -3975,10 +4121,12 @@ class MessageLayer extends KAGLayer
 		showBreakGlyph(glyphobj, pageBreakGlyph, pageBreakGlyphKey);
 	}
 
+@if(GAME_WOHN)
 	function hideGlyph()
 	{
 		glyphLayer.visible	= false;
 	}
+@endif
 
 	function setGlyph(elm)
 	{
@@ -4034,7 +4182,7 @@ class MessageLayer extends KAGLayer
 
 		focusable = src.focusable;
 
-@if(0)
+@if(!GAME_WOHN)
 		// links のコピー
 		{
 			invalidateLinkObjects(); // 一応オブジェクトはすべて無効化
@@ -4110,6 +4258,7 @@ class MessageLayer extends KAGLayer
 			tf.height = sf.height;
 		}
 @endif
+@if(GAME_WOHN)
 		//	links のコピー
 		{
 			var	tl	= links, sl = src.links;
@@ -4150,9 +4299,10 @@ class MessageLayer extends KAGLayer
 				}
 			}
 		}
+@endif
 
 		// そのほか
-@if(0)
+@if(!GAME_WOHN)
 		highlightLayer.visible = false;
 		keyLink = -1;
 @endif
@@ -4177,7 +4327,7 @@ class MessageLayer extends KAGLayer
 		relinexpos = src.relinexpos;
 		isLastLine = src.isLastLine;
 		indentxpos = src.indentxpos;
-@if(0)
+@if(!GAME_WOHN)
 		linkFilled = src.linkFilled;
 		numLinks = src.numLinks;
 		selProcessLock = src.selProcessLock;
@@ -4220,6 +4370,7 @@ class MessageLayer extends KAGLayer
 		antialiased = src.antialiased;
 		vertical = src.vertical;
 		currentRuby = src.currentRuby;
+@if(GAME_WOHN)
 		displaysInFixedPitchAlsoByVariable = src.displaysInFixedPitchAlsoByVariable;
 		defaultRubyBold = src.defaultRubyBold;
 		rubyBold = src.rubyBold;
@@ -4228,18 +4379,21 @@ class MessageLayer extends KAGLayer
 		rubyCharCount = src.rubyCharCount;
 		rubyOffsetX = src.rubyOffsetX;
 		rubyOneToOneText = src.rubyOneToOneText;
+@endif
 		lastDrawnCh = src.lastDrawnCh;
 		edgeExtent = src.edgeExtent;
 		edgeEmphasis = src.edgeEmphasis;
 		shadowOffsetX = src.shadowOffsetX;
 		shadowOffsetY = src.shadowOffsetY;
+@if(GAME_WOHN)
 		currentLine = src.currentLine;
 		currentColumn = src.currentColumn;
 		fontAngle = src.fontAngle;
 		fontItalic = src.fontItalic;
+@endif
 		sizeChanged = src.sizeChanged;
 		nextClearFlag = src.nextClearFlag;
-@if(0)
+@if(!GAME_WOHN)
 		lineLayerBase = src.lineLayerBase;
 		lineLayerPos = src.lineLayerPos;
 		lineLayerLength = src.lineLayerLength;
@@ -4260,9 +4414,11 @@ class MessageLayer extends KAGLayer
 		selClickLock = src.selClickLock;
 		lastMouseX = src.lastMouseX;
 		lastMouseY = src.lastMouseY;
+@if(GAME_WOHN)
 		appearType = src.appearType;
 		appearTimeRate = src.appearTimeRate;
 		continuousType = src.continuousType;
+@endif
 		// [end_assign_vars]
 	}
 
@@ -4287,7 +4443,7 @@ class MessageLayer extends KAGLayer
 		dic.marginR = marginR;
 		dic.marginB = marginB;
 		dic.marginRCh = marginRCh;
-@if(0)
+@if(!GAME_WOHN)
 		dic.defaultLinkColor = defaultLinkColor;
 		dic.defaultLinkOpacity = defaultLinkOpacity;
 @endif
@@ -4295,7 +4451,9 @@ class MessageLayer extends KAGLayer
 		dic.defaultLineSize = defaultLineSize;
 		dic.defaultRubySize = defaultRubySize;
 		dic.defaultRubyOffset = defaultRubyOffset;
+@if(GAME_WOHN)
 		dic.defaultRubyBold = defaultRubyBold;
+@endif
 		dic.defaultLineSpacing = defaultLineSpacing;
 		dic.defaultPitch = defaultPitch;
 		dic.defaultShadow = defaultShadow;
@@ -4310,8 +4468,10 @@ class MessageLayer extends KAGLayer
 		dic.edgeEmphasis = edgeEmphasis;
 		dic.shadowOffsetX = shadowOffsetX;
 		dic.shadowOffsetY = shadowOffsetY;
+@if(GAME_WOHN)
 		dic.currentLine = currentLine;
 		dic.currentColumn = currentColumn;
+@endif
 		dic.defaultAutoReturn = defaultAutoReturn;
 		dic.lineBreakGlyph = lineBreakGlyph;
 		dic.lineBreakGlyphKey = lineBreakGlyphKey;
@@ -4321,11 +4481,14 @@ class MessageLayer extends KAGLayer
 		dic.glyphFixedLeft = glyphFixedLeft;
 		dic.glyphFixedTop = glyphFixedTop;
 		dic.draggable = draggable;
+@if(GAME_WOHN)
 		dic.appearType = appearType;
 		dic.appearTimeRate = appearTimeRate;
 		dic.continuousType = continuousType;
+@endif
 		// [end_store_vars]
 
+@if(GAME_WOHN)
 		with(dic)
 		{
 			//デフォルト値の場合は書き出さない、ここでの値はrestoreと合わせておくこと
@@ -4380,6 +4543,7 @@ class MessageLayer extends KAGLayer
 			delete .appearTimeRate		if .appearTimeRate == 3;		//Configには無い値
 			delete .continuousType		if .continuousType == "";		//Configには無い値
 		}
+@endif
 		return dic;
 	}
 
@@ -4387,6 +4551,7 @@ class MessageLayer extends KAGLayer
 	{
 		imageModified = true;
 
+@if(GAME_WOHN)
 		with(dic)
 		{
 			//省略されたデフォルトに戻す、ここでの値はstoreと合わせておくこと
@@ -4436,6 +4601,7 @@ class MessageLayer extends KAGLayer
 			.appearTimeRate = 3										if .appearTimeRate === void;		//Configには無い値
 			.continuousType = ""									if .continuousType === void;		//Configには無い値
 		}
+@endif
 
 		// 状態を dic から読み出す
 		// [start_restore_vars] と [end_restore_vars] の間は
@@ -4450,7 +4616,7 @@ class MessageLayer extends KAGLayer
 		marginR = dic.marginR if dic.marginR !== void;
 		marginB = dic.marginB if dic.marginB !== void;
 		marginRCh = dic.marginRCh if dic.marginRCh !== void;
-@if(0)
+@if(!GAME_WOHN)
 		defaultLinkColor = dic.defaultLinkColor if dic.defaultLinkColor !== void;
 		defaultLinkOpacity = dic.defaultLinkOpacity if dic.defaultLinkOpacity !== void;
 @endif
@@ -4458,7 +4624,9 @@ class MessageLayer extends KAGLayer
 		defaultLineSize = dic.defaultLineSize if dic.defaultLineSize !== void;
 		defaultRubySize = dic.defaultRubySize if dic.defaultRubySize !== void;
 		defaultRubyOffset = dic.defaultRubyOffset if dic.defaultRubyOffset !== void;
+@if(GAME_WOHN)
 		defaultRubyBold = dic.defaultRubyBold if dic.defaultRubyBold !== void;
+@endif
 		defaultLineSpacing = dic.defaultLineSpacing if dic.defaultLineSpacing !== void;
 		defaultPitch = dic.defaultPitch if dic.defaultPitch !== void;
 		defaultShadow = dic.defaultShadow if dic.defaultShadow !== void;
@@ -4473,8 +4641,10 @@ class MessageLayer extends KAGLayer
 		edgeEmphasis = dic.edgeEmphasis if dic.edgeEmphasis !== void;
 		shadowOffsetX = dic.shadowOffsetX if dic.shadowOffsetX !== void;
 		shadowOffsetY = dic.shadowOffsetY if dic.shadowOffsetY !== void;
+@if(GAME_WOHN)
 		currentLine = dic.currentLine if dic.currentLine !== void;
 		currentColumn = dic.currentColumn if dic.currentColumn !== void;
+@endif
 		defaultAutoReturn = dic.defaultAutoReturn if dic.defaultAutoReturn !== void;
 		lineBreakGlyph = dic.lineBreakGlyph if dic.lineBreakGlyph !== void;
 		lineBreakGlyphKey = dic.lineBreakGlyphKey if dic.lineBreakGlyphKey !== void;
@@ -4484,9 +4654,11 @@ class MessageLayer extends KAGLayer
 		glyphFixedLeft = dic.glyphFixedLeft if dic.glyphFixedLeft !== void;
 		glyphFixedTop = dic.glyphFixedTop if dic.glyphFixedTop !== void;
 		draggable = dic.draggable if dic.draggable !== void;
+@if(GAME_WOHN)
 		appearType = dic.appearType if dic.appearType !== void;
 		appearTimeRate = dic.appearTimeRate if dic.appearTimeRate !== void;
 		continuousType = dic.continuousType if dic.continuousType !== void;
+@endif
 		// [end_restore_vars]
 		super.restore(dic);
 	}
@@ -4536,24 +4708,29 @@ class MessageLayer extends KAGLayer
 		// 呼ばれる
 		if(b)
 		{
-@if(0)
+@if(!GAME_WOHN)
 			visibleBeforeUserInvisible = visible;
 @endif
+@if(GAME_WOHN)
 			visibleBeforeUserInvisible = visible if visibleBeforeUserInvisible === void;
+@endif
 			invisibleByUser = true; // ユーザにより一時的に不可視
 			visible = false;
 		}
 		else
 		{
 			invisibleByUser = false; // 可視
-@if(0)
+@if(!GAME_WOHN)
 			visible = visibleBeforeUserInvisible;
 @endif
+@if(GAME_WOHN)
 			visible = visibleBeforeUserInvisible if visibleBeforeUserInvisible !== void;
 			visibleBeforeUserInvisible	= void;
+@endif
 		}
 	}
 
+@if(GAME_WOHN)
 	/**
 	 *	文字へのアクション設定.
 	 *	@param layer アクションさせる文字レイヤー
@@ -4930,6 +5107,7 @@ class MessageLayer extends KAGLayer
 				setPos(.left + Math.random() * .hmax * 2 - .hmax, .top + Math.random() * .vmax * 2 - .vmax);
 		}
 	}
+@endif
 }
 
 

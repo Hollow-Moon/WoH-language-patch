@@ -127,6 +127,7 @@ function KAGWindow_createMenus()
 		menu.add(this.storeMenu = new KAGMenuItem(this, __t("栞をはさむ(&M)"), 0, onStoreMenuClick, false));
 	}
 
+@if(GAME_WOHN)
 	menu.add(this.quickMenu = new KAGMenuItem(this, __t("クイック(&Q)"), 0, void, false));
 
 		quickMenu.add(this.quickSaveMenuItem = new KAGMenuItem(this, __t("クイックセーブ(&S)"), 1,
@@ -139,6 +140,7 @@ function KAGWindow_createMenus()
 
 		quickMenu.add(this.quickMenuItem = new KAGMenuItem(this, __t("クイックロードメニュー(&M)"), 1,
 			"openQuickMenu()", false));
+@endif
 
 	menu.add(this.displayMenu = new KAGMenuItem(this, __t("画面(&V)"), 0, void, false));
 
@@ -147,6 +149,7 @@ function KAGWindow_createMenus()
 		displayMenu.add(this.fullScreenMenuItem = new KAGMenuItem(this, __t("フルスクリーン(&F)"), 1,
 			onFullScreenMenuItemClick, false));
 
+@if(GAME_WOHN)
 		displayMenu.add(new MenuItem(this, "-"));
 
 		displayMenu.add(this.fullscreenMenu = new KAGMenuItem(this, __t("フルスクリーン時の拡大表示(&M)"), 0, void, false));
@@ -159,7 +162,9 @@ function KAGWindow_createMenus()
 
 			fullscreenMenu.add(this.noneMagnifyMenuItem = new KAGMenuItem(this, __t("拡大しない(&N)"), 1,
 				onNoneMagnifyMenuItemClick, false));
+@endif
 
+@if(GAME_WOHN)
 	menu.add(this.operateMenu = new KAGMenuItem(this, __t("動作設定(&O)"), 0, void, false));
 		operateMenu.add(this.operateMouseMoveMenuItem = new KAGMenuItem(this, __t("確認ダイアログの自動移動(&M)"), 0, void, false));
 			operateMouseMoveMenuItem.add(this.moveToYesMenuItem = new KAGMenuItem(this, __t("「はい」へ移動"), 1,
@@ -168,11 +173,14 @@ function KAGWindow_createMenus()
 				onMoveToNoMenuItemClick, false));
 			operateMouseMoveMenuItem.add(this.moveToCenterMenuItem = new KAGMenuItem(this, __t("中間へ移動"), 1,
 				onMoveToCenterMenuItemClick, false));
+@endif
 
 	menu.add(this.helpMenu = new KAGMenuItem(this, __t("ヘルプ(&H)"), 0, void, false));
 
+@if(GAME_WOHN)
 		helpMenu.add(this.helpCallSupportMenuItem = new KAGMenuItem(this, __t("サポートツールを起動(&S)"), 0,
 			onHelpSupportMenuItemClick, false));
+@endif
 		helpMenu.add(this.helpIndexMenuItem = new KAGMenuItem(this, __t("目次(&I) ..."), 0,
 			onHelpIndexMenuItemClick, false));
 		helpMenu.add(this.helpAboutMenuItem = new KAGMenuItem(this, __t("このソフトについて(&A) ..."), 0,
@@ -180,17 +188,22 @@ function KAGWindow_createMenus()
 
 	menu.add(this.debugMenu = new KAGMenuItem(this, __t("デバッグ(&D)"), 0, void, false));
 
+@if(GAME_WOHN)
 		debugMenu.add(this.loadScenarioMenuItem = new KAGMenuItem(this, __t("シナリオの読込み(&R)"), 1,
 			onExecDialogMenuItemClick, false));
+@endif
 		debugMenu.add(this.reloadScenarioMenuItem = new KAGMenuItem(this, __t("シナリオの再読込み(&R)"), 1,
 			onReloadScenarioMenuItemClick, false));
+@if(GAME_WOHN)
 		debugMenu.add(this.loadLastScenarioMenuItem = new KAGMenuItem(this, __t("前回「シナリオの読込み」をもう一度(&L)"), 1,
 			onLoadLastScenarionMenuItemClick, false));
+@endif
 		debugMenu.add(this.showConsoleMenuItem = new KAGMenuItem(this, __t("コンソール(&C)\tShift+F4"), 1,
 			onShowConsoleMenuItemClick, false));
 		debugMenu.add(this.showControllerMenuItem = new KAGMenuItem(this, __t("コントローラ(&S)\tShift+F1"), 1,
 			onShowContollerMenuItemClick, false));
 
+@if(GAME_WOHN)
         debugMenu.add(new MenuItem(this, "-"));
 
 		debugMenu.add(this.showControllerMenuItem = new KAGMenuItem(this, __t("システムリセット"), 1,
@@ -248,6 +261,7 @@ function KAGWindow_createMenus()
 				onVoiceSpeedMenuItemClick, false));
 			voiceTripleSpeedMenuItem.speed = 3.0;
 */
+@endif
 }
 
 
@@ -261,17 +275,21 @@ class KAGMenuItem extends MenuItem
 	var _accessible = true;
 	var _enabled = true;
 	var autoEnable = false;
+@if(GAME_WOHN)
 	var groupTag;
+@endif
 	var originalCaption;
 
 	function KAGMenuItem(window, caption, group, command, autoenable)
 	{
 		super.MenuItem(window, __(caption));
 		this.owner = window;
+@if(GAME_WOHN)
 		// command が辞書配列だった場合は exp, clickse, clicksebuf を参照して効果音をつける
 		if (command instanceof "Dictionary") {
 			with (command) command = createSoundExpression(.exp, .clickse, .clicksebuf);
 		}
+@endif
 		this.command = command;
 		this.autoEnable = autoenable;
 		if(group!=0)
@@ -289,6 +307,7 @@ class KAGMenuItem extends MenuItem
 		super.finalize(...);
 	}
 
+@if(GAME_WOHN)
 	// groupTagでグループ番号を再設定
 	function resetChildItemGrouping() {
 		var list = this.children, sorted = [];
@@ -310,6 +329,7 @@ class KAGMenuItem extends MenuItem
 		}
 		return grpList;
 	}
+@endif
 
 	property enabled  // オーバーライド
 	{
@@ -326,10 +346,12 @@ class KAGMenuItem extends MenuItem
 	function click()
 	{
 		// click 動作
-@if(0)
+@if(!GAME_WOHN)
 		if(command !== void)
 @endif
+@if(GAME_WOHN)
 		if (_accessible && _enabled && command !== void)
+@endif
 		{
 			if(typeof command == "String")
 			{
@@ -348,6 +370,7 @@ class KAGMenuItem extends MenuItem
 		click();
 	}
 
+@if(GAME_WOHN)
 	// サウンドを鳴らすための式を作成する
 	// exp になにか式があった場合はカンマでつなぐ
 	// system/utils.tjsにあっても良いと思うが現状は MessageLayer と DialogLayer で個別で持っている
@@ -369,9 +392,11 @@ class KAGMenuItem extends MenuItem
 			};
 		}
 	}
+@endif
 }
 
 
+@if(GAME_WOHN)
 // ウィンドウのメニュー部分のみshowModalで表示
 class PopupMenuWindow extends Window
 {
@@ -558,3 +583,4 @@ function SetWindowControlMenu(win, min, max, res, cls) {
 		first.rightJustify = true if (first !== void);
 	}
 }
+@endif

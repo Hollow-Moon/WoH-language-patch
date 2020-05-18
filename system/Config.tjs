@@ -16,7 +16,9 @@
 // ウィンドウのキャプション(タイトル)および
 // タスクバーに表示されるものです。
 ;System.title = "吉里吉里";
+@if(GAME_WOHN)
 ;System.title = __t("魔法使いの夜");
+@endif
 
 
 // ◆ シナリオ解析モード
@@ -58,8 +60,10 @@ function KAGWindow_config()
 // に設定すると、フルスクリーンにできない場合があります。
 ;scWidth = 640;
 ;scHeight = 480;
+@if(GAME_WOHN)
 ;scWidth = 1024;
 ;scHeight = 576;
+@endif
 
 
 // ◆ 読みとり専用モード
@@ -81,8 +85,10 @@ function KAGWindow_config()
 // この場合は 保存可能な栞の個数に制限はありません。また、
 // エクスプローラなどによる栞の管理が容易になります。
 ;freeSaveDataMode = false;
+@if(GAME_WOHN)
 @if(DEBUG)
 ;freeSaveDataMode = true;
+@endif
 @endif
 
 
@@ -93,7 +99,9 @@ function KAGWindow_config()
 // 「開く」ダイアログボックスの「縮小版」表示でセーブ時点でのサムネイルを
 // 表示することができるようになります。
 ;saveThumbnail = false;
+@if(GAME_WOHN)
 ;saveThumbnail = true;
+@endif
 
 
 // ◆サムネイルの保存サイズ
@@ -102,7 +110,9 @@ function KAGWindow_config()
 // 横幅はピクセル単位で指定してください。たて幅は scWidth と scHeight の
 // 比と同じ比で自動的に計算されます。
 ;thumbnailWidth = 133;
+@if(GAME_WOHN)
 ;thumbnailWidth = 130;
+@endif
 
 // ◆サムネイルの保存モード
 // サムネイルの保存モードを指定します。saveThumbnail を true に設定しないとこの
@@ -112,8 +122,11 @@ function KAGWindow_config()
 // 256色ビットマップの方がファイルサイズを小さく抑えることができますが、
 // 画質は悪くなります。
 ;thumbnailDepth = 8;
+@if(GAME_WOHN)
 ;thumbnailDepth = 24;
+@endif
 
+@if(GAME_WOHN)
 // ◆ セーブデータ保存場所
 // ;saveDataLocation = "savedata";
 // のように指定すると、吉里吉里の実行可能ファイルと同じフォルダ以下の
@@ -134,6 +147,7 @@ function KAGWindow_config()
 ;saveDataLocation = System.personalPath + "wohn_savedata";
 @endif
 // 各ユーザーの、マイドキュメント\FataSavedataに保存される
+@endif
 
 
 // ◆ データ名プレフィクス
@@ -141,7 +155,9 @@ function KAGWindow_config()
 // フリーセーブモードの場合でもシステム変数やシステムの設定を保存する
 // ファイルに影響します。
 ;dataName = "data";
+@if(GAME_WOHN)
 ;dataName = "savedata";
+@endif
 
 
 // ◆ データID
@@ -158,7 +174,9 @@ function KAGWindow_config()
 // と入力して Enter キーを押しても取得することができます。
 // ( 例 : "371a6289-a084-ee18-2885-66314a0aa19d" )
 ;saveDataID = "00000000-0000-0000-0000-000000000000";
+@if(GAME_WOHN)
 ;saveDataID = "dd40e5c3-0794-4373-83a5-e0907cea19ac";
+@endif
 
 
 // ◆ 保存モード
@@ -169,8 +187,10 @@ function KAGWindow_config()
 // 兼ねています。
 // "" を指定すると栞の暗号化や圧縮はされません。
 ;saveDataMode = "";
+@if(GAME_WOHN)
 @if(COMPRESS_SAVEFILE)
 ;saveDataMode = "z";
+@endif
 @endif
 
 
@@ -184,7 +204,9 @@ function KAGWindow_config()
 // が栞の読み込みによって新しいマクロの情報に上書きされてしまうことが開発の
 // 妨げになるため、false を指定した方がよいでしょう。
 ;saveMacros = true;
+@if(GAME_WOHN)
 ;saveMacros = false;
+@endif
 
 
 
@@ -258,18 +280,22 @@ function KAGWindow_config()
 //   す。
 // 2 を指定すると選択肢 ( s タグで停止 ) ごとに通過記録を行います。
 ;recordHistoryOfStore = 0;
+@if(GAME_WOHN)
 ;recordHistoryOfStore = 1;
+@endif
 
 
 // ◆ 通過記録の最大数
 // 通過記録の最大数を指定します。最大、ここで指定した回数、前に戻る事ができ
 // ます。大きくするとセーブデータも大きくなります。
 ;maxHistoryOfStore = 5;
+@if(GAME_WOHN)
 //;maxHistoryOfStore = 4;		//20〜40くらいを想定
 ;maxHistoryOfStore = 20;
+@endif
 
 
-@if(0)
+@if(!GAME_WOHN)
 // ◆ quake の time 属性値
 // true とすると quake の time 属性の単位が delay で指定した文字表示速度に
 // 基づくようになります。false を指定すると ms (ミリ秒) 単位で指定すること
@@ -283,7 +309,9 @@ function KAGWindow_config()
 // 分だけ効果音を同時に再生できます。効果音を使用しない場合は 0 を指定して
 // かまいません。
 ;numSEBuffers = 3;
+@if(GAME_WOHN)
 ;numSEBuffers = 15;
+@endif
 
 
 // ◆ ムービーオブジェクトの数
@@ -314,11 +342,13 @@ function KAGWindow_config()
 ;scPositionX.center = 320;
 ;scPositionX.right_center = 400;
 ;scPositionX.right = 480;
+@if(GAME_WOHN)
 ;scPositionX.left = int(scWidth * 0.25);
 ;scPositionX.left_center = int(scWidth * 0.375);
 ;scPositionX.center = int(scWidth * 0.5);
 ;scPositionX.right_center = int(scWidth * 0.625);
 ;scPositionX.right = int(scWidth * 0.75);
+@endif
 
 
 // 簡易な記号
@@ -335,7 +365,9 @@ function KAGWindow_config()
 // 前景レイヤと違って、0 を指定することはできません。これも必要な数だけ確保
 // するようにすべきです。laycount タグでシナリオ内でも変更できます。
 ;numMessageLayers = 2;
+@if(GAME_WOHN)
 ;numMessageLayers = 1;
+@endif
 
 
 // ◆ 初期状態でメッセージレイヤを表示するかどうか
@@ -343,7 +375,9 @@ function KAGWindow_config()
 // false を指定すると初期状態ではすべてのメッセージレイヤは初期状態で非表示
 // になります。
 ;initialMessageLayerVisible = true;
+@if(GAME_WOHN)
 ;initialMessageLayerVisible = false;
+@endif
 
 
 // ◆ 利用可能な栞の数
@@ -353,7 +387,9 @@ function KAGWindow_config()
 // 行う場合など ) は、numBookMarks は必要な数に設定し、restoreMenu.visible と
 // storeMenu.visible を false に設定してください。
 ;numBookMarks = 10;
+@if(GAME_WOHN)
 ;numBookMarks = 8 * 15 + 10;	//	通常が 8ヶ15ページ、クイックが 10ヶ
+@endif
 
 
 // ◆ 栞に日付を併記するか
@@ -366,7 +402,9 @@ function KAGWindow_config()
 // true を指定すると、フォント選択ウィンドウで固定ピッチフォントのみを表示
 // するようになります。
 ;showFixedPitchOnlyInFontSelector = false;
+@if(GAME_WOHN)
 ;showFixedPitchOnlyInFontSelector = true;
+@endif
 
 
 // ◆ 「ヘルプ > 目次」を選択したときに実行するファイル
@@ -415,7 +453,9 @@ function Menu_visible_config()
 // このメニュー項目を非表示にしてもマウスの右クリックでのメッセージの
 // 非表示は引き続き有効です。
 ;rightClickMenuItem.visible = true;
+@if(GAME_WOHN)
 ;rightClickMenuItem.visible = false;
+@endif
 
 
 // ◆ 「システム > メッセージ履歴の表示」
@@ -432,23 +472,31 @@ function Menu_visible_config()
 
 // ◆ 「システム > 自動的に読み進むウェイト」
 ;autoModeWaitMenu.visible = true;
+@if(GAME_WOHN)
 ;autoModeWaitMenu.visible = false;
+@endif
 
 
 // ◆ 「システム > 前に戻る」
 ;goBackMenuItem.visible = true;
+@if(GAME_WOHN)
 ;goBackMenuItem.visible = false;
+@endif
 
 
 // ◆ 「システム > 最初に戻る」
 ;goToStartMenuItem.visible = true;
+@if(GAME_WOHN)
 ;goToStartMenuItem.visible = false;
+@endif
 
 
 // ◆ 「文字表示」
 ;characterMenu.visible = true;
+@if(GAME_WOHN)
 @if(!DEBUG)
 ;characterMenu.visible = false;
+@endif
 @endif
 
 
@@ -476,15 +524,19 @@ function Menu_visible_config()
 
 // ◆ 「栞をたどる」
 ;restoreMenu.visible = true;
+@if(GAME_WOHN)
 @if(!DEBUG)
 ;restoreMenu.visible = false;
+@endif
 @endif
 
 
 // ◆ 「栞をはさむ」
 ;storeMenu.visible = true;
+@if(GAME_WOHN)
 @if(!DEBUG)
 ;storeMenu.visible = false;
+@endif
 @endif
 
 
@@ -494,12 +546,16 @@ function Menu_visible_config()
 
 // ◆ 「ヘルプ」
 ;helpMenu.visible = false;
+@if(GAME_WOHN)
 ;helpMenu.visible = true;
+@endif
 
 
 // ◆ 「ヘルプ > 目次 ...」
 ;helpIndexMenuItem.visible = true;
+@if(GAME_WOHN)
 ;helpIndexMenuItem.visible = false;
+@endif
 
 
 // ◆ 「ヘルプ > このソフトについて ...」
@@ -508,8 +564,10 @@ function Menu_visible_config()
 
 // ◆ 「デバッグ」
 ;debugMenu.visible = false;
+@if(GAME_WOHN)
 @if(DEBUG==1)
 ;debugMenu.visible = true;
+@endif
 @endif
 
 
@@ -541,7 +599,9 @@ function MessageLayer_config()
 // 画像を用いる必要があります (自動的には判別されません)。
 // ltAddAlpha 用の画像は画像フォーマットコンバータで作成可能です。
 ;layerType = ltAddAlpha;
+@if(GAME_WOHN)
 ;layerType = ltAlpha;
+@endif
 
 // ◆ メッセージ枠用の画像
 // メッセージ枠用の画像のファイル名を指定します。
@@ -549,7 +609,9 @@ function MessageLayer_config()
 // 画像を指定した場合、position タグでメッセージレイヤのサイズを変更すると
 // おかしな表示になると思います
 ;frameGraphic = "";  // position タグの frame 属性に相当
+@if(GAME_WOHN)
 ;frameGraphic = "txtwindow01";  // position タグの frame 属性に相当
+@endif
 
 
 // ◆ メッセージレイヤの色と不透明度
@@ -570,10 +632,12 @@ function MessageLayer_config()
 ;marginT = 8; // 上余白
 ;marginR = 8; // 右余白
 ;marginB = 8; // 下余白
+@if(GAME_WOHN)
 ;marginL = __si("142", "marginl_basic"); // 左余白
 ;marginR = __si("142", "marginr_basic"); // 右余白
 ;marginT = __si("69", "margint_basic"); // 上余白
 ;marginB = __si("69", "marginb_basic"); // 下余白
+@endif
 
 
 // ◆ 初期位置
@@ -583,10 +647,12 @@ function MessageLayer_config()
 ;mt = 16;  // 上端位置
 ;mw = 640-32;   // 幅
 ;mh = 480-32;   // 高さ
+@if(GAME_WOHN)
 ;mw = 1024;   // 幅
 ;mh = 576;   // 高さ
 ;ml = (window.scWidth-mw)\2;  // 左端位置
 ;mt = (window.scHeight-mh)\2;  // 上端位置
+@endif
 
 
 // ◆ 自動改行/改ページ
@@ -596,30 +662,38 @@ function MessageLayer_config()
 ;defaultAutoReturn = true;
 
 
+@if(GAME_WOHN)
 // ◆ 可変ピッチ(プロポーショナル)フォントでも固定ピッチで表示するか？
 // kag.showFixedPitchOnlyInFontSelectorが真でプロポーショナルフォントが選ばれており、
 // 且つこのフラグが真のときにのみ有効です。
 ;displaysInFixedPitchAlsoByVariable = __si("0", "displaysinfixedpitchalsobyvariable_basic"); // defstyle タグの pitch 属性に相当
+@endif
 
 
 // ◆ 右文字マージン
 // 禁則処理用にあけておく右端の文字数を指定します。
 // (縦書きモードでは下端の文字数であると解釈されます)
 ;marginRCh = 2;
+@if(GAME_WOHN)
 ;marginRCh = 1;
+@endif
 
 
 // ◆ 文字の大きさ
 // デフォルトの文字の大きさ ( 高さ ) を pixel 単位で指定します。
 ;defaultFontSize = 24;  // deffont タグの size 属性に相当
+@if(GAME_WOHN)
 ;defaultFontSize = __si("26", "fontsize_basic");  // deffont タグの size 属性に相当
 					   // → HistoryLayer_configのfontHeight,lineHeightもWoHシステムでは合わせておくこと
+@endif
 
 
 // ◆ 行間
 // 行間を pixel 単位で指定します。
 ;defaultLineSpacing = 6; // defstyle タグの linespacing 属性に相当
+@if(GAME_WOHN)
 ;defaultLineSpacing = __si("18", "linespacing_basic"); // defstyle タグの linespacing 属性に相当
+@endif
 
 // ◆ 字間
 // 字間を pixel 単位で指定します。
@@ -627,7 +701,9 @@ function MessageLayer_config()
 // 負の数値を指定すると字間が詰まります。正の数値を指定すると字間が空きま
 // す。
 ;defaultPitch = 0; // defstyle タグの pitch 属性に相当
+@if(GAME_WOHN)
 ;defaultPitch = __si("1", "defaultpitch_basic"); // defstyle タグの pitch 属性に相当
+@endif
 
 
 // ◆ 文字の書体
@@ -639,7 +715,9 @@ function MessageLayer_config()
 // カンマで区切って複数のフォントを指定することができます。その場合は、最初
 // の方に書いたフォントが存在すれば、優先されます。
 ;userFace = "ＭＳ Ｐ明朝"; // deffont タグの face 属性に相当
+@if(GAME_WOHN)
 ;userFace = __s("明朝D", "window_font_face"); // deffont タグの face 属性に相当
+@endif
 
 
 // ◆ 文字の色
@@ -650,19 +728,25 @@ function MessageLayer_config()
 // ◆ 文字をボールドにするか
 // する場合は true, しない場合は false を指定します。
 ;defaultBold = true; // deffont タグの bold 属性に相当
+@if(GAME_WOHN)
 ;defaultBold = __sb("1", "defaultbold_basic");
+@endif
 
 
 // ◆ ルビサイズ
 // ルビサイズを pixel 単位で指定します。
 ;defaultRubySize = 10; // deffont タグの rubysize に相当
+@if(GAME_WOHN)
 ;defaultRubySize = __si("12", "defaultrubysize_basic"); // deffont タグの rubysize に相当
+@endif
 
 
 // ◆ ルビ の表示オフセット
 // 負の数を指定するとその pixel 数分、本文に近い位置に表示されます。
 ;defaultRubyOffset = -2; // deffont タグの rubyoffset に相当
+@if(GAME_WOHN)
 ;defaultRubyOffset = 0; // deffont タグの rubyoffset に相当
+@endif
 
 
 // ◆ アンチエイリアス文字描画をするか
@@ -677,13 +761,17 @@ function MessageLayer_config()
 // ◆ 縁取りの色
 // 縁取りの色を 0xRRGGBB 形式で指定します。
 ;defaultEdgeColor = 0x000000;  // deffont タグの edgecolor に属性に相当
+@if(GAME_WOHN)
 ;defaultEdgeColor = 0x2f2f2f;  // deffont タグの edgecolor に属性に相当
+@endif
 
 
 // ◆ 影を描画するか
 // する場合は true, しない場合は false を指定します。
 ;defaultShadow = true;  // deffont タグの shadow 属性に相当
+@if(GAME_WOHN)
 ;defaultShadow = false;  // deffont タグの shadow 属性に相当
+@endif
 
 
 // ◆ 縁取りをするか
@@ -691,7 +779,9 @@ function MessageLayer_config()
 // を同時に描画することができなくなりました。縁取りを指定した場合は縁取りが
 // 優先されます。
 ;defaultEdge = false;  // deffont タグの edge 属性に相当
+@if(GAME_WOHN)
 ;defaultEdge = true;  // deffont タグの edge 属性に相当
+@endif
 
 
 // ◆ クリック待ちグリフの画像ファイル
@@ -797,22 +887,30 @@ function HistoryLayer_config()
 
 // ◆ フォント名
 ;fontName = "ＭＳ Ｐ明朝";
+@if(GAME_WOHN)
 ;fontName = __s("明朝D", "history_font_face");
+@endif
 
 
 // ◆ フォントを太字にするか
 ;fontBold = true;
+@if(GAME_WOHN)
 ;fontBold = __sb("0", "font_bold_history");
+@endif
 
 
 // ◆ フォントのサイズ ( pixel単位)
 ;fontHeight = 24;
+@if(GAME_WOHN)
 ;fontHeight = __si("26", "font_height_history");
+@endif
 
 
 // ◆ ラインの高さ
 ;lineHeight = 26;
+@if(GAME_WOHN)
 ;lineHeight = 27;
+@endif
 
 
 // ◆ 縦書きの場合は true
@@ -824,7 +922,9 @@ function HistoryLayer_config()
 // cm ct er タグ、あるいは repage 属性が true の hr タグ
 // でメッセージ履歴の改ページを行うようになります。
 ;everypage = false;
+@if(GAME_WOHN)
 ;everypage = true;
+@endif
 
 
 // ◆ 自動改行を行うかどうか
@@ -843,19 +943,25 @@ function HistoryLayer_config()
 // true を指定すると栞にメッセージ履歴が保存されるように
 // なりますが、栞のデータサイズが大きくなります。
 ;storeState = false;
+@if(GAME_WOHN)
 ;storeState = true;
+@endif
 
+@if(GAME_WOHN)
 // ◆ マージン設定
 // メッセージレイヤーと同じにする
 ;marginL = __si("142", "marginl_history"); // 左余白
 ;marginR = __si("142", "marginr_history"); // 右余白
 ;marginT = __si("69", "margint_history"); // 上余白
 ;marginB = __si("69", "marginb_history"); // 下余白
+@endif
 
+@if(GAME_WOHN)
 // ◆ 右文字マージン
 // 禁則処理用にあけておく右端の文字数を指定します。
 // (縦書きモードでは下端の文字数であると解釈されます)
 ;marginRCh = 1;
+@endif
 
 
 // ◆ メッセージ履歴 追加の設定
@@ -872,6 +978,7 @@ function HistoryLayer_config()
 }
 
 
+@if(GAME_WOHN)
 //---------------------------------------------- システムコンフィグ設定初期値 -----
 //このデフォルト値を変更したらconfigmenu.tjsおよびconfig_system.ks,config_system.ttdのhint
 //に表記されているデフォルトの表示を変更する事。
@@ -1034,6 +1141,7 @@ function SystemVariables_configKag(kag)
 ;kag.systemSEMute = false;
 
 }
+@endif
 
 
 

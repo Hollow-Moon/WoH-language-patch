@@ -38,10 +38,12 @@ class GraphicLayer extends AnimationLayer
 		// win    : ウィンドウオブジェクト
 		// par    : 親レイヤ
 		// name   : レイヤの名前
-@if(0)
+@if(!GAME_WOHN)
 		super.AnimationLayer(win, par);
 @endif
+@if(GAME_WOHN)
 		super.AnimationLayer(...);
+@endif
 
 		this.name = name;
 		this.id = id;
@@ -335,10 +337,12 @@ class BaseLayer extends GraphicLayer
 
 	function BaseLayer(win, par, name, id)
 	{
-@if(0)
+@if(!GAME_WOHN)
 		super.GraphicLayer(win, par, name, id);
 @endif
+@if(GAME_WOHN)
 		super.GraphicLayer(win, par, name, id, true);
+@endif
 		type = ltCoverRect;
 		hitType = htMask;
 		hitThreshold = 0;
@@ -352,10 +356,12 @@ class BaseLayer extends GraphicLayer
 	function assign(src)
 	{
 		// assign オーバーライド
-@if(0)
+@if(!GAME_WOHN)
 		super.assign(src);
 @endif
+@if(GAME_WOHN)
 		super.assign(...);
+@endif
 		// 親クラスの assign は可視・不可視などをコピーしないが、
 		// 背景レイヤなのでそれでよい
 	}
@@ -371,10 +377,12 @@ class BaseLayer extends GraphicLayer
 			if(elm.visible !== void)
 			{
 				// visible の状態を変えられると困るので
-@if(0)
+@if(!GAME_WOHN)
 				if(isPrimary) elm.visible = true; else elm.visible = false;
 @endif
+@if(GAME_WOHN)
 				if(isPrimaryBase) elm.visible = true; else elm.visible = false;
+@endif
 			}
 		}
 		super.loadImages(elm);
@@ -383,10 +391,12 @@ class BaseLayer extends GraphicLayer
 	function restore(dic)
 	{
 		// restore オーバーライド
-@if(0)
+@if(!GAME_WOHN)
 		if(isPrimary) dic.visible = true; else dic.visible = false;
 @endif
+@if(GAME_WOHN)
 		if(isPrimaryBase) dic.visible = true; else dic.visible = false;
+@endif
 		dic.absolute = 0;
 		super.restore(dic);
 	}
@@ -396,10 +406,12 @@ class BaseLayer extends GraphicLayer
 		// setOptions オーバーライド
 		if(elm.visible !== void)
 		{
-@if(0)
+@if(!GAME_WOHN)
 			if(isPrimary) elm.visible = true; else elm.visible = false;
 @endif
+@if(GAME_WOHN)
 			if(isPrimaryBase) elm.visible = true; else elm.visible = false;
+@endif
 		}
 		super.setOptions(elm);
 	}
@@ -414,19 +426,23 @@ class BaseLayer extends GraphicLayer
 		{
 			// 自身がプライマリレイヤならば、ウィンドウの
 			// onPrimaryClick を呼ぶ
-@if(0)
+@if(!GAME_WOHN)
 			if(isPrimary) window.onPrimaryClick();
 @endif
+@if(GAME_WOHN)
 			if(isPrimaryBase) window.onPrimaryClick();
+@endif
 		}
 		else if(button == mbRight)
 		{
 			// 自身がプライマリレイヤならば、ウィンドウの
 			// onPrimaryRightClick を呼ぶ
-@if(0)
+@if(!GAME_WOHN)
 			if(isPrimary) window.onPrimaryRightClick();
 @endif
+@if(GAME_WOHN)
 			if(isPrimaryBase) window.onPrimaryRightClick();
+@endif
 		}
 	}
 
@@ -505,6 +521,7 @@ class BaseLayer extends GraphicLayer
         }
     }
 
+@if(GAME_WOHN)
 	//背景レイヤーではサイズ調整をしない
 	function expandLayerSize()
 	{
@@ -513,8 +530,7 @@ class BaseLayer extends GraphicLayer
 	function reduceLayerSize()
 	{
 	}
-
-
+@endif
 }
 
 class CharacterLayer extends GraphicLayer
@@ -526,17 +542,21 @@ class CharacterLayer extends GraphicLayer
 
 	function CharacterLayer(win, par, name, id)
 	{
-@if(0)
+@if(!GAME_WOHN)
 		super.GraphicLayer(win, par, name, id);
 		freeImage();
 @endif
+@if(GAME_WOHN)
 		super.GraphicLayer(...);
+@endif
 		type = ltCoverRect;
 		hitType = htMask;
-@if(0)
+@if(!GAME_WOHN)
 		hitThreshold = 64;
 @endif
+@if(GAME_WOHN)
 		hitThreshold = 256;
+@endif
 	}
 
 	function finalize()
@@ -563,10 +583,12 @@ class CharacterLayer extends GraphicLayer
 	function assign(src)
 	{
 		// assign オーバーライド
-@if(0)
+@if(!GAME_WOHN)
 		super.assign(src);
 @endif
+@if(GAME_WOHN)
 		super.assign(...);
+@endif
 		assignVisibleState(src);
 		// 親クラスの assign は可視・不可視などの情報をコピーしないため
 		// ここで assignVisibleState を呼ぶ必要がある

@@ -29,20 +29,6 @@ var DRAW_CUT_SPEED	= 0;		//最速時のdrawspeed(押しっぱなし加速スキ�
 //	アクション管理のため
 Scripts.execStorage("ActionManager.tjs");
 
-//	ウィンドウ機能の拡張のため
-@if(kirikiriz)
-// [XXX] typeof 参照で遅延読み込みが入る／ない場合はダミーを作成
-if (typeof global.MenuItem == "undefined")
-    /**/   global.MenuItem  = %[];
-
-if (typeof global.Pad      == "undefined")
-    /**/   global.Pad       = %[];
-
-if (typeof Debug.console   == "undefined")
-    /**/   Debug.console    = %[];
-@endif
-Plugins.link("windowEx.dll");
-
 //	読み込みに失敗したファイルの記録
 @if(1)
 var	loaderrorfilesfn	= System.dataPath + "loaderror.txt";

@@ -336,6 +336,81 @@ function safeEvalStorage(filename, mode)
 	}
 }
 
+function build_exec_command_line(exepath, arguments, normalize_exepath=true, normalize_arguments=true)
+{
+	var all_args = [];
+	var exe_path = exepath;
+	if (normalize_exepath)
+	{
+		var exe_path_placed = Storages.getPlacedPath(exe_path);
+		if (exe_path_placed !== "")
+		{
+			var exe_path_local = Storages.getLocalName(exe_path_placed);
+			if (exe_path_local !== "")
+			{
+				exe_path = exe_path_local;
+			}
+		}
+	}
+	//exe_path = ('"%s"').sprintf(exe_path);
+	for (var i = 0; i < arguments.count; i += 1)
+	{
+		var arg_path = arguments[i];
+		if (normalize_arguments)
+		{
+			if (typeof(arg_path) === "String")
+			{
+				var arg_path_placed = Storages.getPlacedPath(arg_path);
+				if (arg_path_placed !== "")
+				{
+					var arg_path_local = Storages.getLocalName(arg_path_placed);
+					if (arg_path_local !== "")
+					{
+						arg_path = arg_path_local;
+					}
+				}
+			}
+			else if (typeof(arg_path) === "Object")
+			{
+				var arg_components = [];
+				for (var i = 0; i < arg_path.count; i += 1)
+				{
+					var arg_component = arg_path[i];
+					var arg_path_placed = Storages.getPlacedPath(arg_component);
+					if (arg_path_placed !== "")
+					{
+						var arg_path_local = Storages.getLocalName(arg_path_placed);
+						if (arg_path_local !== "")
+						{
+							arg_component = arg_path_local;
+						}
+					}
+					arg_components.add(arg_component);
+				}
+				arg_path = arg_components.join("");
+			}
+		}
+		else
+		{
+			if (typeof(arg_path) === "Object")
+			{
+				arg_path = arg_path.join("");
+			}
+		}
+		all_args.add(arg_path);
+	}
+	var args_joined = "";
+	if (all_args.count === 1)
+	{
+		args_joined = ('"%s"').sprintf(all_args[0]);
+	}
+	else if (all_args.count > 1)
+	{
+		args_joined = ('"%s"').sprintf(all_args.join('" "'));
+	}
+	return global.System.shellExecute(exe_path, args_joined);
+}
+
 function showAboutKirikiriWindow()
 {
 	if (typeof(global.System.showVersion) === 'Object')
@@ -344,8 +419,18 @@ function showAboutKirikiriWindow()
 	}
 	else
 	{
-		global.System.shellExecute(Storages.getLocalName(global.System.exeName), '-about');
+		return global.build_exec_command_line(global.System.exeName, ["-about"]);
 	}
+}
+
+function showEngineConfigureDialog()
+{
+	return global.build_exec_command_line(global.System.exeName, ["-userconf"]);
+}
+
+function showURLUsingDefaultHandler(url)
+{
+	return global.build_exec_command_line(url, [], false, false);
 }
 
 if (typeof(System.clearGraphicCache) !== "Object")

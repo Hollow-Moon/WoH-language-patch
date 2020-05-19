@@ -491,6 +491,9 @@ function addDevelopmentMenu() {
 	(addDevelopmentMenuItems incontextof this)(devMenuItem);
 	devMenuItem.add(this.throwExceptionItem = new KAGMenuItem(this, "Throw Exception", 1, function(sender) { throw new Exception("This is a test Exception."); }, false));
 	devMenuItem.add(this.throwConductorExceptionItem = new KAGMenuItem(this, "Throw ConductorException", 1, function(sender) { throw new ConductorException("This is a test ConductorException."); }, false));
+	devMenuItem.add(this.openCommandPromptInProjectDirectory = new KAGMenuItem(this, "Open command prompt in project directory", 1, function(sender) { global.System.shellExecute("cmd.exe", "/k cd " + ('"%s"').sprintf(Storages.getLocalName(Storages.getFullPath(".")))); }, false));
+	devMenuItem.add(this.gitCheckoutDashDashCurrentDirectory = new KAGMenuItem(this, "git checkout -- .", 1, function(sender) { global.build_exec_command_line("git.exe", ["-C", Storages.getLocalName(Storages.getFullPath(".")), "checkout", "--", "."], false, false); }, false));
+	devMenuItem.add(this.gitPullOriginMaster = new KAGMenuItem(this, "git pull origin master", 1, function(sender) { global.build_exec_command_line("git.exe", ["-C", Storages.getLocalName(Storages.getFullPath(".")), "pull", "origin", "master"], false, false); }, false));
 }
 
 function addVoiceMenu(patchMenu) {
@@ -537,7 +540,7 @@ function addMovieMenu(patchMenu) {
 	patchMenu.add(this.movieMenuItem = new KAGMenuItem(this, __t("ムービー(&M)"), 0, void, false));
 	movieMenuItem.add(this.subbedVideosMenuItem = new KAGFlagFolderMenuItem(this, __t("ムービー再生中に字幕を表示する(&S)"),, subbedVideosFlag,,videosFolderName));
 	movieMenuItem.add(this.skipMoviesMenuItem = new KAGFlagMenuItem(this, __t("ゲーム中にムービーをスキップする(&K)"),,skipMoviesFlag));
-	movieMenuItem.add(this.forceMpvPlaybackMenuItem = new KAGFlagMenuItem(this, "Force movie playback using mpv",,forceMpvPlaybackFlag));
+	movieMenuItem.add(this.forceMpvPlaybackMenuItem = new KAGFlagMenuItem(this, __t("mpvを使用して強制的に動画を再生する"),,forceMpvPlaybackFlag));
 	if(typeof(global.playVideoMPV) == "undefined") {
 		this.forceMpvPlaybackMenuItem.enabled = false;
 	}
@@ -548,7 +551,7 @@ function addOptionsMenu(patchMenu) {
 
 	patchMenu.add(this.patchOptionsMenuItem = new KAGMenuItem(this, __t("設定(&O)"), 0, void, false));
 	patchOptionsMenuItem.add(this.historyTitleMenuItem = new KAGFlagMenuItem(this, __t("メッセージ歴史でシーンのタイトルを表示する(&H)"),, historyTitleFlag));
-	patchOptionsMenuItem.add(this.engineConfigurationItem = new KAGMenuItem(this, "Open engine configuration dialog", 1, function() { global.System.shellExecute(Storages.getLocalName(global.System.exeName), '-userconf'); },false));
+	patchOptionsMenuItem.add(this.engineConfigurationItem = new KAGMenuItem(this, __t("エンジン構成ダイアログを開く"), 1, function() { global.showEngineConfigureDialog(); },false));
 
 	(addOptionsMenuItems incontextof this)(patchOptionsMenuItem);
 }
@@ -559,17 +562,20 @@ function addWindowSizeMenu(displayMenu) {
 		displayMenu.add(this.windowSizeMenu = new KAGMenuItem(this, __t("ウィンドウ内部のサイズ指定(&S)"), 0, void, false));
 
 @if(GAME_WOHN)
-			windowSizeMenu.add(this.window1024MenuItem = new KAGMenuItem(this, __t("1024x576 (デフォルト)"), 1,
+			windowSizeMenu.add(this.window1024MenuItem = new KAGMenuItem(this, "1024x576", 1,
 				function(sender) { sender.owner.onWindowSizeMenuItemClick(,1024); }, false));
+			this.window1024MenuItem.is_default_size = true;
 @endif
 @if(GAME_FATE||GAME_FHAT)
 @if(!HD_MODE)
-			windowSizeMenu.add(this.window800MenuItem = new KAGMenuItem(this, __t("800x600 (デフォルト)"), 1,
+			windowSizeMenu.add(this.window800MenuItem = new KAGMenuItem(this, "800x600", 1,
 				function(sender) { sender.owner.onWindowSizeMenuItemClick(,800); }, false));
+			this.window800MenuItem.is_default_size = true;
 @endif
 @if(HD_MODE)
-			windowSizeMenu.add(this.window800MenuItem = new KAGMenuItem(this, __t("1.00x (デフォルト)"), 1,
+			windowSizeMenu.add(this.window800MenuItem = new KAGMenuItem(this, "1.00x", 1,
 				function(sender) { sender.owner.onWindowSizeMenuItemClick(,800); }, false));
+			this.window800MenuItem.is_default_size = true;
 @endif
 @endif
 

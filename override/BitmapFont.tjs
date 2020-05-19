@@ -16,17 +16,55 @@ var	bitmapFonts	= [
 var	loadedBitmapFonts	= %[];
 for(var i=0; i<bitmapFonts.count; i+=2)
 	loadedBitmapFonts[bitmapFonts[i]]	= bitmapFonts[i+1];
+global.all_bitmap_fonts = [];
+
+global.test_font_if_renders = function(layer, text="A", check_using_text_size=false)
+{
+	var rect = layer.font.getGlyphDrawRect(text);
+	var	font_width = rect.right, font_height = rect.bottom;
+	if (check_using_text_size)
+	{
+		font_width = layer.font.getTextWidth(text);
+		font_height = layer.font.getTextHeight(text);
+	}
+	if (font_width === 0 || font_height === 0)
+	{
+		return false;
+	}
+	layer.setImageSize(font_width, font_height);
+	layer.setSize(font_width, font_height);
+	layer.setImageSize(font_width, font_height);
+	layer.colorRect(0, 0, layer.imageWidth, layer.imageHeight, 0x000000);
+	(global.Layer.drawText incontextof layer)(0, 0, text, 0xFFFFFF, 255);
+	var has_drawn = false;
+	for (var j = 0; j < layer.imageWidth - 1; j += 1)
+	{
+		if (layer.getMainPixel(j, layer.imageHeight \ 2) !== 0x000000)
+		{
+			has_drawn = true;
+			break;
+		}
+	}
+	return has_drawn;
+};
 
 /*
  *	フォントを一度だけ読み込むようにすると、文字レイヤーが破棄されたタイミングで読み込まれていない状態になるため
  *	念のため毎回ビットマップフォントファイルを設定するようにしている
  */
 
+global.all_font_list = null;
+
 Layer.getFontList	= function(opt)
 {
 	opt	= fsfSameCharSet | fsfNoVertical if opt === void;
 	opt = void;
-	var tmp_layer = new global.Layer(this.window, this);
+	if (global.all_font_list !== null)
+	{
+		return global.all_font_list;
+	}
+	var tmp_layer = this.window.temporaryLayer;
+	var	lastface = tmp_layer.font.face, lastheight = tmp_layer.font.height, lastholdalpha = tmp_layer.holdAlpha;
 	tmp_layer.face = dfMain;
 	tmp_layer.holdAlpha = false;
 	var	list	= [];
@@ -38,7 +76,6 @@ Layer.getFontList	= function(opt)
 	{
 		list = [];
 	}
-	var	lastface= tmp_layer.font.face, lastheight = tmp_layer.font.height;
 	var removes = [
 		"FixedSys",
 		"System",
@@ -73,22 +110,7 @@ Layer.getFontList	= function(opt)
 		try
 		{
 			tmp_layer.font.face = list[i];
-			var font_width = tmp_layer.font.getTextWidth("A");
-			var font_height = tmp_layer.font.getTextHeight("A");
-			tmp_layer.setImageSize(font_width, font_height);
-			tmp_layer.setSize(font_width, font_height);
-			tmp_layer.colorRect(0, 0, tmp_layer.width, tmp_layer.height, 0x000000);
-			(global.Layer.drawText incontextof tmp_layer)(0, 0, "A", 0xFFFFFF, 255);
-			var has_drawn = false;
-			for (var j = 0; j < tmp_layer.width - 1; j += 1)
-			{
-				if (tmp_layer.getMainPixel(j, tmp_layer.height \ 2) !== 0x000000)
-				{
-					has_drawn = true;
-					break;
-				}
-			}
-			if (!has_drawn)
+			if (!global.test_font_if_renders(tmp_layer, global.isJapanese(this.window) ? "あ" : "A"))
 			{
 				removes.add(list[i]);
 			}
@@ -105,36 +127,70 @@ Layer.getFontList	= function(opt)
 	invalidate removes;
 	delete removes;
 
+	var prerendered_fonts_added = 0;
 	for(var i=0; i<bitmapFonts.count; i+=2)
 	{
 		var	fc	= bitmapFonts[i];
 //		list.add(fc);
-		list.insert(i\2, fc);
 		var	keys	= [];
 		keys.assign(bitmapFonts[i+1]);
+		var has_rendered = false;
 		for(var j=0; j<keys.count; j+=2)
 		{
 			var	fh	= keys[i];
 			var	st	= keys[i+1]+fontFileExt;
 			tmp_layer.font.face	= fc;
 			tmp_layer.font.height	= fh;
+			var default_has_rendered = false;
 			if(Storages.isExistentStorage(st))
+			{
 				tmp_layer.font.mapPrerenderedFont(st);
+				default_has_rendered = global.test_font_if_renders(tmp_layer, global.isJapanese(this.window) ? "あ" : "A", true);
+				if (!default_has_rendered)
+				{
+					tmp_layer.font.unmapPrerenderedFont();
+				}
+				else
+				{
+					has_rendered = true;
+				}
+			}
 
 			//	イタリックフォントが存在したら、それも追加
 			st	= keys[i+1] + fontItalicSuffix + fontFileExt;
+			var italic_has_rendered = false;
 			if(Storages.isExistentStorage(st))
 			{
 				tmp_layer.font.italic	= true;
 				tmp_layer.font.mapPrerenderedFont(st);
+				italic_has_rendered = global.test_font_if_renders(tmp_layer, global.isJapanese(this.window) ? "あ" : "A", true);
+				if (!italic_has_rendered)
+				{
+					tmp_layer.font.unmapPrerenderedFont();
+				}
+				else
+				{
+					has_rendered = true;
+					if (!default_has_rendered)
+					{
+						tmp_layer.font.italic = false;
+						tmp_layer.font.mapPrerenderedFont(st);
+					}
+				}
 				tmp_layer.font.italic	= false;
 			}
+		}
+		if (has_rendered)
+		{
+			list.insert(prerendered_fonts_added, fc);
+			global.all_bitmap_fonts.add(fc);
+			prerendered_fonts_added += 1;
 		}
 	}
 	tmp_layer.font.face	= lastface;
 	tmp_layer.font.height	= lastheight;
-	invalidate tmp_layer;
-	delete tmp_layer;
+	tmp_layer.holdAlpha = lastholdalpha;
+	global.all_font_list = list;
 	return list;
 };
 
@@ -151,10 +207,12 @@ Layer.setFontFace	= function(face, height=font.height, italic=font.italic)
 //	dm(name+": "+font.face+" !== "+face+" || "+fh+" !== "+nh+" || "+font.italic+" !== "+italic);
 	if(font.face !== face || fh !== nh || font.italic !== italic)
 	{
+		global.Layer.getFontList();
 		font.height	= height;
 		font.italic	= italic;
 		//dm(" font.face = " + font.face + " / face = " + face);
 		font.face = face if face !== void && face != "";
+@if(0)
 		var	loaded	= loadedBitmapFonts[font.face], st;
 		if(loaded !== void && (st = loaded[nh]) !== void)
 		{
@@ -165,6 +223,7 @@ Layer.setFontFace	= function(face, height=font.height, italic=font.italic)
 //			else
 //				dm(name+".setFontFace: "+st+" is not found.");
 		}
+@endif
 	}
 };
 

@@ -1,4 +1,24 @@
 ﻿
+global.test_write_in_directory = function(test_directory)
+{
+	var test_file_contents = ["This test file can safely be deleted."];
+	var test_file_path = test_directory + "/TESTFILE.KSC";
+	try
+	{
+		test_file_contents.save(test_file_path);
+	}
+	catch {}
+	var test_file_size = Storages.fstat(test_file_path).size;
+	if (Storages.fstat(test_file_path).size === ((test_file_contents[0].length + 3) * 2))
+	{
+		if (Storages.deleteFile(test_file_path))
+		{
+			return true;
+		}
+	}
+	return false;
+};
+
 global.KAGWindow_patch_savedatalocation_override_original = KAGWindow;
 class KAGWindow_patch_savedatalocation_override_override extends KAGWindow_patch_savedatalocation_override_original
 {
@@ -14,30 +34,32 @@ class KAGWindow_patch_savedatalocation_override_override extends KAGWindow_patch
 		var	config;
 		while (true)
 		{
-			if (Storages.isExistentStorage(configconfigfile))
 			{
 				var success = false;
 				var test_save_data_location = this.wanted_save_data_location;
 				try
 				{
-					config = global.safeEvalStorage(configconfigfile);
-					//	設定済みの値を用いる
-					if (typeof(config.saveDataLocation) === "String")
+					if (Storages.isExistentStorage(configconfigfile))
 					{
-						test_save_data_location = config.saveDataLocation;
-					}
+						config = global.safeEvalStorage(configconfigfile);
+						//	設定済みの値を用いる
+						if (typeof(config.saveDataLocation) === "String")
+						{
+							test_save_data_location = config.saveDataLocation;
+						}
 						//	config.saveDataLocation == void なら、デフォルトの値を使用する
+					}
 					var test_paths = [];
 					if (test_save_data_location.indexOf(":") === -1)
 					{
 						test_paths.add(System.exePath + test_save_data_location);
-						if (typeof(System.dataPath) === "String")
-						{
-							test_paths.add(System.dataPath + test_save_data_location);
-						}
 						if (typeof(System.personalPath) === "String")
 						{
 							test_paths.add(System.personalPath + test_save_data_location);
+						}
+						if (typeof(System.dataPath) === "String")
+						{
+							test_paths.add(System.dataPath + test_save_data_location);
 						}
 						if (typeof(System.appDataPath) === "String")
 						{
@@ -58,18 +80,11 @@ class KAGWindow_patch_savedatalocation_override_override extends KAGWindow_patch
 								success = true;
 								break;
 							}
-							var test_file_contents = ["This test file can safely be deleted."];
-							var test_file_path = test_paths[i] + "/TESTFILE.TXT";
-							test_file_contents.save(test_file_path);
-							var test_file_size = Storages.fstat(test_file_path).size;
-							if (Storages.fstat(test_file_path).size === ((test_file_contents[0].length + 3) * 2))
+							if (global.test_write_in_directory(test_paths[i]) && System.createAppLock(test_paths[i].replace(/[^A-Za-z]/g, '_')))
 							{
-								if (Storages.deleteFile(test_file_path) && System.createAppLock(test_paths[i].replace(/[^A-Za-z]/g, '_')))
-								{
-									test_save_data_location = test_paths[i];
-									success = true;
-									break;
-								}
+								test_save_data_location = test_paths[i];
+								success = true;
+								break;
 							}
 						}
 					}
@@ -107,7 +122,36 @@ class KAGWindow_patch_savedatalocation_override_override extends KAGWindow_patch
 				}
 				else
 				{
-					dir	= System.exePath;
+					var test_paths = [];
+					test_paths.add(System.exePath);
+					if (typeof(System.personalPath) === "String")
+					{
+						test_paths.add(System.personalPath);
+					}
+					if (typeof(System.dataPath) === "String")
+					{
+						test_paths.add(System.dataPath);
+					}
+					if (typeof(System.appDataPath) === "String")
+					{
+						test_paths.add(System.appDataPath);
+					}
+					for (var i = 0; i < test_paths.count; i += 1)
+					{
+						if (Storages.isExistentDirectory(test_paths[i] + "/"))
+						{
+							if (this.disable_system_save_data_write)
+							{
+								dir = test_paths[i];
+								break;
+							}
+							if (global.test_write_in_directory(test_paths[i]) && System.createAppLock(test_paths[i].replace(/[^A-Za-z]/g, '_')))
+							{
+								dir = test_paths[i];
+								break;
+							}
+						}
+					}
 				}
 				dir	= Storages.getFullPath(dir);
 

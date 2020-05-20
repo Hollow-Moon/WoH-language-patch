@@ -1300,13 +1300,6 @@ class KAGWindow extends Window
 		for(var i=0; i<labels.count; i++)
 			this["moveTo"+labels[i]+"MenuItem"].checked	= sflags.moveCursorToDialog == labels[i];
 	}
-
-	function onHelpSupportMenuItemClick(sender)
-	{
-		// サポートツールを起動する
-		askYesNo(__("サポートツールを起動してゲームを終了します。よろしいですか？\n(サポートツールの結果を反映させるため、ゲームの再起動が必要です)"),
-			"確認", function { global.System.shellExecute(global.Storages.getLocalName(global.System.exePath) + "SupportTools.exe"); global.System.exit(); });
-	}
 @endif
 
 	function onHelpIndexMenuItemClick(sender)

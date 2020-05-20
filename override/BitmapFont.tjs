@@ -110,7 +110,7 @@ Layer.getFontList	= function(opt)
 		try
 		{
 			tmp_layer.font.face = list[i];
-			if (!global.test_font_if_renders(tmp_layer, global.isJapanese(this.window) ? "あ" : "A"))
+			if (!global.test_font_if_renders(tmp_layer, global.isJapanese(global.kag) ? "あ" : "A"))
 			{
 				removes.add(list[i]);
 			}
@@ -145,7 +145,7 @@ Layer.getFontList	= function(opt)
 			if(Storages.isExistentStorage(st))
 			{
 				tmp_layer.font.mapPrerenderedFont(st);
-				default_has_rendered = global.test_font_if_renders(tmp_layer, global.isJapanese(this.window) ? "あ" : "A", true);
+				default_has_rendered = global.test_font_if_renders(tmp_layer, global.isJapanese(global.kag) ? "あ" : "A", true);
 				if (!default_has_rendered)
 				{
 					tmp_layer.font.unmapPrerenderedFont();
@@ -163,7 +163,7 @@ Layer.getFontList	= function(opt)
 			{
 				tmp_layer.font.italic	= true;
 				tmp_layer.font.mapPrerenderedFont(st);
-				italic_has_rendered = global.test_font_if_renders(tmp_layer, global.isJapanese(this.window) ? "あ" : "A", true);
+				italic_has_rendered = global.test_font_if_renders(tmp_layer, global.isJapanese(global.kag) ? "あ" : "A", true);
 				if (!italic_has_rendered)
 				{
 					tmp_layer.font.unmapPrerenderedFont();

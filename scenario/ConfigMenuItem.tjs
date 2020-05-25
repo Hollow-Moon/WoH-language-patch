@@ -1262,7 +1262,18 @@ class FontListMenuItemLayer extends ListMenuItemLayer
 	//	現在選択しているフォント
 	property fontface
 	{
-		setter(v)	{ choseitem = v; }
+		setter(v)
+		{
+			var to_remap_face = font.get_remap_facename(v);
+			if (typeof(to_remap_face) === "String")
+			{
+				choseitem = to_remap_face;
+			}
+			else
+			{
+				choseitem = v;
+			}
+		}
 		getter		{ return choseitem; }
 	}
 

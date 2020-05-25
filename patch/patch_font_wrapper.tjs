@@ -134,6 +134,8 @@ global.font_remap_list = [
 	["Yu Mincho Light", "游明朝 Light"]
 ];
 
+global.font_remap_cache = %[];
+
 class FontWrapper
 {
 	var font;
@@ -305,6 +307,14 @@ class FontWrapper
 
 	function get_remap_facename(face)
 	{
+		if (typeof(global.font_remap_cache[face]) === "String")
+		{
+			return global.font_remap_cache[face];
+		}
+		else if (typeof(global.font_remap_cache[face]) === "null")
+		{
+			return;
+		}
 		var font_list = this.getList();
 		for (var i = 0; i < global.font_remap_list.count && typeof(global.font_remap_list) === "Object"; i += 1)
 		{

@@ -134,6 +134,24 @@ global.font_remap_list = [
 	["Yu Mincho Light", "游明朝 Light"]
 ];
 
+global.font_remove_list = [
+	"FixedSys",
+	"System",
+	"Terminal",
+	"Small Fonts",
+	"Apple Color Emoji",
+	"Courier",
+	"GB18030 Bitmap",
+	"MS Sans Serif",
+	"Fira Mono",
+	"Fira Mono Medium",
+	"Fixedsys",
+	"Modern",
+	"Script",
+	"Roman",
+	"MS Serif"
+];
+
 global.font_remap_cache = %[];
 
 class FontWrapper
@@ -344,7 +362,27 @@ class FontWrapper
 
 	function getList(flags)
 	{
-		return font.getList(flags);
+		var ret;
+		if (typeof(this.font.getList) === "Object")
+		{
+			ret = font.getList(flags);
+		}
+		else if (typeof(global.enumFont) === "Object")
+		{
+			ret = [];
+			global.enumFont(this.layer.window, ret);
+		}
+		else
+		{
+			ret = [];
+		}
+		for (var i = 0; i < global.font_remove_list.count; i += 1)
+		{
+			var to_remove = global.font_remove_list[i];
+			ret.remove(to_remove);
+			ret.remove("@" + to_remove);
+		}
+		return ret;
 	}
 
 	function mapPrerenderedFont(fontstorage)

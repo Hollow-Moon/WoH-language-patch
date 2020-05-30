@@ -62,12 +62,11 @@ System.exceptionHandler = function(e)
 	}
 @endif
 
-@if(KIRIKIROID)
-	global.System.exitOnNoWindowStartup = false;
-@endif
-
 	return true;
 };
+
+// Prevent premature exit after startup script execution but before main window is created
+global.System.exitOnNoWindowStartup = false;
 
 // Ensure patch version gets placed in the log
 Debug.notice(("Patch Description: %s").sprintf(global.PatchDescription));
@@ -118,7 +117,7 @@ var forceLog = Storages.isExistentStorage(System.exePath + "forceLog.txt");
 @set(HD_MODE=1)
 @endif
 
-@if(kirikiriz)
+@if(kirikiriz||GAME_WOHN)
 @set(ZOOM_WINDOW=1)
 @endif
 

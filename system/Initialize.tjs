@@ -167,6 +167,7 @@ function getClassName( obj )
 	デフォルトの「捕捉されない例外」ハンドラ
 */
 
+@if(0)
 var exceptionOccured	= false;	//	例外が発生したか？
 System.exceptionHandler = function (e)
 {
@@ -276,6 +277,7 @@ System.exceptionHandler = function (e)
 		return false; // false を返すと通常の例外処理
 	}
 };
+@endif
 
 @if(LOG_COPY_TO_EXCHANGE)
 function getLayerInfo()
@@ -475,20 +477,6 @@ function KAGLoadScriptOnce(name)
 */
 KAGLoadScript("AppConfig.tjs");
 
-// Load patch scripts
-var devMode = false;
-var devMode2 = true;
-var isKirikiroid = false;
-var mainPatchName = "Japanese";
-@set(PREFER_PNG=1)
-KAGLoadScript("patch_msgmap.tjs");
-KAGLoadScript("patch_censor.tjs");
-KAGLoadScript("patch_utils.tjs");
-KAGLoadScript("patch_font_wrapper.tjs");
-KAGLoadScript("patch_layer.tjs");
-KAGLoadScript("patch_language.tjs");
-KAGLoadScript("patch_menu.tjs");
-
 /*
 	Config.tjs 読み込み
 */
@@ -587,10 +575,7 @@ KAGLoadScript("EditLayer.tjs");
 KAGLoadScript("EditLayer.override.tjs");
 KAGLoadScript("Plugin.tjs");
 
-KAGLoadScript("patch_historylayer.tjs");
 KAGLoadScript("Override.tjs");
-KAGLoadScript("patch_language_configvalues.tjs");
-KAGLoadScript("patch_wordwrap.tjs");
 
 
 /*
@@ -756,7 +741,7 @@ Scripts.execStorage("LayerHistoryPlugin.tjs");
 	first.ks の実行
 */
 
-kag.process("first.ks", '', true, true);
+kag.process("first.ks");
 
 @if(0)
 global.menu_management_override();

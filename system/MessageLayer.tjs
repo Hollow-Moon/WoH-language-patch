@@ -300,9 +300,6 @@ class MessageLayer extends KAGLayer
 	/*CS*/var defaultRubyOffset = -2; // デフォルトのルビのオフセット
 	/*C*/var rubyOffset; // ルビのオフセット
 	/*C*/var _rubyOffset; // 仮ルビオフセット
-@if(GAME_WOHN)
-	/*C*/var rubyBold; // ルビの太字指定
-@endif
 
 	/*CS*/var defaultLineSpacing = 6; // デフォルトの行間
 	/*C*/var lineSpacing; // 行間
@@ -413,7 +410,13 @@ class MessageLayer extends KAGLayer
 	var	glyphLayer;
 
 	/*C*/var displaysInFixedPitchAlsoByVariable	= true;	// 常時固定ピッチで表示するか
+	/*C*/var rubyShadowColor; // 影の色
+	/*C*/var rubyEdgeColor; // 縁取りの色
 	/*C*/var defaultRubyBold = false;	//	ルビをボールドにするか
+	/*C*/var rubyBold; // ルビの太字指定
+	/*C*/var rubyChColor; // 文字色
+	/*C*/var rubyAntialiased; // アンチエイリアスを掛けるか
+
 	/*C*/var currentRubyPosition;
 	/*C*/var rubyTargetCharLength;	//	ルビ描画の対象となる文字列
 	/*C*/var rubyCharCount;			//	ルビ対象の文字列が表示された数
@@ -1062,7 +1065,11 @@ class MessageLayer extends KAGLayer
 		_rubySize = defaultRubySize;
 		_rubyOffset = defaultRubyOffset;
 @if(GAME_WOHN)
+		rubyShadowColor = defaultShadowColor;
+		rubyEdgeColor = defaultEdgeColor;
 		rubyBold = defaultRubyBold;
+		rubyChColor = defaultChColor;
+		rubyAntialiased = defaultAntialiased;
 @endif
 		shadow = defaultShadow;
 		edge = defaultEdge;
@@ -1215,10 +1222,30 @@ class MessageLayer extends KAGLayer
 			_rubyOffset = +elm.rubyoffset;
 
 @if(GAME_WOHN)
+		if(elm.rubyshadowcolor == 'default')
+			rubyShadowColor = defaultShadowColor;
+		else if(elm.rubyshadowcolor !== void)
+			rubyShadowColor = +elm.rubyshadowcolor;
+
+		if(elm.rubyedgecolor == 'default')
+			rubyEdgeColor = defaultEdgeColor;
+		else if(elm.rubyedgecolor !== void)
+			rubyEdgeColor = +elm.rubyedgecolor;
+
 		if(elm.rubybold == 'default')
 			rubyBold = defaultRubyBold;
 		else if(elm.rubybold !== void)
 			rubyBold = +elm.rubybold;
+
+		if(elm.rubycolor == 'default')
+			rubyChColor = defaultChColor;
+		else if(elm.rubycolor !== void)
+			rubyChColor = +elm.rubycolor;
+
+		if(elm.rubyantialiased == 'default')
+			rubyAntialiased = defaultAntialiased;
+		else if(elm.rubyantialiased !== void)
+			rubyAntialiased = +elm.rubyantialiased;
 @endif
 
 		if(elm.shadow == 'default')
@@ -2409,11 +2436,11 @@ class MessageLayer extends KAGLayer
 			}
 			.setFont(fontFace, fontAngle, rubyBold, fontItalic, rubySize);
 			if(edge)
-				.drawTextWithEdge(text, chColor, antialiased, edgeEmphasis, edgeColor, edgeExtent, vertical, max, min);
+				.drawTextWithEdge(text, rubyChColor, rubyAntialiased, edgeEmphasis, rubyEdgeColor, edgeExtent, vertical, max, min);
 			else if(shadow)
-				.drawTextWithShadow(text, chColor, antialiased, shadowColor, shadowOffsetX, shadowOffsetY, vertical, max, min);
+				.drawTextWithShadow(text, rubyChColor, rubyAntialiased, rubyShadowColor, shadowOffsetX, shadowOffsetY, vertical, max, min);
 			else
-				.drawText(text, chColor, antialiased, vertical, max, min);
+				.drawText(text, rubyChColor, rubyAntialiased, vertical, max, min);
 			var	pos	= getRubyPos(line, stcol, edcol, rubyLayers[line][edcol], offset, align);
 			.charcnt	= edcol - stcol;
 			.setPos(pos[0], pos[1]);
@@ -4309,8 +4336,13 @@ class MessageLayer extends KAGLayer
 		currentRuby = src.currentRuby;
 @if(GAME_WOHN)
 		displaysInFixedPitchAlsoByVariable = src.displaysInFixedPitchAlsoByVariable;
+		rubyShadowColor = src.rubyShadowColor;
+		rubyEdgeColor = src.rubyEdgeColor;
 		defaultRubyBold = src.defaultRubyBold;
 		rubyBold = src.rubyBold;
+		defaultRubyBold = src.defaultRubyBold;
+		rubyChColor = src.rubyChColor;
+		rubyAntialiased = src.rubyAntialiased;
 		currentRubyPosition = src.currentRubyPosition;
 		rubyTargetCharLength = src.rubyTargetCharLength;
 		rubyCharCount = src.rubyCharCount;

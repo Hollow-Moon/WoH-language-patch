@@ -1,9 +1,6 @@
 ﻿@if(__CONFIG_MENU_DEFINED__==0)
 @set(__CONFIG_MENU_DEFINED__=1)
 
-//	処理の時間を測るかどうか
-@set(CONFIG_COUNT_TIME=0)
-
 //	メッセージ表示間隔
 var	CFminCh	= 0, CFmaxCh = 200;
 var	CFminPageWait = 0, CFmaxPageWait = 9950;
@@ -244,9 +241,6 @@ function CFopenPage(pgno, firsttime=false)
 		}
 	}
 */
-@if(CONFIG_COUNT_TIME)
-initMicro();
-@endif
 	//	開いていたら閉じる
 	if(pgno != sf.cf_page)
 	{
@@ -258,16 +252,10 @@ initMicro();
 		case 4:	CFcloseShortcut();	break;
 		}
 	}
-@if(CONFIG_COUNT_TIME)
-dispMicro("close config menu");
-@endif
 	//	ひと呼吸おいて、開く
 	sf.cf_page = pgno;
 	asyncCaller.call(function(firsttime)
 	{
-@if(CONFIG_COUNT_TIME)
-initMicro();
-@endif
 		//	開く
 		switch(sf.cf_page)
 		{
@@ -276,22 +264,13 @@ initMicro();
 		case 3:	CFopenSound(firsttime);		break;
 		case 4:	CFopenShortcut(firsttime);	break;
 		}
-@if(CONFIG_COUNT_TIME)
-dispMicro("open config menu");
-@endif
 	}, firsttime);
 }
 
 //	指定の setfunc でタイムラインを調整して、開く
 function CFplayTimeline(sno, setfunc, firsttime=false, isclose=false, closeall=false)
 {
-@if(CONFIG_COUNT_TIME)
-initMicro(1);
-@endif
 	var	tdata	= __get_config_system_timelinedata(sno);
-@if(CONFIG_COUNT_TIME)
-dispMicro("get timeline data", 1);
-@endif
 	var name2pos = tdata[0], creates = tdata[1], actions = tdata[2];
 	setfunc(name2pos, creates, actions, isclose) if setfunc != void;
 
@@ -346,14 +325,8 @@ dispMicro("get timeline data", 1);
 			}
 		}
 	}
-@if(CONFIG_COUNT_TIME)
-dispMicro("set timeline data", 1);
-@endif
 
 	Menu_object.playTimeline(PRIMARY, creates, actions, %[absolute:CFbaseAbsolute], ignore, isclose,, false);
-@if(CONFIG_COUNT_TIME)
-dispMicro("playTimeline", 1);
-@endif
 
 	if(firsttime)
 		Menu_object.setProps(names[sf.cf_page - 1], ["on", true, "itemMode", imParts], PRIMARY);
@@ -493,9 +466,6 @@ function CFopenSystem(firsttime=false)
 			sample.clear();
 		}
 	}
-@if(CONFIG_COUNT_TIME)
-dispMicro("add menu item", 1);
-@endif
 }
 
 function CFcloseSystem(closeall=false)
@@ -970,9 +940,6 @@ function CFopenMessage(firsttime=false)
 			}
 		}
 	}
-@if(CONFIG_COUNT_TIME)
-dispMicro("add menu item", 1);
-@endif
 }
 
 function CFcloseMessage(closeall=false)
@@ -1477,9 +1444,6 @@ function CFopenSound(firsttime=false)
 
 		.setProp("SE再生テスト", "pressse", "", PRIMARY);
 	}
-@if(CONFIG_COUNT_TIME)
-dispMicro("add menu item", 1);
-@endif
 }
 
 function CFcloseSound(closeall=false)

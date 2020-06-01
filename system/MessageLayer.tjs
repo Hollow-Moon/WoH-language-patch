@@ -398,47 +398,6 @@ class MessageLayer extends KAGLayer
 @if(GAME_WOHN)
 	var visibleBeforeUserInvisible  = void;
 @endif
-@if(!GAME_WOHN)
-	var	_visibleBeforeUserInvisible	= void;
-	property visibleBeforeUserInvisible
-	{
-		setter(v)
-		{
-			if(v !== visibleBeforeUserInvisible)
-			{
-				dmt(name+".visibleBeforeUserInvisible = "+visibleBeforeUserInvisible+" → "+v);
-				_visibleBeforeUserInvisible	= v;
-			}
-		}
-		getter	{ return _visibleBeforeUserInvisible; }
-	}
-
-	property visible
-	{
-		setter(v)
-		{
-			if(v !== visible)
-			{
-				dmt(name+".visible = "+visible+" → "+v);
-				super.visible	= v;
-			}
-		}
-		getter	{ return super.visible; }
-	}
-
-	property absolute
-	{
-		setter(v)
-		{
-			if(v !== absolute)
-			{
-				dmt(name+".absolute = "+absolute+" → "+v);
-				super.absolute	= v;
-			}
-		}
-		getter	{ return super.absolute; }
-	}
-@endif
 	var lastMouseDownX; // 最後にマウスがクリックされた X 座標
 	var lastMouseDownY; // 最後にマウスがクリックされた Y 座標
 
@@ -466,11 +425,6 @@ class MessageLayer extends KAGLayer
 	/*CS*/var	continuousType	= "";	//	現在選択されている継続アクション(出現後も継続する)
 
 	var	configValues = %[];				//	MessageLayer_config() によって獲得したデフォルト設定値の保持
-	// リンクタイプ
-//	var ltNormal = 1;
-//	var ltButton = 2;
-//	var ltEdit = 3;
-//	var ltCheckBox = 4;
 @endif
 	// タイムアウト処理用
 	var timeoutTimer;

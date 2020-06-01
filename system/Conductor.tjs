@@ -39,107 +39,6 @@ var	isTransTag	= %[
 	trans:1, bg:1, fg:1, clfg:1, chgfg:1, partbg:1, clpartbg:1, chgpartbg:1,
 	monocro:1, red:1, green:1, blue:1, sepia:1, nega:1, contrast:1, blur:1, bluroff:1,
 ];
-
-//	タグ属性の未定義チェック
-@if(DEBUG)
-@if(USE_CHECK_TAG_PARAM)
-var	mytaglistStorage= "mytaglist.ksc";
-var	taglistStorage	= "taglist.ksc";
-var	taglist;
-taglist	= Scripts.evalStorage(taglistStorage) if Storages.isExistentStorage(taglistStorage);
-taglist	= %[ALL:[]] if taglist == void;
-if(Storages.isExistentStorage(mytaglistStorage))
-{//	オリジナルのタグと元々のタグをマージする
-	var	mytaglist	= Scripts.evalStorage(mytaglistStorage);
-	var	names		= mytaglist.ALL;
-	for(var i=0; i<names.count; i++)
-	{
-		var	name	= names[i];
-		var	params	= mytaglist[name].param;
-		if(params == void)
-			continue;
-		if(taglist[name] == void)
-		{
-			taglist.ALL.add(name);
-			taglist[name]	= %[];
-		}
-		var	tag	= taglist[name];
-		tag.param	= [] if tag.param == void;
-		for(var i=0; i<params.count; i++)
-			tag.param.add(params[i]) if tag.param.find(params[i]) < 0;
-		tag.comment	= mytaglist[name].comment if mytaglist[name].comment != "";
-	}
-}
-var	undefinedTagParams	= %[];	//	一度見つかったものは二度表示しない
-
-//	チェックを行う一部タグ
-var	checkTags	= %[
-	action:1, stopaction:1, wact:1, bg:1, bgopt:1, condoff:1, monocro:1, blur:1, bluroff:1,
-	quake:1, stopquake:1, shake:1, stopshake:1, shock:1, wshock:1, haze:1, stophaze:1,
-	fg:1, clfg:1, chgfg:1, movefg:1, partbg:1, clpartbg:1, chgpartbg:1, partbgopt:1, movepartbg:1,
-	bgact:1, fgact:1, partbgact:1, seact:1, bgmact:1,
-	focusline:1, startfocusline:1, stopfocusline:1, pausefocusline:1, focuslineact:1, movefocusline:1,
-	hearttone:1, hearttoneact:1,
-	noise:1, noise_back:1, noise_noback:1, pausenoise:1, resumenoise:1, stopnoise:1, noiseact:1,
-	startsnow:1, snowopt:1, stopsnow:1, snowact:1, movesnow:1,
-];
-
-//	未定義タグを使用していないかチェックする
-function checkTagParams(tag)
-{
-	var	keys	= [];
-	keys.assign(tag);
-	if(!checkTags[tag.tagname])
-		return;
-	var	taginfo	= taglist[tag.tagname];
-	if(taginfo == void)
-	{
-//		dm("※未定義のタグ: "+tag.tagname);
-		return;
-	}
-	for(var i=0; i<keys.count; i+=2)
-	{
-		if(keys[i] == "tagname" || keys[i] == "created" || keys[i] == "needlayer")
-			continue;
-		if((taginfo.param == void || taginfo.param.find(keys[i]) < 0) &&
-			(undefinedTagParams[tag.tagname] == void || !undefinedTagParams[tag.tagname][keys[i]]))
-		{
-			dm("※未定義のタグ属性: "+tag.tagname+"."+keys[i]);
-//			dm("◆◆◆未定義のタグ属性: "+tag.tagname+"."+keys[i]);
-//			System.inform("未定義のタグ属性\r\n"+tag.tagname+"."+keys[i]);
-			undefinedTagParams[tag.tagname]	= %[] if undefinedTagParams[tag.tagname] == void;
-			undefinedTagParams[tag.tagname][keys[i]]	= true;
-		}
-	}
-}
-
-//配列になおしてファイル出力
-function outputUndefinedTagParams()
-{
-	var curName = Storages.extractStorageName(Storages.chopStorageExt(kag.conductor.curStorage));
-	var fn = System.exePath+"ss/undefinedTagParams&"+curName+".txt";
-	var output = [];
-	var tags = [];
-	tags.assign(undefinedTagParams);
-
-	for( var i=0; i<tags.count; i+=2 )
-	{
-		var tagname = tags[i];
-		var params = [];
-		params.assign(tags[i+1]);
-		for( var j=0; j<params.count; j+=2 )
-		{
-			output.add(tagname + "." + params[j]);
-		}
-	}
-
-	if( output.count )
-	{
-		output.save2(fn);
-	}
-}
-@endif
-@endif
 @endif
 
 class BaseConductor extends KAGParser
@@ -245,25 +144,7 @@ class BaseConductor extends KAGParser
 				else
 				{
 					// 後回しにされたタグがないので次のタグを得る
-@if(GAME_WOHN)
-@if(DEBUG)
-					try
-					{
-@endif
-@endif
 					obj = getNextTag(); // 次のタグを得る
-@if(GAME_WOHN)
-@if(DEBUG)
-					}
-					catch(e)
-					{
-						if(e.message == "return タグが call タグと対応していません ( return タグが多い )")
-							obj	= void;
-						else
-							throw e;
-					}
-@endif
-@endif
 
 					// getNextTag() の中で、pendings に追加された (iscript など)
 					if(pendings.count > 0)
@@ -285,12 +166,6 @@ class BaseConductor extends KAGParser
 				}
 				else
 				{
-@if(DEBUG)
-@if(USE_CHECK_TAG_PARAM)
-					//	タグの属性値をチェック
-					checkTagParams(obj);
-@endif
-@endif
 					// onTag を呼ぶ
 					var step = onTag(obj);
 					if(step === void)
@@ -676,18 +551,6 @@ class BaseConductor extends KAGParser
 	{
 		pendings.add(tag);
 	}
-@if(GAME_WOHN)
-@if(DEBUG)
-	function dispPendings()
-	{
-		for(var i=0; i<pendings.count; i++)
-		{
-			var	tag	= pendings[i];
-			dm(i+": "+tag.tagname);
-		}
-	}
-@endif
-@endif
 }
 
 
@@ -843,134 +706,8 @@ class Conductor extends BaseConductor
 		}
 	}
 
-@if(GAME_WOHN)
-@if(DEBUG)
-	//デバッグ用の高速セーブ／ロードでペンディングせず即時実施するタグかどうか確認する
-	//	ペンディングで良い:true, 即時実行しないといけない:false
-	function isNotPriorityTag(tagname)
-	{
-/*
-		var priList = ["eval","ch","wt","wact","wshock","wpanse","wtimeline",
-					   "wdash","wsplinemove","waitclick","wa","wm","wb","wf","wp",
-					   "ws","wv","waittrig","clfg","clpartbg","clall"];
-*/
-		var priList = ["eval","ch","wait"];
-
-		for( var i=0; i<priList.count; i++ )
-		{
-			if( priList[i] === void || priList[i] == "" ) continue;
-			if( priList[i] == tagname )
-				return false;
-		}
-		return true;
-	}
-@endif
-@endif
-
 	function onTag(elm)
 	{
-@if(GAME_WOHN)
-//		dm("onTag("+elm.tagname+")");
-@if(DEBUG)
-		if( typeof global.load_by_ss == "undefined" )
-			global.load_by_ss = false;
-		if( typeof global.ss_by_label == "undefined" )
-			global.ss_by_label = false;
-		//自動ロードテスト時の読み込み完了(onTag処理開始)タイミングでSS採取
-		if(load_by_ss && kag.fnSaveFilesBySS.count || ss_by_label)
-		{
-			if( kag.waitForOnPaint )
-			{
-				if( isNotPriorityTag(elm.tagname) || kag.transCount )
-				{
-					dm("＠・・・waiting onPaint * / pending... " + elm.tagname);
-					var newelm = %[];
-					(Dictionary.assignStruct incontextof newelm)(elm);
-					pendings.insert(0, newelm);
-					elm = %[tagname:"l"];
-				}
-			}
-			else
-			{
-
-				if( load_by_ss && ! ss_by_label )
-				{
-					if( typeof this.ss_phase == "undefined" )
-					{
-						dm("＠自動読み込みテスト開始＠＠＠＠＠＠＠＠");
-						var msg_start = "自動読み込みテスト開始";
-						this.ss_phase = 0;
-						kag.caption = msg_start;
-					}
-				}
-
-				if( kag.waitForBeforeSave &&
-					( elm.tagname != "l" && elm.tagname != "lr" &&
-					  elm.tagname != "p" && elm.tagname != "pg" ) )
-				{
-					if( elm.tagname != "eval" && elm.tagname != "ch" )
-					{
-						dm("＠・・・waiting stopTags / pending... " + elm.tagname);
-						var newelm = %[];
-						(Dictionary.assignStruct incontextof newelm)(elm);
-						pendings.insert(0, newelm);
-						elm = %[tagname:"l"];
-					}
-				}
-
-				if( ( kag.waitForBeforeSave || kag.waitForAfterLoad ) &&
-					( elm.tagname == "l" || elm.tagname == "lr" ||
-					  elm.tagname == "p" || elm.tagname == "pg" ) )
-				{
-					dm("＠ onTag set waitForOnPaint elm.tagname=" + elm.tagname + " trans=" + kag.transCount);
-					kag.stopAllTransitions();
-					kag.cancelAutoMode();
-					kag.waitForOnPaint = true;
-					kag.fore.base.updateChildLayers();
-					kag.back.base.updateChildLayers();
-
-					dm("＠・・・waiting onPaint start / pending... " + elm.tagname);
-					var newelm = %[];
-					(Dictionary.assignStruct incontextof newelm)(elm);
-					pendings.insert(0, newelm);
-					elm = %[tagname:"wait", time:1];
-				}
-
-
-				if( load_by_ss && ! ss_by_label )
-				{
-					if(! kag.waitForLoadComplete)
-					{
-						//dm("onTag.waitForComplete phase=" + ss_phase);
-						//次のセーブデータを読み込み
-						//dm(" onTag: tagname= " + elm.tagname);
-						kag.stopAllTransitions();
-						kag.stopAllActions();
-						clear();
-						kag.caption = Storages.extractStorageName(f.autoexecfile) +
-							" 自動読み込み中 [" + (kag.curSaveFilesBySS+1) +"/" + kag.fnSaveFilesBySS.count + "]";
-						kag.captiontmp = kag.caption + " ";
-						kag.loadNextSaveFileBySS();
-						kag.waitForAfterLoad = true;
-						dm("＠自動読み込み中:" + (kag.curSaveFilesBySS+1) +"/" + kag.fnSaveFilesBySS.count);
-						return 0;
-					}
-					else
-					{
-						dm("＠・・・waiting next break");
-						if( isNotPriorityTag(elm.tagname) || kag.transCount )
-						{
-							pendings.insert(0, %[tagname:"l"]);
-							elm = %[tagname:"wait", time:1];
-						}
-					}
-				}
-			}
-		}
-		if( load_by_ss || ss_by_label )
-			dm("＠ onTag exec tagname=" + elm.tagname) if elm.tagname != "ch";
-@endif
-@endif
 		// タグの処理
 		var tagname = elm.tagname;
 		var handler = handlers[tagname];

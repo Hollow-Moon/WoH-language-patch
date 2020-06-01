@@ -179,7 +179,6 @@ class TimeLinePlugin extends KAGPlugin
 		elm.norapid	= false;
 @endif
 
-//initMicro(1);
 		//	実行区間のアクションを生成
 		var	d	= data;
 		if(elm.name != "")
@@ -199,7 +198,6 @@ class TimeLinePlugin extends KAGPlugin
 			throw new Exception("playtimeline: 指定されているシーン("+elm.scene+")が存在しません。");
 			return 0;
 		}
-//dispMicro("create action", 1);
 		//	メニュープラグインが存在している場合
 		var	formenu = false;
 		var	bgcnt	= 0;
@@ -282,7 +280,6 @@ class TimeLinePlugin extends KAGPlugin
 		//	次へ進むなら時刻をリセット
 		if(next !== void)
 			kag.resetWait();
-//dispMicro("other", 1);
 		//	アクションを実行
 		var	doinit		= !formenu && !forrelative;
 		var	choseLayers	= [];
@@ -347,7 +344,6 @@ class TimeLinePlugin extends KAGPlugin
 			}
 
 			kt[_elm.tagname](_elm);
-//dispMicro("do action["+i+"]", 1);
 			_elm.needlayer	= false;	//	↑のactionタグ実行で選択/生成されたオブジェクトを得るため、needlayer=false にする
 			var	layer	= kag.lastTarget;
 			delete notused[layer] if layer != void;
@@ -398,7 +394,6 @@ class TimeLinePlugin extends KAGPlugin
 			dm("do wait: "+next);
 			//	スキップされたらアクションを停止(waitTime内で処理)
 		}
-//dispMicro("other", 1);
 		return ret;
 	}
 

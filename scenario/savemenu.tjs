@@ -144,13 +144,10 @@ function openSaveMenu(snapwithmenuitem=false)
 	//	ロック状態を初期化
 	sf.svldLocked	= [] if sf.svldLocked == void;
 
-//initMicro();
 	var	tdata	= __get_save_timelinedata(9);	//	展開に15msぐらい掛かる
-//dispMicro("load savemenu timeline");
 	var	name2pos= tdata[0], creates = tdata[1], actions = tdata[2];
 	var	ignore	= setSaveMenuTimeline(name2pos, creates, pg, false);
 	muteAllMenuItem(tdata, false);	//	効果音ON(素早くメニュー間の移動を行うと、レイヤーが残っていて再利用される可能性があるので)
-//dispMicro("setSaveMenuTimeline");
 	//	開くときだけキーボード操作を設定
 	var	none			= [ void ];
 	var	lastdownsearch	= function { return find("Saveページ"+int(sf.last_svld_pageno+1), PRIMARY); };
@@ -192,9 +189,7 @@ function openSaveMenu(snapwithmenuitem=false)
 		setCreateProp(trg, "upItems", i < 8 ? four : eight);
 		setCreateProp(trg, "downItems", none);
 	}
-//dispMicro("set keyboard assign");
 	Menu_object.playTimeline(PRIMARY, creates, actions, %[absolute:1100000], ignore,, true, false);
-//dispMicro("start savemenu timeline");
 
 	with(Menu_object)
 	{
@@ -339,7 +334,6 @@ function openSaveMenu(snapwithmenuitem=false)
 	//	キー対応
 	kag.addHook("keyDown", onSaveMenuKeyDown);
 	Menu_object.keyDownCallback	= onSaveMenuKeyDown;
-//dispMicro("add text object");
 }
 function onSaveMenuMouseWheel(shift, delta, x, y)
 {
@@ -617,7 +611,6 @@ function deleteBySaveMenu(param)
 //	セーブメニューを閉じる
 function closeSaveMenu(quick=false)
 {
-//resetTick();
 	if(!tf.sv_opened)
 		return;
 //	dmt("closeSaveMenu()");
@@ -701,7 +694,6 @@ function closeSaveMenu(quick=false)
 		tf.closeSaveMenuCaller();
 		delete tf.closeSaveMenuCaller;
 	}
-//dispTick("close save menu");
 }
 //	セーブコメント用のエディットレイヤーを設定
 Scripts.execStorage("EditLayer.override.tjs");

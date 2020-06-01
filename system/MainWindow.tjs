@@ -163,34 +163,9 @@ class KAGWindow extends Window
 
 	/*C*/var clickSkipEnabled = true; // クリックスキップが有効か
 	/*C*/var nextSkipEnabled = true; // 次の選択肢(/未読)まで進むが有効か
-@if(!GAME_WOHN)
 	var skipMode = 0; // スキップのモード
 		// 0=スキップなし, 1=クリック待ち記号まで, 2=改ページ待ち記号まで, 3=次の停止まで
 		// 4=早送り
-@endif
-@if(GAME_WOHN)
-@set(CHECK_CHANGE_SKIPMODE=0)
-@if(!CHECK_CHANGE_SKIPMODE)
-	var skipMode = 0; // スキップのモード
-		// 0=スキップなし, 1=クリック待ち記号まで, 2=改ページ待ち記号まで, 3=次の停止まで
-		// 4=早送り
-@endif
-@if(CHECK_CHANGE_SKIPMODE)
-	var	_skipMode = 0;
-	property skipMode
-	{
-		getter	{ return _skipMode; }
-		setter(v)
-		{
-			if(v != skipMode)
-			{
-				dmt("skipMode = "+skipMode+" → "+v);
-				_skipMode	= v;
-			}
-		}
-	}
-@endif
-@endif
 	var autoMode = false; // 自動読みすすみモードかどうか
 	var autoModePageWait = 350; // 自動読みすすみモード時の改ページ時のウェイト
 	var autoModeLineWait = 50; // 自動読みすすみモード時の行クリック待ち時のウェイト

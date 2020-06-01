@@ -9,9 +9,6 @@
 //	→	回転や拡大をしながらノイズを掛けるときは、指定した周期より頻繁にノイズが掛かってしまう
 @set(NOISE_WRITE_FINALLAYER=1)
 
-//	画像の読み込み時間を計測
-@set(IMAGE_LOADTIME_COUNT=0)
-
 //	画像の領域分割情報が存在する場合、それぞれの領域を個別のレイヤーへ描画する
 //	→	高速化のために実装したが、レイヤーの準備や合成に時間が掛かりすぎる(表示領域を制限すればよいかも)
 @set(DRAW_DIVIDELAYERS=0)
@@ -412,9 +409,6 @@ class AnimationLayer_override extends AnimationLayer_original
 @endif
 	function loadImages(elm)
 	{
-@if(IMAGE_LOADTIME_COUNT)
-initMicro(6, "");
-@endif
 		if( elm === void ) return;
 		//	property storage からだけでなく、loadImages を直接呼ばれることがある(image タグ)ので、
 		//	ここで位置の記録をとっておく
@@ -422,9 +416,7 @@ initMicro(6, "");
 //		dm(name+".loadImages: "+storage+" → "+elm.storage);
 		_image	= _orgimage;
 		extend_loadImages(...);			//(AffineLayer→AnimationLayer移植対応)
-//dispMicro(name+".extend_loadImages("+elm.storage+")", 6);
 		AfterloadImage(...);
-//dispMicro(name+".AfterloadImage("+elm.storage+")", 6);
 		internalRestorePos(pos);		//	位置を復元
 		//	パーティクル用に利用されていたら、
 		if(initializedParticle)
@@ -487,9 +479,6 @@ initMicro(6, "");
 				invalidate divideLayers[i];
 			divideLayers	= void;
 		}
-@endif
-@if(IMAGE_LOADTIME_COUNT)
-dispMicro(name+".loadImages("+elm.storage+")", 6);
 @endif
 	}
 @if(DRAW_DIVIDELAYERS)
@@ -637,7 +626,6 @@ dispMicro(name+".loadImages("+elm.storage+")", 6);
 	{
 		//	消去範囲をリセット
 //		affineSource._clearRegion.update(0, 0, global.Layer.imageWidth, global.Layer.imageHeight) if screenSizeLayer;
-//initMicro(7, "");
 		//	読込
 		var	ret;
 		if(_orgimage != this)
@@ -674,7 +662,6 @@ dispMicro(name+".loadImages("+elm.storage+")", 6);
 			reset();
 		else
 			calcAffine();
-//dispMicro("AffineLayer_loadImages("+elm.storage+")", 7);
 		return ret;
 	}
 

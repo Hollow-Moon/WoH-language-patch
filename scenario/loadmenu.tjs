@@ -83,7 +83,6 @@ function openLoadMenu()
 	sf.svldLocked	= [] if sf.svldLocked == void;
 
 	//	前回開いていたページ
-//initMicro();
 	var	tdata	= __get_load_timelinedata(9);
 	var	name2pos= tdata[0], creates = tdata[1], actions = tdata[2];
 	var	ignore	= setLoadMenuTimeline(name2pos, creates, int sf.last_svld_pageno);
@@ -193,7 +192,6 @@ function openLoadMenu()
 	kag.addHook("keyDown", onLoadMenuKeyDown);
 	Menu_object.keyDownCallback	= onLoadMenuKeyDown;
 
-//dispMicro("open load menu");
 }
 function onLoadMenuMouseWheel(shift, delta, x, y)
 {
@@ -305,12 +303,10 @@ function closeLoadMenu(quick=false)
 	eraseSaveTextLayer();	//	テキスト消去用レイヤーを破棄する
 
 	//	メニューを閉じる
-//initMicro();
 	var	tdata	= __get_load_timelinedata(quick ? 13 : 12);
 	var	ignore	= setLoadMenuTimeline(tdata[0], tdata[1], int sf.last_svld_pageno, true);
 	muteAllMenuItem(tdata);		//	すべて効果音mute
 	Menu_object.playTimeline(PRIMARY, tdata[1], tdata[2], %[absolute:1100000], ignore, true,, false);
-//dispMicro("close load menu");
 }
 
 @endif

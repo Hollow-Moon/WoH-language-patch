@@ -18,9 +18,6 @@
 @set(USE_RAPID_CLICK=0)		//	中ボタンを押している間、RAPID_CLICK_TYPE 指定のボタンをクリックし続ける(100ms単位)
 @set(RAPID_CLICK_TYPE=0)	//	0:左クリック,1:右クリック,2:右左交互
 
-//	処理時間を計測するかどうか
-@set(MENUITEM_COUNT_TIME=0)
-
 Scripts.execStorage("BasePlugin.tjs");
 Scripts.execStorage("asyncCaller.tjs") if Storages.isExistentStorage("asyncCaller.tjs");
 Scripts.execStorage("doLater.tjs") if Storages.isExistentStorage("doLater.tjs");
@@ -545,9 +542,6 @@ class MenuPlugin extends BasePlugin
 
 	function getLayerFromElm(elm, prefix)
 	{
-@if(0)
-initMicro(5);
-@endif
 		var	layer	= super.getLayerFromElm(...);
 		if(layer == void && elm.menuitem !== void)
 		{//	引数にしたがって、メニューアイテムとして管理しているレイヤーを返す
@@ -583,9 +577,6 @@ initMicro(5);
 				//	storage が同じ
 				if(layer == void && elm.storage != "")
 					layer	= crawlfunc(menuitems, function(l, elm) { return l.storage == elm.storage; }, elm);
-@if(0)
-dispMicro("search item", 5);
-@endif
 			}
 			else if(elm.menuitem >= 0)
 				layer	= menuitems[+elm.menuitem];
@@ -601,9 +592,6 @@ dispMicro("search item", 5);
 //				layer	= new MenuItemLayer(kag, base, "MenuItem["+elm.menuitem+"]", elm.menuitem);	//	新規
 				layer	= getMenuItem(elm.page, elm.menuitem);
 //				dm("getLayerFromElm: "+layer.name+" → "+elm.name);
-@if(0)
-dispMicro("create item", 5);
-@endif
 				layer.plugin	= this;
 				layer.menuitems	= menuitems;
 //				dmt("getLayerFromElm: menuitems["+elm.menuitem+"] = "+layer);
@@ -667,9 +655,6 @@ dispMicro("create item", 5);
 	//	特殊なメニューアイテムを作成
 	function addMenuItem(elm)
 	{
-@if(MENUITEM_COUNT_TIME)
-initMicro(3);
-@endif
 		with(elm)
 		{
 //			dm("addMenuItem("+.class+")");
@@ -710,9 +695,6 @@ initMicro(3);
 						break;
 				}
 			}
-@if(MENUITEM_COUNT_TIME)
-dispMicro("addMenuItem["+.name+"]: find menu item", 3);
-@endif
 			if(layer == void)
 			{
 				var	base= .page != "primary" ? kag[.page != "back" ? "fore" : .page].base : kag.primaryLayer;
@@ -728,9 +710,6 @@ dispMicro("addMenuItem["+.name+"]: find menu item", 3);
 				layer.ibv	= false;
 				layer.actionInfo.stopAction();
 			}
-@if(MENUITEM_COUNT_TIME)
-dispMicro("addMenuItem["+.name+"]: get menu item ", 3);
-@endif
 			layer.enabled	= true;
 			layer.ibv		= false;	//	ibv が設定される前に opacity=255 とかしてしまうと消えてしまうので
 			delete .id;
@@ -752,9 +731,6 @@ dispMicro("addMenuItem["+.name+"]: get menu item ", 3);
 				else
 					layer[keys[i]]	= val;
 			}
-@if(MENUITEM_COUNT_TIME)
-dispMicro("addMenuItem["+.name+"]: set properties", 3);
-@endif
 			return layer;
 		}
 	}
@@ -762,9 +738,6 @@ dispMicro("addMenuItem["+.name+"]: set properties", 3);
 	//	指定のデータでオブジェクトを作成/割り当てし、アクションを実行する
 	function playTimeline(page, creates, actions, offset=%[], ignore=%[], isclose=false, stopaction=false, contlayer=false, norapid=false)
 	{
-@if(MENUITEM_COUNT_TIME)
-initMicro(3);
-@endif
 //		dm("playTimeline("+page+", "+creates.count+", isclose="+isclose+", stopaction="+stopaction+")");
 		this.page	= page;
 		stopaction	= true if isclose;
@@ -816,9 +789,6 @@ initMicro(3);
 				}
 				asyncCaller.call(layer.updateState);//	マウスカーソルが合ったままかもしれないので、後で状態を更新する
 			}
-@if(MENUITEM_COUNT_TIME)
-dispMicro("playTimeline["+name+"]: get menu item ", 3);
-@endif
 //			dm(layer.name+" = "+id+" / "+Scripts.getTraceString());
 //			dm("menuitems["+id+"]("+name+") = "+menuitems[id]);
 			layer.enabled	= true;
@@ -831,7 +801,6 @@ dispMicro("playTimeline["+name+"]: get menu item ", 3);
 			var	actionInfo	= layer.actionInfo;
 			for(var i=2; i<initdata.count; i+=2)
 			{
-//initMicro(4, "");
 				var	prop	= initdata[i];
 				//	初期化するプロパティのアクションは停止する
 				//	→	そうしないと意図しない値で開始されてしまうため
@@ -843,13 +812,9 @@ dispMicro("playTimeline["+name+"]: get menu item ", 3);
 				else
 					layer[prop]	= initdata[i+1];
 				setabs	= true if initdata[i] == "absolute";
-//dispMicro(prop, 4);
 			}
 			layer.absolute	= 1000 + offset["absolute"] if !setabs;
 			layer.ibv		= isclose;	//	変更されている可能性があるので、再設定
-@if(MENUITEM_COUNT_TIME)
-dispMicro("playTimeline["+name+"]: set properties", 3);
-@endif
 			//	アクションの設定
 			var	actdata	= actions[i];
 			if(actdata == void)
@@ -867,9 +832,6 @@ dispMicro("playTimeline["+name+"]: set properties", 3);
 				layer.beginAction(%[module:KeyFrameActionModule, props:prop, keys:keys, norapid:norapid],,, !isclose);
 				totaltime	= keys[keys.count-1][0] if totaltime < keys[keys.count-1][0];
 			}
-@if(MENUITEM_COUNT_TIME)
-dispMicro("playTimeline["+name+"]: set actions["+(actdata.count>>1)+"]", 3);
-@endif
 /*			layer.disabled	= true;		//	開くときも閉じるときも、とりあえず disable する
 			if(!isclose)
 			{

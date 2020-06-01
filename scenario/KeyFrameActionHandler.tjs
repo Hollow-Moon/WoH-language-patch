@@ -55,7 +55,6 @@ class _KeyFrameAction extends ActionHandler
 	//	elm.keys	keys に同じ
 	function _KeyFrameAction(target, propName, elm)
 	{
-//initMicro(7, "");
 //		dm("KeyFrameAction constructor target=" + target.name + " prop=" + propName) if propName == "opacity";
 		super.ActionHandler(...);
 	}
@@ -63,12 +62,10 @@ class _KeyFrameAction extends ActionHandler
 	function construct(target, propName, elm)
 	{
 		super.construct(...);
-//dispMicro("super", 7);
 		if(elm != void)
 		{
 			force	= +elm.force;
 			setKeys(target, propName, elm.keys);
-//dispMicro("set keys", 7);
 		}
 
 		//	アクションを開始する前に画像をキャッシュする
@@ -78,7 +75,6 @@ class _KeyFrameAction extends ActionHandler
 			for(var i=0; i<keys.count; i++)
 				addTouchList(list, keys[i][1]);		//	addTouchList は Conductor.tjs で定義
 			System.touchImages(list) if list.count > 0;
-//dispMicro("touch images", 7);
 		}
 
 @if(KEYFRAMEACTION_VERVOSE)
@@ -100,11 +96,9 @@ class _KeyFrameAction extends ActionHandler
 		//	一通りの動作を先頭キーフレームに指定されている加速度で行うか？
 //		dm("asOne: "+elm.asone);
 		asOne	= elm != void ? +elm.asone : false;
-//dispMicro("set keys ", 8);
 
 		//	初期化する
 		setValue(target, propName, keys[0][1]) if keys[0] !== void;
-//dispMicro("set value", 7);
 	}
 
 	property drawspeed	{ getter { return
@@ -119,7 +113,6 @@ class _KeyFrameAction extends ActionHandler
 	//	キーの設定
 	function setKeys(target, propName, inkeys)
 	{
-//initMicro(8, "");
 		if(inkeys === void){
 			dm("！KeyFrameAction.setKeys inkeys==void, target=" + target + ", propName=" + propName);
 			return false;
@@ -136,7 +129,6 @@ class _KeyFrameAction extends ActionHandler
 		}
 		else
 			i	= 0;
-//dispMicro("assign keys", 8);
 		var	useSpline	= false;
 		for(; i<keys.count; i++)
 		{
@@ -168,7 +160,6 @@ class _KeyFrameAction extends ActionHandler
 			keys[1][0]	= 1;
 		}
 		time	= keys[keys.count - 1][0];		//	トータル時間
-//dispMicro("correct keys", 8);
 		//	一部でもスプライン補間を行なうなら、
 		if(useSpline)
 		{
@@ -185,7 +176,6 @@ class _KeyFrameAction extends ActionHandler
 
 			//	補間用の情報を作成
 			this.work	= initSpline(keys);	//	TJS式の半分の時間で処理できる
-//dispMicro("calc spline", 8);
 		}
 
 		return true;
@@ -568,17 +558,12 @@ function MixedKeyFrameActionModule(info, elm,
 	kfact=KeyFrameAction, lpact=LoopKeyFrameAction,
 	kfeact=KeyFrameExchangeAction, lpkfeact=LoopKeyFrameExchangeAction)
 {
-//initMicro(4, "");
-//dispMicro("micro time", 4);
-//initMicro(5, "");
 	var	props	= typeof elm.props == "String" ? elm.props.split(",",, true) : elm.props;
 	var	keys	= typeof elm.keys == "String" ? parseKeyFrame(elm.keys) : elm.keys;
-//dispMicro("parse key frame", 5);
 /*	dm(elm.keys);
 	for(var i=0; i<keys.count; i++)
 		dm(i+": "+keys[i].join(", "));
 */
-//dispMicro("parse keyframe", 4);
 //	dm("keys " + getDebugStringFromElm(keys));
 	var	usecurrent	= keys.count > 1 ? elm.usecurrent : false;
 	var force		= elm.force !== void ? elm.force : (elm.loop !== void && elm.loop !== "");
@@ -617,10 +602,8 @@ function MixedKeyFrameActionModule(info, elm,
 	var	existsrcopacity	= false;	//	srcopacity が存在するかどうか
 @endif
 //	var	middleRates;
-//dispMicro("pre props", 5);
 	for(var i=0; i<props.count; i++)
 	{
-//initMicro(6, "");
 		//	プロパティ
 		var	prop	= props[i];
 		var	nip		= false;	//	補間する
@@ -643,7 +626,6 @@ function MixedKeyFrameActionModule(info, elm,
 		var	changed	= false;
 		var	accel = 0, interpolate = "n";
 		var	usemiddle	= false;
-//dispMicro("pre loop", 6);
 		for(var j=0; j<keys.count; j++)
 		{
 			var	key	= keys[j];
@@ -717,7 +699,6 @@ function MixedKeyFrameActionModule(info, elm,
 				firstvalue	= val if firstvalue === null;
 			}
 		}
-//dispMicro("loop", 6);
 
 @if(KEYFRAMEACTION_VERVOSE)
 		var	text;
@@ -736,7 +717,6 @@ function MixedKeyFrameActionModule(info, elm,
 		//	KeyFrameExchangeAction を使うかどうか
 		//	→	exchg が指定されており、storage で、変化がある場合
 		var	exchg	= typeof elm.exchg != "undefined" && elm.exchg && prop == "storage" && changed;
-//dispMicro("analyze timeline["+keys.count+"]", 5);
 		//	値に変化があるか、最初のフレームが1ミリ秒以降か、画像を示すプロパティのときは、
 		//	キーフレームアクションを実行する
 		if(changed || firsttime > 0 || force)
@@ -826,7 +806,6 @@ function MixedKeyFrameActionModule(info, elm,
 						}
 					}
 				}
-//dispMicro("use middle", 6);
 			}
 
 			elm.prop	= prop;
@@ -836,7 +815,6 @@ function MixedKeyFrameActionModule(info, elm,
 			else
 				act	= exchg ? kfeact : kfact;
 			info.addAction(prop, act, elm);
-//dispMicro("add action("+prop+")", 6);
 @if(KEYFRAMEACTION_VERVOSE)
 			var	func	= function(keys) { var text; for(var i=0; i<keys.count; i++) { text += "("+keys[i].join(",")+")"; } return text; };
 			dm("MixedKeyFrameActionModule: addAction " + prop+" / "+func(elmkeys));
@@ -877,13 +855,11 @@ function MixedKeyFrameActionModule(info, elm,
 			//	storage が設定されて、目的の画像が最初に読み込まれていることが、一つの条件になっているため
 			info.addAction(prop, InitializeAction, %[prop:prop, inits:[prop, firstvalue]]);
 			delete initvalues[prop];
-//dispMicro("add initialize("+prop+")", 6);
 		}
 
 		//	初期値のみのプロパティは、まとめて値を設定する
 		else if(firstvalue !== null && issetinit)
 			initvalues[prop]	= firstvalue;
-//dispMicro(prop, 5);
 	}
 @if(AUTO_SRCOPACITY)
 	//	srcopacity のキーを登録
@@ -906,9 +882,6 @@ function MixedKeyFrameActionModule(info, elm,
 		var	elm	= %[prop:keys[0], inits:keys];
 		info.addAction(elm.prop, InitializeAction, elm);
 	}
-//dispMicro("init actions["+(keys.count\2)+"]", 5);
-//dispMicro("post props", 5);
-//dispMicro("mixed keyframe", 4);
 }
 
 /**

@@ -52,57 +52,9 @@ function getDebugStringFromElm( elm, str="", maxdepth=3, depth=0 )
 
 	return ret;
 }
-//	実行時間出力
-var	__lasttick	= [];
-function resetTick(no=0) { __lasttick[no] = System.getTickCount(); }
-function dispTick(msg="past", no=0, cnt=0)
-{
-	var	t	= System.getTickCount();
-	var	past= t - __lasttick[no];
-	Debug.message(" ".repeat(no) + "[%d]%s: %4d (ms)%s".sprintf(no, msg, past, cnt > 0 ? "[%6.3f (ms)]".sprintf(past/cnt) : ""));
-	__lasttick[no] = t;
-	return past;
-}
-if(Storages.isExistentStorage("debug/microcount.dll"))
-{
-	try
-	{
-		Plugins.link("debug/microcount.dll");
-		global.__lastmicro	= [];
-		global.initMicro	= function(no=0, msg="-- init micro --")
-		{
-			msg <-> no if typeof msg == "Integer" && typeof no == "String";
-			__lastmicro[no] = startMicroCount();
-			Debug.message(" ".repeat(no) + "<%d>%s".sprintf(no, msg)) if msg != "";
-		};
-		global.dispMicro	= function(msg="past", no=0)
-		{
-			msg <-> no if typeof msg == "Integer" && typeof no == "String";
-//			__lastmicro[no]	= __lastmicro[0] if __lastmicro[no] === void;
-			if(__lastmicro[no] !== void)
-			{
-				var	ms	= endMicroCount(__lastmicro[no]) * 0.001;
-				Debug.message(" ".repeat(no) + "<%d>%s: %6.3f (ms)".sprintf(no, msg, ms));
-				initMicro(no, "");
-				return ms;
-			}
-			return 0;
-		};
-	}
-	catch(e)
-		Debug.message("can't link micro count");
-}
-if(typeof global.initMicro == "undefined")
-{
-	Debug.message("none micro count");
-	global.initMicro	= function (){};
-	global.dispMicro	= function (){/* Debug.message("none func: getMicroCount"); */};
-}
 @endif
 @if(DEBUG==0)
 function getDebugStringFromElm(){ return ""; }
-function initMicro() {}
-function dispMicro() {}
 @endif
 
 /*
@@ -375,23 +327,6 @@ function useArchiveIfExists(name)
 }
 
 @if(0)
-if(Storages.isExistentStorage("KUtils.tjs"))
-	Scripts.execStorage("KUtils.tjs");
-else if(Storages.isExistentStorage("kwidgets/KUtils.tjs"))
-	Scripts.execStorage("kwidgets/KUtils.tjs");
-else
-	throw new Exception("kwidgets/KUtils.tjs が見つかりません。");
-@endif
-@if(0)
-// kwidget の初期化
-Storages.addAutoPath("kwidgets/");
-Scripts.execStorage("KInitialize.tjs");
-
-// パネル処理の初期化
-Storages.addAutoPath("panel/");
-Scripts.execStorage("PanelInitialize.tjs");
-@endif
-@if(0)
 Storages.addAutoPath(System.exePath + "video/"); // exePath 以下の video/
 Storages.addAutoPath("video/"); // video フォルダ
 Storages.addAutoPath("others/"); // その他
@@ -649,100 +584,8 @@ if(Storages.isExistentStorage(System.exePath + "AfterInit2.tjs"))
 	if(ovr !== void && ovr != 'yes') Scripts.eval(ovr);
 }
 
-@if(DEBUG)
-/*
-	デバッグ表示の準備
- */
-Scripts.execStorage("DispStatePlugin.tjs");
-addDisplay(-4, 4, 200, 100, function() {
-	var	array	= [];
-	/*
-	 *	KAGコンダクタの状態
-	 */
-	with(kag.conductor)
-	{
-		var	keys	= [];
-		keys.assign(.waitUntil);
-		var	triggers= [];
-		for(var i=0; i<keys.count; i+=2)
-			triggers.add(keys[i]);
-		array.add("conductor: inProcessing="+.inProcessing+"/interrupted="+.interrupted+"/timer="+.timer.enabled+", "+.timer.interval+"/triggers="+triggers.join(", "));
-		keys.clear();
-		for(var i=0; i<.pendings.count; i++)
-			keys.add(.pendings[i].tagname);
-		array.add("  pendings = "+keys.join(", ")) if keys.count > 0;
-
-	}
-
-	//	最後に受け取ったメッセージ
-	var	maxlen	= 32;
-	array.add("last message: "+kag.lastMessageKey+"("+(kag.lastMessageText.length > maxlen ? kag.lastMessageText.substr(0, maxlen-2)+"..." : kag.lastMessageText)+")") if typeof kag.lastMessageKey != "undefined" && kag.lastMessageKey != void;
-
-	//	タイムラインの状態
-	array.add("timeline: last scene="+timeline_object.scene+", time="+timeline_object.time+(timeline_object.next !== void ? "["+timeline_object.next+"]" : "")+"(ms)") if typeof this.timeline_object != "undefined" && timeline_object.scene !== void && typeof timeline_object.timeline_object.scene != "undefined";
-
-	return array;
-});
-addDisplay(4, -4, 300, 300, function() {
-	/*
-	 *	レイヤーの現在状態を表示する
-	 */
-	var	formatfunc	= function(layer, isbase=false)
-	{
-		with(layer)
-			return (.visible ? "■" : "□")+" "+.name+(typeof .layerID != "undefined" ? "/"+.layerID : "")+
-				(typeof .storage != "undefined" ? " <"+Storages.extractStorageName(.storage)+">" : "")+
-				"["+(isbase ? ._effect +"/in:"+.childEffect : (typeof ._effect != "undefined" ? (._effect != "" ? ._effect : (typeof .parent.childEffect != "undefined" ? .parent.childEffect : "")): ""))+"]"+
-				" ("+.left+", "+.top+/*(typeof .realLeft != "undefined" ? "/"+.realLeft+","+.realTop+"/"+.realImageLeft+","+.realImageTop : "")+*/")-"+
-				(typeof .center != "undefined" ? ("(C:"+.center+", "+.vcenter+")-") : "")+
-				"("+.width+", "+.height+") opac="+.opacity+
-				(typeof .zoomx != "undefined" ? " zoom="+(.zoomx == .zoomy ? "%4.2f".sprintf(.zoomx) : "(%4.2f, %4.2f)".sprintf(.zoomx, .zoomy)) : "")+
-				(typeof .rotate != "undefined" ? " rot=%4.2f".sprintf(.rotate) : "")+
-				(typeof .afx != "undefined" ? " af=(%d, %d)".sprintf(.afx, .afy) : "")+
-				(typeof .srcleft != "undefined" ? " (%4.2f, %4.2f)[%4.2f/%4.2f](%d, %d)".sprintf(.srcleft, .srctop, .srczoomx, .srcrotate, .srcafx, .srcafy): "")+
-				(typeof .notuse != "undefined" ? " use=%d".sprintf(!.notuse) : "");
-	};
-	var	func	= function(layers, array, indent="", func, ffunc, isbase)
-	{
-		indent	+= "  ";
-		for(var i=0; i<layers.count; i++)
-		{
-			var	layer	= layers[i];
-			if(layer instanceof "CompositionLayer" || layer instanceof "MessageCharLayer" || layer instanceof "HistoryLayer" || typeof layer.free != "undefined" || layer.name == "MenuItem[pool]")
-				continue;
-			array.add(indent+ffunc(layer, isbase));
-			func(layer.children, array, indent, func, ffunc, isbase);
-		}
-	};
-	var	array	= [];
-	array.add(formatfunc(kag.fore.base, true));
-	func(kag.fore.base.children, array,, func, formatfunc);
-	array.add(formatfunc(kag.back.base, true));
-	func(kag.back.base.children, array,, func, formatfunc);
-	return array;
-});
-addDisplay(4, 4, 200, 200, kag.actmgr.getActionList);
-//visibleDisplay();	//	最初から表示する
-invisibleDisplay();	//	表示しないで開始(描画が遅くなるので)
-
-/*
- *	レイヤーの状態を別ウィンドウで開く
- */
-Scripts.execStorage("LayerStatePlugin.tjs");
-
-/*
- *	レイヤー状態を記録する
- */
-Scripts.execStorage("LayerHistoryPlugin.tjs");
-
-@endif
-
 /*
 	first.ks の実行
 */
 
 kag.process("first.ks");
-
-@if(0)
-global.menu_management_override();
-@endif

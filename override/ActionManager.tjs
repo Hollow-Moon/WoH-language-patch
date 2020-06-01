@@ -654,7 +654,6 @@ class ActionManager
 @if(__USE_CONTINUOUSHANDLER==1)
 			System.addContinuousHandler(onFlipTimerInterval);
 @endif
-//			initMicroCount(); caption = window.caption;
 			flipping	= true;
 @if(DEBUG)
 //			dm("startFilp: "+System.getTickCount());
@@ -726,29 +725,6 @@ class ActionManager
 		if(count == 0)
 			stopFlip();
 	}
-
-@if(DEBUG)
-	function getActionList(target)
-	{
-		var	array	= [];
-		if(target == void)
-		{
-			for(var i=0; i<actionList.count; i++)
-			{
-				array.add(typeof actionList[i].target.name != "undefined" ? actionList[i].target.name : "no name");
-				array.add("  "+actionList[i].getActionList());
-			}
-		}
-		else if(actionDict[target])
-		{
-			array.add(typeof target.name != "undefined" ? target.name : "no name");
-			array.add("  "+actionDict[target].getActionList());
-		}
-		else
-			array.add("no actions");
-		return array;
-	}
-@endif
 }
 
 

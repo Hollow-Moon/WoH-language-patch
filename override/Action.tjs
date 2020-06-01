@@ -322,7 +322,6 @@ class PropActionInfo
 	//	アクションの追加
 	function addAction(target, handler, elm)
 	{
-//initMicro(8, "");
 		if(typeof handler != "Object" || handler == null)
 		{
 			dm("ハンドラ異常[handler == null]: "+handler);
@@ -331,9 +330,7 @@ class PropActionInfo
 		if(typeof handler.AbsoluteActionHandler != "undefined")
 		{
 			internalAbsoluteActionCompleted(target);
-//initMicro(6, "");
 			var	abso	= getAction(target, handler, elm);
-//dispMicro("new "+handler, 6);
 			if(abso.time != 0)
 				absolute= abso;
 			else
@@ -358,7 +355,6 @@ class PropActionInfo
 		}
 //		if(elm.startTime !== void)
 //			startTime	= +elm.startTime;
-//dispMicro("PropActionInfo.addAction", 8);
 		return true;
 	}
 
@@ -701,22 +697,18 @@ class ActionInfo
 
 	function addAction(propName, handler, elm)
 	{
-//initMicro(7, "");
 		//	nowait なアクションが実行されている間は、新たなアクションを開始しない
 		if(!nowait || elm.force)
 		{
 			handler	= handler! if typeof handler == "String";
 			var	info	= getPropActionInfo(propName);
-//dispMicro("getPropActionInfo()", 7);
 //			dm(target.name+".addAction("+propName+", "+handler+", elm)");
 			info.addAction(target, handler, elm);
-//dispMicro("info.addAction", 7);
 		}
 /*		else
 			dm("no add action: "+target+" / "+propName+" / "+handler+" / "+elm);
 */
 		kag.flipStart() if typeof kag.flipStart == "Object";	//	本当は、ActionManager.startFlip を直接呼びたい
-//dispMicro("ActionInfo.addAction", 7);
 	}
 
 	function delAction(target, propName=void)
@@ -1108,24 +1100,6 @@ class ActionInfo
 			return d;
 		}
 	}
-
-@if(DEBUG)
-	function getActionList()
-	{
-		var	txt, sept;
-		for(var i=0; i<actionList.count; i++)
-		{
-			var	pact	= actionList[i];
-			txt	+= sept + pact.propName + "(";
-			txt	+= pact.absolute.className if pact.absolute != void;
-			for(var i=0; i<pact.relative.count; i++)
-				txt	+= ", "+pact.relative[i].className;
-			txt	+= ")";
-			sept= ", ";
-		}
-		return txt;
-	}
-@endif
 }
 
 /*----------------------------------------------------------------------------/

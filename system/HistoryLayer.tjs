@@ -559,25 +559,6 @@ class HistoryLayer extends Layer
 		indentPos = 0;
 	}
 
-@if(GAME_WOHN)
-	function locateAlign(anchor, text, offsetText="", offsetTextDirection=0) {
-		var right = relinePos;
-		var x = void;
-		var anchorValue = 0;
-		if (anchor == "right") {
-			anchorValue = 1;
-		} else if (anchor == "center") {
-			anchorValue = 0.5;
-		} else if (string(+anchor) == anchor) {
-			anchorValue = +anchor;
-		}
-		x = (right - font.getTextWidth(text)) * anchorValue + font.getTextWidth(offsetText)*offsetTextDirection;
-		lineStart[dataPage][dataPos] = x;
-		limitPos = limitPos_org - x;
-		relinePos = relinePos_org - x;
-	}
-@endif
-
 	function clearBack(n)
 	{
 		// 背景を塗りつぶす

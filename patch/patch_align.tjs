@@ -1,0 +1,168 @@
+﻿
+global.HistoryLayer_patch_align_original = HistoryLayer;
+class HistoryLayer_patch_align_override extends HistoryLayer_patch_align_original
+{
+	function HistoryLayer_patch_align_override()
+	{
+		super.HistoryLayer(...);
+	}
+
+	function HistoryLayer()
+	{
+		HistoryLayer_patch_align_override(...);
+	}
+
+	function locateAlign(anchor, text, offsetText="", offsetTextDirection=0) {
+		var right = relinePos;
+		var x = void;
+		var anchorValue = 0;
+		if (anchor == "right") {
+			anchorValue = 1;
+		} else if (anchor == "center") {
+			anchorValue = 0.5;
+		} else if (string(+anchor) == anchor) {
+			anchorValue = +anchor;
+		}
+		x = (right - font.getTextWidth(text)) * anchorValue + font.getTextWidth(offsetText)*offsetTextDirection;
+		lineStart[dataPage][dataPos] = x;
+		limitPos = limitPos_org - x;
+		relinePos = relinePos_org - x;
+	}
+}
+global.HistoryLayer = HistoryLayer_patch_align_override;
+
+global.MessageLayer_patch_align_original = MessageLayer;
+class MessageLayer_patch_align_override extends MessageLayer_patch_align_original
+{
+	function MessageLayer_patch_align_override()
+	{
+		super.MessageLayer(...);
+	}
+
+	function MessageLayer()
+	{
+		MessageLayer_patch_align_override(...);
+	}
+
+	function locateAlign(anchor, text, offsetText="", offsetTextDirection=0)
+	{
+		var right = relinexpos - marginL;
+		var x = void;
+		var anchorValue = 0;
+		if (anchor == "right") {
+			anchorValue = 1;
+		} else if (anchor == "center") {
+			anchorValue = 0.5;
+		} else if (string(+anchor) == anchor) {
+			anchorValue = +anchor;
+		}
+@if(GAME_FATE||GAME_FHAT)
+		x = (right - lineLayer.font.getTextWidth(text)) * anchorValue + lineLayer.font.getTextWidth(offsetText)*offsetTextDirection;
+@endif
+@if(GAME_WOHN)
+		x = (right - getChWidth(text)[1]) * anchorValue + getChWidth(offsetText)[1]*offsetTextDirection;
+@endif
+		locate(x, void);
+	}
+
+	function locateAlignImage(anchor, imageWidth, y)
+	{
+		var right = window.scWidth - marginL;
+		var anchorValue = getAnchorValue(anchor);
+		var x = (right - imageWidth) * anchorValue;
+		locate(x, y);
+	}
+}
+global.MessageLayer = MessageLayer_patch_align_override;
+
+global.KAGWindow_patch_align_original = KAGWindow;
+class KAGWindow_patch_align_override extends KAGWindow_patch_align_original
+{
+	function KAGWindow_patch_align_override()
+	{
+		super.KAGWindow(...);
+	}
+
+	function KAGWindow()
+	{
+		KAGWindow_patch_align_override(...);
+	}
+
+	function getHandlers()
+	{
+		var handlers = super.getHandlers();
+		handlers.align = function(elm)
+		{
+			var textToAlign = elm.text;
+			var textForLength = textToAlign;
+			textForLength = elm.textforlength if elm.textforlength !== void;
+			var offsetText = "";
+			offsetText = elm.offsettext if elm.offsettext !== void;
+			var offsetTextDirection = 0;
+			offsetTextDirection = elm.offsettextdirection if elm.offsettextdirection !== void;
+			if (elm.anchor !== void) {
+				if(elm.rubychar != void && string(+elm.rubychar) != elm.rubychar) {
+					textForLength = elm.rubychar;
+				}
+				textForLength = conductor.cleanLine(textForLength);
+				offsetText = conductor.cleanLine(offsetText);
+				historyLayer.locateAlign(elm.anchor, textForLength, offsetText, offsetTextDirection);
+				if(currentWithBack) current.comp.locateAlign(elm.anchor, textForLength, offsetText, offsetTextDirection);
+				current.locateAlign(elm.anchor, textForLength, offsetText, offsetTextDirection);
+			}
+			if (elm.rubytext !== void) {
+				var rubyTag = %[tagname:"ruby", text:elm.rubytext];
+				rubyTag.o2o    = elm.rubyo2o    if elm.rubyo2o    !== void;
+				rubyTag.pos    = elm.rubypos    if elm.rubypos    !== void;
+				rubyTag.char   = elm.rubychar   if elm.rubychar   !== void;
+				rubyTag.offset = elm.rubyoffset if elm.rubyoffset !== void;
+				conductor.pendings.insert(0, rubyTag);
+			}
+			if (elm.text !== void) {
+				textToAlign = conductor.cleanLine(textToAlign);
+				var tag_index = 0;
+				for (var i = 0; i < textToAlign.length; i++) {
+					var character = textToAlign[i];
+					var line_tag = %[tagname:"line", len:0];
+					var block_tag = %[tagname:"block", len:0];
+					while (character == conductor.dash_character) {
+						i++;
+						line_tag.len++;
+						character = textToAlign[i];
+					}
+					while (character == conductor.block_character) {
+						i++;
+						block_tag.len++;
+						character = textToAlign[i];
+					}
+					if (line_tag.len > 0 || block_tag.len > 0) {
+						if (line_tag.len > 0) {
+							conductor.pendings.insert(tag_index, line_tag);
+							i--;
+						}
+						if (block_tag.len > 0) {
+							conductor.pendings.insert(tag_index, block_tag);
+							i--;
+						}
+					} else {
+						var chTag = %[tagname:"ch", text:textToAlign[i]];
+						conductor.pendings.insert(tag_index, chTag);
+					}
+					tag_index++;
+				}
+			}
+			if (elm.indent) {
+				var indentTag = %[tagname:"indent"];
+				var indentOffset = 0;
+				if (elm.indentoffset !== void) {
+					indentOffset = elm.indentoffset;
+				}
+				conductor.pendings.insert(indentOffset, indentTag);
+			}
+			return 0;
+		} incontextof this;
+		return handlers;
+	}
+
+}
+global.KAGWindow = KAGWindow_patch_align_override;

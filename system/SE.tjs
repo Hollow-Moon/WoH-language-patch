@@ -1,10 +1,6 @@
 ﻿// SE.tjs - 効果音管理
 // Copyright (C)2001-2009, W.Dee and contributors  改変・配布は自由です
 
-@if(GAME_WOHN)
-@set(VOLUME_VISIBLE=0)
-@endif
-
 class SESoundBuffer extends WaveSoundBuffer
 {
 	// 効果音クラス ( WaveSoundBuffer を継承 )
@@ -321,29 +317,6 @@ class SESoundBuffer extends WaveSoundBuffer
 			super.volume = 0;	// 無音下でトランジションするとノイズが流れるため、再生していない間は音量を0にしておく
 @endif
 		}
-@if(GAME_WOHN)
-@if(VOLUME_VISIBLE)
-		if(status == "play")
-			startDisplayVolume();
-		else
-			stopDisplayVolume();
-	}
-
-	function startDisplayVolume()
-	{
-		System.addContinuousHandler(displayVolume);
-	}
-
-	function stopDisplayVolume()
-	{
-		System.removeContinuousHandler(displayVolume);
-	}
-
-	function displayVolume()
-	{
-		dm("se["+id+"].volume = "+(super.volume \ 1000));
-@endif
-@endif
 	}
 
 	function canWaitStop()

@@ -5528,47 +5528,6 @@ class KAGWindow extends Window
 		}
 		return -2;
 	}
-
-	// スクリーン切り替え時にムービー再生を一時的に止めるロジック
-	var	movieStore;
-	function onMovieScreenChanging(full)
-	{
-		movieStore	= new AsyncTrigger(onMovieScreenChanged, "");
-		var	states	= [];
-		for (var i=0;i<numMovies;i++)
-		{
-			var movie = movies[i], st = %[];
-			movie.internalStore(st);
-			movie.stop();
-			states.add(st);
-		}
-		movieStore.states	= states;
-		movieStore.trigger();
-	}
-
-	function onMovieScreenChanged()
-	{
-		for(var i=0; i<numMovies; i++)
-			movies[i].internalRestore(movieStore.states[i]);
-		invalidate movieStore;
-		movieStore	= void;
-	}
-
-	// プライマリの位置が変わった
-	function onMoviePrimaryPosChanged(ox, oy) {
-		if (!isMain) return;
-		for (var i=0;i<numMovies;i++)
-			with (movies[i]) .setOptions(%[ primox:ox, primoy:oy ]);
-	}
-	function onMovieStatusChanged(state, id)
-	{
-		// 拡張用スタブ（何もしない）
-	}
-	function onMoviePlay(id)
-	{
-		// ムービーの再生を開始した
-		onMovieStatusChanged("play", id);
-	}
 @endif
 	function onMovieStop(id)
 	{

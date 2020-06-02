@@ -215,9 +215,6 @@ class LinkEditLayer extends EditLayer
 
 @if(GAME_WOHN)
 Scripts.execStorage("MessageCharLayer.tjs");	// 文字の表示に利用するレイヤー
-
-//	文字数のみで改ページが必要になったとき、すべてクリアするのではなく、一行上へずらすことで表示の余地を広げる
-@set(MESSAGE_SCROLL_REPAGE=0)
 @endif
 
 class MessageLayer extends KAGLayer
@@ -1995,101 +1992,6 @@ class MessageLayer extends KAGLayer
 		}
 		return false;
 	}
-@if(GAME_WOHN)
-@if(MESSAGE_SCROLL_REPAGE)
-	function scrollLines()
-	{
-		var	vert	= vertical;
-//		var	elm		= %[];
-
-		//	まず通常の文字
-		var	cl	= charLayers[0];
-		if(cl != void)
-		{
-			for(var c=0; c<cl.count; c++)
-				removeCharLayer(0, c);
-		}
-		if(vert)
-			x = imageWidth - marginR, y = marginT + indentxpos;
-		else
-			x = marginL + indentxpos, y = marginT;
-		var	rc	= Math.max(charLayers.count, currentLine+1);
-		for(var r=1; r<rc; r++)
-		{
-			cl	= charLayers[r];
-			if(cl != void)
-			{
-				for(var c=0; c<cl.count; c++)
-				{
-					if(cl[c] == void)
-					{
-						charLayers[r-1][c]	= void if charLayers[r-1] != void;
-						continue;
-					}
-					with(cl[c])
-					{
-						if(vert)
-							.textLeft	= x + int(getCharLayerLeftOffset()+(.textWidth>>1));
-//							elm["textLeft"]	= %[handler:MoveAction, start:.textLeft, value:x + int(getCharLayerLeftOffset()+(.textWidth>>1))];
-						else
-							.textTop	= y + int(getCharLayerTopOffset()-.textHeight);
-//							elm["textTop"]	= %[handler:MoveAction, start:.textTop, value:y + int(getCharLayerTopOffset()-.textHeight)];
-//						actionChar(cl[c], elm, 1);
-						.name	= "[%2d][%2d]: %s(%s)".sprintf(r, c, .name.split(":")[1].substr(1), .group);
-					}
-					charLayers[r-1]	= [] if charLayers[r-1] == void;
-					charLayers[r-1][c]	= cl[c];
-					cl[c]	= void;
-				}
-			}
-			if(vert)
-				x -= lineSize + lineSpacing;
-			else
-				y += lineSize + lineSpacing;
-		}
-//		(Dictionary.clear incontextof elm)();
-
-		//	次にルビ文字
-		var	rl	= rubyLayers[0];
-		if(rl != void)
-		{
-			for(var c=0; c<rl.count; c++)
-				invalidate rl[c] if rl[c] != void;
-			rl.clear();
-		}
-		for(var r=1; r<rubyLayers.count; r++)
-		{
-			rl	= rubyLayers[r];
-			if(rl == void)
-				continue;
-			for(var c=0; c<rl.count; c++)
-			{
-				if(rl[c] == void)
-				{
-					rubyLayers[r-1][c]	= void if rubyLayers[r-1] != void;
-					continue;
-				}
-				with(rl[c])
-				{
-					var	pos	= getRubyPos(r-1, 0, c, rl[c], .offset, .align);
-					if(vert)
-						.left	= pos[0];
-//						elm["left"]	= %[handler:MoveAction, start:.left, value:pos[0]];
-					else
-						.top	= pos[1];
-//						elm["top"]	= %[handler:MoveAction, start:.top, value:pos[1]];
-//					actionChar(rl[c], elm, 1);
-					.name	= "[%2d][%2d]: %s(%s)".sprintf(r, c, .name.split(":")[1].substr(1), .group);
-				}
-				rubyLayers[r-1]	= [] if rubyLayers[r-1] == void;
-				rubyLayers[r-1][c]	= rl[c];
-				rl[c]	= void;
-			}
-		}
-		currentColumn	= 0;	//	行頭へ
-	}
-@endif
-@endif
 
 	function processCh(ch)
 	{
@@ -2149,14 +2051,8 @@ class MessageLayer extends KAGLayer
 					rubyCharCount		= 0;
 				}
 
-@if(MESSAGE_SCROLL_REPAGE)
-				// 改行してページを超える場合は、一行上へずらす
-				if(reline()) scrollLines();
-@endif
-@if(!MESSAGE_SCROLL_REPAGE)
 				// 改行し、ページを超える場合はしかるべき措置をとる
 				if(reline()) return autoReturn;
-@endif
 			}
 @endif
 		}
@@ -3904,17 +3800,7 @@ class MessageLayer extends KAGLayer
 		// 改行を処理する
 		if(reline())
 		{
-@if(!GAME_WOHN)
 			return autoReturn;
-@endif
-@if(GAME_WOHN)
-@if(MESSAGE_SCROLL_REPAGE)
-			scrollLines();
-@endif
-@if(!MESSAGE_SCROLL_REPAGE)
-			return autoReturn;
-@endif
-@endif
 		}
 		return false;
 	}
@@ -3931,12 +3817,7 @@ class MessageLayer extends KAGLayer
 @if(GAME_WOHN)
 		if(putGraph(elm.storage, key, char))
 		{
-@if(MESSAGE_SCROLL_REPAGE)
-			scrollLines();
-@endif
-@if(!MESSAGE_SCROLL_REPAGE)
 			return autoReturn;
-@endif
 		}
 @endif
 		return false;

@@ -22,9 +22,6 @@ class KAGWindow extends Window
 
 	var aboutWidth = 320; // 「このソフトについて」ウィンドウの横幅
 	var aboutHeight = 200; // 同縦幅
-@if(GAME_WOHN)
-	var aboutStorage = "about.ks";
-@endif
 
 	var isFirstProcess = true; // 一番最初の process の呼び出しかどうか
 
@@ -1291,13 +1288,10 @@ class KAGWindow extends Window
 		win.setInnerSize(aboutWidth, aboutHeight);
 @endif
 		win.setPos(left + ((width - win.width)>>1), top + ((height - win.height)>>1));
-@if(!GAME_WOHN)
-		win.process('about.ks' ,,, true); // about.ks を immediate で表示
-@endif
 @if(GAME_WOHN)
 		win.rightClickMenuItem = new KAGMenuItem(this, "RightClick", 0, win.onRightClickMenuItemClick, false); // ESCで消せるように
-		win.process(aboutStorage ,,, true); // about.ks を immediate で表示
 @endif
+		win.process('about.ks' ,,, true); // about.ks を immediate で表示
 		win.showModal(); // モード付きで表示
 @if(GAME_WOHN)
 		invalidate win.rightClickMenuItem;

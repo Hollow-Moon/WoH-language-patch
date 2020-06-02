@@ -2379,18 +2379,6 @@ class KAGWindow extends Window
 			invalidate snapshotLayer, snapshotLayer = void;
 	}
 
-@if(GAME_WOHN)
-	function createThumbnail(w, h)
-	{
-		var tmp = new Layer(this, primaryLayer);
-		tmp.setImageSize(w, h);
-		tmp.face = dfAlpha;
-		tmp.stretchCopy(0, 0, w, h, snapshotLayer,
-			0, 0, snapshotLayer.imageWidth, snapshotLayer.imageHeight, stLinear);
-		return tmp;
-	}
-@endif
-
 	function saveBookMarkToFile(fn, savehist = true)
 	{
 		// ファイル fn に栞を保存する
@@ -2412,15 +2400,9 @@ class KAGWindow extends Window
 			{
 				// サムネイルのサイズまで縮小
 				var size = calcThumbnailSize();
-@if(!GAME_WOHN)
 				var tmp = new Layer(this, primaryLayer);
-@endif
-@if(GAME_WOHN)
-				var tmp;
-@endif
 				try
 				{
-@if(!GAME_WOHN)
 					tmp.setImageSize(size.width, size.height);
 					tmp.face = dfAlpha;
 					tmp.stretchCopy(0, 0, size.width, size.height, snapshotLayer,
@@ -2433,13 +2415,6 @@ class KAGWindow extends Window
 									1.0, 0, 255,  // G gamma, floor, ceil
 									0.8, 0, 255); // B gamma, floor, ceil
 					*/
-@endif
-@if(GAME_WOHN)
-					tmp	= createThumbnail(size.width, size.height);
-
-					processThumbnail(tmp);	//	サムネイルに加工を施す
-@endif
-
 					try
 					{
 						// サムネイルを保存
@@ -2452,12 +2427,7 @@ class KAGWindow extends Window
 					}
 					catch(e)
 					{
-@if(!GAME_WOHN)
 						invalidate tmp;
-@endif
-@if(GAME_WOHN)
-						invalidate tmp if tmp != void;
-@endif
 						unlockSnapshot();
 						System.inform("ファイルに保存できません (ファイルを開けないか、"
 							"書き込み禁止です)");
@@ -2466,12 +2436,7 @@ class KAGWindow extends Window
 				}
 				catch(e)
 				{
-@if(!GAME_WOHN)
 					invalidate tmp;
-@endif
-@if(GAME_WOHN)
-					invalidate tmp if tmp != void;
-@endif
 					throw e;
 				}
 				invalidate tmp;
@@ -2500,14 +2465,6 @@ class KAGWindow extends Window
 
 		return true;
 	}
-
-@if(GAME_WOHN)
-	function processThumbnail(thumbnail)
-	{
-		//	サムネイルに追加の加工を施す
-		//	例) Hシーンのサムネイルをモザイク加工
-	}
-@endif
 
 	function saveBookMark(num, savehist = true)
 	{

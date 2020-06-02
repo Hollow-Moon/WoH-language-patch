@@ -317,11 +317,6 @@ class KAGWindow extends Window
 		if(saveDataLocation.indexOf(":") == -1)
 			saveDataLocation = System.exePath + saveDataLocation;
 
-@if(GAME_WOHN)
-		// セーブ可能かどうかの確認
-		checkSave();
-@endif
-
 		// ログの出力先を saveDataLocation にする
 		if(ismain) Debug.logLocation = saveDataLocation;
 
@@ -1518,52 +1513,6 @@ class KAGWindow extends Window
 
 	//----------------------------------------------------- システム変数関連 --
 
-@if(GAME_WOHN)
-	/**
-	 * 書き込みテストを行う
-	 */
-	function checkSave()
-	{
-		if(!readOnlyMode) {
-
-			var appName = (typeof global.ENV_Maker != "undefined") ? global.ENV_Maker + "/" + global.ENV_GameName : System.title;
-/*
-			// セーブ場所の差し替え
-			var udp = Storages.chopStorageExt(System.exeName) + ".udp";
-			if(Storages.isExistentStorage(udp)) {
-				var vars = [];
-				vars.load(udp);
-				if (vars[0] == "document") {
-					if (System.personalPath != System.exePath) {
-						saveDataLocation = System.personalPath + appName;
-					}
-				} else if (vars[0] == "application") {
-					if (System.appDataPath != System.exePath) {
-						saveDataLocation = System.appDataPath + appName;
-					}
-				}
-			}
-*/
-			// 書き込み権限テスト
-			var dummy = ["test"];
-			var fn = saveDataLocation + "/" + "savecheck";
-			try {
-				(Array.saveStruct incontextof dummy)(fn);
-			} catch(e) {
-				if (System.personalPath != System.exePath) {
-					errorInform("savemydoc");
-					saveDataLocation = System.personalPath + appName;
-				} else {
-					readOnlyMode = true;
-					errorInform("readonly");
-				}
-			}
-
-			dm("セーブデータ保存場所:" + saveDataLocation );
-		}
-	}
-@endif
-
 	function loadSystemVariables()
 	{
 		// システム変数の読み込み
@@ -2510,14 +2459,8 @@ class KAGWindow extends Window
 						invalidate tmp if tmp != void;
 @endif
 						unlockSnapshot();
-@if(!GAME_WOHN)
 						System.inform("ファイルに保存できません (ファイルを開けないか、"
 							"書き込み禁止です)");
-@endif
-@if(GAME_WOHN)
-						readOnlyMode = true;
-						errorInform("savefail");
-@endif
 						return false;
 					}
 				}
@@ -2549,14 +2492,8 @@ class KAGWindow extends Window
 			}
 			catch(e)
 			{
-@if(!GAME_WOHN)
 				System.inform("ファイルに保存できません (ファイルを開けないか、"
 					"書き込み禁止です)");
-@endif
-@if(GAME_WOHN)
-				readOnlyMode = true;
-				errorInform("savefail");
-@endif
 				return false;
 			}
 		}
@@ -2627,12 +2564,7 @@ class KAGWindow extends Window
 
 			if(data.id != saveDataID)
 			{
-@if(!GAME_WOHN)
 				System.inform(__("他のシステムのデータを読み込もうとしました"), __("エラー"));
-@endif
-@if(GAME_WOHN)
-				errorInform("loadfail");
-@endif
 				return false;
 			}
 
@@ -2652,14 +2584,9 @@ class KAGWindow extends Window
 		}
 		catch(e)
 		{
-@if(!GAME_WOHN)
 			System.inform("栞を読み込めないか、栞が"
 				"壊れているか、あるいは他の形式の栞データ"
 				"です(" + e.message + ")", "エラー");
-@endif
-@if(GAME_WOHN)
-			errorInform("loadexception", e.message);
-@endif
 			return false;
 		}
 
@@ -7143,27 +7070,6 @@ class KAGWindow extends Window
 		voiceLog.clear();
 	}
 
-	/**
-	 * ダイアログを表示する
-	 */
-	var _errorInformMessageMap = %[
-	savefail: "ファイルに保存できません (ファイルを開けないか、書き込み禁止です)",
-	loadfail:  "他のシステムのデータを読み込もうとしました",
-	loadexception: %[ exp:function(mes) { return @"栞を読み込めないか、栞が壊れているか、あるいは他の形式の栞データです(${mes})"; } ],
-	savemydoc: %[ message:"書き込み権限がなくファイル保存できません。MyDocument以下にデータを保存します", caption:"Information" ],
-	readonly:  %[ message:"書き込み権限がなくファイル保存できません。ReadOnlyMode で動作します",		  caption:"Warning" ],
-		];
-	function errorInform(tag, *) {
-		if (tag == "" || _errorInformMessageMap[tag] == "") return;
-		var msg = _errorInformMessageMap[tag];
-		var cap = "Error";
-		if (typeof msg == "Object") with (msg) {
-			cap = .caption if (typeof .caption != "undefined");
-			msg = .exp(*)  if (typeof .exp	   != "undefined");
-			msg = .message if (typeof .message != "undefined");
-		}
-		System.inform(msg, cap);
-	}
 	/**
 	 * デバッグ窓表示内容の更新
 	 */

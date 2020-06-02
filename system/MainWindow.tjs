@@ -319,9 +319,6 @@ class KAGWindow extends Window
 
 		// メニューアイテムの作成
 		if(ismain) (KAGWindow_createMenus incontextof this)();
-@if(GAME_WOHN)
-		noneMagnifyMenuItem.enabled	= false if System.getArgument("-fullscreenmode") == "primaryonly";
-@endif
 		if(typeof this.rightClickMenuItem != "undefined")
 			rightClickDefaultName = rightClickCurrentMenuName = rightClickMenuItem.caption;
 
@@ -617,23 +614,6 @@ class KAGWindow extends Window
 			if(System.screenWidth <= scWidth && System.screenHeight <= scHeight)
 				onFullScreenMenuItemClick(this);
 		}
-@endif
-
-@if(GAME_WOHN)
-		// -fszoom が設定されていなければ、前回選択されていたものを選ぶ
-		var	fszoom	= System.getArgument("-fszoom");
-		dm("-fszoom = "+fszoom+" / scflags.fszoom = "+scflags.fszoom);
-		if(fszoom === void)
-		{
-			switch(scflags.fszoom)
-			{
-			case "inner":	onInnerMagnifyMenuItemClick();	break;
-			case "outer":	onOuterMagnifyMenuItemClick();	break;
-			case "none":	onNoneMagnifyMenuItemClick();	break;
-			}
-		}
-		else
-			this[fszoom+"MagnifyMenuItem"].checked	= true if typeof this[fszoom+"MagnifyMenuItem"] != "undefined";
 @endif
 
 		// 前回起動時にフルスクリーンだった場合はフルスクリーンにしてみる
@@ -1182,65 +1162,6 @@ class KAGWindow extends Window
 	}
 
 @if(GAME_WOHN)
-	function resetFullScreen()
-	{
-		if(fullScreened)
-		{
-			try
-			{
-				fullScreen	= false;
-				with(this.reFSTimer = new Timer(onCheckFS, ""))
-					.interval	= 8, .enabled	= true;
-			}
-			catch(e)
-				Debug.notice("フルスクリーンのリセットに失敗しました。: "+e.message);
-		}
-	}
-
-	function onCheckFS
-	{
-		//	フルスクリーンの解除処理が終了したら、再度フルスクリーンにする
-		if(typeof this.screenModeChangedTrigger == "undefined" || !screenModeChangedTrigger.trigged)
-		{
-			try
-				fullScreen	= true;
-			catch(e)
-				Debug.notice("フルスクリーンのリセットに失敗しました。: "+e.message);
-			reFSTimer.enabled	= false;
-			invalidate reFSTimer;
-			reFSTimer	= void;
-			callHook("afterChangeMagnifyType");
-		}
-@if(DEBUG)
-		else
-			dm("フルスクリーン解除待ち");
-@endif
-	}
-
-	function onInnerMagnifyMenuItemClick(sender)
-	{
-		System.setArgument("-fszoom", "inner");
-		innerMagnifyMenuItem.checked	= true;
-		outerMagnifyMenuItem.checked = noneMagnifyMenuItem.checked	= false;
-		resetFullScreen();
-	}
-
-	function onOuterMagnifyMenuItemClick(sender)
-	{
-		System.setArgument("-fszoom", "outer");
-		outerMagnifyMenuItem.checked	= true;
-		innerMagnifyMenuItem.checked = noneMagnifyMenuItem.checked	= false;
-		resetFullScreen();
-	}
-
-	function onNoneMagnifyMenuItemClick(sender)
-	{
-		System.setArgument("-fszoom", "none");
-		noneMagnifyMenuItem.checked	= true;
-		outerMagnifyMenuItem.checked = innerMagnifyMenuItem.checked	= false;
-		resetFullScreen();
-	}
-
 	function onMoveToYesMenuItemClick(sender)
 	{
 		sf.moveCursorToDialog	= "Yes";

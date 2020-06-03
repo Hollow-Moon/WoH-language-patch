@@ -101,7 +101,7 @@
 	["patch_movie_override.tjs", void, void, void, "!GAME_WOHN"],
 	["patch_zoom_window.tjs", void, void, void, "ZOOM_WINDOW"],
 	["patch_fix_call_stack.tjs", void, void, void, "GAME_FATE||GAME_FHAT"],
-	["patch_align.tjs", void, void, void, "GAME_FATE||GAME_FHAT"],
+	"patch_align.tjs",
 	"patch_skip.tjs",
 	"patch_savedatalocation_override.tjs",
 	[void, void, void, void, void, "KAG main window"],

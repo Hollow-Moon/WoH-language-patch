@@ -1,8 +1,8 @@
 ﻿
 global.test_write_in_directory = function(test_directory)
 {
-	var test_file_contents = ["This test file can safely be deleted."];
-	var test_file_path = test_directory + "/TESTFILE.KSC";
+	var test_file_contents = [("This test file can safely be deleted. Timestamp: %s").sprintf(System.getTickCount())];
+	var test_file_path = test_directory + "/savechek.ksc";
 	try
 	{
 		test_file_contents.save(test_file_path);
@@ -28,6 +28,10 @@ class KAGWindow_patch_savedatalocation_override_override extends KAGWindow_patch
 	function get_or_prompt_save_data_location()
 	{
 		this.disable_system_save_data_write = System.getArgument('-disablesystemsavedatawrite') !== void;
+		if (this.disable_system_save_data_write)
+		{
+			this.readOnlyMode = true;
+		}
 		var saveDataLocation;
 		//	セーブディレクトリの位置をユーザーが任意に指定できるようにする
 		var	configconfigfile	= System.exePath+"config.ksc";
@@ -96,6 +100,10 @@ class KAGWindow_patch_savedatalocation_override_override extends KAGWindow_patch
 					break;
 				}
 			}
+			if (this.disable_system_save_data_write)
+			{
+				throw new Exception("System save data write is disabled, but savedata folder is not existant");
+			}
 			{//	初回起動時
 				//	ユニークなフォルダ名を取得("Fate_Savedata"等)
 				var	savefolder	= this.wanted_save_data_location;
@@ -140,12 +148,7 @@ class KAGWindow_patch_savedatalocation_override_override extends KAGWindow_patch
 					{
 						if (Storages.isExistentDirectory(test_paths[i] + "/"))
 						{
-							if (this.disable_system_save_data_write)
-							{
-								dir = test_paths[i];
-								break;
-							}
-							if (global.test_write_in_directory(test_paths[i]) && System.createAppLock(test_paths[i].replace(/[^A-Za-z]/g, '_')))
+							if (global.test_write_in_directory(test_paths[i]))
 							{
 								dir = test_paths[i];
 								break;

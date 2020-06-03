@@ -464,6 +464,61 @@ class LoadScenarioMenuItem extends KAGMenuItem
 	}
 }
 
+function addEnableDisableRestartMenuFunctions()
+{
+	this.restart_menu_state = true;
+	this.restart_menu_state_stack = [];
+	this.pushRestartMenuState = function()
+	{
+		this.restart_menu_state_stack.add(this.restart_menu_state);
+	};
+
+	this.popRestartMenuState = function()
+	{
+		if (this.restart_menu_state_stack.count > 0)
+		{
+			this.setRestartMenuState(this.restart_menu_state_stack[this.restart_menu_state_stack.count - 1]);
+			this.restart_menu_state_stack.erase(this.restart_menu_state_stack.count - 1);
+		}
+	};
+
+	this.setRestartMenuState = function(state)
+	{
+		this.restart_menu_state = state;
+		if (typeof(this.menu) === "Object")
+		{
+@if(HD_MODE)
+			this.qualityMenu.enabled = state;
+			this.wideMenu.enabled = state;
+@endif
+			if (typeof(this.titleThemeMenuItem) === "Object")
+			{
+				this.titleThemeMenuItem.enabled = state;
+			}
+			if (typeof(this.routeMenuItem) === "Object")
+			{
+				this.routeMenuItem.enabled = state;
+			}
+			if (typeof(this.languageMenu) === "Object")
+			{
+				this.languageMenu.enabled = state;
+			}
+		}
+	};
+
+	this.enableRestartMenus = function()
+	{
+		this.setRestartMenuState(true);
+	};
+
+	this.disableRestartMenus = function()
+	{
+		this.setRestartMenuState(false);
+	};
+
+	this.disableRestartMenus();
+}
+
 function addPatchMenu() {
 	menu.insert(this.patchMenu = new KAGMenuItem(this, __t("パッチ(&P)"), 0, void, false), getPatchMenuIndex(this));
 	(addCensorMenu incontextof this)(patchMenu, __t("検閲(&C)"));
@@ -475,6 +530,10 @@ function addPatchMenu() {
 	(addDevelopmentMenu incontextof this)();
 @if(ZOOM_WINDOW)
 	(addWindowSizeMenu incontextof this)(this.displayMenu);
+	if (this.isPseudoMode())
+	{
+		(addFullScreenMenu incontextof this)(this.displayMenu);
+	}
 @endif
 @if(HD_MODE)
 	(addHdMenu incontextof this)(this.displayMenu);
@@ -483,6 +542,8 @@ function addPatchMenu() {
 
 	(addOptionsMenu incontextof this)(patchMenu);
 	(addPatchMenuItems incontextof this)(patchMenu);
+
+	(addEnableDisableRestartMenuFunctions incontextof this)();
 }
 
 function addDevelopmentMenu() {
@@ -554,6 +615,22 @@ function addOptionsMenu(patchMenu) {
 	patchOptionsMenuItem.add(this.engineConfigurationItem = new KAGMenuItem(this, __t("エンジン構成ダイアログを開く"), 1, function() { global.showEngineConfigureDialog(); },false));
 
 	(addOptionsMenuItems incontextof this)(patchOptionsMenuItem);
+}
+
+function addFullScreenMenu(displayMenu)
+{
+	displayMenu.add(new MenuItem(this, "-"));
+
+	displayMenu.add(this.fullscreenMenu = new KAGMenuItem(this, __t("フルスクリーン時の拡大表示(&M)"), 0, void, false));
+
+		fullscreenMenu.add(this.innerMagnifyMenuItem = new KAGMenuItem(this, __t("モニタ内にフィットさせる(&I)"), 1,
+			onInnerMagnifyMenuItemClick, false));
+
+		fullscreenMenu.add(this.outerMagnifyMenuItem = new KAGMenuItem(this, __t("モニタいっぱいに拡大する(&O)"), 1,
+			onOuterMagnifyMenuItemClick, false));
+
+		fullscreenMenu.add(this.noneMagnifyMenuItem = new KAGMenuItem(this, __t("拡大しない(&N)"), 1,
+			onNoneMagnifyMenuItemClick, false));
 }
 
 function addWindowSizeMenu(displayMenu) {

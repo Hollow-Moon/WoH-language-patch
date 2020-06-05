@@ -729,9 +729,8 @@ class KAGWindow extends Window
 			// コンダクタが走行中の時は
 			// コンダクタに中断を伝える
 @if(GAME_WOHN)
-		global.System.eventDisabled = true;
-		global.Window.onCloseQuery(true);
-		global.System.exit();
+		this.conductor.clear();
+		this.extraConductor.clear();
 @endif
 	}
 
@@ -743,11 +742,6 @@ class KAGWindow extends Window
 		askOnClose = false;
 		close();
 		if(this isvalid) askOnClose = askOnClose_save;
-@if(GAME_WOHN)
-		global.System.eventDisabled = true;
-		global.Window.onCloseQuery(true);
-		global.System.exit();
-@endif
 	}
 
 	function closeByScript(elm)

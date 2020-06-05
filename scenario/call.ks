@@ -22,6 +22,7 @@
 ;lockquickmenu する
 @lockquickmenu
 @textoff
+@fadeoutbgm time=400
 @bg storage=black time=400
 @call target=*resetall
 ;archive からロードしたときは archive には戻らないので、記憶していた戻り道を破棄する
@@ -93,6 +94,7 @@ with(tracer_object)
 ;lockquickmenu を維持するため、onceIgnoreUnlockQuickMenu=true
 @eval exp="onceIgnoreUnlockQuickMenu=true;delete tf.do_systemmenu;delete tf.ttm_opened;delete f.in_ttm;outMenu(__menuStack[__menuStack.count-1],, false);with(Menu_object).doInvalidateByInvisible('fore'),.clearClick(),.setAllContrary(false);kag.setHistoryOptions(%[enabled:false]);kag.stopAllActions();kag.freeSnapshot();"
 @stoptrans
+@fadeoutbgm time=400
 @bg storage=black time=400
 @autocache enabled=false
 @eval exp=kag.simplifyLayers()
@@ -104,6 +106,7 @@ with(tracer_object)
 
 ;タイトルメニューからゲーム開始
 *title2start
+@fadeoutbgm time=1200
 @bg storage=black time=1200
 @waittrig name=closeaskyesno cond=&tf.do_askyesno
 @jump storage=first.ks target=*startgame
@@ -115,6 +118,7 @@ with(tracer_object)
 @position page=back visible=false
 @eval exp="delete tf.do_systemmenu;with(Menu_object).doInvalidateByInvisible('fore'),.clearClick(),.setAllContrary(false);kag.setHistoryOptions(%[enabled:false]);kag.stopAllActions();kag.freeSnapshot();"
 @stoptrans
+@fadeoutbgm time=400
 @bg storage=black time=400
 @eval exp=kag.simplifyLayers()
 @visibleframe
@@ -142,6 +146,7 @@ with(tracer_object)
 @eval exp="closeConfigMenu();closeSaveMenu();closeLoadMenu();closeQuickMenu();closeRClickMenu();"
 @eval exp="onceIgnoreUnlockQuickMenu=true;delete tf.do_systemmenu;delete tf.ttm_opened;delete f.in_ttm;outMenu(__menuStack[__menuStack.count-1],, false);with(Menu_object).doInvalidateByInvisible('fore'),.clearClick(),.setAllContrary(false);kag.setHistoryOptions(%[enabled:false]);kag.stopAllActions();kag.freeSnapshot();"
 @stoptrans
+@fadeoutbgm time=400
 @bg storage=black time=400
 @autocache enabled=false
 @eval exp=kag.simplifyLayers()

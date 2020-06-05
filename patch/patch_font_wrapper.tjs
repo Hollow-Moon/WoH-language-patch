@@ -340,11 +340,14 @@ class FontWrapper
 			{
 				for (var j = 0; j < global.font_remap_list[i].count; j += 1)
 				{
-					if (font_list.find(global.font_remap_list[i][j]) !== -1)
+					var xface = global.font_remap_list[i][j];
+					if (font_list.find(xface) !== -1)
 					{
-						return global.font_remap_list[i][j];
+						global.font_remap_cache[face] = xface;
+						return xface;
 					}
 				}
+				global.font_remap_cache[face] = null;
 				return;
 			}
 		}

@@ -478,7 +478,7 @@ function initializeDefaultLanguage() {
 }
 
 function initializeLanguage(kag=global.kag) {
-	if (kag.sflags.language === void) {
+	if (kag.sflags.language === void || global.languages.find(kag.sflags.language) === -1) {
 		// language already loaded in initializeDefaultLanguage
 		kag.sflags.language = default_language;
 		kag.sflags.userFont = %[];

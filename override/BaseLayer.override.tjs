@@ -163,9 +163,6 @@ class BaseLayer_override extends BaseLayer_original
 //		dm(name+".onPaint("+force+"): "+(this == window.fore.base)+" || "+window.fore.base.inTransition+" || "+force);
 		if(this == window.fore.base || window.fore.base.inTransition || force)	//	表か、トランジション中のみ描画処理する
 		{
-@if(CHECKNEEDPERFORMANCE)
-			global.checkneedperformance.countOnPaint(this);
-@endif
 			super.onPaint(...);
 @if(PAUSE_TRANSITION)
 			asyncCaller.call(update) if inTransition;	//	トランジション中なら再度 update

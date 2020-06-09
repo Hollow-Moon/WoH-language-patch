@@ -5,14 +5,11 @@
 
 @iscript
 Scripts.execStorage("version.tjs");
-//Scripts.execStorage("DashPlugin.tjs");
 Scripts.execStorage("TextOnOffPlugin.tjs");
 Scripts.execStorage("FGPlugin.tjs");
 Scripts.execStorage("KeyFrameActionPlugin.tjs");
 //Scripts.execStorage("QuickJumpPlugin.tjs");
 Scripts.execStorage("PartBgPlugin.tjs");
-//Scripts.execStorage("SmallBgPlugin.tjs");
-//Scripts.execStorage("initTag.tjs");
 Scripts.execStorage("TimeLinePlugin.tjs");
 
 //演出プラグイン
@@ -39,9 +36,6 @@ Scripts.execStorage("AlternativePlugin.tjs");
 //駒鳥のセリフを別ウィンドウ(吹き出し)で表示する
 Scripts.execStorage("RobinSerifPlugin.tjs");
 
-//Box2D
-Scripts.execStorage("Box2DLayerPlugin.tjs") if Storages.isExistentStorage("Box2DLayerPlugin.tjs");
-
 //その他ゲーム依存マクロ
 Scripts.execStorage("macro.tjs");
 
@@ -51,25 +45,10 @@ Scripts.execStorage("originalmenus.tjs");
 //ポップアップ
 Scripts.execStorage("PopupPlugin.tjs");
 
-//αムービー
-Scripts.execStorage("AlphaMoviePlugin.tjs") if Storages.isExistentStorage("AlphaMoviePlugin.tjs");
-
 //スタッフロール
 Scripts.execStorage("StaffrollPlugin.tjs");
 
 //テスト用
-@if(DEBUG)
-Scripts.execStorage("ReceiverPlugin.tjs");
-Scripts.execStorage("UpdateDiffPlugin.tjs");
-Scripts.execStorage("RecorderPlugin.tjs");
-Scripts.execStorage("ActionControler.tjs");
-Scripts.execStorage("BackWindowPlugin.tjs");
-Scripts.execStorage("SEBufferWindowPlugin.tjs");
-Scripts.execStorage("debug/PerformanceMesureLayer.tjs");
-@endif
-@if(CHECKNEEDPERFORMANCE)
-Scripts.execStorage("debug/CheckNeedPerformance.tjs");
-@endif
 @endscript
 
 ; フローチャートトレース
@@ -83,8 +62,6 @@ with(alternative_object)
 	.decide_se	= "basicdecide";
 }
 @endscript
-; αムービー
-;@call storage="alphamovie.ks"
 
 ;戻る
 @s

@@ -168,9 +168,6 @@ class BasicCharacterLayer extends CharacterLayer_original
 //		dm(name+"["+storage+"].onPaint(): "+opacity+" > 0 && "+visible+" && ("+isFore+" || "+useTrans+" || "+window.baseTransCount+")");
 		if(isFore || useTrans || window.baseTransCount || force)	//	ページの前後、トランジションの実行は知らないうちに開始されているので予約が必要
 		{
-@if(CHECKNEEDPERFORMANCE)
-			global.checkneedperformance.countOnPaint(this);
-@endif
 			super.onPaint(...);
 /*
 			if(storage == "im0718電飾化した全景_オブジェh(中間木)")

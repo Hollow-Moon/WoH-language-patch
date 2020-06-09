@@ -1,0 +1,57 @@
+﻿
+global.Conductor_patch_kagparser_ignore_call_stack_underflow_original = Conductor;
+class Conductor_patch_kagparser_ignore_call_stack_underflow_override extends Conductor_patch_kagparser_ignore_call_stack_underflow_original
+{
+	var ignore_call_stack_underflow = false;
+	function Conductor_patch_kagparser_ignore_call_stack_underflow_override()
+	{
+		super.Conductor(...);
+	}
+
+	function Conductor()
+	{
+		Conductor_patch_kagparser_ignore_call_stack_underflow_override(...);
+	}
+
+	function onReturn()
+	{
+		if (this.ignore_call_stack_underflow && this.callStackDepth === 0)
+		{
+			this.sleep();
+			this.interrupt();
+			return false;
+		}
+		return super.onReturn(...);
+	}
+}
+global.Conductor = Conductor_patch_kagparser_ignore_call_stack_underflow_override;
+
+global.KAGWindow_patch_kagparser_ignore_call_stack_underflow_original = KAGWindow;
+class KAGWindow_patch_kagparser_ignore_call_stack_underflow_override extends KAGWindow_patch_kagparser_ignore_call_stack_underflow_original
+{
+	function KAGWindow_patch_kagparser_ignore_call_stack_underflow_override()
+	{
+		super.KAGWindow(...);
+	}
+
+	function KAGWindow()
+	{
+		KAGWindow_patch_kagparser_ignore_call_stack_underflow_override(...);
+	}
+
+	function process(file, label, countpage, immediate, ignore_call_stack_underflow=false)
+	{
+		if (ignore_call_stack_underflow)
+		{
+			this.conductor.ignore_call_stack_underflow = true;
+		}
+		var ret = super.process(...);
+		if (ignore_call_stack_underflow)
+		{
+			this.conductor.ignore_call_stack_underflow = false;
+			this.conductor.resetInterrupt();
+		}
+		return ret;
+	}
+}
+global.KAGWindow = KAGWindow_patch_kagparser_ignore_call_stack_underflow_override;

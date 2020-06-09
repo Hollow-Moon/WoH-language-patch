@@ -133,7 +133,20 @@ global.initialize_patch = function()
 		{
 			filename += load[0];
 			loadastype += load[1];
-			tjs_expression += load[2];
+			if (typeof(load[2]) === "Object" && load[2] instanceof "Array")
+			{
+				var tjs_expression_array = [];
+				for (var j = 0; j < load[2].count; j += 1)
+				{
+					var item = load[2][j];
+					tjs_expression_array.add(("typeof(global.%s) %s \"%s\"").sprintf(item[0], typeof(item[2]) === "String" ? item[2] : "!==", typeof(item[1]) === "String" ? item[1] : "Object"));
+				}
+				tjs_expression += tjs_expression_array.join("&&");
+			}
+			else
+			{
+				tjs_expression += load[2];
+			}
 			optional |= load[3];
 			preprocessor_expression += load[4];
 			category += load[5];
@@ -211,7 +224,10 @@ global.initialize_patch = function()
 				{
 					if (loadastype === ".ks")
 					{
-						global.kag.process(filename, "", false, true);
+						var old_level = global.kag.conductor.debugLevel;
+						global.kag.conductor.debugLevel = tkdlNone;
+						global.kag.process(filename, "", false, true, true);
+						global.kag.conductor.debugLevel = old_level;
 					}
 					else if (loadastype === ".dll")
 					{
@@ -257,9 +273,6 @@ global.initialize_patch = function()
 	else
 	{
 		global.kag.process("first.ks", '', true, true);
-@if(GAME_WOHN)
-		global.menu_management_override();
-@endif
 		if (!global.kag.fullScreen)
 		{
 			global.kag.visible = true;

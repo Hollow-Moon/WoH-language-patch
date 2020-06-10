@@ -1408,8 +1408,12 @@ class CGImageLayer extends Layer
 			copyRect(l, t, loader, 0, 0, loader.width, loader.height);
 		else if(magnify > cgAAThreshold)
 			operateStretch(l, t, iw, ih, loader, 0, 0, loader.width, loader.height, omOpaque,, stFastLinear);
-		else
+		else if (typeof(global.stAreaAvg) === "Integer")
+			operateStretch(l, t, iw, ih, loader, 0, 0, loader.width, loader.height, omOpaque,, stAreaAvg);
+		else if (typeof(global.stretchCopyAA) === "Object")
 			stretchCopyAA(l, t, iw, ih, loader, 0, 0, loader.width, loader.height);
+		else
+			operateStretch(l, t, iw, ih, loader, 0, 0, loader.width, loader.height, omOpaque,, stFastLinear);
 	}
 
 	var	lastmagnify;

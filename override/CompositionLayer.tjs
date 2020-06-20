@@ -221,12 +221,7 @@ class CompositionLayer extends Layer
 
 			addLoadErrorFiles(storage) if typeof global.addLoadErrorFiles != "undefined";
 			var	msg	= "画像ファイル: \""+storage+"\" は存在しません。";
-@if(POPUP_NOTFOUND)
-			(typeof global.popupMessage != "undefined" ? popupMessage : dm)(msg);
-@endif
-@if(!POPUP_NOTFOUND)
 			dm(msg);
-@endif
 @if(IS_TLE)
 			return %[];
 @endif

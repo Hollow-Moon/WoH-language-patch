@@ -92,12 +92,7 @@ class SESoundBuffer extends WaveSoundBuffer
 		{
 			addLoadErrorFiles(storage) if typeof global.addLoadErrorFiles != "undefined";
 			var	msg	= __("効果音 \"%s\" が見つかりません").sprintf(storage);
-@if(POPUP_NOTFOUND)
-			(typeof global.popupMessage != "undefined" ? popupMessage : dm)(msg);
-@endif
-@if(!POPUP_NOTFOUND)
 			dm(msg);
-@endif
 			return false;
 		}
 @endif

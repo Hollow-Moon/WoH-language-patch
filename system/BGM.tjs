@@ -229,14 +229,7 @@ class BGM
 		{
 			if(!found)
 			{
-@if(!GAME_WOHN)
 				dm("BGM " + storage + " が見つかりません");
-@endif
-@if(GAME_WOHN)
-				addLoadErrorFiles(storage) if typeof global.addLoadErrorFiles != "undefined";
-				var	msg	= "BGM " + storage + " が見つかりません";
-				dm(msg);
-@endif
 				return;
 			}
 
@@ -256,14 +249,7 @@ class BGM
 			}
 			catch(e)
 			{
-@if(!GAME_WOHN)
 				dm("BGM " + storage +" を再生できません : " + e.message);
-@endif
-@if(GAME_WOHN)
-				addLoadErrorFiles(storage) if typeof global.addLoadErrorFiles != "undefined";
-				var	msg	= "BGM " + storage +" を再生できません : " + e.message;
-				dm(msg);
-@endif
 				return;
 			}
 		}

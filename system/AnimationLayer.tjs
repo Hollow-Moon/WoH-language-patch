@@ -402,10 +402,10 @@ class AnimationLayer extends KAGLayer
 		if(Anim_segments[0] != void)
 @endif
 		{
-			Anim_segments.count = 1;
+		Anim_segments.count = 1;
 
-			// デフォルトのセグメントの停止
-			Anim_segments[0].stop();
+		// デフォルトのセグメントの停止
+		Anim_segments[0].stop();
 		}
 
 		// アニメーションセルレイヤの破棄
@@ -421,6 +421,8 @@ class AnimationLayer extends KAGLayer
 		if(Anim_storageName == '')
 			throw new Exception(
 				__("%sアニメーション情報がありません").sprintf(Anim_loadParams !== void ? __("%sに対する").sprintf(Anim_loadParams.storage) : ""));
+				/*(Anim_loadParams !== void ? Anim_loadParams.storage + "に対する" : "") +
+				"アニメーション情報がありません");*/
 
 		var seg;
 		if(Anim_segments[segment] === void)

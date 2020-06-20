@@ -301,7 +301,7 @@ class HistoryLayer extends Layer
 		closeButton.captionColor= 0xffffff;
 		closeButton.color     = 0x707090;
 		closeButton.visible   = true;
-		closeButton.hint      = __("メッセージ履歴を閉じる");
+		closeButton.hint      = __t("メッセージ履歴を閉じる");
 
 	}
 
@@ -351,6 +351,16 @@ class HistoryLayer extends Layer
 		return data[n];
 	}
 
+@if(GAME_FATE||GAME_FHAT)
+	function getPageNumber(n)
+	{
+		// n 番目のページを得る
+		n += dataStart;
+		if(n >= maxPages) n -= maxPages;
+		return n;
+	}
+@endif
+
 	function getPage(n)
 	{
 		// n 番目のページを得る
@@ -372,7 +382,12 @@ class HistoryLayer extends Layer
 		// n ページ目の、m 行目の表示開始位置を得る
 		n += dataStart;
 		if(n >= maxPages) n -= maxPages;
+@if(!GAME_FATE&&!GAME_FHAT)
 		return lineStart[n][m];
+@endif
+@if(GAME_FATE||GAME_FHAT)
+		return lineStart[n] != void ? lineStart[n][m] : 0;
+@endif
 	}
 
 	function getActionInfo(n)
@@ -595,7 +610,13 @@ class HistoryLayer extends Layer
 			if(dataPages>0)
 			{
 				canScroll	= true;
+@if(!HISTORY_CURRENT_PAGE)
 				dispStart	= dataPages - 1;
+@endif
+@if(HISTORY_CURRENT_PAGE)
+				// 显示当前页
+				dispStart	= dataPages;
+@endif
 			}
 			else
 			{
@@ -972,14 +993,24 @@ class HistoryLayer extends Layer
 				else if(key == VK_LEFT || key == VK_PRIOR)
 				{
 					if(everypage)
+@if(!GAME_FATE&&!GAME_FHAT)
 						nextPage();
+@endif
+@if(GAME_FATE||GAME_FHAT)
+						prevPage();
+@endif
 					else
 						scrollUp();
 				}
 				else if(key == VK_RIGHT || key == VK_NEXT)
 				{
 					if(everypage)
+@if(!GAME_FATE&&!GAME_FHAT)
 						prevPage();
+@endif
+@if(GAME_FATE||GAME_FHAT)
+						nextPage();
+@endif
 					else
 						scrollDown();
 				}

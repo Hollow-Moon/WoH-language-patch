@@ -32,7 +32,7 @@ class KAGSoundBuffer
 		// fade オーバーライド
 		inFading = true;
 		inFadeAndStop = false;
-		inFadeAndPause = false;
+        inFadeAndPause = false;
 		sbclass.fade(...);
 	}
 
@@ -84,7 +84,7 @@ class KAGSoundBuffer
 		{
 			sbclass.stop(); // inFadeAndStop ならば停止
 			inFadeAndStop = false;
-		} else if (inFadeAndPause) {
+        } else if (inFadeAndPause) {
 			sbclass.paused = true; // inFadeAndPause ならば一時停止
 @if(GAME_WOHN)
 			sbclass.volume = 0; // 音量を0にする
@@ -120,9 +120,9 @@ class KAGWaveSoundBuffer extends WaveSoundBuffer, KAGSoundBuffer
 		global.WaveSoundBuffer.finalize(...);
 	}
 
-	function onLabel(label) {
-		owner.owner.onBGMLabel(label);
-	}
+    function onLabel(label) {
+        owner.owner.onBGMLabel(label);
+    }
 
 @if(GAME_WOHN)
 	//サウンドデバイスが動作していない状態でゼロ除算ハード例外が出る問題の回避
@@ -154,7 +154,7 @@ class BGM
 
 	var buf1; // バッファ 1
 	var buf2; // バッファ 2
-	var currentBuffer;	// buf1 or buf2
+	var currentBuffer;  // buf1 or buf2
 	var looping = true; // ループ中かどうか
 	var volume = 100000; // ボリューム
 
@@ -237,14 +237,14 @@ class BGM
 			{
 				buf.looping = loop; // 引数の "loop"
 				buf.open(storage);
-				// ごう追加 再生位置制御
-				if (start !== void &&
-					buf.labels !== void &&
-					(start = buf.labels[start]) !== void &&
-					(start = start.samplePosition) !== void) {
-					buf.samplePosition = start;
-				}
-				buf.paused = paused;
+                // ごう追加 再生位置制御
+                if (start !== void &&
+                    buf.labels !== void &&
+                    (start = buf.labels[start]) !== void &&
+                    (start = start.samplePosition) !== void) {
+                    buf.samplePosition = start;
+                }
+                buf.paused = paused;
 				buf.play();
 			}
 			catch(e)
@@ -347,10 +347,10 @@ class BGM
 		currentStorage = "";
 	}
 
-	function fadePause(elm)
-	{
-		if(_enabled) currentBuffer.fadeOutAndPause(elm.time);
-	}
+    function fadePause(elm)
+    {
+        if(_enabled) currentBuffer.fadeOutAndPause(elm.time);
+    }
 
 	function fade(elm)
 	{
@@ -474,15 +474,15 @@ class BGM
 				buf1.volume2 = v2;
 				buf2.volume2 = v2 if doubleBuffered;
 			} else {
-				buf1.volume2 = 0;
-				buf2.volume2 = 0 if doubleBuffered;
+                buf1.volume2 = 0;
+                buf2.volume2 = 0 if doubleBuffered;
 			}
 		}
 	}
 
 	property inFading // フェード中かどうかを返す
 	{
-		getter { return	 currentBuffer.inFading; }
+		getter { return  currentBuffer.inFading; }
 	}
 
 	property canWaitStop // BGM の終了を待てるかどうかを返す
@@ -547,39 +547,39 @@ class BGM
 					buf2.volume2 = v2 if doubleBuffered;
 				}
 			} else {
-				buf1.volume2 = 0;
-				buf2.volume2 = 0 if doubleBuffered;
-			}
+                buf1.volume2 = 0;
+                buf2.volume2 = 0 if doubleBuffered;
+            }
 		}
 	}
 
 
-	// true の場合はボリューム補正する
-	var _voldown;
+    // true の場合はボリューム補正する
+    var _voldown;
 
-	property voldown {
-		getter() {
-			return _voldown;
-		}
-		setter(v) {
-			_voldown = v;
-			if (_enabled &&	 currentStorage != "") {
-				if (_voldown) {
-					currentBuffer.fade(volume * 0.5, 300);
-				} else {
-					currentBuffer.fade(volume, 300);
-				}
-			}
-		}
-	}
+    property voldown {
+        getter() {
+            return _voldown;
+        }
+        setter(v) {
+            _voldown = v;
+            if (_enabled &&  currentStorage != "") {
+                if (_voldown) {
+                    currentBuffer.fade(volume * 0.5, 300);
+                } else {
+                    currentBuffer.fade(volume, 300);
+                }
+            }
+        }
+    }
 
-	function setLoop(loop) {
-		if(_enabled) {
-			currentBuffer.looping = loop;
-			// ループするときはフラグ0を0にしておくルールに!
-			currentBuffer.flags[0] = loop ? 0 : 1;
-		}
-		looping = loop;
-	}
+    function setLoop(loop) {
+        if(_enabled) {
+            currentBuffer.looping = loop;
+            // ループするときはフラグ0を0にしておくルールに!
+            currentBuffer.flags[0] = loop ? 0 : 1;
+        }
+        looping = loop;
+    }
 
 }

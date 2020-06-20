@@ -217,6 +217,17 @@ class LinkEditLayer extends EditLayer
 Scripts.execStorage("MessageCharLayer.tjs");	// 文字の表示に利用するレイヤー
 @endif
 
+@if(kirikiriz || KIRIKIROID)
+	var lineLayerYDrawOffset = 0;
+@endif
+@if((!KIRIKIROID) && (!kirikiriz))
+	var lineLayerYDrawOffset = 4;
+@endif
+
+@if(TEXT_DRAWER)
+Scripts.execStorage("TextDrawer.tjs");
+@endif
+
 class MessageLayer extends KAGLayer
 {
 	var wwFollowing = "%),:;]}｡｣ﾞﾟ。，、．：；゛゜ヽヾゝ"
@@ -426,131 +437,135 @@ class MessageLayer extends KAGLayer
 
 	var	configValues = %[];				//	MessageLayer_config() によって獲得したデフォルト設定値の保持
 @endif
-	// タイムアウト処理用
-	var timeoutTimer;
-	var timeoutTime;
-	var timeoutStorage;
-	var timeoutTarget;
-	var timeoutExp;
+    // タイムアウト処理用
+    var timeoutTimer;
+    var timeoutTime;
+    var timeoutStorage;
+    var timeoutTarget;
+    var timeoutExp;
 
-	function clearTimeout() {
-		stopTimeout();
-		timeoutTime	   = void;
-		timeoutStorage = void;
-		timeoutTarget  = void;
-		timeoutExp	   = void;
-	}
+    function clearTimeout() {
+        stopTimeout();
+        timeoutTime    = void;
+        timeoutStorage = void;
+        timeoutTarget  = void;
+        timeoutExp     = void;
+    }
 
-	function timeoutHandler() {
-		if (!selProcessLock) {
-			Scripts.eval(timeoutExp) if timeoutExp != '';
-			if (timeoutStorage != '' || timeoutTarget != '') {
-				window.lockMessageLayerSelProcess(); // 選択をロック
-				window.process(timeoutStorage, timeoutTarget);
-				clearTimeout();
-			}
-		}
-	}
+    function timeoutHandler() {
+        if (!selProcessLock) {
+            Scripts.eval(timeoutExp) if timeoutExp != '';
+            if (timeoutStorage != '' || timeoutTarget != '') {
+                window.lockMessageLayerSelProcess(); // 選択をロック
+                window.process(timeoutStorage, timeoutTarget);
+                clearTimeout();
+            }
+        }
+    }
 
-	function addTimeout(elm) {
-		timeoutTime	   = elm.time;
-		timeoutStorage = elm.storage;
-		timeoutTarget  = elm.target;
-		timeoutExp = createSoundExpression(elm.exp, elm.se, elm.sebuf);
-		setSelProcessLock(false); // 選択ロック解除
-		//comp.setSelProcessLock(false); // 選択ロック解除
-	}
+    function addTimeout(elm) {
+        timeoutTime    = elm.time;
+        timeoutStorage = elm.storage;
+        timeoutTarget  = elm.target;
+        timeoutExp = createSoundExpression(elm.exp, elm.se, elm.sebuf);
+        setSelProcessLock(false); // 選択ロック解除
+        //comp.setSelProcessLock(false); // 選択ロック解除
+    }
 
-	function stopTimeout() {
-		if (timeoutTimer !== void) {
-			invalidate timeoutTimer;
-			timeoutTimer = void;
-		}
-	}
+    function stopTimeout() {
+        if (timeoutTimer !== void) {
+            invalidate timeoutTimer;
+            timeoutTimer = void;
+        }
+    }
 
-	function startTimeout() {
-		if (timeoutTime > 0 && (timeoutStorage !== void || timeoutTarget !== void || timeoutExp !== void)) {
-			timeoutTimer = new Timer(timeoutHandler, '');
-			timeoutTimer.capacity = 1;
-			timeoutTimer.interval = timeoutTime;
-			timeoutTimer.enabled  = true;
-		}
-	}
+    function startTimeout() {
+        if (timeoutTime > 0 && (timeoutStorage !== void || timeoutTarget !== void || timeoutExp !== void)) {
+            timeoutTimer = new Timer(timeoutHandler, '');
+            timeoutTimer.capacity = 1;
+            timeoutTimer.interval = timeoutTime;
+            timeoutTimer.enabled  = true;
+        }
+    }
 
-	var clickExp;
-	var clickStorage;
-	var clickTarget;
+    var clickExp;
+    var clickStorage;
+    var clickTarget;
 
-	function clearClick() {
-		clickStorage = void;
-		clickTarget	 = void;
-		clickExp	 = void;
-	}
+    function clearClick() {
+        clickStorage = void;
+        clickTarget  = void;
+        clickExp     = void;
+    }
 
-	function addClick(elm) {
-		clickStorage = elm.storage;
-		clickTarget	 = elm.target;
-		clickExp = createSoundExpression(elm.exp, elm.se, elm.sebuf);
-		focusable = true; // フォーカスを受け取れるように
-		setSelProcessLock(false); // 選択ロック解除
-		//comp.setSelProcessLock(false); // 選択ロック解除
-		selClickLock = false;
-	}
+    function addClick(elm) {
+        clickStorage = elm.storage;
+        clickTarget  = elm.target;
+        clickExp = createSoundExpression(elm.exp, elm.se, elm.sebuf);
+        focusable = true; // フォーカスを受け取れるように
+        setSelProcessLock(false); // 選択ロック解除
+        //comp.setSelProcessLock(false); // 選択ロック解除
+        selClickLock = false;
+    }
 
-	function hasClick() {
-		return clickExp !== void || clickStorage !== void || clickTarget !== void;
-	}
+    function hasClick() {
+        return clickExp !== void || clickStorage !== void || clickTarget !== void;
+    }
 
-	function processClick() {
-		Scripts.eval(clickExp) if clickExp != '';
-		if(clickStorage != '' || clickTarget != '') {
-			window.lockMessageLayerSelProcess(); // 選択をロック
-			if (window.getKeyState(VK_RETURN) || window.getKeyState(VK_SPACE) || window.getKeyState(VK_CONTROL))
-				window.hideMouseCursor();
-			// キーボードによる操作の場合はマウスカーソルを隠す
-			window.process(clickStorage, clickTarget);
-			clearClick();
-		}
-		selClickLock = false;
-	}
+    function processClick() {
+        Scripts.eval(clickExp) if clickExp != '';
+        if(clickStorage != '' || clickTarget != '') {
+            window.lockMessageLayerSelProcess(); // 選択をロック
+            if (window.getKeyState(VK_RETURN) || window.getKeyState(VK_SPACE) || window.getKeyState(VK_CONTROL))
+                window.hideMouseCursor();
+            // キーボードによる操作の場合はマウスカーソルを隠す
+            window.process(clickStorage, clickTarget);
+            clearClick();
+        }
+        selClickLock = false;
+    }
 
-	var wheelExp;
-	var wheelFunc;
-	var wheelStorage;
-	var wheelTarget;
+    var wheelExp;
+    var wheelFunc;
+    var wheelStorage;
+    var wheelTarget;
 
-	function clearWheel() {
-		wheelStorage = void;
-		wheelTarget	 = void;
-		wheelExp	 = void;
-		wheelFunc	 = void;
-	}
+    function clearWheel() {
+        wheelStorage = void;
+        wheelTarget  = void;
+        wheelExp     = void;
+        wheelFunc    = void;
+    }
 
-	function addWheel(elm) {
-		wheelStorage = elm.storage;
-		wheelTarget	 = elm.target;
-		wheelFunc	 = elm.func;
-		wheelExp = createSoundExpression(elm.exp, elm.se, elm.sebuf);
-		focusable = true; // フォーカスを受け取れるように
-		setSelProcessLock(false); // 選択ロック解除
-		//comp.setSelProcessLock(false); // 選択ロック解除
-	}
+    function addWheel(elm) {
+        wheelStorage = elm.storage;
+        wheelTarget  = elm.target;
+        wheelFunc    = elm.func;
+        wheelExp = createSoundExpression(elm.exp, elm.se, elm.sebuf);
+        focusable = true; // フォーカスを受け取れるように
+        setSelProcessLock(false); // 選択ロック解除
+        //comp.setSelProcessLock(false); // 選択ロック解除
+    }
 
-	function hasWheel() {
-		return wheelFunc !== void || wheelExp !== void || wheelStorage !== void || wheelTarget !== void;
-	}
+    function hasWheel() {
+        return wheelFunc !== void || wheelExp !== void || wheelStorage !== void || wheelTarget !== void;
+    }
 
-	function processWheel(shift, delta, x, y) {
-		if (!selProcessLock) {
-			Scripts.eval(wheelFunc)(shift, delta, x, y) if wheelFunc != void;
-			Scripts.eval(wheelExp) if wheelExp != '';
-			if(wheelStorage != '' || wheelTarget != '') {
-				window.lockMessageLayerSelProcess(); // 選択をロック
-				window.process(wheelStorage, wheelTarget);
-				clearWheel();
-			}
-		}
-	}
+    function processWheel(shift, delta, x, y) {
+        if (!selProcessLock) {
+            Scripts.eval(wheelFunc)(shift, delta, x, y) if wheelFunc != void;
+            Scripts.eval(wheelExp) if wheelExp != '';
+            if(wheelStorage != '' || wheelTarget != '') {
+                window.lockMessageLayerSelProcess(); // 選択をロック
+                window.process(wheelStorage, wheelTarget);
+                clearWheel();
+            }
+        }
+    }
+
+@if(TEXT_DRAWER)
+	var textDrawer;
+@endif
 
 	function MessageLayer(owner, parent, name, id, do_config)
 	{
@@ -673,6 +688,10 @@ class MessageLayer extends KAGLayer
 @endif
 			// 領域画像で当たり判定を行う
 
+@if(TEXT_DRAWER)
+		textDrawer = new TextDrawer();
+@endif
+
 @if(GAME_WOHN)
 		//	run ハンドラを追加
 		owner.runHandlers.add(runHandler);
@@ -754,10 +773,18 @@ class MessageLayer extends KAGLayer
 			}
 			else
 			{
-				loadImages(frameGraphic, frameKey);
-				setSizeToImageSize();
+@if(TEXT_DRAWER&&GAME_FATE)
+				if (/tw_/.test(frameGraphic)) {
+					textDrawer = new TextDrawer();
+					textDrawer.drawTigerDojoName(this, frameGraphic, frameKey);
+				} else
+@endif
+				{
+					loadImages(frameGraphic, frameKey);
+					setSizeToImageSize();
+				}
 			}
-@if(!GAME_WOHN)
+@if(SHOW_MARGINS)
 			var	col = 0xff0000, opa = 64;
 			colorRect(0, 0, width, marginT, col, opa);
 			colorRect(0, marginT, marginL, height-marginT, col, opa);
@@ -861,9 +888,9 @@ class MessageLayer extends KAGLayer
 @if(!GAME_WOHN)
 		left = elm.left if elm.left !== void;
 		top = elm.top if elm.top !== void;
- 		imageWidth = elm.width if elm.width !== void;
- 		imageHeight = elm.height if elm.height !== void;
- 		setSizeToImageSize();
+		imageWidth = elm.width if elm.width !== void;
+		imageHeight = elm.height if elm.height !== void;
+		setSizeToImageSize();
 
 		frameGraphic = elm.frame if elm.frame !== void;
 		frameKey = elm.framekey if elm.framekey !== void;
@@ -928,8 +955,10 @@ class MessageLayer extends KAGLayer
 @endif
 	}
 
+@if(GAME_WOHN)
 	// コンフィグの設定に戻す
 	function resetPosition() { setPosition(configValues); }
+@endif
 
 @if(!GAME_WOHN)
 	function clear()
@@ -978,9 +1007,9 @@ class MessageLayer extends KAGLayer
 @endif
 
 @if(!GAME_WOHN)
-		clearTimeout();
-		clearClick();
-		clearWheel();
+        clearTimeout();
+        clearClick();
+        clearWheel();
 @endif
 	}
 
@@ -1290,6 +1319,9 @@ class MessageLayer extends KAGLayer
 		// スタイルのリセット
 		reserveLineSize = defaultLineSize;
 		lineSpacing = defaultLineSpacing;
+@if(PATCH_RUBY)
+		isRubyLine = false;
+@endif
 		pitch = defaultPitch;
 		resetLineSize();
 		align = -1;
@@ -1304,6 +1336,11 @@ class MessageLayer extends KAGLayer
 			lineSpacing = defaultLineSpacing;
 		else if(elm.linespacing !== void)
 			lineSpacing = +elm.linespacing;
+
+@if(PATCH_RUBY)
+			resetLineSize();
+			sizeChanged  =true;
+@endif
 
 		if(elm.pitch == 'default')
 			pitch = defaultPitch;
@@ -1616,7 +1653,7 @@ class MessageLayer extends KAGLayer
 		else
 			// 縦書き
 			// 中央線(レイヤ左端からの位置)
-			return 4 + (lineSize>>1);
+			return defaultAlignOffset + (lineSize>>1);
 	}
 
 	function initLineLayer()
@@ -1634,7 +1671,7 @@ class MessageLayer extends KAGLayer
 		ll.setSizeToImageSize();
 		changeLineSize(/*forceresize=*/true);
 		lineLayerLength = 0;
-		lineLayerPos = 4;
+		lineLayerPos = defaultAlignOffset;
 		ll.visible = false;
 		ll.face = dfAuto;
 		var lliw = ll.imageWidth;
@@ -1656,7 +1693,12 @@ class MessageLayer extends KAGLayer
 		var llox = lineLayerOriginX + getLineLayerLeftOffset();
 		var lloy = lineLayerOriginY + getLineLayerTopOffset();
 
+@if(KIRIKIROID)
+		global.Layer.face = dfAuto;
+@endif
+@if(!KIRIKIROID)
 		face = dfAuto;
+@endif
 		operateRect(
 			llox,
 			lloy,
@@ -1798,21 +1840,22 @@ class MessageLayer extends KAGLayer
 		}
 	}
 
+	var defaultAlignOffset = 4;
 	function getLineLayerLeftOffset()
 	{
 		// 行描画用レイヤ内での左オフセットを取得
 		if(!vertical)
 		{
 			if(align == -1)
-				return -4;
+				return -defaultAlignOffset;
 			else if(align == 0)
-				return ((imageWidth - marginR - marginL - lineLayerLength)>>1) - 4;
+				return ((imageWidth - marginR - marginL - lineLayerLength)>>1) - defaultAlignOffset;
 			else if(align == 1)
-				return imageWidth - marginR - marginL - lineLayerLength - 4;
+				return imageWidth - marginR - marginL - lineLayerLength - defaultAlignOffset;
 		}
 		else
 		{
-			return -lineSize - lineSpacing - 4;
+			return -lineSize - lineSpacing - defaultAlignOffset;
 		}
 	}
 
@@ -1821,17 +1864,17 @@ class MessageLayer extends KAGLayer
 		// 行描画用レイヤ内での上オフセットを取得
 		if(!vertical)
 		{
-			return -(lineLayer.imageHeight - 4 - lineSize - lineSpacing);
+			return -(lineLayer.imageHeight - defaultAlignOffset - lineSize - lineSpacing);
 		}
 		else
 		{
 			if(align == -1)
-				return -4;
+				return -defaultAlignOffset;
 			else if(align == 0)
-				return ((imageHeight - marginB - marginT - lineLayerLength)>>1) - 4;
+				return ((imageHeight - marginB - marginT - lineLayerLength)>>1) - defaultAlignOffset;
 			else if(align == 1)
-				return imageHeight - marginB - marginT - lineLayerLength - 4;
-			return -4;
+				return imageHeight - marginB - marginT - lineLayerLength - defaultAlignOffset;
+			return -defaultAlignOffset;
 		}
 	}
 @endif
@@ -2357,9 +2400,9 @@ class MessageLayer extends KAGLayer
 	}
 @endif
 
-@if(!GAME_WOHN)
 	function putGraph(storage, key, ischar)
 	{
+@if(!GAME_WOHN)
 		// 画像 storage を描画する
 
 		// テンポラリのレイヤを用意
@@ -2383,9 +2426,11 @@ class MessageLayer extends KAGLayer
 			if(lh > lineSize) lineSize = lh; // 拡張
 			cw = lw;
 		}
+@endif
 
 		changeLineSize();
 
+@if(!GAME_WOHN)
 		if(inLink != -1) beginLinkLine();
 
 		var repage = false;
@@ -2451,47 +2496,8 @@ class MessageLayer extends KAGLayer
 
 		// 描画おわり
 		lastDrawnCh="";
-
-		if(inLink!=-1)
-		{
-			// ハイパーリンクでちゅー
-			lineLayer.face = dfProvince;
-			if(vertical)
-				lineLayer.fillRect(lineLayerBase - (fontSize>>1), lineLayerPos,
-					fontSize, cw, numLinks+1);
-			else
-				lineLayer.fillRect(lineLayerPos, lineLayerBase - fontSize,
-					cw, fontSize, numLinks+1);
-			face = dfAuto;
-			lineLayer.face = dfBoth;
-			// 領域画像も塗りつぶしてやる
-			linkFilled=true;
-		}
-
-		if(vertical) y+=cw; else x+=cw;
-
-		lineLayerPos += cw;
-		lineLayerLength += cw;
-
-		lineLayer.visible = true;
-
-		if(align >= 0) adjustAlign();
-
-		return false;
-	}
 @endif
-
 @if(GAME_WOHN)
-	function putGraph(storage, key, ischar)
-	{
-		// 画像 storage を描画する
-
-		changeLineSize();
-
-@if(!GAME_WOHN)
-		if(inLink != -1) beginLinkLine();
-@endif
-
 		var repage = false;
 
 		if(autoReturn)
@@ -2567,6 +2573,7 @@ class MessageLayer extends KAGLayer
 		// 描画おわり
 		lastDrawnCh="";
 
+@endif
 @if(!GAME_WOHN)
 		if(inLink!=-1)
 		{
@@ -2585,7 +2592,10 @@ class MessageLayer extends KAGLayer
 		}
 @endif
 
+@if(GAME_WOHN)
 		cw	+= pitch;
+@endif
+
 		if(vertical) y+=cw; else x+=cw;
 
 @if(!GAME_WOHN)
@@ -2594,13 +2604,14 @@ class MessageLayer extends KAGLayer
 
 		lineLayer.visible = true;
 @endif
-		currentColumn++;
 
+@if(GAME_WOHN)
+		currentColumn++;
+@endif
 		if(align >= 0) adjustAlign();
 
 		return false;
 	}
-@endif
 
 	function putHorizonCh(text, expand = false)
 	{
@@ -2872,7 +2883,7 @@ class MessageLayer extends KAGLayer
 
 	function endHyperLink()
 	{
-		inLink	= -1;
+		inLink = -1;
 @if(!GAME_WOHN)
 		endLinkLine();
 		links[numLinks].lineCount--;
@@ -2910,15 +2921,18 @@ class MessageLayer extends KAGLayer
 	}
 @endif
 
+@if(!GAME_WOHN)
 	function addButton(elm)
 	{
-@if(!GAME_WOHN)
 		// グラフィカルボタンを配置
 		var object = new LinkButtonLayer(window, this);
 		object.loadImages(elm.graphic, elm.graphickey);
 		object.linkNum = numLinks;
+@if(GAME_FATE||GAME_FHAT)
+		locateAlignImage(elm.anchor, object.width, elm.y) if elm.anchor !== void;
+@endif
 		object.setPos(x, y);
-		object.hint = __(elm.hint);
+		object.hint = elm.hint;
 		object.visible = true;
 		object.onenter = createSoundExpression(elm.onenter, elm.enterse, elm.entersebuf);
 		object.onleave = createSoundExpression(elm.onleave, elm.leavese, elm.leavesebuf);
@@ -2947,8 +2961,8 @@ class MessageLayer extends KAGLayer
 		numLinks++;
 		focusable = true; // フォーカスを受け取れるように
 		setSelProcessLock(false); // 選択ロック解除
-@endif
 	}
+@endif
 
 	function addEdit(elm)
 	{
@@ -3210,8 +3224,8 @@ class MessageLayer extends KAGLayer
 
 	function processLink(n)
 	{
-		// タイムアウト処理は停止
-		stopTimeout();
+        // タイムアウト処理は停止
+        stopTimeout();
 
 		// リンク番号 n を処理する
 		var ln = links[n];
@@ -3259,13 +3273,13 @@ class MessageLayer extends KAGLayer
 				else if(type == ltEdit || type == ltCheckBox) item.object.enabled = !b;
 			}
 		}
-		if (selProcessLock) {
-			focusable = false;
-		} else {
-			if (numLinks > 0 || hasWheel() || hasClick()) {
-				focusable = true;
-			}
-		}
+        if (selProcessLock) {
+            focusable = false;
+        } else {
+            if (numLinks > 0 || hasWheel() || hasClick()) {
+                focusable = true;
+            }
+        }
 @endif
 	}
 
@@ -3373,9 +3387,9 @@ class MessageLayer extends KAGLayer
 				{
 					processLink(n);
 					return;
-				} else if (hasClick()) {
-					processClick();
-					return;
+                } else if (hasClick()) {
+                    processClick();
+                    return;
 				}
 			}
 		}
@@ -3608,8 +3622,8 @@ class MessageLayer extends KAGLayer
 		else if(key == VK_SPACE || key == VK_RETURN)
 		{
 			if(selProcessLock || keyLink == -1) {
-				if (hasClick()) {
-					processClick();
+                if (hasClick()) {
+                    processClick();
 				} else {
 					window.checkProceedingKey(key, shift);
 				}
@@ -3803,15 +3817,7 @@ class MessageLayer extends KAGLayer
 		var key = adjustColorKey(elm.key);
 		var char = true;
 		char = +elm.char if elm.char !== void;
-@if(!GAME_WOHN)
 		if(putGraph(elm.storage, key, char)) return autoReturn;
-@endif
-@if(GAME_WOHN)
-		if(putGraph(elm.storage, key, char))
-		{
-			return autoReturn;
-		}
-@endif
 		return false;
 	}
 
@@ -3897,6 +3903,9 @@ class MessageLayer extends KAGLayer
 		glyphobj.parent	= window.primaryLayer;
 		glyphobj.absolute	= absolute + 1;
 @endif
+@if(GAME_FATE||GAME_FHAT)
+		glyphobj.fillRect(0, 0, glyphobj.imageWidth, glyphobj.imageHeight, 0);
+@endif
 		glyphobj.loadImages(storage, key); // 画像を読み込む
 @if(!GAME_WOHN)
 		glyphobj.bringToFront(); // 最前面に
@@ -3919,25 +3928,46 @@ class MessageLayer extends KAGLayer
 		else
 		{
 			if(!vertical)
-@if(!GAME_WOHN)
 			{
+@if(!GAME_WOHN)
 				glyphobj.setPos(lineLayerPos + lineLayerOriginX + getLineLayerLeftOffset(),
-					y + lineSize + lineSpacing - glyphobj.height);
-			}
+@if(HD_MODE)
+@if(kirikiriz || KIRIKIROID)
+					y + lineSpacing + ((lineSize-glyphobj.height)/2));
+@endif
+@if((!KIRIKIROID) && (!kirikiriz))
+					y + lineSize + lineSpacing - glyphobj.height - lineLayerYDrawOffset);
+@endif
+@endif
+@if(!HD_MODE)
+@if(kirikiriz || KIRIKIROID)
+					y + lineSpacing + ((lineSize-glyphobj.height)>>1));
+@endif
+@if((!KIRIKIROID) && (!kirikiriz))
+					y + lineSize + lineSpacing - glyphobj.height - lineLayerYDrawOffset);
+@endif
+@endif
 @endif
 @if(GAME_WOHN)
 				glyphLayer.setPos(x + getCharLayerLeftOffset(), y + getCharLayerTopOffset() - glyphLayer.height);
 @endif
+			}
 			else
-@if(!GAME_WOHN)
 			{
+@if(!GAME_WOHN)
+@if(HD_MODE)
+				glyphobj.setPos(x - lineSpacing-  (lineSize/2) - (glyphobj.width/2),
+					lineLayerPos + lineLayerOriginY + getLineLayerTopOffset());
+@endif
+@if(!HD_MODE)
 				glyphobj.setPos(x - lineSpacing-  (lineSize>>1) - (glyphobj.width>>1),
 					lineLayerPos + lineLayerOriginY + getLineLayerTopOffset());
-			}
+@endif
 @endif
 @if(GAME_WOHN)
 				glyphLayer.setPos(x + getCharLayerLeftOffset() + (glyphLayer.width>>1), y + getCharLayerTopOffset());
 @endif
+			}
 		}
 @if(!GAME_WOHN)
 		glyphobj.visible = true;

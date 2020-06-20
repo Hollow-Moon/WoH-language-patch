@@ -1105,6 +1105,9 @@ class Window_patch_hd_layer_override extends Window_patch_hd_layer_original
 			if (!isMainWindow) {
 				return mainWindow.scflags[hdFlagName];
 			}
+			if (this.scflags[hdFlagName] === void) {
+				this.scflags[hdFlagName] = hdPatchExists && System.desktopWidth >= highResWidth && System.desktopHeight >= highResHeight;
+			}
 			return this.scflags[hdFlagName];
 		}
 		setter(v)
@@ -1123,6 +1126,9 @@ class Window_patch_hd_layer_override extends Window_patch_hd_layer_original
 			if (!isMainWindow) {
 				// return mainWindow.scflags[wideScreenFlagName];
 				return false;
+			}
+			if (this.scflags[wideScreenFlagName] === void) {
+				this.scflags[wideScreenFlagName] = false;
 			}
 			return this.scflags[wideScreenFlagName];
 		}

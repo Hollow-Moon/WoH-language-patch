@@ -20,6 +20,8 @@
 
 {
 	// TODO: clean out the auto path table
+	global.paths_base = [];
+	var paths_base = global.paths_base;
 	var paths_to_add = [];
 	var paths_to_remove = [];
 	var paths = [
@@ -56,34 +58,76 @@
 			Plugins.link("fstat.dll");
 		}
 	}
+	if (typeof(global.System.exePath) === "String" && global.System.exePath !== "" && Storages.isExistentDirectory(global.System.exePath))
+	{
+		paths_base.add(global.System.exePath);
+	}
 
+	global.paths_base_dirlist = %[];
+	var paths_base_dirlist = global.paths_base_dirlist;
+	var paths_search_append = [
+		"data",
+		"patch",
+		"content-data"
+	];
+
+	for (var i = 0; i < paths_base.count; i += 1)
+	{
+		paths_base_dirlist[paths_base[i]] = %[];
+		paths_base_dirlist[paths_base[i]]["."] = global.Storages.dirlist(paths_base[i] + "/");
+		for (var j = 0; j < paths_base_dirlist[paths_base[i]]["."].count; j += 1)
+		{
+			paths_base_dirlist[paths_base[i]]["."][j] = paths_base_dirlist[paths_base[i]]["."][j].toLowerCase();
+		}
+		for (var j = 0; j < paths_search_append.count; j += 1)
+		{
+			if (paths_base_dirlist[paths_base[i]]["."].find(paths_search_append[j] + "/") !== -1)
+			{
+				paths_base_dirlist[paths_base[i]][paths_search_append[j]] = global.Storages.dirlist(paths_base[i] + "/" + paths_search_append[j] + "/");
+			}
+			else
+			{
+				paths_base_dirlist[paths_base[i]][paths_search_append[j]] = [];
+			}
+			for (var k = 0; k < paths_base_dirlist[paths_base[i]][paths_search_append[j]].count; k += 1)
+			{
+				paths_base_dirlist[paths_base[i]][paths_search_append[j]][k] = paths_base_dirlist[paths_base[i]][paths_search_append[j]][k].toLowerCase();
+			}
+		}
+	}
+
+	var paths_to_search_patchnums = [
+		"%s.xp3",
+		"data",
+		".",
+		"patch",
+		"content-data",
+	];
 	for (var i = 2; i < 50; i += 1)
 	{
 		var path = "patch" + i;
-		var paths_to_search = [
-			System.exePath + path + ".xp3",
-			System.exePath + "data/" + path,
-			System.exePath + path,
-			System.exePath + "patch/" + path,
-			System.exePath + "content-data/" + path,
-		];
 		var found = false;
-		for (var j = 0; j < paths_to_search.count && typeof(paths_to_search[j]) === "String"; j += 1)
-		{
-			var path = paths_to_search[j];
+		for (var j = 0; j < paths_to_search_patchnums.count && typeof(paths_to_search_patchnums[j]) === "String"; j += 1)
+		{	
+			for (var k = 0; k < paths_base.count; k += 1)
 			{
-@if(!KIRIKIROID)
-				if (Storages.isExistentDirectory(path + "/"))
+				var path = path;
+				var path_to_search = paths_to_search_patchnums[j];
+				if (path_to_search.indexOf("%s") !== -1)
+				{
+					path = path_to_search.sprintf(path);
+					path_to_search = ".";
+				}
+				var path_dirlist = paths_base_dirlist[paths_base[k]][path_to_search];
+				if (path_dirlist.find(path + "/") !== -1 || path_dirlist.find(path) !== -1)
 				{
 					found = true;
 					break;
 				}
-@endif
-				if (Storages.isExistentStorage(path))
-				{
-					found = true;
-					break;
-				}
+			}
+			if (found)
+			{
+				break;
 			}
 		}
 		if (found)
@@ -96,40 +140,48 @@
 		}
 	}
 	var paths_to_search = [
-		"%sdata.xp3" + arcdelim + "%s",
-		"%s%s.xp3",
-		"%sdata/%s",
-		"%s%s",
-		"%spatch/%s",
-		"%scontent-data/%s",
+		"data.xp3" + arcdelim + "%s",
+		"%s.xp3",
+		"data",
+		".",
+		"patch",
+		"content-data",
 	];
 
 	for (var i = 0; i < paths_to_search.count && typeof(paths_to_search[i]) === "String"; i += 1)
 	{
 		for (var j = 0; j < paths.count; j += 1)
 		{
-			var path = paths_to_search[i].sprintf(System.exePath, paths[j]);
-			var spos = path.indexOf(arcdelim);
-			paths_to_remove.add(path + "/");
-			paths_to_remove.add(path + arcdelim);
-			if (spos !== -1)
+			for (var k = 0; k < paths_base.count; k += 1)
 			{
-				if (Storages.isExistentStorage(path.substring(0, spos)))
+				var path = paths[j];
+				var path_to_search = paths_to_search[i];
+				if (path_to_search.indexOf("%s") !== -1)
 				{
-					paths_to_add.add(path + "/");
+					path = path_to_search.sprintf(paths[j]);
+					path_to_search = ".";
 				}
-			}
-			else
-			{
-@if(!KIRIKIROID)
-				if (Storages.isExistentDirectory(path + "/"))
+				var path_dirlist = paths_base_dirlist[paths_base[k]][path_to_search];
+				var spos = path_to_search.indexOf(arcdelim);
+				paths_to_remove.add(paths_base[k] + "/" + path_to_search + "/" + path + "/");
+				paths_to_remove.add(paths_base[k] + "/" + path_to_search + "/" + path + arcdelim);
+				if (spos !== -1)
 				{
-					paths_to_add.add(path + "/");
+					if (path_dirlist.find(path.substring(0, spos)) !== -1)
+					{
+						paths_to_add.add(paths_base[k] + "/" + path_to_search + "/" + path + "/");
+					}
 				}
-@endif
-				if (Storages.isExistentStorage(path))
+				else
 				{
-					paths_to_add.add(path + arcdelim);
+					if (path_dirlist.find(path + "/") !== -1)
+					{
+						paths_to_add.add(paths_base[k] + "/" + path_to_search + "/" + path + "/");
+					}
+					else if (path_dirlist.find(path) !== -1)
+					{
+						paths_to_add.add(paths_base[k] + "/" + path_to_search + "/" + path + arcdelim);
+					}
 				}
 			}
 		}
@@ -188,35 +240,37 @@
 		];
 		for (var i = 0; i < devpaths.count && typeof(devpaths[i]) === "String"; i += 1)
 		{
-			var path = System.exePath + devpaths[i] + "/";
-			paths_to_remove.add(path);
-@if(!KIRIKIROID)
-			if (Storages.isExistentDirectory(path))
+			for (var j = 0; j < paths_base.count; j += 1)
 			{
-				paths_to_add.add(path);
-			}
+				var path = paths_base[j] + devpaths[i] + "/";
+				paths_to_remove.add(path);
+@if(!KIRIKIROID)
+				if (Storages.isExistentDirectory(path))
+				{
+					paths_to_add.add(path);
+				}
 @endif
+			}
 		}
 	}
 
 @if(!DEBUG)
-	var dir = System.exePath;
-	if (Storages.isExistentDirectory(dir))
+	for (var i = 0; i < paths_base.count; i += 1)
 	{
-		var files = Storages.dirlist(dir);
+		var files = paths_base_dirlist[paths_base[i]]["."];
 		var patches = [];
-		for (var i = 0; i < files.count; i += 1)
+		for (var j = 0; j < files.count; j += 1)
 		{
-			var fn = files[i];
-			if (fn.substr(0, 6) == "patch_" && Storages.extractStorageExt(fn) == ".xp3" && Storages.isExistentStorage(dir + fn))
+			var fn = files[j];
+			if (fn.substr(0, 6) === "patch_" && Storages.extractStorageExt(fn) === ".xp3")
 			{
 				patches.add(fn);
 			}
 		}
 		patches.sort("a");
-		for (var i = 0; i < patches.count; i += 1)
+		for (var j = 0; j < patches.count; j += 1)
 		{
-			var path = dir + patches[i] + arcdelim;
+			var path = paths_base[i] + patches[j] + arcdelim;
 			paths_to_remove.add(path);
 			paths_to_add.add(path);
 		}

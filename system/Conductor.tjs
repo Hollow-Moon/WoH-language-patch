@@ -9,6 +9,10 @@
 @set(CONDUCTOR_VERBOSE=0)
 @endif
 
+if(typeof(global.KAGParser) == "undefined") {
+	Plugins.link("KAGParser.dll");
+}
+
 class ConductorException extends Exception
 {
 	// ConductorException - Conductor がタグハンドラを処理中に発生した例外を
@@ -271,6 +275,7 @@ class BaseConductor extends KAGParser
 			inProcessing = false;
 			var msg = __("エラーが発生しました\nファイル : %s   行 : %s\nタグ : %s ( ← エラーの発生した前後のタグを示している場合もあります )\n%s")
 					.sprintf(curStorage, curLine+1, obj === void ? __("不明") : obj.tagname, e.message);
+
 			if((typeof e.trace) != "undefined") dm("trace : " + e.trace);
 			dm(msg);
 			throw new ConductorException(msg);

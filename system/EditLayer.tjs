@@ -19,6 +19,12 @@ class EditLayer extends KAGLayer
 	var Edit_opacity = 192; // 不透明度
 	var Edit_maxChars = 0; // 最大文字数 ( 0 = 無制限 )
 	var Edit_textColor = clWindowText;
+@if(GAME_FATE||GAME_FHAT)
+	var Edit_shadowLevel = 0;
+	var Edit_shadowColor = 0;
+	var Edit_shadowWidth = 0;
+	var Edit_spacing = 3;
+@endif
 	var Edit_blinkTimer;
 	var Edit_vertical = false;
 	var Edit_mouseDown = false;
@@ -72,6 +78,12 @@ class EditLayer extends KAGLayer
 		Edit_opacity = src.Edit_opacity;
 		Edit_vertical = src.Edit_vertical;
 		Edit_maxChars = src.Edit_maxChars;
+@if(GAME_FATE||GAME_FHAT)
+		Edit_shadowLevel = src.Edit_shadowLevel;
+		Edit_shadowColor = src.Edit_shadowColor;
+		Edit_shadowWidth = src.Edit_shadowWidth;
+		Edit_spacing = src.Edit_spacing;
+@endif
 		var f = font;
 		var sf = src.font;
 		f.face = sf.face;
@@ -114,7 +126,12 @@ class EditLayer extends KAGLayer
 		var bchw = font.getTextWidth(bch);
 		var sch = Edit_text.substring(0, Edit_scrollPos); // 表示以前の文字
 		var schw = font.getTextWidth(sch);
+@if(!GAME_FATE&&!GAME_FHAT)
 		return bchw - schw + 3;
+@endif
+@if(GAME_FATE||GAME_FHAT)
+		return bchw - schw + Edit_spacing;
+@endif
 	}
 
 	function ensureCaretVisible(step = 1)
@@ -123,11 +140,26 @@ class EditLayer extends KAGLayer
 		var sp_save = Edit_scrollPos;
 		var txtlen = Edit_text.length;
 		if(Edit_selStart == txtlen)
+@if(!GAME_FATE&&!GAME_FHAT)
 			while(Edit_scrollPos >= 0 && getCaretXPos() <= 3) Edit_scrollPos-=step;
+@endif
+@if(GAME_FATE||GAME_FHAT)
+			while(Edit_scrollPos >= 0 && getCaretXPos() <= Edit_spacing) Edit_scrollPos-=step;
+@endif
 		else
+@if(!GAME_FATE&&!GAME_FHAT)
 			while(Edit_scrollPos >= 0 && getCaretXPos() < 3) Edit_scrollPos-=step;
+@endif
+@if(GAME_FATE||GAME_FHAT)
+			while(Edit_scrollPos >= 0 && getCaretXPos() < Edit_spacing) Edit_scrollPos-=step;
+@endif
 		var lim = Edit_vertical ? imageHeight : imageWidth;
+@if(!GAME_FATE&&!GAME_FHAT)
 		while(Edit_scrollPos < txtlen && getCaretXPos() >= lim -3) Edit_scrollPos+=step;
+@endif
+@if(GAME_FATE||GAME_FHAT)
+@endif
+		while(Edit_scrollPos < txtlen && getCaretXPos() >= lim -Edit_spacing) Edit_scrollPos+=step;
 		if(Edit_scrollPos < 0) Edit_scrollPos = 0;
 		if(Edit_scrollPos > txtlen) Edit_scrollPos = txtlen;
 		if(sp_save != Edit_scrollPos) update();
@@ -140,14 +172,30 @@ class EditLayer extends KAGLayer
 		if(Edit_vertical)
 		{
 			Edit_caretLayer.top = xpos;
+@if(!GAME_FATE&&!GAME_FHAT)
 			Edit_caretLayer.left = imageWidth - 3 - Edit_caretLayer.imageWidth;
 			setAttentionPos(imageWidth - 3 , Edit_caretLayer.top);
+@endif
+@if(GAME_FATE||GAME_FHAT)
+			Edit_caretLayer.left = imageWidth - Edit_spacing - Edit_caretLayer.imageWidth;
+			setAttentionPos(imageWidth - Edit_spacing , Edit_caretLayer.top);
+@endif
 		}
 		else
 		{
+@if(!GAME_FATE&&!GAME_FHAT)
 			Edit_caretLayer.top = 3;
+@endif
+@if(GAME_FATE||GAME_FHAT)
+			Edit_caretLayer.top = Edit_spacing;
+@endif
 			Edit_caretLayer.left = xpos;
+@if(!GAME_FATE&&!GAME_FHAT)
 			setAttentionPos(xpos, 3);
+@endif
+@if(GAME_FATE||GAME_FHAT)
+			setAttentionPos(xpos, Edit_spacing);
+@endif
 		}
 	}
 
@@ -197,7 +245,12 @@ class EditLayer extends KAGLayer
 	function getCaretPosFromX(x)
 	{
 		// クリックされた位置を割り出す
+@if(!GAME_FATE&&!GAME_FHAT)
 		x -= 3;
+@endif
+@if(GAME_FATE||GAME_FHAT)
+		x -= Edit_spacing;
+@endif
 		var text = Edit_text.substring(Edit_scrollPos);
 		var i = 0;
 		for(;;)
@@ -225,7 +278,12 @@ class EditLayer extends KAGLayer
 		Edit_mouseDown = true;
 
 		// クリックされた
+@if(!GAME_FATE&&!GAME_FHAT)
 		if(x >= 3 && y >= 3 && x < imageWidth -3 && y < imageHeight - 3)
+@endif
+@if(GAME_FATE||GAME_FHAT)
+		if(x >= Edit_spacing && y >= Edit_spacing && x < imageWidth -Edit_spacing && y < imageHeight - Edit_spacing)
+@endif
 		{
 			var oldStart = Edit_selStart;
 			var oldAnchor = Edit_selAnchor;
@@ -266,7 +324,12 @@ class EditLayer extends KAGLayer
 
 			if(Edit_vertical)
 			{
+@if(!GAME_FATE&&!GAME_FHAT)
 				if(y >= 3 && y < (imageHeight - 3))
+@endif
+@if(GAME_FATE||GAME_FHAT)
+				if(y >= Edit_spacing && y < (imageHeight - Edit_spacing))
+@endif
 				{
 					var oldStart = Edit_selStart;
 
@@ -281,16 +344,31 @@ class EditLayer extends KAGLayer
 				}
 				else
 				{
+@if(!GAME_FATE&&!GAME_FHAT)
 					if(y <= 3)
+@endif
+@if(GAME_FATE||GAME_FHAT)
+					if(y <= Edit_spacing)
+@endif
 						stepLeft(true);
 					else
+@if(!GAME_FATE&&!GAME_FHAT)
 					if(y > (imageHeight - 3))
+@endif
+@if(GAME_FATE||GAME_FHAT)
+					if(y > (imageHeight - Edit_spacing))
+@endif
 						stepRight(true);
 				}
 			}
 			else
 			{
+@if(!GAME_FATE&&!GAME_FHAT)
 				if(x >= 3 && x < (imageWidth - 3))
+@endif
+@if(GAME_FATE||GAME_FHAT)
+				if(x >= Edit_spacing && x < (imageWidth - Edit_spacing))
+@endif
 				{
 					var oldStart = Edit_selStart;
 
@@ -305,10 +383,20 @@ class EditLayer extends KAGLayer
 				}
 				else
 				{
+@if(!GAME_FATE&&!GAME_FHAT)
 					if(x <= 3)
+@endif
+@if(GAME_FATE||GAME_FHAT)
+					if(x <= Edit_spacing)
+@endif
 						stepLeft(true);
 					else
+@if(!GAME_FATE&&!GAME_FHAT)
 					if(x > (imageWidth - 3))
+@endif
+@if(GAME_FATE||GAME_FHAT)
+					if(x > (imageWidth - Edit_spacing))
+@endif
 						stepRight(true);
 				}
 			}
@@ -525,6 +613,15 @@ class EditLayer extends KAGLayer
 		hideCaret();
 	}
 
+@if(GAME_FATE||GAME_FHAT)
+	function drawFrame()
+	{
+		colorRect(0, 0, imageWidth, 1, 0x000000, 128);
+		colorRect(0, 1, 1, imageHeight-2, 0x000000, 128);
+		colorRect(imageWidth-1, 1, 1, imageHeight-1, 0xffffff, 128);
+		colorRect(1, imageHeight-1, imageWidth-2, 1, 0xffffff, 128);
+	}
+@endif
 
 	function onPaint()
 	{
@@ -540,8 +637,14 @@ class EditLayer extends KAGLayer
 		// よく使う変数はローカルに持ってくる
 		var h = font.height;
 		h = -h if(h<0);
+@if(!GAME_FATE&&!GAME_FHAT)
 		var x = vert ? imageWidth - 3 : 3;
 		var y = 3;
+@endif
+@if(GAME_FATE||GAME_FHAT)
+		var x = vert ? imageWidth - Edit_spacing : Edit_spacing;
+		var y = Edit_spacing;
+@endif
 		var chpos = Edit_scrollPos;
 		var text = Edit_text;
 		var textlen = text.length;
@@ -550,12 +653,22 @@ class EditLayer extends KAGLayer
 		var highlighttext = clHighlightText;
 		var anti = Edit_antialiased;
 		var textcolor = Edit_textColor;
+@if(GAME_FATE||GAME_FHAT)
+		var shadowlevel = Edit_shadowLevel;
+		var shadowcolor = Edit_shadowColor;
+		var shadowwidth = Edit_shadowWidth;
+@endif
 		var tx = "";
 		if(vert)
 		{
 			for(;;)
 			{
+@if(!GAME_FATE&&!GAME_FHAT)
 				y = 3 + font.getTextWidth(tx);
+@endif
+@if(GAME_FATE||GAME_FHAT)
+				y = Edit_spacing + font.getTextWidth(tx);
+@endif
 				if(y > imwidth) break;
 				if(chpos >= textlen) break;
 				var ch = text[chpos];
@@ -566,12 +679,22 @@ class EditLayer extends KAGLayer
 					// 背景を塗る
 					fillRect(x, y, h, chw, highlightbg);
 					// 文字を書く
+@if(!GAME_FATE&&!GAME_FHAT)
 					drawText(x, y, ch, highlighttext, 255, anti);
+@endif
+@if(GAME_FATE||GAME_FHAT)
+					drawText(x, y, ch, highlighttext, 255, anti, shadowlevel, shadowcolor, shadowwidth);
+@endif
 				}
 				else
 				{
 					// 選択領域外
+@if(!GAME_FATE&&!GAME_FHAT)
 					drawText(x, y, ch, textcolor, 255, anti);
+@endif
+@if(GAME_FATE||GAME_FHAT)
+					drawText(x, y, ch, textcolor, 255, anti, shadowlevel, shadowcolor, shadowwidth);
+@endif
 				}
 				tx += ch;
 			}
@@ -580,7 +703,12 @@ class EditLayer extends KAGLayer
 		{
 			for(;;)
 			{
+@if(!GAME_FATE&&!GAME_FHAT)
 				x = 3 + font.getTextWidth(tx);
+@endif
+@if(GAME_FATE||GAME_FHAT)
+				x = Edit_spacing + font.getTextWidth(tx);
+@endif
 				if(x > imwidth) break;
 				if(chpos >= textlen) break;
 				var ch = text[chpos];
@@ -590,12 +718,22 @@ class EditLayer extends KAGLayer
 					// 背景を塗る
 					fillRect(x, y, chw, h, highlightbg);
 					// 文字を書く
+@if(!GAME_FATE&&!GAME_FHAT)
 					drawText(x, y, ch, highlighttext, 255, anti);
+@endif
+@if(GAME_FATE||GAME_FHAT)
+					drawText(x, y, ch, highlighttext, 255, anti, shadowlevel, shadowcolor, shadowwidth);
+@endif
 				}
 				else
 				{
 					// 選択領域外
+@if(!GAME_FATE&&!GAME_FHAT)
 					drawText(x, y, ch, textcolor, 255, anti);
+@endif
+@if(GAME_FATE||GAME_FHAT)
+					drawText(x, y, ch, textcolor, 255, anti, shadowlevel, shadowcolor, shadowwidth);
+@endif
 				}
 				tx += ch;
 			}
@@ -603,19 +741,36 @@ class EditLayer extends KAGLayer
 		// 文字領域外をもう一度クリア
 		if(vert)
 		{
+@if(!GAME_FATE&&!GAME_FHAT)
 			fillRect(0, imageHeight - 3, imageWidth, 3, 0);
 			colorRect(0, imageHeight - 3, imageWidth, 3, Edit_color, Edit_opacity);
+@endif
+@if(GAME_FATE||GAME_FHAT)
+			fillRect(0, imageHeight - Edit_spacing, imageWidth, Edit_spacing, 0);
+			colorRect(0, imageHeight - Edit_spacing, imageWidth, Edit_spacing, Edit_color, Edit_opacity);
+@endif
 		}
 		else
 		{
+@if(!GAME_FATE&&!GAME_FHAT)
 			fillRect(imageWidth - 3, 0, 3, imageHeight, 0);
 			colorRect(imageWidth - 3, 0, 3, imageHeight, Edit_color, Edit_opacity);
+@endif
+@if(GAME_FATE||GAME_FHAT)
+			fillRect(imageWidth - Edit_spacing, 0, Edit_spacing, imageHeight, 0);
+			colorRect(imageWidth - Edit_spacing, 0, Edit_spacing, imageHeight, Edit_color, Edit_opacity);
+@endif
 		}
 		// 枠を描画
+@if(!GAME_FATE&&!GAME_FHAT)
 		colorRect(0, 0, imageWidth, 1, 0x000000, 128);
 		colorRect(0, 1, 1, imageHeight-2, 0x000000, 128);
 		colorRect(imageWidth-1, 1, 1, imageHeight-1, 0xffffff, 128);
 		colorRect(1, imageHeight-1, imageWidth-2, 1, 0xffffff, 128);
+@endif
+@if(GAME_FATE||GAME_FHAT)
+		drawFrame();
+@endif
 	}
 
 	property text

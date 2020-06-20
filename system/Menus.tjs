@@ -1,8 +1,21 @@
 ﻿// Menus.tjs - メニュー作成関数の定義
 // Copyright (C)2001-2009, W.Dee and contributors  改変・配布は自由です
+if(typeof(global.MenuItem) !== "Object")
+{
+	Plugins.link("menu.dll");
+}
+
+if(typeof(global.MenuItem) !== "Object")
+{
+	return;
+}
 
 function KAGWindow_createMenus()
 {
+	if (typeof(global.MenuItem) !== "Object")
+	{
+		return;
+	}
 	// この関数は MainWindow クラスのオブジェクトのコンテキスト上で実行されます
 
 	menu.add(this.systemMenu = new KAGMenuItem(this, __t("システム(&S)"), 0, "", false));
@@ -177,27 +190,30 @@ function KAGWindow_createMenus()
 			onShowContollerMenuItemClick, false));
 
 @if(GAME_WOHN)
-        debugMenu.add(new MenuItem(this, "-"));
+		debugMenu.add(new MenuItem(this, "-"));
 
 		debugMenu.add(this.showControllerMenuItem = new KAGMenuItem(this, __t("システムリセット"), 1,
 																	resetAll, false));
-        debugMenu.add(new MenuItem(this, "-"));
+
+		debugMenu.add(new MenuItem(this, "-"));
 
 		debugMenu.add(this.debugLevelNoneMenuItem = new KAGMenuItem(this, __t("デバッグレベル:なし"), 2,
 			onDebugLevelNoneMenuItemClick, false));
+
 		debugMenu.add(this.debugLevelSimpleMenuItem = new KAGMenuItem(this, __t("デバッグレベル:シンプル"), 2,
 			onDebugLevelSimpleMenuItemClick, false));
+
 		debugMenu.add(this.debugLevelVerboseMenuItem = new KAGMenuItem(this, __t("デバッグレベル:詳細"), 2,
 			onDebugLevelVerboseMenuItemClick, false));
 
-        debugMenu.add(new MenuItem(this, "-"));
+		debugMenu.add(new MenuItem(this, "-"));
 
 		debugMenu.add(this.debugWinMenuItem = new KAGMenuItem(this, __t("デバッグ窓表示"), 0,
 			onDebugWinMenuItemClick, false));
 
-        debugMenu.add(new MenuItem(this, "-"));
+		debugMenu.add(new MenuItem(this, "-"));
 
-        debugMenu.add(this.autoLabelSaveModeMenuItem = new KAGMenuItem(this, __t("自動ラベルセーブ"), 0,
+		debugMenu.add(this.autoLabelSaveModeMenuItem = new KAGMenuItem(this, __t("自動ラベルセーブ"), 0,
 			onAutoLabelSaveModeMenuItemClick, false));
 
 		debugMenu.add(this.skipToPrevLabelMenuItem = new KAGMenuItem(this, __t("前のラベルに戻る\tAlt+←"), 0,
@@ -206,18 +222,18 @@ function KAGWindow_createMenus()
 		debugMenu.add(this.skipToNextLabelMenuItem = new KAGMenuItem(this, __t("次のラベルに進む\tAlt+→"), 0,
 			onSkipToNextLabelMenuItemClick, false));
 
-        debugMenu.add(new MenuItem(this, "-"));
-
+		debugMenu.add(new MenuItem(this, "-"));
 
 		debugMenu.add(this.chDebugLogMenuItem = new KAGMenuItem(this, __t("KAGEXログモード"), 0,
 			onChDebugLogMenuItemClick, false));
 
-        debugMenu.add(this.outputDebugLogMenuItem = new KAGMenuItem(this, __t("KAGEXログを出力する"), 0,
+		debugMenu.add(this.outputDebugLogMenuItem = new KAGMenuItem(this, __t("KAGEXログを出力する"), 0,
 			onOutputDebugLogMenuItemClick, false));
+@endif
 
-        debugMenu.add(new MenuItem(this, "-"));
-
-/*		debugMenu.add(this.voiceSpeedMenu = new KAGMenuItem(this, __t("ボイス速度(&V)"), 0, void, false));
+@if(GAME_FATE||GAME_FHAT)
+		debugMenu.add(new MenuItem(this, "-"));
+		debugMenu.add(this.voiceSpeedMenu = new KAGMenuItem(this, __t("ボイス速度(&V)"), 0, void, false));
 			voiceSpeedMenu.add(this.voiceNormalSpeedMenuItem = new KAGMenuItem(this, __t("通常(&N)"), 1,
 				onVoiceSpeedMenuItemClick, false));
 			voiceNormalSpeedMenuItem.speed = 1.0;
@@ -233,7 +249,6 @@ function KAGWindow_createMenus()
 			voiceSpeedMenu.add(this.voiceTripleSpeedMenuItem = new KAGMenuItem(this, __t("3倍速(&T)"), 1,
 				onVoiceSpeedMenuItemClick, false));
 			voiceTripleSpeedMenuItem.speed = 3.0;
-*/
 @endif
 }
 
@@ -252,6 +267,23 @@ class KAGMenuItem extends MenuItem
 	var groupTag;
 @endif
 	var originalCaption;
+
+	property caption
+	{
+		getter
+		{
+			return super.caption;
+		}
+		setter(v)
+		{
+			var caption_to_set = v;
+			if (typeof(this.is_default_size) === "Integer" && this.is_default_size === true)
+			{
+				caption_to_set += " " + __("(デフォルト)");
+			}
+			super.caption = caption_to_set;
+		}
+	}
 
 	function KAGMenuItem(window, caption, group, command, autoenable)
 	{

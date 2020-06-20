@@ -247,7 +247,7 @@ class KAGLayer extends Layer
 @if(GAME_WOHN)
 		try
 @endif
-			super.beginTransition(method, withchildren, src, elm);
+		super.beginTransition(method, withchildren, src, elm);
 @if(GAME_WOHN)
 		catch(e)
 		{
@@ -355,8 +355,14 @@ class KAGLayer extends Layer
 		var dic = %[];
 		dic.left = left;
 		dic.top = top;
+@if(!HD_MODE)
 		dic.width = width;
 		dic.height = height;
+@endif
+@if(HD_MODE)
+		dic.width = int(width+1);
+		dic.height = int(height+1);
+@endif
 		dic.imageWidth = imageWidth;
 		dic.imageHeight = imageHeight;
 		dic.opacity = opacity;
@@ -372,6 +378,9 @@ class KAGLayer extends Layer
 	{
 		// 辞書配列 dic から情報を読み出し、このレイヤに設定する
 		setImageSize(dic.imageWidth, dic.imageHeight);
+@if(WIDE_MODE)
+		updateBg(dic.imageWidth, dic.imageHeight, imageStorage !== void);
+@endif
 		setPos(dic.left, dic.top, dic.width, dic.height);
 		setImagePos(dic.imageLeft, dic.imageTop);
 		opacity = dic.opacity;

@@ -72,6 +72,7 @@ class SESoundBuffer extends WaveSoundBuffer
 		var found = true;
 		if(!Storages.isExistentStorage(storage))
 		{
+@if(!GAME_FATE&&!GAME_FHAT)
 			var test;
 			if(test = storage + ".wav", Storages.isExistentStorage(test))
 				storage = test;
@@ -82,6 +83,10 @@ class SESoundBuffer extends WaveSoundBuffer
 			else if(test = storage + ".tcw", Storages.isExistentStorage(test))
 				storage = test;
 			else
+@endif
+@if(GAME_FATE||GAME_FHAT)
+			if((storage = isExistentSound(storage)) == void)
+@endif
 				found = false;
 		}
 		if(!found)
@@ -266,17 +271,17 @@ class SESoundBuffer extends WaveSoundBuffer
 	function _onFadeCompleted()
 	{
 @endif
-		try
-		{
+			try
+			{
 @if(GAME_WOHN)
-			super.volume = 0;	// 無音下でのノイズ発生を抑えるため
+				super.volume = 0;	// 無音下でのノイズ発生を抑えるため
 @endif
-			super.stop(); // 再生停止
-		}
-		catch(e)
-		{
-			dm("効果音の停止に失敗しました(実行は続行できます) : " + e.message);
-		}
+				super.stop(); // 再生停止
+			}
+			catch(e)
+			{
+				dm("効果音の停止に失敗しました(実行は続行できます) : " + e.message);
+			}
 @if(!GAME_WOHN)
 		{
 			inFadeAndStop = false;

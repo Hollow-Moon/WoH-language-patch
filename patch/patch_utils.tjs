@@ -1,21 +1,35 @@
-﻿function name_to_patch(name, isFolder=devMode, basePath=System.exePath) {
-	if (isFolder) {
-		return basePath + name;
-	} else {
+﻿
+function name_to_patch_basename(name, isFolder=devMode)
+{
+	if (isFolder)
+	{
+		return name.toLowerCase();
+	}
+	else
+	{
 		var prefix = "patch";
-		if (name !== "" && !/^\d+$/.test(name)) { // Not empty and not a number
+		if (name !== "" && !/^\d+$/.test(name))
+		{ // Not empty and not a number
 			prefix += "_";
 		}
 
-		return basePath + prefix + name + ".xp3";
+		return (prefix + name + ".xp3").toLowerCase();
 	}
+}
+
+function name_to_patch(name, isFolder=devMode, basePath=System.exePath)
+{
+	return basePath + name_to_patch_basename(name, isFolder);
 }
 
 function name_to_patch_path(name, isFolder=devMode, basePath=System.exePath) {
 	var result = name_to_patch(name, isFolder, basePath);
-	if (isFolder) {
+	if (isFolder)
+	{
 		result += "/";
-	} else {
+	}
+	else
+	{
 		result += ">";
 	}
 	return result;
@@ -23,13 +37,17 @@ function name_to_patch_path(name, isFolder=devMode, basePath=System.exePath) {
 
 function patchExists(name, isFolder=devMode, basePath=System.exePath) {
 	var result = false;
-	if (!isFolder) {
-		result = Storages.isExistentStorage(name_to_patch(name, isFolder, basePath));
-		if (devMode2) {
-			result |= Storages.isExistentDirectory(basePath + name + "/");
+	if (!isFolder)
+	{
+		result = global.paths_base_dirlist[basePath]["."].find(name_to_patch_basename(name, false)) !== -1;
+		if (devMode2)
+		{
+			result |= global.paths_base_dirlist[basePath]["."].find(name_to_patch_basename(name, true) + "/") !== -1;
 		}
-	} else {
-		result = Storages.isExistentDirectory(basePath + name + "/");
+	}
+	else
+	{
+		result = global.paths_base_dirlist[basePath]["."].find(name_to_patch_basename(name, true) + "/") !== -1;
 	}
 	return result;
 }
@@ -59,27 +77,19 @@ function load_patches(patch_array)
 		{
 			basePath = System.exePath;
 		}
-		if (devMode)
+		if (!devMode)
+		{
+			if (global.paths_base_dirlist[basePath]["."].find(name_to_patch_basename(name, false)) !== -1)
+			{
+				patches_to_add.add(name_to_patch_path(name, false, basePath) + folderName);
+			}
+		}
+		if (devMode || devMode2)
 		{
 			var fpath = name_to_patch_path(name, true, basePath) + folderName;
 			if (Storages.isExistentDirectory(fpath))
 			{
 				patches_to_add.add(fpath);
-			}
-		}
-		else
-		{
-			if (Storages.isExistentStorage(name_to_patch(name)))
-			{
-				patches_to_add.add(name_to_patch_path(name) + folderName);
-			}
-			if (devMode2)
-			{
-				var fpath2 = name_to_patch_path(name, true, basePath) + folderName;
-				if (Storages.isExistentDirectory(fpath2))
-				{
-					patches_to_add.add(fpath2);
-				}
 			}
 		}
 	}
@@ -115,11 +125,8 @@ function unload_patches(patch_array)
 		{
 			basePath = System.exePath;
 		}
-		patches_to_remove.add(name_to_patch_path(name, devMode, basePath) + folderName);
-		if (devMode2)
-		{
-			patches_to_remove.add(name_to_patch_path(name, true, basePath) + folderName);
-		}
+		patches_to_remove.add(name_to_patch_path(name, false, basePath) + folderName);
+		patches_to_remove.add(name_to_patch_path(name, true, basePath) + folderName);
 	}
 	for (var i = 0; i < patches_to_remove.count; i += 1)
 	{

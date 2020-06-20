@@ -125,6 +125,9 @@ class GraphicLayer extends AnimationLayer
 	function beginTransition(elm)
 	{
 		// elm に従ってトランジションを行う
+@if(GAME_FATE)
+		stopTransition();
+@endif
 		comp.stopTransition(); // comp で行われていたトランジションも停止
 		super.beginTransition(elm, comp);
 	}
@@ -663,5 +666,18 @@ class CharacterLayer extends GraphicLayer
 		autoHide = +dic.autoHide if dic.autoHide !== void;
 		super.restore(dic);
 	}
+
+@if(0)
+	property top
+	{
+		setter(v)	{ if(top !== v) { dmt(name+".top = "+top+" → "+v); super.top = v; } }
+		getter		{ return super.top; }
+	}
+	property absolute
+	{
+		setter(v)	{ dmt(name+".absolute = "+absolute+" → "+v); super.absolute = v; }
+		getter		{ return super.absolute; }
+	}
+@endif
 
 }

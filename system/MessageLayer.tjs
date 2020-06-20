@@ -281,7 +281,6 @@ class MessageLayer extends KAGLayer
 	/*C*/var storedSelProcessLock = false; // storeSelProcessLock 時点での状態
 @endif
 
-	// ↓使わないけど、Config.tjs に記述があるので
 	/*CS*/var defaultLinkColor = 0x0080ff; // デフォルトのリンク色
 	/*CS*/var defaultLinkOpacity = 64; // デフォルトのリンクの不透明度
 
@@ -569,11 +568,6 @@ class MessageLayer extends KAGLayer
 		this.name = name;
 
 		imageModified = true;
-
-@if(GAME_WOHN)
-//scrollbaseプロパティを追加したため２重に補正となってしまうのでコメントアウト
-//		notMoveAsParentAction = true;	//baseの移動系アクションに逆方向移動を行い、客観位置を固定する
-@endif
 
 		// コンフィギュレーション
 		if(do_config)
@@ -1533,8 +1527,6 @@ class MessageLayer extends KAGLayer
 	{
 		if(layers[row] != void && layers[row][col] != void)
 		{
-//			dm("removeCharLayer("+row+", "+col+") = "+charLayers[row][col].name);
-//			dm(Scripts.getTraceString());
 			_removeCharLayer(layers[row][col]);
 			layers[row][col]	= void;
 		}
@@ -4887,7 +4879,6 @@ class MessageLayer extends KAGLayer
 	//		cur → def → fix(メッセージレイヤーへ書き込み、プールへ)
 	function procedureGroup()
 	{
-//		dmt("procedureGroup()");
 		var	tog	= %[cur:"def", def:"fix"];
 		var	layerss	= [ charLayers, rubyLayers ];
 		for(var i=0; i<layerss.count; i++)

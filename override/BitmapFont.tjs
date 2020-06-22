@@ -21,8 +21,13 @@ global.all_bitmap_fonts = [];
 global.test_font_if_renders = function(layer, text="A", check_using_text_size=false)
 {
 	var rect = layer.font.getGlyphDrawRect(text);
-	var	font_width = rect.right, font_height = rect.bottom;
-	if (check_using_text_size)
+	var	font_width, font_height;
+	if (typeof(rect) === "Object")
+	{
+		font_width = rect.right;
+		font_height = rect.bottom;
+	}
+	if ((typeof(rect) !== "Object") || check_using_text_size)
 	{
 		font_width = layer.font.getTextWidth(text);
 		font_height = layer.font.getTextHeight(text);

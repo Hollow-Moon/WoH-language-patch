@@ -368,7 +368,14 @@ class FontWrapper
 		var ret;
 		if (typeof(this.font.getList) === "Object")
 		{
-			ret = font.getList(flags);
+			try
+			{
+				ret = font.getList(flags);
+			}
+			catch (e)
+			{
+				ret = [];
+			}
 		}
 		else if (typeof(global.enumFont) === "Object")
 		{
@@ -452,6 +459,10 @@ class FontWrapper
 
 	function getGlyphDrawRect(text)
 	{
+		if (typeof(font.getGlyphDrawRect) !== "Object")
+		{
+			return;
+		}
 		var rect = font.getGlyphDrawRect(text);
 @if(HD_MODE)
 		rect.setSize(rect.width / widthScale, rect.height / widthScale);

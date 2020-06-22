@@ -216,7 +216,12 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 		var	w = font.getTextWidth(ch), h = font.getTextHeight(ch);
 @endif
 		var rect = font.getGlyphDrawRect(ch);
-		var	w = rect.right, h = rect.bottom;
+		var	w, h;
+		if (typeof(rect) === "Object")
+		{
+			w = rect.right;
+			h = rect.bottom;
+		}
 		var	txt_w = font.getTextWidth(ch), txt_h = font.getTextHeight(ch);
 		if (txt_w >= 65536 || txt_w < 0)
 		{
@@ -226,7 +231,7 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 		{
 			txt_h = 0;
 		}
-		if (global.all_bitmap_fonts.find(font.face) !== -1)
+		if ((typeof(rect) !== "Object") || (global.all_bitmap_fonts.find(font.face) !== -1))
 		{
 			w = txt_w;
 			h = txt_h;

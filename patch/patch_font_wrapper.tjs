@@ -418,7 +418,7 @@ class FontWrapper
 @endif
 
 @if(DRAWTEXT_ESCAPE)
-	function getTextWidth(text, language=global.kag.sflags.language)
+	function getTextWidth(text, language=(typeof(global.kag) === "Object" ? global.kag.sflags.language : this.layer.window.sflags.language))
 	{
 		var fontToSpecialCharacters = languageSettings[language]["special_characters"];
 		fontToSpecialCharacters = %[] if fontToSpecialCharacters === void;

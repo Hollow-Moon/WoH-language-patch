@@ -555,7 +555,7 @@ function ASWchangeCursor(no, item)
 	}
 }
 //	選択されたシーンの再生を開始する
-function startArchive(index)
+function startArchive(index, direct_index)
 {
 	with(Menu_object)
 	{
@@ -589,6 +589,14 @@ function startArchive(index)
 		{
 			f.av_storage = [ no ];
 		}
+		if (typeof(direct_index) === "Integer")
+		{
+			f.av_direct_no = direct_index;
+		}
+		else
+		{
+			delete f.av_direct_no;
+		}
 		kag.process("call.ks", "*archive");
 	}
 }
@@ -605,7 +613,7 @@ function startArchiveWithScenario(storage)
 				if (global.archive_list[i][1][ii][iii] === storage)
 				{
 					tf.av_no = i;
-					return startArchive(ii);
+					return startArchive(ii, iii);
 				}
 			}
 		}

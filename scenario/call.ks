@@ -45,7 +45,14 @@
 @iscript
 with(tracer_object)
 {
-	f.av_no		= 0;
+	if (typeof(f.av_direct_no) === "Integer")
+	{
+		f.av_no = f.av_direct_no;
+	}
+	else
+	{
+		f.av_no = 0;
+	}
 	f.av_readall= 0;
 	f.lastscripttitle	=f.scripttitle;
 	var	block	= .getBlockFromScript(f.av_storage[0]);

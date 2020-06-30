@@ -287,8 +287,8 @@ function saveLogToExchange()
 	var	copied	= false;
 	if(Storages.isExistentDirectory(sharelogdir))
 	{
-		Storages.copyFile(System.dataPath+logfn, sharelogdir+datestr+"."+logfn, false);
-		Storages.copyFile(savedir+savefn, sharelogdir+savefn, false);
+		Storages.exportFile(System.dataPath+logfn, sharelogdir+datestr+"."+logfn);
+		Storages.exportFile(savedir+savefn, sharelogdir+savefn);
 		copied	= true;
 	}
 

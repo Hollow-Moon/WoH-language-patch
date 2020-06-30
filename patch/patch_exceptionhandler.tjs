@@ -154,11 +154,11 @@ System.exceptionHandler = function(e)
 			}
 			else if (Storages.isExistentStorage(logpath + logname))
 			{
-				if (typeof(Storages.copyFile) === "Object")
+				if (typeof(Storages.exportFile) === "Object")
 				{
 					Debug.startLogToFile(true);
 					var log_file = dir + "krkr.console.log";
-					Storages.copyFile(logpath + logname, log_file, false);
+					Storages.exportFile(logpath + logname, log_file);
 					exception_files.add(log_file);
 				}
 			}

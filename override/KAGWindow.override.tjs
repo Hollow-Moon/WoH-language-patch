@@ -4066,7 +4066,10 @@ class KAGWindow_override extends KAGWindow_original
 			    scflags.bgm = %[];
 			}
 			scflags.bgm.globalVolume = v * 1000;
-			bgm.restoreSystemState(scflags);
+			if (typeof(this.bgm) === "Object")
+			{
+				this.bgm.restoreSystemState(scflags);
+			}
 		}
 	}
 

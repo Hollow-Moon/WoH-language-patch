@@ -26,7 +26,7 @@
 @lockquickmenu
 
 ; コーポレートロゴ
-@call storage=logo.ks cond=sf.normalTitle&&typeof(global.logodisplayed)=='undefined'
+@call storage=logo.ks cond=sf.showLogo&&sf.normalTitle&&typeof(global.logodisplayed)=='undefined'
 @eval exp=global.logodisplayed=true
 
 ; 右クリックを有効にする

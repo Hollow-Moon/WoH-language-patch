@@ -35,11 +35,19 @@ function __sti(text, context)
 	return int(__st(text, context));
 }
 
-function loadMOs()
+function loadMOs(language)
 {
 	removeAllMO();
-	loadMoFile("Translation.mo");
-	loadMoFile("Settings.mo", settingsDomain);
+	var translation_mo_path = find_file_in_language_paths("Translation.mo", language);
+	if (typeof(translation_mo_path) === "String")
+	{
+		loadMoFile(translation_mo_path);
+	}
+	var settings_mo_path = find_file_in_language_paths("Settings.mo", language);
+	if (typeof(settings_mo_path) === "String")
+	{
+		loadMoFile(settings_mo_path, settingsDomain);
+	}
 }
 
 function refreshMenuString(menu)
@@ -53,8 +61,8 @@ function refreshMenuString(menu)
 		refreshMenuString(children[i]);
 }
 
-function refreshStringWithLanguage(kag) {
-	loadMOs();
+function refreshStringWithLanguage(kag, language) {
+	loadMOs(language);
 
 	var patch_info_url = __s("https://example.com/", "patch_info_url");
 	if (patch_info_url !== "https://example.com/")
@@ -66,9 +74,17 @@ function refreshStringWithLanguage(kag) {
 	{
 		global.System.update_title();
 	}
-	if ((typeof(kag) === "Object") && (typeof(kag.menu) === "Object"))
+	if (typeof(kag) === "Object")
 	{
-		refreshMenuString(kag.menu);
+		if (typeof(kag.menu) === "Object")
+		{
+			refreshMenuString(kag.menu);
+		}
+		if (typeof(kag.hintlayer) === "Object")
+		{
+			invalidate kag.hintlayer;
+			kag.hintlayer = void;
+		}
 	}
 }
 @if(FREETYPE_FONT)
@@ -85,18 +101,16 @@ function load_fonts(language) {
 
 	var fontFiles = getFontFiles(language);
 	for (var i=0; i<fontFiles.count; i++) {
-		if (Storages.isExistentStorage(fontFiles[i]))
+		var font_file_path = find_file_in_language_paths(fontFiles[i], language);
+		if (typeof(font_file_path) === "String")
 		{
-@if(0)
 			if (typeof(global.Font) !== "undefined" && typeof(global.Font.addFont) !== "undefined")
 			{
-				// XXX: this doesn't work correctly, even with the names provided by this function.
-				global.Font.addFont(fontFiles[i]);
+				global.Font.addFont(font_file_path);
 			}
-@endif
 			if (typeof(System.addFont) !== "undefined")
 			{
-				var result = System.addFont(fontFiles[i], true);
+				var result = System.addFont(font_file_path, true);
 				if (typeof(result) === "Integer" && result > 0)
 				{
 					Debug.message(("Successfully added font \"%s\"").sprintf(fontFiles[i]));
@@ -109,7 +123,7 @@ function load_fonts(language) {
 		}
 		else
 		{
-			dm(("warning: font %s does not exist").sprintf(fontFiles[i]));
+			dm(("warning: font %s does not exist").sprintf(font_file_path));
 		}
 	}
 
@@ -127,9 +141,17 @@ function load_prerendered_fonts(language) {
 		var prerenderedFontFiles = getPrerenderedFontFiles(language);
 		for (var i = 0; i < prerenderedFontFiles.count; i += 2)
 		{
-			dm(("Adding prerendered font %s").sprintf(prerenderedFontFiles[i]));
-			global.bitmapFonts.push(prerenderedFontFiles[i]);
-			global.bitmapFonts.push(prerenderedFontFiles[i + 1]);
+			var prerendered_font_file_path = find_file_in_language_paths(prerenderedFontFiles[i + 1], language);
+			if (typeof(prerendered_font_file_path) === "String")
+			{
+				dm(("Adding prerendered font %s").sprintf(prerenderedFontFiles[i]));
+				global.bitmapFonts.push(prerenderedFontFiles[i]);
+				global.bitmapFonts.push(prerendered_font_file_path);
+			}
+			else
+			{
+				dm(("warning: prerendered font %s does not exist").sprintf(prerenderedFontFiles[i]));
+			}
 		}
 		for (var i = 0; i < global.bitmapFonts.count; i += 2)
 		{
@@ -226,6 +248,179 @@ var japanese_patch_name = devMode? "Japanese" : mainPatchName;
 var japaneseLanguageLoaded = false;
 var languageSearchPathFile = "LanguageSearchpath.ksc";
 var languageSearchPath = [];
+var languagePatchPaths = [];
+var languageFilePathCache = %[];
+var languageFileCache = %[];
+
+function find_file_in_language_paths(filename, language = void)
+{
+	// Check for absolute path
+	if (filename.indexOf(":") !== -1)
+	{
+		return false;
+	}
+	if ((filename === void) || (filename == null))
+	{
+		return false;
+	}
+@if(kirikiriz)
+	if (filename.trim() === "")
+	{
+		return false;
+	}
+@endif
+	if (typeof(language) !== "String")
+	{
+		if (typeof(global.kag) === "Object")
+		{
+			if (typeof(global.kag.sflags) === "Object")
+			{
+				if (typeof(global.kag.sflags.language) === "String")
+				{
+					language = global.kag.sflags.language;
+				}
+			}
+		}
+	}
+	if (typeof(language) !== "String")
+	{
+		return false;
+	}
+	if (typeof(languageFileCache[language]) !== "Object")
+	{
+		languageFileCache[language] = %[];
+	}
+	if (typeof(languageFilePathCache[language]) !== "Object")
+	{
+		languageFilePathCache[language] = %[];
+	}
+	if (typeof(languageFileCache[language][filename]) === "Object")
+	{
+		return true;
+	}
+	if (typeof(languageFilePathCache[language][filename]) === "String" || typeof(languageFilePathCache[language][filename]) === "Integer")
+	{
+		return languageFilePathCache[language][filename];
+	}
+	var potential_path = false;
+	for (var i = 0; i < languagePatchPaths.count; i += 1)
+	{
+		var current_potential_path = ("%s%s").sprintf(languagePatchPaths[i], filename);
+		if (global.Storages.isExistentStorageNoSearchNoNormalize(current_potential_path))
+		{
+			potential_path = current_potential_path;
+		}
+	}
+	languageFilePathCache[language][filename] = potential_path;
+	return potential_path;
+}
+
+global.Array.load_PatchLanguage_original = Array.load;
+global.Array.load = function(filename, mode='')
+{
+	var file_result = find_file_in_language_paths(filename);
+	if (typeof(file_result) === "String")
+	{
+		return global.Array.load_PatchLanguage_original(file_result, mode);
+	}
+	else if (typeof(file_result) === "Integer")
+	{
+		if (file_result === false)
+		{
+			return global.Array.load_PatchLanguage_original(filename, mode);
+		}
+		else
+		{
+			this.clear();
+			this.assign(languageFileCache[global.kag.sflags.language][filename]);
+			return this;
+		}
+	}
+};
+
+global.Scripts.execStorage_PatchLanguage_original = global.Scripts.execStorage;
+global.Scripts.execStorage = function(filename, mode='', context=global)
+{
+	var file_result = find_file_in_language_paths(filename);
+	if (typeof(file_result) === "String")
+	{
+		return global.Scripts.execStorage_PatchLanguage_original(file_result, mode, context);
+	}
+	else if (typeof(file_result) === "Integer")
+	{
+		if (file_result === false)
+		{
+			return global.Scripts.execStorage_PatchLanguage_original(...);
+		}
+		else
+		{
+			return global.Scripts.exec(languageFileCache[global.kag.sflags.language][filename].join("\n"), filename, 0, context);
+		}
+	}
+};
+
+global.Scripts.evalStorage_PatchLanguage_original = global.Scripts.evalStorage;
+global.Scripts.evalStorage = function(filename, mode='', context=global)
+{
+	var file_result = find_file_in_language_paths(filename);
+	if (typeof(file_result) === "String")
+	{
+		return global.Scripts.evalStorage_PatchLanguage_original(file_result, mode, context);
+	}
+	else if (typeof(file_result) === "Integer")
+	{
+		if (file_result === false)
+		{
+			return global.Scripts.evalStorage_PatchLanguage_original(...);
+		}
+		else
+		{
+			return global.Scripts.eval(languageFileCache[global.kag.sflags.language][filename].join("\n"), filename, 0, context);
+		}
+	}
+};
+
+global.Storages.isExistentStorage_PatchLanguage_original = global.Storages.isExistentStorage;
+global.Storages.isExistentStorage = function(filename)
+{
+	var file_result = find_file_in_language_paths(filename);
+	if (typeof(file_result) === "String")
+	{
+		return true;
+	}
+	else if (typeof(file_result) === "Integer")
+	{
+		if (file_result === false)
+		{
+			return global.Storages.isExistentStorage_PatchLanguage_original(filename);
+		}
+		else
+		{
+			return true;
+		}
+	}
+};
+
+global.Storages.getPlacedPath_PatchLanguage_original = global.Storages.getPlacedPath;
+global.Storages.getPlacedPath = function(filename)
+{
+	var file_result = find_file_in_language_paths(filename);
+	if (typeof(file_result) === "String")
+	{
+		return file_result;
+	}
+	else if (typeof(file_result) === "Integer")
+	{
+		if (file_result === false)
+		{
+			return global.Storages.getPlacedPath_PatchLanguage_original(filename);
+		}
+		else
+		{
+			return void;
+		}
+	}
+};
 
 function languagePatchName(language) {
 	return language == japaneseLanguage? japanese_patch_name : language_patch_prefix + language;
@@ -236,7 +431,7 @@ function languagePatchExists(language) {
 		return true;
 	}
 	if (devMode) {
-		return Storages.isExistentDirectory(System.exePath + language + "/");
+		return Storages.isExistentDirectory("../" + language + "/");
 	}
 	return patchExists(languagePatchName(language));
 }
@@ -253,7 +448,7 @@ function load_language_patch(language, kag) {
 	if (language != japaneseLanguage || !japaneseLanguageLoaded) {
 		if (devMode)
 		{
-			patches_arr.add([languagePatchName, "", System.exePath + "../Common/"]);
+			patches_arr.add([languagePatchName, "", "../../Common/"]);
 		}
 
 		patches_arr.add([languagePatchName, imagesFolderName]);
@@ -269,25 +464,30 @@ function load_language_patch(language, kag) {
 		}
 	}
 
-	load_patches(patches_arr);
+	languagePatchPaths = load_patches(patches_arr, false);
+
+	var language_search_path = find_file_in_language_paths(languageSearchPathFile, language);
+	languageSearchPath = (typeof(language_search_path) === "String") ? Scripts.evalStorage(language_search_path) : [];
+	if (language != japaneseLanguage || !japaneseLanguageLoaded)
+	{
+		for (var i = 0; i < languageSearchPath.count; i += 1)
+		{
+			patches_arr.add([languagePatchName, languageSearchPath[i]]);
+		}
+	}
+
+	languagePatchPaths = load_patches(patches_arr, false);
 	invalidate patches_arr;
 	delete patches_arr;
 
-	var patch_subfolders = [];
-	languageSearchPath = Storages.isExistentStorage(languageSearchPathFile)? Scripts.evalStorage(languageSearchPathFile) : [];
-	for (var i=0; i<languageSearchPath.count; i++) {
-		patch_subfolders.add([languagePatchName, languageSearchPath[i]]);
-	}
-	load_patches(patch_subfolders);
-	invalidate patch_subfolders;
-	delete patch_subfolders;
-
-	refreshStringWithLanguage(kag);
+	refreshStringWithLanguage(kag, language);
 	loadLanguageDict(language);
 	load_fonts(language);
 
-	chara2displayname = Storages.isExistentStorage("chara2displayname.dic")? Scripts.evalStorage("chara2displayname.dic") : %[];
-	voicesNames = Storages.isExistentStorage("voice-names.dic")? Scripts.evalStorage("voice-names.dic"): %[];
+	var chara2displayname_dic_path = find_file_in_language_paths("chara2displayname.dic", language);
+	chara2displayname = (typeof(chara2displayname_dic_path) === "String") ? Scripts.evalStorage(chara2displayname_dic_path) : %[];
+	var voice_names_dic_path = find_file_in_language_paths("voice-names.dic", language);
+	voicesNames = (typeof(voice_names_dic_path) === "String") ? Scripts.evalStorage(voice_names_dic_path): %[];
 	if (language == japaneseLanguage) {
 		japaneseLanguageLoaded = true;
 	}
@@ -320,13 +520,25 @@ function unload_language_patch(language, kag) {
 		patches_arr.add([languagePatchName]);
 		if (devMode)
 		{
-			patches_arr.add([languagePatchName, "", System.exePath + "../Common/"]);
+			patches_arr.add([languagePatchName, "", "../../Common/"]);
 		}
 	}
 
 	unload_patches(patches_arr);
 	invalidate patches_arr;
 	delete patches_arr;
+
+	if (typeof(languageFileCache[language] !== "Object"))
+	{
+		invalidate languageFileCache[language];
+		delete languageFileCache[language];
+	}
+
+	if (typeof(languageFilePathCache[language] !== "Object"))
+	{
+		invalidate languageFilePathCache[language];
+		delete languageFilePathCache[language];
+	}
 
 	chara2displayname = %[];
 	voicesNames = %[];
@@ -381,7 +593,7 @@ function loadLanguagesList() {
 	}
 
 	var patches_arr = [];
-	var	files = global.paths_base_dirlist[System.exePath]["."];
+	var	files = global.paths_base_dirlist[global.paths_base[0]]["."];
 	var loadedLanguages = [japaneseLanguage];
 	for(var i=0; i<files.count; i++) {
 		var	fn	= files[i].toLowerCase();
@@ -509,17 +721,27 @@ function addLanguageMenu() {
 
 function loadLanguageDict(language) {
 	if (languageSettings[language] === void) {
-		if (Storages.isExistentStorage("language.dic")) {
-			languageSettings[language] = Scripts.evalStorage("language.dic");
-		} else {
+		var language_dic_path = find_file_in_language_paths("language.dic", language);
+		if (typeof(language_dic_path) === "String")
+		{
+			languageSettings[language] = Scripts.evalStorage(language_dic_path);
+		}
+		else
+		{
 			languageSettings[language] = %[];
 		}
 
 		var currentLanguageSettings = languageSettings[language];
 
-		currentLanguageSettings["menu_name"] = __s("日本語 - &Japanese", "language_menu_name");
-		currentLanguageSettings["history_default"] = __s("ＭＳ Ｐ明朝", "history_font_face");
-		currentLanguageSettings["history_default_bold"] = __sb("1", "history_font_bold");
+		currentLanguageSettings.menu_name = __s("日本語 - &Japanese", "language_menu_name");
+		currentLanguageSettings.history_default = __s("ＭＳ Ｐ明朝", "history_font_face");
+		currentLanguageSettings.history_default_bold = __sb("1", "history_font_bold");
+
+		if (typeof(currentLanguageSettings.files) === "Object")
+		{
+			languageFileCache[language] = %[];
+			(Dictionary.assignStruct incontextof languageFileCache[language])(currentLanguageSettings.files);
+		}
 	}
 }
 

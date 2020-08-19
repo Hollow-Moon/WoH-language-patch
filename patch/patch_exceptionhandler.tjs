@@ -1,4 +1,44 @@
 ﻿
+global.get_exception_message = function(e)
+{
+	var exception_message = "Unknown error";
+	if (typeof(e) === "Object" && isvalid(e))
+	{
+		if (typeof(e.message) === "String")
+		{
+			exception_message = e.message;
+		}
+	}
+	return exception_message;
+};
+global.get_trace_string = function(e)
+{
+	var trace_string = "";
+	if (typeof(e) === "Object" && isvalid(e))
+	{
+		if (typeof(e.trace) === "String")
+		{
+			trace_string = e.trace;
+		}
+	}
+	return trace_string;
+};
+global.print_exception = function(e, interim_trace)
+{
+	var exception_message = global.get_exception_message(e);
+	var trace_string = global.get_trace_string(e);
+	dm("Exception: " + exception_message);
+	if (trace_string !== "")
+	{
+		dm("Trace: " + trace_string);
+	}
+	if (typeof(interim_trace) === "String")
+	{
+		dm(("The above exception is only for %s.").sprintf(interim_trace));
+		dm("The correct exception you need to submit is located further back.");
+	}
+};
+
 /*----------------------------------------------------------------------------/
 /	例外の最終受付
 /		例外が発生したら、セーブデータ下に"excepted/YYMMDDhhmmss/"ディレクトリを
@@ -7,6 +47,9 @@
 var exceptionOccured	= false;	//	例外が発生したか？
 System.exceptionHandler = function(e)
 {
+	var print_exception = global.print_exception;
+	print_exception(e);
+
 	// Determine where the log is placed
 	var logpath = "";
 	var logname = "krkr.console.log";
@@ -38,23 +81,29 @@ System.exceptionHandler = function(e)
 	// Move the old log to another location
 	try
 	{
-		if (Storages.isExistentStorage(logpath + logname))
+		if (typeof(Storages.isExistentStorageNoSearchNoNormalize) === "Object")
 		{
-			if (typeof(Storages.getTime) === "Object")
+			if (Storages.isExistentStorageNoSearchNoNormalize(logpath + logname))
 			{
-				var logtime = Storages.getTime(logpath + logname);
-				if (typeof(logtime) === "Object")
+				if (typeof(Storages.getTime) === "Object")
 				{
-					var date = logtime.mtime;
-					if (typeof(Storages.moveFile) === "Object")
+					var logtime = Storages.getTime(logpath + logname);
+					if (typeof(logtime) === "Object")
 					{
-						Storages.moveFile(logpath + logname, logpath + ("krkr-%04d%02d%02d%02d%02d%02d.console.log").sprintf(date.getYear(), date.getMonth(), date.getDay(), date.getHours(), date.getMinutes(), date.getSeconds()));
+						var date = logtime.mtime;
+						if (typeof(Storages.moveFile) === "Object")
+						{
+							Storages.moveFile(logpath + logname, logpath + ("krkr-%04d%02d%02d%02d%02d%02d.console.log").sprintf(date.getYear(), date.getMonth(), date.getDay(), date.getHours(), date.getMinutes(), date.getSeconds()));
+						}
 					}
 				}
 			}
 		}
 	}
-	catch (e) {}
+	catch (e)
+	{
+		print_exception(e, "moving the log file");
+	}
 
 	//	フルスクリーンモードで実行中だったら、ウィンドウモードに切り替える
 
@@ -64,24 +113,9 @@ System.exceptionHandler = function(e)
 	}
 
 	//	"script exception"が発生したら、処理しない
-	var exception_message = "Unknown error";
-	var trace_string = "";
-	if (typeof(e) === "Object" && isvalid(e))
-	{
-		if (typeof(e.message) === "String")
-		{
-			exception_message = e.message;
-		}
-		if (typeof(e.trace) === "String")
-		{
-			trace_string = e.trace;
-		}
-		dm("Exception: " + exception_message);
-		if (trace_string !== "")
-		{
-			dm("Trace: " + trace_string);
-		}
-	}
+	var exception_message = global.get_exception_message(e);
+	var trace_string = global.get_trace_string(e);
+
 @if(0)
 	if (e instanceof "ConductorException" && typeof(global.kag) === "Object" && isvalid(global.kag) && typeof(global.kag.mainWindow) === "Object" && isvalid(global.kag.mainWindow) && global.kag === global.kag.mainWindow)
 		return false;
@@ -103,7 +137,10 @@ System.exceptionHandler = function(e)
 			saveDataLocation = global.kag.saveDataLocation;
 		}
 	}
-	catch (e) {}
+	catch (e)
+	{
+		print_exception(e, "moving the savedata location");
+	}
 	var exception_files = [];
 	if (typeof(saveDataLocation) === "String")
 	{
@@ -116,9 +153,10 @@ System.exceptionHandler = function(e)
 		{
 			Storages.createDirectory(dir) if !Storages.isExistentDirectory(dir);
 		}
-		catch(e)
+		catch (e)
 		{
 			success = false;
+			print_exception(e, "creating the log directory");
 		}
 
 		//	exceptedディレクトリの存在チェックと作成
@@ -127,9 +165,10 @@ System.exceptionHandler = function(e)
 		{
 			Storages.createDirectory(dir) if !Storages.isExistentDirectory(dir);
 		}
-		catch(e)
+		catch (e)
 		{
 			success = false;	//	致命的エラー
+			print_exception(e, "creating the log directory");
 		}
 
 		//	今回のディレクトリ名決定して、作成する
@@ -138,9 +177,10 @@ System.exceptionHandler = function(e)
 		{
 			Storages.createDirectory(dir) if !Storages.isExistentDirectory(dir);
 		}
-		catch(e)
+		catch (e)
 		{
 			success = false;
+			print_exception(e, "creating the log directory");
 		}
 
 		if (success) try
@@ -167,7 +207,10 @@ System.exceptionHandler = function(e)
 			Debug.startLogToFile();
 @endif
 		}
-		catch (e) {}
+		catch (e)
+		{
+			print_exception(e, "copying the log file");
+		}
 
 		if (success) try
 		{
@@ -181,7 +224,10 @@ System.exceptionHandler = function(e)
 				}
 			}
 		}
-		catch (e) {}
+		catch (e)
+		{
+			print_exception(e, "moving the log file");
+		}
 
 		if (success && typeof(global.kag.dataName) === "String")
 		{
@@ -201,7 +247,10 @@ System.exceptionHandler = function(e)
 					exception_files.add(ticket_file);
 				}
 			}
-			catch (e) {}
+			catch (e)
+			{
+				print_exception(e, "creating the ticket file");
+			}
 			try
 			{
 				if (global.kag.storeEnabled)
@@ -211,14 +260,20 @@ System.exceptionHandler = function(e)
 					exception_files.add(save_file);
 				}
 			}
-			catch (e) {}
+			catch (e)
+			{
+				print_exception(e, "saving the bookmark file");
+			}
 			try
 			{
 				global.kag.saveSystemVariables();
 				exception_files.add(dir + "datasc.ksd");
 				exception_files.add(dir + "datasu.ksd");
 			}
-			catch (e) {}
+			catch (e)
+			{
+				print_exception(e, "saving the system variable file");
+			}
 			global.kag.dataName = lastdataname;
 		}
 
@@ -321,7 +376,10 @@ System.exceptionHandler = function(e)
 				}
 			}
 		}
-		catch(e) {}
+		catch (e)
+		{
+			print_exception(e, "auto-saving the current state");
+		}
 	}
 @endif
 	if (e instanceof "ConductorException")

@@ -206,7 +206,7 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 
 	function init_zoom_window()
 	{
-		var forcefull = false; // 強制フルスクリーンフラグ
+		this.forcefull = false; // 強制フルスクリーンフラグ
 		with (System) {
 			// 座標・サイズを決定
 			var x = left,  y = top;          // ウィンドウ座標
@@ -270,7 +270,7 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 					for (numer=3, denom=4; numer > 1; numer--)
 						if (pw*numer/denom < sw && ph*numer/denom < sh) break;
 					// 強制でフルスクリーン
-					forcefull = true;
+					this.forcefull = true;
 				}
 			}
 			setZoom(numer, denom);
@@ -306,6 +306,22 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 		}
 		else
 			this[fszoom+"MagnifyMenuItem"].checked	= true if typeof this[fszoom+"MagnifyMenuItem"] != "undefined";
+	}
+
+	function init_zoom_window_menubar_hide()
+	{
+		if (typeof this.registerExEvent != "undefined") {
+			// windowEx 拡張イベントを使用可能
+			registerExEvent();
+			exEventEnabled = true;
+			createMenuBarHideMenu();
+@if(HD_MODE)
+			(initializeHDPatch incontextof this)();
+@endif
+		} else {
+			// 拡張イベントなし
+			menuBarMode = 0; // 強制固定
+		}
 	}
 
 	function zoom_window_save_system_variables()
@@ -531,24 +547,36 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 		callHook("afterChangeScreenMode");
 	}
 	function resetPrimaryPos(z = 0, w, h) {
-		with (_primaryLayer) {
-			if (z > 0) {
-				var x = (innerWidth  - w) / (z*2);
-				var y = (innerHeight - h) / (z*2);
-				w = Math.ceil(innerWidth  / z);
-				h = Math.ceil(innerHeight / z);
-				sysbase.setPos(x, y);
-				.hasImage = true;
-				.setImageSize(w, h);
-				.fillRect(0, 0, w, h, 0);
-				.setSize(w, h);
-			} else {
-				sysbase.setPos(0, 0);
-				.hasImage = false;
-				.setSize(pxWidth, pxHeight);
+		if (typeof(_primaryLayer) === "Object")
+		{
+			with (_primaryLayer) {
+				if (z > 0) {
+					var x = (innerWidth  - w) / (z*2);
+					var y = (innerHeight - h) / (z*2);
+					w = Math.ceil(innerWidth  / z);
+					h = Math.ceil(innerHeight / z);
+					if (typeof(sysbase) === "Object")
+					{
+						sysbase.setPos(x, y);
+					}
+					.hasImage = true;
+					.setImageSize(w, h);
+					.fillRect(0, 0, w, h, 0);
+					.setSize(w, h);
+				} else {
+					if (typeof(sysbase) === "Object")
+					{
+						sysbase.setPos(0, 0);
+					}
+					.hasImage = false;
+					.setSize(pxWidth, pxHeight);
+				}
 			}
 		}
-		with (sysbase) onMoviePrimaryPosChanged(.left, .top);
+		if (typeof(sysbase) === "Object")
+		{
+			with (sysbase) onMoviePrimaryPosChanged(.left, .top);
+		}
 	}
 
 	var _zoomNumer, _zoomDenom;
@@ -601,12 +629,19 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 		if(typeof(this.menu) != "undefined")
 			menu.visible = (menuBarState > 0) if (!fullScreen);
 		var list = menuBarHidePopupMenu;
-		for (var i = list.count-1; i >= 0; i--)
-			 with (list[i]) .checked = (.state == menuBarState);
+		if (typeof(list) === "Object")
+		{
+			for (var i = list.count-1; i >= 0; i--)
+				 with (list[i]) .checked = (.state == menuBarState);
+		}
+
 		if (!menuBarHideAutoVisible) {
 			list = menuBarHideSysMenu;
-			for (var i = list.count-1; i >= 0; i--)
-				with (list[i]) if (typeof .state != "undefined") .checked = (.state == menuBarState);
+			if (typeof(list) === "Object")
+			{
+				for (var i = list.count-1; i >= 0; i--)
+					with (list[i]) if (typeof .state != "undefined") .checked = (.state == menuBarState);
+			}
 		}
 		if (menuBarHideMenuItem !== void) with (menuBarHideMenuItem) {
 			if (fullScreen) .visible = false;
@@ -655,7 +690,7 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 				%[  caption:"メニューバーを非表示", group:1, state: 0 ] ];
 		}
 		exSystemMenu = menuBarHideSysMenu;
-		if (menuBarHideButtonVisible && typeof(this.menu) != "undefined") {
+		if (menuBarHideButtonVisible && typeof(this.menu) === "Object" && typeof(this.menuBarHideMenuItem) !== "Object") {
 			menu.add(menuBarHideMenuItem  = new KAGMenuItem(this, "x", 0, toggleMenuBarState, false));
 			/**/     menuBarHideMenuItem.visible = false;
 		}
@@ -869,7 +904,7 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 	function limitSize(mon)
 	{
 		var	szchg	= false;
-		if(!fullScreen)
+		if(!fullScreen && typeof(System.getMonitorInfo) === "Object")
 		{
 			mon	= System.getMonitorInfo(true, this) if mon == void;
 			var	ml	= mon.work.x, mt = mon.work.y;
@@ -956,7 +991,7 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 		setter(v) {
 			_windowResizeable = v;
 			if (exEventEnabled){
-				disableResize = !v;
+				this.disableResize = !v;
 			} else {
 				var x = (v ? left-5 : left+5), y = (v ? top-5 : top+5);
 
@@ -1125,6 +1160,10 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 @if(GAME_WOHN)
 	function onMove()
 	{
+		if (typeof(System.getMonitorInfo) !== "Object")
+		{
+			return;
+		}
 		var	mon	= System.getMonitorInfo(true, this);
 		var	mw	= mon.work.w, mh = mon.work.h;
 
@@ -1156,8 +1195,11 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 		for (var i=0;i<numMovies;i++)
 		{
 			var movie = movies[i], st = %[];
-			movie.store(st);
-			movie.stop();
+			if (typeof(movie) === "Object")
+			{
+				movie.store(st);
+				movie.stop();
+			}
 			states.add(st);
 		}
 		movieStore.states	= states;
@@ -1167,7 +1209,13 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 	function onMovieScreenChanged()
 	{
 		for(var i=0; i<numMovies; i++)
-			movies[i].restore(movieStore.states[i]);
+		{
+			var movie = movies[i];
+			if (typeof(movie) === "Object")
+			{
+				movie.restore(movieStore.states[i]);
+			}
+		}
 		invalidate movieStore;
 		movieStore	= void;
 	}

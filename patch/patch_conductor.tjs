@@ -1,4 +1,28 @@
-﻿global.Conductor_patch_conductor_original = Conductor;
+﻿
+global.BaseConductor_patch_conductor_original = BaseConductor;
+class BaseConductor_patch_conductor_override extends BaseConductor_patch_conductor_original
+{
+	function BaseConductor_patch_conductor_override()
+	{
+		super.BaseConductor(...);
+	}
+	function BaseConductor()
+	{
+		BaseConductor_patch_conductor_override(...);
+	}
+
+	function onScenarioLoad(name)
+	{
+		// Use Array.load for loading scenario
+		var arr = [];
+		arr.load(name);
+		return arr.join("\n");
+	}
+}
+global.BaseConductor = BaseConductor_patch_conductor_override;
+
+
+global.Conductor_patch_conductor_original = Conductor;
 
 class Conductor_patch_conductor_override extends Conductor_patch_conductor_original
 {
@@ -114,13 +138,17 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 		return super.onTag(...);
 	}
 
-	function onScenarioLoad()
+	function onScenarioLoad(name)
 	{
 		conductorPrevStorage = void;
 		conductorPrevLine = void;
 		conductorPrevLineStr = void;
 		lastQuizdataQuestion = void;
-		return super.onScenarioLoad(...);
+		super.onScenarioLoad(...);
+		// Use Array.load for loading scenario
+		var arr = [];
+		arr.load(name);
+		return arr.join("\n");
 	}
 }
 

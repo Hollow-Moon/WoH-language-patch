@@ -1,6 +1,10 @@
 ﻿
 global.test_write_in_directory = function(test_directory)
 {
+	if (typeof(global.KirikiriSDL2Internal) === "Object")
+	{
+		return true;
+	}
 	var test_file_contents = [("This test file can safely be deleted. Timestamp: %s").sprintf(System.getTickCount())];
 	var test_file_path = test_directory + "/savechek.ksc";
 	try
@@ -34,7 +38,7 @@ class KAGWindow_patch_savedatalocation_override_override extends KAGWindow_patch
 		}
 		var saveDataLocation;
 		//	セーブディレクトリの位置をユーザーが任意に指定できるようにする
-		var	configconfigfile	= System.exePath+"config.ksc";
+		var	configconfigfile	= global.paths_base[0]+"config.ksc";
 		var	config;
 		while (true)
 		{
@@ -56,6 +60,7 @@ class KAGWindow_patch_savedatalocation_override_override extends KAGWindow_patch
 					var test_paths = [];
 					if (test_save_data_location.indexOf(":") === -1)
 					{
+						test_paths.add(global.paths_base[0] + test_save_data_location);
 						test_paths.add(System.exePath + test_save_data_location);
 						if (typeof(System.personalPath) === "String")
 						{
@@ -123,7 +128,11 @@ class KAGWindow_patch_savedatalocation_override_override extends KAGWindow_patch
 				dir	= dir.substr(0, dir.indexOf(savefolder));
 
 				var dirinfo = %[name: dir, title: __("セーブフォルダ(%s)の作成先を指定してください。\n(キャンセルした場合、インストールフォルダに作成します。)").sprintf(savefolder)];
-				var dirselected = Storages.selectDirectory(dirinfo);
+				var dirselected = false;
+				if (typeof(Storages.selectDirectory) === "Object")
+				{
+					dirselected = Storages.selectDirectory(dirinfo);
+				}
 				if (dirselected)
 				{
 					dir	= dirinfo.name;
@@ -131,6 +140,7 @@ class KAGWindow_patch_savedatalocation_override_override extends KAGWindow_patch
 				else
 				{
 					var test_paths = [];
+					test_paths.add(global.paths_base[0]);
 					test_paths.add(System.exePath);
 					if (typeof(System.personalPath) === "String")
 					{

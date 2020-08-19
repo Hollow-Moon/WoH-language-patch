@@ -1,0 +1,589 @@
+﻿@if(__TEXTDRAWER_DEFINED__==0)
+@set(__TEXTDRAWER_DEFINED__=1)
+
+class EntriesSettings
+{
+	var useDictionary = true;
+	var dictionary;
+	var cleanBgImage = void;
+	var emptyLayerImage = false;
+	var imageWidth;
+	var imageHeight;
+	var rubyTitle = new TextualSettings();
+	var title = new TextualSettings();
+	var text = new TextualSettings();
+	var distanceBetweenEntries;
+	var layerLeft;
+	var layerTop;
+	var layerWidth;
+	var layerHeight;
+	var hint;
+	var updateSize = true;
+
+	function EntriesSettings()
+	{
+		rubyTitle.exists = false;
+	}
+}
+
+class TextualSettings
+{
+	var content;
+	var alignment = "center";
+	var verticalAlignment = "center";
+	var exists = true;
+	var leftOffset=0;
+	var rightOffset=0;
+	var topOffset=0;
+	var bottomOffset=0;
+	var fontHeight=14;
+	var fontFace;
+	var fontContext;
+	var fontBold = false;
+	var fontItalic = false;
+	var lineSpace=0;
+	var paragraphSpace=0;
+	var maxHeight;
+	var color;
+	var opacity=255;
+	var shadowColor = 0x000000;
+	var shadowOpacity = 0;
+	var shadowWidth = 0;
+	var shadowOffsetX = 0;
+	var shadowOffsetY = 0;
+	var glow = false;
+	var glowColor;
+	var glowOpacity;
+	var glowStrength;
+	var glowSize = 1;
+
+	property horizontalOffset {
+		getter {
+			return leftOffset + rightOffset;
+		}
+		setter(offset) {
+			leftOffset = offset/2;
+			rightOffset = offset/2;
+		}
+	}
+
+	property verticalOffset {
+		getter {
+			return topOffset + bottomOffset;
+		}
+		setter(offset) {
+			topOffset = offset/2;
+			bottomOffset = offset/2;
+		}
+	}
+}
+
+function loadDictionaryIfExists(dictionaryName) {
+	if (Storages.isExistentStorage(dictionaryName)) {
+		return Scripts.evalStorage(dictionaryName);
+	}
+	return void;
+}
+
+var textDrawerSettingsFileName = "TextDrawerSettings.tjs";
+Scripts.execStorage(textDrawerSettingsFileName) if Storages.isExistentStorage(textDrawerSettingsFileName);
+
+class TextDrawer
+{
+	function drawPlayTime(layer, storage) {
+		// XXX: uses _x, so need to re-evaluate
+		var labels = Scripts.evalStorage("play_time.ksc");
+
+		playTimeSettings.dictionary = %["pt_base" => labels["playtime"]];
+		drawCenteredEntry(layer, storage, playTimeSettings);
+		for (var i = 0; i < playTimeSettings2.count; i++) {
+			playTimeSettings2[i].dictionary = %["pt_base" => labels["units"][i]];
+			drawCenteredEntry(layer, storage, playTimeSettings2[i]);
+		}
+	}
+
+	function drawTigerDojoName(layer, storage, frameKey) {
+		// XXX: uses _x, so need to re-evaluate
+		tigerDojoSettings.dictionary = loadDictionaryIfExists("tiger_dojo_names.dic");
+		drawCenteredEntry(layer, storage, tigerDojoSettings, frameKey);
+	}
+
+	function drawSkills(layer, storage, name)
+	{
+		skillsTitleSettings.title.content = name;
+		drawCenteredEntry(layer, storage, skillsTitleSettings);
+
+		drawCenteredEntry(layer, storage, skillsSettings);
+	}
+
+	function drawWeaponsText(layer, storage)
+	{
+		drawCenteredEntry(layer, storage, weaponsTextSettings);
+	}
+
+	function drawWeaponsTitle(layer, storage, name, ruby)
+	{
+		if (ruby !== void) {
+			if (layer.window.sflags.language == "english") {
+				weaponsTitleSettings.title.content = name;
+				weaponsTitleSettings.rubyTitle.content = ruby;
+			} else {
+				weaponsTitleSettings.title.content = ruby;
+				weaponsTitleSettings.rubyTitle.content = name;
+			}
+		} else {
+			weaponsTitleSettings.title.content = name;
+			weaponsTitleSettings.rubyTitle.content = void;
+		}
+		drawCenteredEntry(layer, storage, weaponsTitleSettings);
+	}
+
+	function drawWeaponsUser(layer, storage, name)
+	{
+		weaponsUserSettings.text.content = name;
+		drawCenteredEntry(layer, storage, weaponsUserSettings);
+	}
+
+	function drawWeaponsName(layer, storage, name)
+	{
+		for (var i = 0; i < weaponsNameSettings.count; i++) {
+			weaponsNameSettings[i].text.content = name;
+			drawCenteredEntry(layer, storage, weaponsNameSettings[i]);
+		}
+	}
+
+	function drawVoiceName(layer, storage, settings) {
+		drawCenteredEntry(layer, storage, settings);
+	}
+
+	function drawStatusButtons(layer, storage)
+	{
+		layer.loadImages("ss_button_mask");
+		for (var i = 0; i < statusButtonsSettings.count; i++) {
+			statusButtonsSettings[i].dictionary = statusButtonsDictionary;
+			if(storage == "ss_宝具ボタン" && layer.window.sflags.language == "english") {
+				statusButtonsSettings[i].text.fontHeight = 15;
+				statusButtonsSettings[i].text.rightOffset = (statusButtonsImageWidth / statusButtonsNumber) * (statusButtonsNumber - (i+1)) + 15;
+			}
+			else
+			{
+				statusButtonsSettings[i].text.fontHeight = 18;
+				statusButtonsSettings[i].text.rightOffset = int(statusButtonsImageWidth / statusButtonsNumber) * (statusButtonsNumber - (i+1)) + 30;
+			}
+			drawCenteredEntry(layer, storage, statusButtonsSettings[i]);
+		}
+	}
+
+	function drawNoblePhantasmSpecification(layer, storage)
+	{
+		// XXX: uses _n, so need to re-evaulate
+		noblePhantasmSpecificationSettings.dictionary = loadDictionaryIfExists("status_noble_phantasm_specification.dic");
+		drawCenteredEntry(layer, storage, noblePhantasmSpecificationSettings);
+	}
+
+	function drawNoblePhantasmText(layer, storage)
+	{
+		drawCenteredEntry(layer, storage, noblePhantasmTextSettings);
+	}
+
+	function drawNoblePhantasmButtons(layer, storage)
+	{
+		var noblePhantasmImageWidth = layer.imageWidth;
+		for (var i = 0; i < noblePhantasmButtonsSettings.count; i++) {
+			with (noblePhantasmButtonsSettings[i]) {
+				with(.title) {
+					.imageWidth = noblePhantasmImageWidth;
+					.leftOffset = i * int(noblePhantasmImageWidth / noblePhantasmButtonsNumber);
+					.rightOffset = int(noblePhantasmImageWidth / noblePhantasmButtonsNumber) * (noblePhantasmButtonsNumber - (i+1));
+				}
+				.rubyTitle.imageWidth = .title.imageWidth;
+				.rubyTitle.leftOffset = .title.leftOffset;
+				.rubyTitle.rightOffset = .title.rightOffset;
+			}
+			drawCenteredEntry(layer, storage, noblePhantasmButtonsSettings[i]);
+		}
+	}
+
+	function drawDetails(layer, storage)
+	{
+		drawCenteredEntry(layer, storage, detailsSettings);
+	}
+
+	function initializeStatusLabels(statusLabelLayers, layer) {
+		if (statusLabelLayers[layer] == void) {
+			statusLabelLayers[layer] = [];
+			for (var i = 0; i < statusRankSettings.count; i++) {
+				var settings = statusRankSettings[i];
+				var statusLabelLayer = new global.Layer(layer.window, layer);
+				with (statusLabelLayer) {
+					.setPos(settings.layerLeft, settings.layerTop);
+					.setSize(settings.layerWidth, settings.layerHeight);
+					.visible = true;
+					.hitThreshold = 0;
+				}
+				statusLabelLayers[layer].add(statusLabelLayer);
+			}
+		}
+
+		// XXX: uses _x, so need to re-evaulate
+		var rankLabels = Scripts.evalStorage("rank_labels.ksc");
+		for (var i = 0; i < statusRankSettings.count; i++) {
+			statusRankSettings[i].text.content = rankLabels[i][0];
+			statusRankSettings[i].hint = rankLabels[i][1];
+			var statusLabelLayer = statusLabelLayers[layer][i];
+			with (statusLabelLayer) {
+				drawCenteredEntry(statusLabelLayer,, statusRankSettings[i]);
+				layer.operateRect(.left, .top, statusLabelLayer, 0, 0, .imageWidth, .height);
+				.fillRect(0, 0, .imageWidth, .imageHeight, 0x00000000);
+			}
+		}
+	}
+
+	function setStatusLabelsVisibility(statusLabelLayers, layers, value) {
+		for (var i = 0; i < layers.count; i++) {
+			if (statusLabelLayers[layers[i]] != void) {
+				for (var j = 0; j < statusLabelLayers[layers[i]].count; j++) {
+					statusLabelLayers[layers[i]][j].visible = value;
+				}
+			}
+		}
+	}
+
+	function drawStatusLabels(layer, storage)
+	{
+		// XXX: uses _x, so need to re-evaulate
+		var labels = Scripts.evalStorage("status_labels.ksc");
+		statusLabelsSettings.text.content = labels["labels"].join("\n");
+		drawCenteredEntry(layer, storage, statusLabelsSettings);
+		classAbilitiesSettings.title.content = labels["abilities"];
+		drawCenteredEntry(layer, storage, classAbilitiesSettings);
+	}
+
+	function drawId(layer, storage) {
+		drawCenteredEntry(layer, storage, idSettings);
+	}
+
+	function drawClassNameTitle(layer, storage) {
+		drawCenteredEntry(layer, storage, classNameTitleSettings);
+	}
+
+	function drawClassName(layer, storage) {
+		drawCenteredEntry(layer, storage, classNameSettings);
+	}
+
+	function drawWallpaperName(layer, storage, name, settings)
+	{
+		settings.text.content = name;
+		drawCenteredEntry(layer, storage, settings);
+	}
+
+	function drawExtraButtons(layer, storage)
+	{
+		for (var i = 0; i < extraMenuButtonsSettings.count; i++) {
+			drawCenteredEntry(layer, storage, extraMenuButtonsSettings[i]);
+		}
+	}
+
+	function formatDictionary(dic)
+	{
+		var format = __(dic["format"]);
+		var arguments = dic["arguments"];
+		for (var i = 0; i < arguments.count; i += 1)
+		{
+			if (typeof(arguments[i]) === "String")
+			{
+				arguments[i] = __(arguments[i]);
+			}
+			else if (typeof(arguments[i]) === "Object" && typeof(arguments[i]["format"]) === "String")
+			{
+				arguments[i] = formatDictionary(arguments[i]);
+			}
+		}
+		return format.sprintf(arguments*);
+	}
+
+	function drawCenteredEntry(layer, storage, settings, frameKey)
+	{
+		with (layer)
+		{
+			var previousFace = .face;
+
+			if (settings.useDictionary && (settings.dictionary == void || settings.dictionary[storage] == void)) {
+				.loadImages(storage, frameKey);
+				.setSizeToImageSize() if settings.updateSize;
+				return;
+			}
+
+			if (settings.cleanBgImage != void) {
+				.loadImages(isExistentImage(settings.cleanBgImage)? settings.cleanBgImage : storage, frameKey);
+				.setSizeToImageSize() if settings.updateSize;
+			} else {
+				if (settings.imageWidth != void && settings.imageHeight != void) {
+					.setImageSize(settings.imageWidth, settings.imageHeight);
+					.setSizeToImageSize() if settings.updateSize;
+				}
+				if (settings.emptyLayerImage) {
+					.fillRect(0, 0, .imageWidth, .imageHeight, 0x00000000);
+				}
+			}
+
+			if (settings.hint != void) {
+				.hint = settings.hint;
+			}
+
+			.face = dfAlpha;
+
+			var text;
+			var title;
+			var content;
+			var originalSettings = %[];
+			if (settings.useDictionary) {
+				var dictionaryItem = settings.dictionary[storage];
+				if (typeof dictionaryItem == "String") {
+					text = __(dictionaryItem);
+				} else if (typeof(dictionaryItem) === "Object" && typeof(dictionaryItem["format"]) === "String") {
+					text = formatDictionary(dictionaryItem);
+				} else {
+					if (typeof(dictionaryItem[0]) === "Object" && typeof(dictionaryItem[0]["format"]) === "String")
+					{
+						text = formatDictionary(dictionaryItem[0]);
+					}
+					else
+					{
+						text = __(dictionaryItem[0]);
+					}
+					var settingsOverride = dictionaryItem[1];
+					originalSettings = applyOverrideSettings(settings, settingsOverride);
+				}
+				if (settings.title.exists && settings.text.exists) {
+					var items = [].split("|", text);
+					title = items[0];
+					content = items[1];
+				} else if (settings.title.exists) {
+					title = text;
+				} else if (settings.text.exists) {
+					content = text;
+				}
+			} else {
+				title = settings.title.content;
+				content = settings.text.content;
+			}
+
+			if (settings.title.exists && title != "") {
+				var titleRuby;
+				var titleText;
+				var textHeight = 0;
+				if (settings.rubyTitle.exists && /\$/.test(title)) {
+					var titleItems = [].split("$",title);
+					titleRuby = titleItems[0];
+					titleText = titleItems[1];
+
+					setFontFromSettings(.font, settings.rubyTitle);
+					textHeight += getTextHeight([[titleRuby]], settings.rubyTitle, .font);
+				} else if (settings.rubyTitle.content != "") {
+					titleRuby = settings.rubyTitle.content;
+					titleText = title;
+
+					setFontFromSettings(.font, settings.rubyTitle);
+					textHeight += getTextHeight([[titleRuby]], settings.rubyTitle, .font);
+				} else {
+					titleText = title;
+				}
+
+				setFontFromSettings(.font, settings.title);
+				var titleLines = wordWrapSplitLines(titleText, .imageWidth - settings.title.horizontalOffset, .font);
+				textHeight += getTextHeight([titleLines], settings.title, .font);
+
+				var titleY = getYByAlignment(layer, settings.title, textHeight);
+
+				if (titleRuby !== void) {
+					setFontFromSettings(.font, settings.rubyTitle);
+					var titleX = getXByAlignment(layer, settings.rubyTitle, titleRuby);
+
+					drawTextGlow(settings.title, titleX, titleY, titleRuby, layer);
+					.drawText(titleX, titleY, titleRuby, settings.title.color);
+					titleY += .font.height + settings.title.lineSpace;
+				}
+
+				setFontFromSettings(.font, settings.title);
+				drawLines(layer, titleY, titleLines, settings.title);
+			}
+
+			if (settings.text.exists) {
+				setFontFromSettings(.font, settings.text);
+
+				var paragraphs = wordWrapSplitParagraphs(content, .imageWidth - settings.text.horizontalOffset, .font);
+
+				var textHeight = getTextHeight(paragraphs, settings.text, .font);
+				var textY = getYByAlignment(layer, settings.text, textHeight);
+
+				for (var p = 0; p < paragraphs.count; p++) {
+					var textLines = paragraphs[p];
+					textY = drawLines(layer, textY, textLines, settings.text);
+					if (p < paragraphs.count-1) {
+						textY += settings.text.paragraphSpace;
+					}
+				}
+			}
+
+			.face = previousFace;
+
+			applyOverrideSettings(settings, originalSettings);
+		}
+	}
+
+	function drawLines(layer, y, lines, textSettings) {
+		with (layer) {
+			for (var i = 0; i < lines.count; i++) {
+				var x = getXByAlignment(layer, textSettings, lines[i]);
+
+				drawTextGlow(textSettings, x, y, lines[i], layer);
+				.drawText(x, y, lines[i], textSettings.color, textSettings.opacity,,textSettings.shadowOpacity, textSettings.shadowColor, textSettings.shadowWidth, textSettings.shadowOffsetX, textSettings.shadowOffsetY);
+				y += .font.height;
+				if (i < lines.count-1) {
+					y += textSettings.lineSpace;
+				}
+			}
+		}
+		return y;
+	}
+
+	function drawTextGlow(textSettings, x, y, text, layer) {
+		with(layer)
+		{
+			if (textSettings.glow) {
+				.drawText(x, y, text, textSettings.glowColor, textSettings.glowOpacity,, textSettings.glowStrength, textSettings.glowColor, textSettings.glowSize, 0, 0);
+			}
+		}
+	}
+
+	function getTextHeight(paragraphs, textSettings, font) {
+		var height = 0;
+		for (var i = 0; i < paragraphs.count; i++) {
+			var lines = paragraphs[i];
+			height += font.height * lines.count + textSettings.lineSpace * (lines.count-1);
+			if (i < paragraphs.count - 1) {
+				height += textSettings.paragraphSpace;
+			}
+		}
+		return height;
+	}
+
+	function getXByAlignment(layer, textSettings, text) {
+		var x;
+		with (layer) {
+			if (textSettings.alignment == "center") {
+				x = textSettings.leftOffset+(.imageWidth - textSettings.horizontalOffset - .font.getTextWidth(text))/2;
+			} else if (textSettings.alignment == "left") {
+				x = textSettings.leftOffset;
+			}
+		}
+		return x;
+	}
+
+	function getYByAlignment(layer, textSettings, textHeight) {
+		var y = 0;
+		with (layer) {
+			var maxHeight = textSettings.maxHeight != void? textSettings.maxHeight : .imageHeight - textSettings.verticalOffset;
+			if (textSettings.verticalAlignment == "center") {
+				y = textSettings.topOffset+(maxHeight - textHeight)/2;
+			} else if (textSettings.verticalAlignment == "top") {
+				y = textSettings.topOffset;
+			} else if (textSettings.verticalAlignment == "bottom") {
+				y = textSettings.topOffset + maxHeight - textHeight;
+			}
+		}
+		return y;
+	}
+
+	function setFontFromSettings(font, textSettings) {
+		font.face = __s(textSettings.fontFace, textSettings.fontContext);
+		font.height = textSettings.fontHeight;
+		font.bold = textSettings.fontBold;
+		font.italic = textSettings.fontItalic;
+	}
+
+	function drawAbilities(layer, storage)
+	{
+		var settings = abilitiesSettings;
+
+		with (layer)
+		{
+			if (settings.dictionary == void || settings.dictionary[storage] == void) {
+				.loadImages(storage);
+				.setSizeToImageSize();
+				return;
+			}
+
+			var abilities = settings.dictionary[storage];
+
+			.loadImages(isExistentImage(settings.cleanBgImage + abilities.count)? (settings.cleanBgImage + abilities.count) : storage);
+			.setSizeToImageSize();
+
+			var longestTitleWidth = getLongestTitle(.font, settings.title, abilities);
+
+			for (var i=0; i<abilities.count; i++) {
+				var title = __(abilities[i][0]);
+				var rank = ": "+__(abilities[i][1]);
+				var content = __(abilities[i][2]);
+
+				var abilityHeight = (.height - (abilities.count-1)*settings.distanceBetweenEntries)/abilities.count;
+
+				setFontFromSettings(.font, settings.title);
+
+				var titleX = settings.title.leftOffset + (longestTitleWidth - .font.getTextWidth(title))/2;
+				var titleY = i*(abilityHeight+settings.distanceBetweenEntries) + (abilityHeight-.font.height)/2 + settings.abilityTopOffset*-(abilities.count-2);
+				.drawText(titleX, titleY, title, settings.title.color,,, settings.title.shadowOpacity, settings.title.shadowColor, settings.title.shadowWidth, settings.title.shadowOffsetX, settings.title.shadowOffsetY);
+
+				var rankX = settings.title.leftOffset +  longestTitleWidth;
+				.drawText(rankX, titleY, rank, settings.title.color,,, settings.title.shadowOpacity, settings.title.shadowColor, settings.title.shadowWidth, settings.title.shadowOffsetX, settings.title.shadowOffsetY);
+
+				setFontFromSettings(.font, settings.text);
+
+				var textX = rankX + settings.text.leftOffset;
+				var textMaxWidth = .imageWidth - textX - settings.text.rightOffset;
+				var textLines = wordWrapSplitLines(content, textMaxWidth, .font);
+				var textY = i*(abilityHeight+settings.distanceBetweenEntries) + (abilityHeight - textLines.count * .font.height - (textLines.count-1) * settings.text.lineSpace)/2 + settings.abilityTopOffset*-(abilities.count-2);
+				for (var j=0; j<textLines.count; j++) {
+					.drawText(textX, textY, textLines[j], settings.text.color,,, settings.text.shadowOpacity, settings.text.shadowColor, settings.text.shadowWidth, settings.text.shadowOffsetX, settings.text.shadowOffsetY);
+					textY += .font.height + settings.text.lineSpace;
+				}
+			}
+		}
+	}
+
+	function getLongestTitle(font, settings, abilities)
+	{
+		setFontFromSettings(font, settings);
+		var longestTitleWidth = settings.minWidth;
+		for (var i=0; i<abilities.count; i++) {
+			var title = __(abilities[i][0]);
+			var titleWidth = font.getTextWidth(title);
+			if ((titleWidth + settings.rightOffset) > longestTitleWidth) {
+				longestTitleWidth = titleWidth + settings.rightOffset;
+			}
+		}
+		return longestTitleWidth;
+	}
+
+	function applyOverrideSettings(settings, settingsOverride) {
+		var originalSettings = %[];
+
+		var keys = Scripts.getObjectKeys(settingsOverride);
+		for (var i=0; i<keys.count; i++) {
+			var key = keys[i];
+			var subkeys = [].split(".", key);
+			var subsettings = settings;
+			for (var j=0; j<subkeys.count-1; j++) {
+				subsettings = subsettings[subkeys[j]];
+			}
+			var subkey = subkeys[subkeys.count-1];
+			originalSettings[key] = subsettings[subkey];
+			subsettings[subkey] = settingsOverride[key];
+		}
+
+		return originalSettings;
+	}
+}
+
+@endif

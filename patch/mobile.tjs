@@ -1,0 +1,161 @@
+﻿var is_mobile = false;
+
+var ssf = %[];
+
+function playMenuOpenSE() {
+    //Mobile only.
+}
+
+kag.setMessageLayerShadowMode = function(edge, shadow) {
+	//Mobile only.
+};
+
+kag.setVirtualWideMode = function(value) {
+	//Mobile only.
+};
+
+kag.tagHandlers.download = function(mp) {
+	// Mobile only.
+	return 0;
+} incontextof kag;
+
+kag.tagHandlers.openflowchart = function(mp) {
+	// Mobile only.
+	return 0;
+} incontextof kag;
+
+kag.tagHandlers.setbgmnonstopmode = function(mp) {
+	// Mobile only.
+	return 0;
+} incontextof kag;
+
+kag.tagHandlers.fixedframemode = function(mp) {
+	// Mobile only.
+	return 0;
+} incontextof kag;
+
+kag.tagHandlers.texturemag = function(mp) {
+	// Mobile only.
+	return 0;
+} incontextof kag;
+
+kag.tagHandlers.setwipemode = function(mp) {
+	// Mobile only.
+	return 0;
+} incontextof kag;
+
+kag.tagHandlers.setignorecinescoautofitmode = function(mp) {
+	// Mobile only.
+	return 0;
+} incontextof kag;
+
+kag.tagHandlers.setnocameraresetmode = function(mp) {
+	// Mobile only.
+	return 0;
+} incontextof kag;
+
+kag.tagHandlers.dflick = function(mp) {
+	// Mobile only.
+	return 0;
+} incontextof kag;
+
+kag.tagHandlers.lflick = function(mp) {
+	// Mobile only.
+	return 0;
+} incontextof kag;
+
+kag.tagHandlers.rflick = function(mp) {
+	// Mobile only.
+	return 0;
+} incontextof kag;
+
+kag.tagHandlers.uflick = function(mp) {
+	// Mobile only.
+	return 0;
+} incontextof kag;
+
+kag.tagHandlers.fillcolor = function(mp) {
+	var layer = kag[mp.page].base;
+	layer.colorRect(0, 0, +layer.width, +layer.height, +mp.color, +mp.opacity);
+	return 0;
+} incontextof kag;
+
+
+property layersToFix { getter { return [[kag.sysbase], kag.fore.messages, kag.fore.layers, kag.fore.belts, kag.back.messages, kag.back.layers, kag.back.belts, [flow_tracker_object.flowlayer, flow_tracker_object.flaglayer, gamemenu.gmenu, shortcut_object.menulayer]]; } }
+
+
+kag.tagHandlers.initscroll = function(mp) {
+@if(!WIDE_MODE)
+	return 0;
+@endif
+@if(WIDE_MODE)
+	// Parameters: from , to, time
+	mp.time = -1;
+	return tagHandlers.dispscroll(mp);
+@endif
+} incontextof kag;
+
+kag.tagHandlers.dispscroll = function(mp) {
+@if(!WIDE_MODE)
+	return 0;
+@endif
+@if(WIDE_MODE)
+	// Parameters: from, to, time
+	var moveTime = (mp.time != 0)? mp.time : 600;
+	// TODO dunno what's the difference between "from" and "to" - they are almost always given the same value - need to test a scene where this is not the case.
+	var yOffset = +mp.from;
+
+	if (scrollYOffset == yOffset) {
+		return 0;
+	}
+
+	// TODO time=-1 is a patch when being called from initscroll
+	if ((!wideScreen && !isCropped) || mp.time == -1) {
+		updateScrollPosition(,yOffset);
+		return 0;
+	}
+
+	//var waitMoveTag = %["tagname" => "wm", "canskip" => 1];
+	//conductor.pendings.insert(0, waitMoveTag);
+	var moveTagParams = %["layer" => "primaryLayer", "time" => moveTime, "bg" => true, "textoff" => 1, "path" => "(0,"+string(yOffset)+",255)"];
+	return tagHandlers.move(moveTagParams);
+
+	return 0;
+@endif
+} incontextof kag;
+
+@if(WIDE_MODE)
+kag.updateScrollPosition = function(x, y) {
+	scrollXOffset = x if x !== void;
+	scrollYOffset = y if y !== void;
+
+	if (!wideScreen && !isCropped) return;
+
+	for(var i=0; i<layersToFix.count; i++) {
+		if (layersToFix[i] === void) {
+			continue;
+		}
+		for(var j=0; j<layersToFix[i].count; j++) {
+			var currentLayer = layersToFix[i][j];
+			if (currentLayer === void) {
+				continue;
+			}
+			currentLayer.setPos(currentLayer.left, currentLayer.top);
+		}
+	}
+} incontextof kag;
+
+
+class LinearMoverBackground extends LinearMoverEx
+{
+	function LinearMoverBackground()
+	{
+		super.LinearMoverEx(...);
+	}
+
+	function updateData(a, b)
+	{
+		kag.updateScrollPosition(a, b);
+	}
+}
+@endif

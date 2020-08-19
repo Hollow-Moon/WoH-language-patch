@@ -41,7 +41,6 @@
 		"image",
 		"system",
 		"plugin",
-		"k2compat",
 		"override",
 		"update",
 		"patch"
@@ -58,10 +57,7 @@
 			Plugins.link("fstat.dll");
 		}
 	}
-	if (typeof(global.System.exePath) === "String" && global.System.exePath !== "" && Storages.isExistentDirectory(global.System.exePath))
-	{
-		paths_base.add(global.System.exePath);
-	}
+	paths_base.add(Storages.getFullPath("../"));
 
 	global.paths_base_dirlist = %[];
 	var paths_base_dirlist = global.paths_base_dirlist;
@@ -190,7 +186,6 @@
 	if (devMode)
 	{
 		var devpaths = [
-			"../common/patch/k2compat",
 			"../common/plugin",
 			"../common/pluginpatch",
 			"../common/imageshistory",

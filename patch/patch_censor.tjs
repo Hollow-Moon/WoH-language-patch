@@ -1,7 +1,16 @@
 ﻿// Patch names
+var vitaAssetsPatchName = devMode? "ImagesVita" : "vita"; // not the best place to decalre the vita patch name but we need it at this stage
+@if(GAME_FATE)
 var hPatchName = "h";
-var decensoredPatchName = "decensor";
+var hCensorPatchName = mainPatchName;
 var maturePatchName = devMode? "mature" : mainPatchName;
+@endif
+@if(GAME_FHAT)
+var hPatchName = mainPatchName;
+var hCensorPatchName = vitaAssetsPatchName;
+var maturePatchName = vitaAssetsPatchName;
+@endif
+var decensoredPatchName = "decensor";
 
 // Flag names
 var hFlagName = "ghentai";
@@ -56,7 +65,7 @@ function updateDecensorConfig(kag=global.kag)
 	var decensor_config_file_name = "decensor_config.dic";
 
 	var decensor_config;
-	var custom_decensor_config_file_path = System.exePath + decensor_config_file_name;
+	var custom_decensor_config_file_path = global.paths_base[0] + decensor_config_file_name;
 	if (Storages.isExistentStorage(custom_decensor_config_file_path))
 	{
 		decensor_config = Scripts.evalStorage(custom_decensor_config_file_path);

@@ -325,13 +325,13 @@ class KAGCensorMenuItem extends KAGMenuItem
 	var previouslyFullyCensored;
 
 
-	function KAGCensorMenuItem(window, name, hFlag, hPatchName, hCensorPatchName, maturePatchName)
+	function KAGCensorMenuItem(window, name, hFlag)
 	{
 		super.KAGMenuItem(window, name, 0, void, false);
-		addChildren(hFlag, hPatchName, hCensorPatchName, maturePatchName);
+		addChildren(hFlag);
 	}
 
-	function addChildren(hFlag, hPatchName, hCensorPatchName, maturePatchName)
+	function addChildren(hFlag)
 	{
 		var matureFlag = new GameFlag(owner, owner.sflags, matureFlagName, true);
 		var matureCensorFlag = inverseFlag(matureFlag);
@@ -530,6 +530,7 @@ function addPatchMenu() {
 	(addMovieMenu incontextof this)(patchMenu);
 
 	(addDevelopmentMenu incontextof this)();
+	(addConductorVerbosityMenu incontextof this)();
 @if(ZOOM_WINDOW)
 	(addWindowSizeMenu incontextof this)(this.displayMenu);
 	if (this.isPseudoMode())
@@ -557,6 +558,22 @@ function addDevelopmentMenu() {
 	devMenuItem.add(this.openCommandPromptInProjectDirectory = new KAGMenuItem(this, "Open command prompt in project directory", 1, function(sender) { global.System.shellExecute("cmd.exe", "/k cd " + ('"%s"').sprintf(Storages.getLocalName(Storages.getFullPath(".")))); }, false));
 	devMenuItem.add(this.gitCheckoutDashDashCurrentDirectory = new KAGMenuItem(this, "git checkout -- .", 1, function(sender) { global.build_exec_command_line("git.exe", ["-C", Storages.getLocalName(Storages.getFullPath(".")), "checkout", "--", "."], false, false); }, false));
 	devMenuItem.add(this.gitPullOriginMaster = new KAGMenuItem(this, "git pull origin master", 1, function(sender) { global.build_exec_command_line("git.exe", ["-C", Storages.getLocalName(Storages.getFullPath(".")), "pull", "origin", "master"], false, false); }, false));
+}
+
+function addConductorVerbosityMenu() {
+	debugMenu.add(this.debugLevelNoneMenuItem = new KAGMenuItem(this, __t("デバッグレベル:なし"), 2,
+		this.onDebugLevelNoneMenuItemClick, false));
+	this.debugLevelNoneMenuItem.checked = this.debugLevel === tkdlNone;
+
+	debugMenu.add(this.debugLevelSimpleMenuItem = new KAGMenuItem(this, __t("デバッグレベル:シンプル"), 2,
+		this.onDebugLevelSimpleMenuItemClick, false));
+	this.debugLevelSimpleMenuItem.checked = this.debugLevel === tkdlSimple;
+
+	debugMenu.add(this.debugLevelVerboseMenuItem = new KAGMenuItem(this, __t("デバッグレベル:詳細"), 2,
+		this.onDebugLevelVerboseMenuItemClick, false));
+	this.debugLevelVerboseMenuItem.checked = this.debugLevel === tkdlVerbose;
+
+	debugMenu.add(new MenuItem(this, "-"));
 }
 
 function addVoiceMenu(patchMenu) {
@@ -611,10 +628,12 @@ function addMovieMenu(patchMenu) {
 
 function addOptionsMenu(patchMenu) {
 	var historyTitleFlag = new GameFlag(this, this.sflags, "historyTitle", false);
+	var showLogoFlag = new GameFlag(this, this.sflags, "showLogo", true);
 
 	patchMenu.add(this.patchOptionsMenuItem = new KAGMenuItem(this, __t("設定(&O)"), 0, void, false));
 	patchOptionsMenuItem.add(this.historyTitleMenuItem = new KAGFlagMenuItem(this, __t("メッセージ歴史でシーンのタイトルを表示する(&H)"),, historyTitleFlag));
 	patchOptionsMenuItem.add(this.engineConfigurationItem = new KAGMenuItem(this, __t("エンジン構成ダイアログを開く"), 1, function() { global.showEngineConfigureDialog(); },false));
+	patchOptionsMenuItem.add(this.showLogoMenuItem = new KAGFlagMenuItem(this, __t("起動時にTYPE-MOONロゴを表示"),, showLogoFlag));
 
 	(addOptionsMenuItems incontextof this)(patchOptionsMenuItem);
 }
@@ -715,27 +734,27 @@ function addWindowSizeMenu(displayMenu) {
 }
 
 function addHdMenu(displayMenu) {
-	var wideResolutions = %[ "&Wide (16:9)" => standardWideRatio];
+	var wideResolutions = %[ __t("ワイド(16:9)(&W)") => standardWideRatio];
 
 	displayMenu.add(new MenuItem(this, "-"));
 
-	displayMenu.add(this.qualityMenu = new KAGMenuItem(this, "&Quality", 0, void, false));
+	displayMenu.add(this.qualityMenu = new KAGMenuItem(this, __t("画質(&Q)"), 0, void, false));
 	this.qualityMenu.enabled = false;
 
-		qualityMenu.add(this.lqMenuItem = new KAGMenuItem(this, "Low", 1,
+		qualityMenu.add(this.lqMenuItem = new KAGMenuItem(this, __t("低い(&L)"), 1,
 			function(sender) { onQualityMenuItemClick(sender.owner.lqMenuItem,'low'); }, false));
 
-		qualityMenu.add(this.hqMenuItem = new KAGMenuItem(this, "High", 1,
+		qualityMenu.add(this.hqMenuItem = new KAGMenuItem(this, __t("高い(&H)"), 1,
 			function(sender) { onQualityMenuItemClick(sender.owner.hqMenuItem,'high'); }, false));
 		this.hqMenuItem.enabled = hdPatchExists;
 
-	displayMenu.add(this.wideMenu = new KAGMenuItem(this, "&Aspect Ratio", 0, void, false));
+	displayMenu.add(this.wideMenu = new KAGMenuItem(this, __t("アスペクト比(&A)"), 0, void, false));
 	this.wideMenu.enabled = false;
 
-		wideMenu.add(this.notWideMenuItem = new KAGMenuItem(this, "&Standard (4:3)", 1,
+		wideMenu.add(this.notWideMenuItem = new KAGMenuItem(this, __t("基準(4:3)(&S)"), 1,
 			function(sender) { onWideMenuItemClick(sender.owner.notWideMenuItem,'standard'); }, false));
 
-		wideMenu.add(this.wideMenuItem = new KAGMenuItem(this, "&Match desktop", 1,
+		wideMenu.add(this.wideMenuItem = new KAGMenuItem(this, __t("デスクトップと同じ(&M)"), 1,
 			function(sender) { onWideMenuItemClick(sender.owner.wideMenuItem,'wide'); }, false));
 
 		var keys = Scripts.getObjectKeys(wideResolutions);
@@ -769,7 +788,7 @@ function addHdMenu(displayMenu) {
 
 function addMessageWindowMenu(patchMenu)
 {
-	patchMenu.add(this.messageWindowMenuItem = new KAGMenuItem(this, "&Message Window", 0, void, false));
+	patchMenu.add(this.messageWindowMenuItem = new KAGMenuItem(this, __t("メッセージウィンドウ(&M)"), 0, void, false));
 @if(GAME_FATE)
 	var mobileWindowFlag = new GameFlag(this, this.sflags, "mobileWindow", false);
 	messageWindowMenuItem.add(this.mobileMessageWindowMenuItem = new KAGFlagMenuItem(this, "&Mobile message window",, mobileWindowFlag,,true));
@@ -779,5 +798,5 @@ function addMessageWindowMenu(patchMenu)
 	this.mobileBreakGlyphsMenuItem.restartCondition = this.mobileBreakGlyphsMenuItem.onlyScenarioRestartCondition;
 @endif
 	var wideStrechWindowFlag = new GameFlag(this, this.sflags, "wideStrechWindow", true);
-	messageWindowMenuItem.add(this.wideMessageStretchMenuItem = new KAGFlagMenuItem(this, "4:3 message window in &wide mode",, inverseFlag(wideStrechWindowFlag),,true));
+	messageWindowMenuItem.add(this.wideMessageStretchMenuItem = new KAGFlagMenuItem(this, __t("ワイドモードで4:3のメッセージウィンドウ(&W)"),, inverseFlag(wideStrechWindowFlag),,true));
 }

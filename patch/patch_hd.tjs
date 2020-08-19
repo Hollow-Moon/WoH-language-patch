@@ -45,7 +45,7 @@ var wideScreenFlagName = "wideScreen";
 var autoWideRatioFlagName = "autoWideRatio";
 var wideRatioFlagName = "wideRatio";
 
-var devHdImageFolders = ["BGImageHD", "FGImageHD", "ImageHD", "ImagesClassicHD", "ImagesConfigHD", "ImagesMobile", "ImagesPatchHD", "ImagesPS2HD", "ImagesTitleHD", "ImagesTrialHD", "ImagesHanafudaHD", "RuleHD"];
+var devHdImageFolders = ["BGImageHD", "FGImageHD", "ImageHD", "ImagesClassicHD", "ImagesConfigHD", "ImagesMobile", "ImagesPatchHD", "ImagesPS2HD", "ImagesTitleHD", "ImagesTrialHD", "ImagesHanafudaHD", "RuleHD", "Image_transparentHDcolor"];
 
 property hdPatchExists { getter { return patchExists(hdPatchName); } }
 
@@ -120,6 +120,7 @@ function unloadHdPatch(kag=global.kag)
 function initializeQuality(scale, firsttime=false) {
 	isHd = scale > 1;
 	scaleFactor = scale;
+	exEventEnabled = !isHd;
 
 	if (isHd) {
 		loadHdPatch(this);

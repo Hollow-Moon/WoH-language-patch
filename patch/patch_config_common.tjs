@@ -73,9 +73,9 @@ Debug.notice(("Patch Description: %s").sprintf(global.PatchDescription));
 
 function dmt(msg*) { Debug.message(msg.join(", ")+": "+Scripts.getTraceString()); }
 
-var devMode = Storages.isExistentStorage(System.exePath + "dev.txt");
-var devMode2 = Storages.isExistentStorage(System.exePath + "dev2.txt");
-var forceLog = Storages.isExistentStorage(System.exePath + "forceLog.txt");
+var devMode = Storages.isExistentStorage("../dev.txt");
+var devMode2 = Storages.isExistentStorage("../dev2.txt");
+var forceLog = Storages.isExistentStorage("../forceLog.txt");
 
 // Default settings
 //プラグインへのイベント配信時にエラー停止しないよう暫定的にトラップさせる=1 / させない=0
@@ -140,14 +140,14 @@ var forceLog = Storages.isExistentStorage(System.exePath + "forceLog.txt");
 @set(CROP_MODE=0)
 
 // Override settings
-var settingsPath = System.exePath + "settings.tjs";
+var settingsPath = "../settings.tjs";
 Scripts.evalStorage(settingsPath) if Storages.isExistentStorage(settingsPath);
 
 @if(GAME_FHAT)
-var mainPatchName = devMode? "" : "3";
+var mainPatchName = devMode? "data" : "3";
 @endif
 @if(GAME_FATE||GAME_WOHN)
-var mainPatchName = "";
+var mainPatchName = devMode? "data" : "";
 @endif
 
 if (forceLog)
@@ -156,10 +156,10 @@ if (forceLog)
 }
 
 if (devMode) {
-	Storages.addAutoPath(System.exePath + "../common/data/");
-	Storages.addAutoPath(System.exePath + "../common/patch/");
-	Storages.addAutoPath(System.exePath + "../common/plugin/");
-	Storages.addAutoPath(System.exePath + "../common/pluginpatch/");
+	Storages.addAutoPath("../../common/data/");
+	Storages.addAutoPath("../../common/patch/");
+	Storages.addAutoPath("../../common/plugin/");
+	Storages.addAutoPath("../../common/pluginpatch/");
 }
 
 KAGLoadScript("patch_initialize.tjs");

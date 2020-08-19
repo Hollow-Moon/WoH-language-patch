@@ -1,0 +1,149 @@
+﻿var msgctxt = "msgctxt";
+var msgid = "msgid";
+var msgidPlural = "msgid_plural";
+var msgstr = "msgstr";
+
+var msgstrPlural = "msgstr[";
+var pluralForms = "Plural-Forms";
+var pluralExpressions = void;
+
+var defaultDomain = "default";
+var defaultContext = "";
+
+var domains = %[];
+
+var contextDelimiter = "\x04"; // EOT
+
+function __(text, domain=defaultDomain) {
+	return _x(text,,domain);
+}
+
+function _x(text, context=defaultContext, domain=defaultDomain) {
+	var dict = domains[domain];
+	if (dict === void) {
+		return text;
+	}
+	var result = dict[context + contextDelimiter + text];
+	if (result === void) {
+		return text;
+	}
+	return result;
+}
+
+function _n(textSingle, textPlural, pluralNumber, domain=defaultDomain) {
+	if (pluralExpressions === void) {
+		return textSingle;
+	}
+
+	global.n = pluralNumber; // Input for eval expression
+	global.plural = void; // Output for eval expression
+	Scripts.eval(pluralExpressions[1]);
+
+	var dict = domains[domain];
+	if (dict === void) {
+		return plural == 0? textSingle : textPlural;
+	}
+	var result = dict[defaultContext + contextDelimiter + textSingle + contextDelimiter + textPlural];
+	if (result === void) {
+		return plural == 0? textSingle : textPlural;
+	}
+	return result[plural];
+}
+
+function removeAllMO() {
+	(Dictionary.clear incontextof domains)();
+	pluralExpressions = void;
+}
+
+function loadMoFile(moFile, domain=defaultDomain) {
+	var poFile = Storages.chopStorageExt(moFile) + ".po";
+
+	if (!Storages.isExistentStorage(poFile)) {
+		return;
+	}
+
+	var lines = [].load(poFile);
+
+	var dict = %[];
+
+	var context=defaultContext;
+	var currentId;
+	var currentIdPlural;
+
+	for(var i=0; i<lines.count; i++) {
+		if (isEntry(msgctxt, lines, i)) {
+			var tmp = readEntry(msgctxt, lines, i);
+			context = tmp[0];
+			i += tmp[1];
+		}
+		else if (isEntry(msgidPlural, lines, i)) {
+			var tmp = readEntry(msgidPlural, lines, i);
+			currentIdPlural = tmp[0];
+			i += tmp[1];
+		}
+		else if (isEntry(msgid, lines, i)) {
+			var tmp = readEntry(msgid, lines, i);
+			currentId = tmp[0];
+			i += tmp[1];
+		}
+		else if (isEntry(msgstrPlural, lines, i)) {
+			var text = [];
+			var j=0;
+			var msgstrPluralIndex = msgstrPlural + string(j) + "]";
+			while (isEntry(msgstrPluralIndex, lines, i)) {
+				var tmp = readEntry(msgstrPluralIndex, lines, i);
+				text.add(tmp[0]);
+				i += tmp[1] + 1;
+				j += 1;
+				msgstrPluralIndex = msgstrPlural + string(j) + "]";
+			}
+			i -= 1;
+
+			dict[context + contextDelimiter + currentId + contextDelimiter + currentIdPlural] = text;
+			context = defaultContext;
+			currentId = void;
+			currentIdPlural = void;
+		}
+		else if (isEntry(msgstr, lines, i)) {
+			var tmp = readEntry(msgstr, lines, i);
+			var text = tmp[0];
+			i += tmp[1];
+
+			dict[context + contextDelimiter + currentId] = text;
+			context = defaultContext;
+			currentId = void;
+		}
+	}
+
+	domains[domain] = dict;
+	readPluralForms(dict[context + contextDelimiter + ""]);
+	dict[context + contextDelimiter + ""] = void;
+}
+
+
+function isEntry(header, lines, i) {
+	return lines[i].substr(0, header.length) == header;
+}
+
+function readEntry(header, lines, i) {
+	var text = lines[i].substr(header.length + 2, lines[i].length-(header.length + 2)-1);
+	var index = 1;
+	var nextLine = lines[i+index];
+	while (nextLine != "" && nextLine[0] === '"') {
+		text += nextLine.substr(1, nextLine.length-2);
+		index += 1;
+		nextLine = lines[i+index];
+	}
+	text = text.replace(/\\n/g, "\n").replace(/\\t/g, "\t");
+	return [text, index-1];
+}
+
+function readPluralForms(text) {
+	var lines = text.split(/\\n/);
+	for (var i=0; i<lines.count; i++) {
+		if (lines[i].substr(0, pluralForms.length) == pluralForms) {
+			pluralExpressions = lines[i].substr(pluralForms.length + 2, lines[i].length - (pluralForms.length + 2)).split(";");
+			break;
+		}
+	}
+}

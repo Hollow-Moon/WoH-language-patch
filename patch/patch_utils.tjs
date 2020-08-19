@@ -17,12 +17,12 @@ function name_to_patch_basename(name, isFolder=devMode)
 	}
 }
 
-function name_to_patch(name, isFolder=devMode, basePath=System.exePath)
+function name_to_patch(name, isFolder=devMode, basePath=global.paths_base[0])
 {
 	return basePath + name_to_patch_basename(name, isFolder);
 }
 
-function name_to_patch_path(name, isFolder=devMode, basePath=System.exePath) {
+function name_to_patch_path(name, isFolder=devMode, basePath=global.paths_base[0]) {
 	var result = name_to_patch(name, isFolder, basePath);
 	if (isFolder)
 	{
@@ -35,7 +35,7 @@ function name_to_patch_path(name, isFolder=devMode, basePath=System.exePath) {
 	return result;
 }
 
-function patchExists(name, isFolder=devMode, basePath=System.exePath) {
+function patchExists(name, isFolder=devMode, basePath=global.paths_base[0]) {
 	var result = false;
 	if (!isFolder)
 	{
@@ -52,7 +52,7 @@ function patchExists(name, isFolder=devMode, basePath=System.exePath) {
 	return result;
 }
 
-function load_patches(patch_array)
+function load_patches(patch_array, should_add_to_auto_path=true)
 {
 	var patches_to_add = [];
 	for (var i = 0; i < patch_array.count; i += 1)
@@ -75,7 +75,7 @@ function load_patches(patch_array)
 		var basePath = patch_array[i][2];
 		if (typeof(basePath) !== "String")
 		{
-			basePath = System.exePath;
+			basePath = global.paths_base[0];
 		}
 		if (!devMode)
 		{
@@ -96,8 +96,12 @@ function load_patches(patch_array)
 	for (var i = 0; i < patches_to_add.count; i += 1)
 	{
 		Storages.removeAutoPath(patches_to_add[i]);
-		Storages.addAutoPath(patches_to_add[i]);
+		if (should_add_to_auto_path)
+		{
+			Storages.addAutoPath(patches_to_add[i]);
+		}
 	}
+	return patches_to_add;
 }
 
 function unload_patches(patch_array)
@@ -123,7 +127,7 @@ function unload_patches(patch_array)
 		var basePath = patch_array[i][2];
 		if (typeof(basePath) !== "String")
 		{
-			basePath = System.exePath;
+			basePath = global.paths_base[0];
 		}
 		patches_to_remove.add(name_to_patch_path(name, false, basePath) + folderName);
 		patches_to_remove.add(name_to_patch_path(name, true, basePath) + folderName);

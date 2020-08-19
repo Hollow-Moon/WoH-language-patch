@@ -1,0 +1,135 @@
+﻿//Based on: https://github.com/krkrz/Krkr2Compat/blob/master/data/k2compat/k2compat.tjs
+
+
+class Krkr2CompatUtils {
+	var scriptBase = "k2compat/";
+	var scriptLoaded = %[];
+	var messageTag = "Krkr2CompatUtils";
+
+	function trace {
+		@if (K2COMPAT_VERBOSE)
+		Debug.message(...);
+		@endif
+	}
+
+	function error(message) {
+		throw new Exception(messageTag + ": " +message);
+	}
+
+	function include(file) {
+		trace(messageTag+".include", file);
+		Scripts.execStorage(file);
+	}
+
+	function require(module) {
+		if (module == "" || scriptLoaded[module]) return;
+		trace(messageTag+".require", module);
+		scriptLoaded[module] = true;
+		include(scriptBase + @"k2compat_${module}.tjs");
+	}
+
+	function requireWIN32Dialog() {
+		if (typeof global.WIN32GenericDialogEX == "Object") return;
+		trace(messageTag+".requireWIN32Dialog");
+		if (typeof global.WIN32Dialog != "Object") {
+			delete global.WIN32Dialog;
+			loadPlugin("win32dialog.dll");
+		}
+		var file = @"win32dialog.tjs";
+		if (Storages.isExistentStorage(scriptBase + file)) {
+			include(scriptBase + file);
+		} else if (Storages.isExistentStorage(file)) {
+			include(file);
+		} else {
+			error(file+" not found.");
+		}
+	}
+
+	function loadPlugin(plugin, raiseerror = true) {
+		trace(messageTag+".loadPlugin", plugin);
+		try {
+			Plugins.link(plugin);
+		} catch(e) {
+			Debug.notice(e.message, Scripts.getTraceString());
+			if (raiseerror) throw e;
+		}
+	}
+
+	function delayLoadSingleton(module, cls, ovr) { return makeDelay(@"require('${module}'); return ${ovr} = new ${cls}();"); }
+
+	function makeDelay(funcstr, context = this) {
+		var unnamed = %[], eval = @"property _ { getter { ${funcstr} } }";
+		(function (eval) { eval!; } incontextof unnamed)(eval);
+		return (&unnamed._) incontextof context;
+	}
+
+	function makeDummyProperty(cls, key, value) {
+		var chk;
+		try { chk = typeof cls[key]; } catch {} // [XXX] クラスのプロパティを直接typeofすると実行コンテキストが違う例外が飛ぶ場合がある
+		if (chk == "undefined") {
+			(function (key, value, prefix) {
+				(@"property ${key} { getter { return typeof this.${prefix}${key} != 'undefined' ? this.${prefix}${key} : ${value}; }" +
+				 @"setter(v) { this.${prefix}${key} = v;"
+				 @if (! K2COMPAT_PURGE_DUMMYPROP_LOG)
+				 + @"global.Debug.message('Krkr2CompatUtils: dummy property ${key} set', v, Scripts.getTraceString()); } }"
+				 @endif
+				 )!;
+			} incontextof cls)(key, value, "_k2compat_");
+		}
+	}
+
+	function toString(target, level=0, sep="\t") {
+		var key = @"(${(typeof target).toLowerCase()})", value;
+		switch (typeof target) {
+		case "Object":
+			value = target ? (string)target : "null";
+			/**/ if (target instanceof "Function") key = "(Function)";
+			else if (target instanceof "Property") key = "(Property)";
+			else if (target instanceof "Class")    key = "(Class)"; // [MEMO] Scripts.getClassNames はインスタンスにしか効かない
+			else if (target instanceof "Array" || target instanceof "Dictionary") {
+				var isdic = target instanceof "Dictionary", ext = [];
+				ext.assign(target);
+				var n = isdic ? ext.count\2 : ext.count;
+				value = isdic ? @"(Dictionary:${n})%[" : @"(Array:${n})[";
+				var step = isdic ? 2 : 1;
+				var large =  n >= 10; // [XXX]自動改行対応の閾値
+				var showkey = isdic || large;
+				var cr = (sep != "" && large);
+				if (cr) value += "\n";
+				for (var i=0, cnt=ext.count; i < cnt; i+=step) {
+					var name = isdic ? @'"${ext[i]}"' : (string)i;
+					var item = toString(ext[isdic ? (i+1) : i], level+1, sep);
+					if (level>0 && cr) value += ((string)sep).repeat(level);
+					if (showkey) value += name + "=>";
+					value += item;
+					if (i+step < cnt) {
+						value += ",";
+						if (cr) value += "\n";
+					}
+				}
+				value += "]";
+			}
+			break;
+		case "Integer": key = "(int)"; value = "%d".sprintf(target); break;
+		case "String":  value = '"'+target.escape()+'"'; break;
+		case "Octet":
+			var oct = "<% ";
+			for (var i = 0, cnt = target.length; i < cnt; i++) oct+="%02X ".sprintf(target[i]);
+			oct += "%>";
+			return "(octet)"+oct;
+		default:
+			value = (string)target;
+			break;
+		}
+		return key + value;
+	}
+}
+
+with (global.Krkr2CompatUtils = new Krkr2CompatUtils()) // replace singleton instance
+{
+	.makeDummyProperty(Window, "innerSunken",    /*default value*/true);
+	.makeDummyProperty(Window, "showScrollBars", /*default value*/true);
+
+	&Debug.console = .delayLoadSingleton("console", "DebugConsoleCompatDialog", "&Debug.console");
+	&Debug.controller = %[];
+}

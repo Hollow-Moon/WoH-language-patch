@@ -154,6 +154,16 @@ global.font_remove_list = [
 
 global.font_remap_cache = %[];
 
+{
+	if (typeof(global.Font) === "Object" && typeof(global.Font.addFont) === "Object")
+	{
+		if (Storages.isExistentStorage("SourceHanSans-Normal.otf"))
+		{
+			System.setArgument("-deffont", global.Font.addFont("SourceHanSans-Normal.otf")[0]);
+		}
+	}
+}
+
 class FontWrapper
 {
 	var font;

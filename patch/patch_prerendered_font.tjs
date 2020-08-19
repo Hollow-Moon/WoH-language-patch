@@ -25,7 +25,7 @@ if (typeof(Storages.createDirectory) !== "Object")
 
 {
 	global.prerenderedFontInfo = %[];
-	global.prerenderedFontDirectory = ("%s/%s/").sprintf(System.exePath, "fonts");
+	global.prerenderedFontDirectory = ("%s/%s/").sprintf(global.paths_base[0], "fonts");
 
 	global.prerenderedFontTable = [
 		// Face, height, angle, bold, italic, strikeout, underline
@@ -528,8 +528,8 @@ if (typeof(Storages.createDirectory) !== "Object")
 		// NOTE: this is done before System.addFont (from addFont.dll is done)
 		if (System.getArgument('-createprerenderedfonts') === "true")
 		{
-			Storages.addAutoPath(System.exePath + "../Common/English/");
-			Storages.addAutoPath(System.exePath + "../RealtaNua/English/");
+			Storages.addAutoPath(global.paths_base[0] + "../Common/English/");
+			Storages.addAutoPath(global.paths_base[0] + "../RealtaNua/English/");
 			var extraFontFiles = ["calibri.ttf", "SabonNextLTPro-Display_0.ttf", "BernhardModernStd-Roman.ttf", "FZST.ttf"];
 			for (var i = 0; (i < extraFontFiles.count) && (extraFontFiles[i] !== void); i += 1)
 			{

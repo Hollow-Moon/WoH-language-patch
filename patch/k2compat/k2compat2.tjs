@@ -1,0 +1,46 @@
+﻿global.LayerKrkr2	= Layer;
+class LayerKrkrz extends LayerKrkr2
+{
+	function LayerKrkrz()
+	{
+		super.Layer(...);
+	}
+
+	function Layer()
+	{
+		LayerKrkrz(...);
+	}
+
+	function pileRect(left, top, src, sleft, stop, swidth, sheight, opacity)
+	{
+		return operateRect(left, top, src, sleft, stop, swidth, sheight,, opacity);
+	}
+
+	function stretchBlend(left, top, src, sleft, stop, swidth, sheight, opacity, type)
+	{
+		return operateStretch(left, top, src, sleft, stop, swidth, sheight,, opacity, type);
+	}
+}
+global.Layer = LayerKrkrz;
+
+global.WindowKrkr2 = Window;
+class WindowKrkrz extends WindowKrkr2
+{
+	function WindowKrkrz()
+	{
+		super.Window(...);
+		enableTouch = false; // disables KAG input touch so that tablets touch will work.
+	}
+
+	function Window()
+	{
+		WindowKrkrz(...);
+	}
+
+	function setLayerPos(x, y)
+	{
+		fore.base.setPos(x, y);
+		back.base.setPos(x, y);
+	}
+}
+global.Window = WindowKrkrz;

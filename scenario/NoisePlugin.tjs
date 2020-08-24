@@ -751,7 +751,7 @@ class NoiseLayer extends Layer
 				super.drawNoise(m, d, p, seed, 0, 0, width, height, holdalpha);
 				return;
 			}
-			inTrans	|= par.inTransition || par.comp.inTransition if typeof par.inTransition != "undefined";
+			inTrans	|= par.inTransition || par.comp.inTransition if ((typeof(par.comp) !== "undefined") && (typeof(par.comp.inTransition) !== "undefined"));
 			par	= par.parent;
 		}
 

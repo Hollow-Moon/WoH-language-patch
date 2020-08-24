@@ -2724,8 +2724,12 @@ class KAGWindow_override extends KAGWindow_original
 			}
 			else
 			{
-				//	保存不要なら、現在残っている画像を破棄する
-				Storages.deleteFile(ifn);
+				try
+				{
+					//	保存不要なら、現在残っている画像を破棄する
+					Storages.deleteFile(ifn);
+				}
+				catch (e) {}
 			}
 		}
 

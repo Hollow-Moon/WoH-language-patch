@@ -241,6 +241,10 @@ class PopUpPlugin extends KAGPlugin
 
 	function clear(layer)
 	{
+		if (!(typeof(this) === "Object" && isvalid(this) && typeof(this.list) === "Object" && isvalid(this.list)))
+		{
+			return;
+		}
 //		dmt("Popup.clear("+layer+")");
 		if(layer != void)
 		{

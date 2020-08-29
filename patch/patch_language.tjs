@@ -323,18 +323,15 @@ global.Array.load = function(filename, mode='')
 	{
 		return global.Array.load_PatchLanguage_original(file_result, mode);
 	}
-	else if (typeof(file_result) === "Integer")
+	else if (typeof(file_result) === "Integer" && file_result === true)
 	{
-		if (file_result === false)
-		{
-			return global.Array.load_PatchLanguage_original(filename, mode);
-		}
-		else
-		{
-			this.clear();
-			this.assign(languageFileCache[global.kag.sflags.language][filename]);
-			return this;
-		}
+		this.clear();
+		this.assign(languageFileCache[global.kag.sflags.language][filename]);
+		return this;
+	}
+	else
+	{
+		return global.Array.load_PatchLanguage_original(filename, mode);
 	}
 };
 
@@ -346,16 +343,13 @@ global.Scripts.execStorage = function(filename, mode='', context=global)
 	{
 		return global.Scripts.execStorage_PatchLanguage_original(file_result, mode, context);
 	}
-	else if (typeof(file_result) === "Integer")
+	else if (typeof(file_result) === "Integer" && file_result === true)
 	{
-		if (file_result === false)
-		{
-			return global.Scripts.execStorage_PatchLanguage_original(...);
-		}
-		else
-		{
-			return global.Scripts.exec(languageFileCache[global.kag.sflags.language][filename].join("\n"), filename, 0, context);
-		}
+		return global.Scripts.exec(languageFileCache[global.kag.sflags.language][filename].join("\n"), filename, 0, context);
+	}
+	else
+	{
+		return global.Scripts.execStorage_PatchLanguage_original(...);
 	}
 };
 
@@ -367,16 +361,13 @@ global.Scripts.evalStorage = function(filename, mode='', context=global)
 	{
 		return global.Scripts.evalStorage_PatchLanguage_original(file_result, mode, context);
 	}
-	else if (typeof(file_result) === "Integer")
+	else if (typeof(file_result) === "Integer" && file_result === true)
 	{
-		if (file_result === false)
-		{
-			return global.Scripts.evalStorage_PatchLanguage_original(...);
-		}
-		else
-		{
-			return global.Scripts.eval(languageFileCache[global.kag.sflags.language][filename].join("\n"), filename, 0, context);
-		}
+		return global.Scripts.eval(languageFileCache[global.kag.sflags.language][filename].join("\n"), filename, 0, context);
+	}
+	else
+	{
+		return global.Scripts.evalStorage_PatchLanguage_original(...);
 	}
 };
 
@@ -388,16 +379,13 @@ global.Storages.isExistentStorage = function(filename)
 	{
 		return true;
 	}
-	else if (typeof(file_result) === "Integer")
+	else if (typeof(file_result) === "Integer" && file_result === true)
 	{
-		if (file_result === false)
-		{
-			return global.Storages.isExistentStorage_PatchLanguage_original(filename);
-		}
-		else
-		{
-			return true;
-		}
+		return true;
+	}
+	else
+	{
+		return global.Storages.isExistentStorage_PatchLanguage_original(filename);
 	}
 };
 
@@ -409,16 +397,13 @@ global.Storages.getPlacedPath = function(filename)
 	{
 		return file_result;
 	}
-	else if (typeof(file_result) === "Integer")
+	else if (typeof(file_result) === "Integer" && file_result === true)
 	{
-		if (file_result === false)
-		{
-			return global.Storages.getPlacedPath_PatchLanguage_original(filename);
-		}
-		else
-		{
-			return void;
-		}
+		return filename;
+	}
+	else
+	{
+		return global.Storages.getPlacedPath_PatchLanguage_original(filename);
 	}
 };
 

@@ -4,7 +4,9 @@
 @if(GAME_WOHN)
 //	タグ属性の未定義チェックを行うか
 @set(USE_CHECK_TAG_PARAM=1)
+@endif
 
+@if(GAME_FATE||GAME_FHAT||GAME_WOHN)
 //	デバッグレベルの設定
 @set(CONDUCTOR_VERBOSE=0)
 @endif
@@ -572,7 +574,7 @@ class Conductor extends BaseConductor
 		super.BaseConductor();
 		ignoreCR = global.ignoreCR;
 		debugLevel = tkdlVerbose;
-@if(GAME_WOHN)
+@if(GAME_FATE||GAME_FHAT||GAME_WOHN)
 @if(CONDUCTOR_VERBOSE)
 		debugLevel = tkdlVerbose;
 @endif

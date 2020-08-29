@@ -384,6 +384,29 @@ class FontWrapper
 			}
 			catch (e)
 			{
+				var exception_message = "Unknown error";
+				if (typeof(e) === "Object" && isvalid(e))
+				{
+					if (typeof(e.message) === "String")
+					{
+						exception_message = e.message;
+					}
+				}
+				dm("Exception: " + exception_message);
+				var trace_string = "";
+				if (typeof(e) === "Object" && isvalid(e))
+				{
+					if (typeof(e.trace) === "String")
+					{
+						trace_string = e.trace;
+					}
+				}
+				if (trace_string !== "")
+				{
+					dm("Trace: " + trace_string);
+				}
+				dm("This error occurs when there is a failure in the font enumeration function.");
+				dm("The game should continue to work without font enumeration functionality.");
 				ret = [];
 			}
 		}

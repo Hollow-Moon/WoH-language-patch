@@ -784,10 +784,10 @@ function MessageLayer_config()
 ;marginR = 8; // 右余白
 ;marginB = 8; // 下余白
 @if(GAME_FATE||GAME_FHAT)
-;marginL = 50; // 左余白
-;marginT = 55; // 上余白
-;marginR = 48; // 右余白
-;marginB = 65; // 下余白
+;marginL = __si("50", "marginl_basic"); // 左余白
+;marginR = __si("55", "marginr_basic"); // 右余白
+;marginT = __si("48", "margint_basic"); // 上余白
+;marginB = __si("65", "marginb_basic"); // 下余白
 /*
 ;marginL = 20; // 左余白
 ;marginT = 2; // 上余白
@@ -796,10 +796,10 @@ function MessageLayer_config()
 */
 @endif
 @if(GAME_WOHN)
-;marginL = __si("142", "marginl_basic"); // 左余白
-;marginR = __si("142", "marginr_basic"); // 右余白
-;marginT = __si("69", "margint_basic"); // 上余白
-;marginB = __si("69", "marginb_basic"); // 下余白
+;marginL = __si("142", "marginl_basic_wohn"); // 左余白
+;marginR = __si("142", "marginr_basic_wohn"); // 右余白
+;marginT = __si("69", "margint_basic_wohn"); // 上余白
+;marginB = __si("69", "marginb_basic_wohn"); // 下余白
 @endif
 
 
@@ -840,19 +840,16 @@ function MessageLayer_config()
 ;defaultAutoReturn = true;
 
 
+@if(GAME_FATE||GAME_FHAT||GAME_WOHN)
+// ◆ 可変ピッチ(プロポーショナル)フォントでも固定ピッチで表示するか？
+// kag.showFixedPitchOnlyInFontSelectorが真でプロポーショナルフォントが選ばれており、
+// 且つこのフラグが真のときにのみ有効です。
 @if(GAME_WOHN)
-// ◆ 可変ピッチ(プロポーショナル)フォントでも固定ピッチで表示するか？
-// kag.showFixedPitchOnlyInFontSelectorが真でプロポーショナルフォントが選ばれており、
-// 且つこのフラグが真のときにのみ有効です。
-;displaysInFixedPitchAlsoByVariable = __si("0", "displaysinfixedpitchalsobyvariable_basic"); // defstyle タグの pitch 属性に相当
+;displaysInFixedPitchAlsoByVariable = __si("0", "displaysinfixedpitchalsobyvariable_basic_wohn"); // defstyle タグの pitch 属性に相当
 @endif
-
-
 @if(GAME_FATE||GAME_FHAT)
-// ◆ 可変ピッチ(プロポーショナル)フォントでも固定ピッチで表示するか？
-// kag.showFixedPitchOnlyInFontSelectorが真でプロポーショナルフォントが選ばれており、
-// 且つこのフラグが真のときにのみ有効です。
-;displaysInFixedPitchAlsoByVariable	= true;
+;displaysInFixedPitchAlsoByVariable = __si("1", "displaysinfixedpitchalsobyvariable_basic"); // defstyle タグの pitch 属性に相当
+@endif
 @endif
 
 
@@ -869,11 +866,11 @@ function MessageLayer_config()
 // デフォルトの文字の大きさ ( 高さ ) を pixel 単位で指定します。
 ;defaultFontSize = 24;  // deffont タグの size 属性に相当
 @if(GAME_FATE||GAME_FHAT)
-;defaultFontSize = 27;  // deffont タグの size 属性に相当
+;defaultFontSize = __si("27", "fontsize_basic");  // deffont タグの size 属性に相当
 // 26文字x13行設定
 @endif
 @if(GAME_WOHN)
-;defaultFontSize = __si("26", "fontsize_basic");  // deffont タグの size 属性に相当
+;defaultFontSize = __si("26", "fontsize_basic_wohn");  // deffont タグの size 属性に相当
 					   // → HistoryLayer_configのfontHeight,lineHeightもWoHシステムでは合わせておくこと
 @endif
 
@@ -885,7 +882,7 @@ function MessageLayer_config()
 ;defaultLineSpacing = __si("13", "linespacing_basic"); // defstyle タグの linespacing 属性に相当
 @endif
 @if(GAME_WOHN)
-;defaultLineSpacing = __si("18", "linespacing_basic"); // defstyle タグの linespacing 属性に相当
+;defaultLineSpacing = __si("18", "linespacing_basic_wohn"); // defstyle タグの linespacing 属性に相当
 @endif
 
 // ◆ 字間
@@ -895,7 +892,7 @@ function MessageLayer_config()
 // す。
 ;defaultPitch = 0; // defstyle タグの pitch 属性に相当
 @if(GAME_WOHN)
-;defaultPitch = __si("1", "defaultpitch_basic"); // defstyle タグの pitch 属性に相当
+;defaultPitch = __si("1", "defaultpitch_basic_wohn"); // defstyle タグの pitch 属性に相当
 @endif
 
 
@@ -912,7 +909,7 @@ function MessageLayer_config()
 ;userFace = __s("ＭＳ ゴシック", "window_font_face"); // deffont タグの face 属性に相当
 @endif
 @if(GAME_WOHN)
-;userFace = __s("明朝D", "window_font_face"); // deffont タグの face 属性に相当
+;userFace = __s("明朝D", "window_font_face_wohn"); // deffont タグの face 属性に相当
 @endif
 
 
@@ -925,10 +922,10 @@ function MessageLayer_config()
 // する場合は true, しない場合は false を指定します。
 ;defaultBold = true; // deffont タグの bold 属性に相当
 @if(GAME_FATE||GAME_FHAT)
-;defaultBold = false; // deffont タグの bold 属性に相当
+;defaultBold = __sb("0", "defaultbold_basic");
 @endif
 @if(GAME_WOHN)
-;defaultBold = __sb("1", "defaultbold_basic");
+;defaultBold = __sb("1", "defaultbold_basic_wohn");
 @endif
 
 
@@ -1107,16 +1104,13 @@ function HistoryLayer_config()
 ;fontName = __s("ＭＳ 明朝", "history_font_face");
 @endif
 @if(GAME_WOHN)
-;fontName = __s("明朝D", "history_font_face");
+;fontName = __s("明朝D", "history_font_face_wohn");
 @endif
 
 
 // ◆ フォントを太字にするか
 ;fontBold = true;
-@if(GAME_FATE||GAME_FHAT)
-;fontBold = false;
-@endif
-@if(GAME_WOHN)
+@if(GAME_FATE||GAME_FHAT||GAME_WOHN)
 ;fontBold = __sb("0", "font_bold_history");
 @endif
 
@@ -1138,10 +1132,10 @@ function HistoryLayer_config()
 // ◆ フォントのサイズ ( pixel単位)
 ;fontHeight = 24;
 @if(GAME_FATE||GAME_FHAT)
-;fontHeight = 27;
+;fontHeight = __si("27", "font_height_history");
 @endif
 @if(GAME_WOHN)
-;fontHeight = __si("26", "font_height_history");
+;fontHeight = __si("26", "font_height_history_wohn");
 @endif
 
 
@@ -1199,10 +1193,10 @@ function HistoryLayer_config()
 @if(GAME_WOHN)
 // ◆ マージン設定
 // メッセージレイヤーと同じにする
-;marginL = __si("142", "marginl_history"); // 左余白
-;marginR = __si("142", "marginr_history"); // 右余白
-;marginT = __si("69", "margint_history"); // 上余白
-;marginB = __si("69", "marginb_history"); // 下余白
+;marginL = __si("142", "marginl_history_wohn"); // 左余白
+;marginR = __si("142", "marginr_history_wohn"); // 右余白
+;marginT = __si("69", "margint_history_wohn"); // 上余白
+;marginB = __si("69", "marginb_history_wohn"); // 下余白
 @endif
 
 @if(GAME_WOHN)

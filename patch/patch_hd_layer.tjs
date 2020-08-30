@@ -3,7 +3,7 @@ var hdExtension = ".webp";
 @if(GAME_FATE)
 var upscaledFactor = 1.6;
 @endif
-@if(GAME_FHAT)
+@if(GAME_FHAT||GAME_WOHN)
 var upscaledFactor = 2;
 @endif
 
@@ -21,7 +21,12 @@ var messageBreakImages = ["linebreak_a", "pagebreak_a"];
 
 var imageNameToNumberOfImages = %[
 	"pt_number" => 10,
+@if(GAME_FATE||GAME_FHAT)
 	"linebreak_a" => 21,
+@endif
+@if(GAME_WOHN)
+	"linebreak_a" => 40,
+@endif
 	"pagebreak_a" => 16,
 	"pagebreak_a.png" => 21, // 21 in low res
 

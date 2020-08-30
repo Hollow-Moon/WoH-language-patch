@@ -2025,7 +2025,7 @@ class KAGWindow_override extends KAGWindow_original
 	function onKeyUp(key, shift)
 	{
 		// This is the print screen code
-		if(key == VK_SCREENSHOT && (shift & ssAlt))
+		if((typeof(global.VK_SCREENSHOT) === "Integer") && (key == VK_SCREENSHOT && (shift & ssAlt)))
 		{
 			var captureLayer = new Layer(this, primaryLayer);
 			with(captureLayer)
@@ -2059,7 +2059,7 @@ class KAGWindow_override extends KAGWindow_original
 			cancelSkip() if skipMode == 4;
 
 @if(DEBUG)
-		else if(key == VK_SNAPSHOT)
+		else if((typeof(global.VK_SCREENSHOT) === "Integer") && (key == VK_SNAPSHOT))
 		{
 			var	captureLayer	= new Layer(this, primaryLayer);
 			with(captureLayer)

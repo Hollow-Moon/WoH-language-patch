@@ -255,11 +255,11 @@ var languageFileCache = %[];
 function find_file_in_language_paths(filename, language = void)
 {
 	// Check for absolute path
-	if (filename.indexOf(":") !== -1)
+	if (typeof(filename) !== "String")
 	{
 		return false;
 	}
-	if ((filename === void) || (filename == null))
+	if (filename.indexOf(":") !== -1)
 	{
 		return false;
 	}

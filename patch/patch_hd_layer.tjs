@@ -124,6 +124,8 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 	var originalClipTop = 0;
 	var originalClipWidth = void;
 	var originalClipHeight = void;
+	var originalAttentionLeft = 0;
+	var originalAttentionTop = 0;
 
 	var isbg = false;
 	var fullScreenBg = false; // For bg images that occupy the whole screen.
@@ -278,6 +280,32 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		{
 			originalClipHeight = transformDiscrete(v, heightScale);
 			super.clipHeight = v*heightScale;
+		}
+	}
+
+	property attentionLeft
+	{
+		getter
+		{
+			return originalAttentionLeft;
+		}
+		setter(v)
+		{
+			originalAttentionLeft = transformDiscrete(v, widthScale);
+			super.attentionLeft = v*widthScale;
+		}
+	}
+
+	property attentionTop
+	{
+		getter
+		{
+			return originalAttentionTop;
+		}
+		setter(v)
+		{
+			originalAttentionTop = transformDiscrete(v, heightScale);
+			super.attentionTop = v*heightScale;
 		}
 	}
 
@@ -816,6 +844,60 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		return taginfo;
 	}
 
+	function loadProvinceImage(image)
+	{
+		throw new Exception("Function loadProvinceImage not implemented");
+	}
+
+	function getMainPixel(x, y)
+	{
+		x *= widthScale;
+		y *= heightScale;
+		return super.getMainPixel(x, y);
+	}
+
+	function setMainPixel(x, y, color)
+	{
+		x *= widthScale;
+		y *= heightScale;
+		super.setMainPixel(x, y, color);
+	}
+
+	function getMaskPixel(x, y)
+	{
+		x *= widthScale;
+		y *= heightScale;
+		return super.getMaskPixel(x, y);
+	}
+
+	function setMaskPixel(x, y, value)
+	{
+		x *= widthScale;
+		y *= heightScale;
+		super.setMaskPixel(x, y, value);
+	}
+
+	function getProvincePixel(x, y)
+	{
+		x *= widthScale;
+		y *= heightScale;
+		return super.getProvincePixel(x, y);
+	}
+
+	function setProvincePixel(x, y, value)
+	{
+		x *= widthScale;
+		y *= heightScale;
+		super.setProvincePixel(x, y, value);
+	}
+
+	function getLayerAt(x, y, exclude_self, get_disabled)
+	{
+		x *= widthScale;
+		y *= heightScale;
+		return super.getLayerAt(x, y, exclude_self, get_disabled);
+	}
+
 	function setSize(width, height)
 	{
 		updateBg(width, height);
@@ -841,10 +923,14 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 	function updateImageSize()
 	{
 		if (hasImage) {
+			// XXX: Fix the below behavior
+@if(0)
 			if (originalImageWidth < originalWidth) {
+				originalImageLeft = 0;
 				originalImageWidth = originalWidth;
 			}
 			if (originalImageHeight < originalHeight) {
+				originalImageTop = 0;
 				originalImageHeight = originalHeight;
 			}
 			if (originalImageWidth + originalImageLeft < originalWidth) {
@@ -853,6 +939,13 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 			if (originalImageHeight + originalImageTop < originalHeight) {
 				originalImageTop = originalHeight - originalImageHeight;
 			}
+@endif
+@if(1)
+			originalImageWidth = super.imageWidth / widthScale;
+			originalImageHeight = super.imageHeight / heightScale;
+			originalImageLeft = super.imageLeft / widthScale;
+			originalImageTop = super.imageTop / heightScale;
+@endif
 		}
 	}
 
@@ -909,6 +1002,10 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		}
 
 		super.setPos(transformLeft(left), transformTop(top), width, height);
+		if (width !== void || height !== void)
+		{
+			updateImageSize();
+		}
 	}
 
 	function setImagePos(left, top)
@@ -951,9 +1048,14 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		super.copyRect(src.transformLeft(left, this), src.transformTop(top, this), src, sleft*src.widthScale, stop*src.heightScale, swidth*src.widthScale, sheight*src.heightScale);
 	}
 
-	function operateStretch(left, top, width, height, src, sleft, stop, swidth, sheight, mode, opacity, type)
+	function copy9Patch(src)
 	{
-		super.operateStretch(src.transformLeft(left, this), src.transformTop(top, this), width*widthScale, height*heightScale, src, sleft*src.widthScale, stop*src.heightScale, swidth*src.widthScale, sheight*src.heightScale, mode, opacity, type);
+		throw new Exception("copy9Patch is not implemented");
+	}
+
+	function operateStretch(left, top, width, height, src, sleft, stop, swidth, sheight, mode, opacity, type, option)
+	{
+		super.operateStretch(src.transformLeft(left, this), src.transformTop(top, this), width*widthScale, height*heightScale, src, sleft*src.widthScale, stop*src.heightScale, swidth*src.widthScale, sheight*src.heightScale, mode, opacity, type, option);
 	}
 
 	function transformSLeft(src, sleft, swidth)
@@ -965,11 +1067,11 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		return sleft*src.widthScale;
 	}
 
-	function stretchCopy(left, top, width, height, src, sleft, stop, swidth, sheight, type)
+	function stretchCopy(left, top, width, height, src, sleft, stop, swidth, sheight, type, option)
 	{
 		sleft = transformSLeft(src, sleft, swidth);
 
-		super.stretchCopy(src.transformLeft(left, this), src.transformTop(top, this), width*widthScale, height*heightScale, src, sleft, stop*src.heightScale, swidth*src.widthScale, sheight*src.heightScale, type);
+		super.stretchCopy(src.transformLeft(left, this), src.transformTop(top, this), width*widthScale, height*heightScale, src, sleft, stop*src.heightScale, swidth*src.widthScale, sheight*src.heightScale, type, option);
 	}
 
 	function stretchCopyAA(left, top, width, height, src, sleft, stop, swidth, sheight, type)
@@ -1003,14 +1105,19 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		super.piledCopy(src.transformLeft(left, this), src.transformTop(top, this), src, sleft*src.widthScale, stop*src.heightScale, swidth*src.widthScale, sheight*src.heightScale);
 	}
 
-	function affineCopy(src, sx, sy, sw, sh, affine, a, b, c, d, tx, ty, type)
+	function affineCopy(src, sx, sy, sw, sh, affine, a, b, c, d, tx, ty, type, clear)
 	{
-		super.affineCopy(src, sx*src.widthScale, sy*src.heightScale, sw*src.widthScale, sh*src.heightScale, affine, a, b, c, d, tx*widthScale, ty*heightScale, type);
+		super.affineCopy(src, sx*src.widthScale, sy*src.heightScale, sw*src.widthScale, sh*src.heightScale, affine, a, b, c, d, tx*widthScale, ty*heightScale, type, clear);
 	}
 
 	function operateAffine(src, sx, sy, sw, sh, affine, a, b, c, d, tx, ty, mode, opa, type)
 	{
 		super.operateAffine(src, sx*src.widthScale, sy*src.heightScale, sw*src.widthScale, sh*src.heightScale, affine, a, b, c, d, tx*widthScale, ty*heightScale, mode, opa, type);
+	}
+
+	function doBoxBlur(xblur=1, yblur=1)
+	{
+		super.doBoxBlur(xblur*widthScale, yblur*heightScale);
 	}
 
 	function fillRect(left, top, width, height, color)
@@ -1023,8 +1130,17 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		super.colorRect(left*widthScale, top*heightScale, width*widthScale, height*heightScale, color, opacity);
 	}
 
-	function setClip(clipLeft, clipTop, clipWidth, clipHeight)
+	function setClip(args*)
 	{
+		if (args.count === 0)
+		{
+			super.setClip();
+			return;
+		}
+		var clipLeft = args.count >= 1 ? args[0] : 0;
+		var clipTop = args.count >= 2 ? args[1] : 0;
+		var clipWidth = args.count >= 3 ? args[2] : 0;
+		var clipHeight = args.count >= 4 ? args[3] : 0;
 		originalClipLeft = transformDiscrete(clipLeft, widthScale);
 		originalClipTop = transformDiscrete(clipTop, heightScale);
 		originalClipWidth = transformDiscrete(clipWidth, widthScale);
@@ -1035,6 +1151,8 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 
 	function setAttentionPos(left, top)
 	{
+		originalAttentionLeft = transformDiscrete(v, widthScale);
+		originalAttentionTop = transformDiscrete(v, heightScale);
 		super.setAttentionPos(left*widthScale, top*heightScale);
 	}
 
@@ -1045,16 +1163,17 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		originalImageHeight = src.originalImageHeight;
 		imageStorage = src.imageStorage;
 		isbg = src.isbg;
-	}
-
-	function setMainPixel(x, y, color)
-	{
-		super.setMainPixel(x*widthScale, y*heightScale, color);
+		updateImageSize();
 	}
 
 	function drawText(left, top, text, color, opacity, aa, slevel, scolor, swidth, sofsx, sofxy)
 	{
 		super.drawText(left*widthScale, top*heightScale, text, color, opacity, aa, slevel, scolor, swidth, sofsx, sofxy);
+	}
+
+	function drawGlyph(left, top, glyph, color, opacity, aa, slevel, scolor, swidth, sofsx, sofxy)
+	{
+		super.drawGlyph(left*widthScale, top*heightScale, glyph, color, opacity, aa, slevel, scolor, swidth, sofsx, sofxy);
 	}
 
 	// TODO figure out if necessary

@@ -2024,13 +2024,15 @@ class KAGWindow_override extends KAGWindow_original
 
 	function onKeyUp(key, shift)
 	{
-		if(key == VK_SNAPSHOT && (shift & ssAlt))
+		// This is the print screen code
+		if(key == VK_9 && (shift & ssAlt))
 		{
 			var captureLayer = new Layer(this, primaryLayer);
 			with(captureLayer)
 			{
 				.setSize(primaryLayer.width, primaryLayer.height);
 				var	ml;
+@if(0)
 				if(singleMessageLayer && typeof(this.isMessageVisible) === "Object" && this.isMessageVisible())
 				{
 					ml	= new Layer(this, fore.base);
@@ -2039,6 +2041,8 @@ class KAGWindow_override extends KAGWindow_original
 					ml.visible	= true;
 				}
 				.piledCopy(0, 0, fore.base, 0, 0, primaryLayer.width, primaryLayer.height);
+@endif
+				.piledCopy(0, 0, primaryLayer, 0, 0, primaryLayer.width, primaryLayer.height);
 				invalidate ml if ml != void;
 @if(0)
 				var	copyright	= "(C)TYPE-MOON All Rights Reserved.";

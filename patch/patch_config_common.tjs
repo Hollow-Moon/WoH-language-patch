@@ -113,13 +113,20 @@ function dmt(msg*) { Debug.message(msg.join(", ")+": "+Scripts.getTraceString())
 @set(ENABLE_LINKS=1)
 @endif
 
-@if(kirikiriz)
+@if(kirikiriz&&!GAME_WOHN)
 @set(HD_MODE=1)
 @endif
 
 @if(kirikiriz||GAME_WOHN)
 @set(ZOOM_WINDOW=1)
 @endif
+
+{
+	if (typeof(global.KirikiriSDL2Internal) === "Object")
+	{
+		Scripts.eval("@set(ZOOM_WINDOW=0)");
+	}
+}
 
 @if(GAME_FATE||GAME_FHAT)
 @set(PATCH_RUBY=1)

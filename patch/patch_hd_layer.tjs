@@ -112,12 +112,18 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 	var imageStorage = void;
 	var isHd = false;
 
-	var originalRect = new Rect();
+	var originalLeft = 0;
+	var originalTop = 0;
 	var originalImageLeft = 0;
 	var originalImageTop = 0;
-	var originalImageWidth = void;
-	var originalImageHeight = void;
-	var originalClipRect = new Rect();
+	var originalWidth = 32;
+	var originalHeight = 32;
+	var originalImageWidth = 32;
+	var originalImageHeight = 32;
+	var originalClipLeft = 0;
+	var originalClipTop = 0;
+	var originalClipWidth = void;
+	var originalClipHeight = void;
 	var originalAttentionLeft = 0;
 	var originalAttentionTop = 0;
 
@@ -176,12 +182,12 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 	{
 		getter
 		{
-			return originalRect.left;
+			return originalLeft;
 		}
 		setter(v)
 		{
-			originalRect.left = transformDiscrete(v, leftScale());
-			super.left = transformLeft(originalRect.left);
+			originalLeft = transformDiscrete(v, leftScale());
+			super.left = transformLeft(originalLeft);
 		}
 	}
 
@@ -189,12 +195,12 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 	{
 		getter
 		{
-			return originalRect.top;
+			return originalTop;
 		}
 		setter(v)
 		{
-			originalRect.top = transformDiscrete(v, topScale());
-			super.top = transformTop(originalRect.top);
+			originalTop = transformDiscrete(v, topScale());
+			super.top = transformTop(originalTop);
 		}
 	}
 
@@ -228,7 +234,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 	{
 		getter
 		{
-			return originalClipRect.left;
+			return originalClipLeft;
 		}
 		setter(v)
 		{
@@ -240,7 +246,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 	{
 		getter
 		{
-			return originalClipRect.top;
+			return originalClipTop;
 		}
 		setter(v)
 		{
@@ -253,7 +259,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 	{
 		getter
 		{
-			return originalClipRect.width;
+			return originalClipWidth;
 		}
 		setter(v)
 		{
@@ -265,7 +271,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 	{
 		getter
 		{
-			return originalClipRect.height;
+			return originalClipHeight;
 		}
 		setter(v)
 		{
@@ -332,11 +338,11 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 			if (absoluteMode) {
 				return super.width;
 			}
-			return originalRect.width;
+			return originalWidth;
 		}
 		setter(v)
 		{
-			originalRect.width = transformDiscrete(v, widthScale);
+			originalWidth = transformDiscrete(v, widthScale);
 			super.width = v * widthScale;
 			updateImageSize();
 		}
@@ -349,11 +355,11 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 			if (absoluteMode) {
 				return super.height;
 			}
-			return originalRect.height;
+			return originalHeight;
 		}
 		setter(v)
 		{
-			originalRect.height = transformDiscrete(v, heightScale);
+			originalHeight = transformDiscrete(v, heightScale);
 			super.height = v * heightScale;
 			updateImageSize();
 		}
@@ -363,6 +369,15 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 	{
 		getter
 		{
+@if(0)
+			if (widthScale == 1)
+			{
+				if (super.imageWidth != originalImageWidth)
+				{
+					dm("warning: image width " + super.imageWidth + " does not match orig " + originalImageWidth);
+				}
+			}
+@endif
 			if (absoluteMode) {
 				return super.imageWidth;
 			}
@@ -371,15 +386,16 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		setter(v)
 		{
 			originalImageWidth = transformDiscrete(v, widthScale);
-			if (originalImageWidth < originalRect.width)
+			if (originalImageWidth < originalWidth)
 			{
 				originalImageLeft = 0;
-				originalRect.width = originalImageWidth;
+				originalWidth = originalImageWidth;
 			}
-			if (originalImageWidth + originalImageLeft < originalRect.width)
+			if (originalImageWidth + originalImageLeft < originalWidth)
 			{
-				originalImageLeft = originalRect.width - originalImageWidth;
+				originalImageLeft = originalWidth - originalImageWidth;
 			}
+			resetClip();
 			super.imageWidth = v * widthScale;
 		}
 	}
@@ -388,6 +404,15 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 	{
 		getter
 		{
+@if(0)
+			if (heightScale == 1)
+			{
+				if (super.imageHeight != originalImageHeight)
+				{
+					dm("warning: image height " + super.imageHeight + " does not match orig " + originalImageHeight);
+				}
+			}
+@endif
 			if (absoluteMode) {
 				return super.imageHeight;
 			}
@@ -396,16 +421,101 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		setter(v)
 		{
 			originalImageHeight = transformDiscrete(v, heightScale);
-			if (originalImageHeight < originalRect.height)
+			if (originalImageHeight < originalHeight)
 			{
 				originalImageTop = 0;
-				originalRect.height = originalImageHeight;
+				originalHeight = originalImageHeight;
 			}
-			if (originalImageHeight + originalImageTop < originalRect.height)
+			if (originalImageHeight + originalImageTop < originalHeight)
 			{
-				originalImageTop = originalRect.height - originalImageHeight;
+				originalImageTop = originalHeight - originalImageHeight;
 			}
+			resetClip();
 			super.imageHeight = v * heightScale;
+		}
+	}
+
+	function resetClip()
+	{
+		originalClipLeft = 0;
+		originalClipTop = 0;
+		originalClipWidth = originalImageWidth;
+		originalClipHeight = originalImageHeight;
+	}
+
+	function setInitialImageProperties()
+	{
+		if (!super.hasImage)
+		{
+			originalImageLeft = 0;
+			originalImageTop = 0;
+			originalImageWidth = originalWidth;
+			originalImageHeight = originalHeight;
+		}
+		resetClip();
+	}
+
+	property hasImage
+	{
+		getter
+		{
+			return super.hasImage;
+		}
+		setter(v)
+		{
+			if (v)
+			{
+				setInitialImageProperties();
+			}
+			super.hasImage = v;
+		}
+	}
+
+	property type
+	{
+		getter
+		{
+			return super.type;
+		}
+		setter(v)
+		{
+			if (super.type != v)
+			{
+				switch (super.type)
+				{
+					case ltOpaque:
+					case ltAlpha:
+					case ltAdditive:
+					case ltSubtractive:
+					case ltMultiplicative:
+					case ltDodge:
+					case ltDarken:
+					case ltLighten:
+					case ltScreen:
+					case ltAddAlpha:
+					case ltPsNormal:
+					case ltPsAdditive:
+					case ltPsSubtractive:
+					case ltPsMultiplicative:
+					case ltPsScreen:
+					case ltPsOverlay:
+					case ltPsHardLight:
+					case ltPsSoftLight:
+					case ltPsColorDodge:
+					case ltPsColorDodge5:
+					case ltPsColorBurn:
+					case ltPsLighten:
+					case ltPsDarken:
+					case ltPsDifference:
+					case ltPsDifference5:
+					case ltPsExclusion:
+						setInitialImageProperties();
+						break;
+					default:
+						break;
+				}
+			}
+			super.type = v;
 		}
 	}
 
@@ -643,10 +753,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 	{
 		super.Layer(...);
 		isbg = isBaseLayer;
-		originalRect.width = super.width / widthScale;
-		originalRect.height = super.height / heightScale;
-		originalImageWidth = super.imageWidth / widthScale;
-		originalImageHeight = super.imageHeight / heightScale;
+		resetClip();
 	}
 
 	function Layer()
@@ -703,7 +810,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 			}
 		}
 		// background settings affect position.
-		(global.Layer.setPos incontextof this)(originalRect.left, originalRect.top);
+		(global.Layer.setPos incontextof this)(originalLeft, originalTop);
 	}
 
 	function updateMessageLayerMobile() {
@@ -839,7 +946,14 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		} else if (imageStorage == "pagebreak_a" && storageExt == ".png") {
 			numberOfImages = imageNameToNumberOfImages[imageStorage + storageExt];
 		} else {
-			numberOfImages = imageNameToNumberOfImages[imageStorage] if imageNameToNumberOfImages[imageStorage] !== void;
+			if (imageNameToNumberOfImages[imageStorage] !== void)
+			{
+				numberOfImages = imageNameToNumberOfImages[imageStorage];
+			}
+			else
+			{
+				numberOfImages = 1;
+			}
 		}
 
 		upscale();
@@ -848,6 +962,8 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 			originalImageWidth = transformDiscrete(originalImageWidth, widthScale);
 			originalImageHeight = transformDiscrete(originalImageHeight, heightScale);
 		}
+
+		resetClip();
 
 		return taginfo;
 	}
@@ -910,8 +1026,8 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 	{
 		updateBg(width, height);
 
-		originalRect.width = transformDiscrete(width, widthScale);
-		originalRect.height = transformDiscrete(height, heightScale);
+		originalWidth = transformDiscrete(width, widthScale);
+		originalHeight = transformDiscrete(height, heightScale);
 
 		super.setSize(width * widthScale, height * heightScale);
 
@@ -923,24 +1039,28 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		updateBg(imageWidth, imageHeight);
 
 		originalImageWidth = transformDiscrete(imageWidth, widthScale);
-		if (originalImageWidth < originalRect.width)
+		if (originalImageWidth < originalWidth)
 		{
 			originalImageLeft = 0;
-			originalRect.width = originalImageWidth;
+			originalWidth = originalImageWidth;
 		}
-		if (originalImageWidth + originalImageLeft < originalRect.width)
+		if (originalImageWidth + originalImageLeft < originalWidth)
 		{
-			originalImageLeft = originalRect.width - originalImageWidth;
+			originalImageLeft = originalWidth - originalImageWidth;
 		}
 		originalImageHeight = transformDiscrete(imageHeight, heightScale);
-		if (originalImageHeight < originalRect.height)
+		if (originalImageHeight < originalHeight)
 		{
 			originalImageTop = 0;
-			originalRect.height = originalImageHeight;
+			originalHeight = originalImageHeight;
 		}
-		if (originalImageHeight + originalImageTop < originalRect.height)
+		if (originalImageHeight + originalImageTop < originalHeight)
 		{
-			originalImageTop = originalRect.height - originalImageHeight;
+			originalImageTop = originalHeight - originalImageHeight;
+		}
+		if (hasImage)
+		{
+			resetClip();
 		}
 
 		super.setImageSize(imageWidth * widthScale, imageHeight * heightScale);
@@ -949,25 +1069,26 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 	function updateImageSize()
 	{
 		if (hasImage) {
-			if (originalImageWidth < originalRect.width) {
-				originalImageWidth = originalRect.width;
+			if (originalImageWidth < originalWidth) {
+				originalImageWidth = originalWidth;
 			}
-			if (originalImageWidth + originalImageLeft < originalRect.width) {
-				originalImageLeft = originalRect.width - originalImageWidth;
+			if (originalImageWidth + originalImageLeft < originalWidth) {
+				originalImageLeft = originalWidth - originalImageWidth;
 			}
-			if (originalImageHeight < originalRect.height) {
-				originalImageHeight = originalRect.height;
+			if (originalImageHeight < originalHeight) {
+				originalImageHeight = originalHeight;
 			}
-			if (originalImageHeight + originalImageTop < originalRect.height) {
-				originalImageTop = originalRect.height - originalImageHeight;
+			if (originalImageHeight + originalImageTop < originalHeight) {
+				originalImageTop = originalHeight - originalImageHeight;
 			}
+			resetClip();
 		}
 	}
 
 	function setSizeToImageSize()
 	{
-		originalRect.width = originalImageWidth;
-		originalRect.height = originalImageHeight;
+		originalWidth = originalImageWidth;
+		originalHeight = originalImageHeight;
 		super.setSizeToImageSize();
 		updateImageSize();
 	}
@@ -1005,20 +1126,24 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 
 	function setPos(left, top, width, height)
 	{
-		originalRect.setOffset(left, top);
+		originalLeft = left;
+		originalTop = top;
 
 		if (width !== void) {
-			originalRect.width = width;
+			originalWidth = width;
 			width = width * widthScale;
 		}
 		if (height !== void) {
-			originalRect.height = height;
+			originalHeight = height;
 			height = height * heightScale;
 		}
 
 		super.setPos(transformLeft(left), transformTop(top), width, height);
 
-		updateImageSize();
+		if (width !== void || height !== void)
+		{
+			updateImageSize();
+		}
 	}
 
 	function setImagePos(left, top)
@@ -1038,14 +1163,14 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 	function updateBgFromSource(src, swidth, sheight)
 	{
 		// When copying a background image, set this layer to be background as well
-		if (src.isbg && src.imageWidth == swidth && src.imageHeight == sheight) {
+		if (src.isbg && src.imageWidthOriginal == swidth && src.imageHeightOriginal == sheight) {
 			isbg = src.isbg;
 			fullScreenBg = src.fullScreenBg;
 			fixedbg = src.fixedbg;
 			movingbg = src.movingbg;
 
 			isMask = true;
-			(global.Layer.setSize incontextof this)(src.imageWidth, src.imageHeight);
+			(global.Layer.setSize incontextof this)(src.imageWidthOriginal, src.imageHeightOriginal);
 			isMask = false;
 		}
 	}
@@ -1147,8 +1272,8 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 	{
 		if (args.count === 0)
 		{
-			super.setClip(0, 0, imageWidth, imageHeight);
-			originalClipRect.set(0, 0, originalImageWidth, originalImageHeight);
+			super.setClip(0, 0, super.imageWidth, super.imageHeight);
+			resetClip();
 			return;
 		}
 		var clipLeft = args.count >= 1 ? args[0] : 0;
@@ -1169,19 +1294,18 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		{
 			clipBottom = clipTop;
 		}
-		var originalClipLeft = transformDiscrete(clipLeft, widthScale);
-		var originalClipTop = transformDiscrete(clipTop, heightScale);
-		var originalClipWidth = transformDiscrete(clipWidth, widthScale);
-		var originalClipHeight = transformDiscrete(clipHeight, heightScale);
-		originalClipRect.set(originalClipLeft, originalClipTop, originalClipWidth, originalClipHeight);
+		originalClipLeft = transformDiscrete(clipLeft, widthScale);
+		originalClipTop = transformDiscrete(clipTop, heightScale);
+		originalClipWidth = transformDiscrete(clipWidth, widthScale);
+		originalClipHeight = transformDiscrete(clipHeight, heightScale);
 
 		super.setClip(clipLeft*widthScale, clipTop*heightScale, clipWidth*widthScale, clipHeight*heightScale);
 	}
 
 	function setAttentionPos(left, top)
 	{
-		originalAttentionLeft = transformDiscrete(v, widthScale);
-		originalAttentionTop = transformDiscrete(v, heightScale);
+		originalAttentionLeft = transformDiscrete(left, widthScale);
+		originalAttentionTop = transformDiscrete(top, heightScale);
 		super.setAttentionPos(left*widthScale, top*heightScale);
 	}
 
@@ -1193,6 +1317,10 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		imageStorage = src.imageStorage;
 		isbg = src.isbg;
 		updateImageSize();
+		if (hasImage)
+		{
+			resetClip();
+		}
 	}
 
 	function drawText(left, top, text, color, opacity, aa, slevel, scolor, swidth, sofsx, sofxy)

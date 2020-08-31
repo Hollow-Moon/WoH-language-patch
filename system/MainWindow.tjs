@@ -755,7 +755,9 @@ class KAGWindow extends Window
 			with (Debug.console) .restoreMaximize() if (.visible && typeof .restoreMaximize != "undefined");
 			return super.onCloseQuery(true);
 		}
+@if(ZOOM_WINDOW)
 		showRestore() if _minimized;	//	最小化状態を解除
+@endif
 		askYesNo(__("終了しますか？"), "確認", onCloseYes);
 		super.onCloseQuery(false);
 @endif
@@ -877,7 +879,6 @@ class KAGWindow extends Window
 
 	//---------------------------------------------------------- フック処理 --
 
-@if(!GAME_WOHN)
 	function callHook(array, arg1, arg2, arg3)
 	{
 		if(array.count)
@@ -899,7 +900,6 @@ class KAGWindow extends Window
 			return false;
 		}
 	}
-@endif
 
 	//------------------------------------------ パッドのキーマッピング作成 --
 

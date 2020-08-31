@@ -963,7 +963,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 			originalImageHeight = transformDiscrete(originalImageHeight, heightScale);
 		}
 
-		resetClip();
+		internalSetImageSize(originalImageWidth, originalImageHeight);
 
 		return taginfo;
 	}
@@ -1039,29 +1039,8 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		updateBg(imageWidth, imageHeight);
 
 		originalImageWidth = transformDiscrete(imageWidth, widthScale);
-		if (originalImageWidth < originalWidth)
-		{
-			originalImageLeft = 0;
-			originalWidth = originalImageWidth;
-		}
-		if (originalImageWidth + originalImageLeft < originalWidth)
-		{
-			originalImageLeft = originalWidth - originalImageWidth;
-		}
 		originalImageHeight = transformDiscrete(imageHeight, heightScale);
-		if (originalImageHeight < originalHeight)
-		{
-			originalImageTop = 0;
-			originalHeight = originalImageHeight;
-		}
-		if (originalImageHeight + originalImageTop < originalHeight)
-		{
-			originalImageTop = originalHeight - originalImageHeight;
-		}
-		if (hasImage)
-		{
-			resetClip();
-		}
+		internalSetImageSize(originalImageWidth, originalImageHeight);
 
 		super.setImageSize(imageWidth * widthScale, imageHeight * heightScale);
 	}
@@ -1081,6 +1060,34 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 			if (originalImageHeight + originalImageTop < originalHeight) {
 				originalImageTop = originalHeight - originalImageHeight;
 			}
+			resetClip();
+		}
+	}
+
+	function internalSetImageSize(width, height)
+	{
+		if (width < originalWidth)
+		{
+			originalImageLeft = 0;
+			originalWidth = width;
+		}
+		if (width + originalImageLeft < originalWidth)
+		{
+			originalImageLeft = originalWidth - width;
+		}
+
+		if (height < originalHeight)
+		{
+			originalImageTop = 0;
+			originalHeight = height;
+		}
+		if (height + originalImageTop < originalHeight)
+		{
+			originalImageTop = originalHeight - height;
+		}
+
+		if (hasImage)
+		{
 			resetClip();
 		}
 	}
@@ -1316,11 +1323,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		originalImageHeight = src.originalImageHeight;
 		imageStorage = src.imageStorage;
 		isbg = src.isbg;
-		updateImageSize();
-		if (hasImage)
-		{
-			resetClip();
-		}
+		internalSetImageSize(originalImageWidth, originalImageHeight);
 	}
 
 	function drawText(left, top, text, color, opacity, aa, slevel, scolor, swidth, sofsx, sofxy)

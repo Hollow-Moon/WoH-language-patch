@@ -185,11 +185,15 @@ function openLoadMenu()
 	}
 
 	//	マウスホイール対応
+@if(ZOOM_WINDOW)
 	kag.addHook("mouseWheel", onLoadMenuMouseWheel);
 	dm(kag.hookMap["mouseWheel"].count);
+@endif
 
 	//	キー対応
+@if(ZOOM_WINDOW)
 	kag.addHook("keyDown", onLoadMenuKeyDown);
+@endif
 	Menu_object.keyDownCallback	= onLoadMenuKeyDown;
 
 }
@@ -260,11 +264,15 @@ function doLoadByLoadMenu(no)
 	Menu_object.clearClick();
 
 	//	マウスホイール解除
+@if(ZOOM_WINDOW)
 	kag.removeHook("mouseWheel", onLoadMenuMouseWheel);
 	dm(kag.hookMap["mouseWheel"].count);
+@endif
 
 	//	キー解除
+@if(ZOOM_WINDOW)
 	kag.removeHook("keyDown", onLoadMenuKeyDown);
+@endif
 	delete Menu_object.keyDownCallback;
 
 	//	一度 black にフェードさせて、指定のデータをロードする
@@ -296,10 +304,14 @@ function closeLoadMenu(quick=false)
 	}
 
 	//	マウスホイール解除
+@if(ZOOM_WINDOW)
 	kag.removeHook("mouseWheel", onLoadMenuMouseWheel);
+@endif
 
 	//	キー解除
+@if(ZOOM_WINDOW)
 	kag.removeHook("keyDown", onLoadMenuKeyDown);
+@endif
 	delete Menu_object.keyDownCallback;
 
 	eraseSaveTextLayer();	//	テキスト消去用レイヤーを破棄する

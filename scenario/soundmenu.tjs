@@ -365,7 +365,9 @@ function SMbuttonState(hide)
 			//	onMouseUp によって呼び出された直後に何故か onMouseMove が発生するため、
 			//	すぐにボタン類が表示されてしまう。なので、asyncCaller で反応し始めるのを遅らす
 			asyncCaller.call(function {
+@if(ZOOM_WINDOW)
 				kag.addHook("mouseMove", SMmouseMove);
+@endif
 				Menu_object.keyDownCallback	= function { return smButtonHided; };
 				Menu_object.keyUpCallback	= SMkeyUp;
 			});
@@ -376,7 +378,9 @@ function SMbuttonState(hide)
 		tf.smHideTimer.enabled	= false;
 		invalidate tf.smHideTimer;
 		delete tf.smHideTimer;
+@if(ZOOM_WINDOW)
 		kag.removeHook("mouseMove", SMmouseMove);
+@endif
 		delete Menu_object.keyDownCallback;
 		delete Menu_object.keyUpCallback;
 		smButtonHided	= false;
@@ -523,7 +527,9 @@ function closeSoundMenu()
 		tf.smHideTimer.enabled	= false;
 		invalidate tf.smHideTimer;
 		delete tf.smHideTimer;
+@if(ZOOM_WINDOW)
 		kag.removeHook("mouseMove", SMmouseMove);
+@endif
 		delete Menu_object.keyDownCallback;
 		delete Menu_object.keyUpCallback;
 	}

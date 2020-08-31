@@ -36,6 +36,7 @@ function openConfigMenu()
 	inMenu("config");
 	Scripts.execStorage("config_system.ttd");
 
+@if(ZOOM_WINDOW)
 	//	ウィンドウメニューからウィンドウサイズが変更されたときにも追随するように
 	kag.addHook("afterChangeWindowSize", CFonAfterChangeWindowSize);
 	kag.addHook("afterChangeScreenMode", CFonAfterChangeScreenMode);
@@ -43,6 +44,7 @@ function openConfigMenu()
 	kag.addHook("afterChangeWindowResizeable", CFonAfterChangeWindowResizeable);
 
 	kag.addHook("keyDown", CFonKeyDown);	//	Cキーで閉じるため
+@endif
 	Menu_object.keyDownCallback	= CFonKeyDown;
 	Menu_object.setClick(, "closeConfigMenu()");
 	Menu_object.setDisfocusableAll();	//	titleメニューや右クリックメニューを focusable=false にする
@@ -61,11 +63,13 @@ function closeConfigMenu()
 	CFcloseFontSelect();
 	outMenu("config");
 
+@if(ZOOM_WINDOW)
 	kag.removeHook("afterChangeWindowSize", CFonAfterChangeWindowSize);
 	kag.removeHook("afterChangeScreenMode", CFonAfterChangeScreenMode);
 	kag.removeHook("afterChangeMagnifyType", CFonAfterChangeMagnifyType);
 	kag.removeHook("afterChangeWindowResizeable", CFonAfterChangeWindowResizeable);
 	kag.removeHook("keyDown", CFonKeyDown);	//	Cキーで閉じるため
+@endif
 	with(Menu_object)
 	{
 		.playSE(closese);

@@ -312,7 +312,9 @@ class MouseCursorPlugin extends KAGPlugin
 kag.addPlugin(global.mousecursor_object = new MouseCursorPlugin(kag));
 
 //	ウィンドウメッセージをフック
+@if(ZOOM_WINDOW)
 kag.addHook("mouseMove", global.mousecursor_object.onMouseMove);
+@endif
 /*
 kag.original_onMouseMove_by_mousecursorplugin	= kag.onMouseMove;
 kag.onMouseMove	= function(x, y)

@@ -97,14 +97,18 @@ function askYesNo(message, caption, yesFunc, noFunc, param, doneFunc, automove=0
 	}
 
 	//	マウスホイールのフックを無効化
+@if(ZOOM_WINDOW)
 	tf.sw_lastwheelhook	= kag.hookMap["mouseWheel"];
 	kag.hookMap["mouseWheel"]	= void;
+@endif
 }
 function doneAskYesNo(yes=false)
 {
 	//	マウスホイールのフックを元に戻す
+@if(ZOOM_WINDOW)
 	kag.hookMap["mouseWheel"]	= tf.sw_lastwheelhook;
 	delete tf.sw_lastwheelhook;
+@endif
 
 	//	キーダウン/アップフックを戻す
 	if(typeof tf.lastKeyDownCallback != "undefined")

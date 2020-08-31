@@ -517,8 +517,10 @@ function openCGMenu(page="fore")
 
 	CGsetKeyHook();	//	kagのキーボードフックを占有
 
+@if(ZOOM_WINDOW)
 	//	マウスホイールも
 	kag.addHook("mouseWheel", onCGMenuMouseWheel);
+@endif
 }
 //	CGメニューを閉じる
 function closeCGMenu()
@@ -555,7 +557,9 @@ function closeCGMenu()
 	}
 
 	CGresetKeyHook();	//	キーボードフックを復帰
+@if(ZOOM_WINDOW)
 	kag.removeHook("mouseWheel", onCGMenuMouseWheel);	//	ホイールも
+@endif
 
 	with(Menu_object)
 	{

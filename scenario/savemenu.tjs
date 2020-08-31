@@ -329,10 +329,14 @@ function openSaveMenu(snapwithmenuitem=false)
 	}
 
 	//	マウスホイール対応
+@if(ZOOM_WINDOW)
 	kag.addHook("mouseWheel", onSaveMenuMouseWheel);
+@endif
 
 	//	キー対応
+@if(ZOOM_WINDOW)
 	kag.addHook("keyDown", onSaveMenuKeyDown);
+@endif
 	Menu_object.keyDownCallback	= onSaveMenuKeyDown;
 }
 function onSaveMenuMouseWheel(shift, delta, x, y)

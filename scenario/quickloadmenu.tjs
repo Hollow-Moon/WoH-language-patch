@@ -90,7 +90,9 @@ function openQuickMenu()
 	Menu_object.setClick(, "closeQuickMenu()");
 
 	//	キー対応
+@if(ZOOM_WINDOW)
 	kag.addHook("keyDown", onQuickMenuKeyDown);
+@endif
 	Menu_object.keyDownCallback	= onQuickMenuKeyDown;
 }
 function onQuickMenuKeyDown(key, shift)
@@ -151,7 +153,9 @@ function closeQuickMenu(saveno, loadno)
 	Menu_object.resetClick();
 
 	//	キー解除
+@if(ZOOM_WINDOW)
 	kag.removeHook("keyDown", onQuickMenuKeyDown);
+@endif
 	delete Menu_object.keyDownCallback;
 
 	//	saveno, loadno が void 以外なら、それぞれ処理を行う

@@ -1842,8 +1842,10 @@ class KAGWindow_override extends KAGWindow_original
 			}
 			else if(ext == ".bmp" && loadBookMarkFromFile(fn))
 				break;	//	セーブデータなら状態を復元する(一つだけ)
+@if(ZOOM_WINDOW)
 			else
 				callHook("fileDrop", [ fn ]);
+@endif
 		}
 	}
 @endif
@@ -1860,7 +1862,9 @@ class KAGWindow_override extends KAGWindow_original
 			inputDevice	= "mouse";
 		else
 			mouseMoveByKeyboard	= false;
+@if(ZOOM_WINDOW)
 		callHook("mouseMove", x, y);
+@endif
 		super.onMouseMove(...);
 	}
 
@@ -1951,8 +1955,10 @@ class KAGWindow_override extends KAGWindow_original
 				historyLayer.windowMouseWheel(shift, delta, x, y);
 			}
 		}
+@if(ZOOM_WINDOW)
 		else
 			callHook("mouseWheel", shift, delta, x, y);
+@endif
 	}
 
 	function onKeyDown(key, shift)

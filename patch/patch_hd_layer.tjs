@@ -145,6 +145,354 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 
 	var absoluteMode = false;
 
+	function onClick_patch_hd_layer_override(x, y)
+	{
+		x /= wideScaleFactor;
+		y /= scaleFactor;
+		this.onClick_patch_hd_layer_original(x, y);
+	}
+
+	property onClick_patch_hd_layer_property_shim
+	{
+		getter
+		{
+			return this.onClick_patch_hd_layer_override;
+		}
+		setter(v)
+		{
+			this.onClick_patch_hd_layer_original = v;
+		}
+	}
+
+	function onDoubleClick_patch_hd_layer_override(x, y)
+	{
+		x /= wideScaleFactor;
+		y /= scaleFactor;
+		this.onDoubleClick_patch_hd_layer_original(x, y);
+	}
+
+	property onDoubleClick_patch_hd_layer_property_shim
+	{
+		getter
+		{
+			return this.onDoubleClick_patch_hd_layer_override;
+		}
+		setter(v)
+		{
+			this.onDoubleClick_patch_hd_layer_original = v;
+		}
+	}
+
+	function onMouseDown_patch_hd_layer_override(x, y, button, shift)
+	{
+		x /= wideScaleFactor;
+		y /= scaleFactor;
+		this.onMouseDown_patch_hd_layer_original(x, y, button, shift);
+	}
+
+	property onMouseDown_patch_hd_layer_property_shim
+	{
+		getter
+		{
+			return this.onMouseDown_patch_hd_layer_override;
+		}
+		setter(v)
+		{
+			this.onMouseDown_patch_hd_layer_original = v;
+		}
+	}
+
+	function onMouseUp_patch_hd_layer_override(x, y, button, shift)
+	{
+		x /= wideScaleFactor;
+		y /= scaleFactor;
+		this.onMouseUp_patch_hd_layer_original(x, y, button, shift);
+	}
+
+	property onMouseUp_patch_hd_layer_property_shim
+	{
+		getter
+		{
+			return this.onMouseUp_patch_hd_layer_override;
+		}
+		setter(v)
+		{
+			this.onMouseUp_patch_hd_layer_original = v;
+		}
+	}
+
+	function onMouseMove_patch_hd_layer_override(x, y, shift)
+	{
+		x /= wideScaleFactor;
+		y /= scaleFactor;
+		this.onMouseMove_patch_hd_layer_original(x, y, shift);
+	}
+
+	property onMouseMove_patch_hd_layer_property_shim
+	{
+		getter
+		{
+			return this.onMouseMove_patch_hd_layer_override;
+		}
+		setter(v)
+		{
+			this.onMouseMove_patch_hd_layer_original = v;
+		}
+	}
+
+	function onMouseWheel_patch_hd_layer_override(shift, delta, x, y)
+	{
+		x /= wideScaleFactor;
+		y /= scaleFactor;
+		this.onMouseWheel_patch_hd_layer_original(shift, delta, x, y);
+	}
+
+	property onMouseWheel_patch_hd_layer_property_shim
+	{
+		getter
+		{
+			return this.onMouseWheel_patch_hd_layer_override;
+		}
+		setter(v)
+		{
+			this.onMouseWheel_patch_hd_layer_original = v;
+		}
+	}
+
+	function onHitTest_patch_hd_layer_override(x, y, hit)
+	{
+		x /= wideScaleFactor;
+		y /= scaleFactor;
+		this.onHitTest_patch_hd_layer_original(x, y, hit);
+	}
+
+	property onHitTest_patch_hd_layer_property_shim
+	{
+		getter
+		{
+			return this.onHitTest_patch_hd_layer_override;
+		}
+		setter(v)
+		{
+			this.onHitTest_patch_hd_layer_original = v;
+		}
+	}
+
+	function onTouchDown_patch_hd_layer_override(x, y, cx, cy, id)
+	{
+		x /= wideScaleFactor;
+		y /= scaleFactor;
+		cx /= wideScaleFactor;
+		cy /= scaleFactor;
+		this.onTouchDown_patch_hd_layer_original(x, y, cx, cy, id);
+	}
+
+	property onTouchDown_patch_hd_layer_property_shim
+	{
+		getter
+		{
+			return this.onTouchDown_patch_hd_layer_override;
+		}
+		setter(v)
+		{
+			this.onTouchDown_patch_hd_layer_original = v;
+		}
+	}
+
+	function onTouchUp_patch_hd_layer_override(x, y, cx, cy, id)
+	{
+		x /= wideScaleFactor;
+		y /= scaleFactor;
+		cx /= wideScaleFactor;
+		cy /= scaleFactor;
+		this.onTouchUp_patch_hd_layer_original(x, y, cx, cy, id);
+	}
+
+	property onTouchUp_patch_hd_layer_property_shim
+	{
+		getter
+		{
+			return this.onTouchUp_patch_hd_layer_override;
+		}
+		setter(v)
+		{
+			this.onTouchUp_patch_hd_layer_original = v;
+		}
+	}
+
+	function onTouchMove_patch_hd_layer_override(x, y, cx, cy, id)
+	{
+		x /= wideScaleFactor;
+		y /= scaleFactor;
+		cx /= wideScaleFactor;
+		cy /= scaleFactor;
+		this.onTouchMove_patch_hd_layer_original(x, y, cx, cy, id);
+	}
+
+	property onTouchMove_patch_hd_layer_property_shim
+	{
+		getter
+		{
+			return this.onTouchMove_patch_hd_layer_override;
+		}
+		setter(v)
+		{
+			this.onTouchMove_patch_hd_layer_original = v;
+		}
+	}
+
+	function onTouchScaling_patch_hd_layer_override(startdistance, currentdistance, cx, cy, flag)
+	{
+		// XXX: startdistance and currentdistance need to be interpolated
+		cx /= wideScaleFactor;
+		cy /= scaleFactor;
+		this.onTouchScaling_patch_hd_layer_original(startdistance, currentdistance, cx, cy, flag);
+	}
+
+	property onTouchScaling_patch_hd_layer_property_shim
+	{
+		getter
+		{
+			return this.onTouchScaling_patch_hd_layer_override;
+		}
+		setter(v)
+		{
+			this.onTouchScaling_patch_hd_layer_original = v;
+		}
+	}
+
+	function onTouchRotate_patch_hd_layer_override(startangle, currentangle, distance, cx, cy, flag)
+	{
+		// XXX: distance need to be interpolated
+		cx /= wideScaleFactor;
+		cy /= scaleFactor;
+		this.onTouchRotate_patch_hd_layer_original(startangle, currentangle, distance, cx, cy, flag);
+	}
+
+	property onTouchRotate_patch_hd_layer_property_shim
+	{
+		getter
+		{
+			return this.onTouchRotate_patch_hd_layer_override;
+		}
+		setter(v)
+		{
+			this.onTouchRotate_patch_hd_layer_original = v;
+		}
+	}
+
+	function patch_hd_layer_setup_event_shims()
+	{
+		if (typeof(this.onClick) === "Object")
+		{
+			this.onClick_patch_hd_layer_original = this.onClick;
+		}
+		else
+		{
+			this.onClick_patch_hd_layer_original = function() {};
+		}
+		if (typeof(this.onDoubleClick) === "Object")
+		{
+			this.onDoubleClick_patch_hd_layer_original = this.onDoubleClick;
+		}
+		else
+		{
+			this.onDoubleClick_patch_hd_layer_original = function() {};
+		}
+		if (typeof(this.onMouseDown) === "Object")
+		{
+			this.onMouseDown_patch_hd_layer_original = this.onMouseDown;
+		}
+		else
+		{
+			this.onMouseDown_patch_hd_layer_original = function() {};
+		}
+		if (typeof(this.onMouseUp) === "Object")
+		{
+			this.onMouseUp_patch_hd_layer_original = this.onMouseUp;
+		}
+		else
+		{
+			this.onMouseUp_patch_hd_layer_original = function() {};
+		}
+		if (typeof(this.onMouseMove) === "Object")
+		{
+			this.onMouseMove_patch_hd_layer_original = this.onMouseMove;
+		}
+		else
+		{
+			this.onMouseMove_patch_hd_layer_original = function() {};
+		}
+		if (typeof(this.onMouseWheel) === "Object")
+		{
+			this.onMouseWheel_patch_hd_layer_original = this.onMouseWheel;
+		}
+		else
+		{
+			this.onMouseWheel_patch_hd_layer_original = function() {};
+		}
+		if (typeof(this.onHitTest) === "Object")
+		{
+			this.onHitTest_patch_hd_layer_original = this.onHitTest;
+		}
+		else
+		{
+			this.onHitTest_patch_hd_layer_original = function() {};
+		}
+		if (typeof(this.onTouchDown) === "Object")
+		{
+			this.onTouchDown_patch_hd_layer_original = this.onTouchDown;
+		}
+		else
+		{
+			this.onTouchDown_patch_hd_layer_original = function() {};
+		}
+		if (typeof(this.onTouchUp) === "Object")
+		{
+			this.onTouchUp_patch_hd_layer_original = this.onTouchUp;
+		}
+		else
+		{
+			this.onTouchUp_patch_hd_layer_original = function() {};
+		}
+		if (typeof(this.onTouchMove) === "Object")
+		{
+			this.onTouchMove_patch_hd_layer_original = this.onTouchMove;
+		}
+		else
+		{
+			this.onTouchMove_patch_hd_layer_original = function() {};
+		}
+		if (typeof(this.onTouchScaling) === "Object")
+		{
+			this.onTouchScaling_patch_hd_layer_original = this.onTouchScaling;
+		}
+		else
+		{
+			this.onTouchScaling_patch_hd_layer_original = function() {};
+		}
+		if (typeof(this.onTouchRotate) === "Object")
+		{
+			this.onTouchRotate_patch_hd_layer_original = this.onTouchRotate;
+		}
+		else
+		{
+			this.onTouchRotate_patch_hd_layer_original = function() {};
+		}
+		&this.onClick = &this.onClick_patch_hd_layer_property_shim;
+		&this.onDoubleClick = &this.onDoubleClick_patch_hd_layer_property_shim;
+		&this.onMouseDown = &this.onMouseDown_patch_hd_layer_property_shim;
+		&this.onMouseUp = &this.onMouseUp_patch_hd_layer_property_shim;
+		&this.onMouseMove = &this.onMouseMove_patch_hd_layer_property_shim;
+		&this.onMouseWheel = &this.onMouseWheel_patch_hd_layer_property_shim;
+		&this.onHitTest = &this.onHitTest_patch_hd_layer_property_shim;
+		&this.onTouchDown = &this.onTouchDown_patch_hd_layer_property_shim;
+		&this.onTouchUp = &this.onTouchUp_patch_hd_layer_property_shim;
+		&this.onTouchMove = &this.onTouchMove_patch_hd_layer_property_shim;
+		&this.onTouchScaling = &this.onTouchScaling_patch_hd_layer_property_shim;
+		&this.onTouchRotate = &this.onTouchRotate_patch_hd_layer_property_shim;
+	}
+
 	property horizontalAlignment
 	{
 		getter
@@ -754,6 +1102,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		super.Layer(...);
 		isbg = isBaseLayer;
 		resetClip();
+		patch_hd_layer_setup_event_shims();
 	}
 
 	function Layer()

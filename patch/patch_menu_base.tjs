@@ -23,9 +23,16 @@ class GameFlag
 	var reverse;
 	var defaultValue;
 
-	property value {
-		getter { return reverse? !holder[name] : holder[name]; }
-		setter(v) { holder[name] = reverse? !v : v; }
+	property value
+	{
+		getter
+		{
+			return (typeof(this.reverse) === "Integer" && this.reverse) ? !this.holder[name] : this.holder[name];
+		}
+		setter (v)
+		{
+			this.holder[name] = (typeof(this.reverse) === "Integer" && this.reverse) ? !v : v;
+		}
 	}
 
 	function GameFlag(owner, holder, name, defaultValue=void, reverse=false)
@@ -36,45 +43,50 @@ class GameFlag
 		this.reverse = reverse;
 		this.defaultValue = defaultValue;
 
-		if (defaultValue !== void && typeof holder[name] == "undefined") {
-			value = defaultValue;
+		if (this.defaultValue !== void && typeof(this.holder) === "Object" && typeof(this.holder[name]) === "undefined")
+		{
+			this.value = this.defaultValue;
 		}
 	}
 
 	function toggleValue()
 	{
-		value = !value;
+		this.value = !this.value;
 	}
 }
 
 class ComplexGameFlag extends GameFlag
 {
-	function ComplexGameFlag() { super.GameFlag(...); }
+	function ComplexGameFlag()
+	{
+		super.GameFlag(...);
+	}
 
 	property value
 	{
 		getter
 		{
 			// TODO code duplication between getter and setter.
-			var path = name.split(".");
-			var currentHolder = holder;
+			var path = this.name.split(".");
+			var currentHolder = this.holder;
 			for (var i=0; i<path.count-1; i++) {
 				currentHolder = currentHolder[path[i]];
 			}
 			var lastPath = path[path.count-1];
 
-			return reverse? !currentHolder[lastPath] : currentHolder[lastPath];
+			return (typeof(this.reverse) === "Integer" && this.reverse) ? !currentHolder[lastPath] : currentHolder[lastPath];
 		}
-		setter(v)
+		setter (v)
 		{
-			var path = name.split(".");
-			var currentHolder = holder;
-			for (var i=0; i<path.count-1; i++) {
+			var path = this.name.split(".");
+			var currentHolder = this.holder;
+			for (var i=0; i<path.count-1; i++)
+			{
 				currentHolder = currentHolder[path[i]];
 			}
 			var lastPath = path[path.count-1];
 
-			currentHolder[lastPath] = reverse? !v : v;
+			currentHolder[lastPath] = (typeof(this.reverse) === "Integer" && this.reverse) ? !v : v;
 		}
 	}
 }
@@ -771,7 +783,7 @@ function addHdMenu(displayMenu) {
 
 @if(CROP_MODE)
 		wideMenu.add(this.wideCroppedMenuItem = new KAGMenuItem(this, "Wide (&cropped)", 1,
-			function(sender) { onWideMenuItemClick(sender.owner.wideCroppedMenuItem,'standard',true) }, false));
+			function(sender) { onWideMenuItemClick(sender.owner.wideCroppedMenuItem,'standard',true); }, false));
 @endif
 
 	if (isHd) {

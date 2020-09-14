@@ -252,7 +252,7 @@ var languagePatchPaths = [];
 var languageFilePathCache = %[];
 var languageFileCache = %[];
 
-function find_file_in_language_paths(filename, language = void)
+function find_file_in_language_paths(filename, language = void, exts = "")
 {
 	// Check for absolute path
 	if (typeof(filename) !== "String")
@@ -302,20 +302,43 @@ function find_file_in_language_paths(filename, language = void)
 	{
 		return languageFilePathCache[language][filename];
 	}
-	var potential_path = false;
-	for (var i = 0; i < languagePatchPaths.count; i += 1)
+	if (exts !== "")
 	{
-		var current_potential_path = ("%s%s").sprintf(languagePatchPaths[i], filename);
-		if (global.Storages.isExistentStorageNoSearchNoNormalize(current_potential_path))
+		exts = exts.split("|");
+	}
+	else
+	{
+		exts = [""];
+	}
+	var potential_path = false;
+	for (var j = 0; j < exts.count; j += 1)
+	{
+		for (var i = 0; i < languagePatchPaths.count; i += 1)
 		{
-			potential_path = current_potential_path;
+			try
+			{
+				var current_potential_path = ("%s%s%s").sprintf(languagePatchPaths[i], filename, exts[j]);
+				if (global.Storages.isExistentStorageNoSearchNoNormalize(current_potential_path))
+				{
+					potential_path = current_potential_path;
+				}
+			}
+			catch(e)
+			{
+
+			}
+		}
+		if (potential_path !== false)
+		{
+			break;
 		}
 	}
+
 	languageFilePathCache[language][filename] = potential_path;
 	return potential_path;
 }
 
-global.Array.load_PatchLanguage_original = Array.load;
+global.Array.load_PatchLanguage_original = global.Array.load;
 global.Array.load = function(filename, mode='')
 {
 	var file_result = find_file_in_language_paths(filename);
@@ -327,11 +350,15 @@ global.Array.load = function(filename, mode='')
 	{
 		this.clear();
 		this.assign(languageFileCache[global.kag.sflags.language][filename]);
+		if (this.count > 0 && this[this.count - 1] === "")
+		{
+			this.erase(this.count - 1);
+		}
 		return this;
 	}
 	else
 	{
-		return global.Array.load_PatchLanguage_original(filename, mode);
+		return global.Array.load_PatchLanguage_original(...);
 	}
 };
 
@@ -385,14 +412,14 @@ global.Storages.isExistentStorage = function(filename)
 	}
 	else
 	{
-		return global.Storages.isExistentStorage_PatchLanguage_original(filename);
+		return global.Storages.isExistentStorage_PatchLanguage_original(...);
 	}
 };
 
 global.Storages.getPlacedPath_PatchLanguage_original = global.Storages.getPlacedPath;
-global.Storages.getPlacedPath = function(filename)
+global.Storages.getPlacedPath = function(filename, exts)
 {
-	var file_result = find_file_in_language_paths(filename);
+	var file_result = find_file_in_language_paths(filename, , exts);
 	if (typeof(file_result) === "String")
 	{
 		return file_result;
@@ -403,7 +430,7 @@ global.Storages.getPlacedPath = function(filename)
 	}
 	else
 	{
-		return global.Storages.getPlacedPath_PatchLanguage_original(filename);
+		return global.Storages.getPlacedPath_PatchLanguage_original(...);
 	}
 };
 
@@ -425,15 +452,11 @@ function load_language_patch(language, kag) {
 	var languagePatchName = languagePatchName(language);
 	var patches_arr = [];
 
-	if (language != japaneseLanguage || (devMode && !japaneseLanguageLoaded))
-	{
-		patches_arr.add([languagePatchName]);
-	}
-
 	if (language != japaneseLanguage || !japaneseLanguageLoaded) {
+		patches_arr.add([languagePatchName]);
 		if (devMode)
 		{
-			patches_arr.add([languagePatchName, "", "../../Common/"]);
+			patches_arr.add([languagePatchName, "", global.typemoon_repo_root + "common/"]);
 		}
 
 		patches_arr.add([languagePatchName, imagesFolderName]);
@@ -461,7 +484,15 @@ function load_language_patch(language, kag) {
 		}
 	}
 
-	languagePatchPaths = load_patches(patches_arr, false);
+	if (language === japaneseLanguage && devMode)
+	{
+		load_patches(patches_arr, true);
+		languagePatchPaths = [];
+	}
+	else
+	{
+		languagePatchPaths = load_patches(patches_arr, false);
+	}
 	invalidate patches_arr;
 	delete patches_arr;
 
@@ -505,7 +536,7 @@ function unload_language_patch(language, kag) {
 		patches_arr.add([languagePatchName]);
 		if (devMode)
 		{
-			patches_arr.add([languagePatchName, "", "../../Common/"]);
+			patches_arr.add([languagePatchName, "", global.typemoon_repo_root + "common/"]);
 		}
 	}
 
@@ -615,14 +646,24 @@ var languages = loadLanguagesList();
 
 var default_language = japaneseLanguage;
 var languageSettings = %[];
+
+// Initialize the Japanese language first.
+load_language_patch(default_language, void);
+
 loadLanguageSettings();
 
 // If we only have a single language patch, we most probably want the game to run in that language (regardless of locale).
-if (languages.count == 2) {
+if (languages.count == 2)
+{
 	default_language = languages[1];
 }
 
-initializeDefaultLanguage();
+// If the language has changed, reload into the new language.
+if (default_language !== japaneseLanguage)
+{
+	unload_language_patch(japaneseLanguage, void);
+	load_language_patch(default_language, void);
+}
 
 // For convenience
 function get_currentLanguageSettings(kag=global.kag) { { return languageSettings[kag.sflags.language]; } }
@@ -669,14 +710,9 @@ function isNoSpaceLanguage(kag=global.kag) {
 	return isJapanese(kag) || isChinese(kag);
 }
 
-
-function initializeDefaultLanguage() {
-	load_language_patch(default_language, void);
-}
-
 function initializeLanguage(kag=global.kag) {
 	if (kag.sflags.language === void || global.languages.find(kag.sflags.language) === -1) {
-		// language already loaded in initializeDefaultLanguage
+		// language already loaded
 		kag.sflags.language = default_language;
 		kag.sflags.userFont = %[];
 	}

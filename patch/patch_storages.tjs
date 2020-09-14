@@ -1,9 +1,24 @@
 ﻿
 {
-	Storages.isExistentStorage_patch_storages_original = Storages.isExistentStorage;
-	Storages.isExistentStorage = function(storage)
+@if(0)
+	global.Storages.removeAutoPath_patch_storages_original = global.Storages.removeAutoPath;
+	global.Storages.removeAutoPath = function(path)
 	{
-		if ((storage === void) || (storage == null))
+		Debug.message("Removing to auto path: " + path + " : " + global.Scripts.getTraceString());
+		return global.Storages.removeAutoPath_patch_storages_original(...);
+	};
+
+	global.Storages.addAutoPath_patch_storages_original = global.Storages.addAutoPath;
+	global.Storages.addAutoPath = function(path)
+	{
+		Debug.message("Adding to auto path: " + path + " : " + global.Scripts.getTraceString());
+		return global.Storages.addAutoPath_patch_storages_original(...);
+	};
+@endif
+	global.Storages.isExistentStorage_patch_storages_original = global.Storages.isExistentStorage;
+	global.Storages.isExistentStorage = function(storage)
+	{
+		if ((storage === void) || (storage === null))
 		{
 			return false;
 		}
@@ -14,8 +29,8 @@
 		}
 @endif
 
-		return isExistentStorage_patch_storages_original(...);
-	} incontextof Storages;
+		return global.Storages.isExistentStorage_patch_storages_original(storage);
+	};
 }
 
 {
@@ -166,25 +181,30 @@
 					path_to_search = ".";
 				}
 				var path_dirlist = paths_base_dirlist[paths_base[k]][path_to_search];
-				var spos = path_to_search.indexOf(arcdelim);
-				paths_to_remove.add(paths_base[k] + "/" + path_to_search + "/" + path + "/");
-				paths_to_remove.add(paths_base[k] + "/" + path_to_search + "/" + path + arcdelim);
+				var spos = path.indexOf(arcdelim);
+				var extra_path = "";
+				if (path_to_search !== ".")
+				{
+					extra_path = path_to_search + "/";
+				}
+				paths_to_remove.add(paths_base[k] + extra_path + path + "/");
+				paths_to_remove.add(paths_base[k] + extra_path + path + arcdelim);
 				if (spos !== -1)
 				{
 					if (path_dirlist.find(path.substring(0, spos)) !== -1)
 					{
-						paths_to_add.add(paths_base[k] + "/" + path_to_search + "/" + path + "/");
+						paths_to_add.add(paths_base[k] + extra_path + path + "/");
 					}
 				}
 				else
 				{
 					if (path_dirlist.find(path + "/") !== -1)
 					{
-						paths_to_add.add(paths_base[k] + "/" + path_to_search + "/" + path + "/");
+						paths_to_add.add(paths_base[k] + extra_path + path + "/");
 					}
 					else if (path_dirlist.find(path) !== -1)
 					{
-						paths_to_add.add(paths_base[k] + "/" + path_to_search + "/" + path + arcdelim);
+						paths_to_add.add(paths_base[k] + extra_path + path + arcdelim);
 					}
 				}
 			}
@@ -193,10 +213,24 @@
 
 	if (devMode)
 	{
+		var commondevpaths = [
+			"plugin",
+			"pluginpatch",
+			"imageshistory",
+			"patch/k2compat",
+		];
+		for (var i = 0; i < commondevpaths.count && typeof(commondevpaths[i]) === "String"; i += 1)
+		{
+			var path = global.typemoon_repo_root + "common/" + commondevpaths[i] + "/";
+			paths_to_remove.add(path);
+@if(!KIRIKIROID)
+			if (Storages.isExistentDirectory(path))
+			{
+				paths_to_add.add(path);
+			}
+@endif
+		}
 		var devpaths = [
-			"../common/plugin",
-			"../common/pluginpatch",
-			"../common/imageshistory",
 			"patch",
 			"etc",
 			"others",
@@ -217,16 +251,15 @@
 			"ImagesPatch",
 			"ImagesConfig",
 			"SEPatch",
+			"BGM_patch",
 @if(GAME_FHAT)
 			"voicehanafuda",
 			"voicehanafuda2",
 			"imagesvita",
 			"imageshanafuda",
-			"bgm_patch",
 			"bgm_vita",
 @endif
 @if(GAME_FATE)
-			"bgm_patch",
 			"ImagesClassic",
 			"ImagesPS2",
 			"ImagesTitle",
@@ -279,14 +312,40 @@
 		}
 	}
 @endif
+	for (var i = 0; i < paths_to_add.count; i += 1)
+	{
+		var failed = false;
+		try
+		{
+			var res = global.Storages.getFullPath(paths_to_add[i]);
+			if (res !== "")
+			{
+				paths_to_add[i] = res;
+			}
+			else
+			{
+				failed = true;
+			}
+		}
+		catch (e)
+		{
+			failed = true;
+		}
+		if (failed)
+		{
+			Debug.message("Unable to validate " + paths_to_add[i]);
+			paths_to_add.erase(i);
+			i -= 1;
+		}
+	}
+
 	for (var i = 0; i < paths_to_remove.count; i += 1)
 	{
-		Storages.removeAutoPath(paths_to_remove[i]);
+		global.Storages.removeAutoPath(paths_to_remove[i]);
 	}
 
 	for (var i = 0; i < paths_to_add.count; i += 1)
 	{
-		Storages.addAutoPath(paths_to_add[i]);
-		Debug.message("Adding to auto path: " + paths_to_add[i]);
+		global.Storages.addAutoPath(paths_to_add[i]);
 	}
 }

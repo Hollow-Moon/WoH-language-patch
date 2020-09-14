@@ -418,7 +418,7 @@ System.exceptionHandler = function(e)
 		}
 	}
 
-	if ((typeof(global.kag) === "Object" && isvalid(global.kag) && typeof(global.kag.visible) == "Integer" && global.kag.visible == false) || System.getArgument('-quitonexception') !== void)
+	if ((typeof(global.kag) !== "Object") || (typeof(global.kag) === "Object" && !isvalid(global.kag)) || (typeof(global.kag) === "Object" && isvalid(global.kag) && typeof(global.kag.visible) !== "Integer") || (typeof(global.kag) === "Object" && isvalid(global.kag) && typeof(global.kag.visible) === "Integer" && global.kag.visible === false) || System.getArgument('-quitonexception') !== void)
 	{
 		System.exit(127);
 	}

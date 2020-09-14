@@ -95,9 +95,9 @@ function load_patches(patch_array, should_add_to_auto_path=true)
 	}
 	for (var i = 0; i < patches_to_add.count; i += 1)
 	{
-		Storages.removeAutoPath(patches_to_add[i]);
 		if (should_add_to_auto_path)
 		{
+			Storages.removeAutoPath(patches_to_add[i]);
 			Storages.addAutoPath(patches_to_add[i]);
 		}
 	}
@@ -460,4 +460,55 @@ global.check_app_lock = function()
 		System.inform(__t("%sはすでに起動しています").sprintf(System.title));
 		System.exit();
 	}
+};
+
+global.initial_scenario_load_ready = function()
+{
+@if(GAME_FHAT)
+	if (System.getArgument("-loadticketatindex") !== void)
+	{
+		global.loadTicketFile(System.getArgument("-loadticketatindex") | 0);
+		(global.initializeTicketFlagsMenu incontextof global.kag)();
+		global.kag.process("title.ks", "*pretitle");
+	}
+@endif
+	if (System.getArgument("-loadsaveatindex") !== void)
+	{
+		global.kag.loadBookMark(System.getArgument("-loadsaveatindex") | 0);
+	}
+@if(GAME_WOHN)
+	else if (System.getArgument("-archiveopenscenario") !== void)
+	{
+		startArchiveWithScenario(System.getArgument("-archiveopenscenario"));
+	}
+@endif
+};
+
+global.full_game_reload = function(extra_args*)
+{
+	var should_reload_save = true;
+	if ((typeof(global.titlemenu_object) === "Object" && typeof(global.titlemenu_object.menulayer) === "Object" && global.titlemenu_object.menulayer.visible) || typeof(global.titlemenu) === "Object" || typeof(global.ticket_menu) === "Object")
+	{
+		should_reload_save = false;
+	}
+	var args_arr = [];
+	if (should_reload_save)
+	{
+		global.kag.saveBookMark(1000, true);
+		args_arr.add("-loadsaveatindex=1000");
+	}
+@if(GAME_FHAT)
+	args_arr.add("-readencoding=Shift_JIS");
+	if (typeof(global.CurrentTicketNo) === "Integer")
+	{
+		args_arr.add("-loadticketatindex=" + CurrentTicketNo);
+	}
+@endif
+	for (var i = 0; i < extra_args.count; i += 1)
+	{
+		args_arr.add(extra_args[i]);
+	}
+	global.build_exec_command_line(global.System.exeName, args_arr);
+	// Possible savedata mutex race condition?
+	global.System.exit();
 };

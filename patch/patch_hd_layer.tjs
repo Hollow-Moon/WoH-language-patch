@@ -961,7 +961,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 
 			// Applying the correction only to sprites, otherwise the blur function is buggy (I'm pretty sure it's only applied to sprites anyway...)
 			if (typeof this.correctleft !== "undefined") {
-				result += correctleft/wideFactor;
+				result += this.correctleft/wideFactor;
 			}
 		}
 		return result;
@@ -1211,11 +1211,12 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 					continue;
 				}
 				var currentStorage = storageName + currentExtension;
-				if (!Storages.isExistentStorage(currentStorage)) {
-					continue;
-				}
 
 				var currentPath = Storages.getPlacedPath(currentStorage);
+				if (currentPath === "")
+				{
+					continue;
+				}
 
 				if (!isBaseLayer && !isMessageLayer && !isMask) {
 					isbg = /bgimage/.test(currentPath); // TODO only works in dev mode

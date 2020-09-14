@@ -168,6 +168,16 @@ function dmt(msg*) { Debug.message(msg.join(", ")+": "+Scripts.getTraceString())
 	{
 		Scripts.evalStorage(settingsPath);
 	}
+
+	global.typemoon_repo_root = void;
+	if (global.devMode)
+	{
+		global.typemoon_repo_root = Storages.getFullPath(basepath + "/../");
+		Storages.addAutoPath(global.typemoon_repo_root + "common/data/");
+		Storages.addAutoPath(global.typemoon_repo_root + "common/patch/");
+		Storages.addAutoPath(global.typemoon_repo_root + "common/plugin/");
+		Storages.addAutoPath(global.typemoon_repo_root + "common/pluginpatch/");
+	}
 }
 
 @if(GAME_FHAT)
@@ -180,13 +190,6 @@ var mainPatchName = devMode? "data" : "";
 if (forceLog)
 {
 	Debug.startLogToFile(false);
-}
-
-if (devMode) {
-	Storages.addAutoPath("../../common/data/");
-	Storages.addAutoPath("../../common/patch/");
-	Storages.addAutoPath("../../common/plugin/");
-	Storages.addAutoPath("../../common/pluginpatch/");
 }
 
 KAGLoadScript("patch_initialize.tjs");

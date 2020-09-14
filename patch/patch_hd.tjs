@@ -152,6 +152,10 @@ function onQualityMenuItemClick(sender, quality) {
 	with (sender.owner) {
 		var changed = false;
 		if (quality == "low" && .isHd) {
+			if (typeof(global.KirikiriSDL2Internal) !== "Object")
+			{
+				global.full_game_reload("-enablehd=false");
+			}
 			.extraConductor.clear();
 			.lineBreak.loadedImage = null;
 			.pageBreak.loadedImage = null;
@@ -160,6 +164,10 @@ function onQualityMenuItemClick(sender, quality) {
 			changed = true;
 			sender.checked = true;
 		} else if (quality == "high" && !.isHd) {
+			if (typeof(global.KirikiriSDL2Internal) !== "Object")
+			{
+				global.full_game_reload("-enablehd=true");
+			}
 			.extraConductor.clear();
 			.lineBreak.loadedImage = null;
 			.pageBreak.loadedImage = null;
@@ -183,6 +191,10 @@ function onWideMenuItemClick(sender, ratio, cropped=false) {
 	}
 	if (ratio !== void && ratio != sender.owner.wideRatio)
 	{
+		if (typeof(global.KirikiriSDL2Internal) !== "Object")
+		{
+			global.full_game_reload("-wideratio=" + ratio);
+		}
 		with (sender.owner) {
 			.extraConductor.clear();
 			.saveBookMark(1000, true);
@@ -271,7 +283,18 @@ function updateResolution(mp)
 
 
 function initializeHDPatch() {
+	if (System.getArgument("-enablehd") !== void)
+	{
+		isHd = System.getArgument("-enablehd") === "true";
+	}
 	(initializeQuality incontextof this)(isHd? defaultScaleFactor : 1, true);
-	(initializeWide incontextof this)(wideRatio, true);
+	if (System.getArgument("-wideratio") !== void)
+	{
+		(initializeWide incontextof this)(System.getArgument("-wideratio") * 1.0, true);
+	}
+	else
+	{
+		(initializeWide incontextof this)(wideRatio, true);
+	}
 	changeResolution(this);
 }

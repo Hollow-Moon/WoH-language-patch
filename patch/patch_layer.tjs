@@ -5,9 +5,20 @@ function get_file_name_of_image_with_extension_that_exists(storage)
 {
 	var image_extensions = global.image_extensions;
 
-	if (image_extensions.find(Storages.extractStorageExt(storage)) === -1)
+	if (image_extensions.find(global.Storages.extractStorageExt(storage)) === -1)
 	{
-		var file_name_no_ext = global.Storages.chopStorageExt(storage);
+		var file_name_no_ext = storage;
+		var file_name_len = storage.length;
+
+		for (var i = 0; i < image_extensions.count; i += 1)
+		{
+			var file_name_ext_pos = file_name_no_ext.indexOf(image_extensions[i]);
+			if ((file_name_ext_pos !== -1) && (file_name_ext_pos + image_extensions[i].length === file_name_len))
+			{
+				file_name_no_ext = file_name_no_ext.substring(0, file_name_ext_pos);
+				break;
+			}
+		}
 		for (var i = 0; i < image_extensions.count; i += 1)
 		{
 			var fn = file_name_no_ext + image_extensions[i];
@@ -137,7 +148,7 @@ class Layer_patch_layer_override extends Layer_patch_layer_original
 
 	function setImageSize(w, h)
 	{
-		if (w > 65535 || w < 0 || h > 65535 || h < 0)
+		if (w > 65535 || w <= 0 || h > 65535 || h <= 0)
 		{
 			if (!large_image_warning)
 			{

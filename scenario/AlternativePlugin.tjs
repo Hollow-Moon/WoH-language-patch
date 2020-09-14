@@ -205,16 +205,18 @@ class AlternativePlugin extends KAGPlugin
 						ths[i]	= 0;
 						for(var j=0; j<.text.count; j++)
 						{
-							tw	= base.font.getTextWidth(getPrefix(i) + .text[j]);
+							var cur_text = __(.text[j]);
+							tw	= base.font.getTextWidth(getPrefix(i) + cur_text);
 							tws[i]	= tw if tws[i] < tw;
-							ths[i]	+= base.font.getTextHeight(.text[j]);
+							ths[i]	+= base.font.getTextHeight(cur_text);
 						}
 						ths[i] += lineSpacing * (.text.count - 1);
 					}
 					else
 					{
-						tws[i]	= base.font.getTextWidth(getPrefix(i) + .text);
-						ths[i]	= base.font.getTextHeight(.text);
+						var cur_text = __(.text);
+						tws[i]	= base.font.getTextWidth(getPrefix(i) + cur_text);
+						ths[i]	= base.font.getTextHeight(cur_text);
 					}
 
 					mw	= tws[i] if mw < tws[i];
@@ -367,24 +369,28 @@ class AlternativePlugin extends KAGPlugin
 								{
 									for(var i=0; i<text.count; i++)
 									{
-	//									.drawText(l, t, prfx+text[i], textColor, 255, true, edgeEmphasis, edgeColor, ee, 0, 0);
+										var cur_text = __(text[i]);
+	//									.drawText(l, t, prfx+cur_text, textColor, 255, true, edgeEmphasis, edgeColor, ee, 0, 0);
 										if(edge)
-											.drawText(l, t, prfx+text[i], textColor, 255, antialiased, edgeEmphasis, edgeColor, edgeExtent, 0, 0);
+											.drawText(l, t, prfx+cur_text, textColor, 255, antialiased, edgeEmphasis, edgeColor, edgeExtent, 0, 0);
 										else if(shadow)
-											.drawText(l, t, prfx+text[i], textColor, 255, antialiased, 255, shadowColor, 0, 2, 2);
+											.drawText(l, t, prfx+cur_text, textColor, 255, antialiased, 255, shadowColor, 0, 2, 2);
 										else
-											.drawText(l, t, prfx+text[i], textColor, 255, antialiased);
-										t	+= .font.getTextHeight(prfx+text[i]) + lineSpacing;
+											.drawText(l, t, prfx+cur_text, textColor, 255, antialiased);
+										t	+= .font.getTextHeight(prfx+cur_text) + lineSpacing;
 									}
 								}
 								else
-	//								.drawText(l, t, prfx+text, textColor, 255, true, edgeEmphasis, edgeColor, ee, 0, 0);
+								{
+									var cur_text = __(text);
+	//								.drawText(l, t, prfx+cur_text, textColor, 255, true, edgeEmphasis, edgeColor, ee, 0, 0);
 									if(edge)
-										.drawText(l, t, prfx+text, textColor, 255, antialiased, edgeEmphasis, edgeColor, edgeExtent, 0, 0);
+										.drawText(l, t, prfx+cur_text, textColor, 255, antialiased, edgeEmphasis, edgeColor, edgeExtent, 0, 0);
 									else if(shadow)
-										.drawText(l, t, prfx+text, textColor, 255, antialiased, 255, shadowColor, 0, 2, 2);
+										.drawText(l, t, prfx+cur_text, textColor, 255, antialiased, 255, shadowColor, 0, 2, 2);
 									else
-										.drawText(l, t, prfx+text, textColor, 255, antialiased);
+										.drawText(l, t, prfx+cur_text, textColor, 255, antialiased);
+								}
 							}
 							p	+= bw;
 						}

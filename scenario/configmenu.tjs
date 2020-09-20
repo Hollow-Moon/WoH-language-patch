@@ -107,23 +107,26 @@ function closeConfigMenu()
 //	ウィンドウサイズが変更された
 function CFonAfterChangeWindowSize()
 {
-	var	fs	= kag.fullScreen;
-	for(var i=0; i<kag.windowWidthes.count; i++)
+	if (typeof(global.kag.windowWidthes) === "Object")
 	{
-		var	sz	= kag.windowWidthes[i];
-		var	target	= Menu_object.find("サイズ" + sz, PRIMARY);
-		if(target != void && target isvalid)
+		var	fs	= kag.fullScreen;
+		for(var i=0; i<kag.windowWidthes.count; i++)
 		{
-			if(sz != kag.innerWidth)
+			var	sz	= kag.windowWidthes[i];
+			var	target	= Menu_object.find("サイズ" + sz, PRIMARY);
+			if(target != void && target isvalid)
 			{
-				target.on = 0;
-				if(!fs && kag["window"+sz+"MenuItem"].enabled)
-					target.release(), target.enabled	= true;
+				if(sz != kag.innerWidth)
+				{
+					target.on = 0;
+					if(!fs && kag["window"+sz+"MenuItem"].enabled)
+						target.release(), target.enabled	= true;
+					else
+						target.enabled	= false;
+				}
 				else
-					target.enabled	= false;
+					target.on = true, target.release();
 			}
-			else
-				target.on = true, target.release();
 		}
 	}
 }
@@ -139,15 +142,25 @@ function CFonAfterChangeScreenMode()
 		for(var i=0; i<CFfullScreenModes.count; i+=3)
 		{
 			var	enabled	= v;
-			enabled	= false if CFfullScreenModes[i+1] == "none" && kag.fullScreenMode == 0;
+			if (typeof(global.kag.fullScreenMode) === "Integer")
+			{
+				enabled	= false if CFfullScreenModes[i+1] == "none" && kag.fullScreenMode == 0;
+			}
+			else
+			{
+				enabled	= false;
+			}
 			.setProps(CFfullScreenModes[i], ["enabled", enabled, "on", fszoom == CFfullScreenModes[i+1]], PRIMARY);
 		}
 
 		.setProp("ウィンドウ表示", "on", !v, PRIMARY);
-		for(var i=0; i<kag.windowWidthes.count; i++)
+		if (typeof(global.kag.windowWidthes) === "Object")
 		{
-			var	sz	= kag.windowWidthes[i];
-			.setProp("サイズ"+sz, "enabled", !v && kag["window"+sz+"MenuItem"].enabled, PRIMARY);
+			for(var i=0; i<kag.windowWidthes.count; i++)
+			{
+				var	sz	= kag.windowWidthes[i];
+				.setProp("サイズ"+sz, "enabled", !v && kag["window"+sz+"MenuItem"].enabled, PRIMARY);
+			}
 		}
 	}
 }
@@ -166,9 +179,12 @@ function CFonAfterChangeMagnifyType()
 //	サイズ可変指定が変更された
 function CFonAfterChangeWindowResizeable()
 {
-	with(Menu_object)
+	if (typeof(global.kag.windowResizeable) === "Integer")
 	{
-		.setProp("サイズ可変", "on", !kag.windowResizeable, PRIMARY);
+		with(Menu_object)
+		{
+			.setProp("サイズ可変", "on", !kag.windowResizeable, PRIMARY);
+		}
 	}
 }
 
@@ -349,7 +365,10 @@ function CFsetSystemMenuItems(name2pos, creates, actions, isclose)
 	setCreateProps(creates[name2pos["ウィンドウ表示"]], %[on:!v, disabled:!v], 2);
 */	setCreateProp(creates[name2pos["フルスクリーン表示"]], "on", v);
 	setCreateProp(creates[name2pos["ウィンドウ表示"]], "on", !v);
-	setCreateProp(creates[name2pos["サイズ可変"]], "on", !kag.windowResizeable);
+	if (typeof(global.kag.windowResizeable) === "Integer")
+	{
+		setCreateProp(creates[name2pos["サイズ可変"]], "on", !kag.windowResizeable);
+	}
 
 	if(isclose)
 	{
@@ -383,14 +402,24 @@ function CFsetSystemMenuItems(name2pos, creates, actions, isclose)
 	{
 		name	= CFfullScreenModes[i];
 		var	elm	= %[on:fszoom == CFfullScreenModes[i+1], enabled:v];
-		elm.enabled	= false if CFfullScreenModes[i+1] == "none" && kag.fullScreenMode == 0;
+		if (typeof(global.kag.fullScreenMode) === "Integer")
+		{
+			elm.enabled	= false if CFfullScreenModes[i+1] == "none" && kag.fullScreenMode == 0;
+		}
+		else
+		{
+			elm.enabled	= false;
+		}
 		setCreateProps(creates[name2pos[name]], elm, 2);
 	}
 
-	for(var i=0; i<kag.windowWidthes.count; i++)
+	if (typeof(global.kag.windowWidthes) === "Object")
 	{
-		var	sz	= kag.windowWidthes[i];
-		setCreateProps(creates[name2pos["サイズ"+sz]], %[enabled:(!v & kag["window"+sz+"MenuItem"].enabled), on:sz == kag.innerWidth]);
+		for(var i=0; i<kag.windowWidthes.count; i++)
+		{
+			var	sz	= kag.windowWidthes[i];
+			setCreateProps(creates[name2pos["サイズ"+sz]], %[enabled:(!v & kag["window"+sz+"MenuItem"].enabled), on:sz == kag.innerWidth]);
+		}
 	}
 
 	v	= cf.disableCharAppearAction;
@@ -500,7 +529,10 @@ function configChgWindowStyle(item)
 {
 	if(item.name.substr(0, 3) == "サイズ")
 	{
-		kag.onWindowSizeMenuItemClick(, item.name.substr(3));
+		if (typeof(global.kag.onWindowSizeMenuItemClick) === "Object")
+		{
+			kag.onWindowSizeMenuItemClick(, item.name.substr(3));
+		}
 		CFonAfterChangeWindowSize();
 	}
 	else if(item.name == "フルスクリーン表示")
@@ -619,8 +651,11 @@ function configSystemMouseUp(item)
 
 		case "サイズ可変":
 			item.on = !item.on;
-			kag.windowResizeable = !item.on;
-			kag.updateWindowResizeable();
+			if (typeof(global.kag.windowResizeable) === "Integer")
+			{
+				kag.windowResizeable = !item.on;
+				kag.updateWindowResizeable();
+			}
 			item.enter();
 			break;
 

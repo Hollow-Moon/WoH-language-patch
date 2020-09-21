@@ -2059,7 +2059,15 @@ class KAGWindow_override extends KAGWindow_original
 				var	fh	= .font.getTextHeight(copyright);
 				.drawText(.imageWidth - fw - 8, .imageHeight - fh - 8, copyright, 0x000000, 255, true, 2048, 0xFFFFFF, 1);
 @endif
+				if (typeof(captureLayer.absoluteMode) === "Integer")
+				{
+					captureLayer.absoluteMode = true;
+				}
 				Clipboard.setAsBitmap(captureLayer);
+				if (typeof(captureLayer.absoluteMode) === "Integer")
+				{
+					captureLayer.absoluteMode = false;
+				}
 			}
 			invalidate captureLayer;
 		}

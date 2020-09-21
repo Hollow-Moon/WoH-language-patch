@@ -101,9 +101,14 @@ function round(v)
 
 function transformDiscrete(v, scale)
 {
+@if(SCALE_USING_FLOATING_POINT)
 	// To avoids rounding errors when summing, rounding should occur only after scaling.
 	// Using "round" is probably better than "int" but it causes tearing in the yes/no button when you hover over it.
-	return int(v*scale)/scale;
+	return int(v * scale) / scale;
+@endif
+@if(!SCALE_USING_FLOATING_POINT)
+	return v | 0;
+@endif
 }
 
 global.Layer_patch_hd_layer_original	= Layer;
@@ -147,8 +152,14 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 
 	function onClick_patch_hd_layer_override(x, y)
 	{
+@if(SCALE_USING_FLOATING_POINT)
 		x /= wideScaleFactor;
 		y /= scaleFactor;
+@endif
+@if(!SCALE_USING_FLOATING_POINT)
+		x \= wideScaleFactor;
+		y \= scaleFactor;
+@endif
 		this.onClick_patch_hd_layer_original(x, y);
 	}
 
@@ -166,8 +177,14 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 
 	function onDoubleClick_patch_hd_layer_override(x, y)
 	{
+@if(SCALE_USING_FLOATING_POINT)
 		x /= wideScaleFactor;
 		y /= scaleFactor;
+@endif
+@if(!SCALE_USING_FLOATING_POINT)
+		x \= wideScaleFactor;
+		y \= scaleFactor;
+@endif
 		this.onDoubleClick_patch_hd_layer_original(x, y);
 	}
 
@@ -185,8 +202,14 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 
 	function onMouseDown_patch_hd_layer_override(x, y, button, shift)
 	{
+@if(SCALE_USING_FLOATING_POINT)
 		x /= wideScaleFactor;
 		y /= scaleFactor;
+@endif
+@if(!SCALE_USING_FLOATING_POINT)
+		x \= wideScaleFactor;
+		y \= scaleFactor;
+@endif
 		this.onMouseDown_patch_hd_layer_original(x, y, button, shift);
 	}
 
@@ -204,8 +227,14 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 
 	function onMouseUp_patch_hd_layer_override(x, y, button, shift)
 	{
+@if(SCALE_USING_FLOATING_POINT)
 		x /= wideScaleFactor;
 		y /= scaleFactor;
+@endif
+@if(!SCALE_USING_FLOATING_POINT)
+		x \= wideScaleFactor;
+		y \= scaleFactor;
+@endif
 		this.onMouseUp_patch_hd_layer_original(x, y, button, shift);
 	}
 
@@ -223,8 +252,14 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 
 	function onMouseMove_patch_hd_layer_override(x, y, shift)
 	{
+@if(SCALE_USING_FLOATING_POINT)
 		x /= wideScaleFactor;
 		y /= scaleFactor;
+@endif
+@if(!SCALE_USING_FLOATING_POINT)
+		x \= wideScaleFactor;
+		y \= scaleFactor;
+@endif
 		this.onMouseMove_patch_hd_layer_original(x, y, shift);
 	}
 
@@ -242,8 +277,14 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 
 	function onMouseWheel_patch_hd_layer_override(shift, delta, x, y)
 	{
+@if(SCALE_USING_FLOATING_POINT)
 		x /= wideScaleFactor;
 		y /= scaleFactor;
+@endif
+@if(!SCALE_USING_FLOATING_POINT)
+		x \= wideScaleFactor;
+		y \= scaleFactor;
+@endif
 		this.onMouseWheel_patch_hd_layer_original(shift, delta, x, y);
 	}
 
@@ -261,8 +302,14 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 
 	function onHitTest_patch_hd_layer_override(x, y, hit)
 	{
+@if(SCALE_USING_FLOATING_POINT)
 		x /= wideScaleFactor;
 		y /= scaleFactor;
+@endif
+@if(!SCALE_USING_FLOATING_POINT)
+		x \= wideScaleFactor;
+		y \= scaleFactor;
+@endif
 		this.onHitTest_patch_hd_layer_original(x, y, hit);
 	}
 
@@ -280,10 +327,18 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 
 	function onTouchDown_patch_hd_layer_override(x, y, cx, cy, id)
 	{
+@if(SCALE_USING_FLOATING_POINT)
 		x /= wideScaleFactor;
 		y /= scaleFactor;
 		cx /= wideScaleFactor;
 		cy /= scaleFactor;
+@endif
+@if(!SCALE_USING_FLOATING_POINT)
+		x \= wideScaleFactor;
+		y \= scaleFactor;
+		cx \= wideScaleFactor;
+		cy \= scaleFactor;
+@endif
 		this.onTouchDown_patch_hd_layer_original(x, y, cx, cy, id);
 	}
 
@@ -301,10 +356,18 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 
 	function onTouchUp_patch_hd_layer_override(x, y, cx, cy, id)
 	{
+@if(SCALE_USING_FLOATING_POINT)
 		x /= wideScaleFactor;
 		y /= scaleFactor;
 		cx /= wideScaleFactor;
 		cy /= scaleFactor;
+@endif
+@if(!SCALE_USING_FLOATING_POINT)
+		x \= wideScaleFactor;
+		y \= scaleFactor;
+		cx \= wideScaleFactor;
+		cy \= scaleFactor;
+@endif
 		this.onTouchUp_patch_hd_layer_original(x, y, cx, cy, id);
 	}
 
@@ -322,10 +385,18 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 
 	function onTouchMove_patch_hd_layer_override(x, y, cx, cy, id)
 	{
+@if(SCALE_USING_FLOATING_POINT)
 		x /= wideScaleFactor;
 		y /= scaleFactor;
 		cx /= wideScaleFactor;
 		cy /= scaleFactor;
+@endif
+@if(!SCALE_USING_FLOATING_POINT)
+		x \= wideScaleFactor;
+		y \= scaleFactor;
+		cx \= wideScaleFactor;
+		cy \= scaleFactor;
+@endif
 		this.onTouchMove_patch_hd_layer_original(x, y, cx, cy, id);
 	}
 
@@ -344,8 +415,14 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 	function onTouchScaling_patch_hd_layer_override(startdistance, currentdistance, cx, cy, flag)
 	{
 		// XXX: startdistance and currentdistance need to be interpolated
+@if(SCALE_USING_FLOATING_POINT)
 		cx /= wideScaleFactor;
 		cy /= scaleFactor;
+@endif
+@if(!SCALE_USING_FLOATING_POINT)
+		cx \= wideScaleFactor;
+		cy \= scaleFactor;
+@endif
 		this.onTouchScaling_patch_hd_layer_original(startdistance, currentdistance, cx, cy, flag);
 	}
 
@@ -364,8 +441,14 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 	function onTouchRotate_patch_hd_layer_override(startangle, currentangle, distance, cx, cy, flag)
 	{
 		// XXX: distance need to be interpolated
+@if(SCALE_USING_FLOATING_POINT)
 		cx /= wideScaleFactor;
 		cy /= scaleFactor;
+@endif
+@if(!SCALE_USING_FLOATING_POINT)
+		cx \= wideScaleFactor;
+		cy \= scaleFactor;
+@endif
 		this.onTouchRotate_patch_hd_layer_original(startangle, currentangle, distance, cx, cy, flag);
 	}
 
@@ -534,6 +617,9 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		}
 		setter(v)
 		{
+@if(!SCALE_USING_FLOATING_POINT)
+			v = ((v < 0 ? -v : v) & 0x7fffffff) * (v < 0 ? -1 : 1);
+@endif
 			originalLeft = transformDiscrete(v, leftScale());
 			super.left = transformLeft(originalLeft);
 		}
@@ -547,6 +633,9 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		}
 		setter(v)
 		{
+@if(!SCALE_USING_FLOATING_POINT)
+			v = ((v < 0 ? -v : v) & 0x7fffffff) * (v < 0 ? -1 : 1);
+@endif
 			originalTop = transformDiscrete(v, topScale());
 			super.top = transformTop(originalTop);
 		}
@@ -560,6 +649,9 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		}
 		setter(v)
 		{
+@if(!SCALE_USING_FLOATING_POINT)
+			v = ((v < 0 ? -v : v) & 0x7fffffff) * (v < 0 ? -1 : 1);
+@endif
 			originalImageLeft = transformDiscrete(v, widthScale);
 			super.imageLeft = v*widthScale;
 		}
@@ -573,6 +665,9 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		}
 		setter(v)
 		{
+@if(!SCALE_USING_FLOATING_POINT)
+			v = ((v < 0 ? -v : v) & 0x7fffffff) * (v < 0 ? -1 : 1);
+@endif
 			originalImageTop = transformDiscrete(v, heightScale);
 			super.imageTop = v*heightScale;
 		}
@@ -586,7 +681,10 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		}
 		setter(v)
 		{
-			(global.Layer.setClip incontextof this)(v, clipTop, clipWidth, clipHeight);
+@if(!SCALE_USING_FLOATING_POINT)
+			v = ((v < 0 ? -v : v) & 0x7fffffff) * (v < 0 ? -1 : 1);
+@endif
+			(global.Layer.setClip incontextof this)(v, originalClipTop, originalClipWidth, originalClipHeight);
 		}
 	}
 
@@ -598,7 +696,10 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		}
 		setter(v)
 		{
-			(global.Layer.setClip incontextof this)(clipLeft, v, clipWidth, clipHeight);
+@if(!SCALE_USING_FLOATING_POINT)
+			v = ((v < 0 ? -v : v) & 0x7fffffff) * (v < 0 ? -1 : 1);
+@endif
+			(global.Layer.setClip incontextof this)(originalClipLeft, v, originalClipWidth, originalClipHeight);
 		}
 	}
 
@@ -611,7 +712,10 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		}
 		setter(v)
 		{
-			(global.Layer.setClip incontextof this)(clipLeft, clipTop, v, clipHeight);
+@if(!SCALE_USING_FLOATING_POINT)
+			v = ((v < 0 ? -v : v) & 0x7fffffff) * (v < 0 ? -1 : 1);
+@endif
+			(global.Layer.setClip incontextof this)(originalClipLeft, originalClipTop, v, originalClipHeight);
 		}
 	}
 
@@ -623,7 +727,10 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		}
 		setter(v)
 		{
-			(global.Layer.setClip incontextof this)(clipLeft, clipTop, clipWidth, v);
+@if(!SCALE_USING_FLOATING_POINT)
+			v = ((v < 0 ? -v : v) & 0x7fffffff) * (v < 0 ? -1 : 1);
+@endif
+			(global.Layer.setClip incontextof this)(originalClipLeft, originalClipTop, originalClipWidth, v);
 		}
 	}
 
@@ -657,7 +764,12 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 	{
 		getter
 		{
+@if(SCALE_USING_FLOATING_POINT)
 			return super.cursorX / cursorXScale;
+@endif
+@if(!SCALE_USING_FLOATING_POINT)
+			return super.cursorX \ cursorXScale;
+@endif
 		}
 		setter(v)
 		{
@@ -670,7 +782,12 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 	{
 		getter
 		{
+@if(SCALE_USING_FLOATING_POINT)
 			return (super.cursorY - cursorYOffset() * wideScaleFactor) / cursorYScale;
+@endif
+@if(!SCALE_USING_FLOATING_POINT)
+			return (super.cursorY - cursorYOffset() * wideScaleFactor) \ cursorYScale;
+@endif
 		}
 		setter(v)
 		{
@@ -690,6 +807,13 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		}
 		setter(v)
 		{
+@if(!SCALE_USING_FLOATING_POINT)
+			if (v < 0)
+			{
+				v = -v;
+			}
+			v &= 0xffffffff;
+@endif
 			originalWidth = transformDiscrete(v, widthScale);
 			super.width = v * widthScale;
 			updateImageSize();
@@ -707,6 +831,13 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		}
 		setter(v)
 		{
+@if(!SCALE_USING_FLOATING_POINT)
+			if (v < 0)
+			{
+				v = -v;
+			}
+			v &= 0xffffffff;
+@endif
 			originalHeight = transformDiscrete(v, heightScale);
 			super.height = v * heightScale;
 			updateImageSize();
@@ -733,6 +864,13 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		}
 		setter(v)
 		{
+@if(!SCALE_USING_FLOATING_POINT)
+			if (v < 0)
+			{
+				v = -v;
+			}
+			v &= 0xffffffff;
+@endif
 			originalImageWidth = transformDiscrete(v, widthScale);
 			if (originalImageWidth < originalWidth)
 			{
@@ -768,6 +906,13 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		}
 		setter(v)
 		{
+@if(!SCALE_USING_FLOATING_POINT)
+			if (v < 0)
+			{
+				v = -v;
+			}
+			v &= 0xffffffff;
+@endif
 			originalImageHeight = transformDiscrete(v, heightScale);
 			if (originalImageHeight < originalHeight)
 			{
@@ -896,6 +1041,10 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 	{
 		getter
 		{
+			if (absoluteMode)
+			{
+				return 1;
+			}
 			if (isbg || shouldStretch) {
 				return wideScaleFactor;
 			}
@@ -907,6 +1056,10 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 	{
 		getter
 		{
+			if (absoluteMode)
+			{
+				return 1;
+			}
 			if (isbg) {
 				return wideScaleFactor;
 			}
@@ -956,12 +1109,24 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 	function leftPivot(parent=this.parent)
 	{
 		var result = 0;
-		if (!shouldStretch && !isbg && (parent !== null && (parent.isbg || parent.shouldStretch) && !parent.isLineLayer )) {
-			result = width*(wideFactor-1)*horizontalAlignment/wideFactor;
+		if (!shouldStretch && !isbg && (parent !== null && (parent.isbg || parent.shouldStretch) && !parent.isLineLayer ))
+		{
+@if(SCALE_USING_FLOATING_POINT)
+			result = width * (wideFactor - 1) * horizontalAlignment / wideFactor;
+@endif
+@if(!SCALE_USING_FLOATING_POINT)
+			result = width * (wideFactor - 1) * horizontalAlignment \ wideFactor;
+			result |= 0;
+@endif
 
 			// Applying the correction only to sprites, otherwise the blur function is buggy (I'm pretty sure it's only applied to sprites anyway...)
 			if (typeof this.correctleft !== "undefined") {
-				result += this.correctleft/wideFactor;
+@if(SCALE_USING_FLOATING_POINT)
+				result += this.correctleft / wideFactor;
+@endif
+@if(!SCALE_USING_FLOATING_POINT)
+				result += this.correctleft \ wideFactor;
+@endif
 			}
 		}
 		return result;
@@ -1244,8 +1409,14 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 						originalImageHeight = originalImageHeight / (window.isHd? upscaledFactor : 1);
 					} else if (/hd/.test(currentPath)) {
 						// HD versions of patch assets (mostly the HD masks for the status menu).
+@if(SCALE_USING_FLOATING_POINT)
 						originalImageWidth = originalImageWidth / (window.isHd? upscaledFactor : 1);
 						originalImageHeight = originalImageHeight / (window.isHd? upscaledFactor : 1);
+@endif
+@if(!SCALE_USING_FLOATING_POINT)
+						originalImageWidth = originalImageWidth \ (window.isHd? upscaledFactor : 1);
+						originalImageHeight = originalImageHeight \ (window.isHd? upscaledFactor : 1);
+@endif
 					}
 				} else {
 					// Load images based on file extension priority (according to global.image_extensions).
@@ -1325,6 +1496,10 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 
 	function getMainPixel(x, y)
 	{
+@if(!SCALE_USING_FLOATING_POINT)
+		x = ((x < 0 ? -x : x) & 0x7fffffff) * (x < 0 ? -1 : 1);
+		y = ((y < 0 ? -y : y) & 0x7fffffff) * (y < 0 ? -1 : 1);
+@endif
 		x *= widthScale;
 		y *= heightScale;
 		return super.getMainPixel(x, y);
@@ -1332,6 +1507,11 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 
 	function setMainPixel(x, y, color)
 	{
+@if(!SCALE_USING_FLOATING_POINT)
+		x = ((x < 0 ? -x : x) & 0x7fffffff) * (x < 0 ? -1 : 1);
+		y = ((y < 0 ? -y : y) & 0x7fffffff) * (y < 0 ? -1 : 1);
+		color &= 0xffffffff;
+@endif
 		x *= widthScale;
 		y *= heightScale;
 		super.setMainPixel(x, y, color);
@@ -1339,6 +1519,10 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 
 	function getMaskPixel(x, y)
 	{
+@if(!SCALE_USING_FLOATING_POINT)
+		x = ((x < 0 ? -x : x) & 0x7fffffff) * (x < 0 ? -1 : 1);
+		y = ((y < 0 ? -y : y) & 0x7fffffff) * (y < 0 ? -1 : 1);
+@endif
 		x *= widthScale;
 		y *= heightScale;
 		return super.getMaskPixel(x, y);
@@ -1346,6 +1530,11 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 
 	function setMaskPixel(x, y, value)
 	{
+@if(!SCALE_USING_FLOATING_POINT)
+		x = ((x < 0 ? -x : x) & 0x7fffffff) * (x < 0 ? -1 : 1);
+		y = ((y < 0 ? -y : y) & 0x7fffffff) * (y < 0 ? -1 : 1);
+		value &= 0xffffffff;
+@endif
 		x *= widthScale;
 		y *= heightScale;
 		super.setMaskPixel(x, y, value);
@@ -1353,6 +1542,10 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 
 	function getProvincePixel(x, y)
 	{
+@if(!SCALE_USING_FLOATING_POINT)
+		x = ((x < 0 ? -x : x) & 0x7fffffff) * (x < 0 ? -1 : 1);
+		y = ((y < 0 ? -y : y) & 0x7fffffff) * (y < 0 ? -1 : 1);
+@endif
 		x *= widthScale;
 		y *= heightScale;
 		return super.getProvincePixel(x, y);
@@ -1360,6 +1553,11 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 
 	function setProvincePixel(x, y, value)
 	{
+@if(!SCALE_USING_FLOATING_POINT)
+		x = ((x < 0 ? -x : x) & 0x7fffffff) * (x < 0 ? -1 : 1);
+		y = ((y < 0 ? -y : y) & 0x7fffffff) * (y < 0 ? -1 : 1);
+		value &= 0xffffffff;
+@endif
 		x *= widthScale;
 		y *= heightScale;
 		super.setProvincePixel(x, y, value);
@@ -1367,6 +1565,10 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 
 	function getLayerAt(x, y, exclude_self, get_disabled)
 	{
+@if(!SCALE_USING_FLOATING_POINT)
+		x = ((x < 0 ? -x : x) & 0x7fffffff) * (x < 0 ? -1 : 1);
+		y = ((y < 0 ? -y : y) & 0x7fffffff) * (y < 0 ? -1 : 1);
+@endif
 		x *= widthScale;
 		y *= heightScale;
 		return super.getLayerAt(x, y, exclude_self, get_disabled);
@@ -1374,6 +1576,11 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 
 	function setSize(width, height)
 	{
+@if(!SCALE_USING_FLOATING_POINT)
+		width = ((width < 0 ? -width : width) & 0x7fffffff) * (width < 0 ? -1 : 1);
+		height = ((height < 0 ? -height : height) & 0x7fffffff) * (height < 0 ? -1 : 1);
+@endif
+
 		updateBg(width, height);
 
 		originalWidth = transformDiscrete(width, widthScale);
@@ -1386,6 +1593,11 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 
 	function setImageSize(imageWidth, imageHeight)
 	{
+@if(!SCALE_USING_FLOATING_POINT)
+		imageWidth = ((imageWidth < 0 ? -imageWidth : imageWidth) & 0x7fffffff) * (imageWidth < 0 ? -1 : 1);
+		imageHeight = ((imageHeight < 0 ? -imageHeight : imageHeight) & 0x7fffffff) * (imageHeight < 0 ? -1 : 1);
+@endif
+
 		updateBg(imageWidth, imageHeight);
 
 		originalImageWidth = transformDiscrete(imageWidth, widthScale);
@@ -1456,7 +1668,12 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		var scaleHeight = originalImageHeight * heightScale;
 		if (super.imageWidth == scaleWidth && super.imageHeight == scaleHeight) return;
 
+@if(SCALE_USING_FLOATING_POINT)
 		var scale = scaleWidth / super.imageWidth;
+@endif
+@if(!SCALE_USING_FLOATING_POINT)
+		var scale = scaleWidth \ super.imageWidth;
+@endif
 		var singleWidth = super.imageWidth \ numberOfImages;
 		var roundedUpscaledSingleWidth = int(singleWidth * scale);
 		scaleWidth = roundedUpscaledSingleWidth * numberOfImages;
@@ -1483,14 +1700,26 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 
 	function setPos(left, top, width, height)
 	{
+@if(!SCALE_USING_FLOATING_POINT)
+		left = ((left < 0 ? -left : left) & 0x7fffffff) * (left < 0 ? -1 : 1);
+		top = ((top < 0 ? -top : top) & 0x7fffffff) * (top < 0 ? -1 : 1);
+@endif
 		originalLeft = left;
 		originalTop = top;
 
-		if (width !== void) {
+		if (width !== void)
+		{
+@if(!SCALE_USING_FLOATING_POINT)
+			width = ((width < 0 ? -width : width) & 0x7fffffff) * (width < 0 ? -1 : 1);
+@endif
 			originalWidth = width;
 			width = width * widthScale;
 		}
-		if (height !== void) {
+		if (height !== void)
+		{
+@if(!SCALE_USING_FLOATING_POINT)
+			height = ((height < 0 ? -height : height) & 0x7fffffff) * (height < 0 ? -1 : 1);
+@endif
 			originalHeight = height;
 			height = height * heightScale;
 		}
@@ -1505,6 +1734,10 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 
 	function setImagePos(left, top)
 	{
+@if(!SCALE_USING_FLOATING_POINT)
+		left = ((left < 0 ? -left : left) & 0x7fffffff) * (left < 0 ? -1 : 1);
+		top = ((top < 0 ? -top : top) & 0x7fffffff) * (top < 0 ? -1 : 1);
+@endif
 		originalImageLeft = left;
 		originalImageTop = top;
 		super.setImagePos(left*widthScale, top*heightScale);
@@ -1512,6 +1745,10 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 
 	function setCursorPos(cursorX, cursorY)
 	{
+@if(!SCALE_USING_FLOATING_POINT)
+		cursorX = ((cursorX < 0 ? -cursorX : cursorX) & 0x7fffffff) * (cursorX < 0 ? -1 : 1);
+		cursorY = ((cursorY < 0 ? -cursorY : cursorY) & 0x7fffffff) * (cursorY < 0 ? -1 : 1);
+@endif
 		var originalCursorX = transformDiscrete(cursorX, cursorXScale);
 		var originalCursorY = transformDiscrete(cursorY, cursorYScale);
 		super.setCursorPos(transformCursorX(originalCursorX), transformCursorY(originalCursorY));
@@ -1534,11 +1771,35 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 
 	function operateRect(left, top, src, sleft, stop, swidth, sheight, mode, opacity)
 	{
+@if(!SCALE_USING_FLOATING_POINT)
+		left = ((left < 0 ? -left : left) & 0x7fffffff) * (left < 0 ? -1 : 1);
+		top = ((top < 0 ? -top : top) & 0x7fffffff) * (top < 0 ? -1 : 1);
+		sleft = ((sleft < 0 ? -sleft : sleft) & 0x7fffffff) * (sleft < 0 ? -1 : 1);
+		stop = ((stop < 0 ? -stop : stop) & 0x7fffffff) * (stop < 0 ? -1 : 1);
+		swidth = ((swidth < 0 ? -swidth : swidth) & 0x7fffffff) * (swidth < 0 ? -1 : 1);
+		sheight = ((sheight < 0 ? -sheight : sheight) & 0x7fffffff) * (sheight < 0 ? -1 : 1);
+		if (mode !== void)
+		{
+			mode = ((mode < 0 ? -mode : mode) & 0x7fffffff) * (mode < 0 ? -1 : 1);
+		}
+		if (opacity !== void)
+		{
+			opacity = ((opacity < 0 ? -opacity : opacity) & 0x7fffffff) * (opacity < 0 ? -1 : 1);
+		}
+@endif
 		super.operateRect(src.transformLeft(left, this), src.transformTop(top, this), src, sleft*src.widthScale, stop*src.heightScale, swidth*src.widthScale, sheight*src.heightScale, mode, opacity);
 	}
 
 	function copyRect(left, top, src, sleft, stop, swidth, sheight)
 	{
+@if(!SCALE_USING_FLOATING_POINT)
+		left = ((left < 0 ? -left : left) & 0x7fffffff) * (left < 0 ? -1 : 1);
+		top = ((top < 0 ? -top : top) & 0x7fffffff) * (top < 0 ? -1 : 1);
+		sleft = ((sleft < 0 ? -sleft : sleft) & 0x7fffffff) * (sleft < 0 ? -1 : 1);
+		stop = ((stop < 0 ? -stop : stop) & 0x7fffffff) * (stop < 0 ? -1 : 1);
+		swidth = ((swidth < 0 ? -swidth : swidth) & 0x7fffffff) * (swidth < 0 ? -1 : 1);
+		sheight = ((sheight < 0 ? -sheight : sheight) & 0x7fffffff) * (sheight < 0 ? -1 : 1);
+@endif
 		updateBgFromSource(src, swidth, sheight);
 		super.copyRect(src.transformLeft(left, this), src.transformTop(top, this), src, sleft*src.widthScale, stop*src.heightScale, swidth*src.widthScale, sheight*src.heightScale);
 	}
@@ -1550,13 +1811,48 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 
 	function operateStretch(left, top, width, height, src, sleft, stop, swidth, sheight, mode, opacity, type, option)
 	{
+@if(!SCALE_USING_FLOATING_POINT)
+		left = ((left < 0 ? -left : left) & 0x7fffffff) * (left < 0 ? -1 : 1);
+		top = ((top < 0 ? -top : top) & 0x7fffffff) * (top < 0 ? -1 : 1);
+		width = ((width < 0 ? -width : width) & 0x7fffffff) * (width < 0 ? -1 : 1);
+		height = ((height < 0 ? -height : height) & 0x7fffffff) * (height < 0 ? -1 : 1);
+		var sleft_orig = sleft;
+		var stop_orig = stop;
+		var swidth_orig = swidth;
+		var sheight_orig = sheight;
+		sleft = ((sleft < 0 ? -sleft : sleft) & 0x7fffffff) * (sleft < 0 ? -1 : 1);
+		stop = ((stop < 0 ? -stop : stop) & 0x7fffffff) * (stop < 0 ? -1 : 1);
+		swidth = ((swidth < 0 ? -swidth : swidth) & 0x7fffffff) * (swidth < 0 ? -1 : 1);
+		sheight = ((sheight < 0 ? -sheight : sheight) & 0x7fffffff) * (sheight < 0 ? -1 : 1);
+		if (mode !== void)
+		{
+			mode = ((mode < 0 ? -mode : mode) & 0x7fffffff) * (mode < 0 ? -1 : 1);
+		}
+		if (opacity !== void)
+		{
+			opacity = ((opacity < 0 ? -opacity : opacity) & 0x7fffffff) * (opacity < 0 ? -1 : 1);
+		}
+		if (type !== void)
+		{
+			type = ((type < 0 ? -type : type) & 0x7fffffff) * (type < 0 ? -1 : 1);
+		}
+		if (option !== void)
+		{
+			option *= 1.0;
+		}
+@endif
 		super.operateStretch(src.transformLeft(left, this), src.transformTop(top, this), width*widthScale, height*heightScale, src, sleft*src.widthScale, stop*src.heightScale, swidth*src.widthScale, sheight*src.heightScale, mode, opacity, type, option);
 	}
 
 	function transformSLeft(src, sleft, swidth)
 	{
 		if (src.numberOfImages > 1) {
+@if(SCALE_USING_FLOATING_POINT)
 			var imageIndex = sleft / swidth;
+@endif
+@if(!SCALE_USING_FLOATING_POINT)
+			var imageIndex = sleft \ swidth;
+@endif
 			return imageIndex * int(swidth * src.widthScale);
 		}
 		return sleft*src.widthScale;
@@ -1564,6 +1860,24 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 
 	function stretchCopy(left, top, width, height, src, sleft, stop, swidth, sheight, type, option)
 	{
+@if(!SCALE_USING_FLOATING_POINT)
+		left = ((left < 0 ? -left : left) & 0x7fffffff) * (left < 0 ? -1 : 1);
+		top = ((top < 0 ? -top : top) & 0x7fffffff) * (top < 0 ? -1 : 1);
+		width = ((width < 0 ? -width : width) & 0x7fffffff) * (width < 0 ? -1 : 1);
+		height = ((height < 0 ? -height : height) & 0x7fffffff) * (height < 0 ? -1 : 1);
+		sleft = ((sleft < 0 ? -sleft : sleft) & 0x7fffffff) * (sleft < 0 ? -1 : 1);
+		stop = ((stop < 0 ? -stop : stop) & 0x7fffffff) * (stop < 0 ? -1 : 1);
+		swidth = ((swidth < 0 ? -swidth : swidth) & 0x7fffffff) * (swidth < 0 ? -1 : 1);
+		sheight = ((sheight < 0 ? -sheight : sheight) & 0x7fffffff) * (sheight < 0 ? -1 : 1);
+		if (type !== void)
+		{
+			type = ((type < 0 ? -type : type) & 0x7fffffff) * (type < 0 ? -1 : 1);
+		}
+		if (option !== void)
+		{
+			option *= 1.0;
+		}
+@endif
 		sleft = transformSLeft(src, sleft, swidth);
 
 		super.stretchCopy(src.transformLeft(left, this), src.transformTop(top, this), width*widthScale, height*heightScale, src, sleft, stop*src.heightScale, swidth*src.widthScale, sheight*src.heightScale, type, option);
@@ -1596,32 +1910,108 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 
 	function piledCopy(left, top, src, sleft, stop, swidth, sheight)
 	{
+@if(!SCALE_USING_FLOATING_POINT)
+		left = ((left < 0 ? -left : left) & 0x7fffffff) * (left < 0 ? -1 : 1);
+		top = ((top < 0 ? -top : top) & 0x7fffffff) * (top < 0 ? -1 : 1);
+		sleft = ((sleft < 0 ? -sleft : sleft) & 0x7fffffff) * (sleft < 0 ? -1 : 1);
+		stop = ((stop < 0 ? -stop : stop) & 0x7fffffff) * (stop < 0 ? -1 : 1);
+		swidth = ((swidth < 0 ? -swidth : swidth) & 0x7fffffff) * (swidth < 0 ? -1 : 1);
+		sheight = ((sheight < 0 ? -sheight : sheight) & 0x7fffffff) * (sheight < 0 ? -1 : 1);
+@endif
 		updateBgFromSource(src, swidth, sheight);
 		super.piledCopy(src.transformLeft(left, this), src.transformTop(top, this), src, sleft*src.widthScale, stop*src.heightScale, swidth*src.widthScale, sheight*src.heightScale);
 	}
 
 	function affineCopy(src, sx, sy, sw, sh, affine, a, b, c, d, tx, ty, type, clear)
 	{
+@if(!SCALE_USING_FLOATING_POINT)
+		sx = ((sx < 0 ? -sx : sx) & 0x7fffffff) * (sx < 0 ? -1 : 1);
+		sy = ((sy < 0 ? -sy : sy) & 0x7fffffff) * (sy < 0 ? -1 : 1);
+		sw = ((sw < 0 ? -sw : sw) & 0x7fffffff) * (sw < 0 ? -1 : 1);
+		sh = ((sh < 0 ? -sh : sh) & 0x7fffffff) * (sh < 0 ? -1 : 1);
+		affine = !!affine;
+		a *= 1.0;
+		b *= 1.0;
+		c *= 1.0;
+		d *= 1.0;
+		tx *= 1.0;
+		ty *= 1.0;
+		if (type !== void)
+		{
+			type = ((type < 0 ? -type : type) & 0x7fffffff) * (type < 0 ? -1 : 1);
+		}
+		if (clear !== void)
+		{
+			clear = ((clear < 0 ? -clear : clear) & 0x7fffffff) * (clear < 0 ? -1 : 1);
+		}
+@endif
 		super.affineCopy(src, sx*src.widthScale, sy*src.heightScale, sw*src.widthScale, sh*src.heightScale, affine, a, b, c, d, tx*widthScale, ty*heightScale, type, clear);
 	}
 
 	function operateAffine(src, sx, sy, sw, sh, affine, a, b, c, d, tx, ty, mode, opa, type)
 	{
+@if(!SCALE_USING_FLOATING_POINT)
+		sx = ((sx < 0 ? -sx : sx) & 0x7fffffff) * (sx < 0 ? -1 : 1);
+		sy = ((sy < 0 ? -sy : sy) & 0x7fffffff) * (sy < 0 ? -1 : 1);
+		sw = ((sw < 0 ? -sw : sw) & 0x7fffffff) * (sw < 0 ? -1 : 1);
+		sh = ((sh < 0 ? -sh : sh) & 0x7fffffff) * (sh < 0 ? -1 : 1);
+		affine = !!affine;
+		a *= 1.0;
+		b *= 1.0;
+		c *= 1.0;
+		d *= 1.0;
+		tx *= 1.0;
+		ty *= 1.0;
+		if (mode !== void)
+		{
+			mode = ((mode < 0 ? -mode : mode) & 0x7fffffff) * (mode < 0 ? -1 : 1);
+		}
+		if (opa !== void)
+		{
+			opa = ((opa < 0 ? -opa : opa) & 0x7fffffff) * (opa < 0 ? -1 : 1);
+		}
+		if (type !== void)
+		{
+			type = ((type < 0 ? -type : type) & 0x7fffffff) * (type < 0 ? -1 : 1);
+		}
+@endif
 		super.operateAffine(src, sx*src.widthScale, sy*src.heightScale, sw*src.widthScale, sh*src.heightScale, affine, a, b, c, d, tx*widthScale, ty*heightScale, mode, opa, type);
 	}
 
 	function doBoxBlur(xblur=1, yblur=1)
 	{
+@if(!SCALE_USING_FLOATING_POINT)
+		xblur = ((xblur < 0 ? -xblur : xblur) & 0x7fffffff) * (xblur < 0 ? -1 : 1);
+		yblur = ((yblur < 0 ? -yblur : yblur) & 0x7fffffff) * (yblur < 0 ? -1 : 1);
+@endif
 		super.doBoxBlur(xblur*widthScale, yblur*heightScale);
 	}
 
 	function fillRect(left, top, width, height, color)
 	{
+@if(!SCALE_USING_FLOATING_POINT)
+		left = ((left < 0 ? -left : left) & 0x7fffffff) * (left < 0 ? -1 : 1);
+		top = ((top < 0 ? -top : top) & 0x7fffffff) * (top < 0 ? -1 : 1);
+		width = ((width < 0 ? -width : width) & 0x7fffffff) * (width < 0 ? -1 : 1);
+		height = ((height < 0 ? -height : height) & 0x7fffffff) * (height < 0 ? -1 : 1);
+		color &= 0xffffffff;
+@endif
 		super.fillRect(left*widthScale, top*heightScale, width*widthScale, height*heightScale, color);
 	}
 
 	function colorRect(left, top, width, height, color, opacity)
 	{
+@if(!SCALE_USING_FLOATING_POINT)
+		left = ((left < 0 ? -left : left) & 0x7fffffff) * (left < 0 ? -1 : 1);
+		top = ((top < 0 ? -top : top) & 0x7fffffff) * (top < 0 ? -1 : 1);
+		width = ((width < 0 ? -width : width) & 0x7fffffff) * (width < 0 ? -1 : 1);
+		height = ((height < 0 ? -height : height) & 0x7fffffff) * (height < 0 ? -1 : 1);
+		color &= 0xffffffff;
+		if (opacity !== void)
+		{
+			opacity = ((opacity < 0 ? -opacity : opacity) & 0x7fffffff) * (opacity < 0 ? -1 : 1);
+		}
+@endif
 		super.colorRect(left*widthScale, top*heightScale, width*widthScale, height*heightScale, color, opacity);
 	}
 
@@ -1637,6 +2027,12 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		var clipTop = args.count >= 2 ? args[1] : 0;
 		var clipWidth = args.count >= 3 ? args[2] : 0;
 		var clipHeight = args.count >= 4 ? args[3] : 0;
+@if(!SCALE_USING_FLOATING_POINT)
+		clipLeft = ((clipLeft < 0 ? -clipLeft : clipLeft) & 0x7fffffff) * (clipLeft < 0 ? -1 : 1);
+		clipTop = ((clipTop < 0 ? -clipTop : clipTop) & 0x7fffffff) * (clipTop < 0 ? -1 : 1);
+		clipWidth = ((clipWidth < 0 ? -clipWidth : clipWidth) & 0x7fffffff) * (clipWidth < 0 ? -1 : 1);
+		clipHeight = ((clipHeight < 0 ? -clipHeight : clipHeight) & 0x7fffffff) * (clipHeight < 0 ? -1 : 1);
+@endif
 		var clipRight = originalImageWidth + clipLeft;
 		var clipBottom = originalImageHeight + clipTop;
 		clipLeft = clipLeft < 0 ? 0 : clipLeft;
@@ -1661,6 +2057,10 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 
 	function setAttentionPos(left, top)
 	{
+@if(!SCALE_USING_FLOATING_POINT)
+		left = ((left < 0 ? -left : left) & 0x7fffffff) * (left < 0 ? -1 : 1);
+		top = ((top < 0 ? -top : top) & 0x7fffffff) * (top < 0 ? -1 : 1);
+@endif
 		originalAttentionLeft = transformDiscrete(left, widthScale);
 		originalAttentionTop = transformDiscrete(top, heightScale);
 		super.setAttentionPos(left*widthScale, top*heightScale);
@@ -1676,23 +2076,187 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		internalSetImageSize(originalImageWidth, originalImageHeight);
 	}
 
-	function drawText(left, top, text, color, opacity, aa, slevel, scolor, swidth, sofsx, sofxy)
+	function drawText(left, top, text, color, opacity, aa, slevel, scolor, swidth, sofsx, sofsy)
 	{
-		super.drawText(left*widthScale, top*heightScale, text, color, opacity, aa, slevel, scolor, swidth, sofsx, sofxy);
+@if(!SCALE_USING_FLOATING_POINT)
+		left = ((left < 0 ? -left : left) & 0x7fffffff) * (left < 0 ? -1 : 1);
+		top = ((top < 0 ? -top : top) & 0x7fffffff) * (top < 0 ? -1 : 1);
+		color &= 0xffffffff;
+		if (opacity !== void)
+		{
+			opacity = ((opacity < 0 ? -opacity : opacity) & 0x7fffffff) * (opacity < 0 ? -1 : 1);
+		}
+		if (aa !== void)
+		{
+			aa = !!aa;
+		}
+		if (slevel !== void)
+		{
+			slevel = ((slevel < 0 ? -slevel : slevel) & 0x7fffffff) * (slevel < 0 ? -1 : 1);
+		}
+		if (scolor !== void)
+		{
+			scolor &= 0xffffffff;
+		}
+		if (swidth !== void)
+		{
+			swidth = ((swidth < 0 ? -swidth : swidth) & 0x7fffffff) * (swidth < 0 ? -1 : 1);
+		}
+		if (sofsx !== void)
+		{
+			sofsx = ((sofsx < 0 ? -sofsx : sofsx) & 0x7fffffff) * (sofsx < 0 ? -1 : 1);
+		}
+		if (sofsy !== void)
+		{
+			sofsy = ((sofsy < 0 ? -sofsy : sofsy) & 0x7fffffff) * (sofsy < 0 ? -1 : 1);
+		}
+@endif
+		super.drawText(left*widthScale, top*heightScale, text, color, opacity, aa, slevel, scolor, swidth, sofsx, sofsy);
 	}
 
-	function drawGlyph(left, top, glyph, color, opacity, aa, slevel, scolor, swidth, sofsx, sofxy)
+	function drawGlyph(left, top, glyph, color, opacity, aa, slevel, scolor, swidth, sofsx, sofsy)
 	{
-		super.drawGlyph(left*widthScale, top*heightScale, glyph, color, opacity, aa, slevel, scolor, swidth, sofsx, sofxy);
+@if(!SCALE_USING_FLOATING_POINT)
+		left = ((left < 0 ? -left : left) & 0x7fffffff) * (left < 0 ? -1 : 1);
+		top = ((top < 0 ? -top : top) & 0x7fffffff) * (top < 0 ? -1 : 1);
+		color &= 0xffffffff;
+		if (opacity !== void)
+		{
+			opacity = ((opacity < 0 ? -opacity : opacity) & 0x7fffffff) * (opacity < 0 ? -1 : 1);
+		}
+		if (aa !== void)
+		{
+			aa = !!aa;
+		}
+		if (slevel !== void)
+		{
+			slevel = ((slevel < 0 ? -slevel : slevel) & 0x7fffffff) * (slevel < 0 ? -1 : 1);
+		}
+		if (scolor !== void)
+		{
+			scolor &= 0xffffffff;
+		}
+		if (swidth !== void)
+		{
+			swidth = ((swidth < 0 ? -swidth : swidth) & 0x7fffffff) * (swidth < 0 ? -1 : 1);
+		}
+		if (sofsx !== void)
+		{
+			sofsx = ((sofsx < 0 ? -sofsx : sofsx) & 0x7fffffff) * (sofsx < 0 ? -1 : 1);
+		}
+		if (sofsy !== void)
+		{
+			sofsy = ((sofsy < 0 ? -sofsy : sofsy) & 0x7fffffff) * (sofsy < 0 ? -1 : 1);
+		}
+@endif
+		super.drawGlyph(left*widthScale, top*heightScale, glyph, color, opacity, aa, slevel, scolor, swidth, sofsx, sofsy);
 	}
 
-	// TODO figure out if necessary
+@if(0)
+	property mainImageBuffer
+	{
+		getter
+		{
+			if (!absoluteMode)
+			{
+				dm("trace: " + Scripts.getTraceString());
+				throw new Exception("Attempted to get mainImageBuffer while not in absoluteMode");
+			}
+			return super.mainImageBuffer;
+		}
+	}
+
+	property mainImageBufferForWrite
+	{
+		getter
+		{
+			if (!absoluteMode)
+			{
+				dm("trace: " + Scripts.getTraceString());
+				throw new Exception("Attempted to get mainImageBufferForWrite while not in absoluteMode");
+			}
+			return super.mainImageBufferForWrite;
+		}
+	}
+
+	property mainImageBufferPitch
+	{
+		getter
+		{
+			if (!absoluteMode)
+			{
+				dm("trace: " + Scripts.getTraceString());
+				throw new Exception("Attempted to get mainImageBufferPitch while not in absoluteMode");
+			}
+			return super.mainImageBufferPitch;
+		}
+	}
+
+	property provinceImageBuffer
+	{
+		getter
+		{
+			if (!absoluteMode)
+			{
+				dm("trace: " + Scripts.getTraceString());
+				throw new Exception("Attempted to get provinceImageBuffer while not in absoluteMode");
+			}
+			return super.provinceImageBuffer;
+		}
+	}
+
+	property provinceImageBufferForWrite
+	{
+		getter
+		{
+			if (!absoluteMode)
+			{
+				dm("trace: " + Scripts.getTraceString());
+				throw new Exception("Attempted to get provinceImageBufferForWrite while not in absoluteMode");
+			}
+			return super.provinceImageBufferForWrite;
+		}
+	}
+
+	property provinceImageBufferPitch
+	{
+		getter
+		{
+			if (!absoluteMode)
+			{
+				dm("trace: " + Scripts.getTraceString());
+				throw new Exception("Attempted to get provinceImageBufferPitch while not in absoluteMode");
+			}
+			return super.provinceImageBufferPitch;
+		}
+	}
+@endif
+
+	function update(args*)
+	{
+		if (args.count < 1)
+		{
+			super.update();
+			return;
+		}
+		if (args.count < 4)
+		{
+			throw new Exception("expected 4 args");
+		}
+		var left = args[0];
+		var top = args[1];
+		var width = args[2];
+		var height = args[3];
+@if(!SCALE_USING_FLOATING_POINT)
+		left = ((left < 0 ? -left : left) & 0x7fffffff) * (left < 0 ? -1 : 1);
+		top = ((top < 0 ? -top : top) & 0x7fffffff) * (top < 0 ? -1 : 1);
+		width = ((width < 0 ? -width : width) & 0x7fffffff) * (width < 0 ? -1 : 1);
+		height = ((height < 0 ? -height : height) & 0x7fffffff) * (height < 0 ? -1 : 1);
+@endif
+		super.update(left*widthScale, top*heightScale, width*widthScale, height*heightScale);
+	}
+
 	/*
-	function update(left, top, width, height)
-	{
-		super.update(left*leftScale, top*topScale, width*widthScale, height*heightScale);
-	}
-
 	function redraw(left, top)
 	{
 		super.redraw(left*widthScale, top*heightScale);
@@ -1720,7 +2284,12 @@ class Window_patch_hd_layer_override extends Window_patch_hd_layer_original
 	property transformedScrollYOffset { getter {
 		var scale = scrollYOffset / 150; // 0: image unchanged, 150: image scrolled all the way to the bottom.
 		var factor = wideScreen? wideFactor : cropFactor;
-		var result = originalResHeight * Math.abs(1 - factor)*scale/wideFactor;
+@if(SCALE_USING_FLOATING_POINT)
+		var result = originalResHeight * (Math.abs(1 - factor)    ) * scale / wideFactor;
+@endif
+@if(!SCALE_USING_FLOATING_POINT)
+		var result = originalResHeight * (Math.abs(1 - factor) | 0) * scale \ wideFactor;
+@endif
 		return result;
 	} }
 
@@ -1728,6 +2297,17 @@ class Window_patch_hd_layer_override extends Window_patch_hd_layer_original
 	property heightScale { getter { return scaleFactor * (isMainWindow? cropFactor : 1); } }
 	property isMainWindow { getter { return this === global.Window.mainWindow; } }
 	property body { getter() { return fore; } }
+
+@if(ZOOM_WINDOW)
+@if(SCALE_USING_FLOATING_POINT)
+	property innerWidthScale { getter { return innerWidth / exWidth; } }
+	property innerHeightScale { getter { return innerHeight / exHeight; } }
+@endif
+@if(!SCALE_USING_FLOATING_POINT)
+	property innerWidthScale { getter { return innerWidth \ exWidth; } }
+	property innerHeightScale { getter { return innerHeight \ exHeight; } }
+@endif
+@endif
 
 	property isHd
 	{
@@ -1776,13 +2356,23 @@ class Window_patch_hd_layer_override extends Window_patch_hd_layer_original
 	{
 		getter
 		{
-			if (!wideScreen) {
-				return cubicRatio;
+			var retvalue;
+			if (!wideScreen)
+			{
+				retvalue = cubicRatio;
 			}
-			if (this.scflags[autoWideRatioFlagName]) {
-				return systemRatio;
+			else if (this.scflags[autoWideRatioFlagName])
+			{
+				retvalue = systemRatio;
 			}
-			return this.scflags[wideRatioFlagName] != void? this.scflags[wideRatioFlagName] : systemRatio;
+			else
+			{
+				retvalue = this.scflags[wideRatioFlagName] != void? this.scflags[wideRatioFlagName] : systemRatio;
+			}
+@if(!SCALE_USING_FLOATING_POINT)
+			retvalue |= 0;
+@endif
+			return retvalue;
 		}
 	}
 
@@ -1798,6 +2388,9 @@ class Window_patch_hd_layer_override extends Window_patch_hd_layer_original
 		}
 		setter(v)
 		{
+@if(!SCALE_USING_FLOATING_POINT)
+			v = ((v < 0 ? -v : v) & 0x7fffffff) * (v < 0 ? -1 : 1);
+@endif
 			if (isMainWindow) {
 				super.left = v;
 			} else {
@@ -1819,6 +2412,9 @@ class Window_patch_hd_layer_override extends Window_patch_hd_layer_original
 		}
 		setter(v)
 		{
+@if(!SCALE_USING_FLOATING_POINT)
+			v = ((v < 0 ? -v : v) & 0x7fffffff) * (v < 0 ? -1 : 1);
+@endif
 			if (isMainWindow) {
 				super.top = v;
 			} else {
@@ -1836,6 +2432,9 @@ class Window_patch_hd_layer_override extends Window_patch_hd_layer_original
 		}
 		setter(v)
 		{
+@if(!SCALE_USING_FLOATING_POINT)
+			v = ((v < 0 ? -v : v) & 0x7fffffff) * (v < 0 ? -1 : 1);
+@endif
 			originalWidth = v;
 			super.width = v * widthScale;
 		}
@@ -1849,6 +2448,9 @@ class Window_patch_hd_layer_override extends Window_patch_hd_layer_original
 		}
 		setter(v)
 		{
+@if(!SCALE_USING_FLOATING_POINT)
+			v = ((v < 0 ? -v : v) & 0x7fffffff) * (v < 0 ? -1 : 1);
+@endif
 			originalHeight = v;
 			super.height = v * heightScale;
 		}
@@ -1862,6 +2464,9 @@ class Window_patch_hd_layer_override extends Window_patch_hd_layer_original
 		}
 		setter(v)
 		{
+@if(!SCALE_USING_FLOATING_POINT)
+			v = ((v < 0 ? -v : v) & 0x7fffffff) * (v < 0 ? -1 : 1);
+@endif
 			originalInnerWidth = v;
 			super.innerWidth = v * widthScale;
 		}
@@ -1875,6 +2480,9 @@ class Window_patch_hd_layer_override extends Window_patch_hd_layer_original
 		}
 		setter(v)
 		{
+@if(!SCALE_USING_FLOATING_POINT)
+			v = ((v < 0 ? -v : v) & 0x7fffffff) * (v < 0 ? -1 : 1);
+@endif
 			originalInnerHeight = v;
 			super.innerHeight = v * heightScale;
 		}
@@ -1898,6 +2506,10 @@ class Window_patch_hd_layer_override extends Window_patch_hd_layer_original
 
 	function setPos(left, top)
 	{
+@if(!SCALE_USING_FLOATING_POINT)
+		left = ((left < 0 ? -left : left) & 0x7fffffff) * (left < 0 ? -1 : 1);
+		top = ((top < 0 ? -top : top) & 0x7fffffff) * (top < 0 ? -1 : 1);
+@endif
 		if (isMainWindow) {
 			super.setPos(left, top);
 		} else {
@@ -1909,22 +2521,42 @@ class Window_patch_hd_layer_override extends Window_patch_hd_layer_original
 
 	function setInnerSize(innerWidth, innerHeight)
 	{
+@if(!SCALE_USING_FLOATING_POINT)
+		innerWidth = ((innerWidth < 0 ? -innerWidth : innerWidth) & 0x7fffffff) * (innerWidth < 0 ? -1 : 1);
+		innerHeight = ((innerHeight < 0 ? -innerHeight : innerHeight) & 0x7fffffff) * (innerHeight < 0 ? -1 : 1);
+@endif
 		originalInnerWidth = innerWidth;
 		originalInnerHeight = innerHeight;
 		super.setInnerSize(innerWidth * widthScale, innerHeight * heightScale);
 
+@if(SCALE_USING_FLOATING_POINT)
 		originalWidth = super.width / widthScale;
 		originalHeight = super.height / heightScale;
+@endif
+@if(!SCALE_USING_FLOATING_POINT)
+		originalWidth = super.width \ widthScale;
+		originalHeight = super.height \ heightScale;
+@endif
 	}
 
 	function setSize(width, height)
 	{
+@if(!SCALE_USING_FLOATING_POINT)
+		width = ((width < 0 ? -width : width) & 0x7fffffff) * (width < 0 ? -1 : 1);
+		height = ((height < 0 ? -height : height) & 0x7fffffff) * (height < 0 ? -1 : 1);
+@endif
 		originalWidth = width;
 		originalHeight = height;
 		super.setSize(width * widthScale, height * heightScale);
 
+@if(SCALE_USING_FLOATING_POINT)
 		originalInnerWidth = super.innerWidth / widthScale;
 		originalInnerHeight = super.innerHeight / heightScale;
+@endif
+@if(!SCALE_USING_FLOATING_POINT)
+		originalInnerWidth = super.innerWidth \ widthScale;
+		originalInnerHeight = super.innerHeight \ heightScale;
+@endif
 	}
 }
 global.Window = Window_patch_hd_layer_override;
@@ -1946,7 +2578,12 @@ class VideoOverlay_patch_hd_layer_override extends VideoOverlay_patch_hd_layer_o
 	{
 		getter
 		{
+@if(SCALE_USING_FLOATING_POINT)
 			return super.originalWidth / wideScaleFactor;
+@endif
+@if(!SCALE_USING_FLOATING_POINT)
+			return super.originalWidth \ wideScaleFactor;
+@endif
 		}
 	}
 
@@ -1954,7 +2591,12 @@ class VideoOverlay_patch_hd_layer_override extends VideoOverlay_patch_hd_layer_o
 	{
 		getter
 		{
+@if(SCALE_USING_FLOATING_POINT)
 			return super.originalHeight / scaleFactor;
+@endif
+@if(!SCALE_USING_FLOATING_POINT)
+			return super.originalHeight \ scaleFactor;
+@endif
 		}
 	}
 

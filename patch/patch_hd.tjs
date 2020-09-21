@@ -18,7 +18,12 @@ var highResHeight = 1200;
 var highResWidth = 2048;
 var highResHeight = 1152;
 @endif
+@if(SCALE_USING_FLOATING_POINT)
 var defaultScaleFactor = highResWidth / originalResWidth;
+@endif
+@if(!SCALE_USING_FLOATING_POINT)
+var defaultScaleFactor = highResWidth \ originalResWidth;
+@endif
 var isCropped = false;
 var scaleFactor = 1;
 var wideFactor = 1;
@@ -139,7 +144,16 @@ function initializeQuality(scale, firsttime=false) {
 
 function initializeWide(ratio, firsttime=false) {
 	wideScreen = ratio > cubicRatio;
+@if(SCALE_USING_FLOATING_POINT)
 	wideFactor = originalResHeight * ratio / originalResWidth;
+@endif
+@if(!SCALE_USING_FLOATING_POINT)
+	wideFactor = originalResHeight * ratio \ originalResWidth;
+	if (!wideFactor)
+	{
+		wideFactor = 1;
+	}
+@endif
 
 	if (wideScreen) {
 		load_patches([[wideRulePatchName, wideRuleFolderName]]);
@@ -206,10 +220,15 @@ function onWideMenuItemClick(sender, ratio, cropped=false) {
 	if (cropped != isCropped)
 	{
 		with (sender.owner) {
-			if (cropped) {
+@if(SCALE_USING_FLOATING_POINT)
+			if (cropped)
+			{
 				isCropped = true;
-				cropFactor = 1/cubicRatio;
-			} else {
+				cropFactor = 1 / cubicRatio;
+			}
+			else
+@endif
+			{
 				isCropped = false;
 				cropFactor = 1;
 			}

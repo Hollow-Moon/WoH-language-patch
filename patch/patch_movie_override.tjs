@@ -79,6 +79,10 @@ class Movie_patch_movie_override_override extends Movie_patch_movie_override_ori
 
 	function open(storage)
 	{
+		if (storage == "")
+		{
+			return false;
+		}
 		this.storageName = storage;
 
 @if(kirikiriz)
@@ -123,11 +127,21 @@ class Movie_patch_movie_override_override extends Movie_patch_movie_override_ori
 		}
 		catch(e)
 		{
-			if(e.message.indexOf(".dll") != -1) throw e;
-			dm("ムービー " + storage + " を再生できません : " +
-				e.message);
-			return;
+			if (typeof(e) !== "Object" || !isvalid(e) || typeof(e.message) !== "String")
+			{
+				return false;
+			}
+			if (typeof(e.message) === "String")
+			{
+				Debug.message("Movie error message: " + e.message);
+			}
+			if (typeof(e.trace) === "String")
+			{
+				Debug.message("Movie error message: " + e.trace);
+			}
+			return false;
 		}
+		return true;
 	}
 
 	function _onOpen()

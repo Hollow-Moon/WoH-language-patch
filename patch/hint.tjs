@@ -11,7 +11,7 @@ class Window_hint_override extends Window_hint_original
 			.visible = false;
 			.ignoreHintSensing = true;
 			.hitThreshold = 256;
-			.font.height = 9;
+			.font.height = Math.ceil(9 / Math.min(1, innerHeightScale)); // upscale font when using window size < x1.0
 			.font.face = __s("MS UI Gothic", "hint_font_face");
 @if(WIDE_MODE)
 			._isFixedPosition = true;
@@ -44,8 +44,9 @@ class Window_hint_override extends Window_hint_original
 				}
 			}
 
+			var fontHeight = hintlayer.font.height;
 			var w = hintlayer.font.getTextWidth(lines[longestLineIndex]) + hintHorizontalPadding * 2;
-			var h = hintlayer.font.height * lines.count + hintLineSpacing * (lines.count-1) + hintVerticalPadding * 2;
+			var h = fontHeight * lines.count + hintLineSpacing * (lines.count-1) + hintVerticalPadding * 2;
 			hintlayer.setImageSize(w, h);
 			hintlayer.setSizeToImageSize();
 
@@ -60,10 +61,18 @@ class Window_hint_override extends Window_hint_original
 			x /= wideScaleFactor;
 			y /= scaleFactor;
 @endif
-
+@if(ZOOM_WINDOW)
+			x /= innerWidthScale;
+			y /= innerHeightScale;
+			if ((x+w) > innerWidth/innerWidthScale) { x = innerWidth/innerWidthScale - w; }
+			if ((y+mouseCursorSize+h) > innerHeight/innerHeightScale) { y = innerHeight/innerHeightScale - h - mouseCursorSize/innerHeightScale; }
+			hintlayer.setPos(x, y + mouseCursorSize/innerHeightScale);
+@endif
+@if(!ZOOM_WINDOW)
 			if ((x+w) > innerWidth) { x = innerWidth - w; }
 			if ((y+mouseCursorSize+h) > innerHeight) { y = innerHeight - h - mouseCursorSize; }
 			hintlayer.setPos(x, y + mouseCursorSize);
+@endif
 
 			hintlayer.fillRect(0, 0, w, h, 0);
 			hintlayer.colorRect(0, 0, w, h, clInfoBk, 196);
@@ -76,7 +85,7 @@ class Window_hint_override extends Window_hint_original
 			var lineY = hintVerticalPadding;
 			for (var i=0; i<lines.count; i++) {
 				hintlayer.drawText(hintHorizontalPadding, lineY, lines[i], clInfoText, 220);
-				lineY += hintlayer.font.height + hintLineSpacing;
+				lineY += fontHeight + hintLineSpacing;
 			}
 			hintlayer.visible = true;
 			hintlayer.bringToFront();

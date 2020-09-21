@@ -64,6 +64,7 @@
 	["patch_prerendered_font.tjs", ,,, "PRERENDERED_FONTS"],
 	"patch_font_wrapper.tjs",
 	"patch_layer.tjs",
+	["patch_movie.tjs", ,,, "GAME_FATE||GAME_FHAT"],
 	["patch_hd_layer.tjs", ,,, "HD_MODE"],
 	["patch_hd.tjs", ,,, "HD_MODE"],
 	["patch_hd_plugins.tjs", ,,, "HD_MODE"],

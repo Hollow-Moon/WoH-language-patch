@@ -113,7 +113,7 @@ function dmt(msg*) { Debug.message(msg.join(", ")+": "+Scripts.getTraceString())
 @set(ENABLE_LINKS=1)
 @endif
 
-@if(kirikiriz&&!GAME_WOHN)
+@if(kirikiriz)
 @set(HD_MODE=1)
 @endif
 
@@ -139,6 +139,12 @@ function dmt(msg*) { Debug.message(msg.join(", ")+": "+Scripts.getTraceString())
 // Wide mode should be independent of hd mode, but this is currently not the case.
 @if(HD_MODE)
 @set(WIDE_MODE=1)
+@if(GAME_FATE||GAME_FHAT)
+@set(SCALE_USING_FLOATING_POINT=1)
+@endif
+@if(GAME_WOHN)
+@set(SCALE_USING_FLOATING_POINT=0)
+@endif
 @endif
 @set(CROP_MODE=0)
 

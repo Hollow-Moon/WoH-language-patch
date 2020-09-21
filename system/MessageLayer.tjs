@@ -1445,10 +1445,10 @@ class MessageLayer extends KAGLayer
 				if(vertical)
 				{
 					for(var i=0; i<currentColumn; i++)
-@if(!HD_MODE)
+@if(!SCALE_USING_FLOATING_POINT)
 						chars[i].textLeft	= x + getCharLayerLeftOffset() + (chars[i].textWidth>>1) if chars[i] != void;
 @endif
-@if(HD_MODE)
+@if(SCALE_USING_FLOATING_POINT)
 						chars[i].textLeft	= x + getCharLayerLeftOffset() + (chars[i].textWidth/2) if chars[i] != void;
 @endif
 				}
@@ -1482,10 +1482,10 @@ class MessageLayer extends KAGLayer
 			if(align == -1)
 				return 0;
 			else if(align == 0)
-@if(!HD_MODE)
+@if(!SCALE_USING_FLOATING_POINT)
 				return (imageWidth - marginR - marginL - currentLineLengthSize) >> 1;
 @endif
-@if(HD_MODE)
+@if(SCALE_USING_FLOATING_POINT)
 				return (imageWidth - marginR - marginL - currentLineLengthSize) / 2;
 @endif
 			else if(align == 1)
@@ -1505,10 +1505,10 @@ class MessageLayer extends KAGLayer
 			if(align == -1)
 				return 0;
 			else if(align == 0)
-@if(!HD_MODE)
+@if(!SCALE_USING_FLOATING_POINT)
 				return (imageHeight - marginB - marginT - currentLineLengthSize) >> 1;
 @endif
-@if(HD_MODE)
+@if(SCALE_USING_FLOATING_POINT)
 				return (imageHeight - marginB - marginT - currentLineLengthSize) / 2;
 @endif
 			else if(align == 1)
@@ -2226,11 +2226,11 @@ class MessageLayer extends KAGLayer
 			}
 
 			if(vert)
-@if(!HD_MODE)
+@if(!SCALE_USING_FLOATING_POINT)
 				.setTextPos(x + int(getCharLayerLeftOffset()+(.textWidth>>1)), y + getCharLayerTopOffset());
 @endif
-@if(HD_MODE)
-			.setTextPos(x + int(getCharLayerLeftOffset()+(.textWidth / 2)), y + getCharLayerTopOffset());
+@if(SCALE_USING_FLOATING_POINT)
+				.setTextPos(x + int(getCharLayerLeftOffset()+(.textWidth / 2)), y + getCharLayerTopOffset());
 @endif
 			else
 				.setTextPos(x + dxp + getCharLayerLeftOffset(), y + int(getCharLayerTopOffset()-.textHeight));
@@ -2351,11 +2351,11 @@ class MessageLayer extends KAGLayer
 			rx	= getCharLayerLeft(line, stcol);
 			if(align == "c")
 			{//	センタリング
-@if(!HD_MODE)
+@if(!SCALE_USING_FLOATING_POINT)
 				rx	+= (getCharLayerRight(line, edcol) - rx) >> 1;
 				rx	-= rubylayer.textWidth >> 1;
 @endif
-@if(HD_MODE)
+@if(SCALE_USING_FLOATING_POINT)
 				rx	+= (getCharLayerRight(line, edcol) - rx) / 2;
 				rx	-= rubylayer.textWidth / 2;
 @endif
@@ -2369,11 +2369,11 @@ class MessageLayer extends KAGLayer
 			ry	= getCharLayerTop(line, stcol);
 			if(align == "c")
 			{//	センタリング
-@if(!HD_MODE)
+@if(!SCALE_USING_FLOATING_POINT)
 				ry	+= (getCharLayerBottom(line, edcol) - ry) >> 1;
 				ry	-= rubylayer.textHeight >> 1;
 @endif
-@if(HD_MODE)
+@if(SCALE_USING_FLOATING_POINT)
 				ry	+= (getCharLayerBottom(line, edcol) - ry) / 2;
 				ry	-= rubylayer.textHeight / 2;
 @endif
@@ -2558,10 +2558,10 @@ class MessageLayer extends KAGLayer
 			else
 				.drawGraph(storage, key);
 			if(vertical)
-@if(!HD_MODE)
+@if(!SCALE_USING_FLOATING_POINT)
 				.setTextPos(x + int(getCharLayerLeftOffset()+(.textWidth>>1)), y + getCharLayerTopOffset());
 @endif
-@if(HD_MODE)
+@if(SCALE_USING_FLOATING_POINT)
 				.setTextPos(x + int(getCharLayerLeftOffset()+(.textWidth / 2)), y + getCharLayerTopOffset());
 @endif
 			else
@@ -2790,10 +2790,10 @@ class MessageLayer extends KAGLayer
 					if(!vertical)
 						x = .textLeft - getCharLayerLeftOffset(), y = .textTop - getCharLayerTopOffset() + .textHeight;
 					else
-@if(!HD_MODE)
+@if(!SCALE_USING_FLOATING_POINT)
 						x = .textLeft - getCharLayerLeftOffset() - (.textWidth>>1), y = .textTop - getCharLayerTopOffset();
 @endif
-@if(HD_MODE)
+@if(SCALE_USING_FLOATING_POINT)
 						x = .textLeft - getCharLayerLeftOffset() - (.textWidth / 2), y = .textTop - getCharLayerTopOffset();
 @endif
 				}
@@ -3973,7 +3973,7 @@ class MessageLayer extends KAGLayer
 			{
 @if(!GAME_WOHN)
 				glyphobj.setPos(lineLayerPos + lineLayerOriginX + getLineLayerLeftOffset(),
-@if(HD_MODE)
+@if(SCALE_USING_FLOATING_POINT)
 @if(kirikiriz || KIRIKIROID)
 					y + lineSpacing + ((lineSize-glyphobj.height)/2));
 @endif
@@ -3981,7 +3981,7 @@ class MessageLayer extends KAGLayer
 					y + lineSize + lineSpacing - glyphobj.height - lineLayerYDrawOffset);
 @endif
 @endif
-@if(!HD_MODE)
+@if(!SCALE_USING_FLOATING_POINT)
 @if(kirikiriz || KIRIKIROID)
 					y + lineSpacing + ((lineSize-glyphobj.height)>>1));
 @endif
@@ -3997,20 +3997,20 @@ class MessageLayer extends KAGLayer
 			else
 			{
 @if(!GAME_WOHN)
-@if(HD_MODE)
+@if(SCALE_USING_FLOATING_POINT)
 				glyphobj.setPos(x - lineSpacing-  (lineSize/2) - (glyphobj.width/2),
 					lineLayerPos + lineLayerOriginY + getLineLayerTopOffset());
 @endif
-@if(!HD_MODE)
+@if(!SCALE_USING_FLOATING_POINT)
 				glyphobj.setPos(x - lineSpacing-  (lineSize>>1) - (glyphobj.width>>1),
 					lineLayerPos + lineLayerOriginY + getLineLayerTopOffset());
 @endif
 @endif
 @if(GAME_WOHN)
-@if(HD_MODE)
+@if(SCALE_USING_FLOATING_POINT)
 				glyphLayer.setPos(x + getCharLayerLeftOffset() + (glyphLayer.width/2), y + getCharLayerTopOffset());
 @endif
-@if(!HD_MODE)
+@if(!SCALE_USING_FLOATING_POINT)
 				glyphLayer.setPos(x + getCharLayerLeftOffset() + (glyphLayer.width>>1), y + getCharLayerTopOffset());
 @endif
 @endif

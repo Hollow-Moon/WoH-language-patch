@@ -275,10 +275,29 @@ class BaseConductor extends KAGParser
 			timerEnabled =false;
 			onStop();
 			inProcessing = false;
+			var e_message = "";
+			var e_trace = "";
+			if (typeof(e) === "Object")
+			{
+				if (typeof(e.message) === "String")
+				{
+					e_message = e.message;
+				}
+				if (typeof(e.trace) === "String")
+				{
+					e_trace = e.trace;
+				}
+			}
 			var msg = __("エラーが発生しました\nファイル : %s   行 : %s\nタグ : %s ( ← エラーの発生した前後のタグを示している場合もあります )\n%s")
-					.sprintf(curStorage, curLine+1, obj === void ? __("不明") : obj.tagname, e.message);
+					.sprintf(curStorage, curLine+1, obj === void ? __("不明") : obj.tagname, e_message);
 
+			if (e_trace !== "")
+			{
+				dm("trace : " + e_trace);
+			}
+@if(0)
 			if((typeof e.trace) != "undefined") dm("trace : " + e.trace);
+@endif
 			dm(msg);
 			throw new ConductorException(msg);
 //			System.inform(msg, "エラー");

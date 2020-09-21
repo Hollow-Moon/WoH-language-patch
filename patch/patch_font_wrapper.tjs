@@ -214,14 +214,14 @@ class FontWrapper
 		setter(v)
 		{
 @if(HD_MODE)
-			if (Math.abs(v) != originalHeight || font.height != (v * heightScale))
+			if ((Math.abs(v) | 0) != originalHeight || font.height != (v * heightScale))
 @endif
 @if(!HD_MODE)
 			if (v != font.height)
 @endif
 			{
 @if(HD_MODE)
-				originalHeight = Math.abs(v);
+				originalHeight = (Math.abs(v) | 0);
 				font.height = v * heightScale;
 @endif
 @if(!HD_MODE)
@@ -367,7 +367,12 @@ class FontWrapper
 	function getTextHeight(text)
 	{
 @if(HD_MODE)
+@if(SCALE_USING_FLOATING_POINT)
 		return font.getTextHeight(text) / heightScale;
+@endif
+@if(!SCALE_USING_FLOATING_POINT)
+		return font.getTextHeight(text) \ heightScale;
+@endif
 @endif
 @if(!HD_MODE)
 		return font.getTextHeight(text);
@@ -443,7 +448,12 @@ class FontWrapper
 	function getTextWidth(text)
 	{
 @if(HD_MODE)
+@if(SCALE_USING_FLOATING_POINT)
 		return font.getTextWidth(text) / widthScale;
+@endif
+@if(!SCALE_USING_FLOATING_POINT)
+		return font.getTextWidth(text) \ widthScale;
+@endif
 @endif
 @if(!HD_MODE)
 		return font.getTextWidth(text);
@@ -461,7 +471,12 @@ class FontWrapper
 @endif
 		{
 @if(HD_MODE)
+@if(SCALE_USING_FLOATING_POINT)
 			return font.getTextWidth(text) / widthScale;
+@endif
+@if(!SCALE_USING_FLOATING_POINT)
+			return font.getTextWidth(text) \ widthScale;
+@endif
 @endif
 @if(!HD_MODE)
 			return font.getTextWidth(text);
@@ -483,7 +498,12 @@ class FontWrapper
 			}
 		}
 @if(HD_MODE)
+@if(SCALE_USING_FLOATING_POINT)
 		return width / widthScale;
+@endif
+@if(!SCALE_USING_FLOATING_POINT)
+		return width \ widthScale;
+@endif
 @endif
 @if(!HD_MODE)
 		return width;
@@ -499,7 +519,12 @@ class FontWrapper
 		}
 		var rect = font.getGlyphDrawRect(text);
 @if(HD_MODE)
+@if(SCALE_USING_FLOATING_POINT)
 		rect.setSize(rect.width / widthScale, rect.height / widthScale);
+@endif
+@if(!SCALE_USING_FLOATING_POINT)
+		rect.setSize(rect.width \ widthScale, rect.height \ widthScale);
+@endif	
 @endif
 		return rect;
 	}
@@ -507,7 +532,12 @@ class FontWrapper
 	function getEscWidthX(text)
 	{
 @if(HD_MODE)
+@if(SCALE_USING_FLOATING_POINT)
 		return font.getEscWidthX(text) / widthScale;
+@endif
+@if(!SCALE_USING_FLOATING_POINT)
+		return font.getEscWidthX(text) \ widthScale;
+@endif	
 @endif
 @if(!HD_MODE)
 		return font.getEscWidthX(text);
@@ -517,7 +547,12 @@ class FontWrapper
 	function getEscWidthY(text)
 	{
 @if(HD_MODE)
+@if(SCALE_USING_FLOATING_POINT)
 		return font.getEscWidthY(text) / widthScale;
+@endif
+@if(!SCALE_USING_FLOATING_POINT)
+		return font.getEscWidthY(text) \ widthScale;
+@endif
 @endif
 @if(!HD_MODE)
 		return font.getEscWidthY(text);
@@ -527,7 +562,12 @@ class FontWrapper
 	function getEscHeightX(text)
 	{
 @if(HD_MODE)
+@if(SCALE_USING_FLOATING_POINT)
 		return font.getEscHeightX(text) / heightScale;
+@endif
+@if(!SCALE_USING_FLOATING_POINT)
+		return font.getEscHeightX(text) \ heightScale;
+@endif
 @endif
 @if(!HD_MODE)
 		return font.getEscHeightX(text);
@@ -537,7 +577,12 @@ class FontWrapper
 	function getEscHeightY(text)
 	{
 @if(HD_MODE)
+@if(SCALE_USING_FLOATING_POINT)
 		return font.getEscHeightY(text) / heightScale;
+@endif
+@if(!SCALE_USING_FLOATING_POINT)
+		return font.getEscHeightY(text) \ heightScale;
+@endif
 @endif
 @if(!HD_MODE)
 		return font.getEscHeightY(text);

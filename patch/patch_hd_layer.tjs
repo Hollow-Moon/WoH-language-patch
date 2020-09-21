@@ -1265,7 +1265,9 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 	function Layer_patch_hd_layer_override()
 	{
 		super.Layer(...);
+@if(!GAME_WOHN)
 		isbg = isBaseLayer;
+@endif
 		resetClip();
 		patch_hd_layer_setup_event_shims();
 	}
@@ -1297,6 +1299,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 
 	function updateBg(width, height, fromloadImages=false)
 	{
+@if(!GAME_WOHN)
 		if (isBaseLayer) {
 			// Used for dialogs.
 			isbg = !shouldStretch;
@@ -1325,6 +1328,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		}
 		// background settings affect position.
 		(global.Layer.setPos incontextof this)(originalLeft, originalTop);
+@endif
 	}
 
 	function updateMessageLayerMobile() {
@@ -1351,6 +1355,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 			imageStorage = originalToHdName[imageStorage] if originalToHdName[imageStorage] !== void;
 		}
 
+@if(!GAME_WOHN)
 		if (messageLayerImages.contains(imageStorage) && typeof window.sflags !== "undefined" && !window.sflags.mobileWindow) {
 			storageExt = ".png";
 		} else if (messageBreakImages.contains(imageStorage) && typeof window.sflags !== "undefined" && !window.sflags.mobileWindow) {
@@ -1358,12 +1363,13 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		}
 
 		updateMessageLayerMobile();
+@endif
 
 @if(GAME_FATE)
 		// Check to see if an HD version exists.
 		isHd = Storages.isExistentStorage(imageStorage + hdExtension) || imageStorage != storageName;
 @endif
-@if(GAME_FHAT)
+@if(GAME_FHAT||GAME_WOHN)
 		isHd = true;
 @endif
 
@@ -1383,9 +1389,11 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 					continue;
 				}
 
+@if(!GAME_WOHN)
 				if (!isBaseLayer && !isMessageLayer && !isMask) {
 					isbg = /bgimage/.test(currentPath); // TODO only works in dev mode
 				}
+@endif
 
 				if (/hd/.test(currentPath)) {
 					// TODO the /hd/.test is being used twice in this method, find a way to optimize...
@@ -1399,15 +1407,23 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 					originalImageHeight = tmp.imageHeightOriginal;
 					invalidate tmp;
 
-					if (imageStorage == "pagebreak_a") {
+@if(!GAME_WOHN)
+					if (imageStorage == "pagebreak_a")
+					{
 						// low resolution image has 21 images, but HD has 16.
 						originalImageWidth = originalImageWidth / 21 * 16;
-					} else if (imageStorage == "c31") {
+					}
+					else if (imageStorage == "c31")
+					{
 						// 2 HD versions: png and webp - the png has a higher resolution.
 						isbg = true;
 						originalImageWidth = originalImageWidth / (window.isHd? upscaledFactor : 1);
 						originalImageHeight = originalImageHeight / (window.isHd? upscaledFactor : 1);
-					} else if (/hd/.test(currentPath)) {
+					}
+					else
+@endif
+					if (/hd/.test(currentPath))
+					{
 						// HD versions of patch assets (mostly the HD masks for the status menu).
 @if(SCALE_USING_FLOATING_POINT)
 						originalImageWidth = originalImageWidth / (window.isHd? upscaledFactor : 1);
@@ -1428,6 +1444,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 
 		var taginfo = super.loadImages(imageStorage+chosenExt, key);
 
+@if(!GAME_WOHN)
 		// Mainly used for 藤02a腕b(中) and 藤02g腕b(中) since the HD version's width is larger than expected because of redundant transparent padding, but there might be other cases so the condition is generic.
 		if (isHd && isCharacterLayer && !isbg) {
 			var w = originalImageWidth*widthScale;
@@ -1444,34 +1461,51 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 				invalidate tmp;
 			}
 		}
+@endif
 
-		if (isThumbnail) {
+		if (isThumbnail)
+		{
 			originalImageWidth = 120;
 			originalImageHeight = 90;
-		} else if (isTicketThumbnail) {
+		}
+		else if (isTicketThumbnail)
+		{
 			originalImageWidth = 128;
 			originalImageHeight = 96;
-		} else if (!isHd || storageExt != "") {
+		}
+		else if (!isHd || storageExt != "")
+		{
 			originalImageWidth = super.imageWidth;
 			originalImageHeight = super.imageHeight;
 
+@if(!GAME_WOHN)
 			if (imageStorage == "csラストep08b") {
 				isbg = true;
 			}
+@endif
 		}
 
 		updateBg(originalImageWidth, originalImageHeight, true);
 
-		if (isExButtonLayer) {
+@if(!GAME_WOHN)
+		if (isExButtonLayer)
+		{
 			numberOfImages = septByMode[mode];
-		} else if (imageStorage == "pagebreak_a" && storageExt == ".png") {
+		}
+		else if (imageStorage == "pagebreak_a" && storageExt == ".png")
+		{
 			numberOfImages = imageNameToNumberOfImages[imageStorage + storageExt];
-		} else {
+		}
+		else
+@endif
+		{
+@if(!GAME_WOHN)
 			if (imageNameToNumberOfImages[imageStorage] !== void)
 			{
 				numberOfImages = imageNameToNumberOfImages[imageStorage];
 			}
 			else
+@endif
 			{
 				numberOfImages = 1;
 			}
@@ -1479,7 +1513,8 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 
 		upscale();
 
-		if (numberOfImages == 1) {
+		if (numberOfImages == 1)
+		{
 			originalImageWidth = transformDiscrete(originalImageWidth, widthScale);
 			originalImageHeight = transformDiscrete(originalImageHeight, heightScale);
 		}

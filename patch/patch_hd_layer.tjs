@@ -1980,6 +1980,13 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 			clear = ((clear < 0 ? -clear : clear) & 0x7fffffff) * (clear < 0 ? -1 : 1);
 		}
 @endif
+		if (!affine)
+		{
+			a *= widthScale;
+			b *= heightScale;
+			c *= widthScale;
+			d *= heightScale;
+		}
 		super.affineCopy(src, sx*src.widthScale, sy*src.heightScale, sw*src.widthScale, sh*src.heightScale, affine, a, b, c, d, tx*widthScale, ty*heightScale, type, clear);
 	}
 
@@ -2010,6 +2017,13 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 			type = ((type < 0 ? -type : type) & 0x7fffffff) * (type < 0 ? -1 : 1);
 		}
 @endif
+		if (!affine)
+		{
+			a *= widthScale;
+			b *= heightScale;
+			c *= widthScale;
+			d *= heightScale;
+		}
 		super.operateAffine(src, sx*src.widthScale, sy*src.heightScale, sw*src.widthScale, sh*src.heightScale, affine, a, b, c, d, tx*widthScale, ty*heightScale, mode, opa, type);
 	}
 

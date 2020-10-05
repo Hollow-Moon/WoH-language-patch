@@ -229,6 +229,14 @@ class CompositionLayer extends Layer
 			return void;
 		}
 
+		// Use the precomposed image if it exists.
+		var using_precomposed_image = false;
+		if (namenoext.indexOf(__Layer_partsSeparateKey) !== -1 && Storages.isExistentImage(namenoext))
+		{
+			using_precomposed_image = true;
+			orgstorage = namenoext;
+		}
+
 		//	現在読み込んでいる画像と異なるなら、ファイルを読み込む
 		if(orgstorage != this.orgstorage || force)
 		{
@@ -253,7 +261,7 @@ class CompositionLayer extends Layer
 			//	ファイルを読み込む
 //			dm("\t\tloadImages("+orgstorage+", "+colorkey+")");
 			orgTag	= super.loadImages(orgstorage, colorkey);
-			if(orgTag == null || (typeof orgTag.monoList == "undefined" && typeof orgTag.multiList == "undefined"))
+			if(orgTag == null || (!using_precomposed_image && (typeof orgTag.monoList == "undefined" && typeof orgTag.multiList == "undefined")))
 			{
 //				dm("\t\tloadImages("+orgstorage+", "+colorkey+") : "+(orgTag != null ? orgTag.groundBase : ""));
 				this.storage	= storage;
@@ -264,7 +272,7 @@ class CompositionLayer extends Layer
 			with(orgTag)
 			{
 				//	パーツ名称の一覧を取得
-				if (typeof(orgTag.monoList) === "String")
+				if (!using_precomposed_image && typeof(orgTag.monoList) === "String")
 				{
 					monoList	= .monoList.split(__Layer_tagSeparateKey,, true);
 					for(var i=0; i<monoList.count; i++)	monoList[i]	= monoList[i].trim();	//	レイヤー名の末尾に空白がついていることがあり、パーツ名に反映されてしまうため
@@ -273,7 +281,7 @@ class CompositionLayer extends Layer
 				{
 					monoList = [];
 				}
-				if (typeof(orgTag.multiList) === "String")
+				if (!using_precomposed_image && typeof(orgTag.multiList) === "String")
 				{
 					multiList	= .multiList.split(__Layer_tagSeparateKey,, true);
 					for(var i=0; i<multiList.count; i++)multiList[i]= multiList[i].trim();
@@ -298,7 +306,7 @@ class CompositionLayer extends Layer
 @endif
 		}
 @if(COMPOSITION_PARTS!=1)
-		else if(multies != void)
+		else if(!using_precomposed_image && multies != void)
 		{
 			//	読み込まれているパーツのうち、multi パーツの部分を元に戻す
 			var	layer	= new global.Layer(window, this);
@@ -312,6 +320,12 @@ class CompositionLayer extends Layer
 		}
 @endif
 		this.storage	= storage;
+
+		// Since we aren't doing any additional processing, we can just return here.
+		if (using_precomposed_image)
+		{
+			return orgTag;
+		}
 
 		//	標準の monoパーツで描画し直す必要があるか
 		var	drawNormalMono	= monoName != "";

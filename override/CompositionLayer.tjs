@@ -207,7 +207,8 @@ class CompositionLayer extends Layer
 	{
 		//	対象となるファイル名とパーツ名に分ける
 		var	path		= Storages.extractStoragePath(Storages.getFullPath(storage));
-		var	partnames	= Storages.extractStorageName(Storages.chopStorageExt(storage)).split(__Layer_partsSeparateKey);
+		var namenoext   = Storages.extractStorageName(Storages.chopStorageExt(storage));
+		var	partnames	= namenoext.split(__Layer_partsSeparateKey);
 		var	orgstorage	= partnames[0];
 		partnames.erase(0);
 //		dm(name+"("+parent.name+").loadImages("+storage+"|"+partnames.join(",")+")");
@@ -263,10 +264,24 @@ class CompositionLayer extends Layer
 			with(orgTag)
 			{
 				//	パーツ名称の一覧を取得
-				monoList	= .monoList.split(__Layer_tagSeparateKey,, true);
-				multiList	= .multiList.split(__Layer_tagSeparateKey,, true);
-				for(var i=0; i<monoList.count; i++)	monoList[i]	= monoList[i].trim();	//	レイヤー名の末尾に空白がついていることがあり、パーツ名に反映されてしまうため
-				for(var i=0; i<multiList.count; i++)multiList[i]= multiList[i].trim();
+				if (typeof(orgTag.monoList) === "String")
+				{
+					monoList	= .monoList.split(__Layer_tagSeparateKey,, true);
+					for(var i=0; i<monoList.count; i++)	monoList[i]	= monoList[i].trim();	//	レイヤー名の末尾に空白がついていることがあり、パーツ名に反映されてしまうため
+				}
+				else
+				{
+					monoList = [];
+				}
+				if (typeof(orgTag.multiList) === "String")
+				{
+					multiList	= .multiList.split(__Layer_tagSeparateKey,, true);
+					for(var i=0; i<multiList.count; i++)multiList[i]= multiList[i].trim();
+				}
+				else
+				{
+					multiList = [];
+				}
 //				dm("\t\tparts: mono = "+monoList.join(",")+" / multi = "+multiList.join(","));
 
 				//	パラメータを設定

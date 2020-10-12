@@ -144,6 +144,7 @@ function initializeQuality(scale, firsttime=false) {
 
 function initializeWide(ratio, firsttime=false) {
 	wideScreen = ratio > cubicRatio;
+	wideRatio = ratio;
 @if(SCALE_USING_FLOATING_POINT)
 	wideFactor = originalResHeight * ratio / originalResWidth;
 @endif
@@ -201,13 +202,14 @@ function onWideMenuItemClick(sender, ratio, cropped=false) {
 	if (ratio == "standard") {
 		ratio = cubicRatio;
 	} else if (ratio == "wide") {
-		ratio = sender.owner.scflags[autoWideRatioFlagName]? systemRatio : (sender.owner.scflags[wideRatioFlagName] != void? sender.owner.scflags[wideRatioFlagName] : systemRatio);
+		ratio = systemRatio;
 	}
-	if (ratio !== void && ratio != sender.owner.wideRatio)
+	
+	if (ratio !== void && !floatEquals(ratio, sender.owner.wideRatio))
 	{
 		if (typeof(global.KirikiriSDL2Internal) !== "Object")
 		{
-			global.full_game_reload("-wideratio=" + ratio);
+			global.full_game_reload("-wideratio=" + global.real_to_hex_string(ratio));
 		}
 		with (sender.owner) {
 			.extraConductor.clear();

@@ -85,17 +85,22 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 			words = [];
 		}
 
-		var clean = conductor.cleanLine(elm.__patch_conductor_line_str);
-		if (typeof(global.kag) === "Object" && isvalid(global.kag) && global.kag.sflags.language == englishLanguage && !startsWith("花札", conductor.curStorage)) {
-			clean = clean.replace(/　/, " ");
+		var clean;
+		if (typeof(global.kag) === "Object" && isvalid(global.kag) && global.kag.sflags.language == englishLanguage && !startsWith("花札", conductor.curStorage))
+		{
+			clean = conductor.cleaned_lines_space[elm.__patch_conductor_line];
+		}
+		else
+		{
+			clean = conductor.cleaned_lines[elm.__patch_conductor_line];
 		}
 
 		if (clean == "") return;
 
 		if (isChinese()) {
-			onNewLineWordWrapChinese(clean);
+			onNewLineWordWrapChinese(elm.__patch_conductor_line);
 		} else if (!isJapanese()) {
-			onNewLineWordWrapSpace(clean);
+			onNewLineWordWrapSpace(elm.__patch_conductor_line);
 		}
 	}
 
@@ -114,15 +119,122 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 		return ret;
 	}
 
-	function onNewLineWordWrapSpace(clean)
+	var word_length_cache = %[];
+	var word_length_test = [0, 0];
+	var word_lines_space = [];
+	var word_lines_chinese = [];
+	var word_lines_cleaned_space = [];
+
+	function generate_word_wrapping_list(conductor)
 	{
-		if (words.count > 0) {
-			words.erase(0);
+		var word_length_test_cur = this.getLengthsForString(" !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~");
+		if (word_length_test_cur[0] !== word_length_test[0] || word_length_test_cur[1] !== word_length_test[1])
+		{
+			(global.Dictionary.clear incontextof this.word_length_cache)();
+			word_length_test = word_length_test_cur;
+		}
+		var cleaned_lines = conductor.cleaned_lines;
+		var cleaned_lines_space = conductor.cleaned_lines_space;
+		this.word_lines_space.clear();
+		for (var i = 0; i < cleaned_lines.count; i += 1)
+		{
+			var arr = [];
+			var additionalWords = cleaned_lines[i].split(" ");
+			for (var j = 0; j < additionalWords.count; j += 1)
+			{
+				if (additionalWords[j] === "")
+				{
+					arr.add(["", [0, 0]]);
+					continue;
+				}
+				if (additionalWords[j] === "")
+				{
+					continue;
+				}
+				if (this.word_length_cache[additionalWords[j]] === void)
+				{
+					this.word_length_cache[additionalWords[j]] = this.getLengthsForString(additionalWords[j]);
+				}
+				arr.add([additionalWords[j], this.word_length_cache[additionalWords[j]]]);
+			}
+			this.word_lines_space.add(arr);
+		}
+		this.word_lines_cleaned_space.clear();
+		for (var i = 0; i < cleaned_lines_space.count; i += 1)
+		{
+			var arr = [];
+			var additionalWords = cleaned_lines_space[i].split(" ");
+			for (var j = 0; j < additionalWords.count; j += 1)
+			{
+				if (additionalWords[j] === "")
+				{
+					arr.add(["", [0, 0]]);
+					continue;
+				}
+				if (additionalWords[j] === "")
+				{
+					continue;
+				}
+				if (this.word_length_cache[additionalWords[j]] === void)
+				{
+					this.word_length_cache[additionalWords[j]] = this.getLengthsForString(additionalWords[j]);
+				}
+				arr.add([additionalWords[j], this.word_length_cache[additionalWords[j]]]);
+			}
+			this.word_lines_cleaned_space.add(arr);
+		}
+		this.word_lines_chinese.clear();
+		for (var i = 0; i < cleaned_lines.count; i += 1)
+		{
+			var arr = [];
+			//	Use continuous English characters as separators to split the line into an array of substrings. / 中英文分词
+			var additionalWords = cleaned_lines[i].split(/([A-zＡ-ｚ-]+)/);
+			for (var j = 0; j < additionalWords.count; j += 1)
+			{
+				if (additionalWords[j] === "")
+				{
+					arr.add(["", [0, 0]]);
+					continue;
+				}
+				if (this.word_length_cache[additionalWords[j]] === void)
+				{
+					this.word_length_cache[additionalWords[j]] = this.getLengthsForString(additionalWords[j]);
+				}
+				arr.add([additionalWords[j], this.word_length_cache[additionalWords[j]]]);
+			}
+			this.word_lines_chinese.add(arr);
+		}
+	}
+
+	function onNewLineWordWrapSpace(linenum)
+	{
+		if (this.words.count > 0)
+		{
+			this.words.erase(0);
 		}
 
-		var additionalWords = clean.split(" ");
-		for (var i = 0; i < additionalWords.count; i++) {
-			words.add([additionalWords[i], this.getLengthsForString(additionalWords[i])]);
+		var word_lines;
+		if (typeof(global.kag) === "Object" && isvalid(global.kag) && global.kag.sflags.language == englishLanguage && !startsWith("花札", conductor.curStorage))
+		{
+			word_lines = this.word_lines_cleaned_space;
+		}
+		else
+		{
+			word_lines = this.word_lines_space;
+		}
+
+		if (this.words.count === 0)
+		{
+			this.words.assignStruct(word_lines[linenum]);
+		}
+		else
+		{
+			var arr = [];
+			arr.assignStruct(word_lines[linenum]);
+			for (var i = 0; i < arr.count; i += 1)
+			{
+				this.words.add(arr[i]);
+			}
 		}
 		/*if (additionalWords.count > 0) {
 			dm("clean line: " + clean);
@@ -134,13 +246,23 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 		}*/
 	}
 
-	function onNewLineWordWrapChinese(clean)
+	function onNewLineWordWrapChinese(linenum)
 	{
-		//	Use continuous English characters as separators to split the line into an array of substrings. / 中英文分词
-		var additionalWords = clean.split(/([A-zＡ-ｚ-]+)/);
-		for (var i = 0; i < additionalWords.count; i++) {
-			words.add([additionalWords[i], this.getLengthsForString(additionalWords[i])]);
+		var word_lines = this.word_lines_chinese;
+		if (this.words.count === 0)
+		{
+			this.words.assignStruct(word_lines[linenum]);
 		}
+		else
+		{
+			var arr = [];
+			arr.assignStruct(word_lines[linenum]);
+			for (var i = 0; i < arr.count; i += 1)
+			{
+				this.words.add(arr[i]);
+			}
+		}
+
 		currentWordIndex = 0;
 		currentCharPos = -2;
 
@@ -178,6 +300,8 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 		return false;
 	}
 
+	var first_time_ch = false;
+
 	function getHandlers()
 	{
 		var handlers = super.getHandlers();
@@ -192,6 +316,15 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 		handlers.ch_patch_wordwrap_original = handlers.ch;
 		handlers.ch = function(elm)
 		{
+@if(!GAME_WOHN)
+			if (!this.first_time_ch && this.isMain)
+			{
+				this.first_time_ch = true;
+				// XXX: workaround for font face not being set the first time
+				this.onReloadScenarioMenuItemClick();
+				return 0;
+			}
+@endif
 			// 文字表示
 			var acs = actualChSpeed;
 			if(updateBeforeCh)

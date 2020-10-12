@@ -81,7 +81,126 @@ kag.tagHandlers.fillcolor = function(mp) {
 } incontextof kag;
 
 
-property layersToFix { getter { return [[kag.sysbase], kag.fore.messages, kag.fore.layers, kag.fore.belts, kag.back.messages, kag.back.layers, kag.back.belts, [flow_tracker_object.flowlayer, flow_tracker_object.flaglayer, gamemenu.gmenu, shortcut_object.menulayer]]; } }
+property layersToFix
+{
+	getter
+	{
+		var layers = [];
+		if (typeof(global.kag) === "Object" && isvalid(global.kag))
+		{
+			var kag = global.kag;
+			if (typeof(kag.sysbase) === "Object" && isvalid(kag.sysbase))
+			{
+				layers.add([kag.sysbase]);
+			}
+			if (typeof(kag.fore) === "Object" && isvalid(kag.fore))
+			{
+				var fore = kag.fore;
+				if (typeof(fore.messages) === "Object" && isvalid(fore.messages))
+				{
+					layers.add(fore.messages);
+				}
+				if (typeof(fore.layers) === "Object" && isvalid(fore.layers))
+				{
+					layers.add(fore.layers);
+				}
+				if (typeof(fore.belts) === "Object" && isvalid(fore.belts))
+				{
+					layers.add(fore.belts);
+				}
+			}
+			if (typeof(kag.back) === "Object" && isvalid(kag.back))
+			{
+				var back = kag.back;
+				if (typeof(back.messages) === "Object" && isvalid(back.messages))
+				{
+					layers.add(back.messages);
+				}
+				if (typeof(back.layers) === "Object" && isvalid(back.layers))
+				{
+					layers.add(back.layers);
+				}
+				if (typeof(back.belts) === "Object" && isvalid(back.belts))
+				{
+					layers.add(back.belts);
+				}
+			}
+		}
+		var layers2 = [];
+		if (typeof(global.flow_tracker_object) === "Object" && isvalid(global.flow_tracker_object))
+		{
+			var flow_tracker_object = global.flow_tracker_object;
+			if (typeof(flow_tracker_object.flowlayer) === "Object" && isvalid(flow_tracker_object.flowlayer))
+			{
+				layers2.add(flow_tracker_object.flowlayer);
+			}
+			if (typeof(flow_tracker_object.flaglayer) === "Object" && isvalid(flow_tracker_object.flaglayer))
+			{
+				layers2.add(flow_tracker_object.flaglayer);
+			}
+		}
+		if (typeof(global.gamemenu) === "Object" && isvalid(global.gamemenu))
+		{
+			var gamemenu = global.gamemenu;
+			if (typeof(gamemenu.gmenu) === "Object" && isvalid(gamemenu.gmenu))
+			{
+				layers2.add(gamemenu.gmenu);
+			}
+		}
+		if (typeof(global.shortcut_object) === "Object" && isvalid(global.shortcut_object))
+		{
+			var shortcut_object = global.shortcut_object;
+			if (typeof(shortcut_object.menulayer) === "Object" && isvalid(shortcut_object.menulayer))
+			{
+				layers2.add(shortcut_object.menulayer);
+			}
+		}
+		if (typeof(global.yesnolayer) === "Object" && isvalid(global.yesnolayer))
+		{
+			var yesnolayer = global.yesnolayer;
+			layers2.add(yesnolayer);
+			if (typeof(yesnolayer.reverse) === "Object" && isvalid(yesnolayer.reverse))
+			{
+				layers2.add(yesnolayer.reverse);
+			}
+			if (typeof(yesnolayer.base) === "Object" && isvalid(yesnolayer.base))
+			{
+				var base = yesnolayer.base;
+				for (var i = 0; i < base.count; i += 1)
+				{
+					if (typeof(base[i]) === "Object" && isvalid(base[i]))
+					{
+						layers2.add(base[i]);
+					}
+				}
+			}
+			if (typeof(yesnolayer.nobtn) === "Object" && isvalid(yesnolayer.nobtn))
+			{
+				var nobtn = yesnolayer.nobtn;
+				for (var i = 0; i < nobtn.count; i += 1)
+				{
+					if (typeof(nobtn[i]) === "Object" && isvalid(nobtn[i]))
+					{
+						layers2.add(nobtn[i]);
+					}
+				}
+			}
+			if (typeof(yesnolayer.yesbtn) === "Object" && isvalid(yesnolayer.yesbtn))
+			{
+				var yesbtn = yesnolayer.yesbtn;
+				for (var i = 0; i < yesbtn.count; i += 1)
+				{
+					if (typeof(yesbtn[i]) === "Object" && isvalid(yesbtn[i]))
+					{
+						layers2.add(yesbtn[i]);
+					}
+				}
+			}
+		}
+		layers.add(layers2);
+		return layers;
+	}
+}
 
 
 kag.tagHandlers.initscroll = function(mp) {
@@ -131,6 +250,7 @@ kag.updateScrollPosition = function(x, y) {
 
 	if (!wideScreen && !isCropped) return;
 
+	var layersToFix = global.layersToFix;
 	for(var i=0; i<layersToFix.count; i++) {
 		if (layersToFix[i] === void) {
 			continue;

@@ -754,20 +754,20 @@ function addHdMenu(displayMenu) {
 	this.qualityMenu.enabled = false;
 
 		qualityMenu.add(this.lqMenuItem = new KAGMenuItem(this, __t("低い(&L)"), 1,
-			function(sender) { onQualityMenuItemClick(sender.owner.lqMenuItem,'low'); }, false));
+			function(sender) { onQualityMenuItemClick(sender,'low'); }, false));
 
 		qualityMenu.add(this.hqMenuItem = new KAGMenuItem(this, __t("高い(&H)"), 1,
-			function(sender) { onQualityMenuItemClick(sender.owner.hqMenuItem,'high'); }, false));
+			function(sender) { onQualityMenuItemClick(sender,'high'); }, false));
 		this.hqMenuItem.enabled = hdPatchExists;
 
 	displayMenu.add(this.wideMenu = new KAGMenuItem(this, __t("アスペクト比(&A)"), 0, void, false));
 	this.wideMenu.enabled = false;
 
 		wideMenu.add(this.notWideMenuItem = new KAGMenuItem(this, __t("基準(4:3)(&S)"), 1,
-			function(sender) { onWideMenuItemClick(sender.owner.notWideMenuItem,'standard'); }, false));
+			function(sender) { onWideMenuItemClick(sender,'standard'); }, false));
 
 		wideMenu.add(this.wideMenuItem = new KAGMenuItem(this, __t("デスクトップと同じ(&M)"), 1,
-			function(sender) { onWideMenuItemClick(sender.owner.wideMenuItem,'wide'); }, false));
+			function(sender) { onWideMenuItemClick(sender,'wide'); }, false));
 
 		var keys = Scripts.getObjectKeys(wideResolutions);
 		for (var i=0; i<keys.count; i++) {
@@ -777,13 +777,16 @@ function addHdMenu(displayMenu) {
 				continue;
 			}
 			var wideMenuItemName = "wideRatio"+key.replace(/[:&\() ]/g, "")+"MenuItem";
-			this.wideMenu.add(this[wideMenuItemName] = new KAGMenuItem(this, key, 1, function(sender) { onWideMenuItemClick(sender.owner.wideMenuItem, sender.ratio); }));
+			this.wideMenu.add(this[wideMenuItemName] = new KAGMenuItem(this, key, 1, function(sender) { onWideMenuItemClick(sender, sender.ratio); }));
 			this[wideMenuItemName].ratio = ratio;
+			if (floatEquals(this.wideRatio, ratio)) {
+				this[wideMenuItemName].checked = true;
+			}
 		}
 
 @if(CROP_MODE)
 		wideMenu.add(this.wideCroppedMenuItem = new KAGMenuItem(this, "Wide (&cropped)", 1,
-			function(sender) { onWideMenuItemClick(sender.owner.wideCroppedMenuItem,'standard',true); }, false));
+			function(sender) { onWideMenuItemClick(sender,'standard',true); }, false));
 @endif
 
 	if (isHd) {
@@ -792,7 +795,9 @@ function addHdMenu(displayMenu) {
 		this.lqMenuItem.checked = true;
 	}
 	if (wideScreen) {
-		this.wideMenuItem.checked = true;
+		if (this.isAutoWide) {
+			this.wideMenuItem.checked = true;
+		}
 	} else {
 		this.notWideMenuItem.checked = true;
 	}

@@ -40,8 +40,11 @@ class KAGWindow_patch_savedatalocation_override_override extends KAGWindow_patch
 		//	セーブディレクトリの位置をユーザーが任意に指定できるようにする
 		var	configconfigfile	= global.paths_base[0]+"config.ksc";
 		var	config;
+		var triedonce = false;
 		while (true)
 		{
+			var failed_used_by_another_process = false;
+			var failed_read_only = false;
 			{
 				var success = false;
 				var test_save_data_location = this.wanted_save_data_location;
@@ -89,11 +92,22 @@ class KAGWindow_patch_savedatalocation_override_override extends KAGWindow_patch
 								success = true;
 								break;
 							}
-							if (global.test_write_in_directory(test_paths[i]) && System.createAppLock(test_paths[i].replace(/[^A-Za-z]/g, '_')))
+							if (global.test_write_in_directory(test_paths[i]))
 							{
-								test_save_data_location = test_paths[i];
-								success = true;
-								break;
+								if (System.createAppLock(test_paths[i].replace(/[^A-Za-z]/g, '_')))
+								{
+									test_save_data_location = test_paths[i];
+									success = true;
+									break;
+								}
+								else
+								{
+									failed_used_by_another_process = true;
+								}
+							}
+							else
+							{
+								failed_read_only = true;
 							}
 						}
 					}
@@ -104,6 +118,27 @@ class KAGWindow_patch_savedatalocation_override_override extends KAGWindow_patch
 					saveDataLocation = test_save_data_location;
 					break;
 				}
+			}
+			if (triedonce)
+			{
+				var strarr = [];
+				strarr.add(("The directory %s has been selected as the savedata folder, but it cannot be used.").sprintf(this.wanted_save_data_location));
+				if (failed_read_only)
+				{
+					strarr.add("A test file could not be written to the selected directory.");
+					strarr.add("Please check to make sure the directory is not read-only and that you have the correct permissions for that directory.");
+				}
+				if (failed_used_by_another_process)
+				{
+					strarr.add("The selected directory is locked for usage in another process.");
+					strarr.add("Please close the offending process in order to use the selected directory.");
+					strarr.add("If the issue persists, please restart your system and try again.");
+				}
+				System.inform(strarr.join("\n"));
+			}
+			else
+			{
+				triedonce = true;
 			}
 			if (this.disable_system_save_data_write)
 			{

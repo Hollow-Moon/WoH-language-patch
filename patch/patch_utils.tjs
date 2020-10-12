@@ -482,6 +482,25 @@ global.initial_scenario_load_ready = function()
 		startArchiveWithScenario(System.getArgument("-archiveopenscenario"));
 	}
 @endif
+	if (System.getArgument("-fullscreen") !== void)
+	{
+		var should_fullscreen = System.getArgument("-fullscreen") === "true";
+		if (should_fullscreen)
+		{
+			global.kag.onFullScreenMenuItemClick();
+		}
+		else
+		{
+			global.kag.onWindowedMenuItemClick();
+		}
+	}
+	if (System.getArgument("-innersizewidth") !== void)
+	{
+		if (typeof(global.kag.onWindowSizeMenuItemClick) === "Object")
+		{
+			global.kag.onWindowSizeMenuItemClick(void, System.getArgument("-innersizewidth") | 0);
+		}
+	}
 };
 
 global.full_game_reload = function(extra_args*)
@@ -504,6 +523,8 @@ global.full_game_reload = function(extra_args*)
 		args_arr.add("-loadticketatindex=" + CurrentTicketNo);
 	}
 @endif
+	args_arr.add("-fullscreen=" + (global.kag.fullScreen ? "true" : "false"));
+	args_arr.add("-innersizewidth=" + global.kag.innerWidth);
 	for (var i = 0; i < extra_args.count; i += 1)
 	{
 		args_arr.add(extra_args[i]);
@@ -511,4 +532,95 @@ global.full_game_reload = function(extra_args*)
 	global.build_exec_command_line(global.System.exeName, args_arr);
 	// Possible savedata mutex race condition?
 	global.System.exit();
+};
+
+
+function floatEquals(x, y, epsilon=0.0000001) {
+	return Math.abs(x - y) < epsilon;
+}
+
+// https://stackoverflow.com/a/54137634
+global.binary_to_decimal = function(arr)
+{
+	var decimal = 0;
+	var bits = 1;
+	for (var i = 0; i < arr.count; i += 1)
+	{
+		var current_number = (arr[arr.count - i - 1]);
+		if (current_number === 1)
+		{
+			decimal += bits;
+		}
+		bits *= 2;
+	}
+	return decimal;
+};
+
+// Based on https://gist.github.com/Manouchehri/f4b41c8272db2d6423fa987e844dd9ac
+// with modifications to make the output closer to that of TJSRealToHexString
+global.real_to_hex_string = function(v)
+{
+	var ebits = 11;
+	var fbits = 52;
+
+	var s, e, f;
+	// NaN doesn't equal itself
+	if (v !== v)
+	{
+		return "NaN";
+	}
+	else if (v === Infinity)
+	{
+		return "Infinity";
+	}
+	else if (v === -Infinity)
+	{
+		return "-Infinity";
+	}
+	else if (v === 0)
+	{
+		if (1 / v === -Infinity)
+		{
+			return "-0.0";
+		}
+		else
+		{
+			return "0.0";
+		}
+	}
+	else
+	{
+		var bias = (1 << (ebits - 1)) - 1;
+		s = v < 0;
+		v = Math.abs(v);
+
+		if (v >= Math.pow(2, 1 - bias))
+		{
+			var ln = Math.min(Math.floor(Math.log(v) / Math.LN2), bias);
+			e = ln + bias;
+			f = v * Math.pow(2, fbits - ln) - Math.pow(2, fbits);
+		}
+		else
+		{
+			e = 0;
+			f = v / Math.pow(2, 1 - bias - fbits);
+		}
+	}
+
+	// Pack sign, exponent, fraction
+	var fbits_arr = [];
+	for (var i = fbits; i !== 0; i -= 1)
+	{
+		fbits_arr.insert(0, f % 2 ? 1 : 0);
+		f = Math.floor(f / 2);
+	}
+	var ebits_arr = [];
+	for (var i = ebits; i !== 0; i -= 1)
+	{
+		ebits_arr.insert(0, e % 2 ? 1 : 0);
+		e = Math.floor(e / 2);
+	}
+
+	// Bits to bytes
+	return ("%s0x1.%013Xp%d").sprintf(s ? "-" : "", binary_to_decimal(fbits_arr), binary_to_decimal(ebits_arr) - 1023);
 };

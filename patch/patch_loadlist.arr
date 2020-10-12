@@ -14,7 +14,7 @@
 	["shrinkCopy.dll", ,,, "GALLERY_DYNAMIC_THUMBNAIL"],
 	["layerExAreaAverage.dll", ,,, "GALLERY_DYNAMIC_THUMBNAIL"],
 	["clipboardEx.dll", ,,, "GAME_WOHN"],
-	["krprocesssuicide.dll", ,, true],
+	["krprocesssuicide.dll", ,,, "0"],
 	["tvpgl.dll", ,, true],
 	["wutcwf.dll", ,, true],
 	["layerExSave.dll", ,, true],

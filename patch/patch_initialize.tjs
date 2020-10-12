@@ -200,19 +200,15 @@ global.initialize_patch = function()
 				{
 					dm("The following failed to execute: " + filename);
 					var exception_message = "Unknown error";
-					var trace_string = "";
 					if (typeof(e) === "Object" && isvalid(e))
 					{
 						if (typeof(e.message) === "String")
 						{
 							exception_message = e.message;
 						}
-						if (typeof(e.trace) === "String")
-						{
-							trace_string = e.trace;
-						}
 						dm("Exception: " + exception_message);
 					}
+					var trace_string = Scripts.getTraceString();
 					if (trace_string !== "")
 					{
 						dm("Trace: " + trace_string);

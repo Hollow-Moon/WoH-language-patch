@@ -1876,7 +1876,30 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 			option *= 1.0;
 		}
 @endif
-		super.operateStretch(src.transformLeft(left, this), src.transformTop(top, this), width*widthScale, height*heightScale, src, sleft*src.widthScale, stop*src.heightScale, swidth*src.widthScale, sheight*src.heightScale, mode, opacity, type, option);
+	sleft *= src.widthScale;
+	stop *= src.heightScale;
+	swidth *= src.widthScale;
+	sheight *= src.heightScale;
+@if(SCALE_USING_FLOATING_POINT)
+	// XXX: workaround for transparent YesNoLayer
+	if (sleft > 0 && sleft < 1)
+	{
+		sleft = 1;
+	}
+	if (stop > 0 && stop < 1)
+	{
+		stop = 1;
+	}
+	if (swidth > 0 && swidth < 1)
+	{
+		swidth = 1;
+	}
+	if (sheight > 0 && sheight < 1)
+	{
+		sheight = 1;
+	}
+@endif
+		super.operateStretch(src.transformLeft(left, this), src.transformTop(top, this), width*widthScale, height*heightScale, src, sleft, stop, swidth, sheight, mode, opacity, type, option);
 	}
 
 	function transformSLeft(src, sleft, swidth)
@@ -2406,22 +2429,34 @@ class Window_patch_hd_layer_override extends Window_patch_hd_layer_original
 		getter
 		{
 			var retvalue;
-			if (!wideScreen)
-			{
+			if (!wideScreen) {
 				retvalue = cubicRatio;
-			}
-			else if (this.scflags[autoWideRatioFlagName])
-			{
+			} else if (this.scflags[autoWideRatioFlagName]) {
 				retvalue = systemRatio;
-			}
-			else
-			{
+			} else {
 				retvalue = this.scflags[wideRatioFlagName] != void? this.scflags[wideRatioFlagName] : systemRatio;
 			}
 @if(!SCALE_USING_FLOATING_POINT)
 			retvalue |= 0;
 @endif
 			return retvalue;
+		}
+		setter(v)
+		{
+			if (!wideScreen) {
+				this.scflags[autoWideRatioFlagName] = false;
+				this.scflags[wideRatioFlagName] = cubicRatio;
+			}
+			this.scflags[autoWideRatioFlagName] = floatEquals(v, systemRatio);
+			this.scflags[wideRatioFlagName] = v;
+		}
+	}
+
+	property isAutoWide
+	{
+		getter
+		{
+			return this.scflags[autoWideRatioFlagName];
 		}
 	}
 

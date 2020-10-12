@@ -39,8 +39,7 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 
 	var dash_character = "―";
 	var block_character = "■";
-	var cleaned_lines = [];
-	var cleaned_lines_space = [];
+	var lines = [];
 
 	// Blech. TJS2 "String" class is /supposed/ to have a .repeat() method.
 	function dashrepeat(count, character)
@@ -148,52 +147,9 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 		lastQuizdataQuestion = void;
 		super.onScenarioLoad(...);
 		// Use Array.load for loading scenario
-		var arr = [];
-		arr.load(name);
-		if (typeof(this.owner) === "Object" && this.owner.visible)
-		{
-			this.cleaned_lines.clear();
-			this.cleaned_lines.assign(arr);
-			var in_iscript = false;
-			for (var i = 0; i < this.cleaned_lines.count; i += 1)
-			{
-				var line = this.cleaned_lines[i];
-				if (line.charAt(0) === "@" || line.charAt(0) === ";")
-				{
-					this.cleaned_lines[i] = "";
-					continue;
-				}
-				if (line === "[iscript]" || line === "[iscript]\\" || line === "@iscript")
-				{
-					in_iscript = true;
-				}
-				if (line === "[endscript]" || line === "[endscript]\\" || line === "@endscript")
-				{
-					in_iscript = false;
-				}
-				if (in_iscript)
-				{
-					this.cleaned_lines[i] = "";
-					continue;
-				}
-				this.cleaned_lines[i] = this.cleanLine(line);
-			}
-			this.cleaned_lines_space.clear();
-			this.cleaned_lines_space.assign(this.cleaned_lines);
-			for (var i = 0; i < this.cleaned_lines_space.count; i += 1)
-			{
-				if (this.cleaned_lines_space[i] === "")
-				{
-					continue;
-				}
-				this.cleaned_lines_space[i] = this.cleaned_lines_space[i].replace(/　/, " ");
-			}
-			if (typeof(this.owner.generate_word_wrapping_list) === "Object")
-			{
-				this.owner.generate_word_wrapping_list(this);
-			}
-		}
-		return arr.join("\n");
+		this.lines.clear();
+		this.lines.load(name);
+		return this.lines.join("\n");
 	}
 }
 

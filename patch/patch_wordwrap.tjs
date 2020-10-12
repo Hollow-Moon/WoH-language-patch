@@ -64,10 +64,12 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 		KAGWindow_patch_wordwrap_override(...);
 	}
 
+	var word_lines_scenario_changed = false;
 	function onConductorScenarioLoad()
 	{
-		words = [];
-		inQuotes = 0;
+		this.words.clear();
+		this.inQuotes = 0;
+		this.word_lines_scenario_changed = true;
 		return super.onConductorScenarioLoad(...);
 	}
 
@@ -83,15 +85,16 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 
 	function onNewLine(elm)
 	{
-		if (word_lines_current_storage !== this.conductor.curStorage)
+		if (word_lines_scenario_changed)
 		{
-			word_lines_current_storage = this.conductor.curStorage;
+			word_lines_scenario_changed = false;
 			this.generate_word_wrapping_list(this.conductor);
 		}
 		processQuotedLine();
 
-		if (isChinese()) {
-			words = [];
+		if (isChinese())
+		{
+			this.words.clear();
 		}
 
 		var clean;

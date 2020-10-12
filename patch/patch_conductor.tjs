@@ -21,6 +21,14 @@ class BaseConductor_patch_conductor_override extends BaseConductor_patch_conduct
 }
 global.BaseConductor = BaseConductor_patch_conductor_override;
 
+global.patch_conductor_regex_0 = /\[line len=([0-9]+)]/;
+global.patch_conductor_regex_1 = /\[line([0-9]*)]/;
+global.patch_conductor_regex_2 = /\[block len=([0-9]+)]/;
+global.patch_conductor_regex_3 = /\["[a-zA-Z0-9_-]*"]/g;
+global.patch_conductor_regex_4 = /\['[a-zA-Z0-9_-]*']/g;
+global.patch_conductor_regex_5 = /\[[0-9]*]/g;
+global.patch_conductor_regex_6 = /\[\+?\w+\.\w+]/g;
+global.patch_conductor_regex_7 = /\[[^]]*]/g;
 
 global.Conductor_patch_conductor_original = Conductor;
 
@@ -75,14 +83,14 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 		if (line.length > 0 && line[0] == "@") {
 			return "";
 		}
-		line = replaceLine(line, /\[line len=([0-9]+)]/); // Replace line-tags with dashes
-		line = replaceLine(line, /\[line([0-9]*)]/);      // Replace slightly-different-line-tags with dashes
-		line = replaceLine(line, /\[block len=([0-9]+)]/, block_character);
-		line = line.replace(/\["[a-zA-Z0-9_-]*"]/g, "");  // Remove arrays with string quotes indexes (not sure if possible but just in case)
-		line = line.replace(/\['[a-zA-Z0-9_-]*']/g, "");  // Remove arrays with string apostrophes indexes (not sure if possible but just in case)
-		line = line.replace(/\[[0-9]*]/g, "");            // Remove arrays with number indexes (required or it will break when there is nested []s)
-		line = line.replace(/\[\+?\w+\.\w+]/g, "");       // Remove arrays with variable index (i.e. [+mp.pos])
-		line = line.replace(/\[[^]]*]/g, "");             // Remove tags
+		line = replaceLine(line, global.patch_conductor_regex_0); // Replace line-tags with dashes
+		line = replaceLine(line, global.patch_conductor_regex_1);      // Replace slightly-different-line-tags with dashes
+		line = replaceLine(line, global.patch_conductor_regex_2, block_character);
+		line = line.replace(global.patch_conductor_regex_3, "");  // Remove arrays with string quotes indexes (not sure if possible but just in case)
+		line = line.replace(global.patch_conductor_regex_4, "");  // Remove arrays with string apostrophes indexes (not sure if possible but just in case)
+		line = line.replace(global.patch_conductor_regex_5, "");            // Remove arrays with number indexes (required or it will break when there is nested []s)
+		line = line.replace(global.patch_conductor_regex_6, "");       // Remove arrays with variable index (i.e. [+mp.pos])
+		line = line.replace(global.patch_conductor_regex_7, "");             // Remove tags
 		return line;
 	}
 

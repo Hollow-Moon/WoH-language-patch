@@ -160,7 +160,7 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 		{
 			with (font)
 			{
-				return .face === lastFontParams[0] && .angle === lastFontParams[1] && .bold === lastFontParams[2] && .italic === lastFontParams[3] && .height === lastFontParams[4];
+				return .face !== lastFontParams[0] || .angle !== lastFontParams[1] || .bold !== lastFontParams[2] || .italic !== lastFontParams[3] || .height !== lastFontParams[4];
 			}
 		}
 		return false;
@@ -388,7 +388,7 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 			 && vert === lastParams[3]
 			 && max === lastParams[4]
 			 && min === lastParams[5]
-			 && hasFontChanged()
+			 && !hasFontChanged()
 				)
 			{
 				return;
@@ -425,7 +425,7 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 			 && vert === lastParams[6]
 			 && max === lastParams[7]
 			 && min === lastParams[8]
-			 && hasFontChanged()
+			 && !hasFontChanged()
 				)
 			{
 				return;
@@ -462,7 +462,7 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 			 && vert === lastParams[6]
 			 && max === lastParams[7]
 			 && min === lastParams[8]
-			 && hasFontChanged()
+			 && !hasFontChanged()
 				)
 			{
 				return;

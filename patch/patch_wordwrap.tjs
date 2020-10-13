@@ -68,7 +68,9 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 	function onConductorScenarioLoad()
 	{
 		this.words.clear();
+@if(0)
 		this.inQuotes = 0;
+@endif
 		this.word_lines_scenario_changed = true;
 		return super.onConductorScenarioLoad(...);
 	}
@@ -90,7 +92,9 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 			word_lines_scenario_changed = false;
 			this.generate_word_wrapping_list(this.conductor);
 		}
+@if(0)
 		processQuotedLine();
+@endif
 
 		if (isChinese())
 		{
@@ -345,14 +349,20 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 	}
 
 	var nextWordTagName = "nextword";
+	var wordTag = %[tagname: nextWordTagName, text: "", hllength: 0, mllength: 0];
 	function processWordWrappingSpace(elm)
 	{
 		if (elm.text==" " && words.count > 1) {
 			words.erase(0);
 			var nextWord = words[0];
 
-			var wordTag = %[tagname:nextWordTagName, text:nextWord[0], hllength:nextWord[1][0], mllength:nextWord[1][1]];
-			conductor.pendings.insert(0,wordTag);
+			with (this.wordTag)
+			{
+				.text = nextWord[0];
+				.hllength = nextWord[1][0];
+				.mllength = nextWord[1][1];
+			}
+			conductor.pendings.insert(0, this.wordTag);
 			//dm("word: ["+nextWord[0]+"]");
 		}
 		return false;
@@ -395,7 +405,9 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 			}
 			if(historyWriteEnabled) historyLayer.store(text);
 
+@if(0)
 			processQuotesIndent(elm);
+@endif
 
 			if(autoWCEnabled)
 			{
@@ -440,8 +452,13 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 						if(currentWordIndex%2)
 						{
 							var word = words[currentWordIndex];
-							var wordTag = %[tagname:nextWordTagName, text:word[0], hllength:word[1][0], mllength:word[1][1]];
-							return processNextWord(wordTag);
+							with (this.wordTag)
+							{
+								.text = word[0];
+								.hllength = word[1][0];
+								.mllength = word[1][1];
+							}
+							return processNextWord(this.wordTag);
 						}
 						return false;
 					}
@@ -460,6 +477,7 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 		return current.nextWord(elm);
 	}
 
+@if(0)
 	var quotesIndentedLeft = 1;
 	var afterQuotesIndentedRight = 2;
 	var quotesMethod = 0;
@@ -520,6 +538,7 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 			}
 		}
 	}
+@endif
 }
 global.KAGWindow = KAGWindow_patch_wordwrap_override;
 

@@ -360,7 +360,10 @@ class MessageLayer extends KAGLayer
 
 @if(GAME_WOHN)
 	var charLayers = []; // 文字を表示するレイヤー : [line][column]
+	var charPoolByCh = %[];
+@if(0)
 	var	charPool = [];	//	使っていない文字レイヤーを格納
+@endif
 	var	maxCharPoolCount	= 50; // 使ってない文字レイヤーを保存しておく最大数
 	var	lastCharLayerInfos = []; // 固定化する前のレイヤー状態 : [line][column]
 	/*CS*/var currentLine = 0; // 現在の行
@@ -708,8 +711,22 @@ class MessageLayer extends KAGLayer
 @endif
 @if(GAME_WOHN)
 		stopCharAction();
+@if(1)
+		var charPoolArr = [];
+		charPoolArr.assign(charPoolByCh);
+		(global.Dictionary.clear incontextof this.charPoolByCh)();
+		for (var i = 0; i < charPoolArr.count; i += 2)
+		{
+			if (charPoolArr[i + 1] !== void)
+			{
+				invalidate charPoolArr[i + 1];
+			}
+		}
+@endif
+@if(0)
 		for( var i=0; i<charPool.count; i++ )
 			invalidate charPool[i] if charPool[i] != void;
+@endif
 
 		var layers = [ charLayers, rubyLayers ];
 		for(var k=0; k<layers.count; k++)
@@ -1560,14 +1577,23 @@ class MessageLayer extends KAGLayer
 	}
 
 	//	新しい文字レイヤーを取得
-	function createNewCharLayer()
+	function createNewCharLayer(key=" ")
 	{
 		var	nc;
+@if(0)
 		if(charPool.count > 0)
 		{
 			nc	= charPool[0];
 			charPool.erase(0);
 		}
+@endif
+@if(1)
+		if (charPoolByCh[key] !== void && charPoolByCh[key].count > 0)
+		{
+			nc	= charPoolByCh[key][0];
+			charPoolByCh[key].erase(0);
+		}
+@endif
 		else
 			nc	= new MessageCharLayer(window, this);
 
@@ -1589,26 +1615,38 @@ class MessageLayer extends KAGLayer
 		{
 			window.stopAction(char);	//	アクション停止
 
+@if(0)
 			if(charPool.count < maxCharPoolCount)
 			{
 				char.name		= "in char pool";
-				char.fillRect(0, 0, char.imageWidth, char.imageHeight, char.clearcolor);
 				char.visible	= false;
 				charPool.add(char);
 			}
 			else
 				invalidate char;
+@endif
+			if (char.lastParams.count > 0)
+			{
+				var key = char.lastParams;
+				if (charPoolByCh[key] === void)
+				{
+					charPoolByCh[key] = [];
+				}
+				char.name		= "in char pool";
+				char.visible	= false;
+				charPoolByCh[key].add(char);
+			}
 		}
 	}
 
 	// 指定の行、桁の文字レイヤーを返す。なければ作成する
 	var	lastCharLayer;
-	function getCharLayer(line=currentLine, col=currentColumn)
+	function getCharLayer(line=currentLine, col=currentColumn, key)
 	{
 		if(charLayers[line] == void)
 			charLayers[line]	= [];
 		if(charLayers[line][col] == void)
-			charLayers[line][col]	= createNewCharLayer();
+			charLayers[line][col]	= createNewCharLayer(key);
 		charLayers[line][col].group	= currentCharGroup;
 		return lastCharLayer = charLayers[line][col];
 	}
@@ -2202,9 +2240,13 @@ class MessageLayer extends KAGLayer
 @endif
 
 		var	cw;
-		with(getCharLayer(currentLine, currentColumn))
+		with(getCharLayer(currentLine, currentColumn, ch))
 		{
 			.name	= "[%2d][%2d]: %s(%s)".sprintf(currentLine, currentColumn, ch, .group);
+			if (charPoolByCh[ch] !== void && charPoolByCh[ch].count > 0)
+			{
+				.assignImages(charPoolByCh[ch][0]);
+			}
 			.setFont(fontFace, fontAngle, bold, fontItalic, fontSize);
 			if(edge)
 				.drawTextWithEdge(ch, chColor, antialiased, edgeEmphasis, edgeColor, edgeExtent, vertical);
@@ -2333,12 +2375,12 @@ class MessageLayer extends KAGLayer
 		}
 	}
 
-	function getRubyLayer(line, col)
+	function getRubyLayer(line, col, key)
 	{
 		if(rubyLayers[line] == void)
 			rubyLayers[line]	= [];
 		if(rubyLayers[line][col] == void)
-			rubyLayers[line][col]	= createNewCharLayer();
+			rubyLayers[line][col]	= createNewCharLayer(key);
 		rubyLayers[line][col].group	= currentCharGroup;
 		return lastCharLayer = rubyLayers[line][col];
 	}
@@ -2385,7 +2427,7 @@ class MessageLayer extends KAGLayer
 
 	function drawRuby(line = currentLine, stcol, edcol, text, offset, align)
 	{
-		with(getRubyLayer(line, edcol))
+		with(getRubyLayer(line, edcol, text))
 		{
 			.name		= "[%2d][%2d]: ルビ = %s(%s)".sprintf(currentLine, currentColumn, text, .group);
 			var	max, min;
@@ -2544,8 +2586,12 @@ class MessageLayer extends KAGLayer
 		if(repage) return true; // 文字は描画しない
 
 		var cw;
-		with(getCharLayer(currentLine, currentColumn))
+		with(getCharLayer(currentLine, currentColumn, storage))
 		{
+			if (charPoolByCh[storage] !== void && charPoolByCh[storage].count > 0)
+			{
+				.assignImages(charPoolByCh[storage][0]);
+			}
 			if(ischar)
 			{
 				if(edge)

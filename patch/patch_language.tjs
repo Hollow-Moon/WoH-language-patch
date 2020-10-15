@@ -872,13 +872,14 @@ class Window_PatchLanguage_override extends Window_PatchLanguage_original
 
 	function replaceCharacters(obj)
 	{
-		if (obj.text=="~")
+		if (#(obj.text) === 126) // "~"
 		{
 			obj.text = "〜";
 		}
 
-		if (this.sflags.language == englishLanguage
-			&& obj.text=="　" 							// Japanese whitespace
+		if (
+			#(obj.text) === 12288 					// Japanese whitespace "　"
+			&& this.sflags.language == englishLanguage
 			&& !startsWith("花札", conductor.curStorage) // Not hanafuda
 			)
 		{

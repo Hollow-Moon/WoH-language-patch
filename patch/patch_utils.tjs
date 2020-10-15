@@ -182,14 +182,12 @@ function reverseStr(str)
 
 function startsWith(obj, str)
 {
-	var regex = new RegExp("^" + obj + ".*");
-	return regex.test(str);
+	return str.substr(0, obj.length) === obj;
 }
 
 function endsWith(obj, str)
 {
-	var regex = new RegExp(".*" + obj + "$");
-	return regex.test(str);
+	return str.substr(str.length - obj.length, obj.length) === obj;
 }
 
 function capitalize(str)

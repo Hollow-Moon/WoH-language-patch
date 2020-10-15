@@ -14,7 +14,16 @@ class Conductor_patch_skip_override extends Conductor_patch_skip_original
 
 	function onTag(elm)
 	{
-		if (elm.exp !== "timeline_object.loadByData(global.__tmp_tla,global.__tla_name)")
+		var owner = this.owner;
+		if (
+			(
+				typeof(owner.skipToScenario) === "String"
+				|| typeof(owner.skipToLabel) === "String"
+				|| typeof(owner.skipToLine) === "Integer"
+				|| typeof(owner.isSkippingToTarget) === "Integer"
+				)
+			&& elm.exp !== "timeline_object.loadByData(global.__tmp_tla,global.__tla_name)"
+			)
 		{
 			if (typeof(owner.skipToScenario) === "String")
 			{

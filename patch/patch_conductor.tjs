@@ -101,7 +101,6 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 
 	var conductorPrevStorage;
 	var conductorPrevLine;
-	var conductorPrevLineStr;
 	var lastQuizdataQuestion;
 	var hasNewLineSinceLastCall = false;
 	function isNewLine()
@@ -122,7 +121,6 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 		{
 			ret.__patch_conductor_storage = this.curStorage;
 			ret.__patch_conductor_line = this.curLine;
-			ret.__patch_conductor_line_str = this.curLineStr;
 		}
 		return ret;
 	}
@@ -137,7 +135,6 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 					hasNewLineSinceLastCall = true;
 					conductorPrevStorage = elm.__patch_conductor_storage;
 					conductorPrevLine = elm.__patch_conductor_line;
-					conductorPrevLineStr = elm.__patch_conductor_line_str;
 					if (isInQuiz() && lastQuizdataQuestion != quizdata.question) {
 						lastQuizdataQuestion = quizdata.question;
 					}
@@ -151,7 +148,6 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 	{
 		conductorPrevStorage = void;
 		conductorPrevLine = void;
-		conductorPrevLineStr = void;
 		lastQuizdataQuestion = void;
 		super.onScenarioLoad(...);
 		// Use Array.load for loading scenario

@@ -102,7 +102,7 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 
 		var clean = this.cleaned_lines[elm.__patch_conductor_line];
 
-		if (clean !== void && clean.length === 0) return;
+		if ((clean === void) || (clean !== void && clean.length === 0)) return;
 
 		if (isChinese()) {
 			onNewLineWordWrapChinese(elm.__patch_conductor_line);

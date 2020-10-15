@@ -1588,7 +1588,7 @@ class MessageLayer extends KAGLayer
 		}
 @endif
 @if(1)
-		if (charPoolByCh[key] !== void && charPoolByCh[key].count > 0)
+		if ((key !== "" && key !== void) && charPoolByCh[key] !== void && charPoolByCh[key].count > 0)
 		{
 			nc	= charPoolByCh[key][0];
 			charPoolByCh[key].erase(0);
@@ -1628,18 +1628,19 @@ class MessageLayer extends KAGLayer
 			if (char.lastParams.count > 0)
 			{
 				var key = char.lastParams[0];
-				if (charPoolByCh[key] === void)
+				if (key !== void && key !== "")
 				{
-					charPoolByCh[key] = [];
+					if (charPoolByCh[key] === void)
+					{
+						charPoolByCh[key] = [];
+					}
+					char.name		= "in char pool";
+					char.visible	= false;
+					charPoolByCh[key].add(char);
+					return;
 				}
-				char.name		= "in char pool";
-				char.visible	= false;
-				charPoolByCh[key].add(char);
 			}
-			else
-			{
-				invalidate char;
-			}
+			invalidate char;
 		}
 	}
 
@@ -2247,7 +2248,7 @@ class MessageLayer extends KAGLayer
 		with(getCharLayer(currentLine, currentColumn, ch))
 		{
 			.name	= "[%2d][%2d]: %s(%s)".sprintf(currentLine, currentColumn, ch, .group);
-			if (charPoolByCh[ch] !== void && charPoolByCh[ch].count > 0)
+			if ((ch !== "" && ch !== void) && charPoolByCh[ch] !== void && charPoolByCh[ch].count > 0)
 			{
 				.assignImages(charPoolByCh[ch][0]);
 			}
@@ -2592,7 +2593,7 @@ class MessageLayer extends KAGLayer
 		var cw;
 		with(getCharLayer(currentLine, currentColumn, storage))
 		{
-			if (charPoolByCh[storage] !== void && charPoolByCh[storage].count > 0)
+			if ((storage !== "" && storage !== void) && charPoolByCh[storage] !== void && charPoolByCh[storage].count > 0)
 			{
 				.assignImages(charPoolByCh[storage][0]);
 			}

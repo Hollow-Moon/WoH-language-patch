@@ -236,23 +236,31 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 
 	function onNewLineWordWrapSpace(linenum)
 	{
-		if (this.words.count > 0)
+		var words = this.words;
+		if (words.count > 0)
 		{
-			this.words.erase(0);
+			words.erase(0);
 		}
 
 		var word_lines = this.word_lines_space;
 
-		if (this.words.count === 0)
+		if (words.count === 0)
 		{
-			this.words.assign(word_lines[linenum]);
+			words.assign(word_lines[linenum]);
 		}
 		else
 		{
-			var arr = word_lines[linenum];
-			for (var i = 0; i < arr.count; i += 1)
+			if (typeof(words.push) === "Object")
 			{
-				this.words.add(arr[i]);
+				words.push(word_lines[linenum]*);
+			}
+			else
+			{
+				var arr = word_lines[linenum];
+				for (var i = 0; i < arr.count; i += 1)
+				{
+					words.add(arr[i]);
+				}
 			}
 		}
 		/*if (additionalWords.count > 0) {
@@ -267,17 +275,25 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 
 	function onNewLineWordWrapChinese(linenum)
 	{
+		var words = this.words;
 		var word_lines = this.word_lines_chinese;
-		if (this.words.count === 0)
+		if (words.count === 0)
 		{
-			this.words.assign(word_lines[linenum]);
+			words.assign(word_lines[linenum]);
 		}
 		else
 		{
-			var arr = word_lines[linenum];
-			for (var i = 0; i < arr.count; i += 1)
+			if (typeof(words.push) === "Object")
 			{
-				this.words.add(arr[i]);
+				words.push(word_lines[linenum]*);
+			}
+			else
+			{
+				var arr = word_lines[linenum];
+				for (var i = 0; i < arr.count; i += 1)
+				{
+					words.add(arr[i]);
+				}
 			}
 		}
 

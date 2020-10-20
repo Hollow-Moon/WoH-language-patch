@@ -86,6 +86,13 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 
 	function onNewLine(elm)
 	{
+		var is_japanese = isJapanese();
+		if (is_japanese)
+		{
+			// Don't bother doing the wordwrap calculations since we won't be using them
+			return;
+		}
+
 		if (word_lines_scenario_changed)
 		{
 			word_lines_scenario_changed = false;
@@ -106,14 +113,15 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 
 		if (isChinese()) {
 			onNewLineWordWrapChinese(elm.__patch_conductor_line);
-		} else if (!isJapanese()) {
+		} else if (!is_japanese) {
 			onNewLineWordWrapSpace(elm.__patch_conductor_line);
 		}
 	}
 
+	var get_lengths_for_string_ret = [0, 0];
 	function getLengthsForString(str)
 	{
-		var ret = [0, 0];
+		var ret = get_lengths_for_string_ret;
 		ret[0] = this.historyLayer.font.getTextWidth(str);
 		if (typeof(this.current.lineLayer) === "Object")
 		{
@@ -137,7 +145,7 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 		if (word_length_test_cur[0] !== word_length_test[0] || word_length_test_cur[1] !== word_length_test[1])
 		{
 			(global.Dictionary.clear incontextof this.word_length_cache)();
-			word_length_test = word_length_test_cur;
+			word_length_test.assign(word_length_test_cur);
 		}
 		this.cleaned_lines.clear();
 		this.cleaned_lines.assign(conductor.lines);
@@ -177,7 +185,7 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 			}
 		}
 		var cleaned_lines = this.cleaned_lines;
-		var empty_word = ["", [0, 0]];
+		var empty_word = %[tagname: this.nextWordTagName, text: "", hllength: 0, mllength: 0];
 		var empty_line = [];
 		this.word_lines_space.clear();
 		for (var i = 0; i < cleaned_lines.count; i += 1)
@@ -199,38 +207,43 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 				}
 				if (this.word_length_cache[word] === void)
 				{
-					this.word_length_cache[word] = [word, this.getLengthsForString(word)];
+					var lengths = this.getLengthsForString(word);
+					this.word_length_cache[word] = %[tagname: this.nextWordTagName, text: word, hllength: lengths[0], mllength: lengths[1]];
 				}
 				arr[j] = this.word_length_cache[word];
 			}
 			this.word_lines_space[i] = arr;
 		}
 		this.word_lines_chinese.clear();
-		for (var i = 0; i < cleaned_lines.count; i += 1)
+		if (isChinese())
 		{
-			if (cleaned_lines[i].length === 0)
+			for (var i = 0; i < cleaned_lines.count; i += 1)
 			{
-				this.word_lines_chinese[i] = empty_line;
-				continue;
-			}
-			var arr = [];
-			//	Use continuous English characters as separators to split the line into an array of substrings. / 中英文分词
-			var additionalWords = cleaned_lines[i].split(/([A-zＡ-ｚ-]+)/);
-			for (var j = 0; j < additionalWords.count; j += 1)
-			{
-				var word = additionalWords[j];
-				if (word.length === 0)
+				if (cleaned_lines[i].length === 0)
 				{
-					arr[j] = empty_word;
+					this.word_lines_chinese[i] = empty_line;
 					continue;
 				}
-				if (this.word_length_cache[word] === void)
+				var arr = [];
+				//	Use continuous English characters as separators to split the line into an array of substrings. / 中英文分词
+				var additionalWords = cleaned_lines[i].split(/([A-zＡ-ｚ-]+)/);
+				for (var j = 0; j < additionalWords.count; j += 1)
 				{
-					this.word_length_cache[word] = [word, this.getLengthsForString(word)];
+					var word = additionalWords[j];
+					if (word.length === 0)
+					{
+						arr[j] = empty_word;
+						continue;
+					}
+					if (this.word_length_cache[word] === void)
+					{
+						var lengths = this.getLengthsForString(word);
+						this.word_length_cache[word] = %[tagname: this.nextWordTagName, text: word, hllength: lengths[0], mllength: lengths[1]];
+					}
+					arr[j] = this.word_length_cache[word];
 				}
-				arr[j] = this.word_length_cache[word];
+				this.word_lines_chinese[i] = arr;
 			}
-			this.word_lines_chinese[i] = arr;
 		}
 	}
 
@@ -321,7 +334,6 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 	}
 
 	var nextWordTagName = "nextword";
-	var wordTag = %[tagname: nextWordTagName, text: "", hllength: 0, mllength: 0];
 	function processWordWrappingSpace(elm)
 	{
 		if (
@@ -332,13 +344,7 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 			words.erase(0);
 			var nextWord = words[0];
 
-			with (this.wordTag)
-			{
-				.text = nextWord[0];
-				.hllength = nextWord[1][0];
-				.mllength = nextWord[1][1];
-			}
-			conductor.pendings.insert(0, this.wordTag);
+			conductor.pendings.insert(0, nextWord);
 			//dm("word: ["+nextWord[0]+"]");
 		}
 		return false;
@@ -412,7 +418,7 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 				case -2:	//	This is a new word or need start from 0 position. / 新词组
 					currentCharPos++;
 				default:
-					currentCharPos = words[currentWordIndex][0].indexOf(elm.text, currentCharPos+1);
+					currentCharPos = words[currentWordIndex].text.indexOf(elm.text, currentCharPos+1);
 					break;
 			}
 			if(currentCharPos == -1) {	//	To determine the current word needs to be processed. / 处理
@@ -422,26 +428,20 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 						currentCharPos = -3;
 						return false;
 					}
-					else if(words[currentWordIndex][0].indexOf(elm.text) != -1)
+					else if(words[currentWordIndex].text.indexOf(elm.text) != -1)
 					{
 						currentCharPos = -2;
 						if(currentWordIndex%2)
 						{
 							var word = words[currentWordIndex];
-							with (this.wordTag)
-							{
-								.text = word[0];
-								.hllength = word[1][0];
-								.mllength = word[1][1];
-							}
-							return processNextWord(this.wordTag);
+							return processNextWord(word);
 						}
 						return false;
 					}
 				}
 			}
 			//	End of the word, the next word should be determined it needs to process. / 到该词组末尾，下一词组需要处理
-			if(currentCharPos == words[currentWordIndex][0].length - 1) currentCharPos = -1;
+			if(currentCharPos == words[currentWordIndex].text.length - 1) currentCharPos = -1;
 		}
 		return false;
 	}

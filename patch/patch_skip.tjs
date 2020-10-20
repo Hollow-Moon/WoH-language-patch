@@ -174,7 +174,7 @@ class KAGWindow_patch_skip_override extends KAGWindow_patch_skip_original
 
 	function process(storage)
 	{
-		if ((typeof(this.jumpToScenario) === "String" || System.getArgument('-archiveopenscenario') !== void) && storage === "first.ks" && isMain)
+		if ((typeof(this.jumpToScenario) === "String" || System.getArgument('-archiveopenscenario') !== void || System.getArgument('-flowchartopenbyscenario') !== void) && storage === "first.ks" && isMain)
 		{
 			this.set_skip(System.getArgument('-skipscenario'), System.getArgument('-skiplabel'), System.getArgument('-skipline'));
 			var ret = super.process((typeof(this.jumpToScenario) === "String") ? this.jumpToScenario : storage, (typeof(this.jumpToLabel) === "String") ? this.jumpToLabel : void, true, typeof(this.shouldSkipImmediate) === "String");

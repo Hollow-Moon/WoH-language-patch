@@ -2053,9 +2053,11 @@ class LoopKeyFrameExchangeAction extends KeyFrameExchangeAction
 //	揺らぎ実行アクション
 class HazeAction extends RelativeActionHandler
 {
+@if(0)
 	var	omega	= 1;	//	1ミリ秒あたりの角速度(=波の移動速度/大きい程上下にすばやく移動する)
 	var	interval= 50;	//	描画周期(ms)
 	var	drawtick;		//	次に描画する時間
+@endif
 
 	function HazeAction(target, propName, elm)
 	{
@@ -2066,7 +2068,9 @@ class HazeAction extends RelativeActionHandler
 	{
 		super.construct(...);
 //		omega	= +elm.omega if elm.omega !== void;
+@if(0)
 		interval= +elm.interval if elm.interval != void;
+@endif
 		target.updateWaveTable();	//	使用する波テーブルを更新する
 	}
 
@@ -2074,9 +2078,14 @@ class HazeAction extends RelativeActionHandler
 	{
 		if(stopFlag)
 			return true;
-		else if(now >= drawtick)
+		else
+@if(0)
+		if(now >= drawtick)
+@endif
 		{
+@if(0)
 			drawtick	= now + interval;	//	次の描画時刻
+@endif
 //			target.doHaze(now * omega);
 			target.doHaze(now);
 //			target.doHaze	= now * omega;
@@ -2087,8 +2096,10 @@ class HazeAction extends RelativeActionHandler
 //	ノイズアクション
 class NoiseAction extends RelativeActionHandler
 {
+@if(0)
 	var	interval	= 50;	//	ノイズを掛ける周期(ms)
 	var	drawtick;			//	次に描画する時間
+@endif
 
 	function NoiseAction(target, propName, elm)
 	{
@@ -2098,16 +2109,23 @@ class NoiseAction extends RelativeActionHandler
 	function construct(target, propName, elm)
 	{
 		super.construct(...);
+@if(0)
 		interval	= +elm.interval if elm.interval !== void;
+@endif
 	}
 
 	function doAction(target, propName, now, stopFlag)
 	{
 		if(stopFlag)
 			return true;
-		else if(now >= drawtick)
+		else
+@if(0)
+		if(now >= drawtick)
+@endif
 		{
+@if(0)
 			drawtick	= now + interval;	//	次の描画時刻
+@endif
 //			target.doNoise(now);
 			target.doNoise	= now;
 		}

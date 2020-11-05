@@ -309,7 +309,7 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 	{
 //		dm("draw minimize: "+ch);
 		var	tmp	= window.temporaryLayer;
-		with(window.temporaryLayer)
+		with(tmp)
 		{
 			var	w, h;
 			.face	= dfAlpha;
@@ -318,14 +318,14 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 			{
 				.angle	= font.angle;
 				.bold	= font.bold;
-				window.temporaryLayer.setFontFace(font.face, font.height, font.italic);
+				tmp.setFontFace(font.face, font.height, font.italic);
 				w	= .getTextWidth(ch);
 				h	= .getTextHeight(ch);
 			}
 			.setImageSize(w + (ea << 1), h + (ea << 1));
 			.fillRect(0, 0, .imageWidth, .imageHeight, clearcolor);
 			.drawText(ea + (vert ? .font.height : 0), ea, ch, color, 255, aa, sl, sc, sw, sox, soy);
-			stretchCopy(0, 0, width, height, window.temporaryLayer, 0, 0, .imageWidth, .imageHeight);
+			stretchCopy(0, 0, width, height, tmp, 0, 0, .imageWidth, .imageHeight);
 		}
 	}
 
@@ -335,7 +335,7 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 //		dm("equableLayout("+vert+", "+ch+", "+color+", ...)");
 		var	tmp	= window.temporaryLayer;
 		var	spc, step;
-		with(window.temporaryLayer)
+		with(tmp)
 		{
 			var	w, h;
 			.face	= dfAlpha;
@@ -344,7 +344,7 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 			{
 				.angle	= font.angle;
 				.bold	= font.bold;
-				window.temporaryLayer.setFontFace(font.face, font.height, font.italic);
+				tmp.setFontFace(font.face, font.height, font.italic);
 				w	= .getTextWidth(ch);
 				h	= .getTextHeight(ch);
 			}
@@ -365,7 +365,7 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 //				dm(ch[i]+": "+l+", "+t+", "+spc+", "+step);
 				.fillRect(0, 0, .imageWidth, .imageHeight, 0x00000000);
 				.drawText(ea + (vert ? .font.height : 0), ea, ch[i], color, 255, aa, sl, sc, sw, sox, soy);
-				operateRect(l, t, window.temporaryLayer, 0, 0, .imageWidth, .imageHeight);
+				operateRect(l, t, tmp, 0, 0, .imageWidth, .imageHeight);
 				if(vert)
 					t	+= .font.getTextHeight(ch[i]) + int(spc);
 				else
@@ -386,6 +386,7 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 
 	function drawText(ch, color, aa, vert, max, min)
 	{
+		var lastParams = this.lastParams;
 		if (this.drawed === 1 && lastParams.count === 6)
 		{
 			if (
@@ -420,6 +421,7 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 
 	function drawTextWithShadow(ch, color, aa, shadowcolor, shadowoffsetx, shadowoffsety, vert, max, min)
 	{
+		var lastParams = this.lastParams;
 		if (this.drawed === 2 && lastParams.count === 9)
 		{
 			if (
@@ -457,6 +459,7 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 
 	function drawTextWithEdge(ch, color, aa, edgeemphasis, edgecolor, edgeextent, vert, max, min)
 	{
+		var lastParams = this.lastParams;
 		if (this.drawed === 3 && lastParams.count === 9)
 		{
 			if (
@@ -505,6 +508,7 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 
 	function drawGraph(storage, key, color=void, withresize=true)
 	{
+		var lastParams = this.lastParams;
 		if (this.drawed === 4 && lastParams.count === 4)
 		{
 			if (
@@ -535,6 +539,7 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 
 	function drawGraphWithShadow(storage, key, color, shadowcolor, shadowoffsetx, shadowoffsety)
 	{
+		var lastParams = this.lastParams;
 		if (this.drawed === 5 && lastParams.count === 6)
 		{
 			if (
@@ -566,6 +571,7 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 
 	function drawGraphWithEdge(storage, key, color, edgeemphasis, edgecolor, edgeextent)
 	{
+		var lastParams = this.lastParams;
 		if (this.drawed === 6 && lastParams.count === 6)
 		{
 			if (

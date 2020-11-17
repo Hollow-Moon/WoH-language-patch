@@ -192,6 +192,7 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 @if(ZOOM_WINDOW)
 	var exWidth, exHeight; // 拡張画面サイズ⇒sysbase/fore.base/back.baseレイヤサイズ
 	var pxWidth, pxHeight; // 現在のサイズ（sc～exまでの値）
+	var exEventEnabled = false;
 @endif
 
 	function KAGWindow_patch_zoom_window_override()
@@ -315,9 +316,6 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 			registerExEvent();
 			exEventEnabled = true;
 			createMenuBarHideMenu();
-@if(HD_MODE)
-			(initializeHDPatch incontextof this)();
-@endif
 		} else {
 			// 拡張イベントなし
 			menuBarMode = 0; // 強制固定
@@ -937,6 +935,7 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 
 	var _lastInnerSize;
 	var _onResizeProcess = true;
+@if(ZOOM_WINDOW_ENABLE_ONRESIZE)
 	function onResize() {
 		if (trackTempMenuShowing) return super.onResize();
 @if(GAME_WOHN)
@@ -985,6 +984,7 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 		}
 		return super.onResize();
 	}
+@endif
 	var _windowResizeable = true; // フレームを掴んでリサイズ可能かどうか
 	property windowResizeable {
 		getter { return _windowResizeable; }

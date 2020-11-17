@@ -14,15 +14,12 @@ global.play_movie_resize = function(video, kag=global.kag, window=global.kag)
 			//    It fixes itself when stopping and replaying the movie (in which case window.height displays the correct value).
 			if (isNewMovieKrkrz && video.mode == vomMFEVR)
 			{
-				var videoRatio = videoSize[0] / videoSize[1];
-				var kagRatio = kag.scWidth / kag.scHeight;
+				var videoBoundsSize = calculateTouchFromInside(videoSize[0], videoSize[1], kag.scWidth, kag.scHeight);
 				
-				var videoBoundsWidth = kag.scWidth * (videoRatio / kagRatio);
-				var videoBoundsHeight = videoBoundsWidth / videoRatio;
-				var videoBoundsTop = (videoBoundsHeight - kag.scHeight) / 2;
-				var videoBoundsLeft = -(videoBoundsWidth - kag.scWidth) / 2;
+				var videoBoundsLeft = (kag.scWidth - videoBoundsSize[0]) / 2;
+				var videoBoundsTop = (kag.scHeight - videoBoundsSize[1]) / 2;
 
-				video.setBounds(videoBoundsLeft, videoBoundsTop, videoBoundsWidth, videoBoundsHeight);
+				video.setBounds(videoBoundsLeft, videoBoundsTop, videoBoundsSize[0], videoBoundsSize[1]);
 			}
 			else
 @endif
@@ -69,7 +66,7 @@ global.play_movie_resize = function(video, kag=global.kag, window=global.kag)
 		// If too big, resize to fit desktop
 		if (windowSize[0] > desktopWidth || windowSize[1] > desktopHeight)
 		{
-			videoSize = kag.tagHandlers.calculateTouchFromInside(videoSize[0], videoSize[1], desktopWidth - windowExtraWidth, desktopHeight - windowExtraHeight);
+			videoSize = calculateTouchFromInside(videoSize[0], videoSize[1], desktopWidth - windowExtraWidth, desktopHeight - windowExtraHeight);
 			windowSize = [videoSize[0]+windowExtraWidth, videoSize[1]+windowExtraHeight];
 		}
 
@@ -125,3 +122,17 @@ global.stop_movie_resize = function(video, kag=global.kag, window=global.kag)
 	}
 };
 
+// Scales [wo,ho] to [we,he], while keeping the same ratio of wo:ho and making sure wo<=we and ho<=he.
+global.calculateTouchFromInside = function(wo, ho, we, he)
+{
+	var h2 = ho * we/wo; // Resulting height if width was scaled
+	if(h2 > he)
+	{
+		// If height is too big, scale based on height
+		return [wo * he/ho, he];
+	}
+	else // scale using width
+	{
+		return [we, h2];
+	}
+};

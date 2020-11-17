@@ -109,6 +109,7 @@
 	["EditLayer.override.tjs", ,,, "GAME_WOHN"],
 	"Plugin.tjs",
 	[,,,,, "After KAG system scripts"],
+	"patch_kagconfig.tjs",
 	"patch_historylayer.tjs",
 	["Override.tjs", ,,, "GAME_FATE||GAME_FHAT"],
 	["Action.tjs", ,,, "GAME_WOHN"],

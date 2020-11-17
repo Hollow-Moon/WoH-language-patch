@@ -1,0 +1,662 @@
+﻿
+// Game-specific configuration.
+// For the upstream KAG3 values, please see "Config.tjs".
+
+@if(GAME_FHAT)
+;System.title = __t("Fate/hollow ataraxia");
+@endif
+@if(GAME_FATE)
+;System.title = __t("Fate/stay night[Realta Nua]");
+@endif
+@if(GAME_WOHN)
+;System.title = __t("魔法使いの夜");
+@endif
+
+global.KAGWindow_config_patch_kagconfig_original = global.KAGWindow_config;
+
+global.KAGWindow_config = function() {
+;(global.KAGWindow_config_patch_kagconfig_original incontextof this)();
+
+@if(GAME_FATE||GAME_FHAT)
+;scWidth = 800;
+;scHeight = 600;
+@endif
+@if(GAME_WOHN)
+;scWidth = 1024;
+;scHeight = 576;
+@endif
+
+@if(GAME_FATE||GAME_FHAT)
+;freeSaveDataMode = true;
+@endif
+@if(GAME_WOHN)
+@if(DEBUG)
+;freeSaveDataMode = true;
+@endif
+@endif
+
+@if(GAME_FATE||GAME_FHAT)
+;saveThumbnail = true;
+@endif
+@if(GAME_WOHN)
+;saveThumbnail = true;
+@endif
+
+@if(GAME_FATE||GAME_FHAT)
+;thumbnailWidth = 120;		//	サムネールの幅(高さは自動的に計算される)
+@endif
+@if(GAME_WOHN)
+;thumbnailWidth = 130;
+@endif
+
+@if(GAME_WOHN)
+;thumbnailDepth = 24;
+@endif
+
+@if(GAME_FATE||GAME_FHAT)
+;fullcolorThumbnail = true;	//	フルカラーで保存するか(ファイルサイズは大きい)
+@endif
+
+@if(GAME_FATE)
+;saveDataLocation = "faterealtanua_savedata";
+@endif
+@if(GAME_FHAT)
+;saveDataLocation = "FateHA_Savedata";
+@endif
+@if(GAME_WOHN)
+;saveDataLocation = "wohn_savedata";
+@endif
+
+@if(GAME_WOHN)
+;dataName = "savedata";
+@endif
+
+@if(GAME_FATE||GAME_FHAT)
+;saveDataID = "cb1ef19b-b322-4a89-90d9-fa8e7bbd0bfd";
+@endif
+@if(GAME_WOHN)
+;saveDataID = "dd40e5c3-0794-4373-83a5-e0907cea19ac";
+@endif
+
+@if(GAME_FATE||GAME_FHAT)
+@if(!DEBUG)
+;saveDataMode = "z";
+@endif
+@endif
+@if(GAME_WOHN)
+@if(COMPRESS_SAVEFILE)
+;saveDataMode = "z";
+@endif
+@endif
+
+@if(GAME_FATE||GAME_FHAT||GAME_WOHN)
+;saveMacros = false;
+@endif
+
+@if(GAME_FATE||GAME_FHAT)
+//;recordHistoryOfStore = 2;
+@endif
+@if(GAME_WOHN)
+;recordHistoryOfStore = 1;
+@endif
+
+@if(GAME_FATE||GAME_FHAT)
+;maxHistoryOfStore = recordHistoryOfStore==0 ? 0 : 3;
+//;maxHistoryOfStore = 100;	//	100ページ戻れる(スクリプティング用)
+@endif
+@if(GAME_WOHN)
+//;maxHistoryOfStore = 4;		//20〜40くらいを想定
+;maxHistoryOfStore = 20;
+@endif
+
+@if(GAME_FATE||GAME_FHAT)
+;numSEBuffers = 12;
+@endif
+@if(GAME_WOHN)
+;numSEBuffers = 15;
+@endif
+
+@if(GAME_FATE||GAME_FHAT)
+;numCharacterLayers = 5;	//	立ち絵
+@endif
+
+@if(GAME_FATE||GAME_FHAT)
+;scPositionX.left = 200;
+;scPositionX.left_center = 300;
+;scPositionX.center = 400;
+;scPositionX.right_center = 500;
+;scPositionX.right = 600;
+@endif
+@if(GAME_WOHN)
+;scPositionX.left = int(scWidth * 0.25);
+;scPositionX.left_center = int(scWidth * 0.375);
+;scPositionX.center = int(scWidth * 0.5);
+;scPositionX.right_center = int(scWidth * 0.625);
+;scPositionX.right = int(scWidth * 0.75);
+@endif
+
+@if(GAME_FATE||GAME_FHAT||GAME_WOHN)
+;numMessageLayers = 1;
+@endif
+
+@if(GAME_FATE||GAME_FHAT||GAME_WOHN)
+;initialMessageLayerVisible = false;
+@endif
+
+@if(GAME_FATE||GAME_FHAT)
+;numBookMarks = 960;
+@endif
+@if(GAME_WOHN)
+;numBookMarks = 8 * 15 + 10;	//	通常が 8ヶ15ページ、クイックが 10ヶ
+@endif
+
+@if(GAME_FATE||GAME_FHAT)
+// ◆ セーブデータの名前
+;bookmarkName = "記憶";
+;loadActionName = "をたど";
+;loadActionNameLast = "らりるれろ";
+;saveActionName = "を上書き";
+;saveActionNameLast = "さしすせそ";
+@endif
+
+@if(GAME_WOHN)
+;showFixedPitchOnlyInFontSelector = true;
+@endif
+
+@if(GAME_FATE||GAME_FHAT)
+;aboutWidth = 200; // 幅
+@endif
+
+};
+
+global.Menu_visible_config_patch_kagconfig_original = global.Menu_visible_config;
+
+global.Menu_visible_config = function() {
+;(global.Menu_visible_config_patch_kagconfig_original incontextof this)();
+
+@if(GAME_FATE||GAME_FHAT||GAME_WOHN)
+;rightClickMenuItem.visible = false;
+@endif
+
+@if(GAME_FATE||GAME_FHAT)
+;showHistoryMenuItem.visible = false;
+@endif
+
+@if(GAME_FATE||GAME_FHAT)
+;skipToNextStopMenuItem.visible = false;
+@endif
+
+@if(GAME_FATE||GAME_FHAT)
+;autoModeMenuItem.visible = false;
+@endif
+
+@if(GAME_FATE||GAME_FHAT||GAME_WOHN)
+;autoModeWaitMenu.visible = false;
+@endif
+
+@if(GAME_FATE||GAME_FHAT||GAME_WOHN)
+;goBackMenuItem.visible = false;
+@endif
+
+@if(GAME_FATE||GAME_FHAT||GAME_WOHN)
+;goToStartMenuItem.visible = false;
+@endif
+
+@if(GAME_FATE||GAME_FHAT)
+;characterMenu.visible = false;
+@endif
+@if(GAME_WOHN)
+@if(!DEBUG)
+;characterMenu.visible = false;
+@endif
+@endif
+
+@if(GAME_FATE||GAME_FHAT)
+;restoreMenu.visible = false;
+@endif
+@if(GAME_WOHN)
+@if(!DEBUG)
+;restoreMenu.visible = false;
+@endif
+@endif
+
+@if(GAME_FATE||GAME_FHAT)
+;storeMenu.visible = false;
+@endif
+@if(GAME_WOHN)
+@if(!DEBUG)
+;storeMenu.visible = false;
+@endif
+@endif
+
+@if(GAME_FATE||GAME_FHAT)
+bookMarkMenu.visible = restoreMenu.visible | storeMenu.visible;
+@endif
+
+@if(GAME_FATE||GAME_FHAT||GAME_WOHN)
+;helpMenu.visible = true;
+@endif
+
+@if(GAME_FATE||GAME_FHAT||GAME_WOHN)
+;helpIndexMenuItem.visible = false;
+@endif
+
+@if(GAME_FATE||GAME_FHAT)
+@if(DEBUG || SELECTVOICESPEED)
+;debugMenu.visible = true;
+@endif
+@if(!DEBUG && !SELECTVOICESPEED)
+;debugMenu.visible = false;
+@endif
+@if(GAME_WOHN)
+@if(DEBUG)
+;debugMenu.visible = true;
+@endif
+@endif
+
+
+@if(SELECTVOICESPEED)
+;voiceSpeedMenu.visible = true;
+@endif
+@if(!SELECTVOICESPEED)
+;voiceSpeedMenu.visible = false;
+@endif
+@endif
+
+};
+
+@if(GAME_FATE||GAME_FHAT)
+/*
+ *	メッセージ領域は、26(+1)文字x13行で表示する
+ */
+@endif
+
+global.MessageLayer_config_patch_kagconfig_original = global.MessageLayer_config;
+
+global.MessageLayer_config = function() {
+(global.MessageLayer_config_patch_kagconfig_original incontextof this)();
+@if(GAME_WOHN)
+;layerType = ltAlpha;
+@endif
+
+@if(GAME_FHAT)
+;frameGraphic = "tw_夜パート(通常)";  // position タグの frame 属性に相当
+@endif
+@if(GAME_FATE)
+;frameGraphic = "tw_ノーマル(通常)";  // position タグの frame 属性に相当
+@endif
+@if(GAME_WOHN)
+;frameGraphic = "txtwindow01";  // position タグの frame 属性に相当
+@endif
+
+@if(GAME_FATE||GAME_FHAT)
+;frameOpacity = 64;  // position タグの opacity 属性に相当
+@endif
+
+@if(GAME_FATE||GAME_FHAT)
+;marginL = __si("50", "marginl_basic"); // 左余白
+;marginR = __si("48", "marginr_basic"); // 右余白
+;marginT = __si("55", "margint_basic"); // 上余白
+;marginB = __si("65", "marginb_basic"); // 下余白
+/*
+;marginL = 20; // 左余白
+;marginT = 2; // 上余白
+;marginR = 18; // 右余白
+;marginB = 9; // 下余白
+*/
+@endif
+@if(GAME_WOHN)
+;marginL = __si("142", "marginl_basic_wohn"); // 左余白
+;marginR = __si("142", "marginr_basic_wohn"); // 右余白
+;marginT = __si("69", "margint_basic_wohn"); // 上余白
+;marginB = __si("69", "marginb_basic_wohn"); // 下余白
+@endif
+
+@if(GAME_FATE||GAME_FHAT)
+;ml = 0;  // 左端位置
+;mt = 0;  // 上端位置
+;mw = 800-0;   // 幅
+;mh = 600-0;   // 高さ
+/*
+;ml = 30;  // 左端位置
+;mt = 15;  // 上端位置
+;mw = 800-ml*2;   // 幅
+;mh = 600-mt*2;   // 高さ
+*/
+@endif
+@if(GAME_WOHN)
+;mw = 1024;   // 幅
+;mh = 576;   // 高さ
+;ml = (window.scWidth-mw)\2;  // 左端位置
+;mt = (window.scHeight-mh)\2;  // 上端位置
+@endif
+
+@if(GAME_FATE||GAME_FHAT)
+//	※ ツールでやっているから必要ない。
+@endif
+;defaultAutoReturn = true;
+
+
+@if(GAME_FATE||GAME_FHAT)
+;displaysInFixedPitchAlsoByVariable = __si("1", "displaysinfixedpitchalsobyvariable_basic"); // defstyle タグの pitch 属性に相当
+@endif
+@if(GAME_WOHN)
+;displaysInFixedPitchAlsoByVariable = __si("0", "displaysinfixedpitchalsobyvariable_basic_wohn"); // defstyle タグの pitch 属性に相当
+@endif
+
+@if(GAME_FATE||GAME_FHAT||GAME_WOHN)
+;marginRCh = 1;
+@endif
+
+@if(GAME_FATE||GAME_FHAT)
+;defaultFontSize = __si("27", "fontsize_basic");  // deffont タグの size 属性に相当
+// 26文字x13行設定
+@endif
+@if(GAME_WOHN)
+;defaultFontSize = __si("26", "fontsize_basic_wohn");  // deffont タグの size 属性に相当
+					   // → HistoryLayer_configのfontHeight,lineHeightもWoHシステムでは合わせておくこと
+@endif
+
+@if(GAME_FATE||GAME_FHAT)
+;defaultLineSpacing = __si("13", "linespacing_basic"); // defstyle タグの linespacing 属性に相当
+@endif
+@if(GAME_WOHN)
+;defaultLineSpacing = __si("18", "linespacing_basic_wohn"); // defstyle タグの linespacing 属性に相当
+@endif
+
+@if(GAME_WOHN)
+;defaultPitch = __si("1", "defaultpitch_basic_wohn"); // defstyle タグの pitch 属性に相当
+@endif
+
+@if(GAME_FATE||GAME_FHAT)
+;userFace = __s("ＭＳ ゴシック", "window_font_face"); // deffont タグの face 属性に相当
+@endif
+@if(GAME_WOHN)
+;userFace = __s("明朝D", "window_font_face_wohn"); // deffont タグの face 属性に相当
+@endif
+
+@if(GAME_FATE||GAME_FHAT)
+;defaultBold = __sb("0", "defaultbold_basic");
+@endif
+@if(GAME_WOHN)
+;defaultBold = __sb("1", "defaultbold_basic_wohn");
+@endif
+
+@if(GAME_FATE||GAME_FHAT||GAME_WOHN)
+;defaultRubySize = __si("12", "defaultrubysize_basic"); // deffont タグの rubysize に相当
+@endif
+
+@if(GAME_FATE||GAME_FHAT)
+;defaultRubyOffset = -1; // deffont タグの rubyoffset に相当
+@endif
+@if(GAME_WOHN)
+;defaultRubyOffset = 0; // deffont タグの rubyoffset に相当
+@endif
+
+@if(GAME_FATE||GAME_FHAT)
+// ◆ ルビをボールドにするか
+;defaultRubyBold = false;
+@endif
+
+@if(GAME_WOHN)
+;defaultEdgeColor = 0x2f2f2f;  // deffont タグの edgecolor に属性に相当
+@endif
+
+@if(GAME_FATE||GAME_FHAT||GAME_WOHN)
+;defaultShadow = false;  // deffont タグの shadow 属性に相当
+@endif
+
+@if(GAME_FATE||GAME_FHAT||GAME_WOHN)
+;defaultEdge = true;  // deffont タグの edge 属性に相当
+@endif
+
+
+};
+
+//---------------------------------------------- メッセージ履歴の設定 -----
+
+@if(GAME_FATE||GAME_FHAT)
+/*
+ *	上部に表示されるボタンの高さは18pixel
+ */
+@endif
+
+global.HistoryLayer_config_patch_kagconfig_original = global.HistoryLayer_config;
+
+global.HistoryLayer_config = function() {
+(global.HistoryLayer_config_patch_kagconfig_original incontextof this)();
+@if(GAME_FATE||GAME_FHAT)
+;fontName = __s("ＭＳ 明朝", "history_font_face");
+@endif
+@if(GAME_WOHN)
+;fontName = __s("明朝D", "history_font_face_wohn");
+@endif
+
+@if(GAME_FATE||GAME_FHAT||GAME_WOHN)
+;fontBold = __sb("0", "font_bold_history");
+@endif
+
+@if(GAME_FATE||GAME_FHAT)
+// ◆ 左右上下マージン
+;marginL = 50; // 左余白
+;marginT = 68; // 上余白
+;marginR = 48; // 右余白
+;marginB = 49; // 下余白
+@endif
+
+@if(GAME_FATE||GAME_FHAT)
+// ◆ コントロール部の高さ
+//;controlHeight	= 20;
+;controlHeight	= 0;	//	コントロール部を左に寄せたので、高さは0になった。
+@endif
+
+@if(GAME_FATE||GAME_FHAT)
+;fontHeight = __si("27", "font_height_history");
+@endif
+@if(GAME_WOHN)
+;fontHeight = __si("26", "font_height_history_wohn");
+@endif
+
+@if(GAME_FATE||GAME_FHAT)
+;lineHeight = 40;
+@endif
+@if(GAME_WOHN)
+;lineHeight = 27;
+@endif
+
+@if(GAME_FATE||GAME_FHAT)
+;verticalView = false;  // position タグの vertical 属性に相当
+@endif
+
+@if(GAME_FATE||GAME_FHAT||GAME_WOHN)
+;everypage = true;
+@endif
+
+@if(GAME_FATE||GAME_FHAT)
+;maxPages = 25;
+;maxLines = 1000;
+@endif
+
+@if(GAME_FATE||GAME_FHAT||GAME_WOHN)
+;storeState = true;
+@endif
+
+@if(GAME_WOHN)
+// ◆ マージン設定
+// メッセージレイヤーと同じにする
+;marginL = __si("142", "marginl_history_wohn"); // 左余白
+;marginR = __si("142", "marginr_history_wohn"); // 右余白
+;marginT = __si("69", "margint_history_wohn"); // 上余白
+;marginB = __si("69", "marginb_history_wohn"); // 下余白
+@endif
+
+@if(GAME_WOHN)
+// ◆ 右文字マージン
+// 禁則処理用にあけておく右端の文字数を指定します。
+// (縦書きモードでは下端の文字数であると解釈されます)
+;marginRCh = 1;
+@endif
+
+};
+
+
+@if(GAME_WOHN)
+//---------------------------------------------- システムコンフィグ設定初期値 -----
+//このデフォルト値を変更したらconfigmenu.tjsおよびconfig_system.ks,config_system.ttdのhint
+//に表記されているデフォルトの表示を変更する事。
+
+//	scflags項目の初期化
+global.SystemVariables_configCf = function() {
+var cf = %[];
+// [ システムコンフィグ設定 ]
+// ◆ コマドリの台詞(コンフィグ画面に設定項目自体を表示するかどうか)
+;cf.visibileRobinSerifButton = false;
+
+
+// ◆ コマドリの台詞(表示設定)
+;cf.dispRobinSerif = true;
+
+
+// ◆ テキスト表示演出(フェードイン可否[負論理])
+;cf.disableCharAppearAction = false;
+
+
+// ◆ 既読テキスト表示演出(フェードアウト可否[負論理])
+;cf.lme_disable = false;
+
+
+// ◆ 既読テキスト表示演出(フェードアウト時間[文字数] 0〜500)
+;cf.lme_time = 20;
+
+
+// ◆ 既読テキスト表示演出(フェードアウト不透明度 1〜255)　※0には出来ない
+;cf.lme_opacity = 102;
+
+
+// ◆ マウスの右クリック設定(右クリック2回でメニューを表示するか)
+;cf.doubleCushionMenuOpen = false;
+
+
+// ◆ マウスカーソルの自動移動
+;cf.autoMouseMove = true;
+
+
+// [ メッセージコンフィグ設定 ]
+// ◆ オートモードで左クリックの動作 true:エフェクトカット / false:オート解除
+;cf.autoModeArrowClick = false;
+
+
+// ◆ 既読メッセージのスキップ(シーンの先頭で skipToNextStopByKey を実行するか)
+;cf.ch2ndSkip = false;
+
+
+// ◆ 既読シーンのスキップ
+;cf.scene2ndSkip = false;
+
+
+// ◆ スキップの確認
+;cf.skipWithoutCheck = false;	//	確認せずにスキップするなら true
+
+
+// ◆ 選択肢でスキップ解除
+;cf.stopSkipAtAlternative = true;
+
+// メッセージ早送りを既読のみに制限するか
+;cf.skipOnly2nd = true;
+
+// ◆ メッセージ早送りキー
+//	Enter - cf.skipKey = 1
+//	Ctrl  - cf.skipKey = 2
+//	Shift - cf.skipKey = 3
+;cf.skipKey = 2;
+
+
+// [ エフェクトコンフィグ設定 ]
+// ◆ エフェクト瞬間表示
+;cf.effectSkip = false;
+
+
+// ◆ 演出のスキップ(カット可否)
+;cf.effectCut = false;
+
+
+// ◆ (キャラクター)画像切替時にテキストを消去しない
+;cf.noTextOff = false;
+
+
+// ◆ 特殊効果の表示
+;cf.speffect = true;
+
+return cf;
+};
+
+
+//	kagメンバ項目の初期化
+global.SystemVariables_configKag = function() {
+// [ システムコンフィグ設定 ]
+// ◆ 画面モード(フルスクリーン／ウィンドウ表示)
+;kag.fullScreened = false;
+
+
+// ◆ ウィンドウサイズ可変
+;kag.windowResizeable = true;				//true:可変許可  false:ロック
+
+
+// [ メッセージコンフィグ設定 ]
+// ◆ 未読メッセージ表示速度(0〜250[ms])
+;kag.userChSpeed = 35;
+
+
+@if(0)
+// ◆ フォント		→ このファイルの上にある MessageLayer_config [userFace]項目に設定のこと
+// ◆ フォント太字	→ このファイルの上にある MessageLayer_config [defaultBold]項目に設定のこと
+// ◆ フォント太字ルビ
+;kag.current.defaultRubyBold = false;
+@endif
+
+
+// ◆ 未読をページ末まで一気に表示
+;kag.chNonStopToPageBreak = false;
+
+
+// ◆ 既読メッセージ表示速度(0〜250[ms])
+;kag.userCh2ndSpeed = 26;
+
+
+// ◆ 既読をページ末まで一気に表示
+;kag.ch2ndNonStopToPageBreak = false;
+
+
+// ◆ オートモードのページ切り替え時間 (0〜9990[ms])
+;kag.autoModePageWait = 3000;
+
+// ◆ オートモードのクリック待ち切り替え時間
+;kag.autoModeLineWait = 2200;
+
+// [ サウンドコンフィグ設定 ]
+// ◆ BGMボリューム(0〜100)
+;kag.bgmPropVolume = kag.bgmVolume = 100;
+
+
+// ◆ BGMミュート
+;kag.bgmPropMute = false;
+
+
+// ◆ SEボリューム(0〜100)
+;kag.sePropVolume = kag.seVolume = 100;
+
+
+// ◆ SEミュート
+;kag.sePropMute = false;
+
+
+// ◆ システムSEボリューム(0〜100)
+;kag.systemSEVolume = 33;
+
+
+// ◆ システムSEミュート
+;kag.systemSEMute = false;
+
+};
+@endif
+

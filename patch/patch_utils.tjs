@@ -648,12 +648,28 @@ global.initial_scenario_load_ready = function()
 			global.kag.onWindowedMenuItemClick();
 		}
 	}
+	else if (typeof(global.kag.scflags.fullScreen) === "Integer")
+	{
+		var should_fullscreen = global.kag.scflags.fullScreen;
+		if (should_fullscreen)
+		{
+			global.kag.onFullScreenMenuItemClick();
+		}
+		else
+		{
+			global.kag.onWindowedMenuItemClick();
+		}
+	}
 	if (System.getArgument("-innersizewidth") !== void)
 	{
 		if (typeof(global.kag.onWindowSizeMenuItemClick) === "Object")
 		{
 			global.kag.onWindowSizeMenuItemClick(void, System.getArgument("-innersizewidth") | 0);
 		}
+	}
+	else
+	{
+		kag.callResizeHook();
 	}
 };
 

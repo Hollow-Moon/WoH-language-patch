@@ -381,6 +381,9 @@ class FontWrapper
 
 	function getList(flags)
 	{
+@if(GAME_WOHN)
+		flags &= ~global.fsfSameCharSet;
+@endif
 		var ret;
 		if (typeof(this.font.getList) === "Object")
 		{

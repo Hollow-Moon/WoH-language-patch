@@ -3959,7 +3959,23 @@ class MessageLayer extends KAGLayer
 			for(var i=0; i<text.length; i++)
 			{
 				var	ch	= text[i];
+@if(0)
 				w	= (displaysInFixedPitchAlsoByVariable && typeof ch == "String" && #ch>255) ? .font.height : .font.getTextWidth(ch);
+@endif
+				w = 0;
+				var rect = .font.getGlyphDrawRect(ch);
+				if (typeof(rect) === "Object")
+				{
+					w = rect.right;
+				}
+				else
+				{
+					w = .font.getTextWidth(ch);
+				}
+				if (w >= 65536 || w < 0)
+				{
+					w = 0;
+				}
 				cw.add(w);
 				tw	+= w;
 			}

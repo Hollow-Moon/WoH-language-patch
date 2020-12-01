@@ -16,10 +16,36 @@ class HistoryLayer_patch_wordwrap_override extends HistoryLayer_patch_wordwrap_o
 
 	function nextWord(elm)
 	{
+@if(!WORDWRAP_BOLDITALIC_MODIFIER)
 		var currentWordWidth = elm.hllength;
-		if ((getCurrentLineWidth() + currentWordWidth) >= relinePos && currentWordWidth < relinePos) {
+@endif
+@if(WORDWRAP_BOLDITALIC_MODIFIER)
+		var currentWordWidth = 0;
+		var bold = this.font.bold;
+		var italic = this.font.italic;
+		if (bold && italic)
+		{
+			currentWordWidth = elm.hllengthbi;
+		}
+		else if (bold)
+		{
+			currentWordWidth = elm.hllengthb;
+		}
+		else if (italic)
+		{
+			currentWordWidth = elm.hllengthi;
+		}
+		else
+		{
+			currentWordWidth = elm.hllength;
+		}
+@endif
+		if ((getCurrentLineWidth() + currentWordWidth) >= relinePos && currentWordWidth < relinePos)
+		{
 			if (reline())
+			{
 				return autoReturn;
+			}
 		}
 		return false;
 	}
@@ -41,10 +67,44 @@ class MessageLayer_patch_wordwrap_override extends MessageLayer_patch_wordwrap_o
 
 	function nextWord(elm)
 	{
+@if(!WORDWRAP_BOLDITALIC_MODIFIER)
 		var currentWordWidth = elm.mllength;
-		if ((x + currentWordWidth) >= relinexpos && currentWordWidth < relinexpos) {
+@endif
+@if(WORDWRAP_BOLDITALIC_MODIFIER)
+		var currentWordWidth = 0, bold = false, italic = false;
+		if (typeof(this.lineLayer) === "Object")
+		{
+			bold = this.lineLayer.font.bold;
+			italic = this.lineLayer.font.italic;
+		}
+		else if (typeof(this.getChWidth) === "Object")
+		{
+			bold = this.bold;
+			italic = this.fontItalic;
+		}
+		if (bold && italic)
+		{
+			currentWordWidth = elm.mllengthbi;
+		}
+		else if (bold)
+		{
+			currentWordWidth = elm.mllengthb;
+		}
+		else if (italic)
+		{
+			currentWordWidth = elm.mllengthi;
+		}
+		else
+		{
+			currentWordWidth = elm.mllength;
+		}
+@endif
+		if ((x + currentWordWidth) >= relinexpos && currentWordWidth < relinexpos)
+		{
 			if (reline())
+			{
 				return autoReturn;
+			}
 		}
 		return false;
 	}
@@ -118,10 +178,16 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 		}
 	}
 
+@if(!WORDWRAP_BOLDITALIC_MODIFIER)
 	var get_lengths_for_string_ret = [0, 0];
+@endif
+@if(WORDWRAP_BOLDITALIC_MODIFIER)
+	var get_lengths_for_string_ret = [0, 0, 0, 0, 0, 0, 0, 0];
+@endif
 	function getLengthsForString(str)
 	{
 		var ret = get_lengths_for_string_ret;
+@if(!WORDWRAP_BOLDITALIC_MODIFIER)
 		ret[0] = this.historyLayer.font.getTextWidth(str);
 		if (typeof(this.current.lineLayer) === "Object")
 		{
@@ -131,6 +197,57 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 		{
 			ret[1] = this.current.getChWidth(str)[1];
 		}
+@endif
+@if(WORDWRAP_BOLDITALIC_MODIFIER)
+		var hlf = this.historyLayer.font;
+		var save_bold_hl = hlf.bold;
+		var save_italic_hl = hlf.italic;
+		hlf.bold = false;
+		hlf.italic = false;
+		ret[0] = hlf.getTextWidth(str);
+		hlf.bold = true;
+		ret[2] = hlf.getTextWidth(str);
+		hlf.italic = true;
+		ret[6] = hlf.getTextWidth(str);
+		hlf.bold = false;
+		ret[4] = hlf.getTextWidth(str);
+		hlf.bold = save_bold_hl;
+		hlf.italic = save_italic_hl;
+		if (typeof(this.current.lineLayer) === "Object")
+		{
+			var mlf = this.current.lineLayer.font;
+			var save_bold_ml = mlf.bold;
+			var save_italic_ml = mlf.italic;
+			mlf.bold = false;
+			mlf.italic = false;
+			ret[1] = mlf.getTextWidth(str);
+			mlf.bold = true;
+			ret[3] = mlf.getTextWidth(str);
+			mlf.italic = true;
+			ret[7] = mlf.getTextWidth(str);
+			mlf.bold = false;
+			ret[5] = mlf.getTextWidth(str);
+			mlf.bold = save_bold_ml;
+			mlf.italic = save_italic_ml;
+		}
+		else if (typeof(this.current.getChWidth) === "Object")
+		{
+			var ml = this.current;
+			var save_bold_ml = ml.bold;
+			var save_italic_ml = ml.fontItalic;
+			ml.bold = false;
+			ml.fontItalic = false;
+			ret[1] = ml.getChWidth(str)[1];
+			ml.bold = true;
+			ret[3] = ml.getChWidth(str)[1];
+			ml.fontItalic = true;
+			ret[7] = ml.getChWidth(str)[1];
+			ml.bold = false;
+			ret[5] = ml.getChWidth(str)[1];
+			ml.bold = save_bold_ml;
+			ml.fontItalic = save_italic_ml;
+		}
+@endif
 		return ret;
 	}
 
@@ -185,7 +302,23 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 			}
 		}
 		var cleaned_lines = this.cleaned_lines;
+@if(!WORDWRAP_BOLDITALIC_MODIFIER)
 		var empty_word = %[tagname: this.nextWordTagName, text: "", hllength: 0, mllength: 0];
+@endif
+@if(WORDWRAP_BOLDITALIC_MODIFIER)
+		var empty_word = %[
+			tagname: this.nextWordTagName,
+			text: "",
+			hllength: 0,
+			mllength: 0,
+			hllengthb: 0,
+			mllengthb: 0,
+			hllengthi: 0,
+			mllengthi: 0,
+			hllengthbi: 0,
+			mllengthbi: 0
+		];
+@endif
 		var empty_line = [];
 		this.word_lines_space.clear();
 		for (var i = 0; i < cleaned_lines.count; i += 1)
@@ -208,7 +341,23 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 				if (this.word_length_cache[word] === void)
 				{
 					var lengths = this.getLengthsForString(word);
+@if(!WORDWRAP_BOLDITALIC_MODIFIER)
 					this.word_length_cache[word] = %[tagname: this.nextWordTagName, text: word, hllength: lengths[0], mllength: lengths[1]];
+@endif
+@if(WORDWRAP_BOLDITALIC_MODIFIER)
+					this.word_length_cache[word] = %[
+						tagname: this.nextWordTagName,
+						text: word,
+						hllength: lengths[0],
+						mllength: lengths[1],
+						hllengthb: lengths[2],
+						mllengthb: lengths[3],
+						hllengthi: lengths[4],
+						mllengthi: lengths[5],
+						hllengthbi: lengths[6],
+						mllengthbi: lengths[7]
+					];
+@endif
 				}
 				arr[j] = this.word_length_cache[word];
 			}
@@ -238,7 +387,23 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 					if (this.word_length_cache[word] === void)
 					{
 						var lengths = this.getLengthsForString(word);
+@if(!WORDWRAP_BOLDITALIC_MODIFIER)
 						this.word_length_cache[word] = %[tagname: this.nextWordTagName, text: word, hllength: lengths[0], mllength: lengths[1]];
+@endif
+@if(WORDWRAP_BOLDITALIC_MODIFIER)
+						this.word_length_cache[word] = %[
+							tagname: this.nextWordTagName,
+							text: word,
+							hllength: lengths[0],
+							mllength: lengths[1],
+							hllengthb: lengths[2],
+							mllengthb: lengths[3],
+							hllengthi: lengths[4],
+							mllengthi: lengths[5],
+							hllengthbi: lengths[6],
+							mllengthbi: lengths[7],
+						];
+@endif
 					}
 					arr[j] = this.word_length_cache[word];
 				}

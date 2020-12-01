@@ -3950,12 +3950,14 @@ class MessageLayer extends KAGLayer
 		rubyOffsetX				= elm.offset == void ? 0 : +elm.offset;
 	}
 
+	var get_ch_width_ret_cache = [[], 0];
 	function getChWidth(text)
 	{
 		with(getCharLayer(currentLine, currentColumn))
 		{
 			.setFont(fontFace, fontAngle, bold, fontItalic, fontSize);
-			var	cw	= [], tw = 0, w;
+			var	cw	= get_ch_width_ret_cache[0], tw = 0, w;
+			cw.clear();
 			for(var i=0; i<text.length; i++)
 			{
 				var	ch	= text[i];
@@ -3980,7 +3982,9 @@ class MessageLayer extends KAGLayer
 				tw	+= w;
 			}
 			removeCharLayer(currentLine, currentColumn);
-			return [ cw, tw ];
+			get_ch_width_ret_cache[0] = cw;
+			get_ch_width_ret_cache[1] = tw;
+			return get_ch_width_ret_cache;
 		}
 	}
 

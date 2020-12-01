@@ -71,7 +71,12 @@ function openTeatime()
 	}
 
 	Scripts.execStorage("teatimemenu.ttd") if typeof global.__get_teatimemenu_timelinedata == "undefined";
-	var	tdata	= __get_teatimemenu_timelinedata(TTMchapter2id[f.chapter][0]);	//	開く
+	var ch2id = TTMchapter2id[f.chapter];
+	if (f.chapter === 5.5)
+	{
+		ch2id = TTMchapter2id["5.5"];
+	}
+	var	tdata	= global.__get_teatimemenu_timelinedata(ch2id[0]);	//	開く
 	TTMsetProps(tdata[0], tdata[1]);
 	Menu_object.playTimeline("fore", tdata[1], tdata[2], %[absolute:1000000],,, true);
 	Menu_object.setClick();	//	右クリックは無効

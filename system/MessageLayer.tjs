@@ -3951,11 +3951,29 @@ class MessageLayer extends KAGLayer
 	}
 
 	var get_ch_width_ret_cache = [[], 0];
-	function getChWidth(text)
+	function getChWidth(text, return_tw_only=false)
 	{
 		with(getCharLayer(currentLine, currentColumn))
 		{
 			.setFont(fontFace, fontAngle, bold, fontItalic, fontSize);
+			if (return_tw_only)
+			{
+				var w = 0;
+				var rect = .font.getGlyphDrawRect(text);
+				if (typeof(rect) === "Object")
+				{
+					w = rect.right;
+				}
+				else
+				{
+					w = .font.getTextWidth(text);
+				}
+				if (w >= 65536 || w < 0)
+				{
+					w = 0;
+				}
+				return w;
+			}
 			var	cw	= get_ch_width_ret_cache[0], tw = 0, w;
 			cw.clear();
 			for(var i=0; i<text.length; i++)

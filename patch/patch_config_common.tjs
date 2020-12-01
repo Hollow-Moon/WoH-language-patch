@@ -52,7 +52,16 @@ System.exceptionHandler = function(e)
 	{
 		Debug.message("Trace: " + trace_string);
 	}
-	var msg = ("The following script error occurred early in initialization.\n\n--------------------------------------------------------------------------------\n%s\n--------------------------------------------------------------------------------\n\n\"krkr.console.log\" and \"hwexcept.log\" have been created in either the game's or savedata directory.\nPlease contact the support forum thread with the save data that caused the error, along with the above files and an explanation of when and how it occurred.\nSupport forum thread: %s\n\n").sprintf(exception_message, global.PatchInfoURL);
+	var msg_components = [];
+	msg_components.add("\"krkr.console.log\" and \"hwexcept.log\" have been created in either the game's or savedata directory.");
+	msg_components.add("Please contact the support forum thread with the save data that caused the error, along with the above files and an explanation of when and how it occurred.");
+	msg_components.add(("Support forum thread: %s").sprintf(global.PatchInfoURL));
+	msg_components.add("");
+	msg_components.add("The following script error occurred early in initialization.");
+	msg_components.add("--------------------------------------------------------------------------------");
+	msg_components.add(exception_message);
+	msg_components.add("--------------------------------------------------------------------------------");
+	var msg = msg_components.join("\n");
 	System.inform(msg);
 
 @if(!KIRIKIROID)

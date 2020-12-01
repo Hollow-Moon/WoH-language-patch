@@ -285,7 +285,28 @@ System.exceptionHandler = function(e)
 	var ed	= System.eventDisabled;
 	System.eventDisabled	= true;
 	var msg_components = [];
-	
+
+	if (exception_files.count > 0)
+	{
+		msg_components.add(__("このダイアログボックスのスクリーンショットは送信しないでください。"));
+		msg_components.add(__("次のファイルには、保存データと例外情報が含まれています："));
+		for (var i = 0; i < exception_files.count; i += 1)
+		{
+			msg_components.add(__("     ・%s").sprintf(exception_files[i]));
+		}
+		msg_components.add(__("※情報が不十分ですと回答できませんので、必ずファイル・情報をご提供ください。"));
+		if (exception_information_in_clipboard)
+		{
+			msg_components.add(__("上記のファイルの内容はクリップボードに配置されているので、サポートフォーラムのスレッドに貼り付けてください。"));
+		}
+	}
+	if (!(e instanceof "ConductorException"))
+	{
+		msg_components.add(__("アンチウィルスソフトその他の常駐アプリケーションを終了してゲームを再起動することでエラーを回避できる可能性があります。"));
+	}
+	msg_components.add(__("上記のファイルを添えて、いつどのようにエラーが発生したかを説明したサポート掲示板にご連絡ください。"));
+	msg_components.add(__("サポート掲示板: %s").sprintf(global.PatchInfoURL));
+	msg_components.add("--------------------------------------------------------------------------------");
 	if (e instanceof "ConductorException")
 	{
 		msg_components.add(__("下記のスクリプトエラーが発生しました。"));
@@ -297,31 +318,11 @@ System.exceptionHandler = function(e)
 	msg_components.add("--------------------------------------------------------------------------------");
 	msg_components.add(exception_message);
 	msg_components.add("--------------------------------------------------------------------------------");
-	if (!(e instanceof "ConductorException"))
-	{
-		msg_components.add(__("アンチウィルスソフトその他の常駐アプリケーションを終了してゲームを再起動することでエラーを回避できる可能性があります。"));
-	}
-	if (exception_files.count > 0)
-	{
-		msg_components.add(__("次のファイルには、保存データと例外情報が含まれています："));
-		for (var i = 0; i < exception_files.count; i += 1)
-		{
-			msg_components.add(__("     ・%s").sprintf(exception_files[i]));
-		}
-		msg_components.add(__("※情報が不十分ですと回答できませんので、必ずファイル・情報をご提供ください。"));
-		if (exception_information_in_clipboard)
-		{
-			msg_components.add(__("上記のファイルの内容はクリップボードに配置されているので、サポートフォーラムのスレッドに貼り付けてください。"));
-		}
-		msg_components.add(__("このダイアログボックスのスクリーンショットは送信しないでください。"));
-	}
 	if (trace_string !== "")
 	{
 		msg_components.add(__("-- trace --"));
 		msg_components.add(trace_string);
 	}
-	msg_components.add(__("上記のファイルを添えて、いつどのようにエラーが発生したかを説明したサポート掲示板にご連絡ください。"));
-	msg_components.add(__("サポート掲示板: %s").sprintf(global.PatchInfoURL));
 
 @if(GAME_FATE)
 	//	ゲーム本編中なら、セーブしておく

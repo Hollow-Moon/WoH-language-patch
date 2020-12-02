@@ -341,7 +341,13 @@ function find_file_in_language_paths(filename, language = void, exts = "")
 global.Array.load_PatchLanguage_original = global.Array.load;
 global.Array.load = function(filename, mode='')
 {
-	var file_result = find_file_in_language_paths(filename);
+	var file_result = void;
+@if(GAME_WOHN)
+	if (filename !== "first.ks")
+@endif
+	{
+		file_result = find_file_in_language_paths(filename);
+	}
 	if (typeof(file_result) === "String")
 	{
 		return global.Array.load_PatchLanguage_original(file_result, mode);

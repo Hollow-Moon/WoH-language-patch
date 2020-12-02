@@ -343,7 +343,7 @@ function onSaveMenuMouseWheel(shift, delta, x, y)
 {
 	if(!tf.sv_opened || tf.do_hidesystemmenu)
 		return;
-	var	no	= Math.max(0, Math.min(kag.bookMarkPages-1, int sf.last_svld_pageno + (delta > 0 ? -1 : 1)));
+	var	no	= Math.max(0, Math.min(kag.bookMarkPages-1, int sf.last_svld_pageno + (delta > 0 ? -1 : 1))) | 0;
 	changePageSaveMenu(no);
 }
 function onSaveMenuKeyDown(key, shift)

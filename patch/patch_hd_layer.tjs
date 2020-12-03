@@ -2056,6 +2056,13 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		xblur = ((xblur < 0 ? -xblur : xblur) & 0x7fffffff) * (xblur < 0 ? -1 : 1);
 		yblur = ((yblur < 0 ? -yblur : yblur) & 0x7fffffff) * (yblur < 0 ? -1 : 1);
 @endif
+@if(GAME_WOHN)
+		// Attempted workaround for overflow
+		if ((xblur + 1) * (yblur + 1) >= 16777216)
+		{
+			return;
+		}
+@endif
 		super.doBoxBlur(xblur*widthScale, yblur*heightScale);
 	}
 

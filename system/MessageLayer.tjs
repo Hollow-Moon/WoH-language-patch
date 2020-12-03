@@ -3956,25 +3956,11 @@ class MessageLayer extends KAGLayer
 		with(getCharLayer(currentLine, currentColumn))
 		{
 			.setFont(fontFace, fontAngle, bold, fontItalic, fontSize);
+			var	cw	= get_ch_width_ret_cache[0], tw = .font.getTextWidth(text), w;
 			if (return_tw_only)
 			{
-				var w = 0;
-				var rect = .font.getGlyphDrawRect(text);
-				if (typeof(rect) === "Object")
-				{
-					w = rect.right;
-				}
-				else
-				{
-					w = .font.getTextWidth(text);
-				}
-				if (w >= 65536 || w < 0)
-				{
-					w = 0;
-				}
-				return w;
+				return tw;
 			}
-			var	cw	= get_ch_width_ret_cache[0], tw = 0, w;
 			cw.clear();
 			for(var i=0; i<text.length; i++)
 			{
@@ -3982,22 +3968,8 @@ class MessageLayer extends KAGLayer
 @if(0)
 				w	= (displaysInFixedPitchAlsoByVariable && typeof ch == "String" && #ch>255) ? .font.height : .font.getTextWidth(ch);
 @endif
-				w = 0;
-				var rect = .font.getGlyphDrawRect(ch);
-				if (typeof(rect) === "Object")
-				{
-					w = rect.right;
-				}
-				else
-				{
-					w = .font.getTextWidth(ch);
-				}
-				if (w >= 65536 || w < 0)
-				{
-					w = 0;
-				}
+				w = .font.getTextWidth(ch);
 				cw.add(w);
-				tw	+= w;
 			}
 			removeCharLayer(currentLine, currentColumn);
 			get_ch_width_ret_cache[0] = cw;
@@ -4011,12 +3983,11 @@ class MessageLayer extends KAGLayer
 		with(getRubyLayer(currentLine, currentColumn))
 		{
 			.setFont(fontFace, fontAngle, rubyBold, fontItalic, rubySize);
-			var	rw	= [], tw = 0, w;
+			var	rw	= [], tw = .font.getTextWidth(text), w;
 			for(var i=0; i<text.length; i++)
 			{
 				w	= .font.getTextWidth(text[i]);
 				rw.add(w);
-				tw	+= w;
 			}
 			removeCharLayer(currentLine, currentColumn, rubyLayers);
 			return [ rw, tw ];

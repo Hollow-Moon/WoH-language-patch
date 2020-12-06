@@ -22,9 +22,10 @@ class BaseConductor_patch_conductor_override extends BaseConductor_patch_conduct
 }
 global.BaseConductor = BaseConductor_patch_conductor_override;
 
-global.patch_conductor_regex_1 = /\[line( len=)?([0-9]*?)]/;
-global.patch_conductor_regex_2 = /\[block( len=)?([0-9]*?)]/;
-global.patch_conductor_regex_3 = /(?:\["[a-zA-Z0-9_-]*"]|\['[a-zA-Z0-9_-]*']|\[[0-9]*]|\[\+?\w+\.\w+]|\[[^]]*])/g;
+global.patch_conductor_regex_1 = /\[line( len=)?([0-9]*?)]/g;
+global.patch_conductor_regex_2 = /\[block( len=)?([0-9]*?)]/g;
+global.patch_conductor_regex_3 = /(?:\[ruby char="(?:.*?)" text="(.*?)"]|\[ruby char=(?:.*?) text="(.*?)"]|\[ruby char="(?:.*?)" text=(.*?)]|\[ruby char=(?:.*?) text=(.*?)]|\[ruby text="(.*?)" char="(?:.*?)"]|\[ruby text="(.*?)" char=(?:.*?)]|\[ruby text=(.*?) char="(?:.*?)"]|\[ruby text=(.*?) char=(?:.*?)])/g;
+global.patch_conductor_regex_4 = /(?:\["[a-zA-Z0-9_-]*"]|\['[a-zA-Z0-9_-]*']|\[[0-9]*]|\[\+?\w+\.\w+]|\[[^]]*])/g;
 
 global.Conductor_patch_conductor_original = Conductor;
 
@@ -69,6 +70,21 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 		return text;
 	}
 
+	function replaceRubyChar(matcharr)
+	{
+		for (var i = 1; i < matcharr.count; i += 1)
+		{
+			if (matcharr[i] != "")
+			{
+				if (+(matcharr[i]) != matcharr[i])
+				{
+					return matcharr[i];
+				}
+			}
+		}
+		return "";
+	}
+
 	function cleanLine(line=curLineStr)
 	{
 		if (isInQuiz())
@@ -83,11 +99,13 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 		{
 			return "";
 		}
-		line = replaceLine(line, global.patch_conductor_regex_1);
+		line = this.replaceLine(line, global.patch_conductor_regex_1);
 		// Replace line-tags with dashes
 		// Replace slightly-different-line-tags with dashes
-		line = replaceLine(line, global.patch_conductor_regex_2, block_character);
-		line = line.replace(global.patch_conductor_regex_3, "");
+		line = this.replaceLine(line, global.patch_conductor_regex_2, block_character);
+		line = line.replace(global.patch_conductor_regex_3, this.replaceRubyChar);
+		// Replace ruby tag containing text in char argument
+		line = line.replace(global.patch_conductor_regex_4, "");
 		// Remove arrays with string quotes indexes (not sure if possible but just in case)
 		// Remove arrays with string apostrophes indexes (not sure if possible but just in case)
 		// Remove arrays with number indexes (required or it will break when there is nested []s)

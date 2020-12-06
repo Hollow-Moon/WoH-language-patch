@@ -263,7 +263,7 @@ class TracerPlugin extends KAGPlugin
 				if(cf.skipWithoutCheck)	//	既読は自動的にスキップ
 				{
 					if(typeof global.popupMessage != "undefined")
-						popupMessage(__("「%s」をスキップしました").sprintf(block.title));
+						popupMessage(__("「%s」をスキップしました").sprintf(__(block.title)));
 @if(!__SYNC_ASK__)
 					asyncCaller.call(skipscene);
 @endif
@@ -271,7 +271,7 @@ class TracerPlugin extends KAGPlugin
 				}
 				else
 				{
-					var	msg		= __("シーン「%s」は、既に再生しています。\nスキップしますか？").sprintf(block.title);
+					var	msg		= __("シーン「%s」は、既に再生しています。\nスキップしますか？").sprintf(__(block.title));
 					var	title	= __("既読スキップ");
 @if(__SYNC_ASK__)
 					if(askYesNo(msg, title))

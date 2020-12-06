@@ -180,76 +180,14 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 
 @if(!WORDWRAP_BOLDITALIC_MODIFIER)
 	var get_lengths_for_string_ret = [0, 0];
-@endif
-@if(WORDWRAP_BOLDITALIC_MODIFIER)
-	var get_lengths_for_string_ret = [0, 0, 0, 0, 0, 0, 0, 0];
-@endif
-	function getLengthsForString(str)
+	function getLengthsForString(str, hlf, mlf)
 	{
 		var ret = get_lengths_for_string_ret;
-@if(!WORDWRAP_BOLDITALIC_MODIFIER)
-		ret[0] = this.historyLayer.font.getTextWidth(str);
-		if (typeof(this.current.lineLayer) === "Object")
-		{
-			ret[1] = this.current.lineLayer.font.getTextWidth(str);
-		}
-		else if (typeof(this.current.getChWidth) === "Object")
-		{
-			ret[1] = this.current.getChWidth(str)[1];
-		}
-@endif
-@if(WORDWRAP_BOLDITALIC_MODIFIER)
-		var hlf = this.historyLayer.font;
-		var save_bold_hl = hlf.bold;
-		var save_italic_hl = hlf.italic;
-		hlf.bold = false;
-		hlf.italic = false;
 		ret[0] = hlf.getTextWidth(str);
-		hlf.bold = true;
-		ret[2] = hlf.getTextWidth(str);
-		hlf.italic = true;
-		ret[6] = hlf.getTextWidth(str);
-		hlf.bold = false;
-		ret[4] = hlf.getTextWidth(str);
-		hlf.bold = save_bold_hl;
-		hlf.italic = save_italic_hl;
-		if (typeof(this.current.lineLayer) === "Object")
-		{
-			var mlf = this.current.lineLayer.font;
-			var save_bold_ml = mlf.bold;
-			var save_italic_ml = mlf.italic;
-			mlf.bold = false;
-			mlf.italic = false;
-			ret[1] = mlf.getTextWidth(str);
-			mlf.bold = true;
-			ret[3] = mlf.getTextWidth(str);
-			mlf.italic = true;
-			ret[7] = mlf.getTextWidth(str);
-			mlf.bold = false;
-			ret[5] = mlf.getTextWidth(str);
-			mlf.bold = save_bold_ml;
-			mlf.italic = save_italic_ml;
-		}
-		else if (typeof(this.current.getChWidth) === "Object")
-		{
-			var ml = this.current;
-			var save_bold_ml = ml.bold;
-			var save_italic_ml = ml.fontItalic;
-			ml.bold = false;
-			ml.fontItalic = false;
-			ret[1] = ml.getChWidth(str, true);
-			ml.bold = true;
-			ret[3] = ml.getChWidth(str, true);
-			ml.fontItalic = true;
-			ret[7] = ml.getChWidth(str, true);
-			ml.bold = false;
-			ret[5] = ml.getChWidth(str, true);
-			ml.bold = save_bold_ml;
-			ml.fontItalic = save_italic_ml;
-		}
-@endif
+		ret[1] = mlf.getTextWidth(str);
 		return ret;
 	}
+@endif
 
 	var word_length_cache = %[];
 	var word_length_test = [0, 0];
@@ -258,28 +196,65 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 
 	function generate_word_wrapping_list(conductor)
 	{
-		var word_length_test_cur = this.getLengthsForString("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz");
+		var ml_charlayer = void;
+		if (typeof(this.current.getCharLayer) === "Object")
+		{
+			var ml = this.current;
+			ml_charlayer = ml.getCharLayer();
+			ml_charlayer.setFont(ml.fontFace, ml.fontAngle, ml.bold, ml.fontItalic, ml.fontSize);
+		}
+		var hlf = this.historyLayer.font;
+		var mlf = void;
+		if (typeof(this.current.lineLayer) === "Object")
+		{
+			mlf = this.current.lineLayer.font;
+		}
+		else if (ml_charlayer !== void)
+		{
+			mlf = ml_charlayer.font;
+		}
+@if(WORDWRAP_BOLDITALIC_MODIFIER)
+		var hlf_gtw = hlf.getTextWidth;
+		var mlf_gtw = mlf.getTextWidth;
+		var save_bold_hlf = hlf.bold;
+		var save_italic_hlf = hlf.italic;
+		var save_bold_mlf = mlf.bold;
+		var save_italic_mlf = mlf.italic;
+		hlf.bold = false;
+		hlf.italic = false;
+		mlf.bold = false;
+		mlf.italic = false;
+		var word_length_test_str = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+		var word_length_test_hl = hlf_gtw(word_length_test_str);
+		var word_length_test_ml = mlf_gtw(word_length_test_str);
+		if (word_length_test_hl !== word_length_test[0] || word_length_test_ml !== word_length_test[1])
+		{
+			(global.Dictionary.clear incontextof this.word_length_cache)();
+			word_length_test[0] = word_length_test_hl;
+			word_length_test[1] = word_length_test_ml;
+		}
+@endif
+@if(!WORDWRAP_BOLDITALIC_MODIFIER)
+		var word_length_test_cur = this.getLengthsForString("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz", hlf, mlf);
 		if (word_length_test_cur[0] !== word_length_test[0] || word_length_test_cur[1] !== word_length_test[1])
 		{
 			(global.Dictionary.clear incontextof this.word_length_cache)();
 			word_length_test.assign(word_length_test_cur);
 		}
+@endif
 		this.cleaned_lines.clear();
 		this.cleaned_lines.assign(conductor.lines);
 		var in_iscript = false;
+		var iscript = ["[iscript]", "[iscript]\\", "@iscript"];
+		var endscript = ["[endscript]", "[endscript]\\", "@endscript"];
 		for (var i = 0; i < this.cleaned_lines.count; i += 1)
 		{
 			var line = this.cleaned_lines[i];
-			if (line.charAt(0) === "@" || line.charAt(0) === ";")
-			{
-				this.cleaned_lines[i] = "";
-				continue;
-			}
-			if (line === "[iscript]" || line === "[iscript]\\" || line === "@iscript")
+			if (iscript.contains(line))
 			{
 				in_iscript = true;
 			}
-			if (line === "[endscript]" || line === "[endscript]\\" || line === "@endscript")
+			if (endscript.contains(line))
 			{
 				in_iscript = false;
 			}
@@ -320,6 +295,9 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 		];
 @endif
 		var empty_line = [];
+@if(WORDWRAP_BOLDITALIC_MODIFIER)
+		var needed_lengths = %[];
+@endif
 		this.word_lines_space.clear();
 		for (var i = 0; i < cleaned_lines.count; i += 1)
 		{
@@ -340,23 +318,16 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 				}
 				if (this.word_length_cache[word] === void)
 				{
-					var lengths = this.getLengthsForString(word);
 @if(!WORDWRAP_BOLDITALIC_MODIFIER)
+					var lengths = this.getLengthsForString(word, hlf, mlf);
 					this.word_length_cache[word] = %[tagname: this.nextWordTagName, text: word, hllength: lengths[0], mllength: lengths[1]];
 @endif
 @if(WORDWRAP_BOLDITALIC_MODIFIER)
 					this.word_length_cache[word] = %[
 						tagname: this.nextWordTagName,
 						text: word,
-						hllength: lengths[0],
-						mllength: lengths[1],
-						hllengthb: lengths[2],
-						mllengthb: lengths[3],
-						hllengthi: lengths[4],
-						mllengthi: lengths[5],
-						hllengthbi: lengths[6],
-						mllengthbi: lengths[7]
 					];
+					needed_lengths[word] = this.word_length_cache[word];
 @endif
 				}
 				arr[j] = this.word_length_cache[word];
@@ -386,29 +357,57 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 					}
 					if (this.word_length_cache[word] === void)
 					{
-						var lengths = this.getLengthsForString(word);
 @if(!WORDWRAP_BOLDITALIC_MODIFIER)
+						var lengths = this.getLengthsForString(word, hlf, mlf);
 						this.word_length_cache[word] = %[tagname: this.nextWordTagName, text: word, hllength: lengths[0], mllength: lengths[1]];
 @endif
 @if(WORDWRAP_BOLDITALIC_MODIFIER)
 						this.word_length_cache[word] = %[
 							tagname: this.nextWordTagName,
 							text: word,
-							hllength: lengths[0],
-							mllength: lengths[1],
-							hllengthb: lengths[2],
-							mllengthb: lengths[3],
-							hllengthi: lengths[4],
-							mllengthi: lengths[5],
-							hllengthbi: lengths[6],
-							mllengthbi: lengths[7],
 						];
+						needed_lengths[word] = this.word_length_cache[word];
 @endif
 					}
 					arr[j] = this.word_length_cache[word];
 				}
 				this.word_lines_chinese[i] = arr;
 			}
+		}
+@if(WORDWRAP_BOLDITALIC_MODIFIER)
+		var needed_lengths_arr = [];
+		needed_lengths_arr.assign(needed_lengths);
+		for (var i = 0; i < needed_lengths_arr.count; i += 2)
+		{
+			var word = needed_lengths_arr[i];
+			var dic = needed_lengths_arr[i + 1];
+			hlf.bold = false;
+			hlf.italic = false;
+			mlf.bold = false;
+			mlf.italic = false;
+			dic.hllength = hlf_gtw(word);
+			dic.mllength = mlf_gtw(word);
+			hlf.bold = true;
+			mlf.bold = true;
+			dic.hllengthb = hlf_gtw(word);
+			dic.mllengthb = mlf_gtw(word);
+			hlf.italic = true;
+			mlf.italic = true;
+			dic.hllengthbi = hlf_gtw(word);
+			dic.mllengthbi = mlf_gtw(word);
+			hlf.bold = false;
+			mlf.bold = false;
+			dic.hllengthi = hlf_gtw(word);
+			dic.mllengthi = mlf_gtw(word);
+		}
+		hlf.bold = save_bold_hlf;
+		hlf.italic = save_italic_hlf;
+		mlf.bold = save_bold_mlf;
+		mlf.italic = save_italic_mlf;
+@endif
+		if (typeof(this.current.removeCharLayer) === "Object")
+		{
+			this.current.removeCharLayer(this.current.currentLine, this.current.currentColumn);
 		}
 	}
 
@@ -562,7 +561,7 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 				var ind;
 				if((ind = autoWCChars.indexOf(text)) != -1)
 				{
-					return int(acs * autoWCWaits[ind]);
+					return (acs * autoWCWaits[ind]) | 0;
 				}
 			}
 			return acs;

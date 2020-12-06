@@ -96,7 +96,7 @@ var bottomImages = [
 
 function round(v)
 {
-	return int(v + (v<0 ? -0.5 : 0.5));
+	return (v + (v<0 ? -0.5 : 0.5)) | 0;
 }
 
 function transformDiscrete(v, scale)
@@ -104,7 +104,7 @@ function transformDiscrete(v, scale)
 @if(SCALE_USING_FLOATING_POINT)
 	// To avoids rounding errors when summing, rounding should occur only after scaling.
 	// Using "round" is probably better than "int" but it causes tearing in the yes/no button when you hover over it.
-	return int(v * scale) / scale;
+	return ((v * scale) | 0) / scale;
 @endif
 @if(!SCALE_USING_FLOATING_POINT)
 	return v | 0;
@@ -1710,7 +1710,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		var scale = scaleWidth \ super.imageWidth;
 @endif
 		var singleWidth = super.imageWidth \ numberOfImages;
-		var roundedUpscaledSingleWidth = int(singleWidth * scale);
+		var roundedUpscaledSingleWidth = (singleWidth * scale) | 0;
 		scaleWidth = roundedUpscaledSingleWidth * numberOfImages;
 
 		var tmp = new global.Layer(window, this);
@@ -1911,7 +1911,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 @if(!SCALE_USING_FLOATING_POINT)
 			var imageIndex = sleft \ swidth;
 @endif
-			return imageIndex * int(swidth * src.widthScale);
+			return imageIndex * ((swidth * src.widthScale) | 0);
 		}
 		return sleft*src.widthScale;
 	}

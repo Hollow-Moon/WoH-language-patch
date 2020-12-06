@@ -89,13 +89,13 @@ function loadMoFile(moFile, domain=defaultDomain) {
 		else if (isEntry(msgstrPlural, lines, i)) {
 			var text = [];
 			var j=0;
-			var msgstrPluralIndex = msgstrPlural + string(j) + "]";
+			var msgstrPluralIndex = msgstrPlural + ("" + j) + "]";
 			while (isEntry(msgstrPluralIndex, lines, i)) {
 				var tmp = readEntry(msgstrPluralIndex, lines, i);
 				text.add(tmp[0]);
 				i += tmp[1] + 1;
 				j += 1;
-				msgstrPluralIndex = msgstrPlural + string(j) + "]";
+				msgstrPluralIndex = msgstrPlural + ("" + j) + "]";
 			}
 			i -= 1;
 

@@ -20,7 +20,7 @@ class HistoryLayer_patch_align_override extends HistoryLayer_patch_align_origina
 			anchorValue = 1;
 		} else if (anchor == "center") {
 			anchorValue = 0.5;
-		} else if (string(+anchor) == anchor) {
+		} else if (("" + (+anchor)) == anchor) {
 			anchorValue = +anchor;
 		}
 		x = (right - font.getTextWidth(text)) * anchorValue + font.getTextWidth(offsetText)*offsetTextDirection;
@@ -53,7 +53,7 @@ class MessageLayer_patch_align_override extends MessageLayer_patch_align_origina
 			anchorValue = 1;
 		} else if (anchor == "center") {
 			anchorValue = 0.5;
-		} else if (string(+anchor) == anchor) {
+		} else if (("" + (+anchor)) == anchor) {
 			anchorValue = +anchor;
 		}
 @if(GAME_FATE||GAME_FHAT)
@@ -101,7 +101,7 @@ class KAGWindow_patch_align_override extends KAGWindow_patch_align_original
 			var offsetTextDirection = 0;
 			offsetTextDirection = elm.offsettextdirection if elm.offsettextdirection !== void;
 			if (elm.anchor !== void) {
-				if(elm.rubychar != void && string(+elm.rubychar) != elm.rubychar) {
+				if(elm.rubychar != void && ("" + (+elm.rubychar)) != elm.rubychar) {
 					textForLength = elm.rubychar;
 				}
 				textForLength = conductor.cleanLine(textForLength);

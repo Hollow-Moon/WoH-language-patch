@@ -168,7 +168,7 @@ class TextDrawer
 			else
 			{
 				statusButtonsSettings[i].text.fontHeight = 18;
-				statusButtonsSettings[i].text.rightOffset = int(statusButtonsImageWidth / statusButtonsNumber) * (statusButtonsNumber - (i+1)) + 30;
+				statusButtonsSettings[i].text.rightOffset = ((statusButtonsImageWidth / statusButtonsNumber) * (statusButtonsNumber - (i+1)) + 30) | 0;
 			}
 			drawCenteredEntry(layer, storage, statusButtonsSettings[i]);
 		}
@@ -193,8 +193,8 @@ class TextDrawer
 			with (noblePhantasmButtonsSettings[i]) {
 				with(.title) {
 					.imageWidth = noblePhantasmImageWidth;
-					.leftOffset = i * int(noblePhantasmImageWidth / noblePhantasmButtonsNumber);
-					.rightOffset = int(noblePhantasmImageWidth / noblePhantasmButtonsNumber) * (noblePhantasmButtonsNumber - (i+1));
+					.leftOffset = i * ((noblePhantasmImageWidth / noblePhantasmButtonsNumber) | 0);
+					.rightOffset = ((noblePhantasmImageWidth / noblePhantasmButtonsNumber) * (noblePhantasmButtonsNumber - (i+1))) | 0;
 				}
 				.rubyTitle.imageWidth = .title.imageWidth;
 				.rubyTitle.leftOffset = .title.leftOffset;

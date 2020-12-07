@@ -1697,6 +1697,38 @@ class MessageLayer extends KAGLayer
 		else
 			return t + charLayers[line][col].textHeight;
 	}
+
+	function cacheCharLayerFromText(text, num=1)
+	{
+		for (var i = 0; i < text.length; i += 1)
+		{
+			var ch = text[i];
+			for (var j = 0; j < num; j += 1)
+			{
+				var known_char = void;
+				if ((ch !== "" && ch !== void) && charPoolByCh[ch] !== void && charPoolByCh[ch].count > 0)
+				{
+					known_char = charPoolByCh[ch][0];
+				}
+				with(getCharLayer(currentLine, currentColumn, ""))
+				{
+					.name	= "[%2d][%2d]: %s(%s)".sprintf(currentLine, currentColumn, ch, .group);
+					if (known_char !== void)
+					{
+						.assignImages(known_char);
+					}
+					.setFont(fontFace, fontAngle, bold, fontItalic, fontSize);
+					if(edge)
+						.drawTextWithEdge(ch, chColor, antialiased, edgeEmphasis, edgeColor, edgeExtent, vertical);
+					else if(shadow)
+						.drawTextWithShadow(ch, chColor, antialiased, shadowColor, shadowOffsetX, shadowOffsetY, vertical);
+					else
+						.drawText(ch, chColor, antialiased, vertical);
+				}
+				removeCharLayer(currentLine, currentColumn);
+			}
+		}
+	}
 @endif
 
 @if(!GAME_WOHN)

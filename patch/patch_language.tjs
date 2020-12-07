@@ -772,28 +772,6 @@ function loadLanguageDict(language) {
 	}
 }
 
-function reload_messagelayer_config(window=global.kag)
-{
-	var ignore_changes_tmp = false;
-	if (typeof(window.ignore_font_changes) === "Integer" && window.ignore_font_changes)
-	{
-		ignore_changes_tmp = true;
-		window.ignore_font_changes = false;
-	}
-	var old_current = window.currentNum;
-	var old_chr_count = window.fore.layers.count;
-	var old_msg_count = window.fore.messages.count;
-	window.allocateCharacterLayers(0);
-	window.allocateMessageLayers(0);
-	window.allocateCharacterLayers(old_chr_count);
-	window.allocateMessageLayers(old_msg_count);
-	window.current = (window.currentPage?window.back:window.fore).messages[old_current];
-	if (ignore_changes_tmp)
-	{
-		window.ignore_font_changes = true;
-	}
-}
-
 global.Layer_PatchLanguage_original = Layer;
 class Layer_PatchLanguage_override extends Layer_PatchLanguage_original
 {

@@ -336,6 +336,7 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 	function generate_word_wrapping_list(conductor)
 	{
 		var ml_charlayer = void;
+		var invalidate_wordcache = false;
 		if (typeof(this.current.getCharLayer) === "Object")
 		{
 			var ml = this.current;
@@ -368,6 +369,7 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 		var word_length_test_ml = mlf_gtw(word_length_test_str);
 		if (word_length_test_hl !== word_length_test[0] || word_length_test_ml !== word_length_test[1])
 		{
+			invalidate_wordcache = true;
 			var word_length_cache_arr = [];
 			word_length_cache_arr.assign(this.word_length_cache);
 			for (var i = 0; i < word_length_cache_arr.count; i += 2)
@@ -390,6 +392,7 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 		var word_length_test_cur = this.getLengthsForString("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz", hlf, mlf);
 		if (word_length_test_cur[0] !== word_length_test[0] || word_length_test_cur[1] !== word_length_test[1])
 		{
+			invalidate_wordcache = true;
 			var word_length_cache_arr = [];
 			word_length_cache_arr.assign(this.word_length_cache);
 			for (var i = 0; i < word_length_cache_arr.count; i += 2)
@@ -423,8 +426,6 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 			needed_lengths[word_tag.text] = word_tag;
 @endif
 		}
-		word_lines_needed.clear();
-
 @if(WORDWRAP_BOLDITALIC_MODIFIER)
 		var needed_lengths_arr = [];
 		needed_lengths_arr.assign(needed_lengths);
@@ -460,6 +461,29 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 		{
 			this.current.removeCharLayer(this.current.currentLine, this.current.currentColumn);
 		}
+
+@if(CACHE_CHAR_LAYERS_FROM_TEXT)
+		if (invalidate_wordcache)
+		{
+			global.reload_messagelayer_config(this);
+			this.setMessageLayerUserFont();
+		}
+@if(CACHE_CHAR_LAYERS_FROM_TEXT_FIRSTLOAD_ONLY)
+		if (invalidate_wordcache)
+@endif
+		{
+			if (typeof(this.current.cacheCharLayerFromText) === "Object")
+			{
+				var cclft = this.current.cacheCharLayerFromText;
+				for (var i = 0; i < word_lines_needed.count; i += 1)
+				{
+					var word_tag = word_lines_needed[i];
+					cclft(word_tag.text, 1);
+				}
+			}
+		}
+@endif
+		word_lines_needed.clear();
 	}
 
 	function onNewLineWordWrapSpace(linenum)

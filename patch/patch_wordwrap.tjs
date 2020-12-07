@@ -233,12 +233,17 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 	{
 		this.word_lines_space.clear();
 		this.word_lines_chinese.clear();
+		if (typeof(global.kag) !== "Object")
+		{
+			// We haven't finished initialization yet
+			return;
+		}
 		if (isJapanese())
 		{
 			// Don't bother doing the wordwrap calculations since we won't be using them
 			return;
 		}
-		var empty_scr = joined_cleaned_lines.replace(/(\n| |\t)/g, "");
+		var empty_scr = joined_cleaned_lines.replace(/[\n \t\[\]\(\)""'']+/g, "");
 		if (empty_scr.length === 0)
 		{
 			return;

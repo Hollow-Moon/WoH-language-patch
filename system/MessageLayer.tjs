@@ -361,9 +361,7 @@ class MessageLayer extends KAGLayer
 @if(GAME_WOHN)
 	var charLayers = []; // 文字を表示するレイヤー : [line][column]
 	var charPoolByCh = %[];
-@if(0)
 	var	charPool = [];	//	使っていない文字レイヤーを格納
-@endif
 	var	maxCharPoolCount	= 50; // 使ってない文字レイヤーを保存しておく最大数
 	var	lastCharLayerInfos = []; // 固定化する前のレイヤー状態 : [line][column]
 	/*CS*/var currentLine = 0; // 現在の行
@@ -696,6 +694,10 @@ class MessageLayer extends KAGLayer
 @endif
 
 @if(GAME_WOHN)
+		for (var i = 0; i < maxCharPoolCount; i += 1)
+		{
+			charPool.add(createNewCharLayer());
+		}
 		//	run ハンドラを追加
 		owner.runHandlers.add(runHandler);
 @endif
@@ -723,10 +725,8 @@ class MessageLayer extends KAGLayer
 			}
 		}
 @endif
-@if(0)
 		for( var i=0; i<charPool.count; i++ )
 			invalidate charPool[i] if charPool[i] != void;
-@endif
 
 		var layers = [ charLayers, rubyLayers ];
 		for(var k=0; k<layers.count; k++)
@@ -765,6 +765,12 @@ class MessageLayer extends KAGLayer
 	function clearLayer(notClearUpdate=false)
 @endif
 	{
+@if(GAME_WOHN)
+		for (var i = charPool.count; i < maxCharPoolCount; i += 1)
+		{
+			charPool.add(createNewCharLayer());
+		}
+@endif
 		// レイヤをクリア
 		window.updateBeforeCh = 1;
 
@@ -1580,20 +1586,16 @@ class MessageLayer extends KAGLayer
 	function createNewCharLayer(key=" ")
 	{
 		var	nc;
-@if(0)
-		if(charPool.count > 0)
-		{
-			nc	= charPool[0];
-			charPool.erase(0);
-		}
-@endif
-@if(1)
 		if ((key !== "" && key !== void) && charPoolByCh[key] !== void && charPoolByCh[key].count > 0)
 		{
 			nc	= charPoolByCh[key][0];
 			charPoolByCh[key].erase(0);
 		}
-@endif
+		else if(charPool.count > 0)
+		{
+			nc	= charPool[0];
+			charPool.erase(0);
+		}
 		else
 			nc	= new MessageCharLayer(window, this);
 
@@ -1615,16 +1617,6 @@ class MessageLayer extends KAGLayer
 		{
 			window.stopAction(char);	//	アクション停止
 
-@if(0)
-			if(charPool.count < maxCharPoolCount)
-			{
-				char.name		= "in char pool";
-				char.visible	= false;
-				charPool.add(char);
-			}
-			else
-				invalidate char;
-@endif
 			if (char.lastParams.count > 0)
 			{
 				var key = char.lastParams[0];
@@ -1639,6 +1631,13 @@ class MessageLayer extends KAGLayer
 					charPoolByCh[key].add(char);
 					return;
 				}
+			}
+			if (charPool.count < maxCharPoolCount)
+			{
+				char.name		= "in char pool";
+				char.visible	= false;
+				charPool.add(char);
+				return;
 			}
 			invalidate char;
 		}
@@ -2245,12 +2244,17 @@ class MessageLayer extends KAGLayer
 @endif
 
 		var	cw;
+		var known_char = void;
+		if ((ch !== "" && ch !== void) && charPoolByCh[ch] !== void && charPoolByCh[ch].count > 0)
+		{
+			known_char = charPoolByCh[ch][0];
+		}
 		with(getCharLayer(currentLine, currentColumn, ch))
 		{
 			.name	= "[%2d][%2d]: %s(%s)".sprintf(currentLine, currentColumn, ch, .group);
-			if ((ch !== "" && ch !== void) && charPoolByCh[ch] !== void && charPoolByCh[ch].count > 0)
+			if (known_char !== void)
 			{
-				.assignImages(charPoolByCh[ch][0]);
+				.assignImages(known_char);
 			}
 			.setFont(fontFace, fontAngle, bold, fontItalic, fontSize);
 			if(edge)

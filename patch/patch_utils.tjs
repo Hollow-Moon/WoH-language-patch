@@ -276,45 +276,25 @@ function fixAndLoadDictionaryForKrkr2(filename, mode)
 {
 	var file_as_array = [];
 	file_as_array.load(filename, mode);
-	var new_file_as_array = [];
-	for (var i = 0; i < file_as_array.count; i += 1)
-	{
-		new_file_as_array[i] = file_as_array[i].replace(/\(const\)/g, "");
-	}
-	return Scripts.eval(new_file_as_array.join("\n"));
+	return Scripts.eval(file_as_array.join("\n").replace(/\(const\)/g, ""));
 }
 
 global.krkrzDictionaryReplace = function(matcharr)
 {
-	for (var i = 1; i < matcharr.count; i += 1)
-	{
-		if (matcharr[i] != "")
-		{
-			return matcharr[i];
-		}
-	}
-	return "";
+	matcharr.erase(0);
+	return matcharr.join("");
 };
+
+global.krkrzDictionaryRegex1 = new RegExp("(?:real (0x\\d\\.[A-F0-9][A-F0-9][A-F0-9][A-F0-9][A-F0-9][A-F0-9][A-F0-9][A-F0-9][A-F0-9][A-F0-9][A-F0-9][A-F0-9][A-F0-9]p-?\\d*|[-\+]?0\.0|NaN|[-\+]?Infinity)(?: /\\* (?:.*?) \\*/)?|int ([-\\+]?\\d*)|string (\".*\"))", "g");
+global.krkrzDictionaryRegex2 = /(?: )(?=\%?\[\n)/g;
 
 function fixAndLoadDictionaryForKrkrZ(filename, mode)
 {
 	var file_as_array = [];
 	file_as_array.load(filename, mode);
-	var new_file_as_array = [];
-	var regexp1 = new RegExp("(?:real 0x\\d\\.[A-F0-9][A-F0-9][A-F0-9][A-F0-9][A-F0-9][A-F0-9][A-F0-9][A-F0-9][A-F0-9][A-F0-9][A-F0-9][A-F0-9][A-F0-9]p-?\\d* /\\* (\\d*?\\.?\\d*) \\*/|int ([-\\+]?\\d*)|string (\".*\"))", "g");
-	var regexp2 = new RegExp("real [-\+]?0\.0 /\\* ([-\+]?\\d*?\\.?\\d*) \\*/", "g");
-	var regexp3 = /\%\[$/g;
-	var regexp4 = /[^%"A-Za-z0-9]\[$/g;
-	for (var i = 0; i < file_as_array.count; i += 1)
-	{
-		new_file_as_array[i] = file_as_array[i]
-			.replace(regexp1, global.krkrzDictionaryReplace)
-			.replace(regexp2, "0.0")
-			.replace(regexp3, "(const) %[")
-			.replace(regexp4, " (const) [")
-			;
-	}
-	return Scripts.eval(("(const) [ %s ]").sprintf(new_file_as_array.join("\n")))[0];
+	var j = file_as_array.join("\n").replace(global.krkrzDictionaryRegex1, global.krkrzDictionaryReplace).replace(global.krkrzDictionaryRegex2, " (const)");
+	Debug.message(j);
+	return Scripts.eval(("(const)[ (const)%s ]").sprintf(j))[0];
 }
 
 // Avoid CVE-2015-5672

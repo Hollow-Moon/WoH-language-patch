@@ -135,13 +135,23 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 		return super.onConductorScenarioLoad(...);
 	}
 
+	function onConductorScenarioLoaded()
+	{
+		if (this.word_lines_space.count !== 0 || this.word_lines_chinese.count !== 0)
+		{
+			this.word_lines_scenario_changed = false;
+			this.clearMessageLayers();
+			this.generate_word_wrapping_list(this.conductor);
+		}
+		return super.onConductorScenarioLoaded(...);
+	}
+
 	var words = [];
 
 	//Chinese
 	var currentWordIndex = 0;
 	var currentCharPos = 0;
 
-	var cleaned_lines = [];
 	var word_lines_current_storage = "";
 
 	function onNewLine(elm)
@@ -167,7 +177,7 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 			this.words.clear();
 		}
 
-		var clean = this.cleaned_lines[elm.__patch_conductor_line];
+		var clean = this.conductor.cleaned_lines[elm.__patch_conductor_line];
 
 		if ((clean === void) || (clean !== void && clean.length === 0)) return;
 
@@ -193,6 +203,130 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 	var word_length_test = [0, 0];
 	var word_lines_space = [];
 	var word_lines_chinese = [];
+	var word_lines_needed = [];
+	var nextWordTagName = "nextword";
+@if(!WORDWRAP_BOLDITALIC_MODIFIER)
+	var empty_word = %[
+		tagname: this.nextWordTagName,
+		text: "",
+		hllength: 0,
+		mllength: 0
+	];
+@endif
+@if(WORDWRAP_BOLDITALIC_MODIFIER)
+	var empty_word = %[
+		tagname: this.nextWordTagName,
+		text: "",
+		hllength: 0,
+		mllength: 0,
+		hllengthb: 0,
+		mllengthb: 0,
+		hllengthi: 0,
+		mllengthi: 0,
+		hllengthbi: 0,
+		mllengthbi: 0
+	];
+@endif
+	var empty_line = [];
+
+	function onConductorScenarioPreLoad(joined_cleaned_lines)
+	{
+		this.word_lines_space.clear();
+		this.word_lines_chinese.clear();
+		if (isJapanese())
+		{
+			// Don't bother doing the wordwrap calculations since we won't be using them
+			return;
+		}
+		var empty_scr = joined_cleaned_lines.replace(/(\n| |\t)/g, "");
+		if (empty_scr.length === 0)
+		{
+			return;
+		}
+		var empty_line = this.empty_line;
+		var empty_word = this.empty_word;
+		var cleaned_lines = this.conductor.cleaned_lines;
+		var word_lines_needed = this.word_lines_needed;
+		for (var i = 0; i < cleaned_lines.count; i += 1)
+		{
+			if (cleaned_lines[i].length === 0)
+			{
+				this.word_lines_space[i] = empty_line;
+				continue;
+			}
+			var arr = [];
+			var additionalWords = cleaned_lines[i].split(" ");
+			for (var j = 0; j < additionalWords.count; j += 1)
+			{
+				var word = additionalWords[j];
+				if (word.length === 0)
+				{
+					arr[j] = empty_word;
+					continue;
+				}
+				if (this.word_length_cache[word] === void)
+				{
+@if(!WORDWRAP_BOLDITALIC_MODIFIER)
+					this.word_length_cache[word] = %[
+						tagname: this.nextWordTagName,
+						text: word
+					];
+@endif
+@if(WORDWRAP_BOLDITALIC_MODIFIER)
+					this.word_length_cache[word] = %[
+						tagname: this.nextWordTagName,
+						text: word,
+					];
+@endif
+					word_lines_needed.add(this.word_length_cache[word]);
+				}
+				arr[j] = this.word_length_cache[word];
+			}
+			this.word_lines_space[i] = arr;
+		}
+		if (isChinese())
+		{
+			for (var i = 0; i < cleaned_lines.count; i += 1)
+			{
+				if (cleaned_lines[i].length === 0)
+				{
+					this.word_lines_chinese[i] = empty_line;
+					continue;
+				}
+				var arr = [];
+				//	Use continuous English characters as separators to split the line into an array of substrings. / 中英文分词
+				var additionalWords = cleaned_lines[i].split(/([A-zＡ-ｚ-]+)/);
+				for (var j = 0; j < additionalWords.count; j += 1)
+				{
+					var word = additionalWords[j];
+					if (word.length === 0)
+					{
+						arr[j] = empty_word;
+						continue;
+					}
+					if (this.word_length_cache[word] === void)
+					{
+@if(!WORDWRAP_BOLDITALIC_MODIFIER)
+						var lengths = this.getLengthsForString(word, hlf, mlf);
+						this.word_length_cache[word] = %[
+							tagname: this.nextWordTagName,
+							text: word
+						];
+@endif
+@if(WORDWRAP_BOLDITALIC_MODIFIER)
+						this.word_length_cache[word] = %[
+							tagname: this.nextWordTagName,
+							text: word,
+						];
+@endif
+						word_lines_needed.add(this.word_length_cache[word]);
+					}
+					arr[j] = this.word_length_cache[word];
+				}
+				this.word_lines_chinese[i] = arr;
+			}
+		}
+	}
 
 	function generate_word_wrapping_list(conductor)
 	{
@@ -229,7 +363,20 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 		var word_length_test_ml = mlf_gtw(word_length_test_str);
 		if (word_length_test_hl !== word_length_test[0] || word_length_test_ml !== word_length_test[1])
 		{
-			(global.Dictionary.clear incontextof this.word_length_cache)();
+			var word_length_cache_arr = [];
+			word_length_cache_arr.assign(this.word_length_cache);
+			for (var i = 0; i < word_length_cache_arr.count; i += 2)
+			{
+				var word_tag = word_length_cache_arr[i + 1];
+@if(!WORDWRAP_BOLDITALIC_MODIFIER)
+				var lengths = this.getLengthsForString(word_tag.text, hlf, mlf);
+				word_tag.hllength = lengths[0];
+				word_tag.mllength = lengths[1];
+@endif
+@if(WORDWRAP_BOLDITALIC_MODIFIER)
+				needed_lengths[word_tag.text] = word_tag;
+@endif
+			}
 			word_length_test[0] = word_length_test_hl;
 			word_length_test[1] = word_length_test_ml;
 		}
@@ -238,142 +385,41 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 		var word_length_test_cur = this.getLengthsForString("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz", hlf, mlf);
 		if (word_length_test_cur[0] !== word_length_test[0] || word_length_test_cur[1] !== word_length_test[1])
 		{
-			(global.Dictionary.clear incontextof this.word_length_cache)();
+			var word_length_cache_arr = [];
+			word_length_cache_arr.assign(this.word_length_cache);
+			for (var i = 0; i < word_length_cache_arr.count; i += 2)
+			{
+				var word_tag = word_length_cache_arr[i + 1];
+@if(!WORDWRAP_BOLDITALIC_MODIFIER)
+				var lengths = this.getLengthsForString(word_tag.text, hlf, mlf);
+				word_tag.hllength = lengths[0];
+				word_tag.mllength = lengths[1];
+@endif
+@if(WORDWRAP_BOLDITALIC_MODIFIER)
+				needed_lengths[word_tag.text] = word_tag;
+@endif
+			}
 			word_length_test.assign(word_length_test_cur);
 		}
 @endif
-		this.cleaned_lines.clear();
-		this.cleaned_lines.assign(conductor.lines);
-		var in_iscript = false;
-		var iscript = ["[iscript]", "[iscript]\\", "@iscript"];
-		var endscript = ["[endscript]", "[endscript]\\", "@endscript"];
-		for (var i = 0; i < this.cleaned_lines.count; i += 1)
-		{
-			var line = this.cleaned_lines[i];
-			if (iscript.contains(line))
-			{
-				in_iscript = true;
-			}
-			if (endscript.contains(line))
-			{
-				in_iscript = false;
-			}
-			if (in_iscript)
-			{
-				this.cleaned_lines[i] = "";
-				continue;
-			}
-			this.cleaned_lines[i] = conductor.cleanLine(line);
-		}
-		if (typeof(global.kag) === "Object" && isvalid(global.kag) && global.kag.sflags.language == englishLanguage && !startsWith("花札", conductor.curStorage))
-		{
-			for (var i = 0; i < this.cleaned_lines.count; i += 1)
-			{
-				if (this.cleaned_lines[i].length === 0)
-				{
-					continue;
-				}
-				this.cleaned_lines[i] = this.cleaned_lines[i].replace(/　/, " ");
-			}
-		}
-		var cleaned_lines = this.cleaned_lines;
-@if(!WORDWRAP_BOLDITALIC_MODIFIER)
-		var empty_word = %[tagname: this.nextWordTagName, text: "", hllength: 0, mllength: 0];
-@endif
-@if(WORDWRAP_BOLDITALIC_MODIFIER)
-		var empty_word = %[
-			tagname: this.nextWordTagName,
-			text: "",
-			hllength: 0,
-			mllength: 0,
-			hllengthb: 0,
-			mllengthb: 0,
-			hllengthi: 0,
-			mllengthi: 0,
-			hllengthbi: 0,
-			mllengthbi: 0
-		];
-@endif
-		var empty_line = [];
 @if(WORDWRAP_BOLDITALIC_MODIFIER)
 		var needed_lengths = %[];
 @endif
-		this.word_lines_space.clear();
-		for (var i = 0; i < cleaned_lines.count; i += 1)
+		var word_lines_needed = this.word_lines_needed;
+		for (var i = 0; i < word_lines_needed.count; i += 1)
 		{
-			if (cleaned_lines[i].length === 0)
-			{
-				this.word_lines_space[i] = empty_line;
-				continue;
-			}
-			var arr = [];
-			var additionalWords = cleaned_lines[i].split(" ");
-			for (var j = 0; j < additionalWords.count; j += 1)
-			{
-				var word = additionalWords[j];
-				if (word.length === 0)
-				{
-					arr[j] = empty_word;
-					continue;
-				}
-				if (this.word_length_cache[word] === void)
-				{
+			var word_tag = word_lines_needed[i];
 @if(!WORDWRAP_BOLDITALIC_MODIFIER)
-					var lengths = this.getLengthsForString(word, hlf, mlf);
-					this.word_length_cache[word] = %[tagname: this.nextWordTagName, text: word, hllength: lengths[0], mllength: lengths[1]];
+			var lengths = this.getLengthsForString(word_tag.text, hlf, mlf);
+			word_tag.hllength = lengths[0];
+			word_tag.mllength = lengths[1];
 @endif
 @if(WORDWRAP_BOLDITALIC_MODIFIER)
-					this.word_length_cache[word] = %[
-						tagname: this.nextWordTagName,
-						text: word,
-					];
-					needed_lengths[word] = this.word_length_cache[word];
+			needed_lengths[word_tag.text] = word_tag;
 @endif
-				}
-				arr[j] = this.word_length_cache[word];
-			}
-			this.word_lines_space[i] = arr;
 		}
-		this.word_lines_chinese.clear();
-		if (isChinese())
-		{
-			for (var i = 0; i < cleaned_lines.count; i += 1)
-			{
-				if (cleaned_lines[i].length === 0)
-				{
-					this.word_lines_chinese[i] = empty_line;
-					continue;
-				}
-				var arr = [];
-				//	Use continuous English characters as separators to split the line into an array of substrings. / 中英文分词
-				var additionalWords = cleaned_lines[i].split(/([A-zＡ-ｚ-]+)/);
-				for (var j = 0; j < additionalWords.count; j += 1)
-				{
-					var word = additionalWords[j];
-					if (word.length === 0)
-					{
-						arr[j] = empty_word;
-						continue;
-					}
-					if (this.word_length_cache[word] === void)
-					{
-@if(!WORDWRAP_BOLDITALIC_MODIFIER)
-						var lengths = this.getLengthsForString(word, hlf, mlf);
-						this.word_length_cache[word] = %[tagname: this.nextWordTagName, text: word, hllength: lengths[0], mllength: lengths[1]];
-@endif
-@if(WORDWRAP_BOLDITALIC_MODIFIER)
-						this.word_length_cache[word] = %[
-							tagname: this.nextWordTagName,
-							text: word,
-						];
-						needed_lengths[word] = this.word_length_cache[word];
-@endif
-					}
-					arr[j] = this.word_length_cache[word];
-				}
-				this.word_lines_chinese[i] = arr;
-			}
-		}
+		word_lines_needed.clear();
+
 @if(WORDWRAP_BOLDITALIC_MODIFIER)
 		var needed_lengths_arr = [];
 		needed_lengths_arr.assign(needed_lengths);
@@ -497,7 +543,6 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 		return false;
 	}
 
-	var nextWordTagName = "nextword";
 	function processWordWrappingSpace(elm)
 	{
 		if (

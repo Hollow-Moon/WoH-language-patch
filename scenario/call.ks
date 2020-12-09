@@ -147,18 +147,19 @@ with(tracer_object)
 
 ;Fade to black quit.
 *quit
+@eval exp="kag.pauseAction();kag.pauseTransition();"
 @position visible=false
 @position page=back visible=false
 ;lockquickmenu を維持するため、onceIgnoreUnlockQuickMenu=true
 @eval exp="closeConfigMenu();closeSaveMenu();closeLoadMenu();closeQuickMenu();closeRClickMenu();"
-@eval exp="onceIgnoreUnlockQuickMenu=true;delete tf.do_systemmenu;delete tf.ttm_opened;delete f.in_ttm;outMenu(__menuStack[__menuStack.count-1],, false);with(Menu_object).doInvalidateByInvisible('fore'),.clearClick(),.setAllContrary(false);kag.setHistoryOptions(%[enabled:false]);kag.stopAllActions();kag.freeSnapshot();"
+@eval exp="onceIgnoreUnlockQuickMenu=true;delete tf.do_systemmenu;delete tf.ttm_opened;delete f.in_ttm;outMenu(__menuStack[__menuStack.count-1],, false);with(Menu_object).doInvalidateByInvisible('fore'),.clearClick(),.setAllContrary(false);kag.setHistoryOptions(%[enabled:false]);kag.freeSnapshot();"
 @stoptrans
 @fadeoutbgm time=400
 @bg storage=black time=400
 @autocache enabled=false
-@eval exp=kag.simplifyLayers()
-@visibleframe
-@call target=*resetall
+;@eval exp=kag.simplifyLayers()
+;@visibleframe
+;@call target=*resetall
 @cm
 @waittrig name=closeaskyesno cond=&tf.do_askyesno
 @eval exp="kag.shutdown()"

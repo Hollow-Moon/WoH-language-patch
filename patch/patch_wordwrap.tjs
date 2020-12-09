@@ -137,10 +137,17 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 
 	function onConductorScenarioLoaded()
 	{
-		if (this.word_lines_space.count !== 0 || this.word_lines_chinese.count !== 0)
+		if ((this.word_lines_scenario_changed) && (this.word_lines_space.count !== 0 || this.word_lines_chinese.count !== 0))
 		{
 			this.word_lines_scenario_changed = false;
 			this.clearMessageLayers();
+@if(GAME_WOHN)
+			if ((typeof(this.current) === "Object" && !isvalid(this.current)) || (typeof(this.current) === "void"))
+			{
+				this.allocateMessageLayers(1);
+				global.reload_messagelayer_config(this);
+			}
+@endif
 			this.generate_word_wrapping_list(this.conductor);
 		}
 		return super.onConductorScenarioLoaded(...);
@@ -163,11 +170,6 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 			return;
 		}
 
-		if (word_lines_scenario_changed)
-		{
-			word_lines_scenario_changed = false;
-			this.generate_word_wrapping_list(this.conductor);
-		}
 @if(0)
 		processQuotedLine();
 @endif
@@ -496,19 +498,24 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 
 		var word_lines = this.word_lines_space;
 
+		var word_line = word_lines[linenum];
+		if (word_line === void)
+		{
+			return;
+		}
 		if (words.count === 0)
 		{
-			words.assign(word_lines[linenum]);
+			words.assign(word_line);
 		}
 		else
 		{
 			if (typeof(words.push) === "Object")
 			{
-				words.push(word_lines[linenum]*);
+				words.push(word_line*);
 			}
 			else
 			{
-				var arr = word_lines[linenum];
+				var arr = word_line;
 				for (var i = 0; i < arr.count; i += 1)
 				{
 					words.add(arr[i]);
@@ -529,19 +536,24 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 	{
 		var words = this.words;
 		var word_lines = this.word_lines_chinese;
+		var word_line = word_lines[linenum];
+		if (word_line === void)
+		{
+			return;
+		}
 		if (words.count === 0)
 		{
-			words.assign(word_lines[linenum]);
+			words.assign(word_line);
 		}
 		else
 		{
 			if (typeof(words.push) === "Object")
 			{
-				words.push(word_lines[linenum]*);
+				words.push(word_line*);
 			}
 			else
 			{
-				var arr = word_lines[linenum];
+				var arr = word_line;
 				for (var i = 0; i < arr.count; i += 1)
 				{
 					words.add(arr[i]);

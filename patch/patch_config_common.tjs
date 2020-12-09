@@ -21,7 +21,7 @@ global.PatchInfoURL = "https://forums.nrvnqsr.com/showthread.php/7705";
 @if(GAME_WOHN)
 global.PatchVersion = [0, 0, 1];
 global.PatchDescription = ("Language Patch v%i.%i.%i").sprintf(PatchVersion[0], PatchVersion[1], PatchVersion[2]);
-global.PatchInfoURL = "https://forums.nrvnqsr.com/showthread.php/8586";
+global.PatchInfoURL = "https://hollow-moon.github.io/wohn-tl/support/";
 @endif
 
 if ((typeof(global.PatchVersion) !== "Object") || (typeof(global.PatchDescription) !== "String") || (typeof(global.PatchInfoURL) !== "String"))
@@ -65,6 +65,14 @@ System.exceptionHandler = function(e)
 	System.inform(msg);
 
 @if(!KIRIKIROID)
+	if ((typeof(global.devMode) === "Integer" ? !global.devMode : true) && (typeof(global.devMode2) === "Integer" ? !global.devMode2 : true))
+	{
+		if (System.getArgument('-openpatchinfourlonerror') !== "no" && typeof(global.PatchInfoURL) === "String")
+		{
+			System.shellExecute(global.PatchInfoURL);
+		}
+	}
+
 	if (typeof(global.kag) === "Object" && isvalid(global.kag) && typeof(global.kag.visible) == "Integer" && global.kag.visible == false)
 	{
 		System.exit(127);

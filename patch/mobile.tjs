@@ -186,6 +186,7 @@ kag.tagHandlers.dispscroll = function(mp) {
 	return 0;
 @endif
 @if(WIDE_MODE)
+	originalscrollYOffset = void;
 	// Parameters: from, to, time
 	var moveTime = (mp.time != 0)? mp.time : 600;
 	// TODO dunno what's the difference between "from" and "to" - they are almost always given the same value - need to test a scene where this is not the case.
@@ -229,6 +230,23 @@ kag.updateScrollPosition = function(x, y) {
 			}
 			currentLayer.setPos(currentLayer.left, currentLayer.top);
 		}
+	}
+} incontextof kag;
+
+kag.scrollDown = function() {
+	originalscrollYOffset = scrollYOffset if originalscrollYOffset === void;
+	updateScrollPosition(,Math.min(scrollYOffset+scrollYOffsetSpeed, scrollYOffsetMax));
+} incontextof kag;
+
+kag.scrollUp = function() {
+	originalscrollYOffset = scrollYOffset if originalscrollYOffset === void;
+	updateScrollPosition(,Math.max(scrollYOffset-scrollYOffsetSpeed, scrollYOffsetMin));
+} incontextof kag;
+
+kag.scrollReset = function() {
+	if (originalscrollYOffset !== void) {
+		updateScrollPosition(,originalscrollYOffset);
+		originalscrollYOffset = void;
 	}
 } incontextof kag;
 

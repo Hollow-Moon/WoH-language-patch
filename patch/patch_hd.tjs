@@ -36,7 +36,6 @@ var cubicRatio = 16/9;
 @endif
 var standardWideRatio = 16/9;
 var systemRatio = System.screenWidth / System.screenHeight;
-var loadedWebpPlugin = false;
 
 var hdFolderSuffix = "-hd";
 
@@ -70,10 +69,6 @@ property wideScaleFactor { getter() { return scaleFactor * wideFactor; } }
 
 function loadHdPatch(kag=global.kag)
 {
-	if (!loadedWebpPlugin) {
-		Plugins.link("krglhwebp.dll");
-		loadedWebpPlugin = true;
-	}
 	var patches_arr = [];
 	patches_arr.add([hdPatchName]);
 	if (devMode) {

@@ -11,7 +11,11 @@ class Window_hint_override extends Window_hint_original
 			.visible = false;
 			.ignoreHintSensing = true;
 			.hitThreshold = 256;
-			.font.height = Math.ceil(9 / Math.min(1, innerHeightScale)); // upscale font when using window size < x1.0
+			if (typeof this.innerHeightScale !== "undefined") {
+				.font.height = Math.ceil(9 / Math.min(1, innerHeightScale)); // upscale font when using window size < x1.0
+			} else {
+				.font.height = 9;
+			}
 			.font.face = __s("MS UI Gothic", "hint_font_face");
 @if(WIDE_MODE)
 			._isFixedPosition = true;
@@ -62,17 +66,21 @@ class Window_hint_override extends Window_hint_original
 			y /= scaleFactor;
 @endif
 @if(ZOOM_WINDOW)
-			x /= innerWidthScale;
-			y /= innerHeightScale;
-			if ((x+w) > innerWidth/innerWidthScale) { x = innerWidth/innerWidthScale - w; }
-			if ((y+mouseCursorSize+h) > innerHeight/innerHeightScale) { y = innerHeight/innerHeightScale - h - mouseCursorSize/innerHeightScale; }
-			hintlayer.setPos(x, y + mouseCursorSize/innerHeightScale);
+			if (typeof this.innerHeightScale !== "undefined")
+			{
+				x /= innerWidthScale;
+				y /= innerHeightScale;
+				if ((x+w) > innerWidth/innerWidthScale) { x = innerWidth/innerWidthScale - w; }
+				if ((y+mouseCursorSize+h) > innerHeight/innerHeightScale) { y = innerHeight/innerHeightScale - h - mouseCursorSize/innerHeightScale; }
+				hintlayer.setPos(x, y + mouseCursorSize/innerHeightScale);
+			}
+			else
 @endif
-@if(!ZOOM_WINDOW)
-			if ((x+w) > innerWidth) { x = innerWidth - w; }
-			if ((y+mouseCursorSize+h) > innerHeight) { y = innerHeight - h - mouseCursorSize; }
-			hintlayer.setPos(x, y + mouseCursorSize);
-@endif
+			{
+				if ((x+w) > innerWidth) { x = innerWidth - w; }
+				if ((y+mouseCursorSize+h) > innerHeight) { y = innerHeight - h - mouseCursorSize; }
+				hintlayer.setPos(x, y + mouseCursorSize);
+			}
 
 			hintlayer.fillRect(0, 0, w, h, 0);
 			hintlayer.colorRect(0, 0, w, h, clInfoBk, 196);

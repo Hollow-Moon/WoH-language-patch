@@ -205,6 +205,15 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 		KAGWindow_patch_zoom_window_override(...);
 	}
 
+@if(SCALE_USING_FLOATING_POINT)
+	property innerWidthScale { getter { return innerWidth / exWidth; } }
+	property innerHeightScale { getter { return innerHeight / exHeight; } }
+@endif
+@if(!SCALE_USING_FLOATING_POINT)
+	property innerWidthScale { getter { return innerWidth \ exWidth; } }
+	property innerHeightScale { getter { return innerHeight \ exHeight; } }
+@endif
+
 	function init_zoom_window()
 	{
 		this.forcefull = false; // 強制フルスクリーンフラグ
@@ -672,25 +681,39 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 		if (!menuBarHideModeEnable) return;
 		if (menuBarHideAutoVisible) {
 			menuBarHidePopupMenu = [
-				%[  caption:"常に表示",   group:1, state: 1 ],
-				%[  caption:"常に非表示", group:1, state: 0 ],
-				%[  caption:"動的に表示", group:1, state:-1 ] ];
+				%[  originalCaption:__t("常に表示"),   group:1, state: 1 ],
+				%[  originalCaption:__t("常に非表示"), group:1, state: 0 ],
+				%[  originalCaption:__t("動的に表示"), group:1, state:-1 ] ];
 			menuBarHideSysMenu = [
 				%[  caption:"-" ],
-				%[  caption:"メニューバー", children:menuBarHidePopupMenu ] ];
+				%[  originalCaption:__t("メニューバー"), children:menuBarHidePopupMenu ] ];
 		} else {
 			menuBarHidePopupMenu = [
-				%[  caption:"表示",   group:1, state: 1 ],
-				%[  caption:"非表示", group:1, state: 0 ] ];
+				%[  originalCaption:__t("表示"),   group:1, state: 1 ],
+				%[  originalCaption:__t("非表示"), group:1, state: 0 ] ];
 			menuBarHideSysMenu = [
 				%[  caption:"-" ],
-				%[  caption:"メニューバーを表示",   group:1, state: 1 ],
-				%[  caption:"メニューバーを非表示", group:1, state: 0 ] ];
+				%[  originalCaption:__t("メニューバーを表示"),   group:1, state: 1 ],
+				%[  originalCaption:__t("メニューバーを非表示"), group:1, state: 0 ] ];
 		}
 		exSystemMenu = menuBarHideSysMenu;
+		refreshExSystemMenu();
 		if (menuBarHideButtonVisible && typeof(this.menu) === "Object" && typeof(this.menuBarHideMenuItem) !== "Object") {
 			menu.add(menuBarHideMenuItem  = new KAGMenuItem(this, "x", 0, toggleMenuBarState, false));
 			/**/     menuBarHideMenuItem.visible = false;
+		}
+	}
+	function refreshExSystemMenu(menu=exSystemMenu) {
+		if (menu === void) {
+			return;
+		}
+		for (var i=0; i<menu.count; i++) {
+			if (menu[i]["originalCaption"] !== void) {
+				menu[i]["caption"] = __(menu[i]["originalCaption"]);
+				if (typeof menu[i].children === "Object") {
+					refreshExSystemMenu(menu[i].children);
+				}
+			}
 		}
 	}
 	function onExSystemMenuSelected(sel) {

@@ -50,7 +50,7 @@ function loadMOs(language)
 	}
 }
 
-function refreshMenuString(menu)
+function refreshMenuString(kag, menu)
 {
 	if(typeof menu.originalCaption !== "undefined") {
 		menu.caption = __(menu.originalCaption);
@@ -58,7 +58,10 @@ function refreshMenuString(menu)
 
 	var children = menu.children;
 	for(var i=0; i<children.count; i++)
-		refreshMenuString(children[i]);
+		refreshMenuString(kag, children[i]);
+@if(ZOOM_WINDOW)
+	kag.refreshExSystemMenu();
+@endif
 }
 
 function refreshStringWithLanguage(kag, language) {
@@ -78,7 +81,7 @@ function refreshStringWithLanguage(kag, language) {
 	{
 		if (typeof(kag.menu) === "Object")
 		{
-			refreshMenuString(kag.menu);
+			refreshMenuString(kag, kag.menu);
 		}
 		if (typeof(kag.hintlayer) === "Object")
 		{

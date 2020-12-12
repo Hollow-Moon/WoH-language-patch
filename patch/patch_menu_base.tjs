@@ -178,15 +178,21 @@ class KAGFlagMenuItem extends KAGMenuItem
 		}
 	}
 
-	function restartCondition() {
+	function restartCondition()
+	{
 		return true;
 	}
 
-	function onlyTitleRestartCondition() {
+	function onlyTitleRestartCondition()
+	{
+		if (typeof owner.conductor !== "Object") {
+			return false;
+		}
 		return owner.conductor.curStorage === "タイトル.ks" || owner.conductor.curStorage === "title.ks";
 	}
 
-	function onlyScenarioRestartCondition() {
+	function onlyScenarioRestartCondition()
+	{
 		return !onlyTitleRestartCondition();
 	}
 
@@ -773,9 +779,6 @@ function addHdMenu(displayMenu) {
 		for (var i=0; i<keys.count; i++) {
 			var key = keys[i];
 			var ratio = wideResolutions[key];
-			if (ratio == systemRatio) {
-				continue;
-			}
 			var wideMenuItemName = "wideRatio"+key.replace(/[:&\() ]/g, "")+"MenuItem";
 			this.wideMenu.add(this[wideMenuItemName] = new KAGMenuItem(this, key, 1, function(sender) { onWideMenuItemClick(sender, sender.ratio); }));
 			this[wideMenuItemName].ratio = ratio;

@@ -14,12 +14,24 @@ global.play_movie_resize = function(video, kag=global.kag, window=global.kag)
 			//    It fixes itself when stopping and replaying the movie (in which case window.height displays the correct value).
 			if (isNewMovieKrkrz && video.mode == vomMFEVR)
 			{
-				var videoBoundsSize = calculateTouchFromInside(videoSize[0], videoSize[1], kag.scWidth, kag.scHeight);
+				var videoRatio = videoSize[0] / videoSize[1];
+				var kagRatio = kag.scWidth / kag.scHeight;
 				
-				var videoBoundsLeft = (kag.scWidth - videoBoundsSize[0]) / 2;
-				var videoBoundsTop = (kag.scHeight - videoBoundsSize[1]) / 2;
+				var videoBoundsWidth;
+				var videoBoundsHeight;
+				if (systemRatio > kagRatio) {
+					videoBoundsHeight = kag.scHeight;
+					videoBoundsWidth = videoBoundsHeight * videoRatio;
+				} else {
+					videoBoundsWidth = kag.scWidth;
+					videoBoundsHeight = videoBoundsWidth / videoRatio;
+				}
+				var videoBoundsTop = (kag.scHeight - videoBoundsHeight) / 2;
+				var videoBoundsLeft = (kag.scWidth - videoBoundsWidth) / 2;
 
-				video.setBounds(videoBoundsLeft, videoBoundsTop, videoBoundsSize[0], videoBoundsSize[1]);
+				videoSize = [videoBoundsWidth, videoBoundsHeight];
+
+				video.setBounds(videoBoundsLeft, videoBoundsTop, videoBoundsWidth, videoBoundsHeight);
 			}
 			else
 @endif

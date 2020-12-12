@@ -272,6 +272,19 @@ function stopAllMovies(kag=global.kag)
 	}
 }
 
+function isAnyMoviePlaying(kag=global.kag)
+{
+	for(var i=0; i<kag.movies.count; i++)
+	{
+		with(kag.movies[i])
+		{
+			if(.canWaitStop)
+				return true;
+		}
+	}
+	return false;
+}
+
 function fixAndLoadDictionaryForKrkr2(filename, mode)
 {
 	var file_as_array = [];

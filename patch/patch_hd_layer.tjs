@@ -2356,6 +2356,11 @@ class Window_patch_hd_layer_override extends Window_patch_hd_layer_original
 
 	var scrollXOffset = 0;
 	var scrollYOffset = 0;
+	var originalscrollXOffset = void;
+	var originalscrollYOffset = void;
+	var scrollYOffsetSpeed = 5;
+	var scrollYOffsetMin = 0;
+	var scrollYOffsetMax = 150;
 
 	property transformedScrollXOffset { getter { return scrollXOffset; } }
 
@@ -2376,17 +2381,6 @@ class Window_patch_hd_layer_override extends Window_patch_hd_layer_original
 	property heightScale { getter { return scaleFactor * (isMainWindow? cropFactor : 1); } }
 	property isMainWindow { getter { return this === global.Window.mainWindow; } }
 	property body { getter() { return fore; } }
-
-@if(ZOOM_WINDOW)
-@if(SCALE_USING_FLOATING_POINT)
-	property innerWidthScale { getter { return innerWidth / exWidth; } }
-	property innerHeightScale { getter { return innerHeight / exHeight; } }
-@endif
-@if(!SCALE_USING_FLOATING_POINT)
-	property innerWidthScale { getter { return innerWidth \ exWidth; } }
-	property innerHeightScale { getter { return innerHeight \ exHeight; } }
-@endif
-@endif
 
 	property isHd
 	{

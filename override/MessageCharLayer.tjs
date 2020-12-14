@@ -10,7 +10,9 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 
 	var	drawed = 0;		//	描画されたか/描画内容
 	var	lastParams = [];//	描画時のパラメータ(drawTextのみ)
+	var	lastParamsTmp = [];
 	var lastFontParams = [];
+	var lastFontParamsTmp = [];
 
 	var	pitch;		//	前の文字との字間
 
@@ -153,23 +155,26 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 		}
 		with(font)
 		{
-			.angle	= angle;
-			.bold	= bold;
+			if (.angle != angle)
+			{
+				.angle	= angle;
+			}
+			if (.bold != bold)
+			{
+				.bold	= bold;
+			}
 			setFontFace((angle == 2700 ? "@" : "") +face, - size, italic);
 		}
 	}
 
 	function hasFontChanged()
 	{
-		var lastFontParams = this.lastFontParams;
-		if (lastFontParams.count === 6)
+		this.lastFontParamsTmp.clear();
+		with (font)
 		{
-			with (font)
-			{
-				return .face !== lastFontParams[0] || .angle !== lastFontParams[1] || .bold !== lastFontParams[2] || .italic !== lastFontParams[3] || .height !== lastFontParams[4] || ea !== lastFontParams[5];
-			}
+			this.lastFontParamsTmp.push(.face, .angle, .bold, .italic, .height, ea);
 		}
-		return false;
+		return this.lastFontParams.join("|") !== this.lastFontParamsTmp.join("|");
 	}
 @if(0)
 	property left
@@ -386,17 +391,12 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 	function drawText(ch, color, aa, vert, max, min)
 	{
 		var lastParams = this.lastParams;
+		var lastParamsTmp = this.lastParamsTmp;
 		if (this.drawed === 1 && lastParams.count === 6)
 		{
-			if (
-				ch === lastParams[0]
-			 && color === lastParams[1]
-			 && aa === lastParams[2]
-			 && vert === lastParams[3]
-			 && max === lastParams[4]
-			 && min === lastParams[5]
-			 && !hasFontChanged()
-				)
+			lastParamsTmp.clear();
+			lastParamsTmp.push(ch, color, aa, vert, max, min);
+			if (lastParams.join("|") === lastParamsTmp.join("|") && !hasFontChanged())
 			{
 				return;
 			}
@@ -409,8 +409,8 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 		else
 			superDrawText(vert, ch, color, aa);
 		drawed	= 1;
-		lastParams[0]	= ch;
-		lastParams.push(color, aa, vert, max, min);
+		lastParams.clear();
+		lastParams.push(ch, color, aa, vert, max, min);
 		lastFontParams.clear();
 		with (font)
 		{
@@ -421,20 +421,12 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 	function drawTextWithShadow(ch, color, aa, shadowcolor, shadowoffsetx, shadowoffsety, vert, max, min)
 	{
 		var lastParams = this.lastParams;
+		var lastParamsTmp = this.lastParamsTmp;
 		if (this.drawed === 2 && lastParams.count === 9)
 		{
-			if (
-				ch === lastParams[0]
-			 && color === lastParams[1]
-			 && aa === lastParams[2]
-			 && shadowcolor === lastParams[3]
-			 && shadowoffsetx === lastParams[4]
-			 && shadowoffsety === lastParams[5]
-			 && vert === lastParams[6]
-			 && max === lastParams[7]
-			 && min === lastParams[8]
-			 && !hasFontChanged()
-				)
+			lastParamsTmp.clear();
+			lastParamsTmp.push(ch, color, aa, shadowcolor, shadowoffsetx, shadowoffsety, vert, max, min);
+			if (lastParams.join("|") === lastParamsTmp.join("|") && !hasFontChanged())
 			{
 				return;
 			}
@@ -447,8 +439,8 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 		else
 			superDrawText(vert, ch, color, aa, 255, shadowcolor, 0, shadowoffsetx, shadowoffsety);
 		drawed	= 2;
-		lastParams[0]	= ch;
-		lastParams.push(color, aa, shadowcolor, shadowoffsetx, shadowoffsety, vert, max, min);
+		lastParams.clear();
+		lastParams.push(ch, color, aa, shadowcolor, shadowoffsetx, shadowoffsety, vert, max, min);
 		lastFontParams.clear();
 		with (font)
 		{
@@ -459,20 +451,12 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 	function drawTextWithEdge(ch, color, aa, edgeemphasis, edgecolor, edgeextent, vert, max, min)
 	{
 		var lastParams = this.lastParams;
+		var lastParamsTmp = this.lastParamsTmp;
 		if (this.drawed === 3 && lastParams.count === 9)
 		{
-			if (
-				ch === lastParams[0]
-			 && color === lastParams[1]
-			 && aa === lastParams[2]
-			 && edgeemphasis === lastParams[3]
-			 && edgecolor === lastParams[4]
-			 && edgeextent === lastParams[5]
-			 && vert === lastParams[6]
-			 && max === lastParams[7]
-			 && min === lastParams[8]
-			 && !hasFontChanged()
-				)
+			lastParamsTmp.clear();
+			lastParamsTmp.push(ch, color, aa, edgeemphasis, edgecolor, edgeextent, vert, max, min);
+			if (lastParams.join("|") === lastParamsTmp.join("|") && !hasFontChanged())
 			{
 				return;
 			}
@@ -485,8 +469,8 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 		else
 			superDrawText(vert, ch, color, aa, edgeemphasis, edgecolor, edgeextent, 0, 0);
 		drawed	= 3;
-		lastParams[0]	= ch;
-		lastParams.push(color, aa, edgeemphasis, edgecolor, edgeextent, vert, max, min);
+		lastParams.clear();
+		lastParams.push(ch, color, aa, edgeemphasis, edgecolor, edgeextent, vert, max, min);
 		lastFontParams.clear();
 		with (font)
 		{
@@ -508,14 +492,12 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 	function drawGraph(storage, key, color=void, withresize=true)
 	{
 		var lastParams = this.lastParams;
+		var lastParamsTmp = this.lastParamsTmp;
 		if (this.drawed === 4 && lastParams.count === 4)
 		{
-			if (
-				storage === lastParams[0]
-			 && key === lastParams[1]
-			 && color === lastParams[2]
-			 && withresize === lastParams[3]
-				)
+			lastParamsTmp.clear();
+			lastParamsTmp.push(storage, key, color, withresize);
+			if (lastParams.join("|") === lastParamsTmp.join("|"))
 			{
 				return;
 			}
@@ -531,24 +513,20 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 		}
 		operateRect(ea, ea, layer, 0, 0, iw, ih);
 		drawed	= 4;
-		lastParams[0]	= storage;
-		lastParams.push(key, color, withresize);
+		lastParams.clear();
+		lastParams.push(storage, key, color, withresize);
 		lastFontParams.clear();
 	}
 
 	function drawGraphWithShadow(storage, key, color, shadowcolor, shadowoffsetx, shadowoffsety)
 	{
 		var lastParams = this.lastParams;
+		var lastParamsTmp = this.lastParamsTmp;
 		if (this.drawed === 5 && lastParams.count === 6)
 		{
-			if (
-				storage === lastParams[0]
-			 && key === lastParams[1]
-			 && color === lastParams[2]
-			 && shadowcolor === lastParams[3]
-			 && shadowoffsetx === lastParams[4]
-			 && shadowoffsety === lastParams[5]
-				)
+			lastParamsTmp.clear();
+			lastParamsTmp.push(storage, key, color, shadowcolor, shadowoffsetx, shadowoffsety);
+			if (lastParams.join("|") === lastParamsTmp.join("|"))
 			{
 				return;
 			}
@@ -563,24 +541,20 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 
 		drawGraph(layer, false);
 		drawed	= 5;
-		lastParams[0]	= storage;
-		lastParams.push(key, color, shadowcolor, shadowoffsetx, shadowoffsety);
+		lastParams.clear();
+		lastParams.push(storage, key, color, shadowcolor, shadowoffsetx, shadowoffsety);
 		lastFontParams.clear();
 	}
 
 	function drawGraphWithEdge(storage, key, color, edgeemphasis, edgecolor, edgeextent)
 	{
 		var lastParams = this.lastParams;
+		var lastParamsTmp = this.lastParamsTmp;
 		if (this.drawed === 6 && lastParams.count === 6)
 		{
-			if (
-				storage === lastParams[0]
-			 && key === lastParams[1]
-			 && color === lastParams[2]
-			 && edgeemphasis === lastParams[3]
-			 && edgecolor === lastParams[4]
-			 && edgeextent === lastParams[5]
-				)
+			lastParamsTmp.clear();
+			lastParamsTmp.push(storage, key, color, edgeemphasis, edgecolor, edgeextent);
+			if (lastParams.join("|") === lastParamsTmp.join("|"))
 			{
 				return;
 			}
@@ -606,8 +580,8 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 
 		drawGraph(storage, key, color, false);
 		drawed	= 6;
-		lastParams[0]	= storage;
-		lastParams.push(key, color, edgeemphasis, edgecolor, edgeextent);
+		lastParams.clear();
+		lastParams.push(storage, key, color, edgeemphasis, edgecolor, edgeextent);
 		lastFontParams.clear();
 	}
 

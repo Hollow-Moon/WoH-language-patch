@@ -489,6 +489,7 @@ global.initial_scenario_load_ready = function()
 @if(GAME_FHAT)
 	if (System.getArgument("-loadticketatindex") !== void)
 	{
+		global.kag.askOnClose = true;
 		global.loadTicketFile(System.getArgument("-loadticketatindex") | 0);
 		(global.initializeTicketFlagsMenu incontextof global.kag)();
 		global.kag.process("title.ks", "*pretitle");
@@ -502,6 +503,7 @@ global.initial_scenario_load_ready = function()
 @endif
 	if (System.getArgument("-loadsaveatindex") !== void)
 	{
+		global.kag.askOnClose = true;
 		global.kag.loadBookMark(System.getArgument("-loadsaveatindex") | 0);
 	}
 @if(GAME_WOHN)
@@ -513,6 +515,7 @@ global.initial_scenario_load_ready = function()
 @if(GAME_FATE||GAME_FHAT)
 	else if (System.getArgument("-flowchartopen") !== void || System.getArgument("-flowchartopenbyscenario") !== void)
 	{
+		global.kag.askOnClose = true;
 		global.kag.setHistoryOptions(%[enabled:true]);
 		var flowchart_name = System.getArgument("-flowchartopen");
 		var flowchart_id = 0;

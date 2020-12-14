@@ -342,7 +342,8 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 		if (typeof(this.current.getCharLayer) === "Object")
 		{
 			var ml = this.current;
-			ml_charlayer = ml.getCharLayer();
+			ml_charlayer = ml.tmpCharLayer;
+			ml_charlayer.clear();
 			ml_charlayer.setFont(ml.fontFace, ml.fontAngle, ml.bold, ml.fontItalic, ml.fontSize);
 		}
 		var hlf = this.historyLayer.font;
@@ -459,9 +460,9 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 		mlf.bold = save_bold_mlf;
 		mlf.italic = save_italic_mlf;
 @endif
-		if (typeof(this.current.removeCharLayer) === "Object")
+		if (ml_charlayer !== void)
 		{
-			this.current.removeCharLayer(this.current.currentLine, this.current.currentColumn);
+			ml_charlayer.clear();
 		}
 
 @if(CACHE_CHAR_LAYERS_FROM_TEXT)
@@ -486,6 +487,8 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 		}
 @endif
 		word_lines_needed.clear();
+		// Garbage collection.
+		global.System.doCompact(global.clIdle);
 	}
 
 	function onNewLineWordWrapSpace(linenum)

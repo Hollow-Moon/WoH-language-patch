@@ -354,6 +354,10 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 		}
 		else if (ml_charlayer !== void)
 		{
+			if (!ml_charlayer.hasImage)
+			{
+				ml_charlayer.hasImage = true;
+			}
 			mlf = ml_charlayer.font;
 		}
 @if(WORDWRAP_BOLDITALIC_MODIFIER)
@@ -460,10 +464,6 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 		mlf.bold = save_bold_mlf;
 		mlf.italic = save_italic_mlf;
 @endif
-		if (ml_charlayer !== void)
-		{
-			ml_charlayer.clear();
-		}
 
 @if(CACHE_CHAR_LAYERS_FROM_TEXT)
 		if (invalidate_wordcache)

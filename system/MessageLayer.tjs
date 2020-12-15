@@ -782,12 +782,6 @@ class MessageLayer extends KAGLayer
 	function clearLayer(notClearUpdate=false)
 @endif
 	{
-@if(GAME_WOHN)
-		for (var i = charPool.count; i < maxCharPoolCount; i += 1)
-		{
-			charPool.add(createNewCharLayer());
-		}
-@endif
 		// レイヤをクリア
 		window.updateBeforeCh = 1;
 
@@ -913,6 +907,13 @@ class MessageLayer extends KAGLayer
 		}
 
 		lastCharLayerInfos.clear();
+
+@if(GAME_WOHN)
+		for (var i = charPool.count; i < maxCharPoolCount; i += 1)
+		{
+			charPool.add(createNewCharLayer());
+		}
+@endif
 
 		//	グリフを隠す
 		glyphLayer.visible	= false;

@@ -42,6 +42,8 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 		super.Layer(...);
 		hitThreshold	= 256;
 
+		this.clear();
+
 @if(0)
 		if(global.fonts == void)
 		{
@@ -118,6 +120,7 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 
 	function assignImages(src)
 	{
+		this.clear();
 		super.assignImages(...);
 
 		with(src)
@@ -228,24 +231,46 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 		}
 		w	+= (ea << 1);
 		h	+= (ea << 1);
-		if(imageWidth != w || imageHeight != h)
+		clear();
+
+		if (esc_w === 0 || esc_h === 0)
+		{
+			this.hasImage = false;
+			drawed = 1;
+			return;
+		}
+		else if (!this.hasImage)
+		{
+			this.hasImage = true;
+		}
+		if (imageWidth != w || imageHeight != h)
 		{
 			setImageSize(w, h);
 			setSizeToImageSize();
 			drawed	= 1;	//	clear で fillRect するため
 		}
-		clear();
 	}
 
 	function clear()
 	{
+		if (drawed)
+		{
+			this.hasImage = false;
+		}
+@if(0)
 		fillRect(0, 0, imageWidth, imageHeight, clearcolor) if drawed;
+@endif
 		drawed	= 0;
-		lastParams.clear();
+		this.lastParams.clear();
+		this.lastFontParams.clear();
 	}
 
 	function resizeByText(ch, vert, max, min)
 	{
+		if (!this.hasImage)
+		{
+			this.hasImage = true;
+		}
 @if(0)
 		var	w = font.getTextWidth(ch), h = font.getTextHeight(ch);
 @endif
@@ -385,6 +410,10 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 		{
 			return;
 		}
+		if (!this.hasImage)
+		{
+			this.hasImage = true;
+		}
 		super.drawText(ea + (vert ? font.height : 0), ea, text, color, 255, aa, shadowlevel, shadowcolor, shadowwidth, shadowofsx, shadowofsy);
 	}
 
@@ -400,6 +429,10 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 			{
 				return;
 			}
+		}
+		if (!this.hasImage)
+		{
+			this.hasImage = true;
 		}
 		var	ret	= resizeByText(ch, vert, max, min);
 		if(ret > 0)
@@ -431,6 +464,10 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 				return;
 			}
 		}
+		if (!this.hasImage)
+		{
+			this.hasImage = true;
+		}
 		var	ret	= resizeByText(ch, vert, max, min);
 		if(ret > 0)
 			drawMinimize(vert, ch, color, aa, shadowcolor, 0, shadowoffsetx, shadowoffsety);
@@ -460,6 +497,10 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 			{
 				return;
 			}
+		}
+		if (!this.hasImage)
+		{
+			this.hasImage = true;
 		}
 		var	ret	= resizeByText(ch, vert, max, min);
 		if(ret > 0)
@@ -504,7 +545,17 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 		}
 		var	layer	= getGraph(storage, key);
 		var	iw = layer.imageWidth, ih = layer.imageHeight;
-		resize(iw, ih) if withresize;
+		if (withresize)
+		{
+			resize(iw, ih);
+		}
+		else
+		{
+			if (!this.hasImage)
+			{
+				this.hasImage = true;
+			}
+		}
 		if(color !== void)
 		{
 			layer.face	= dfOpaque;
@@ -530,6 +581,10 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 			{
 				return;
 			}
+		}
+		if (!this.hasImage)
+		{
+			this.hasImage = true;
 		}
 		var	layer	= getGraph(storage, key);
 		var	iw = layer.imageWidth, ih = layer.imageHeight;
@@ -558,6 +613,10 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 			{
 				return;
 			}
+		}
+		if (!this.hasImage)
+		{
+			this.hasImage = true;
 		}
 		var	layer	= getGraph(storage, key);
 		var	iw = layer.imageWidth, ih = layer.imageHeight;

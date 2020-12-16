@@ -233,13 +233,7 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 		h	+= (ea << 1);
 		clear();
 
-		if (esc_w === 0 || esc_h === 0)
-		{
-			this.hasImage = false;
-			drawed = 1;
-			return;
-		}
-		else if (!this.hasImage)
+		if (!this.hasImage)
 		{
 			this.hasImage = true;
 		}
@@ -247,12 +241,16 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 		{
 			setImageSize(w, h);
 			setSizeToImageSize();
+			fillRect(0, 0, imageWidth, imageHeight, clearcolor);
 			drawed	= 1;	//	clear で fillRect するため
 		}
 	}
 
 	function clear()
 	{
+		setSize(1, 1);
+		left = 0;
+		top = 0;
 		if (drawed)
 		{
 			this.hasImage = false;

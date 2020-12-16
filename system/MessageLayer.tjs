@@ -1696,7 +1696,7 @@ class MessageLayer extends KAGLayer
 			return t + charLayers[line][col].textHeight;
 	}
 
-	function getFontParamsAsString(ruby=false, graph=false, italic=this.fontItalic, ischar=false, key=0, max=0, min=0)
+	function getFontParamsAsString(ruby=false, graph=false, italic=false, ischar=false, key=0, max=0, min=0)
 	{
 		this.fontParams.clear();
 		if (graph)
@@ -1720,7 +1720,7 @@ class MessageLayer extends KAGLayer
 
 	function cacheCharLayerFromCh(ch, ruby=false, graph=false, italic=false, ischar=false, key=0, max=0, min=0, cache=true)
 	{
-		var fontParamsAsString = this.getFontParamsAsString(ruby, graph, italic, ischar, key);
+		var fontParamsAsString = this.getFontParamsAsString(ruby, graph, italic, ischar, key, max, min);
 		var knownCharLayers = this.knownCharLayersByFont[fontParamsAsString];
 		if (knownCharLayers === void)
 		{
@@ -2344,7 +2344,7 @@ class MessageLayer extends KAGLayer
 			.name	= "[%2d][%2d]: %s(%s)".sprintf(currentLine, currentColumn, ch, .group);
 			if (ch !== "" && ch !== void)
 			{
-				var fontParamsAsString = this.getFontParamsAsString(false, false, void, false, 0);
+				var fontParamsAsString = this.getFontParamsAsString(false, false, fontItalic, false, 0);
 				var knownCharLayers = this.knownCharLayersByFont[fontParamsAsString];
 				if (knownCharLayers === void)
 				{
@@ -2545,7 +2545,7 @@ class MessageLayer extends KAGLayer
 			}
 			if (text !== "" && text !== void)
 			{
-				var fontParamsAsString = this.getFontParamsAsString(true, false, void, false, 0, max, min);
+				var fontParamsAsString = this.getFontParamsAsString(true, false, fontItalic, false, 0, max, min);
 				var knownCharLayers = this.knownCharLayersByFont[fontParamsAsString];
 				if (knownCharLayers === void)
 				{

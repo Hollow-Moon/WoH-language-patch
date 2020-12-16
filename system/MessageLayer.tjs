@@ -1707,18 +1707,18 @@ class MessageLayer extends KAGLayer
 		{
 			if (ruby)
 			{
-				this.fontParams.push(fontFace, fontAngle, rubyBold, italic, rubySize);
+				this.fontParams.push(fontFace, fontAngle, rubyBold, italic, rubySize, rubyAntialiased, rubyChColor, rubyEdgeColor, rubyShadowColor, max, min);
 			}
 			else
 			{
-				this.fontParams.push(fontFace, fontAngle, bold, italic, fontSize);
+				this.fontParams.push(fontFace, fontAngle, bold, italic, fontSize, antialiased, chColor, edgeColor, shadowColor);
 			}
 		}
-		this.fontParams.push(antialiased, chColor, edgeColor, edgeEmphasis, edgeExtent, max, min, rubyAntialiased, rubyChColor, rubyEdgeColor, rubyShadowColor, shadowColor, shadowOffsetX, shadowOffsetY, vertical);
+		this.fontParams.push(edgeEmphasis, edgeExtent, shadowOffsetX, shadowOffsetY, vertical);
 		return this.fontParams.join("|");
 	}
 
-	function cacheCharLayerFromCh(ch, ruby=false, graph=false, italic=false, ischar=false, key=0, max=0, min=0)
+	function cacheCharLayerFromCh(ch, ruby=false, graph=false, italic=false, ischar=false, key=0, max=0, min=0, cache=true)
 	{
 		var fontParamsAsString = this.getFontParamsAsString(ruby, graph, italic, ischar, key);
 		var knownCharLayers = this.knownCharLayersByFont[fontParamsAsString];
@@ -1733,6 +1733,7 @@ class MessageLayer extends KAGLayer
 		}
 		with (this.tmpCharLayer)
 		{
+			.clear();
 			if (graph)
 			{
 				if(ischar)
@@ -1773,8 +1774,13 @@ class MessageLayer extends KAGLayer
 				}
 			}
 		}
-		knownCharLayers[ch] = createNewCharLayer();
-		knownCharLayers[ch].assignImages(this.tmpCharLayer);
+		var charlayer = createNewCharLayer();
+		charlayer.assignImages(this.tmpCharLayer);
+		if (cache)
+		{
+			knownCharLayers[ch] = charlayer;
+		}
+		return charlayer;
 	}
 
 	function cacheCharLayerFromText(text)
@@ -2539,7 +2545,7 @@ class MessageLayer extends KAGLayer
 			}
 			if (text !== "" && text !== void)
 			{
-				var fontParamsAsString = this.getFontParamsAsString(true, false, void, false, 0);
+				var fontParamsAsString = this.getFontParamsAsString(true, false, void, false, 0, max, min);
 				var knownCharLayers = this.knownCharLayersByFont[fontParamsAsString];
 				if (knownCharLayers === void)
 				{
@@ -2693,21 +2699,17 @@ class MessageLayer extends KAGLayer
 		var cw;
 		with(getCharLayer(currentLine, currentColumn, storage))
 		{
-			if (storage !== "" && storage !== void)
+			if(ischar)
 			{
-				var fontParamsAsString = this.getFontParamsAsString(false, true, void, ischar, key);
-				var knownCharLayers = this.knownCharLayersByFont[fontParamsAsString];
-				if (knownCharLayers === void)
-				{
-					this.knownCharLayersByFont[fontParamsAsString] = %[];
-					knownCharLayers = this.knownCharLayersByFont[fontParamsAsString];
-				}
-				if (knownCharLayers[storage] === void)
-				{
-					this.cacheCharLayerFromCh(storage, false, true, false, ischar, key);
-				}
-				.assignImages(knownCharLayers[storage]);
+				if(edge)
+					.drawGraphWithEdge(storage, key, chColor, edgeEmphasis, edgeColor, edgeExtent);
+				else if(shadow)
+					.drawGraphWithShadow(storage, key, chColor, shadowColor, shadowOffsetX, shadowOffsetY);
+				else
+					.drawGraph(storage, key, chColor);
 			}
+			else
+				.drawGraph(storage, key);
 
 			if(vertical)
 @if(!SCALE_USING_FLOATING_POINT)

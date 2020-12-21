@@ -805,8 +805,17 @@ function addHdMenu(displayMenu) {
 		this.notWideMenuItem.checked = true;
 	}
 
-	var fpsLimitFlag = new GameFlag(this, this.sflags, "contfreq", "0");
-	var multiThreadDrawFlag = new GameFlag(this, this.sflags, "drawthread", 1);
+@if(GAME_WOHN)
+	var fpsLimitDefault = "60";
+	var multiThreadDefault = 0;
+@endif
+@if(!GAME_WOHN)
+	var fpsLimitDefault = "60";
+	var multiThreadDefault = 1;
+@endif
+
+	var fpsLimitFlag = new GameFlag(this, this.sflags, "contfreq", fpsLimitDefault);
+	var multiThreadDrawFlag = new GameFlag(this, this.sflags, "drawthread", multiThreadDefault);
 
 	var fpsLimitCallback = function(sender)
 	{
@@ -814,14 +823,11 @@ function addHdMenu(displayMenu) {
 	};
 
 	displayMenu.add(this.fpsLimitMenuItem = new KAGMenuItem(this, __t("最大フレームレート(&M)"), 0, void, false));
+	this.fpsLimitMenuItem.afterCallback = fpsLimitCallback;
 	this.fpsLimitMenuItem.add(this.fpsLimit00MenuItem = new KAGFlagMenuItem(this, __t("制限なし(&N)"), 1, fpsLimitFlag, "0"));
-	this.fpsLimit00MenuItem.afterCallback = fpsLimitCallback;
 	this.fpsLimitMenuItem.add(this.fpsLimit60MenuItem = new KAGFlagMenuItem(this,   __t("&60フレーム/秒"),    1, fpsLimitFlag, "60"));
-	this.fpsLimit60MenuItem.afterCallback = fpsLimitCallback;
 	this.fpsLimitMenuItem.add(this.fpsLimit30MenuItem = new KAGFlagMenuItem(this,   __t("&30フレーム/秒"),    1, fpsLimitFlag, "30"));
-	this.fpsLimit30MenuItem.afterCallback = fpsLimitCallback;
 	this.fpsLimitMenuItem.add(this.fpsLimit15MenuItem = new KAGFlagMenuItem(this,   __t("&15フレーム/秒"),    1, fpsLimitFlag, "15"));
-	this.fpsLimit15MenuItem.afterCallback = fpsLimitCallback;
 
 	if (typeof(global.System.drawThreadNum) === "Integer")
 	{
@@ -832,16 +838,11 @@ function addHdMenu(displayMenu) {
 
 		displayMenu.add(this.multiThreadDrawMenuItem = new KAGMenuItem(this, __t("描画スレッド分割数(&N)"), 0, void, false));
 		this.multiThreadDrawMenuItem.add(this.multiThreadDraw1MenuItem = new KAGFlagMenuItem(this, __t("無効：スレッド分割しない(&D)"), 1, multiThreadDrawFlag, 1));
-		this.multiThreadDraw1MenuItem.afterCallback = multiThreadDrawCallback;
 		this.multiThreadDrawMenuItem.add(this.multiThreadDraw0MenuItem = new KAGFlagMenuItem(this, __t("自動：プロセッサ数で分割(&A)"), 1, multiThreadDrawFlag, 0));
-		this.multiThreadDraw0MenuItem.afterCallback = multiThreadDrawCallback;
 		this.multiThreadDrawMenuItem.add(new MenuItem(this, "-"));
 		this.multiThreadDrawMenuItem.add(this.multiThreadDraw2MenuItem = new KAGFlagMenuItem(this, __t("&2スレッド"), 1, multiThreadDrawFlag, 2));
-		this.multiThreadDraw2MenuItem.afterCallback = multiThreadDrawCallback;
 		this.multiThreadDrawMenuItem.add(this.multiThreadDraw4MenuItem = new KAGFlagMenuItem(this, __t("&4スレッド"), 1, multiThreadDrawFlag, 4));
-		this.multiThreadDraw4MenuItem.afterCallback = multiThreadDrawCallback;
 		this.multiThreadDrawMenuItem.add(this.multiThreadDraw8MenuItem = new KAGFlagMenuItem(this, __t("&8スレッド"), 1, multiThreadDrawFlag, 8));
-		this.multiThreadDraw8MenuItem.afterCallback = multiThreadDrawCallback;
 	}
 }
 

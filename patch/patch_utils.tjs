@@ -681,7 +681,10 @@ global.initial_scenario_load_ready = function()
 	}
 	else
 	{
-		kag.callResizeHook();
+		if (typeof(global.kag.callResizeHook) === "Object")
+		{
+			global.kag.callResizeHook();
+		}
 	}
 };
 

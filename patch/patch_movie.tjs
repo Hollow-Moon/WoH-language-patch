@@ -15,11 +15,10 @@ global.play_movie_resize = function(video, kag=global.kag, window=global.kag)
 			if (isNewMovieKrkrz && video.mode == vomMFEVR)
 			{
 				var videoRatio = videoSize[0] / videoSize[1];
-				var kagRatio = kag.scWidth / kag.scHeight;
 				
 				var videoBoundsWidth;
 				var videoBoundsHeight;
-				if (systemRatio > kagRatio) {
+				if (systemRatio > kag.wideRatio) {
 					videoBoundsHeight = kag.scHeight;
 					videoBoundsWidth = videoBoundsHeight * videoRatio;
 				} else {

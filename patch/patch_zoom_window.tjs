@@ -1167,24 +1167,6 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 @endif
 	}
 
-	function onMouseMove(x, y)
-	{
-@if(kirikiriz)
-		if (fullScreened) {
-			if (y > 0) {
-				if(typeof(this.menu) != "undefined")
-					menu.visible = false;
-			}
-			else if (y == 0) {
-				if(typeof(this.menu) != "undefined")
-					menu.visible = true;
-			}
-		}
-@endif
-		super.onMouseMove(...);
-	}
-
-
 @if(GAME_WOHN)
 	function onMove()
 	{

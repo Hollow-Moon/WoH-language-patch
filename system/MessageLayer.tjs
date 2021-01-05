@@ -1634,6 +1634,7 @@ class MessageLayer extends KAGLayer
 			{
 				char.name		= "in char pool";
 				char.visible	= false;
+				char.clear();
 				charPool.add(char);
 				return;
 			}
@@ -1696,7 +1697,7 @@ class MessageLayer extends KAGLayer
 			return t + charLayers[line][col].textHeight;
 	}
 
-	function getFontParamsAsString(ruby=false, graph=false, italic=false, ischar=false, key=0, max=0, min=0)
+	function getFontParamsAsString(ruby=false, graph=false, italic=false, ischar=false, key, max, min)
 	{
 		this.fontParams.clear();
 		if (graph)
@@ -1718,7 +1719,7 @@ class MessageLayer extends KAGLayer
 		return this.fontParams.join("|");
 	}
 
-	function cacheCharLayerFromCh(ch, ruby=false, graph=false, italic=false, ischar=false, key=0, max=0, min=0, cache=true)
+	function cacheCharLayerFromCh(ch, ruby=false, graph=false, italic=false, ischar=false, key, max, min, cache=true)
 	{
 		var fontParamsAsString = this.getFontParamsAsString(ruby, graph, italic, ischar, key, max, min);
 		var knownCharLayers = this.knownCharLayersByFont[fontParamsAsString];
@@ -4058,6 +4059,10 @@ class MessageLayer extends KAGLayer
 	{
 		with(getCharLayer(currentLine, currentColumn))
 		{
+			if (!.hasImage)
+			{
+				.hasImage = true;
+			}
 			.setFont(fontFace, fontAngle, bold, fontItalic, fontSize);
 			var	cw	= get_ch_width_ret_cache[0], tw = .font.getTextWidth(text), w;
 			if (return_tw_only)
@@ -4086,6 +4091,10 @@ class MessageLayer extends KAGLayer
 	{
 		with(getRubyLayer(currentLine, currentColumn))
 		{
+			if (!.hasImage)
+			{
+				.hasImage = true;
+			}
 			.setFont(fontFace, fontAngle, rubyBold, fontItalic, rubySize);
 			var	rw	= [], tw = .font.getTextWidth(text), w;
 			for(var i=0; i<text.length; i++)

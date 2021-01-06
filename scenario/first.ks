@@ -17,7 +17,7 @@
 @setmessageappearaction page=fore type=opaque timerate=3
 @setmessageappearaction page=back type=opaque timerate=3
 
-@eval exp="startArchiveWithScenario(System.getArgument('-archiveopenscenario'))" cond="System.getArgument('-archiveopenscenario')!==void"
+@eval exp="global.initial_scenario_load_ready()"
 
 *normalstart
 

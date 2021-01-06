@@ -20,9 +20,12 @@ class KAGWindow_patch_fix_savedata_by_jump_override extends KAGWindow_patch_fix_
 			
 			var save_testmode = global.testmode;
 			global.testmode = true;
+			Debug.message("KEK: " + pcflags.mainConductor.storageShortName);
 			global.open_scenario_using_scenario_tracker(this, pcflags.mainConductor.storageShortName);
 			this.set_skip(, pcflags.mainConductor.curLabel);
+@if(!GAME_WOHN)
 			this.do_immediate_skip();
+@endif
 			global.testmode = save_testmode;
 			return;
 		}

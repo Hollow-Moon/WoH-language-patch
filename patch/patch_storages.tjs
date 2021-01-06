@@ -31,6 +31,30 @@
 
 		return global.Storages.isExistentStorage_patch_storages_original(storage);
 	};
+
+	// Stub out dirlist.dll so that outdated update archives don't get loaded.
+	global.Plugins.link_patch_storages_original = global.Plugins.link;
+	global.Plugins.link = function(storage)
+	{
+		if (storage === "dirlist.dll")
+		{
+			return;
+		}
+		return global.Plugins.link_patch_storages_original(...);
+	};
+	global.Plugins.unlink_patch_storages_original = global.Plugins.unlink;
+	global.Plugins.unlink = function(storage)
+	{
+		if (storage === "dirlist.dll")
+		{
+			return;
+		}
+		return global.Plugins.unlink_patch_storages_original(...);
+	};
+	global.getDirList = function(directory)
+	{
+		return [];
+	};
 }
 
 {

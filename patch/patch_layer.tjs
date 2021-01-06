@@ -262,8 +262,15 @@ class Window_patch_layer_override extends Window_patch_layer_original
 @if(kirikiriz)
 	function onMouseMove(x, y)
 	{
-		if (fullScreened) {
-			var h = systemRatio >= this.wideRatio? System.screenHeight : System.screenWidth*(1/this.wideRatio);
+		if (typeof this.fullScreened !== "undefined" && fullScreened) {
+			var systemRatio = System.screenWidth / System.screenHeight;
+@if(HD_MODE)
+			var wideRatio = this.wideRatio;
+@endif
+@if(!HD_MODE)
+			var wideRatio = 4/3;
+@endif
+			var h = systemRatio >= wideRatio? System.screenHeight : System.screenWidth*(1/wideRatio);
 			var screenTop = Math.ceil((h-System.screenHeight)/2);
 			
 			if (y > screenTop) {

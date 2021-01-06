@@ -127,29 +127,35 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 	var word_lines_scenario_changed = false;
 	function onConductorScenarioLoad()
 	{
-		this.words.clear();
+		if (this.conductor === this.mainConductor)
+		{
+			this.words.clear();
 @if(0)
-		this.inQuotes = 0;
+			this.inQuotes = 0;
 @endif
-		this.word_lines_scenario_changed = true;
+			this.word_lines_scenario_changed = true;
+		}
 		return super.onConductorScenarioLoad(...);
 	}
 
 	function onConductorScenarioLoaded()
 	{
-		if ((this.word_lines_scenario_changed) && (this.word_lines_space.count !== 0 || this.word_lines_chinese.count !== 0))
+		if ((this.conductor === this.mainConductor) && (this.word_lines_space.count !== 0 || this.word_lines_chinese.count !== 0))
 		{
-			this.word_lines_scenario_changed = false;
-			this.clearMessageLayers();
-@if(GAME_WOHN)
-			if ((typeof(this.current) === "Object" && !isvalid(this.current)) || (typeof(this.current) === "void"))
+			if ((typeof(this.current) === "Object" && !isvalid(this.current)) || (typeof(this.current) !== "Object") || (this.fore.messages.count === 0))
 			{
 				this.allocateMessageLayers(1);
 				global.reload_messagelayer_config(this);
 			}
-@endif
-			this.generate_word_wrapping_list(this.conductor);
+			this.setMessageLayerUserFont();
+			this.clearMessageLayers();
+			if (this.word_lines_scenario_changed || this.check_word_length_cache())
+			{
+				this.word_lines_scenario_changed = false;
+				this.generate_word_wrapping_list(this.conductor);
+			}
 		}
+
 		return super.onConductorScenarioLoaded(...);
 	}
 
@@ -167,6 +173,11 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 		if (is_japanese)
 		{
 			// Don't bother doing the wordwrap calculations since we won't be using them
+			return;
+		}
+		if (this.conductor === this.extraConductor)
+		{
+			// We don't do wordwrap on the extra conductor
 			return;
 		}
 
@@ -231,13 +242,23 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 @endif
 	var empty_line = [];
 
-	function onConductorScenarioPreLoad(joined_cleaned_lines)
+	function onConductorScenarioPreLoad(joined_cleaned_lines, conductor)
 	{
 		this.word_lines_space.clear();
 		this.word_lines_chinese.clear();
 		if (typeof(global.kag) !== "Object")
 		{
 			// We haven't finished initialization yet
+			return;
+		}
+		if (conductor === this.extraConductor)
+		{
+			// We don't do wordwrap on the extra conductor
+			return;
+		}
+		if (conductor.callStackDepth === 0)
+		{
+			// We are still at the initialization stage
 			return;
 		}
 		if (isJapanese())
@@ -252,7 +273,7 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 		}
 		var empty_line = this.empty_line;
 		var empty_word = this.empty_word;
-		var cleaned_lines = this.conductor.cleaned_lines;
+		var cleaned_lines = conductor.cleaned_lines;
 		var word_lines_needed = this.word_lines_needed;
 		for (var i = 0; i < cleaned_lines.count; i += 1)
 		{
@@ -335,7 +356,16 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 		}
 	}
 
-	function generate_word_wrapping_list(conductor)
+	function get_hlf()
+	{
+		if (typeof(this.historyLayer) === "Object")
+		{
+			return this.historyLayer.font;
+		}
+		return void;
+	}
+
+	function get_mlf()
 	{
 		var ml_charlayer = void;
 		var invalidate_wordcache = false;
@@ -345,7 +375,6 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 			ml_charlayer = ml.tmpCharLayer;
 			ml_charlayer.setFont(ml.fontFace, ml.fontAngle, ml.bold, ml.fontItalic, ml.fontSize);
 		}
-		var hlf = this.historyLayer.font;
 		var mlf = void;
 		if (typeof(this.current.lineLayer) === "Object")
 		{
@@ -359,6 +388,17 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 			}
 			mlf = ml_charlayer.font;
 		}
+		return mlf;
+	}
+
+	function check_word_length_cache(hlf=this.get_hlf(), mlf=this.get_mlf(), process=false)
+	{
+		var invalidate_wordcache = false;
+		if (hlf === void || mlf === void)
+		{
+			return invalidate_wordcache;
+		}
+		var word_length_test_str = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 @if(WORDWRAP_BOLDITALIC_MODIFIER)
 		var hlf_gtw = hlf.getTextWidth;
 		var mlf_gtw = mlf.getTextWidth;
@@ -370,35 +410,44 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 		hlf.italic = false;
 		mlf.bold = false;
 		mlf.italic = false;
-		var word_length_test_str = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 		var word_length_test_hl = hlf_gtw(word_length_test_str);
 		var word_length_test_ml = mlf_gtw(word_length_test_str);
 		if (word_length_test_hl !== word_length_test[0] || word_length_test_ml !== word_length_test[1])
 		{
 			invalidate_wordcache = true;
-			var word_length_cache_arr = [];
-			word_length_cache_arr.assign(this.word_length_cache);
-			for (var i = 0; i < word_length_cache_arr.count; i += 2)
+			if (process)
 			{
-				var word_tag = word_length_cache_arr[i + 1];
-@if(!WORDWRAP_BOLDITALIC_MODIFIER)
-				var lengths = this.getLengthsForString(word_tag.text, hlf, mlf);
-				word_tag.hllength = lengths[0];
-				word_tag.mllength = lengths[1];
-@endif
-@if(WORDWRAP_BOLDITALIC_MODIFIER)
-				needed_lengths[word_tag.text] = word_tag;
-@endif
+				word_length_test[0] = word_length_test_hl;
+				word_length_test[1] = word_length_test_ml;
 			}
-			word_length_test[0] = word_length_test_hl;
-			word_length_test[1] = word_length_test_ml;
 		}
+		hlf.bold = save_bold_hlf;
+		hlf.italic = save_italic_hlf;
+		mlf.bold = save_bold_mlf;
+		mlf.italic = save_italic_mlf;
 @endif
 @if(!WORDWRAP_BOLDITALIC_MODIFIER)
-		var word_length_test_cur = this.getLengthsForString("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz", hlf, mlf);
+		var word_length_test_cur = this.getLengthsForString(word_length_test_str, hlf, mlf);
 		if (word_length_test_cur[0] !== word_length_test[0] || word_length_test_cur[1] !== word_length_test[1])
 		{
 			invalidate_wordcache = true;
+			if (process)
+			{
+				word_length_test.assign(word_length_test_cur);
+			}
+		}
+@endif
+		return invalidate_wordcache;
+	}
+
+	function generate_word_wrapping_list(conductor)
+	{
+		var hlf = this.get_hlf();
+		var mlf = this.get_mlf();
+		var invalidate_wordcache = this.check_word_length_cache(hlf, mlf, true);
+
+		if (invalidate_wordcache)
+		{
 			var word_length_cache_arr = [];
 			word_length_cache_arr.assign(this.word_length_cache);
 			for (var i = 0; i < word_length_cache_arr.count; i += 2)
@@ -413,9 +462,8 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 				needed_lengths[word_tag.text] = word_tag;
 @endif
 			}
-			word_length_test.assign(word_length_test_cur);
 		}
-@endif
+
 @if(WORDWRAP_BOLDITALIC_MODIFIER)
 		var needed_lengths = %[];
 @endif
@@ -778,7 +826,7 @@ global.KAGWindow = KAGWindow_patch_wordwrap_override;
 // Words longer than one line break at the first character that is over the limit.
 // If maxlines is reached, the rest of the string is returned in the last line regardless of length.
 // Note: Breaking on characters other than space (e.g. tab, hyphen) is not supported.
-function wordWrapSplit(text, maxWidth, font, offset=0, maxLines=0, directiveCharacters="")
+function wordWrapSplit(text, maxWidth, font, offset=0, maxLines=0, directiveCharacters="", delimiter=" ", delimiterOnNewLine=false)
 {
 	var directiveCharactersRegex = directiveCharacters != ""? new RegExp("["+directiveCharacters+"]", "g") : void;
 
@@ -789,27 +837,29 @@ function wordWrapSplit(text, maxWidth, font, offset=0, maxLines=0, directiveChar
 	}
 
 	var out = [];
-	var words = [].split(" ", text);
+	var words = [].split(delimiter, text);
 
 	var tmp = "";
 	for (var i = 0; i < words.count; i++)
 	{
-		var space = i != 0 ? " " : "";
+		var space = i != 0 ? delimiter : "";
 		var word = space + words[i];
 		var textToTest = directiveCharactersRegex === void? (tmp+word) : (tmp+word).replace(directiveCharactersRegex, "");
 		if (font.getTextWidth(textToTest)+offset < maxWidth) {
 			tmp += word;
 		} else {
-			out.add(tmp);
+			if (tmp != "") {
+				out.add(tmp);
+			}
 
-			if (out.count == maxLines) {
+			if (out.count == maxLines && maxLines > 0) {
 				for (var j = i; j < words.count; j++) {
 					out[out.count-1] += space + words[j];
 				}
 				return out;
 			} else {
 				offset = 0;
-				tmp = words[i]; //No need to add space here.
+				tmp = delimiterOnNewLine? delimiter + words[i] : words[i];
 			}
 		}
 	}
@@ -829,6 +879,16 @@ function wordWrapSplitLines(lines, maxWidth, font, offset=0, maxLines=0)
 		for (var j=0; j<sublines.count; j++) {
 			out.add(sublines[j]);
 		}
+	}
+	if (sf.language == japaneseLanguage) {
+		var out2 = [];
+		for (var i=0; i<out.count; i++) {
+			var sublines = wordWrapSplit(out[i], maxWidth, font, offset, maxLines,, "・", true);
+			for (var j=0; j<sublines.count; j++) {
+				out2.add(sublines[j]);
+			}
+		}
+		return out2;
 	}
 	return out;
 }

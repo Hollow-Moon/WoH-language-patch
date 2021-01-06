@@ -1,0 +1,33 @@
+﻿
+global.KAGWindow_patch_fix_savedata_by_jump_original = KAGWindow;
+class KAGWindow_patch_fix_savedata_by_jump_override extends KAGWindow_patch_fix_savedata_by_jump_original
+{
+	function KAGWindow_patch_fix_savedata_by_jump_override()
+	{
+		super.KAGWindow(...);
+	}
+
+	function KAGWindow()
+	{
+		KAGWindow_patch_fix_savedata_by_jump_override(...);
+	}
+
+	function restoreFlags()
+	{
+		if (this.sflags.savedataRepair)
+		{
+			(Dictionary.assignStruct incontextof flags)(pflags);
+			
+			var save_testmode = global.testmode;
+			global.testmode = true;
+			global.open_scenario_using_scenario_tracker(this, pcflags.mainConductor.storageShortName);
+			this.set_skip(, pcflags.mainConductor.curLabel);
+			this.do_immediate_skip();
+			global.testmode = save_testmode;
+			return;
+		}
+		return super.restoreFlags();
+	}
+
+}
+global.KAGWindow = global.KAGWindow_patch_fix_savedata_by_jump_override;

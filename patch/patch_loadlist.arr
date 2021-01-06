@@ -1,6 +1,7 @@
 ﻿[
 	["System.setArgument('-graphicsystem', 'drawdevice');", , [["System.setArgument", , "==="]]],
 	"patch_kirikiroid.tjs",
+	"patch_kirikirisdl2.tjs",
 	"patch_storages.tjs",
 	[,,,,, "initial native plugins"],
 	["cxdec.dll", ,, true, "GAME_FHAT"],
@@ -130,6 +131,7 @@
 	["patch_movie_override.tjs", ,,, "!GAME_WOHN"],
 	["patch_zoom_window.tjs", ,,, "ZOOM_WINDOW"],
 	["patch_fix_call_stack.tjs", ,,, "GAME_FATE||GAME_FHAT"],
+	["patch_fix_savedata_by_jump.tjs", ,,, "GAME_FATE||GAME_FHAT"],
 	"patch_align.tjs",
 	"patch_skip.tjs",
 	"patch_kagparser_ignore_call_stack_underflow.tjs",

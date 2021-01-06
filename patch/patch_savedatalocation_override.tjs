@@ -1,10 +1,11 @@
 ﻿
 global.test_write_in_directory = function(test_directory)
 {
-	if (typeof(global.KirikiriSDL2Internal) === "Object")
+@if(KIRIKIROID||KIRIKIRISDL2)
 	{
 		return true;
 	}
+@endif
 	var test_file_contents = [("This test file can safely be deleted. Timestamp: %s").sprintf(System.getTickCount())];
 	var test_file_path = test_directory + "/savechek.ksc";
 	try

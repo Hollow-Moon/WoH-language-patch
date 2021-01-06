@@ -647,11 +647,13 @@ function addMovieMenu(patchMenu) {
 function addOptionsMenu(patchMenu) {
 	var historyTitleFlag = new GameFlag(this, this.sflags, "historyTitle", false);
 	var showLogoFlag = new GameFlag(this, this.sflags, "showLogo", true);
+	var savedataRepairFlag = new GameFlag(this, this.sflags, "savedataRepair", false);
 
 	patchMenu.add(this.patchOptionsMenuItem = new KAGMenuItem(this, __t("設定(&O)"), 0, void, false));
 	patchOptionsMenuItem.add(this.historyTitleMenuItem = new KAGFlagMenuItem(this, __t("メッセージ歴史でシーンのタイトルを表示する(&H)"),, historyTitleFlag));
 	patchOptionsMenuItem.add(this.engineConfigurationItem = new KAGMenuItem(this, __t("エンジン構成ダイアログを開く"), 1, function() { global.showEngineConfigureDialog(); },false));
 	patchOptionsMenuItem.add(this.showLogoMenuItem = new KAGFlagMenuItem(this, __t("起動時にTYPE-MOONロゴを表示"),, showLogoFlag));
+	patchOptionsMenuItem.add(this.savedataRepairMenuItem = new KAGFlagMenuItem(this, __t("修復保存データモードを有効にする"),, savedataRepairFlag));
 
 	(addOptionsMenuItems incontextof this)(patchOptionsMenuItem);
 }
@@ -817,21 +819,56 @@ function addHdMenu(displayMenu) {
 	var fpsLimitFlag = new GameFlag(this, this.sflags, "contfreq", fpsLimitDefault);
 	var multiThreadDrawFlag = new GameFlag(this, this.sflags, "drawthread", multiThreadDefault);
 
+	// Work around null pointer dereference when attempting to use Window.waitVSync on dev_multi_platform version of Kirikiri Z.
+	var fpsLimitBeforeCallback = function(sender)
+	{
+		if (sender === sender.owner.fpsLimitVsyncMenuItem)
+		{
+			if (typeof(global.Canvas) === "Object")
+			{
+				return false;
+			}
+		}
+		return true;
+	};
+
 	var fpsLimitCallback = function(sender)
 	{
-		global.System.setArgument("-contfreq", sender.flag.value);
+		if (sender.flag.value === "-1")
+		{
+			if (typeof(global.Canvas) !== "Object")
+			{
+				sender.owner.waitVSync = true;
+			}
+			global.System.setArgument("-contfreq", "0");
+		}
+		else
+		{
+			if (typeof(global.Canvas) !== "Object")
+			{
+				sender.owner.waitVSync = false;
+			}
+			global.System.setArgument("-contfreq", sender.flag.value);
+		}
 	};
 
 	displayMenu.add(this.fpsLimitMenuItem = new KAGMenuItem(this, __t("最大フレームレート(&M)"), 0, void, false));
+	this.fpsLimitMenuItem.add(this.fpsLimitVsyncMenuItem = new KAGFlagMenuItem(this, __t("垂直同期待ち(&V)"), 1, fpsLimitFlag, "-1"));
 	this.fpsLimitMenuItem.add(this.fpsLimit00MenuItem = new KAGFlagMenuItem(this, __t("制限なし(&N)"), 1, fpsLimitFlag, "0"));
 	this.fpsLimitMenuItem.add(this.fpsLimit60MenuItem = new KAGFlagMenuItem(this,   __t("&60フレーム/秒"),    1, fpsLimitFlag, "60"));
 	this.fpsLimitMenuItem.add(this.fpsLimit30MenuItem = new KAGFlagMenuItem(this,   __t("&30フレーム/秒"),    1, fpsLimitFlag, "30"));
 	this.fpsLimitMenuItem.add(this.fpsLimit15MenuItem = new KAGFlagMenuItem(this,   __t("&15フレーム/秒"),    1, fpsLimitFlag, "15"));
+	this.fpsLimitVsyncMenuItem.afterCallback = fpsLimitCallback;
 	this.fpsLimit00MenuItem.afterCallback = fpsLimitCallback;
 	this.fpsLimit60MenuItem.afterCallback = fpsLimitCallback;
 	this.fpsLimit30MenuItem.afterCallback = fpsLimitCallback;
 	this.fpsLimit15MenuItem.afterCallback = fpsLimitCallback;
-	fpsLimitCallback(this.fpsLimit00MenuItem);
+	this.fpsLimitVsyncMenuItem.beforeCallback = fpsLimitBeforeCallback;
+	this.fpsLimit00MenuItem.beforeCallback = fpsLimitBeforeCallback;
+	this.fpsLimit60MenuItem.beforeCallback = fpsLimitBeforeCallback;
+	this.fpsLimit30MenuItem.beforeCallback = fpsLimitBeforeCallback;
+	this.fpsLimit15MenuItem.beforeCallback = fpsLimitBeforeCallback;
+	fpsLimitCallback(this.fpsLimitVsyncMenuItem);
 
 	if (typeof(global.System.drawThreadNum) === "Integer")
 	{

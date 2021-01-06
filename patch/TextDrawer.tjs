@@ -153,6 +153,13 @@ class TextDrawer
 	}
 
 	function drawVoiceName(layer, storage, settings) {
+		if (sf.language == japaneseLanguage) {
+			if (storage == "voicename_イリヤ") {
+				settings.text.fontHeight = 15;
+			} else {
+				settings.text.fontHeight = 20; // should be the same as the settings in VoiceConfigLayer.tjs
+			}
+		}
 		drawCenteredEntry(layer, storage, settings);
 	}
 
@@ -260,6 +267,13 @@ class TextDrawer
 	}
 
 	function drawId(layer, storage) {
+		if (sf.language == japaneseLanguage) {
+			if (storage == "ss_マスターイリヤ") {
+				idSettings.text.fontHeight = 15;
+			} else {
+				idSettings.text.fontHeight = 18; // should be same as idSettings in TextDrawerSettings.tjs
+			}
+		}
 		drawCenteredEntry(layer, storage, idSettings);
 	}
 

@@ -35,7 +35,6 @@ var cubicRatio = 4/3;
 var cubicRatio = 16/9;
 @endif
 var standardWideRatio = 16/9;
-var systemRatio = System.screenWidth / System.screenHeight;
 
 var hdFolderSuffix = "-hd";
 
@@ -59,6 +58,7 @@ var wideRatioFlagName = "wideRatio";
 
 var devHdImageFolders = ["BGImageHD", "FGImageHD", "ImageHD", "ImagesClassicHD", "ImagesConfigHD", "ImagesMobile", "ImagesPatchHD", "ImagesPS2HD", "ImagesTitleHD", "ImagesTrialHD", "ImagesHanafudaHD", "RuleHD", "Image_transparentHDcolor"];
 
+property systemRatio { getter { return System.screenWidth / System.screenHeight; } }
 property hdPatchExists { getter { return patchExists(hdPatchName); } }
 
 property inverseScaleFactor { getter() { return 1/scaleFactor; } }
@@ -161,10 +161,11 @@ function onQualityMenuItemClick(sender, quality) {
 	with (sender.owner) {
 		var changed = false;
 		if (quality == "low" && .isHd) {
-			if (typeof(global.KirikiriSDL2Internal) !== "Object")
+@if(!KIRIKIROID&&!KIRIKIRISDL2)
 			{
 				global.full_game_reload("-enablehd=false");
 			}
+@endif
 			.extraConductor.clear();
 			.lineBreak.loadedImage = null;
 			.pageBreak.loadedImage = null;
@@ -173,10 +174,11 @@ function onQualityMenuItemClick(sender, quality) {
 			changed = true;
 			sender.checked = true;
 		} else if (quality == "high" && !.isHd) {
-			if (typeof(global.KirikiriSDL2Internal) !== "Object")
+@if(!KIRIKIROID&&!KIRIKIRISDL2)
 			{
 				global.full_game_reload("-enablehd=true");
 			}
+@endif
 			.extraConductor.clear();
 			.lineBreak.loadedImage = null;
 			.pageBreak.loadedImage = null;
@@ -201,10 +203,11 @@ function onWideMenuItemClick(sender, ratio, cropped=false) {
 	
 	if (ratio !== void && !floatEquals(ratio, sender.owner.wideRatio))
 	{
-		if (typeof(global.KirikiriSDL2Internal) !== "Object")
+@if(!KIRIKIROID&&!KIRIKIRISDL2)
 		{
 			global.full_game_reload("-wideratio=" + global.real_to_hex_string(ratio));
 		}
+@endif
 		with (sender.owner) {
 			.extraConductor.clear();
 			.saveBookMark(1000, true);

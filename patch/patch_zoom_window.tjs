@@ -1095,7 +1095,10 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 		}
 	}
 	function onMoveSizeEnd() {
-		if(_onResizeProcess)
+@if(GAME_WOHN)
+		limitSize();
+@endif
+		if(_resizeSnapshot !== void)
 			setZoom(innerWidth, pxWidth);
 //		dm("onResizeEnd/zoomed", innerWidth, innerHeight);
 		callHook("onMoveSizeEndHook", this, _resizeSnapshot);

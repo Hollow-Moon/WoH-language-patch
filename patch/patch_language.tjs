@@ -242,8 +242,8 @@ function saveFontWithLanguage(kag=global.kag)
 	}
 }
 
+var chara2displaynamefile = "chara2displayname.dic";
 var chara2displayname = %[];
-var voicesNames = %[];
 var imagesFolderName = "images";
 var subbedVideosFlagName = "subbedVideos";
 var videosFolderName = "videos";
@@ -509,10 +509,8 @@ function load_language_patch(language, kag) {
 	loadLanguageDict(language);
 	load_fonts(language);
 
-	var chara2displayname_dic_path = find_file_in_language_paths("chara2displayname.dic", language);
+	var chara2displayname_dic_path = find_file_in_language_paths(chara2displaynamefile, language);
 	chara2displayname = (typeof(chara2displayname_dic_path) === "String") ? Scripts.evalStorage(chara2displayname_dic_path) : %[];
-	var voice_names_dic_path = find_file_in_language_paths("voice-names.dic", language);
-	voicesNames = (typeof(voice_names_dic_path) === "String") ? Scripts.evalStorage(voice_names_dic_path): %[];
 	if (language == japaneseLanguage) {
 		japaneseLanguageLoaded = true;
 	}
@@ -566,7 +564,6 @@ function unload_language_patch(language, kag) {
 	}
 
 	chara2displayname = %[];
-	voicesNames = %[];
 }
 
 function loadLanguageSettings() {

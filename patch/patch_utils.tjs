@@ -476,13 +476,139 @@ global.prologue_storage_arr = [
 	"プロローグ2日目.ks",
 	"プロローグ3日目.ks",
 ];
-global.prologue_title_arr = [
-	void,
-	"2日前 - プロローグ",
-	"1日前 - プロローグ",
-	"当日 - プロローグ",
-];
 @endif
+
+global.open_scenario_using_scenario_tracker = function(kag=global.kag, scenario, flowchart_id=0, flowchart_name=void)
+{
+@if(GAME_WOHN)
+	global.startArchiveWithScenario(scenario);
+@endif
+@if(GAME_FATE||GAME_FHAT)
+	kag.askOnClose = true;
+	kag.setHistoryOptions(%[enabled:true]);
+	flowchart_id |= 0;
+@if(GAME_FATE)
+	if (flowchart_name !== "prologue" && scenario !== void)
+	{
+		for (var i = 0; i < global.prologue_storage_arr.count; i += 1)
+		{
+			if (global.prologue_storage_arr[i] === scenario)
+			{
+				flowchart_name = "prologue";
+				break;
+			}
+		}
+	}
+
+	if (flowchart_name === "prologue")
+	{
+		if (scenario !== void)
+		{
+			for (var i = 0; i < global.prologue_storage_arr.count; i += 1)
+			{
+				if (scenario === global.prologue_storage_arr[i])
+				{
+					flowchart_id = i;
+					break;
+				}
+			}
+		}
+	}
+	else
+@endif
+	{
+		if (flowchart_name === void && scenario !== void)
+		{
+			// Figure out the flowchart name by the scenario name
+			// The scenario name is formatted as follows: AAA-12.ks
+			// where AAA is the flowchart name and 12 is the flowchart ID
+			if (scenario.substr(scenario.length - 3, 3) !== ".ks")
+			{
+				throw new Exception("Passed in scenario does not have KAG scenario file extension");
+			}
+			var flowchart_id_len = 0;
+			if (scenario.substr(scenario.length - 6, 1) === "-")
+			{
+				flowchart_id_len = 2;
+			}
+			else if (scenario.substr(scenario.length - 7, 1) === "-")
+			{
+				flowchart_id_len = 3;
+			}
+			if (flowchart_id_len === 0)
+			{
+				throw new Exception("Passed in scenario does not have a dash in it");
+			}
+			flowchart_id |= scenario.substr(scenario.length - 3 - flowchart_id_len, flowchart_id_len);
+			flowchart_name = scenario.substr(0, scenario.length - 3 - flowchart_id_len - 1);
+		}
+	}
+	global.flow_tracker_object.init(flowchart_name, flowchart_id);
+	if (typeof(global.flow_tracker_object.flow) === "Object" && scenario !== void)
+	{
+		var flow = global.flow_tracker_object.flow;
+@if(GAME_FHAT)
+		var flowchart = void;
+		if (typeof(global.flow_tracker_object.flowchart) === "Object")
+		{
+			flowchart = global.flow_tracker_object.flowchart;
+		}
+@endif
+		var new_id = 0;
+		for (var i = 0; i < flow.count; i += 1)
+		{
+			if (typeof(flow[i]) !== "Object")
+			{
+				continue;
+			}
+			if (typeof(flow[i].type) !== "String")
+			{
+				continue;
+			}
+			var t = flow[i].type;
+			if (t === "SCENE" || t === "SELECTER")
+			{
+				var file = void;
+@if(GAME_FHAT)
+				if (flowchart !== void)
+				{
+					file = flowchart.getScriptFilename(i);
+				}
+@endif
+@if(GAME_FATE)
+				if (typeof(global.flow_tracker_object.flowfile) === "String")
+				{
+					file = global.flow_tracker_object.getScenarioFileNameFromFcf(global.flow_tracker_object.flowfile, i);
+				}
+@endif
+				if (scenario === file)
+				{
+					new_id = i;
+					break;
+				}
+			}
+		}
+		if (new_id !== 0)
+		{
+			global.flow_tracker_object.init(flowchart_name, new_id);
+		}
+	}
+	if (!global.flow_tracker_object.isPlayOK())
+	{
+		throw new Exception("Flowchart passed in is invalid");
+	}
+@if(GAME_FATE)
+	global.setSystemMode("scenario");
+	if (kag.flags.layer_image === void)
+	{
+		kag.flags.layer_image = %[];
+	}
+	kag.flags.layer_image["base"] = "";
+	kag.enabledAutoMode = true;
+@endif
+	kag.process("flowtrackerplugin.ks", "*moveToAnotherScene");
+@endif
+};
 
 global.initial_scenario_load_ready = function()
 {
@@ -509,143 +635,13 @@ global.initial_scenario_load_ready = function()
 @if(GAME_WOHN)
 	else if (System.getArgument("-archiveopenscenario") !== void)
 	{
-		startArchiveWithScenario(System.getArgument("-archiveopenscenario"));
+		global.open_scenario_using_scenario_tracker(global.kag, System.getArgument("-archiveopenscenario"));
 	}
 @endif
 @if(GAME_FATE||GAME_FHAT)
 	else if (System.getArgument("-flowchartopen") !== void || System.getArgument("-flowchartopenbyscenario") !== void)
 	{
-		global.kag.askOnClose = true;
-		global.kag.setHistoryOptions(%[enabled:true]);
-		var flowchart_name = System.getArgument("-flowchartopen");
-		var flowchart_id = 0;
-		if (System.getArgument("-flowchartopenbyid") !== void)
-		{
-			flowchart_id |= System.getArgument("-flowchartopenbyid");
-		}
-@if(GAME_FATE)
-		var is_prologue_flowchart = flowchart_name === "prologue";
-		if ((!is_prologue_flowchart) && System.getArgument("-flowchartopenbyscenario") !== void)
-		{
-			var test_filename = System.getArgument("-flowchartopenbyscenario");
-			for (var i = 0; i < global.prologue_storage_arr.count; i += 1)
-			{
-				if (global.prologue_storage_arr[i] === test_filename)
-				{
-					is_prologue_flowchart = true;
-					break;
-				}
-			}
-		}
-		if (!is_prologue_flowchart)
-@endif
-		{
-			if (flowchart_name === void && System.getArgument("-flowchartopenbyscenario") !== void)
-			{
-				var filename = System.getArgument("-flowchartopenbyscenario");
-				// Figure out the flowchart name by the scenario name
-				// The scenario name is formatted as follows: AAA-12.ks
-				// where AAA is the flowchart name and 12 is the flowchart ID
-				if (filename.substr(filename.length - 3, 3) !== ".ks")
-				{
-					throw new Exception("Passed in scenario does not have KAG scenario file extension");
-				}
-				var flowchart_id_len = 0;
-				if (filename.substr(filename.length - 6, 1) === "-")
-				{
-					flowchart_id_len = 2;
-				}
-				else if (filename.substr(filename.length - 7, 1) === "-")
-				{
-					flowchart_id_len = 3;
-				}
-				if (flowchart_id_len === 0)
-				{
-					throw new Exception("Passed in scenario does not have a dash in it");
-				}
-				flowchart_id |= filename.substr(filename.length - 3 - flowchart_id_len, flowchart_id_len);
-				flowchart_name = filename.substr(0, filename.length - 3 - flowchart_id_len - 1);
-			}
-			global.flow_tracker_object.init(flowchart_name, flowchart_id);
-			if (typeof(global.flow_tracker_object.flow) === "Object" && System.getArgument("-flowchartopenbyscenario") !== void)
-			{
-				var flow = global.flow_tracker_object.flow;
-@if(GAME_FHAT)
-				var flowchart = void;
-				if (typeof(global.flow_tracker_object.flowchart) === "Object")
-				{
-					flowchart = global.flow_tracker_object.flowchart;
-				}
-@endif
-				var new_id = 0;
-				for (var i = 0; i < flow.count; i += 1)
-				{
-					if (typeof(flow[i]) !== "Object")
-					{
-						continue;
-					}
-					if (typeof(flow[i].type) !== "String")
-					{
-						continue;
-					}
-					var t = flow[i].type;
-					if (t === "SCENE" || t === "SELECTER")
-					{
-						var file = void;
-@if(GAME_FHAT)
-						if (flowchart !== void)
-						{
-							file = flowchart.getScriptFilename(i);
-						}
-@endif
-@if(GAME_FATE)
-						if (typeof(global.flow_tracker_object.flowfile) === "String")
-						{
-							file = global.flow_tracker_object.getScenarioFileNameFromFcf(global.flow_tracker_object.flowfile, i);
-						}
-@endif
-						if (System.getArgument("-flowchartopenbyscenario") === file)
-						{
-							new_id = i;
-							break;
-						}
-					}
-				}
-				if (new_id !== 0)
-				{
-					global.flow_tracker_object.init(flowchart_name, new_id);
-				}
-			}
-			if (!global.flow_tracker_object.isPlayOK())
-			{
-				throw new Exception("Flowchart passed in is invalid");
-			}
-		}
-@if(GAME_FATE)
-		if (is_prologue_flowchart)
-		{
-			// Special case for prologue, since it isn't implemented in a "proper" way.
-
-			if (System.getArgument("-flowchartopenbyscenario") !== void)
-			{
-				for (var i = 0; i < global.prologue_storage_arr.count; i += 1)
-				{
-					if (System.getArgument("-flowchartopenbyscenario") === global.prologue_storage_arr[i])
-					{
-						flowchart_id = i;
-						break;
-					}
-				}
-			}
-			global.flow_tracker_object.init("prologue", flowchart_id);
-			if (global.prologue_title_arr[flowchart_id] !== void)
-			{
-				global.f.scripttitle = __(global.prologue_title_arr[flowchart_id]);
-			}
-			global.flow_tracker_object.scriptfile = global.prologue_storage_arr[flowchart_id];
-		}
-@endif
-		global.kag.process("flowtrackerplugin.ks", "*sceneplay");
+		global.open_scenario_using_scenario_tracker(global.kag, System.getArgument("-flowchartopenbyscenario"), System.getArgument("-flowchartopenbyid"), System.getArgument("-flowchartopen"));
 	}
 @endif
 	if (System.getArgument("-fullscreen") !== void)
@@ -705,6 +701,7 @@ global.full_game_reload = function(extra_args*)
 	args_arr.add("-readencoding=Shift_JIS");
 	if (typeof(global.CurrentTicketNo) === "Integer")
 	{
+		global.saveTicketFile();
 		args_arr.add("-loadticketatindex=" + CurrentTicketNo);
 	}
 @endif
@@ -714,6 +711,7 @@ global.full_game_reload = function(extra_args*)
 	{
 		args_arr.add(extra_args[i]);
 	}
+	global.kag.saveSystemVariables();
 	global.build_exec_command_line(global.System.exeName, args_arr);
 	// Possible savedata mutex race condition?
 	global.System.exit();

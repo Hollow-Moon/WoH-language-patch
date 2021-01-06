@@ -1638,6 +1638,20 @@ function CFcloseShortcut(closeall=false)
 function setConfigToDefault()
 {
 	dm("setConfigToDefault()");
+	if (typeof(global.kag.current) === "Object")
+	{
+		with (global.kag.current.configValues)
+		{
+			kag.chDefaultFace = .userFace;
+			kag.chDefaultBold = .defaultBold;
+			kag.chDefaultRubyBold = .defaultRubyBold;
+
+			tf.chDefaultFace = .userFace;
+			tf.chDefaultBold = .defaultBold;
+			tf.chDefaultRubyBold = .defaultRubyBold;
+		}
+	}
+
 
 	//	推奨設定に戻す
 	with(RecommendedSettings)

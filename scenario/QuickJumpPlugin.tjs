@@ -245,7 +245,10 @@ class QuickJumpPlugin extends KAGPlugin
 				pflags.scripttitle = pname;
 
 			// データを元に、栞をたどる動作をする
+			var savedatarepair_save = this.sflags.savedataRepair;
+			this.sflags.savedataRepair = true;
 			restoreFlags();
+			this.sflags.savedataRepair = savedatarepair_save;
 
 			//表示中ページがずれるので１ページ減らす
 			var hist = historyLayer;

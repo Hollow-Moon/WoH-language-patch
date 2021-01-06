@@ -625,6 +625,7 @@ class MessageLayer extends KAGLayer
 				.defaultBold = defaultBold;
 				.defaultRubySize = defaultRubySize;
 				.defaultRubyOffset = defaultRubyOffset;
+				.defaultRubyBold = defaultRubyBold;
 				.defaultAntialiased = defaultAntialiased;
 				.defaultShadowColor = defaultShadowColor;
 				.defaultEdgeColor = defaultEdgeColor;
@@ -4464,7 +4465,6 @@ class MessageLayer extends KAGLayer
 		rubyEdgeColor = src.rubyEdgeColor;
 		defaultRubyBold = src.defaultRubyBold;
 		rubyBold = src.rubyBold;
-		defaultRubyBold = src.defaultRubyBold;
 		rubyChColor = src.rubyChColor;
 		rubyAntialiased = src.rubyAntialiased;
 		currentRubyPosition = src.currentRubyPosition;
@@ -4606,7 +4606,7 @@ class MessageLayer extends KAGLayer
 			delete .defaultLineSize		if .defaultLineSize == 0;		//Configには無い値
 			//defaultRubySize			必ず保存する
 			delete .defaultRubyOffset	if .defaultRubyOffset == configValues.defaultRubyOffset;
-			//defaultRubyBold			必ず保存する
+			delete .defaultRubyBold		if .defaultRubyBold == configValues.defaultRubyBold;
 			delete .defaultLineSpacing	if .defaultLineSpacing == configValues.defaultLineSpacing;
 			delete .defaultPitch		if .defaultPitch == configValues.defaultPitch;
 			delete .defaultShadow		if .defaultShadow == configValues.defaultShadow;
@@ -4666,6 +4666,7 @@ class MessageLayer extends KAGLayer
 			.marginRCh = configValues.marginRCh						if .marginRCh === void;
 			.defaultLineSize = 0									if .defaultLineSize === void;		//Configには無い値
 			.defaultRubyOffset = configValues.defaultRubyOffset		if .defaultRubyOffset === void;
+			.defaultRubyBold = configValues.defaultRubyBold			if .defaultRubyBold === void;
 			.defaultLineSpacing = configValues.defaultLineSpacing	if .defaultLineSpacing === void;
 			.defaultPitch = configValues.defaultPitch				if .defaultPitch === void;
 			.defaultShadow = configValues.defaultShadow				if .defaultShadow === void;

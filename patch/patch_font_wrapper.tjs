@@ -385,11 +385,20 @@ class FontWrapper
 		flags &= ~global.fsfSameCharSet;
 @endif
 		var ret;
-		if (typeof(this.font.getList) === "Object")
+		var font_obj;
+		if (typeof(global.Font) === "Object")
+		{
+			font_obj = new Font();
+		}
+		else if (typeof(this.font.getList) === "Object")
+		{
+			font_obj = this.font;
+		}
+		if (typeof(font_obj) === "Object")
 		{
 			try
 			{
-				ret = font.getList(flags);
+				ret = font_obj.getList(flags);
 			}
 			catch (e)
 			{

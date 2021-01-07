@@ -12,9 +12,16 @@ class KAGWindow_patch_fix_savedata_by_jump_override extends KAGWindow_patch_fix_
 		KAGWindow_patch_fix_savedata_by_jump_override(...);
 	}
 
+	function internalStoreFlags(f)
+	{
+		super.internalStoreFlags(...);
+
+		f.patch_version = global.PatchVersion;
+	}
+
 	function restoreFlags()
 	{
-		if (this.sflags.savedataRepair)
+		if (this.sflags.savedataRepair || (pcflags.patch_version === void || (pcflags.patch_version.join("|") !== global.PatchVersion.join("|"))))
 		{
 			(Dictionary.assignStruct incontextof flags)(pflags);
 			

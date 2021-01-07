@@ -679,10 +679,14 @@ function closeSaveMenu(quick=false)
 	}
 
 	//	マウスホイール解除
+@if(ZOOM_WINDOW)
 	kag.removeHook("mouseWheel", onSaveMenuMouseWheel);
+@endif
 
 	//	キー解除
+@if(ZOOM_WINDOW)
 	kag.removeHook("keyDown", onSaveMenuKeyDown);
+@endif
 	delete Menu_object.keyDownCallback;
 
 	//	メニューを閉じる

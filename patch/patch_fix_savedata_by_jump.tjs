@@ -27,8 +27,31 @@ class KAGWindow_patch_fix_savedata_by_jump_override extends KAGWindow_patch_fix_
 			
 			var save_testmode = global.testmode;
 			global.testmode = true;
-			Debug.message("KEK: " + pcflags.mainConductor.storageShortName);
-			global.open_scenario_using_scenario_tracker(this, pcflags.mainConductor.storageShortName);
+			var scenario = pcflags.mainConductor.storageShortName;
+			var flowfile = void;
+			var flowid = void;
+@if(GAME_FATE||GAME_FHAT)
+			if (typeof(pcflags.current_id) === "Integer" && typeof(pcflags.current_flowfile) === "String")
+			{
+				scenario = void;
+				flowid = pcflags.current_id;
+				flowfile = pcflags.current_flowfile;
+			}
+@endif
+@if(GAME_WOHN)
+			if (typeof(pcflags.scriptno) === "Integer" && typeof(pcflags.scripts) === "Object" && pcflags.scripts.count > pcflags.scriptno)
+			{
+				scenario = pcflags.scripts[pcflags.scriptno];
+			}
+			if (typeof(pflags.av_no) === "Integer" && typeof(pflags.av_storage) === "Object" && pflags.av_storage.count > pflags.av_no)
+			{
+				global.startArchiveWithScenario(pflags.av_storage[pflags.av_no]);
+			}
+			else
+@endif
+			{
+				global.open_scenario_using_scenario_tracker(this, scenario, flowid, flowfile);
+			}
 			this.set_skip(, pcflags.mainConductor.curLabel);
 @if(!GAME_WOHN)
 			this.do_immediate_skip();

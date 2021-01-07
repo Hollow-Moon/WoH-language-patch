@@ -153,6 +153,48 @@ class KAGWindow_patch_skip_override extends KAGWindow_patch_skip_original
 		}
 	}
 
+	function showPageBreak()
+	{
+		if (this.isSkippingToTarget !== void)
+		{
+			return 0;
+		}
+		return super.showPageBreak(...);
+	}
+
+	function showLineBreak()
+	{
+		if (this.isSkippingToTarget !== void)
+		{
+			return 0;
+		}
+		return super.showLineBreak(...);
+	}
+
+	function getHandlers()
+	{
+		var handlers = super.getHandlers();
+		handlers.ch_patch_skip_original = handlers.ch;
+		handlers.ch = function(elm)
+		{
+			if (this.isSkippingToTarget !== void)
+			{
+				return 0;
+			}
+			return this.tagHandlers.ch_patch_skip_original(elm);
+		} incontextof this;
+		handlers.r_patch_skip_original = handlers.r;
+		handlers.r = function(elm)
+		{
+			if (this.isSkippingToTarget !== void)
+			{
+				return 0;
+			}
+			return this.tagHandlers.r_patch_skip_original(elm);
+		} incontextof this;
+		return handlers;
+	}
+
 	function do_immediate_skip()
 	{
 		while (this.isSkippingToTarget)

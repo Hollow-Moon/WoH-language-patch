@@ -244,8 +244,6 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 
 	function onConductorScenarioPreLoad(joined_cleaned_lines, conductor)
 	{
-		this.word_lines_space.clear();
-		this.word_lines_chinese.clear();
 		if (typeof(global.kag) !== "Object")
 		{
 			// We haven't finished initialization yet
@@ -271,6 +269,8 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 		{
 			return;
 		}
+		this.word_lines_space.clear();
+		this.word_lines_chinese.clear();
 		var empty_line = this.empty_line;
 		var empty_word = this.empty_word;
 		var cleaned_lines = conductor.cleaned_lines;

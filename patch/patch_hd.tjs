@@ -169,7 +169,7 @@ function onQualityMenuItemClick(sender, quality) {
 			.extraConductor.clear();
 			.lineBreak.loadedImage = null;
 			.pageBreak.loadedImage = null;
-			.saveBookMark(1000, true);
+			.reload_scenario_prepare();
 			(initializeQuality incontextof sender.owner)(1);
 			changed = true;
 			sender.checked = true;
@@ -182,14 +182,14 @@ function onQualityMenuItemClick(sender, quality) {
 			.extraConductor.clear();
 			.lineBreak.loadedImage = null;
 			.pageBreak.loadedImage = null;
-			.saveBookMark(1000, true);
+			.reload_scenario_prepare();
 			(initializeQuality incontextof sender.owner)(defaultScaleFactor);
 			changed = true;
 			sender.checked = true;
 		}
 		if (changed) {
 			changeResolution(sender.owner);
-			.loadBookMark(1000);
+			.reload_scenario_execute();
 		}
 	}
 }
@@ -210,10 +210,10 @@ function onWideMenuItemClick(sender, ratio, cropped=false) {
 @endif
 		with (sender.owner) {
 			.extraConductor.clear();
-			.saveBookMark(1000, true);
+			.reload_scenario_prepare();
 			(initializeWide incontextof sender.owner)(ratio);
 			changeResolution(sender.owner);
-			.loadBookMark(1000);
+			.reload_scenario_execute();
 		}
 	}
 	if (cropped != isCropped)
@@ -233,11 +233,11 @@ function onWideMenuItemClick(sender, ratio, cropped=false) {
 			}
 
 			.extraConductor.clear();
-			.saveBookMark(1000, true);
+			.reload_scenario_prepare();
 
 			.setSize(.width, .height);
 
-			.loadBookMark(1000);
+			.reload_scenario_execute();
 		}
 	}
 
@@ -247,6 +247,11 @@ function onWideMenuItemClick(sender, ratio, cropped=false) {
 function changeResolution(win) {
 	with (win) {
 		(updateResolution incontextof win)(%[]);
+		if (typeof(._primaryLayer) === "Object")
+		{
+			._primaryLayer.setSize(originalResWidth, originalResHeight);
+			._primaryLayer.fillRect(0, 0, ._primaryLayer.width, ._primaryLayer.height, 0x000000);
+		}
 		if (typeof(.primaryLayer) === "Object")
 		{
 			.primaryLayer.setSize(originalResWidth, originalResHeight);
@@ -288,6 +293,9 @@ function updateResolution(mp)
 	//pxWidth = exWidth = size[0];
 	//pxHeight = exHeight = size[1];
 	setInnerSize(innerWidth, innerHeight);	//	ウィンドウのクライアントサイズを変更
+@if(!ZOOM_WINDOW)
+	setZoom(1, 1);
+@endif
 
 @if(ZOOM_WINDOW)
 	addHook("afterChangeScreenMode", fullScreenAfterChangeScreenMode) if curfullscreen;

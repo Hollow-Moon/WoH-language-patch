@@ -136,6 +136,7 @@
 	"patch_skip.tjs",
 	"patch_kagparser_ignore_call_stack_underflow.tjs",
 	"patch_savedatalocation_override.tjs",
+	"patch_reload_override.tjs",
 	[,,,,, "KAG main window"],
 
 	"global.kag = new KAGWindow();",

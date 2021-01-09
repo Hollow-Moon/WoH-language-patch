@@ -1,0 +1,120 @@
+﻿
+global.KAGWindow_patch_reload_original = KAGWindow;
+class KAGWindow_patch_reload_override extends KAGWindow_patch_reload_original
+{
+	function KAGWindow_patch_reload_override()
+	{
+		super.KAGWindow(...);
+	}
+
+	function KAGWindow()
+	{
+		KAGWindow_patch_reload_override(...);
+	}
+
+@if(GAME_WOHN)
+	var has_title_menu = false;
+@endif
+
+	function reload_scenario_prepare()
+	{
+@if(GAME_FATE||GAME_FHAT)
+		if (typeof(global.titlemenu_object) === "Object" && typeof(global.titlemenu_object.menulayer) === "Object" && global.titlemenu_object.menulayer.visible)
+		{
+			return;
+		}
+		else if (typeof(global.titlemenu) === "Object")
+		{
+			return;
+		}
+		else if (typeof(global.ticket_menu) === "Object")
+		{
+			return;
+		}
+@endif
+@if(GAME_WOHN)
+		if (__menuStack.count !== 0 && __menuStack[__menuStack.count - 1] === "title")
+		{
+			this.isFirstProcess = false;
+			this.has_title_menu = true;
+			closeTitleMenu();
+			process('call.ks','*resetall', false, true, true);
+			return;
+		}
+@endif
+@if(GAME_FATE||GAME_FHAT||GAME_WOHN)
+		saveBookMark(1000, true);
+@endif
+@if(!GAME_FATE&&!GAME_FHAT&&!GAME_WOHN)
+		saveBookMark(1000, false);
+@endif
+	}
+
+	function reload_scenario_execute()
+	{
+@if(GAME_FATE||GAME_FHAT)
+		if (typeof(global.titlemenu_object) === "Object" && typeof(global.titlemenu_object.menulayer) === "Object" && global.titlemenu_object.menulayer.visible)
+		{
+			global.titlemenu_object.onMenuClosed_orig = global.titlemenu_object.onMenuClosed;
+			global.titlemenu_object.onMenuClosed = function()
+			{
+				this.onMenuClosed_orig(...);
+				this.show();
+				this.onMenuClosed = this.onMenuClosed_orig;
+				this.onMenuClosed_orig = void;
+				delete this.onMenuClosed_orig;
+			} incontextof global.titlemenu_object;
+			global.titlemenu_object.hide();
+			return;
+		}
+		else if (typeof(global.titlemenu) === "Object")
+		{
+			global.closeTitleMenu_orig = global.closeTitleMenu;
+			global.closeTitleMenu = function()
+			{
+				var mode = global.titlemenu.mode;
+				var notime = global.titlemenu.notime;
+				global.closeTitleMenu_orig(...);
+				global.teardownGarbage();
+				global.disposeObjects();
+				global.showTitleMenu(mode, true, notime);
+				global.closeTitleMenu = global.closeTitleMenu_orig;
+				global.closeTitleMenu_orig = void;
+				delete global.closeTitleMenu_orig;
+			};
+			global.hideTitleMenu();
+			return;
+		}
+		else if (typeof(global.ticket_menu) === "Object")
+		{
+			var return_storage = ticket_menu.return_storage;
+			var return_label = ticket_menu.return_label;
+			global.closeTicketMenu();
+			global.teardownGarbage();
+			global.disposeObjects();
+			global.showTicketMenu(return_storage, return_label);
+			return;
+		}
+@endif
+@if(GAME_WOHN)
+		if (this.has_title_menu)
+		{
+			this.has_title_menu = false;
+			process('first.ks','*titlemenu');
+			return;
+		}
+		tf.load_no = 1000;
+		process("call.ks", "*load");
+@endif
+@if(!GAME_FATE&&!GAME_FHAT&&!GAME_WOHN)
+		loadBookMark(1000);
+@endif
+	}
+
+	function onReloadScenarioMenuItemClick(sender)
+	{
+		this.reload_scenario_prepare();
+		this.reload_scenario_execute();
+	}
+}
+global.KAGWindow = KAGWindow_patch_reload_override;

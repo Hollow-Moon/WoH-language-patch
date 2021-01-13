@@ -65,6 +65,33 @@ class MessageLayer_patch_wordwrap_override extends MessageLayer_patch_wordwrap_o
 		MessageLayer_patch_wordwrap_override(...);
 	}
 
+	function shouldReline(ch)
+	{
+		var vert = vertical;
+		if((vert ?  y >= relinexpos  : x >= relinexpos ) && autoReturn)
+		{
+			if(((lastDrawnCh=="" || wwLeading.indexOf(lastDrawnCh)==-1) &&
+				wwFollowing.indexOf(ch)==-1) ||
+				(lastDrawnCh!="" && wwFollowingWeak.indexOf(lastDrawnCh)!=-1 &&
+					wwFollowingWeak.indexOf(ch)!=-1))
+			{
+				// 最後に描画したのが行末禁則文字でない場合
+				// しかもこれから描画するのが行頭禁則文字でない
+				// 場合
+				// または弱禁則文字が連続していない場合
+				return true;
+			}
+			else if(vert ? ( y>imageHeight ) : (x>imageWidth))
+			{
+				// これから描画するのが強禁則文字ではなくて、
+				// 確実に 右端を越える場合
+				// ( この場合は余白は考えない )
+				return true;
+			}
+		}
+		return false;
+	}
+
 	function nextWord(elm)
 	{
 @if(!WORDWRAP_BOLDITALIC_MODIFIER)
@@ -636,6 +663,13 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 
 			if (conductor.isNewLine()) {
 				onNewLine(elm);
+			}
+			else
+			{
+				if ((this.current.currentColumn === 0 || this.current.shouldReline(elm.text)) && #(elm.text) === 32 && !isJapanese())
+				{
+					return 0;
+				}
 			}
 			replaceCharacters(elm);
 			if(processWordWrapping(elm)) {

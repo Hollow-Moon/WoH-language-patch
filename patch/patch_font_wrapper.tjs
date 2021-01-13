@@ -336,6 +336,10 @@ class FontWrapper
 
 	function get_remap_facename(face)
 	{
+		if (face === '' || face === void)
+		{
+			return;
+		}
 		if (typeof(global.font_remap_cache[face]) === "String")
 		{
 			return global.font_remap_cache[face];

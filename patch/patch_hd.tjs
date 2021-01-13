@@ -9,20 +9,28 @@ var originalResHeight = 576;
 @if(GAME_FATE)
 var highResWidth = 1280;
 var highResHeight = 960;
+var veryHighResWidth = 1920;
+var veryHighResHeight = 1440;
 @endif
 @if(GAME_FHAT)
 var highResWidth = 1600;
 var highResHeight = 1200;
+var veryHighResWidth = 3200;
+var veryHighResHeight = 2400;
 @endif
 @if(GAME_WOHN)
 var highResWidth = 2048;
 var highResHeight = 1152;
+var veryHighResWidth = 4096;
+var veryHighResHeight = 2304;
 @endif
 @if(SCALE_USING_FLOATING_POINT)
 var defaultScaleFactor = highResWidth / originalResWidth;
+var defaultHighScaleFactor = veryHighResWidth / originalResWidth;
 @endif
 @if(!SCALE_USING_FLOATING_POINT)
 var defaultScaleFactor = highResWidth \ originalResWidth;
+var defaultHighScaleFactor = veryHighResWidth \ originalResWidth;
 @endif
 var isCropped = false;
 var scaleFactor = 1;
@@ -40,18 +48,21 @@ var hdFolderSuffix = "-hd";
 
 @if(GAME_FATE)
 var hdPatchName = devMode? "ImagesHD" : "HD";
+var fhdPatchName = devMode?  "ImagesHD2" : "HD";
 @endif
 @if(GAME_FHAT)
 var hdPatchName = devMode? "ImageHD" : "HD";
+var fhdPatchName = devMode?  "ImageHD2" : "HD";
 @endif
 @if(GAME_WOHN)
 var hdPatchName = devMode? "ImageHD" : "HD";
+var fhdPatchName = devMode?  "ImageHD2" : "HD";
 @endif
 
 var wideRulePatchName = devMode? "RuleWide" : hdPatchName;
 var wideRuleFolderName = devMode? "" : "RuleWide";
 
-var hdFlagName = "isHd";
+var hdScaleFactorFlagName = "hdScaleFactor";
 var wideScreenFlagName = "wideScreen";
 var autoWideRatioFlagName = "autoWideRatio";
 var wideRatioFlagName = "wideRatio";
@@ -59,7 +70,8 @@ var wideRatioFlagName = "wideRatio";
 var devHdImageFolders = ["BGImageHD", "FGImageHD", "ImageHD", "ImagesClassicHD", "ImagesConfigHD", "ImagesMobile", "ImagesPatchHD", "ImagesPS2HD", "ImagesTitleHD", "ImagesTrialHD", "ImagesHanafudaHD", "RuleHD", "Image_transparentHDcolor"];
 
 property systemRatio { getter { return System.screenWidth / System.screenHeight; } }
-property hdPatchExists { getter { return patchExists(hdPatchName); } }
+property hdPatchExists { getter { return patchExists(hdPatchName) || patchExists(fhdPatchName); } }
+property fhdPatchExists { getter { return patchExists(fhdPatchName); } }
 
 property inverseScaleFactor { getter() { return 1/scaleFactor; } }
 property inverseWideFactor { getter() { return 1/wideFactor; } }
@@ -125,9 +137,9 @@ function unloadHdPatch(kag=global.kag)
 	}
 }
 
-function initializeQuality(scale, firsttime=false) {
-	isHd = scale > 1;
+function initializeQuality(scale) {
 	scaleFactor = scale;
+	hdScaleFactor = scale;
 
 	if (isHd) {
 		loadHdPatch(this);
@@ -136,7 +148,7 @@ function initializeQuality(scale, firsttime=false) {
 	}
 }
 
-function initializeWide(ratio, firsttime=false) {
+function initializeWide(ratio) {
 	wideScreen = ratio > cubicRatio;
 	wideRatio = ratio;
 @if(SCALE_USING_FLOATING_POINT)
@@ -160,10 +172,10 @@ function initializeWide(ratio, firsttime=false) {
 function onQualityMenuItemClick(sender, quality) {
 	with (sender.owner) {
 		var changed = false;
-		if (quality == "low" && .isHd) {
+		if (quality == "low" && .hdScaleFactor !== 1) {
 @if(!KIRIKIROID&&!KIRIKIRISDL2)
 			{
-				global.full_game_reload("-enablehd=false");
+				global.full_game_reload("-hdscalefactor=1");
 			}
 @endif
 			.extraConductor.clear();
@@ -173,10 +185,10 @@ function onQualityMenuItemClick(sender, quality) {
 			(initializeQuality incontextof sender.owner)(1);
 			changed = true;
 			sender.checked = true;
-		} else if (quality == "high" && !.isHd) {
+		} else if (quality == "high" && .hdScaleFactor !== defaultScaleFactor) {
 @if(!KIRIKIROID&&!KIRIKIRISDL2)
 			{
-				global.full_game_reload("-enablehd=true");
+				global.full_game_reload("-hdscalefactor=" + defaultScaleFactor);
 			}
 @endif
 			.extraConductor.clear();
@@ -184,6 +196,19 @@ function onQualityMenuItemClick(sender, quality) {
 			.pageBreak.loadedImage = null;
 			.reload_scenario_prepare();
 			(initializeQuality incontextof sender.owner)(defaultScaleFactor);
+			changed = true;
+			sender.checked = true;
+		} else if (quality == "veryHigh" && .hdScaleFactor !== defaultHighScaleFactor) {
+@if(!KIRIKIROID&&!KIRIKIRISDL2)
+			{
+				global.full_game_reload("-hdscalefactor=" + defaultHighScaleFactor);
+			}
+@endif
+			.extraConductor.clear();
+			.lineBreak.loadedImage = null;
+			.pageBreak.loadedImage = null;
+			.reload_scenario_prepare();
+			(initializeQuality incontextof sender.owner)(defaultHighScaleFactor);
 			changed = true;
 			sender.checked = true;
 		}
@@ -249,28 +274,7 @@ function changeResolution(win) {
 		(updateResolution incontextof win)(%[]);
 		if (typeof(._primaryLayer) === "Object")
 		{
-			._primaryLayer.setSize(originalResWidth, originalResHeight);
-			._primaryLayer.fillRect(0, 0, ._primaryLayer.width, ._primaryLayer.height, 0x000000);
-		}
-		if (typeof(.primaryLayer) === "Object")
-		{
-			.primaryLayer.setSize(originalResWidth, originalResHeight);
-			.primaryLayer.fillRect(0, 0, .primaryLayer.width, .primaryLayer.height, 0x000000);
-		}
-		if (typeof(.fore) === "Object" && typeof(.fore.base) === "Object")
-		{
-			.fore.base.setImageSize(originalResWidth, originalResHeight);
-			.fore.base.setSizeToImageSize();
-		}
-		if (typeof(.back) === "Object" && typeof(.back.base) === "Object")
-		{
-			.back.base.setImageSize(originalResWidth, originalResHeight);
-			.back.base.setSizeToImageSize();
-		}
-		if (typeof(.historyLayer) === "Object")
-		{
-			.historyLayer.setImageSize(originalResWidth, originalResHeight);
-			.historyLayer.setSizeToImageSize();
+			._primaryLayer.update_bounds_hd_layer();
 		}
 		if (typeof(.hintlayer) === "Object")
 		{
@@ -282,6 +286,10 @@ function changeResolution(win) {
 			global.flow_tracker_object.isTest = false;
 			global.flow_tracker_object.isTest = true;
 		}
+@if(!ZOOM_WINDOW)
+		.setSize(originalResWidth, originalResHeight);
+		.setInnerSize(originalResWidth, originalResHeight);
+@endif
 	}
 }
 
@@ -292,8 +300,12 @@ function updateResolution(mp)
 	curfullscreen <-> fullScreen;	//	フルスクリーン状態を解除
 	//pxWidth = exWidth = size[0];
 	//pxHeight = exHeight = size[1];
+@if(ZOOM_WINDOW)
 	setInnerSize(innerWidth, innerHeight);	//	ウィンドウのクライアントサイズを変更
+@endif
 @if(!ZOOM_WINDOW)
+	setSize(originalResWidth, originalResHeight);
+	setInnerSize(originalResWidth, originalResHeight);
 	setZoom(1, 1);
 @endif
 
@@ -309,11 +321,11 @@ function updateResolution(mp)
 
 
 function initializeHDPatch() {
-	if (System.getArgument("-enablehd") !== void)
+	if (System.getArgument("-hdscalefactor") !== void)
 	{
-		isHd = System.getArgument("-enablehd") === "true";
+		hdScaleFactor = +System.getArgument("-hdscalefactor");
 	}
-	(initializeQuality incontextof this)(isHd? defaultScaleFactor : 1, true);
+	(initializeQuality incontextof this)(hdScaleFactor, true);
 	if (System.getArgument("-wideratio") !== void)
 	{
 		(initializeWide incontextof this)(System.getArgument("-wideratio") * 1.0, true);

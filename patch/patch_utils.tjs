@@ -649,7 +649,15 @@ global.initial_scenario_load_ready = function()
 		global.kag.askOnClose = true;
 		global.loadTicketFile(System.getArgument("-loadticketatindex") | 0);
 		(global.initializeTicketFlagsMenu incontextof global.kag)();
-		global.kag.process("title.ks", "*pretitle");
+		if (System.getArgument("-loadsaveatindex") === void)
+		{
+			global.kag.setConductorToMain();
+			global.kag.conductor.inProcessing = false;
+			global.kag.conductor.interupted = false;
+			global.kag.conductor.sleep();
+			global.kag.process("title.ks", "*prepare", false, true, true);
+			global.kag.process("title.ks", "*pretitle");
+		}
 	}
 @endif
 @if(GAME_FATE||GAME_FHAT)

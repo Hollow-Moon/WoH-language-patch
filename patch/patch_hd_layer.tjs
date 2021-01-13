@@ -1343,6 +1343,42 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		}
 	}
 
+	function update_bounds_hd_layer()
+	{
+		var originalLeft_tmp = originalLeft;
+		var originalTop_tmp = originalTop;
+		var originalWidth_tmp = originalWidth;
+		var originalHeight_tmp = originalHeight;
+		var originalImageLeft_tmp = originalImageLeft;
+		var originalImageTop_tmp = originalImageTop;
+		var originalImageWidth_tmp = originalImageWidth;
+		var originalImageHeight_tmp = originalImageHeight;
+		var originalClipLeft_tmp = originalClipLeft;
+		var originalClipTop_tmp = originalClipTop;
+		var originalClipWidth_tmp = originalClipWidth;
+		var originalClipHeight_tmp = originalClipHeight;
+		var originalAttentionLeft_tmp = originalAttentionLeft;
+		var originalAttentionTop_tmp = originalAttentionTop;
+@if(0)
+		if (super.hasImage)
+		{
+			super.fillRect(0, 0, super.imageWidth, super.imageHeight, 0x000000);
+		}
+@endif
+		this.setPos_patch_hd_layer(originalLeft_tmp, originalTop_tmp, originalWidth_tmp, originalHeight_tmp);
+		if (super.hasImage)
+		{
+			this.setImageSize_patch_hd_layer(originalImageWidth_tmp, originalImageHeight_tmp);
+			this.setImagePos_patch_hd_layer(originalImageLeft_tmp, originalImageTop_tmp);
+			this.setClip_patch_hd_layer(originalClipLeft_tmp, originalClipTop_tmp, originalClipWidth_tmp, originalClipHeight_tmp);
+		}
+		this.setAttentionPos_patch_hd_layer(originalAttentionLeft_tmp, originalAttentionTop_tmp);
+		for (var i = 0; i < this.children.count; i += 1)
+		{
+			this.children[i].update_bounds_hd_layer();
+		}
+	}
+
 	function loadImages(storage, key)
 	{
 		storage = storage.toLowerCase();
@@ -1609,7 +1645,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		return super.getLayerAt(x, y, exclude_self, get_disabled);
 	}
 
-	function setSize(width, height)
+	function setSize_patch_hd_layer(width, height)
 	{
 @if(!SCALE_USING_FLOATING_POINT)
 		width = ((width < 0 ? -width : width) & 0x7fffffff) * (width < 0 ? -1 : 1);
@@ -1626,7 +1662,12 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		updateImageSize();
 	}
 
-	function setImageSize(imageWidth, imageHeight)
+	function setSize()
+	{
+		return this.setSize_patch_hd_layer(...);
+	}
+
+	function setImageSize_patch_hd_layer(imageWidth, imageHeight)
 	{
 @if(!SCALE_USING_FLOATING_POINT)
 		imageWidth = ((imageWidth < 0 ? -imageWidth : imageWidth) & 0x7fffffff) * (imageWidth < 0 ? -1 : 1);
@@ -1640,6 +1681,11 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		internalSetImageSize(originalImageWidth, originalImageHeight);
 
 		super.setImageSize(imageWidth * widthScale, imageHeight * heightScale);
+	}
+
+	function setImageSize()
+	{
+		return this.setImageSize_patch_hd_layer(...);
 	}
 
 	function updateImageSize()
@@ -1733,7 +1779,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		invalidate tmp;
 	}
 
-	function setPos(left, top, width, height)
+	function setPos_patch_hd_layer(left, top, width, height)
 	{
 @if(!SCALE_USING_FLOATING_POINT)
 		left = ((left < 0 ? -left : left) & 0x7fffffff) * (left < 0 ? -1 : 1);
@@ -1767,7 +1813,12 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		}
 	}
 
-	function setImagePos(left, top)
+	function setPos()
+	{
+		return this.setPos_patch_hd_layer(...);
+	}
+
+	function setImagePos_patch_hd_layer(left, top)
 	{
 @if(!SCALE_USING_FLOATING_POINT)
 		left = ((left < 0 ? -left : left) & 0x7fffffff) * (left < 0 ? -1 : 1);
@@ -1776,6 +1827,11 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		originalImageLeft = left;
 		originalImageTop = top;
 		super.setImagePos(left*widthScale, top*heightScale);
+	}
+
+	function setImagePos()
+	{
+		return this.setImagePos_patch_hd_layer(...);
 	}
 
 	function setCursorPos(cursorX, cursorY)
@@ -2094,7 +2150,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		super.colorRect(left*widthScale, top*heightScale, width*widthScale, height*heightScale, color, opacity);
 	}
 
-	function setClip(args*)
+	function setClip_patch_hd_layer(args*)
 	{
 		if (args.count === 0)
 		{
@@ -2134,7 +2190,12 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		super.setClip(clipLeft*widthScale, clipTop*heightScale, clipWidth*widthScale, clipHeight*heightScale);
 	}
 
-	function setAttentionPos(left, top)
+	function setClip()
+	{
+		return this.setClip_patch_hd_layer(...);
+	}
+
+	function setAttentionPos_patch_hd_layer(left, top)
 	{
 @if(!SCALE_USING_FLOATING_POINT)
 		left = ((left < 0 ? -left : left) & 0x7fffffff) * (left < 0 ? -1 : 1);
@@ -2143,6 +2204,11 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		originalAttentionLeft = transformDiscrete(left, widthScale);
 		originalAttentionTop = transformDiscrete(top, heightScale);
 		super.setAttentionPos(left*widthScale, top*heightScale);
+	}
+
+	function setAttentionPos()
+	{
+		return this.setAttentionPos_patch_hd_layer(...);
 	}
 
 	function assignImages(src)
@@ -2229,6 +2295,95 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		}
 @endif
 		super.drawGlyph(left*widthScale, top*heightScale, glyph, color, opacity, aa, slevel, scolor, swidth, sofsx, sofsy);
+	}
+
+	function beginTransition(name, withchildren=true, transsrc, options=%[])
+	{
+		this.update_bounds_hd_layer();
+		if (typeof(transsrc) === "Object" && transsrc !== null && isvalid(transsrc) && transsrc instanceof "Layer")
+		{
+			transsrc.update_bounds_hd_layer();
+		}
+		var srcwidth = void;
+		var srcheight = void;
+		var destwidth = void;
+		var destheight = void;
+		if (withchildren)
+		{
+			destwidth = originalWidth;
+			destheight = originalHeight;
+		}
+		else
+		{
+			destwidth = originalImageWidth;
+			destheight = originalImageHeight;
+		}
+		if (typeof(transsrc) === "Object" && transsrc !== null && isvalid(transsrc) && transsrc instanceof "Layer")
+		{
+			if (withchildren)
+			{
+				srcwidth = transsrc.originalWidth;
+				srcheight = transsrc.originalHeight;
+			}
+			else
+			{
+				srcwidth = transsrc.originalImageWidth;
+				srcheight = transsrc.originalImageHeight;
+			}
+		}
+		if ((name === "crossfade" || name === "scroll" || name === "universal") && (srcwidth !== destwidth || srcheight !== destheight))
+		{
+			Debug.message("Ignored transition start due to size mismatch");
+			var trace_string = Scripts.getTraceString();
+			if (trace_string !== "")
+			{
+				Debug.message("Trace: " + trace_string);
+			}
+			if (typeof(this.onTransitionCompleted) === "Object")
+			{
+				this.onTransitionCompleted(this, transsrc);
+			}
+			return;
+		}
+		try
+		{
+			return super.beginTransition(...);
+		}
+		catch (e)
+		{
+			var msg = "";
+			if (typeof(e) === "Object" && isvalid(e) && typeof(e.message) === "String")
+			{
+				msg = e.message;
+			}
+			Debug.message("Couldn't start transition: " + e.message);
+			var trace_string = Scripts.getTraceString();
+			if (trace_string !== "")
+			{
+				Debug.message("Trace: " + trace_string);
+			}
+			try
+			{
+				if (typeof(this.onTransitionCompleted) === "Object")
+				{
+					this.onTransitionCompleted(this, transsrc);
+				}
+			}
+			catch (ee)
+			{
+				var msg = "";
+				if (typeof(e) === "Object" && isvalid(e) && typeof(e.message) === "String")
+				{
+					msg = e.message;
+				}
+				Debug.message("Couldn't call onTransitionCompleted: " + e.message);
+				var trace_string = Scripts.getTraceString();
+				if (trace_string !== "")
+				{
+					Debug.message("Trace: " + trace_string);
+				}
+			}
+		}
 	}
 
 @if(0)
@@ -2382,24 +2537,39 @@ class Window_patch_hd_layer_override extends Window_patch_hd_layer_original
 	property isMainWindow { getter { return this === global.Window.mainWindow; } }
 	property body { getter() { return fore; } }
 
-	property isHd
+	property hdScaleFactor
 	{
 		getter
 		{
 			if (!hdPatchExists) {
-				return false;
+				return 1;
 			}
 			if (!isMainWindow) {
-				return mainWindow.scflags[hdFlagName];
+				return mainWindow.scflags[hdScaleFactorFlagName];
 			}
-			if (this.scflags[hdFlagName] === void) {
-				this.scflags[hdFlagName] = hdPatchExists && System.desktopWidth >= highResWidth && System.desktopHeight >= highResHeight;
+			if (this.scflags[hdScaleFactorFlagName] === void) {
+				if (System.desktopWidth >= veryHighResWidth && System.desktopHeight >= veryHighResHeight) {
+					this.scflags[hdScaleFactorFlagName] = defaultHighScaleFactor;
+				}
+				else if (System.desktopWidth >= highResWidth && System.desktopHeight >= highResHeight) {
+					this.scflags[hdScaleFactorFlagName] = defaultScaleFactor;
+				} else {
+					this.scflags[hdScaleFactorFlagName] = 1;
+				}
 			}
-			return this.scflags[hdFlagName];
+			return this.scflags[hdScaleFactorFlagName];
 		}
 		setter(v)
 		{
-			this.scflags[hdFlagName] = v;
+			this.scflags[hdScaleFactorFlagName] = v;
+		}
+	}
+
+	property isHd
+	{
+		getter
+		{
+			return hdScaleFactor > 1;
 		}
 	}
 
@@ -2614,6 +2784,7 @@ class Window_patch_hd_layer_override extends Window_patch_hd_layer_original
 		originalInnerHeight = innerHeight;
 		super.setInnerSize(innerWidth * widthScale, innerHeight * heightScale);
 
+@if(!ZOOM_WINDOW)
 @if(SCALE_USING_FLOATING_POINT)
 		originalWidth = super.width / widthScale;
 		originalHeight = super.height / heightScale;
@@ -2621,6 +2792,7 @@ class Window_patch_hd_layer_override extends Window_patch_hd_layer_original
 @if(!SCALE_USING_FLOATING_POINT)
 		originalWidth = super.width \ widthScale;
 		originalHeight = super.height \ heightScale;
+@endif
 @endif
 	}
 
@@ -2634,6 +2806,7 @@ class Window_patch_hd_layer_override extends Window_patch_hd_layer_original
 		originalHeight = height;
 		super.setSize(width * widthScale, height * heightScale);
 
+@if(!ZOOM_WINDOW)
 @if(SCALE_USING_FLOATING_POINT)
 		originalInnerWidth = super.innerWidth / widthScale;
 		originalInnerHeight = super.innerHeight / heightScale;
@@ -2641,6 +2814,7 @@ class Window_patch_hd_layer_override extends Window_patch_hd_layer_original
 @if(!SCALE_USING_FLOATING_POINT)
 		originalInnerWidth = super.innerWidth \ widthScale;
 		originalInnerHeight = super.innerHeight \ heightScale;
+@endif
 @endif
 	}
 }

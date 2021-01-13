@@ -199,6 +199,8 @@ class KAGWindow_patch_skip_override extends KAGWindow_patch_skip_original
 	{
 		while (this.isSkippingToTarget)
 		{
+			this.setConductorToMain();
+			this.conductor.inProcessing = false;
 			this.conductor.run(true);
 			if (typeof(this.actmgr) === "Object")
 			{

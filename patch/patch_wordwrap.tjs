@@ -185,7 +185,6 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 		processQuotedLine();
 @endif
 
-		if (isChinese())
 		{
 			this.words.clear();
 		}
@@ -541,10 +540,6 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 	function onNewLineWordWrapSpace(linenum)
 	{
 		var words = this.words;
-		if (words.count > 0)
-		{
-			words.erase(0);
-		}
 
 		var word_lines = this.word_lines_space;
 
@@ -553,24 +548,8 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 		{
 			return;
 		}
-		if (words.count === 0)
 		{
 			words.assign(word_line);
-		}
-		else
-		{
-			if (typeof(words.push) === "Object")
-			{
-				words.push(word_line*);
-			}
-			else
-			{
-				var arr = word_line;
-				for (var i = 0; i < arr.count; i += 1)
-				{
-					words.add(arr[i]);
-				}
-			}
 		}
 		/*if (additionalWords.count > 0) {
 			dm("clean line: " + clean);
@@ -591,24 +570,8 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 		{
 			return;
 		}
-		if (words.count === 0)
 		{
 			words.assign(word_line);
-		}
-		else
-		{
-			if (typeof(words.push) === "Object")
-			{
-				words.push(word_line*);
-			}
-			else
-			{
-				var arr = word_line;
-				for (var i = 0; i < arr.count; i += 1)
-				{
-					words.add(arr[i]);
-				}
-			}
 		}
 
 		currentWordIndex = 0;

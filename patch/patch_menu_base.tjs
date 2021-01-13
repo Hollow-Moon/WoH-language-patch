@@ -768,6 +768,12 @@ function addHdMenu(displayMenu) {
 			function(sender) { onQualityMenuItemClick(sender,'high'); }, false));
 		this.hqMenuItem.enabled = hdPatchExists;
 
+		qualityMenu.add(this.fhdMenuItem = new KAGMenuItem(this, __t("高い2(&H)"), 1,  // TODO find better name...
+			function(sender) { onQualityMenuItemClick(sender,'veryHigh'); }, false));
+		this.fhdMenuItem.visible = fhdPatchExists;
+		this.fhdMenuItem.enabled = fhdPatchExists;
+
+
 	displayMenu.add(this.wideMenu = new KAGMenuItem(this, __t("アスペクト比(&A)"), 0, void, false));
 	this.wideMenu.enabled = false;
 
@@ -794,10 +800,12 @@ function addHdMenu(displayMenu) {
 			function(sender) { onWideMenuItemClick(sender,'standard',true); }, false));
 @endif
 
-	if (isHd) {
-		this.hqMenuItem.checked = true;
-	} else {
+	if (hdScaleFactor === 1) {
 		this.lqMenuItem.checked = true;
+	} else if (hdScaleFactor === defaultScaleFactor) {
+		this.hqMenuItem.checked = true;
+	} else if (hdScaleFactor === defaultHighScaleFactor) {
+		this.fhdMenuItem.checked = true;
 	}
 	if (wideScreen) {
 		if (this.isAutoWide) {

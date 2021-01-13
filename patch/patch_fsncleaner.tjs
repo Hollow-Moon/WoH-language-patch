@@ -1,0 +1,99 @@
+﻿{
+	global.fsncleaner_clean = function(lines)
+	{
+		var joined_lines = lines.join("\n");
+		// EraseCommentedScript
+		var erase_commented_script = /(?:(?<=^)|(?<=\n))(?:;@).*?(?:\n|$)/g;
+		joined_lines = joined_lines.replace(erase_commented_script, "");
+		// EraseTlaData
+		var erase_tla_data = /(?s)(?:\n\*tladata\n).*?(?:$)/g;
+		joined_lines = joined_lines.replace(erase_tla_data, "");
+		// EraseScript
+		var erase_script = /(?:(?<=^)|(?<=\n))(?:@).*?(?:\n|$)/g;
+		joined_lines = joined_lines.replace(erase_script, "");
+		// EraseLR
+		var erase_lr = /\[l\]\[r\]/g;
+		joined_lines = joined_lines.replace(erase_lr, "");
+		var lines_cleaned = joined_lines.split("\n");
+		lines_cleaned.erase(lines_cleaned.count - 1);
+		return lines_cleaned;
+	};
+
+	global.fsncleaner_rescript = function(dest, src)
+	{
+		var is_technical_regex = /^[\@\;\*]/g;
+		var clean_technical = function(arr)
+		{
+			var is_technical_regex = /^[\@\;\*]/g;
+			for (var i = arr.count - 1; i >= 0; i -= 1)
+			{
+				if (arr[i] === "*tladata")
+				{
+					for (var j = arr.count - 1; j >= i; j -= 1)
+					{
+						arr.erase(j);
+					}
+					break;
+				}
+			}
+			for (var i = arr.count - 1; i >= 0; i -= 1)
+			{
+				if (is_technical_regex.match(arr[i]).count !== 0)
+				{
+					arr.erase(i);
+				}
+			}
+			if (arr[arr.count - 1] === "")
+			{
+				arr.erase(arr.count - 1);
+			}
+		};
+		var is_technical_nocomment_regex = /^[\@\*]/g;
+		var is_lr_regex = /\[[lr]\]$/g;
+		var dest_notechnical = [];
+		dest_notechnical.assign(dest);
+		clean_technical(dest_notechnical);
+		var translated_lines = [];
+		translated_lines.assign(src);
+		// DoLR
+		for (var i = 0; i < translated_lines.count; i += 1)
+		{
+			var line = translated_lines[i];
+			if (is_technical_regex.match(line).count !== 0)
+			{
+				continue;
+			}
+			if (i === translated_lines.count - 1)
+			{
+				if (is_lr_regex.match(line).count === 0)
+				{
+					translated_lines[i] += "[l][r]";
+				}
+				continue;
+			}
+			var line1 = translated_lines[i + 1];
+			if (is_technical_nocomment_regex.match(line1).count === 0)
+			{
+				if (is_lr_regex.match(line).count === 0)
+				{
+					translated_lines[i] += "[l][r]";
+				}
+				continue;
+			}
+		}
+		clean_technical(translated_lines);
+		if (dest_notechnical.count !== translated_lines.count)
+		{
+			throw new Exception("Line count doesn't match while attempting to clean!");
+		}
+		// ReplaceText
+		for (var i = 0, j = 0; (i < dest.count && j < translated_lines.count); i += 1)
+		{
+			if (is_technical_regex.match(dest[i]).count === 0)
+			{
+				dest[i] = translated_lines[j];
+				j += 1;
+			}
+		}
+	};
+}

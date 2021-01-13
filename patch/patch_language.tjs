@@ -353,15 +353,36 @@ global.Array.load = function(filename, mode='')
 	}
 	if (typeof(file_result) === "String")
 	{
+		if ((filename.indexOf(".ks") === filename.length - 3) && global.get_fsncleaner_rescript_enabled() && typeof(global.fsncleaner_rescript) === "Object")
+		{
+			this.clear();
+			this.load_PatchLanguage_original(filename, mode);
+			var language_load = [];
+			language_load.load_PatchLanguage_original(file_result, mode);
+			global.fsncleaner_rescript(this, language_load);
+			delete language_load;
+			return this;
+		}
 		return global.Array.load_PatchLanguage_original(file_result, mode);
 	}
 	else if (typeof(file_result) === "Integer" && file_result === true)
 	{
 		this.clear();
-		this.assign(languageFileCache[global.kag.sflags.language][filename]);
-		if (this.count > 0 && this[this.count - 1] === "")
+		var language_load = this;
+		if ((filename.indexOf(".ks") === filename.length - 3) && global.get_fsncleaner_rescript_enabled() && typeof(global.fsncleaner_rescript) === "Object")
 		{
-			this.erase(this.count - 1);
+			language_load = [];
+			this.load_PatchLanguage_original(filename, mode);
+		}
+		language_load.assign(languageFileCache[global.kag.sflags.language][filename]);
+		if (language_load.count > 0 && language_load[language_load.count - 1] === "")
+		{
+			language_load.erase(language_load.count - 1);
+		}
+		if (language_load !== this)
+		{
+			global.fsncleaner_rescript(this, language_load);
+			delete language_load;
 		}
 		return this;
 	}
@@ -678,6 +699,8 @@ function get_default_history_font(kag=global.kag) { { return get_currentLanguage
 function get_default_history_bold(kag=global.kag) { { return get_currentLanguageSettings(kag)["history_default_bold"]; } }
 function get_historyFontDefault(kag=global.kag) { { return [ get_default_history_font(kag), get_default_history_bold(kag) ]; } }
 function get_historyFont(kag=global.kag) { { return get_currentLanguageSettings(kag)["history"] !== void? get_currentLanguageSettings(kag)["history"] : %[]; } }
+function get_fsncleaner_rescript_enabled(kag=global.kag) { { return !!(get_currentLanguageSettings(kag)["fsncleaner_rescript_enabled"]); } }
+
 
 function get_default_font()
 {

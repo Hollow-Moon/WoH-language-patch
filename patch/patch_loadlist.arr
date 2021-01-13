@@ -75,6 +75,7 @@
 	["kri18n.dll", , [["__"]], true],
 	["i18n.tjs", , [["__"]]],
 	"patch_language.tjs",
+	"patch_fsncleaner.tjs",
 	"patch_exceptionhandler.tjs",
 	"patch_menu_base.tjs",
 	"patch_menu.tjs",

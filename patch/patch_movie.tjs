@@ -61,6 +61,9 @@ global.play_movie_resize = function(video, kag=global.kag, window=global.kag)
 	else
 	{
 		videoSize = [video.originalWidth, video.originalHeight];
+		if (videoSize[0] < window.innerWidth && videoSize[1] < window.innerHeight) {
+			videoSize = [window.innerWidth, window.innerHeight];
+		}
 		var windowExtraWidth = window.width - window.innerWidth;
 		var windowExtraHeight = window.height - window.innerHeight;
 		var windowSize = [videoSize[0]+windowExtraWidth, videoSize[1]+windowExtraHeight];

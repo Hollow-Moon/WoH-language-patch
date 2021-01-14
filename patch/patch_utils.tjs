@@ -519,60 +519,63 @@ global.open_scenario_using_scenario_tracker = function(kag=global.kag, scenario,
 	kag.setHistoryOptions(%[enabled:true]);
 	flowchart_id |= 0;
 @if(GAME_FATE)
-	if (flowchart_name !== "prologue" && scenario !== void)
+	if (scenario === "タイトル.ks" || scenario === "体験版ダイジェスト仮組04.ks" || scenario === "ラストエピソード.ks" || scenario === "tiger_dojo_joke.ks" || scenario === "セイバーエピローグ.ks" || scenario === "凛エピローグ.ks" || scenario === "凛エピローグ2.ks" || scenario === "桜エピローグ2.ks" || scenario === "桜エピローグ.ks")
 	{
-		for (var i = 0; i < global.prologue_storage_arr.count; i += 1)
+		global.kag.setConductorToMain();
+		global.kag.conductor.inProcessing = false;
+		global.kag.conductor.interupted = false;
+		global.kag.conductor.sleep();
+		global.kag.process("FlowTrackerPlugin.ks", "*cleanup", false, true, true);
+		global.flow_tracker_object.isScenarioExecution = false;
+		global.kag.conductor.clearCallStack();
+		if (scenario === "タイトル.ks")
 		{
-			if (global.prologue_storage_arr[i] === scenario)
-			{
-				flowchart_name = "prologue";
-				break;
-			}
+			global.kag.process("suflags_hack.ks", "*wakame");
 		}
-	}
-
-	if (flowchart_name === "prologue")
-	{
-		if (scenario !== void)
+		else if (scenario === "体験版ダイジェスト仮組04.ks")
 		{
-			for (var i = 0; i < global.prologue_storage_arr.count; i += 1)
-			{
-				if (scenario === global.prologue_storage_arr[i])
-				{
-					flowchart_id = i;
-					break;
-				}
-			}
+			global.kag.process("suflags_hack.ks", "*demoonly");
 		}
+		else if (scenario === "ラストエピソード.ks")
+		{
+			global.kag.process("suflags_hack.ks", "*realtanua");
+		}
+		else if (scenario === "tiger_dojo_joke.ks")
+		{
+			global.kag.process("endlist.ks", "*tiger_dojo_joke");
+		}
+		else if (scenario === "セイバーエピローグ.ks")
+		{
+			global.kag.process("endlist.ks", "*fate_true_end");
+		}
+		else if (scenario === "凛エピローグ.ks")
+		{
+			global.kag.process("endlist.ks", "*ubw_good_end");
+		}
+		else if (scenario === "凛エピローグ2.ks")
+		{
+			global.kag.process("endlist.ks", "*ubw_true_end");
+		}
+		else if (scenario === "桜エピローグ2.ks")
+		{
+			global.kag.process("endlist.ks", "*hf_normal_end");
+		}
+		else if (scenario === "桜エピローグ.ks")
+		{
+			global.kag.process("endlist.ks", "*hf_true_end");
+		}
+		return;
 	}
-	else
 @endif
+	if (flowchart_name === void && scenario !== void)
 	{
-		if (flowchart_name === void && scenario !== void)
-		{
-			// Figure out the flowchart name by the scenario name
-			// The scenario name is formatted as follows: AAA-12.ks
-			// where AAA is the flowchart name and 12 is the flowchart ID
-			if (scenario.substr(scenario.length - 3, 3) !== ".ks")
-			{
-				throw new Exception("Passed in scenario does not have KAG scenario file extension");
-			}
-			var flowchart_id_len = 0;
-			if (scenario.substr(scenario.length - 6, 1) === "-")
-			{
-				flowchart_id_len = 2;
-			}
-			else if (scenario.substr(scenario.length - 7, 1) === "-")
-			{
-				flowchart_id_len = 3;
-			}
-			if (flowchart_id_len === 0)
-			{
-				throw new Exception("Passed in scenario does not have a dash in it");
-			}
-			flowchart_id |= scenario.substr(scenario.length - 3 - flowchart_id_len, flowchart_id_len);
-			flowchart_name = scenario.substr(0, scenario.length - 3 - flowchart_id_len - 1);
-		}
+		var arr = global.flow_tracker_object.getIdNameFromScenario(scenario);
+		flowchart_name = arr[1];
+		flowchart_id = arr[0];
+	}
+	if (flowchart_name === void)
+	{
+		throw new Exception("Could not find flowchart name from scenario!");
 	}
 	global.flow_tracker_object.init(flowchart_name, flowchart_id);
 	if (typeof(global.flow_tracker_object.flow) === "Object" && scenario !== void)

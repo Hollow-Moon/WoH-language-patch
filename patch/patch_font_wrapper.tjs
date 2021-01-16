@@ -153,14 +153,64 @@ global.font_remove_list = [
 	"#44 Font Bitmap"
 ];
 
+global.font_file_add_list = [
+	"MSGOTHIC.TTC",
+	"MSMINCHO.TTC",
+	"TAHOMA.TTF",
+	"TAHOMABD.TTF",
+	"TIMES.TTF",
+	"TIMESBD.TTF",
+	"TIMESBI.TTF",
+	"TIMESI.TTF",
+];
+
 global.font_remap_cache = %[];
 
 {
 	if (typeof(global.Font) === "Object" && typeof(global.Font.addFont) === "Object")
 	{
-		if (Storages.isExistentStorage("MS PGothic.ttf"))
+		for (var i = 0; i < global.font_file_add_list.count; i += 1)
 		{
-			System.setArgument("-deffont", global.Font.addFont("MS PGothic.ttf")[0]);
+			var item = global.font_file_add_list[i];
+			if (Storages.isExistentStorage(item))
+			{
+				var res = global.Font.addFont(item);
+				if (res !== void && res.count > 0)
+				{
+					for (var j = 0; j < res.count; j += 1)
+					{
+						if (res[j] === "MS PGothic")
+						{
+							System.setArgument("-deffont", res[j]);
+							break;
+						}
+					}
+					Debug.message(("Successfully added font \"%s\"").sprintf(res[0]));
+				}
+				else
+				{
+					Debug.message(("Failed to add font file \"%s\"").sprintf(item));
+				}
+			}
+		}
+	}
+	else if (typeof(global.System.addFont) === "Object")
+	{
+		for (var i = 0; i < global.font_file_add_list.count; i += 1)
+		{
+			var item = global.font_file_add_list[i];
+			if (Storages.isExistentStorage(item))
+			{
+				var result = System.addFont(item, true);
+				if (typeof(result) === "Integer" && result > 0)
+				{
+					Debug.message(("Successfully added font \"%s\"").sprintf(item));
+				}
+				else
+				{
+					Debug.message(("Failed to add font file \"%s\"").sprintf(item));
+				}
+			}
 		}
 	}
 }

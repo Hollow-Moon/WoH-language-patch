@@ -39,9 +39,10 @@ class KAGWindow_patch_fix_savedata_by_jump_override extends KAGWindow_patch_fix_
 			}
 @endif
 @if(GAME_WOHN)
-			if (typeof(pcflags.scriptno) === "Integer" && typeof(pcflags.scripts) === "Object" && pcflags.scripts.count > pcflags.scriptno)
+			var wanted_scriptno = pcflags.scriptno - 1;
+			if (typeof(pcflags.scriptno) === "Integer" && typeof(pcflags.scripts) === "Object" && pcflags.scripts.count > wanted_scriptno)
 			{
-				scenario = pcflags.scripts[pcflags.scriptno];
+				scenario = pcflags.scripts[wanted_scriptno];
 			}
 			if (typeof(pflags.av_no) === "Integer" && typeof(pflags.av_storage) === "Object" && pflags.av_storage.count > pflags.av_no)
 			{

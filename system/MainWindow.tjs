@@ -344,7 +344,20 @@ class KAGWindow extends Window
 		{
 			if (typeof(Debug.logLocation) === "String")
 			{
-				Debug.logLocation = saveDataLocation;
+				if (!global.forceLog)
+				{
+					var arcdelim = System.getArgument("-arcdelim");
+					if (!arcdelim)
+					{
+						arcdelim = ">";
+					}
+					// global.Debug.logLocation will be cleared if there is an archive delimiter in the path
+					global.Debug.logLocation = "__this_path_should_be_fake__" + arcdelim;
+				}
+				else
+				{
+					global.Debug.logLocation = saveDataLocation;
+				}
 			}
 		}
 @endif

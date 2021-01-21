@@ -821,24 +821,10 @@ function addHdMenu(displayMenu) {
 	var fpsLimitFlag = new GameFlag(this, this.sflags, "contfreq", fpsLimitDefault);
 	var multiThreadDrawFlag = new GameFlag(this, this.sflags, "drawthread", multiThreadDefault);
 
-	// Work around null pointer dereference when attempting to use Window.waitVSync on dev_multi_platform version of Kirikiri Z.
-	var fpsLimitBeforeCallback = function(sender)
-	{
-		if (sender === sender.owner.fpsLimitVsyncMenuItem)
-		{
-			if (typeof(global.Canvas) === "Object")
-			{
-				return false;
-			}
-		}
-		return true;
-	};
-
 	var fpsLimitCallback = function(sender)
 	{
 		if (sender.flag.value === "-1")
 		{
-			if (typeof(global.Canvas) !== "Object")
 			{
 				sender.owner.waitVSync = true;
 			}
@@ -846,7 +832,6 @@ function addHdMenu(displayMenu) {
 		}
 		else
 		{
-			if (typeof(global.Canvas) !== "Object")
 			{
 				sender.owner.waitVSync = false;
 			}
@@ -865,11 +850,6 @@ function addHdMenu(displayMenu) {
 	this.fpsLimit60MenuItem.afterCallback = fpsLimitCallback;
 	this.fpsLimit30MenuItem.afterCallback = fpsLimitCallback;
 	this.fpsLimit15MenuItem.afterCallback = fpsLimitCallback;
-	this.fpsLimitVsyncMenuItem.beforeCallback = fpsLimitBeforeCallback;
-	this.fpsLimit00MenuItem.beforeCallback = fpsLimitBeforeCallback;
-	this.fpsLimit60MenuItem.beforeCallback = fpsLimitBeforeCallback;
-	this.fpsLimit30MenuItem.beforeCallback = fpsLimitBeforeCallback;
-	this.fpsLimit15MenuItem.beforeCallback = fpsLimitBeforeCallback;
 	fpsLimitCallback(this.fpsLimitVsyncMenuItem);
 
 	if (typeof(global.System.drawThreadNum) === "Integer")

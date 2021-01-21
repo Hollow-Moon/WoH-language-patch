@@ -173,21 +173,33 @@ function setFontWithLanguage(language, kag=global.kag)
 	/// Main ///
 	kag.sflags.userFont[language] = %[
 		fontface:get_default_font(),
-		bold:false,
-		rubybold:false
+		bold:get_default_bold(),
+		rubybold:get_default_ruby_bold()
 	] if kag.sflags.userFont[language] === void;
 
 	with(kag)
 	{
 		var uf = .sflags.userFont[language];
 		.chDefaultFace				= uf.fontface;
+		if (typeof(tf.chDefaultFace) === "String")
+		{
+			tf.chDefaultFace = uf.fontface;
+		}
 		if (typeof(.chDefaultBold) === "Integer")
 		{
 			.chDefaultBold				= uf.bold;
 		}
+		if (typeof(tf.chDefaultBold) === "Integer")
+		{
+			tf.chDefaultBold = uf.bold;
+		}
 		if (typeof(.chDefaultRubyBold) === "Integer")
 		{
 			.chDefaultRubyBold				= uf.rubybold;
+		}
+		if (typeof(tf.chDefaultRubyBold) === "Integer")
+		{
+			tf.chDefaultRubyBold = uf.rubybold;
 		}
 		.current.defaultBold		= uf.bold;
 		.current.defaultRubyBold	= uf.rubybold;
@@ -708,6 +720,15 @@ function get_fsncleaner_rescript_enabled(kag=global.kag) { { return !!(get_curre
 
 function get_default_font()
 {
+@if(GAME_WOHN)
+	{
+		if (typeof(global.kag.current) === "Object")
+		{
+			return global.kag.current.configValues.userFace;
+		}
+	}
+@endif
+@if(!GAME_WOHN)
 	{
 		var font_face_to_use = "ＭＳ ゴシック";
 		if (typeof(global.fontSettings) === "Object")
@@ -715,6 +736,37 @@ function get_default_font()
 			font_face_to_use = fontSettings["window"].face;
 		}
 		return __s(font_face_to_use, "window_font_face");
+	}
+@endif
+}
+
+function get_default_bold()
+{
+@if(GAME_WOHN)
+	{
+		if (typeof(global.kag.current) === "Object")
+		{
+			return global.kag.current.configValues.defaultBold;
+		}
+	}
+@endif
+	{
+		return false;
+	}
+}
+
+function get_default_ruby_bold()
+{
+@if(GAME_WOHN)
+	{
+		if (typeof(global.kag.current) === "Object")
+		{
+			return global.kag.current.configValues.defaultRubyBold;
+		}
+	}
+@endif
+	{
+		return false;
 	}
 }
 
@@ -896,12 +948,15 @@ class Window_PatchLanguage_override extends Window_PatchLanguage_original
 		unload_language_patch(this.sflags.language, this);
 		load_language_patch(language, this);
 		this.sflags.language = language;
+@if(!GAME_WOHN)
 		setFontWithLanguage(this.sflags.language, this);
+@endif
 		sender.checked = true;
 		extraConductor.clear(); // Fix code for AutoPath
 @if(GAME_WOHN)
 		// Reload the font configuration.
 		global.reload_messagelayer_config(this);
+		setFontWithLanguage(this.sflags.language, this);
 @endif
 		onReloadScenarioMenuItemClick(sender);
 		if(typeof global.flow_tracker_object !== "undefined" && typeof flow_tracker_object.flowchart !== "undefined" && flow_tracker_object.flowchart.filename !== void)

@@ -92,9 +92,20 @@
 	}
 	if ((typeof(Storages.dirlist) !== "Object") || (typeof(Storages.isExistentDirectory) !== "Object"))
 	{
-		if (Storages.isExistentStorage("fstat.dll"))
+		var fstat_paths = [
+			"fstat.dll",
+@if(GAME_WOHN)
+			System.exePath + "content-data/patch/fstat.dll",
+@endif
+		];
+		for (var i = 0; i < fstat_paths.count; i += 1)
 		{
-			Plugins.link("fstat.dll");
+			var path = "" + fstat_paths[i];
+			if (path !== "" && Storages.isExistentStorage(path))
+			{
+				Plugins.link(path);
+				break;
+			}
 		}
 	}
 	var currentpath = Storages.getFullPath("./");

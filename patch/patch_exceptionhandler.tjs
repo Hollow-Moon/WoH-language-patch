@@ -58,7 +58,6 @@ System.exceptionHandler = function(e)
 	if (typeof(global.Debug) === "Object" && typeof(global.Debug.logLocation) === "String")
 	{
 		logpath = global.Debug.logLocation;
-		logname = "krkr.console.log";
 	}
 	else
 	{
@@ -73,27 +72,36 @@ System.exceptionHandler = function(e)
 	{
 		hwexceptpath = System.exePath;
 	}
-	logpath += "/";
-	logpath = Storages.getFullPath(logpath);
-	hwexceptpath += "/";
-	hwexceptpath = Storages.getFullPath(logpath);
+	if (logpath !== "")
+	{
+		logpath += "/";
+		logpath = Storages.getFullPath(logpath);
+	}
+	if (hwexceptpath !== "")
+	{
+		hwexceptpath += "/";
+		hwexceptpath = Storages.getFullPath(hwexceptpath);
+	}
 
 	// Move the old log to another location
 	try
 	{
-		if (typeof(Storages.isExistentStorageNoSearchNoNormalize) === "Object")
+		if (logpath !== "")
 		{
-			if (Storages.isExistentStorageNoSearchNoNormalize(logpath + logname))
+			if (typeof(Storages.isExistentStorageNoSearchNoNormalize) === "Object")
 			{
-				if (typeof(Storages.getTime) === "Object")
+				if (Storages.isExistentStorageNoSearchNoNormalize(logpath + logname))
 				{
-					var logtime = Storages.getTime(logpath + logname);
-					if (typeof(logtime) === "Object")
+					if (typeof(Storages.getTime) === "Object")
 					{
-						var date = logtime.mtime;
-						if (typeof(Storages.moveFile) === "Object")
+						var logtime = Storages.getTime(logpath + logname);
+						if (typeof(logtime) === "Object")
 						{
-							Storages.moveFile(logpath + logname, logpath + ("krkr-%04d%02d%02d%02d%02d%02d.console.log").sprintf(date.getYear(), date.getMonth(), date.getDay(), date.getHours(), date.getMinutes(), date.getSeconds()));
+							var date = logtime.mtime;
+							if (typeof(Storages.moveFile) === "Object")
+							{
+								Storages.moveFile(logpath + logname, logpath + ("krkr-%04d%02d%02d%02d%02d%02d.console.log").sprintf(date.getYear(), date.getMonth(), date.getDay(), date.getHours(), date.getMinutes(), date.getSeconds()));
+							}
 						}
 					}
 				}
@@ -188,11 +196,15 @@ System.exceptionHandler = function(e)
 @if(!KIRIKIROID)
 			if (typeof(global.Debug) === "Object" && typeof(global.Debug.logLocation) === "String")
 			{
+				if (typeof(global.System.setArgument) === "Object")
+				{
+					global.System.setArgument("-forcelog", "yes");
+				}
 				global.Debug.logLocation = dir;
 				Debug.startLogToFile(true);
-				exception_files.add(logpath + logname);
+				exception_files.add(dir + logname);
 			}
-			else if (Storages.isExistentStorage(logpath + logname))
+			else if (logpath !== "" && Storages.isExistentStorage(logpath + logname))
 			{
 				if (typeof(Storages.exportFile) === "Object")
 				{

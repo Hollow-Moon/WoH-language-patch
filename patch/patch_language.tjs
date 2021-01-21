@@ -305,9 +305,13 @@ function find_file_in_language_paths(filename, language = void, exts = "")
 	{
 		return languageFilePathCache[language][filename];
 	}
-	if (exts !== "")
+	if (exts !== "" && typeof(exts) === "String")
 	{
 		exts = exts.split("|");
+	}
+	else if (typeof(exts) === "Object")
+	{
+		exts = exts;
 	}
 	else
 	{
@@ -795,6 +799,36 @@ function loadLanguageDict(language) {
 	}
 }
 
+global.System.touchImages_PatchLanguage_original = global.System.touchImages;
+global.System.touchImages = function(storage, limitbytes=0, timeout=0)
+{
+	var storage_fixed = [];
+	if (typeof(global.chop_image_extension) === "Object" && typeof(global.image_extensions) === "Object")
+	{
+		for (var i = 0; i < storage.count; i += 1)
+		{
+			var result = void;
+			if (storage[i].indexOf(":") === -1)
+			{
+				result = global.find_file_in_language_paths(global.chop_image_extension(storage[i]), , global.image_extensions);
+			}
+			if (typeof(result) === "String")
+			{
+				storage_fixed.push(result);
+			}
+			else
+			{
+				storage_fixed.push(storage[i]);
+			}
+		}
+	}
+	else
+	{
+		storage_fixed = storage;
+	}
+	return global.System.touchImages_PatchLanguage_original(storage_fixed, limitbytes, timeout);
+};
+
 global.Layer_PatchLanguage_original = Layer;
 class Layer_PatchLanguage_override extends Layer_PatchLanguage_original
 {
@@ -822,6 +856,19 @@ class Layer_PatchLanguage_override extends Layer_PatchLanguage_original
 	function Layer()
 	{
 		Layer_PatchLanguage_override(...);
+	}
+
+	function loadImages(storage, key)
+	{
+		if (typeof(global.chop_image_extension) === "Object" && typeof(global.image_extensions) === "Object" && storage.indexOf(":") === -1)
+		{
+			var result = global.find_file_in_language_paths(chop_image_extension(storage), , global.image_extensions);
+			if (typeof(result) === "String")
+			{
+				return super.loadImages(result, key);
+			}
+		}
+		return super.loadImages(...);
 	}
 }
 global.Layer = Layer_PatchLanguage_override;

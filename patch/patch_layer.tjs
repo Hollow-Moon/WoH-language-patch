@@ -1,6 +1,31 @@
 ﻿
 global.image_extensions = [".webp", ".png", ".tlg", ".jpg", ".bmp"];
 
+function chop_image_extension(storage)
+{
+	var image_extensions = global.image_extensions;
+
+	if (image_extensions.find(global.Storages.extractStorageExt(storage)) === -1)
+	{
+		var file_name_no_ext = storage;
+		var file_name_len = storage.length;
+
+		for (var i = 0; i < image_extensions.count; i += 1)
+		{
+			var file_name_ext_pos = file_name_no_ext.indexOf(image_extensions[i]);
+			if ((file_name_ext_pos !== -1) && (file_name_ext_pos + image_extensions[i].length === file_name_len))
+			{
+				file_name_no_ext = file_name_no_ext.substring(0, file_name_ext_pos);
+				break;
+			}
+		}
+		return file_name_no_ext;
+	}
+
+
+	return storage;
+}
+
 function get_file_name_of_image_with_extension_that_exists(storage)
 {
 	var image_extensions = global.image_extensions;
@@ -63,24 +88,20 @@ function getExistImageName(storage)
 	return global.get_full_path_of_image(storage);
 }
 
-global.System_patch_layer_original = System;
-class System_patch_layer_override extends System_patch_layer_original
+global.System.touchImages_patch_layer_original = global.System.touchImages;
+global.System.touchImages = function(storage, limitbytes=0, timeout=0)
 {
-	function touchImages(storage, limitbytes=0, timeout=0)
+	var storage_fixed = [];
+	for (var i = 0; i < storage.count; i += 1)
 	{
-		var storage_fixed = [];
-		for (var i = 0; i < storage.count; i += 1)
+		var file_name = global.get_full_path_of_image(storage[i]);
+		if (file_name !== "")
 		{
-			var file_name = global.get_full_path_of_image(storage[i]);
-			if (file_name !== "")
-			{
-				storage_fixed.push(file_name);
-			}
+			storage_fixed.push(file_name);
 		}
-		return super.touchImages(storage_fixed, limitbytes, timeout);
 	}
-}
-global.System = System_patch_layer_override;
+	return global.System.touchImages_patch_layer_original(storage_fixed, limitbytes, timeout);
+};
 
 global.layer_tagdata_replacement = %[];
 

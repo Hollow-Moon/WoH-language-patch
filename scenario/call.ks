@@ -100,6 +100,7 @@ with(tracer_object)
 @position page=back visible=false
 ;lockquickmenu を維持するため、onceIgnoreUnlockQuickMenu=true
 @eval exp="onceIgnoreUnlockQuickMenu=true;delete tf.do_systemmenu;delete tf.ttm_opened;delete f.in_ttm;outMenu(__menuStack[__menuStack.count-1],, false);with(Menu_object).doInvalidateByInvisible('fore'),.clearClick(),.setAllContrary(false);kag.setHistoryOptions(%[enabled:false]);kag.stopAllActions();kag.freeSnapshot();"
+@eval exp="global.kag.set_skip()"
 @stoptrans
 @fadeoutbgm time=400
 @bg storage=black time=400

@@ -573,9 +573,19 @@ function addDevelopmentMenu() {
 	(addDevelopmentMenuItems incontextof this)(devMenuItem);
 	devMenuItem.add(this.throwExceptionItem = new KAGMenuItem(this, "Throw Exception", 1, function(sender) { throw new Exception("This is a test Exception."); }, false));
 	devMenuItem.add(this.throwConductorExceptionItem = new KAGMenuItem(this, "Throw ConductorException", 1, function(sender) { throw new ConductorException("This is a test ConductorException."); }, false));
-	devMenuItem.add(this.openCommandPromptInProjectDirectory = new KAGMenuItem(this, "Open command prompt in project directory", 1, function(sender) { global.System.shellExecute("cmd.exe", "/k cd " + ('"%s"').sprintf(Storages.getLocalName(Storages.getFullPath(".")))); }, false));
-	devMenuItem.add(this.gitCheckoutDashDashCurrentDirectory = new KAGMenuItem(this, "git checkout -- .", 1, function(sender) { global.build_exec_command_line("git.exe", ["-C", Storages.getLocalName(Storages.getFullPath(".")), "checkout", "--", "."], false, false); }, false));
-	devMenuItem.add(this.gitPullOriginMaster = new KAGMenuItem(this, "git pull origin master", 1, function(sender) { global.build_exec_command_line("git.exe", ["-C", Storages.getLocalName(Storages.getFullPath(".")), "pull", "origin", "master"], false, false); }, false));
+	var base_path = Storages.getFullPath(".");
+	if (base_path.indexOf(">") === -1)
+	{
+		base_path = Storages.getLocalName(base_path);
+	}
+	else
+	{
+		base_path = System.exePath + "/content-data/";
+		base_path = Storages.getLocalName(base_path);
+	}
+	devMenuItem.add(this.openCommandPromptInProjectDirectory = new KAGMenuItem(this, "Open command prompt in project directory", 1, function(sender) { global.System.shellExecute("cmd.exe", "/k cd " + ('"%s"').sprintf(base_path)); }, false));
+	devMenuItem.add(this.gitCheckoutDashDashCurrentDirectory = new KAGMenuItem(this, "git checkout -- .", 1, function(sender) { global.build_exec_command_line("git.exe", ["-C", base_path, "checkout", "--", "."], false, false); }, false));
+	devMenuItem.add(this.gitPullOriginMaster = new KAGMenuItem(this, "git pull origin master", 1, function(sender) { global.build_exec_command_line("git.exe", ["-C", base_path, "pull", "origin", "master"], false, false); }, false));
 }
 
 function addConductorVerbosityMenu() {

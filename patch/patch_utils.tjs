@@ -478,7 +478,7 @@ global.prologue_storage_arr = [
 ];
 @endif
 
-global.open_scenario_using_scenario_tracker = function(kag=global.kag, scenario, flowchart_id=0, flowchart_name=void)
+global.open_scenario_using_scenario_tracker = function(kag=global.kag, scenario, flowchart_id, flowchart_name=void)
 {
 @if(GAME_WOHN)
 	if (typeof(kag.conductor) !== "Object")
@@ -490,27 +490,42 @@ global.open_scenario_using_scenario_tracker = function(kag=global.kag, scenario,
 	{
 		tracer_object.load(tracer_object.chart_storage = "main.gc");
 	}
-	var block = tracer_object.getBlockFromScript(scenario);
-	if (block === void)
+	if (flowchart_id === void)
 	{
-		throw new Exception("Couldn't find reference to script " + scenario + " in chart!");
+		var block = tracer_object.getBlockFromScript(scenario);
+		if (block === void)
+		{
+			throw new Exception("Couldn't find reference to script " + scenario + " in chart!");
+		}
+		global.tracer_object.start(block.id, false);
 	}
-	global.tracer_object.start(block.id);
+	else
+	{
+		global.tracer_object.start(flowchart_id, false);
+	}
+	
 	var save_scene_2nd_skip = cf.scene2ndSkip;
 	cf.scene2ndSkip = false;
 	tracer_object.exec();
 	cf.scene2ndSkip = save_scene_2nd_skip;
-	var scripts = global.tracer_object.scripts;
-	if (scripts === void)
+	if (typeof(scenario) === "String")
 	{
-		throw new Exception("No scripts in block!");
+		var scripts = global.tracer_object.scripts;
+		if (scripts === void)
+		{
+			throw new Exception("No scripts in block!");
+		}
+		var script_index = scripts.find(scenario);
+		if (script_index === -1)
+		{
+			throw new Exception("Could not find specified script in block!");
+		}
+		global.tracer_object.scriptNo = script_index;
 	}
-	var script_index = scripts.find(scenario);
-	if (script_index === -1)
+	else
 	{
-		throw new Exception("Could not find specified script in block!");
+		global.tracer_object.scriptNo = 0;
 	}
-	global.tracer_object.scriptNo = script_index;
 	global.kag.conductor.clearCallStack();
 	kag.process("tracerplugin.ks", "*play2");
 @endif

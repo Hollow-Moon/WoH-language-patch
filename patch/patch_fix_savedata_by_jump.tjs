@@ -44,6 +44,12 @@ class KAGWindow_patch_fix_savedata_by_jump_override extends KAGWindow_patch_fix_
 			{
 				scenario = pcflags.scripts[wanted_scriptno];
 			}
+			else if (typeof(pcflags.chart_storage) === "String" && typeof(pcflags.chart_current) === "Integer")
+			{
+				scenario = void;
+				flowfile = pcflags.chart_storage;
+				flowid = pcflags.chart_current;
+			}
 			if (typeof(pflags.av_no) === "Integer" && typeof(pflags.av_storage) === "Object" && pflags.av_storage.count > pflags.av_no)
 			{
 				global.startArchiveWithScenario(pflags.av_storage[pflags.av_no]);

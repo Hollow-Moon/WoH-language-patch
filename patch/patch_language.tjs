@@ -171,11 +171,10 @@ function setFontWithLanguage(language, kag=global.kag)
 	load_fonts(language);
 
 	/// Main ///
-	kag.sflags.userFont[language] = %[
-		fontface:get_default_font(),
-		bold:get_default_bold(),
-		rubybold:get_default_ruby_bold()
-	] if kag.sflags.userFont[language] === void;
+	if (kag.sflags.userFont[language] === void)
+	{
+		kag.sflags.userFont[language] = global.get_default_userfont_settings();
+	}
 
 	with(kag)
 	{
@@ -214,6 +213,13 @@ function setFontWithLanguage(language, kag=global.kag)
 		.face = kag.sflags.historyFont		= hf[0];
 		.bold = kag.sflags.historyFontBold	= hf[1];
 	}
+}
+
+function set_default_history_settings(curlangset)
+{
+	var histsetting = global.get_default_history_settings();
+	curlangset.history_default = histsetting.fontName;
+	curlangset.history_default_bold = histsetting.fontBold;
 }
 
 function saveFontWithLanguage(kag=global.kag)
@@ -711,8 +717,24 @@ if (default_language !== japaneseLanguage)
 // For convenience
 function get_currentLanguageSettings(kag=global.kag) { { return languageSettings[kag.sflags.language]; } }
 function get_special_characters(kag=global.kag) { { return get_currentLanguageSettings(kag)["special_characters"] !== void? get_currentLanguageSettings(kag)["special_characters"] : %[]; } }
-function get_default_history_font(kag=global.kag) { { return get_currentLanguageSettings(kag)["history_default"]; } }
-function get_default_history_bold(kag=global.kag) { { return get_currentLanguageSettings(kag)["history_default_bold"]; } }
+function get_default_history_font(kag=global.kag)
+{
+	var cur_langset = get_currentLanguageSettings(kag);
+	if (cur_langset["history_default"] === void)
+	{
+		global.set_default_history_settings(global.get_currentLanguageSettings(kag));
+	}
+	return cur_langset["history_default"];
+}
+function get_default_history_bold(kag=global.kag)
+{
+	var cur_langset = get_currentLanguageSettings(kag);
+	if (cur_langset["history_default_bold"] === void)
+	{
+		global.set_default_history_settings(global.get_currentLanguageSettings(kag));
+	}
+	return cur_langset["history_default_bold"];
+}
 function get_historyFontDefault(kag=global.kag) { { return [ get_default_history_font(kag), get_default_history_bold(kag) ]; } }
 function get_historyFont(kag=global.kag) { { return get_currentLanguageSettings(kag)["history"] !== void? get_currentLanguageSettings(kag)["history"] : %[]; } }
 function get_fsncleaner_rescript_enabled(kag=global.kag) { { return !!(get_currentLanguageSettings(kag)["fsncleaner_rescript_enabled"]); } }
@@ -720,56 +742,60 @@ function get_fsncleaner_rescript_enabled(kag=global.kag) { { return !!(get_curre
 
 function get_default_font()
 {
-@if(GAME_WOHN)
+	var dic = %[];
+	dic.missing = function(set, name, prop)
 	{
-		if (typeof(global.kag.current) === "Object")
+		if (!set)
 		{
-			return global.kag.current.configValues.userFace;
+			return false;
 		}
-	}
-@endif
-@if(!GAME_WOHN)
-	{
-		var font_face_to_use = "ＭＳ ゴシック";
-		if (typeof(global.fontSettings) === "Object")
-		{
-			font_face_to_use = fontSettings["window"].face;
-		}
-		return __s(font_face_to_use, "window_font_face");
-	}
-@endif
+		this[name] = *prop;
+		return true;
+	};
+	global.Scripts.setCallMissing(dic);
+	(global.MessageLayer_config incontextof dic)();
+	return dic.userFace;
 }
 
-function get_default_bold()
+function get_default_userfont_settings()
 {
-@if(GAME_WOHN)
+	var dic = %[];
+	dic.missing = function(set, name, prop)
 	{
-		if (typeof(global.kag.current) === "Object")
+		if (!set)
 		{
-			return global.kag.current.configValues.defaultBold;
+			return false;
 		}
-	}
-@endif
-	{
-		return false;
-	}
+		this[name] = *prop;
+		return true;
+	};
+	global.Scripts.setCallMissing(dic);
+	(global.MessageLayer_config incontextof dic)();
+
+	return %[
+		fontface: dic.userFace,
+		bold: dic.defaultBold,
+		rubybold: false
+	];
 }
 
-function get_default_ruby_bold()
+function get_default_history_settings()
 {
-@if(GAME_WOHN)
+	var dic = %[];
+	dic.missing = function(set, name, prop)
 	{
-		if (typeof(global.kag.current) === "Object")
+		if (!set)
 		{
-			return global.kag.current.configValues.defaultRubyBold;
+			return false;
 		}
-	}
-@endif
-	{
-		return false;
-	}
-}
+		this[name] = *prop;
+		return true;
+	};
+	global.Scripts.setCallMissing(dic);
+	(global.HistoryLayer_config incontextof dic)();
 
+	return dic;
+}
 
 function getFontFiles(language) {
 	var fontFiles = languageSettings[language]["fontFiles"];
@@ -840,8 +866,6 @@ function loadLanguageDict(language) {
 		var currentLanguageSettings = languageSettings[language];
 
 		currentLanguageSettings.menu_name = __s("日本語 - &Japanese", "language_menu_name");
-		currentLanguageSettings.history_default = __s("ＭＳ Ｐ明朝", "history_font_face");
-		currentLanguageSettings.history_default_bold = __sb("1", "history_font_bold");
 
 		if (typeof(currentLanguageSettings.files) === "Object")
 		{

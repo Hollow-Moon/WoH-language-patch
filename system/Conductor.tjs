@@ -39,6 +39,21 @@ var	isTransTag	= %[
 	trans:1, bg:1, fg:1, clfg:1, chgfg:1, partbg:1, clpartbg:1, chgpartbg:1,
 	monocro:1, red:1, green:1, blue:1, sepia:1, nega:1, contrast:1, blur:1, bluroff:1,
 ];
+var	isSpecialTag = %[
+	"if" => 1,
+	"ignore" => 1,
+	"endif" => 1,
+	"endignore" => 1,
+	"else" => 1,
+	"elsif" => 1,
+	"emb" => 1,
+	"macro" => 1,
+	"endmacro" => 1,
+	"erasemacro" => 1,
+	"jump" => 1,
+	"call" => 1,
+	"return" => 1,
+];
 @endif
 
 class BaseConductor extends KAGParser
@@ -319,8 +334,12 @@ class BaseConductor extends KAGParser
 
 //		dm("touchNextImages() / "+Scripts.getTraceString());
 //		dm("touchNextImages("+wait+"): pendings = "+pendings.count);
+		var next_pendings = [];
 		var	list	= [];
 		var	ext;
+		var last_label = this.curLabel;
+		var save_processSpecialTags = this.processSpecialTags;
+		this.processSpecialTags = false;
 		for(;;)
 		{
 			//	キャッシュしないならスキップ
@@ -334,10 +353,34 @@ class BaseConductor extends KAGParser
 				break;
 //			dm("touchNextImages: "+ntag.tagname);
 
+			// We need to handle macropop ourselves since special tag processing is disabled
+			if (ntag.tagname === "macropop")
+			{
+				this.popMacroArgs();
+				continue;
+			}
+
 			//	タグを複製して pendings へ
 			var obj = %[];
 			(Dictionary.assignStruct incontextof obj)(ntag); // 次のタグを得る
-			pendings.add(obj); // すべて後回しにする
+			next_pendings.add(obj); // すべて後回しにする
+
+			// Empty pending queue to pendings if label changed.
+			var cur_label = this.curLabel;
+			if (cur_label !== last_label && next_pendings.count > 0)
+			{
+				this.pendings.push(next_pendings*);
+				next_pendings.clear();
+			}
+
+			// If a control flow tag has been hit, clear pending queue (we don't want to add it), rewind to label, and stop here.
+			if (isSpecialTag[obj.tagname])
+			{
+				Debug.message("Special tag name: " + obj.tagname);
+				next_pendings.clear();
+				this.goToLabel(this.curLabel);
+				break;
+			}
 
 			// 実行停止するタグが見つかったら、次へ進む
 			if(isStopTag[obj.tagname])
@@ -379,6 +422,13 @@ class BaseConductor extends KAGParser
 			else if(obj.storage != void && !isSoundTags[obj.tagname] &&	//	storage があり、サウンド関連のタグでなく、
 				((ext = Storages.extractStorageExt(obj.storage)) == "" || (global.image_extensions.find(ext) !== -1)))	//	拡張子がない場合は、画像としておく
 				addTouchList(list, obj.storage);	// storage 属性は画像の可能性がある
+		}
+		this.processSpecialTags = save_processSpecialTags;
+		// Empty pending queue.
+		if (next_pendings.count > 0)
+		{
+			this.pendings.push(next_pendings*);
+			next_pendings.clear();
 		}
 
 		// 次で使用する画像をキャッシュへ読み込む

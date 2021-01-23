@@ -43,7 +43,7 @@
 	["patch_plugin_firespark.tjs", , [["initFireSpark"]], , "GAME_FATE||GAME_FHAT"],
 	["layerExFilter.dll", , [["Layer.drawNoise"]], true, "GAME_WOHN"],
 	["patch_plugin_layerexfilter.tjs", , [["Layer.drawNoise"]], , "GAME_WOHN"],
-	["layerExParticle.dll", , [["Layer.initVectorParticle"]], true, "GAME_WOHN"],
+	["layerExParticle.dll", , [["Layer.initVectorParticle"]], true, "GAME_WOHN&&0"],
 	["patch_plugin_layerexparticle.tjs", , [["Layer.initVectorParticle"]], , "GAME_WOHN"],
 	["layerExYADraw.dll", , [["Layer.drawFocusLines"]], true, "GAME_WOHN"],
 	["patch_plugin_layerexyadraw.tjs", , [["Layer.drawFocusLines"]], , "GAME_WOHN"],

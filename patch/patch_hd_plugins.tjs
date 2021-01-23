@@ -180,7 +180,6 @@ if (typeof(global.Layer.hazeCopy) === "Object")
 }
 
 // LayerExParticle.dll
-@if(0)
 if (typeof(global.Layer.initVectorParticle) === "Object")
 {
 	global.Layer.initVectorParticle_patch_hd_plugins_original = global.Layer.initVectorParticle;
@@ -190,13 +189,13 @@ if (typeof(global.Layer.initVectorParticle) === "Object")
 		t = this.transformTop(t);
 		w = w * this.widthScale;
 		h = h * this.heightScale;
-		if (typeof(this.particleImage) === "Object")
+		if (this.initializedParticle && typeof(this.particleImage) === "Object")
 		{
 			this.particleImage.absoluteMode = true;
 		}
 		this.absoluteMode = true;
 		var ret = (global.Layer.initVectorParticle_patch_hd_plugins_original incontextof this)(unk, mc, gr, l, t, w, h);
-		if (typeof(this.particleImage) === "Object")
+		if (this.initializedParticle && typeof(this.particleImage) === "Object")
 		{
 			this.particleImage.absoluteMode = false;
 		}
@@ -211,13 +210,13 @@ if (typeof(global.Layer.initRotateParticle) === "Object")
 	{
 		cx = this.transformLeft(cx);
 		cy = this.transformTop(cy);
-		if (typeof(this.particleImage) === "Object")
+		if (this.initializedParticle && typeof(this.particleImage) === "Object")
 		{
 			this.particleImage.absoluteMode = true;
 		}
 		this.absoluteMode = true;
 		var ret = (global.Layer.initRotateParticle_patch_hd_plugins_original incontextof this)(unk, mc, gr, cx, cy);
-		if (typeof(this.particleImage) === "Object")
+		if (this.initializedParticle && typeof(this.particleImage) === "Object")
 		{
 			this.particleImage.absoluteMode = false;
 		}
@@ -232,13 +231,13 @@ if (typeof(global.Layer.initAccelRotateParticle) === "Object")
 	{
 		cx = this.transformLeft(cx);
 		cy = this.transformTop(cy);
-		if (typeof(this.particleImage) === "Object")
+		if (this.initializedParticle && typeof(this.particleImage) === "Object")
 		{
 			this.particleImage.absoluteMode = true;
 		}
 		this.absoluteMode = true;
 		var ret = (global.Layer.initAccelRotateParticle_patch_hd_plugins_original incontextof this)(unk, mc, gr, cx, cy);
-		if (typeof(this.particleImage) === "Object")
+		if (this.initializedParticle && typeof(this.particleImage) === "Object")
 		{
 			this.particleImage.absoluteMode = false;
 		}
@@ -255,13 +254,13 @@ if (typeof(global.Layer.initBlinkParticle) === "Object")
 		t = this.transformTop(t);
 		w = w * this.widthScale;
 		h = h * this.heightScale;
-		if (typeof(this.particleImage) === "Object")
+		if (this.initializedParticle && typeof(this.particleImage) === "Object")
 		{
 			this.particleImage.absoluteMode = true;
 		}
 		this.absoluteMode = true;
 		var ret = (global.Layer.initBlinkParticle_patch_hd_plugins_original incontextof this)(unk, mc, gr, l, t, w, h);
-		if (typeof(this.particleImage) === "Object")
+		if (this.initializedParticle && typeof(this.particleImage) === "Object")
 		{
 			this.particleImage.absoluteMode = false;
 		}
@@ -274,13 +273,13 @@ if (typeof(global.Layer.uninitParticle) === "Object")
 	global.Layer.uninitParticle_patch_hd_plugins_original = global.Layer.uninitParticle;
 	global.Layer.uninitParticle = function()
 	{
-		if (typeof(this.particleImage) === "Object")
+		if (this.initializedParticle && typeof(this.particleImage) === "Object")
 		{
 			this.particleImage.absoluteMode = true;
 		}
 		this.absoluteMode = true;
 		var ret = (global.Layer.uninitParticle_patch_hd_plugins_original incontextof this)(...);
-		if (typeof(this.particleImage) === "Object")
+		if (this.initializedParticle && typeof(this.particleImage) === "Object")
 		{
 			this.particleImage.absoluteMode = false;
 		}
@@ -293,13 +292,13 @@ if (typeof(global.Layer.updateParticle) === "Object")
 	global.Layer.updateParticle_patch_hd_plugins_original = global.Layer.updateParticle;
 	global.Layer.updateParticle = function()
 	{
-		if (typeof(this.particleImage) === "Object")
+		if (this.initializedParticle && typeof(this.particleImage) === "Object")
 		{
 			this.particleImage.absoluteMode = true;
 		}
 		this.absoluteMode = true;
 		var ret = (global.Layer.updateParticle_patch_hd_plugins_original incontextof this)(...);
-		if (typeof(this.particleImage) === "Object")
+		if (this.initializedParticle && typeof(this.particleImage) === "Object")
 		{
 			this.particleImage.absoluteMode = false;
 		}
@@ -312,13 +311,13 @@ if (typeof(global.Layer.setParticleBlinkTime) === "Object")
 	global.Layer.setParticleBlinkTime_patch_hd_plugins_original = global.Layer.setParticleBlinkTime;
 	global.Layer.setParticleBlinkTime = function()
 	{
-		if (typeof(this.particleImage) === "Object")
+		if (this.initializedParticle && typeof(this.particleImage) === "Object")
 		{
 			this.particleImage.absoluteMode = true;
 		}
 		this.absoluteMode = true;
 		var ret = (global.Layer.setParticleBlinkTime_patch_hd_plugins_original incontextof this)(...);
-		if (typeof(this.particleImage) === "Object")
+		if (this.initializedParticle && typeof(this.particleImage) === "Object")
 		{
 			this.particleImage.absoluteMode = false;
 		}
@@ -326,7 +325,6 @@ if (typeof(global.Layer.setParticleBlinkTime) === "Object")
 		return ret;
 	};
 }
-@endif
 
 // LayerExYaDraw.dll
 

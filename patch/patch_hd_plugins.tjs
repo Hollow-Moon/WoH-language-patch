@@ -110,4 +110,306 @@ if (typeof(global.drawAALine) === "Object")
 	global.drawAALine = drawAALine_patch_hd_plugins_override;
 }
 
+// LayerExFilter.dll
+if (typeof(global.Layer.drawNoise) === "Object")
+{
+	global.Layer.drawNoise_patch_hd_plugins_original = global.Layer.drawNoise;
+	global.Layer.drawNoise = function(monocro, under, upper, seed, l, t, w, h, holdalpha)
+	{
+		l = this.transformLeft(l);
+		t = this.transformTop(t);
+		w = w * this.widthScale;
+		h = h * this.heightScale;
+		this.absoluteMode = true;
+		var ret = (global.Layer.drawNoise_patch_hd_plugins_original incontextof this)(monocro, under, upper, seed, l, t, w, h, holdalpha);
+		this.absoluteMode = false;
+		return ret;
+	};
+}
+if (typeof(global.Layer.doContrast) === "Object")
+{
+	global.Layer.doContrast_patch_hd_plugins_original = global.Layer.doContrast;
+	global.Layer.doContrast = function()
+	{
+		this.absoluteMode = true;
+		var ret = (global.Layer.doContrast_patch_hd_plugins_original incontextof this)(...);
+		this.absoluteMode = false;
+		return ret;
+	};
+}
+if (typeof(global.Layer.initHazeCopy) === "Object")
+{
+	global.Layer.initHazeCopy_patch_hd_plugins_original = global.Layer.initHazeCopy;
+	global.Layer.initHazeCopy = function()
+	{
+		this.absoluteMode = true;
+		var ret = (global.Layer.initHazeCopy_patch_hd_plugins_original incontextof this)(...);
+		this.absoluteMode = false;
+		return ret;
+	};
+}
+if (typeof(global.Layer.uninitHazeCopy) === "Object")
+{
+	global.Layer.uninitHazeCopy_patch_hd_plugins_original = global.Layer.uninitHazeCopy;
+	global.Layer.uninitHazeCopy = function()
+	{
+		this.absoluteMode = true;
+		var ret = (global.Layer.uninitHazeCopy_patch_hd_plugins_original incontextof this)(...);
+		this.absoluteMode = false;
+		return ret;
+	};
+}
+if (typeof(global.Layer.hazeCopy) === "Object")
+{
+	global.Layer.hazeCopy_patch_hd_plugins_original = global.Layer.hazeCopy;
+	global.Layer.hazeCopy = function(waveinfono, srcLayer, sl, st, rad, delta, per, alphablend, dl, dt, dw, dh, sw, sh)
+	{
+		sl = srcLayer.transformLeft(sl);
+		st = srcLayer.transformTop(st);
+		sw = sw * srcLayer.widthScale;
+		sh = sh * srcLayer.heightScale;
+		dl = this.transformLeft(dl);
+		dt = this.transformTop(dt);
+		dw = dw * this.widthScale;
+		dh = dh * this.heightScale;
+		this.absoluteMode = true;
+		var ret = (global.Layer.hazeCopy_patch_hd_plugins_original incontextof this)(waveinfono, srcLayer, sl, st, rad, delta, per, alphablend, dl, dt, dw, dh, sw, sh);
+		this.absoluteMode = false;
+		return ret;
+	};
+}
+
+// LayerExParticle.dll
+if (typeof(global.Layer.initVectorParticle) === "Object")
+{
+	global.Layer.initVectorParticle_patch_hd_plugins_original = global.Layer.initVectorParticle;
+	global.Layer.initVectorParticle = function(unk, mc, gr, l, t, w, h)
+	{
+		l = this.transformLeft(l);
+		t = this.transformTop(t);
+		w = w * this.widthScale;
+		h = h * this.heightScale;
+		if (typeof(this.particleImage) === "Object")
+		{
+			this.particleImage.absoluteMode = true;
+		}
+		this.absoluteMode = true;
+		var ret = (global.Layer.initVectorParticle_patch_hd_plugins_original incontextof this)(unk, mc, gr, l, t, w, h);
+		if (typeof(this.particleImage) === "Object")
+		{
+			this.particleImage.absoluteMode = false;
+		}
+		this.absoluteMode = false;
+		return ret;
+	};
+}
+if (typeof(global.Layer.initRotateParticle) === "Object")
+{
+	global.Layer.initRotateParticle_patch_hd_plugins_original = global.Layer.initRotateParticle;
+	global.Layer.initRotateParticle = function(unk, mc, gr, cx, cy)
+	{
+		cx = this.transformLeft(cx);
+		cy = this.transformTop(cy);
+		if (typeof(this.particleImage) === "Object")
+		{
+			this.particleImage.absoluteMode = true;
+		}
+		this.absoluteMode = true;
+		var ret = (global.Layer.initRotateParticle_patch_hd_plugins_original incontextof this)(unk, mc, gr, cx, cy);
+		if (typeof(this.particleImage) === "Object")
+		{
+			this.particleImage.absoluteMode = false;
+		}
+		this.absoluteMode = false;
+		return ret;
+	};
+}
+if (typeof(global.Layer.initAccelRotateParticle) === "Object")
+{
+	global.Layer.initAccelRotateParticle_patch_hd_plugins_original = global.Layer.initAccelRotateParticle;
+	global.Layer.initAccelRotateParticle = function(unk, mc, gr, cx, cy)
+	{
+		cx = this.transformLeft(cx);
+		cy = this.transformTop(cy);
+		if (typeof(this.particleImage) === "Object")
+		{
+			this.particleImage.absoluteMode = true;
+		}
+		this.absoluteMode = true;
+		var ret = (global.Layer.initAccelRotateParticle_patch_hd_plugins_original incontextof this)(unk, mc, gr, cx, cy);
+		if (typeof(this.particleImage) === "Object")
+		{
+			this.particleImage.absoluteMode = false;
+		}
+		this.absoluteMode = false;
+		return ret;
+	};
+}
+if (typeof(global.Layer.initBlinkParticle) === "Object")
+{
+	global.Layer.initBlinkParticle_patch_hd_plugins_original = global.Layer.initBlinkParticle;
+	global.Layer.initBlinkParticle = function(unk, mc, gr, l, t, w, h)
+	{
+		l = this.transformLeft(l);
+		t = this.transformTop(t);
+		w = w * this.widthScale;
+		h = h * this.heightScale;
+		if (typeof(this.particleImage) === "Object")
+		{
+			this.particleImage.absoluteMode = true;
+		}
+		this.absoluteMode = true;
+		var ret = (global.Layer.initBlinkParticle_patch_hd_plugins_original incontextof this)(unk, mc, gr, l, t, w, h);
+		if (typeof(this.particleImage) === "Object")
+		{
+			this.particleImage.absoluteMode = false;
+		}
+		this.absoluteMode = false;
+		return ret;
+	};
+}
+if (typeof(global.Layer.uninitParticle) === "Object")
+{
+	global.Layer.uninitParticle_patch_hd_plugins_original = global.Layer.uninitParticle;
+	global.Layer.uninitParticle = function()
+	{
+		if (typeof(this.particleImage) === "Object")
+		{
+			this.particleImage.absoluteMode = true;
+		}
+		this.absoluteMode = true;
+		var ret = (global.Layer.uninitParticle_patch_hd_plugins_original incontextof this)(...);
+		if (typeof(this.particleImage) === "Object")
+		{
+			this.particleImage.absoluteMode = false;
+		}
+		this.absoluteMode = false;
+		return ret;
+	};
+}
+if (typeof(global.Layer.updateParticle) === "Object")
+{
+	global.Layer.updateParticle_patch_hd_plugins_original = global.Layer.updateParticle;
+	global.Layer.updateParticle = function()
+	{
+		if (typeof(this.particleImage) === "Object")
+		{
+			this.particleImage.absoluteMode = true;
+		}
+		this.absoluteMode = true;
+		var ret = (global.Layer.updateParticle_patch_hd_plugins_original incontextof this)(...);
+		if (typeof(this.particleImage) === "Object")
+		{
+			this.particleImage.absoluteMode = false;
+		}
+		this.absoluteMode = false;
+		return ret;
+	};
+}
+if (typeof(global.Layer.setParticleBlinkTime) === "Object")
+{
+	global.Layer.setParticleBlinkTime_patch_hd_plugins_original = global.Layer.setParticleBlinkTime;
+	global.Layer.setParticleBlinkTime = function()
+	{
+		if (typeof(this.particleImage) === "Object")
+		{
+			this.particleImage.absoluteMode = true;
+		}
+		this.absoluteMode = true;
+		var ret = (global.Layer.setParticleBlinkTime_patch_hd_plugins_original incontextof this)(...);
+		if (typeof(this.particleImage) === "Object")
+		{
+			this.particleImage.absoluteMode = false;
+		}
+		this.absoluteMode = false;
+		return ret;
+	};
+}
+
+// LayerExYaDraw.dll
+
+if (typeof(global.Layer.drawFocusLines) === "Object")
+{
+	// XXX: probably need to do split-component multiply of cmin and cmax…
+	global.Layer.drawFocusLines_patch_hd_plugins_original = global.Layer.drawFocusLines;
+	global.Layer.drawFocusLines = function(cx, cy, cmin, cmax, lmin, lmax, emin, emax, color)
+	{
+		cx = this.transformLeft(cx);
+		cy = this.transformTop(cy);
+		this.absoluteMode = true;
+		var ret = (global.Layer.drawFocusLines_patch_hd_plugins_original incontextof this)(cx, cy, cmin, cmax, lmin, lmax, emin, emax, color);
+		this.absoluteMode = false;
+		return ret;
+	};
+}
+
+// LayerExImage.dll
+
+if (typeof(global.Layer.light) === "Object")
+{
+	global.Layer.light_patch_hd_plugins_original = global.Layer.light;
+	global.Layer.light = function()
+	{
+		this.absoluteMode = true;
+		var ret = (global.Layer.light_patch_hd_plugins_original incontextof this)(...);
+		this.absoluteMode = false;
+		return ret;
+	};
+}
+if (typeof(global.Layer.colorize) === "Object")
+{
+	global.Layer.colorize_patch_hd_plugins_original = global.Layer.colorize;
+	global.Layer.colorize = function()
+	{
+		this.absoluteMode = true;
+		var ret = (global.Layer.colorize_patch_hd_plugins_original incontextof this)(...);
+		this.absoluteMode = false;
+		return ret;
+	};
+}
+if (typeof(global.Layer.modulate) === "Object")
+{
+	global.Layer.modulate_patch_hd_plugins_original = global.Layer.modulate;
+	global.Layer.modulate = function()
+	{
+		this.absoluteMode = true;
+		var ret = (global.Layer.modulate_patch_hd_plugins_original incontextof this)(...);
+		this.absoluteMode = false;
+		return ret;
+	};
+}
+if (typeof(global.Layer.noise) === "Object")
+{
+	global.Layer.noise_patch_hd_plugins_original = global.Layer.noise;
+	global.Layer.noise = function()
+	{
+		this.absoluteMode = true;
+		var ret = (global.Layer.noise_patch_hd_plugins_original incontextof this)(...);
+		this.absoluteMode = false;
+		return ret;
+	};
+}
+if (typeof(global.Layer.generateWhiteNoise) === "Object")
+{
+	global.Layer.generateWhiteNoise_patch_hd_plugins_original = global.Layer.generateWhiteNoise;
+	global.Layer.generateWhiteNoise = function()
+	{
+		this.absoluteMode = true;
+		var ret = (global.Layer.generateWhiteNoise_patch_hd_plugins_original incontextof this)(...);
+		this.absoluteMode = false;
+		return ret;
+	};
+}
+if (typeof(global.Layer.gaussianBlur) === "Object")
+{
+	global.Layer.gaussianBlur_patch_hd_plugins_original = global.Layer.gaussianBlur;
+	global.Layer.gaussianBlur = function()
+	{
+		this.absoluteMode = true;
+		var ret = (global.Layer.gaussianBlur_patch_hd_plugins_original incontextof this)(...);
+		this.absoluteMode = false;
+		return ret;
+	};
+}
+
 @endif

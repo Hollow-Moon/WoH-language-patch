@@ -590,7 +590,7 @@ global.open_scenario_using_scenario_tracker = function(kag=global.kag, scenario,
 	}
 	if (flowchart_name === void)
 	{
-		throw new Exception("Could not find flowchart name from scenario!");
+		throw new Exception("Could not find flowchart name from scenario " + scenario);
 	}
 	global.flow_tracker_object.init(flowchart_name, flowchart_id);
 	if (typeof(global.flow_tracker_object.flow) === "Object" && scenario !== void)
@@ -890,4 +890,14 @@ function reload_messagelayer_config(window=global.kag)
 		window.fore.messages[i].appearTimeRate = 3;
 	}
 @endif
+}
+
+{
+	if (System.getArgument("-systeminformgoestolog") !== void)
+	{
+		global.System.inform = function(arg)
+		{
+			Debug.message(arg);
+		};
+	}
 }

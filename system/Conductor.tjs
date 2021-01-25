@@ -336,7 +336,6 @@ class BaseConductor extends KAGParser
 //		dm("touchNextImages("+wait+"): pendings = "+pendings.count);
 		var next_pendings = [];
 		var	list	= [];
-		var	ext;
 		var last_label = this.curLabel;
 		var save_processSpecialTags = this.processSpecialTags;
 		this.processSpecialTags = false;
@@ -397,31 +396,7 @@ class BaseConductor extends KAGParser
 				continue;
 			}
 
-			// タグで使用する画像をリストへ追加
-			if(isActionTags[obj.tagname] && obj.props !== void)
-			{
-				var	props	= obj.props.split(",");
-				var	ii;
-				for(var i=0; i<props.count; i++)
-				{
-					if(props[i] == "-storage")
-					{
-						ii	= i + 3;
-						break;
-					}
-				}
-				if(ii !== void)
-				{
-					var	keys	= obj.keys.split(/\)\(/);
-					for(var i=0; i<keys.count; i++)
-						addTouchList(list, (keys[i].split(","))[ii]);
-				}
-			}
-			else if(obj.tagname == "playtimeline")
-				timeline_object.getCacheStorageList(obj.scene, list);	//	シーンで使われる画像
-			else if(obj.storage != void && !isSoundTags[obj.tagname] &&	//	storage があり、サウンド関連のタグでなく、
-				((ext = Storages.extractStorageExt(obj.storage)) == "" || (global.image_extensions.find(ext) !== -1)))	//	拡張子がない場合は、画像としておく
-				addTouchList(list, obj.storage);	// storage 属性は画像の可能性がある
+			global.handle_cache_of_tag(list, obj);
 		}
 		this.processSpecialTags = save_processSpecialTags;
 		// Empty pending queue.
@@ -976,4 +951,34 @@ function addTouchList(list, storage)
 	}
 	list.add(storage) if list.find(storage) < 0;
 }
+
+global.handle_cache_of_tag = function(list, obj)
+{
+	var	ext;
+	// タグで使用する画像をリストへ追加
+	if(isActionTags[obj.tagname] && obj.props !== void)
+	{
+		var	props	= obj.props.split(",");
+		var	ii;
+		for(var i=0; i<props.count; i++)
+		{
+			if(props[i] == "-storage")
+			{
+				ii	= i + 3;
+				break;
+			}
+		}
+		if(ii !== void)
+		{
+			var	keys	= obj.keys.split(/\)\(/);
+			for(var i=0; i<keys.count; i++)
+				addTouchList(list, (keys[i].split(","))[ii]);
+		}
+	}
+	else if(obj.tagname == "playtimeline")
+		timeline_object.getCacheStorageList(obj.scene, list);	//	シーンで使われる画像
+	else if(obj.storage != void && !isSoundTags[obj.tagname] &&	//	storage があり、サウンド関連のタグでなく、
+		((ext = Storages.extractStorageExt(obj.storage)) == "" || (global.image_extensions.find(ext) !== -1)))	//	拡張子がない場合は、画像としておく
+		addTouchList(list, obj.storage);	// storage 属性は画像の可能性がある
+};
 @endif

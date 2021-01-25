@@ -225,6 +225,12 @@ class Layer_patch_layer_override extends Layer_patch_layer_original
 		return res;
 	}
 
+	function saveLayerImage(storage, type)
+	{
+		storage = global.Storages.getFullPath(storage);
+		return super.saveLayerImage(storage, type);
+	}
+
 @if(DRAWTEXT_ESCAPE)
 	function drawText(left, top, text, color, opacity, aa, slevel, scolor, swidth, sofsx, sofxy, language=(typeof(global.kag) === "Object" ? global.kag.sflags.language : this.window.sflags.language))
 	{

@@ -119,6 +119,7 @@ function dmt(msg*) { Debug.message(msg.join(", ")+": "+Scripts.getTraceString())
 @set(USE_WUFFMPEG=1)
 @set(SHOW_MARGINS=0)
 @set(WORDWRAP_BOLDITALIC_MODIFIER=0)
+@set(RELOAD_SCENARIO_ON_FONT_CHANGE=1)
 
 @if(GAME_FATE||GAME_FHAT)
 @set(TEXT_DRAWER=1)
@@ -134,6 +135,7 @@ function dmt(msg*) { Debug.message(msg.join(", ")+": "+Scripts.getTraceString())
 
 @if(kirikiriz)
 @set(HD_MODE=1)
+@set(ASYNC_IMAGE_LOAD=1)
 @endif
 
 @if(kirikiriz||GAME_WOHN)
@@ -190,15 +192,15 @@ function dmt(msg*) { Debug.message(msg.join(", ")+": "+Scripts.getTraceString())
 	{
 		basepath = System.exePath;
 	}
-	global.devMode = Storages.isExistentStorage(basepath + "dev.txt");
-	global.devMode2 = Storages.isExistentStorage(basepath + "dev2.txt");
-	global.forceLog = Storages.isExistentStorage(basepath + "forceLog.txt");
+	global.devMode = ((("" + System.getArgument('-devmode')).indexOf("1") !== -1) || Storages.isExistentStorage(basepath + "dev.txt"));
+	global.devMode2 = ((("" + System.getArgument('-devmode')).indexOf("2") !== -1) || Storages.isExistentStorage(basepath + "dev2.txt"));
+	global.forceLog = ((System.getArgument('-forcelog') !== void) || Storages.isExistentStorage(basepath + "forceLog.txt"));
 
 	// Override settings
 	var settingsPath = basepath + "settings.tjs";
 	if (Storages.isExistentStorage(settingsPath))
 	{
-		Scripts.evalStorage(settingsPath);
+		var _ = Scripts.evalStorage(settingsPath);
 	}
 
 	global.typemoon_repo_root = void;

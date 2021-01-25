@@ -1,0 +1,115 @@
+﻿
+global.async_image_ready = function()
+{
+	if (typeof(global.kag) === "Object")
+	{
+		var conductor = global.kag.mainConductor;
+		if (conductor.is_waiting_on_image_load)
+		{
+			conductor.is_waiting_on_image_load = false;
+			conductor.run();
+		}
+	}
+};
+
+global.async_image_wait = function()
+{
+	if (typeof(global.kag) === "Object")
+	{
+		var conductor = global.kag.mainConductor;
+	}
+};
+
+var not_image_tags = %[
+	se:1, sestop:1, fadese:1, seact:1,
+	play:1, playstop:1, bgmact:1,
+	say:1, seloop:1, rclick:1,
+];
+
+
+global.Conductor_patch_async_image_load_override_original = Conductor;
+class Conductor_patch_async_image_load_override_override extends Conductor_patch_async_image_load_override_original
+{
+	function Conductor_patch_async_image_load_override_override()
+	{
+		super.Conductor(...);
+	}
+	function Conductor()
+	{
+		Conductor_patch_async_image_load_override_override(...);
+	}
+
+	var is_immediate = false;
+
+	function startProcess(immediate = false)
+	{
+		if (!_interrupted)
+		{
+			this.is_immediate = immediate;
+		}
+		var ret = super.startProcess(...);
+		this.is_immediate = false;
+		return ret;
+	}
+
+	var is_waiting_on_image_load = false;
+
+	function onTag(elm)
+	{
+		var	canskip	= elm.canskip === void ? false : +elm.canskip;
+		if (!this.is_immediate && !this.owner.usingExtraConductor && (elm.tagname === "playtimeline" ? ((canskip && !this.owner.skipMode) || !canskip) : true) && this.owner.isSkippingToTarget === void && !not_image_tags[elm.tagname] && this.processSpecialTags)
+		{
+			var list = [];
+			var storage = elm.storage;
+			var missing_image = false;
+@if(!GAME_WOHN)
+			if (storage === void)
+			{
+				storage = elm.image;
+			}
+			if (storage === void)
+			{
+				storage = elm.file;
+			}
+			if (storage === "")
+			{
+				storage = void;
+			}
+			if (storage !== void)
+			{
+				list.add(storage);
+			}
+@endif
+@if(GAME_WOHN)
+			global.handle_cache_of_tag(list, elm);
+@endif
+
+			if (list.count > 0 && typeof(global.get_full_path_of_image) === "Object")
+			{
+				for (var i = list.count - 1; i >= 0; i -= 1)
+				{
+					list[i] = global.get_full_path_of_image(list[i]);
+					if (list[i] === void || list[i] === "")
+					{
+						list.erase(i);
+					}
+					else
+					{
+						missing_image = missing_image || (global.get_async_image(list[i]) === void);
+					}
+				}
+			}
+			if (missing_image)
+			{
+				// Touch images
+				global.System.touchImages(list);
+				this.is_waiting_on_image_load = true;
+				// Wait
+				return -3;
+			}
+		}
+		return super.onTag(...);
+	}
+}
+global.Conductor = Conductor_patch_async_image_load_override_override;
+

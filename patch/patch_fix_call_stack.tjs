@@ -12,6 +12,7 @@ class Conductor_patch_fix_call_stack_override extends Conductor_patch_fix_call_s
 		Conductor_patch_fix_call_stack_override(...);
 	}
 
+@if(1)
 	var flow_tracker_object_storage;
 	var flow_tracker_object_label;
 
@@ -34,9 +35,25 @@ class Conductor_patch_fix_call_stack_override extends Conductor_patch_fix_call_s
 		}
 		super.restore(...);
 	}
+@endif
+
+@if(0)
+	function onReturn()
+	{
+		if (this === this.owner.mainConductor && typeof(global.flow_tracker_object) === "Object" && (flow_tracker_object.scriptfile === this.curStorage) && this.callStackDepth === 0)
+		{
+			global.kag.conductor.clearCallStack();
+			this.loadScenario("FlowTrackerPlugin.ks");
+			this.goToLabel("*afterscene");
+			return false;
+		}
+		return super.onReturn(...);
+	}
+@endif
 }
 global.Conductor = Conductor_patch_fix_call_stack_override;
 
+@if(1)
 {
 	global.Conductor.flow_tracker_object_storage = "FlowTrackerPlugin.ks";
 	global.Conductor.flow_tracker_object_label = "*sceneplay";
@@ -67,3 +84,4 @@ global.Conductor = Conductor_patch_fix_call_stack_override;
 		global.Conductor.flow_tracker_object_orig_line_str = lines[call_line_offset + 1];
 	}
 }
+@endif

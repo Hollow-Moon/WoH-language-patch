@@ -1,6 +1,10 @@
 ﻿
 global.cached_async_images = %[];
 
+global.touched_async_images = [];
+
+global.total_size_async_images = 0;
+
 global.get_async_image = function(storage)
 {
 	if (storage === void || storage === "")
@@ -8,15 +12,19 @@ global.get_async_image = function(storage)
 		return void;
 	}
 	var cached_async_images = global.cached_async_images;
-	if (cached_async_images[storage] === void)
+	var image = cached_async_images[storage];
+	if (image === void)
 	{
 		return void;
 	}
-	if (cached_async_images[storage].loading)
+	if (image.loading)
 	{
 		return void;
 	}
-	return cached_async_images[storage];
+	image.retrieve_count += 1;
+	global.touched_async_images.remove(storage);
+	global.touched_async_images.insert(0, storage);
+	return image;
 };
 
 global.async_image_loaded = function(meta, async, error, message)
@@ -25,6 +33,9 @@ global.async_image_loaded = function(meta, async, error, message)
 	this.async = async;
 	this.error = error;
 	this.message = message;
+	this.total_size = this.bufferPitch * this.height * 4;
+	global.total_size_async_images += this.total_size;
+	this.retrieve_count = 0;
 	if (async)
 	{
 		global.async_image_ready();
@@ -34,6 +45,56 @@ global.async_image_loaded = function(meta, async, error, message)
 global.async_image_wait = function() {};
 
 global.async_image_ready = function() {};
+
+global.async_image_load = function(storage, key, async, source_layer)
+{
+	var cached_async_images = global.cached_async_images;
+	var touched_async_images = global.touched_async_images;
+	for (var i = touched_async_images.count - 1; i >= 0; i -= 1)
+	{
+		if (global.async_bitmap_cache_value_of_graphicCacheLimit >= global.total_size_async_images)
+		{
+			break;
+		}
+		global.async_image_unload(touched_async_images[i]);
+	}
+	var bitmap_obj = new Bitmap();
+	bitmap_obj.onLoaded = global.async_image_loaded;
+	if (source_layer !== void)
+	{
+		source_layer.copyToBitmapFromMainImage(bitmap_obj);
+		(global.async_image_loaded incontextof bitmap_obj)(%[], false, false, "");
+	}
+	else
+	{
+		if (async)
+		{
+			bitmap_obj.loadAsync(storage);
+		}
+		else
+		{
+			var res = bitmap_obj.load(storage, key);
+			(global.async_image_loaded incontextof bitmap_obj)(res, false, false, "");
+		}
+	}
+	cached_async_images[storage] = bitmap_obj;
+	global.touched_async_images.insert(0, storage);
+	return bitmap_obj;
+};
+
+global.async_image_unload = function(storage)
+{
+	var cached_async_images = global.cached_async_images;
+	if (cached_async_images[storage] !== void && !cached_async_images[storage].loading && cached_async_images[storage].retrieve_count)
+	{
+		global.total_size_async_images -= cached_async_images[storage].total_size;
+		invalidate cached_async_images[storage];
+		delete cached_async_images[storage];
+		global.touched_async_images.remove(storage);
+		return true;
+	}
+	return false;
+};
 
 global.Layer_async_image_load_original = Layer;
 class Layer_async_image_load_override extends Layer_async_image_load_original
@@ -53,11 +114,8 @@ class Layer_async_image_load_override extends Layer_async_image_load_original
 		var async_image = global.get_async_image(storage);
 		if (async_image === void)
 		{
-			var bitmap_obj = new Bitmap();
-			bitmap_obj.load(storage, key);
-			bitmap_obj.onLoaded = global.async_image_loaded;
-			global.cached_async_images[storage] = bitmap_obj;
-			async_image = global.cached_async_images[storage];
+			async_image = global.async_image_load(storage, key, false);
+			async_image.retrieve_count += 1;
 		}
 		if (async_image !== void)
 		{
@@ -66,26 +124,19 @@ class Layer_async_image_load_override extends Layer_async_image_load_original
 			{
 				(global.Dictionary.assign incontextof meta)(async_image.meta);
 			}
-			
 			this.copyFromBitmapToMainImage(async_image);
 			return meta;
 		}
-
 		return super.loadImages(...);
 	}
 
 	function saveLayerImage(storage)
 	{
 		var cached_async_images = global.cached_async_images;
-		if (cached_async_images[storage] !== void)
-		{
-			invalidate cached_async_images[storage];
-			delete cached_async_images[storage];
-		}
+		global.async_image_unload(storage);
 		var ret = super.saveLayerImage(...);
-		var bitmap_obj = new Bitmap();
-		this.copyToBitmapFromMainImage(bitmap_obj);
-		cached_async_images[storage] = bitmap_obj;
+		var async_image = global.async_image_load(storage, void, void, this);
+		async_image.retrieve_count += 1;
 		return ret;
 	}
 }
@@ -98,16 +149,62 @@ global.System.clearGraphicCache = function()
 	images.assign(global.cached_async_images);
 	for (var i = 0; i < images.count; i += 2)
 	{
-		invalidate images[i + 1];
+		global.async_image_unload(images[i]);
 	}
-	(global.Dictionary.clear incontextof global.cached_async_images)();
 	return global.System.clearGraphicCache_patch_async_image_load_orig();
 };
+
+
+global.last_set_value_of_graphicCacheLimit = 0;
+class internal_for_patch_async_image_load
+{
+	property graphicCacheLimit_override
+	{
+		setter (v)
+		{
+			if (v == -1)
+			{
+				v = global.orig_value_of_graphicCacheLimit;
+			}
+			else if (v == 0)
+			{
+				global.System.graphicCacheLimit_async_image_load_original = 0;
+				global.System.clearGraphicCache();
+			}
+			if (v > global.orig_value_of_graphicCacheLimit)
+			{
+				v = global.orig_value_of_graphicCacheLimit;
+			}
+			global.carveout_value_of_graphicCacheLimit = v / 16;
+			global.async_bitmap_cache_value_of_graphicCacheLimit = global.carveout_value_of_graphicCacheLimit * 15;
+			global.last_set_value_of_graphicCacheLimit = v;
+		}
+		getter
+		{
+			return global.last_set_value_of_graphicCacheLimit;
+		}
+	}
+}
+
+{
+	global.System.graphicCacheLimit = global.gcsAuto;
+	global.orig_value_of_graphicCacheLimit = global.System.graphicCacheLimit;
+
+	// Property override
+	var tmp = &global.System.graphicCacheLimit;
+	&global.System.graphicCacheLimit_async_image_load_original = tmp;
+	&global.System.graphicCacheLimit = &global.internal_for_patch_async_image_load.graphicCacheLimit_override;
+
+	global.System.graphicCacheLimit = global.orig_value_of_graphicCacheLimit;
+}
+
+// Bitmap.bufferPitch * Bitmap.height
 
 global.System.touchImages_async_image_load_original = global.System.touchImages;
 global.System.touchImages = function(storage, limitbytes=0, timeout=0)
 {
 	var cached_async_images = global.cached_async_images;
+	var async_image_load = global.async_image_load;
 	var image_already_cached = 0;
 	for (var i = 0; i < storage.count; i += 1)
 	{
@@ -115,22 +212,26 @@ global.System.touchImages = function(storage, limitbytes=0, timeout=0)
 		{
 			throw new Exception("Image path passed in " + storage[i] + " is not absolute path.");
 		}
-		if (global.cached_async_images[storage[i]] !== void)
+		if (cached_async_images[storage[i]] !== void)
 		{
-			if (!global.cached_async_images[storage[i]].loading)
+			if (!cached_async_images[storage[i]].loading)
 			{
 				image_already_cached += 1;
 			}
 			continue;
 		}
-		var bitmap_obj = new Bitmap();
-		bitmap_obj.onLoaded = global.async_image_loaded;
-		bitmap_obj.loadAsync(storage[i]);
-		global.cached_async_images[storage[i]] = bitmap_obj;
+		async_image_load(storage[i], void, true);
+		if (!cached_async_images[storage[i]].loading)
+		{
+			image_already_cached += 1;
+		}
 	}
 	if (image_already_cached === storage.count)
 	{
 		global.async_image_ready();
+		// All images were loaded synchronously
+		return true;
 	}
+	return false;
 };
 

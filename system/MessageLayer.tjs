@@ -238,6 +238,7 @@ class MessageLayer extends KAGLayer
 
 	wwFollowing += wwFollowingWeak;
 
+@if(GAME_WOHN)
 	// 連結表示されるため、画像として描画される文字と対応する画像ファイルのラベル
 	var char2graph	= %[
 		"―" => "line%02d-%02d",
@@ -245,6 +246,7 @@ class MessageLayer extends KAGLayer
 //		"□" => "wacky%d-%d",
 	];
 	var	lastCh;	//	直前に表示した文字(改行毎にクリアされる)
+@endif
 
 	var id; // 識別子
 	var comp; // 対応する表/裏メッセージレイヤ
@@ -2310,6 +2312,7 @@ class MessageLayer extends KAGLayer
 @if(GAME_WOHN)
 		fadeoutLastMessage() if typeof global.fadeoutLastMessage != "undefined";
 
+@if(1)
 		if(	(ch.length == 1 && char2graph[ch] != void) ||	// 表示文字が1文字で、登録されている文字の場合
 			(ch.length > 1 && ch[0].repeat(ch.length) == ch && char2graph[ch[0]] != void))	// 全ての表示文字が同じで、且つ登録されている文字の場合
 		{
@@ -2327,6 +2330,7 @@ class MessageLayer extends KAGLayer
 
 			return putGraph(char2graph[ch[0]].sprintf(fontSize, lastCh.length),, true);
 		}
+@endif
 		lastCh	= ch;
 
 		changeLineSize() if sizeChanged;

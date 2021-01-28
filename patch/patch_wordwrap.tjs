@@ -59,9 +59,15 @@ global.HistoryLayer = HistoryLayer_patch_wordwrap_override;
 global.MessageLayer_patch_wordwrap_original = MessageLayer;
 class MessageLayer_patch_wordwrap_override extends MessageLayer_patch_wordwrap_original
 {
+@if(GAME_WOHN)
+	var char2graph_arr = [];
+@endif
 	function MessageLayer_patch_wordwrap_override()
 	{
 		super.MessageLayer(...);
+@if(GAME_WOHN)
+		this.char2graph_arr.assign(this.char2graph);
+@endif
 	}
 
 	function MessageLayer()
@@ -231,36 +237,54 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 		}
 	}
 
+@if(GAME_WOHN)
+	var char2glyph_cache = %[];
+@endif
+
+	function gtw_func(font, str, use_char2graph=false)
+	{
+		var res = 0;
+@if(GAME_WOHN)
+		if (use_char2graph)
+		{
+			var cache = this.char2glyph_cache["|" + font.height];
+			if (cache !== void)
+			{
+				var maps = cache[0];
+				var regexps = cache[1];
+				for (var i = 0; i < regexps.count; i += 1)
+				{
+					var oldstr = str;
+					str = regexps[i].replace(str, "");
+					var count_diff = oldstr.length - str.length;
+					if (count_diff > 0)
+					{
+						res += maps[regexps[i]]["" + count_diff];
+					}
+				}
+			}
+		}
+@endif
+@if(USE_GET_GLYPH_DRAW_RECT)
+		var rect = font.getGlyphDrawRect(str);
+		if (typeof(rect) === "Object")
+		{
+			res += rect.right;
+		}
+@endif
+@if(!USE_GET_GLYPH_DRAW_RECT)
+		res += font.getTextWidth(str);
+@endif
+		return res;
+	}
+
 @if(!WORDWRAP_BOLDITALIC_MODIFIER)
 	var get_lengths_for_string_ret = [0, 0];
 	function getLengthsForString(str, hlf, mlf)
 	{
 		var ret = get_lengths_for_string_ret;
-@if(!USE_GET_GLYPH_DRAW_RECT)
-		ret[0] = hlf.getTextWidth(str);
-		ret[1] = mlf.getTextWidth(str);
-@endif
-@if(USE_GET_GLYPH_DRAW_RECT)
-		var rect;
-		rect = hlf.getGlyphDrawRect(str);
-		if (typeof(rect) === "Object")
-		{
-			ret[0] = rect.right;
-		}
-		else
-		{
-			ret[0] = 0;
-		}
-		rect = mlf.getGlyphDrawRect(str);
-		if (typeof(rect) === "Object")
-		{
-			ret[1] = rect.right;
-		}
-		else
-		{
-			ret[1] = 0;
-		}
-@endif
+		ret[0] = this.gtw_func(hlf, str);
+		ret[1] = this.gtw_func(mlf, str, true);
 		return ret;
 	}
 @endif
@@ -328,6 +352,41 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 		var empty_word = this.empty_word;
 		var cleaned_lines = conductor.cleaned_lines;
 		var word_lines_needed = this.word_lines_needed;
+@if(GAME_WOHN)
+		var mlf = this.get_mlf();
+		var mlf_size = mlf.height;
+		var char2glyph_cache = this.char2glyph_cache;
+		var test_char2glyph = "|" + mlf_size;
+		var total = 30;
+		if (char2glyph_cache[test_char2glyph] === void)
+		{
+			var tmp_cache = %[];
+			
+			var tmp_char2glyph_arr = [];
+			tmp_char2glyph_arr.assign(this.current.char2graph);
+			var tmp_char2glyph_mapped = [];
+			var tmp_char2glyph_map = %[];
+			var tmp_layer_for_char2glyph = new Layer(this, this.primaryLayer);
+			for (var i = 0; i < tmp_char2glyph_arr.count; i += 2)
+			{
+				var regexp_obj = new RegExp(tmp_char2glyph_arr[i]);
+				tmp_char2glyph_mapped.add(regexp_obj);
+				var map_tmp = %[];
+				for (var j = 0; j <= 30; j += 1)
+				{
+					var image_dir = tmp_char2glyph_arr[i + 1].sprintf(mlf_size, j);
+					if (Storages.isExistentImage(image_dir))
+					{
+						tmp_layer_for_char2glyph.loadImages(image_dir);
+						map_tmp["" + j] = tmp_layer_for_char2glyph.imageWidth;
+					}
+				}
+				tmp_char2glyph_map[regexp_obj] = map_tmp;
+			}
+			invalidate tmp_layer_for_char2glyph;
+			char2glyph_cache[test_char2glyph] = [tmp_char2glyph_map, tmp_char2glyph_mapped];
+		}
+@endif
 		for (var i = 0; i < cleaned_lines.count; i += 1)
 		{
 			if (cleaned_lines[i].length === 0)
@@ -453,26 +512,7 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 		}
 		var word_length_test_str = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 @if(WORDWRAP_BOLDITALIC_MODIFIER)
-@if(!USE_GET_GLYPH_DRAW_RECT)
-		var hlf_gtw = hlf.getTextWidth;
-		var mlf_gtw = mlf.getTextWidth;
-@endif
-@if(USE_GET_GLYPH_DRAW_RECT)
-		var gtw_func = function(str)
-		{
-			var rect = this.getGlyphDrawRect(str);
-			if (typeof(rect) === "Object")
-			{
-				return rect.right;
-			}
-			else
-			{
-				return 0;
-			}
-		};
-		var hlf_gtw = (gtw_func incontextof hlf);
-		var mlf_gtw = (gtw_func incontextof mlf);
-@endif
+		var gtw_func = this.gtw_func;
 		var save_bold_hlf = hlf.bold;
 		var save_italic_hlf = hlf.italic;
 		var save_bold_mlf = mlf.bold;
@@ -481,8 +521,8 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 		hlf.italic = false;
 		mlf.bold = false;
 		mlf.italic = false;
-		var word_length_test_hl = hlf_gtw(word_length_test_str);
-		var word_length_test_ml = mlf_gtw(word_length_test_str);
+		var word_length_test_hl = gtw_func(hlf, word_length_test_str);
+		var word_length_test_ml = gtw_func(mlf, word_length_test_str, true);
 		if (word_length_test_hl !== word_length_test[0] || word_length_test_ml !== word_length_test[1])
 		{
 			invalidate_wordcache = true;
@@ -562,20 +602,20 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 			hlf.italic = false;
 			mlf.bold = false;
 			mlf.italic = false;
-			dic.hllength = hlf_gtw(word);
-			dic.mllength = mlf_gtw(word);
+			dic.hllength = gtw_func(hlf, word);
+			dic.mllength = gtw_func(mlf, word, true);
 			hlf.bold = true;
 			mlf.bold = true;
-			dic.hllengthb = hlf_gtw(word);
-			dic.mllengthb = mlf_gtw(word);
+			dic.hllengthb = gtw_func(hlf, word);
+			dic.mllengthb = gtw_func(mlf, word, true);
 			hlf.italic = true;
 			mlf.italic = true;
-			dic.hllengthbi = hlf_gtw(word);
-			dic.mllengthbi = mlf_gtw(word);
+			dic.hllengthbi = gtw_func(hlf, word);
+			dic.mllengthbi = gtw_func(mlf, word, true);
 			hlf.bold = false;
 			mlf.bold = false;
-			dic.hllengthi = hlf_gtw(word);
-			dic.mllengthi = mlf_gtw(word);
+			dic.hllengthi = gtw_func(hlf, word);
+			dic.mllengthi = gtw_func(mlf, word, true);
 		}
 		hlf.bold = save_bold_hlf;
 		hlf.italic = save_italic_hlf;

@@ -1605,7 +1605,7 @@ class MessageLayer extends KAGLayer
 	}
 
 	//	新しい文字レイヤーを取得
-	function createNewCharLayer(key=" ")
+	function createNewCharLayer()
 	{
 		var	nc;
 		if(charPool.count > 0)
@@ -1648,14 +1648,18 @@ class MessageLayer extends KAGLayer
 
 	// 指定の行、桁の文字レイヤーを返す。なければ作成する
 	var	lastCharLayer;
-	function getCharLayer(line=currentLine, col=currentColumn, key)
+	function getCharLayer(line=currentLine, col=currentColumn)
 	{
 		if(charLayers[line] == void)
 			charLayers[line]	= [];
-		if(charLayers[line][col] == void)
-			charLayers[line][col]	= createNewCharLayer(key);
-		charLayers[line][col].group	= currentCharGroup;
-		return lastCharLayer = charLayers[line][col];
+		var layer = charLayers[line][col];
+		if(layer == void)
+		{
+			layer = createNewCharLayer();
+			charLayers[line][col] = layer;
+		}
+		layer.group	= currentCharGroup;
+		return lastCharLayer = layer;
 	}
 
 	// 指定の行、桁の文字の位置
@@ -2346,7 +2350,7 @@ class MessageLayer extends KAGLayer
 @endif
 
 		var	cw;
-		with(getCharLayer(currentLine, currentColumn, ch))
+		with(getCharLayer(currentLine, currentColumn))
 		{
 			.name	= "[%2d][%2d]: %s(%s)".sprintf(currentLine, currentColumn, ch, .group);
 			if (ch !== "" && ch !== void)
@@ -2485,14 +2489,18 @@ class MessageLayer extends KAGLayer
 		}
 	}
 
-	function getRubyLayer(line, col, key)
+	function getRubyLayer(line, col)
 	{
 		if(rubyLayers[line] == void)
 			rubyLayers[line]	= [];
-		if(rubyLayers[line][col] == void)
-			rubyLayers[line][col]	= createNewCharLayer(key);
-		rubyLayers[line][col].group	= currentCharGroup;
-		return lastCharLayer = rubyLayers[line][col];
+		var layer = rubyLayers[line][col];
+		if(layer == void)
+		{
+			layer = createNewCharLayer();
+			rubyLayers[line][col] = layer;
+		}
+		layer.group	= currentCharGroup;
+		return lastCharLayer = layer;
 	}
 
 	function getRubyPos(line, stcol, edcol, rubylayer, offset=0, align="c")
@@ -2537,7 +2545,7 @@ class MessageLayer extends KAGLayer
 
 	function drawRuby(line = currentLine, stcol, edcol, text, offset, align)
 	{
-		with(getRubyLayer(line, edcol, text))
+		with(getRubyLayer(line, edcol))
 		{
 			.name		= "[%2d][%2d]: ルビ = %s(%s)".sprintf(currentLine, currentColumn, text, .group);
 			var	max, min;
@@ -2704,7 +2712,7 @@ class MessageLayer extends KAGLayer
 		if(repage) return true; // 文字は描画しない
 
 		var cw;
-		with(getCharLayer(currentLine, currentColumn, storage))
+		with(getCharLayer(currentLine, currentColumn))
 		{
 			if(ischar)
 			{
@@ -5064,10 +5072,15 @@ class MessageLayer extends KAGLayer
 			for(var i=0; i<lines.count; i++)
 			{
 				var	line	= lines[i];
-				if(line == void)
+				if(line === void)
+				{
 					continue;
+				}
 				for(var i=0; i<line.count; i++)
-					func(line[i], args*) if line[i] != void && line[i].group == group;
+				{
+					var char = line[i];
+					func(char, args*) if char !== void && char.group === group;
+				}
 			}
 		}
 	}
@@ -5097,7 +5110,10 @@ class MessageLayer extends KAGLayer
 				if(line == void)
 					continue;
 				for(var i=0; i<line.count; i++)
-					line[i].group	= "cur" if line[i] != void;
+				{
+					var char = line[i];
+					char.group	= "cur" if char !== void;
+				}
 			}
 		}
 	}

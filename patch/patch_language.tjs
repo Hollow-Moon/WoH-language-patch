@@ -109,7 +109,15 @@ function load_fonts(language) {
 		{
 			if (typeof(global.Font) !== "undefined" && typeof(global.Font.addFont) !== "undefined")
 			{
-				global.Font.addFont(font_file_path);
+				var result = global.Font.addFont(font_file_path);
+				if (typeof(result) === "Object" && result.count > 0)
+				{
+					Debug.message(("Successfully added font \"%s\"").sprintf(result[0]));
+				}
+				else
+				{
+					Debug.message(("Failed to add font file \"%s\"").sprintf(fontFiles[i]));
+				}
 			}
 			if (typeof(System.addFont) !== "undefined")
 			{
@@ -126,7 +134,7 @@ function load_fonts(language) {
 		}
 		else
 		{
-			dm(("warning: font %s does not exist").sprintf(font_file_path));
+			dm(("warning: font %s does not exist").sprintf(fontFiles[i]));
 		}
 	}
 

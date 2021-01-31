@@ -4,15 +4,20 @@
 
 var	fonts;
 
+@set(MESSAGECHARLAYER_MEMORY_EFFICIENT=0)
+
 class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLayer などに変更のこと
 {
 	var	ea	= 4;	//	縁取り部分のサイズ
 
 	var	drawed = 0;		//	描画されたか/描画内容
 	var	lastParams = [];//	描画時のパラメータ(drawTextのみ)
+	var	lastParamsStr = "";
 	var	lastParamsTmp = [];
 	var lastFontParams = [];
-	var lastFontParamsTmp = [];
+	var lastFontParamsStr = "";
+	var curFontParams = [];
+	var curFontParamsStr = "";
 
 	var	pitch;		//	前の文字との字間
 
@@ -89,8 +94,10 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 			.opacity	= opacity;
 			.lastParams	= [];
 			.lastParams.assign(lastParams);
+			.lastParamsStr = lastParamsStr;
 			.lastFontParams = [];
 			.lastFontParams.assign(lastFontParams);
+			.lastFontParamsStr = lastFontParamsStr;
 		}
 		return dic;
 	}
@@ -112,8 +119,10 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 			opacity		= .opacity;
 			lastParams.clear();
 			lastParams.assign(.lastParams);
+			lastParamsStr = .lastParamsStr;
 			lastFontParams.clear();
 			lastFontParams.assign(.lastFontParams);
+			lastFontParamsStr = .lastFontParamsStr;
 			redraw();
 		}
 	}
@@ -137,8 +146,10 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 			opacity		= .opacity;
 			lastParams.clear();
 			lastParams.assign(.lastParams);
+			lastParamsStr = .lastParamsStr;
 			lastFontParams.clear();
 			lastFontParams.assign(.lastFontParams);
+			lastFontParamsStr = .lastFontParamsStr;
 		}
 	}
 
@@ -152,28 +163,32 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 		{
 			face = face.substring(1);
 		}
+		var font_changed = false;
 		with(font)
 		{
 			if (.angle != angle)
 			{
+				font_changed = true;
 				.angle	= angle;
 			}
 			if (.bold != bold)
 			{
+				font_changed = true;
 				.bold	= bold;
 			}
-			setFontFace((angle == 2700 ? "@" : "") +face, - size, italic);
+			font_changed = setFontFace((angle == 2700 ? "@" : "") +face, - size, italic) || font_changed;
+			if (font_changed)
+			{
+				this.curFontParams.clear();
+				this.curFontParams.push(.face, .angle, .bold, .italic, .height, ea);
+				this.curFontParamsStr = this.curFontParams.join("|");
+			}
 		}
 	}
 
 	function hasFontChanged()
 	{
-		this.lastFontParamsTmp.clear();
-		with (font)
-		{
-			this.lastFontParamsTmp.push(.face, .angle, .bold, .italic, .height, ea);
-		}
-		return this.lastFontParams.join("|") !== this.lastFontParamsTmp.join("|");
+		return this.lastFontParamsStr !== this.curFontParamsStr;
 	}
 @if(0)
 	property left
@@ -229,10 +244,12 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 		h	+= (ea << 1);
 		clear();
 
+@if(MESSAGECHARLAYER_MEMORY_EFFICIENT)
 		if (!this.hasImage)
 		{
 			this.hasImage = true;
 		}
+@endif
 		if (imageWidth != w || imageHeight != h)
 		{
 			setImageSize(w, h);
@@ -247,24 +264,30 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 		setSize(1, 1);
 		left = 0;
 		top = 0;
+@if(MESSAGECHARLAYER_MEMORY_EFFICIENT)
 		if (drawed)
 		{
 			this.hasImage = false;
 		}
+@endif
 @if(0)
 		fillRect(0, 0, imageWidth, imageHeight, clearcolor) if drawed;
 @endif
 		drawed	= 0;
 		this.lastParams.clear();
+		this.lastParamsStr = "";
 		this.lastFontParams.clear();
+		this.lastFontParamsStr = "";
 	}
 
 	function resizeByText(ch, vert, max, min)
 	{
+@if(MESSAGECHARLAYER_MEMORY_EFFICIENT)
 		if (!this.hasImage)
 		{
 			this.hasImage = true;
 		}
+@endif
 @if(0)
 		var	w = font.getTextWidth(ch), h = font.getTextHeight(ch);
 @endif
@@ -404,30 +427,35 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 		{
 			return;
 		}
+@if(MESSAGECHARLAYER_MEMORY_EFFICIENT)
 		if (!this.hasImage)
 		{
 			this.hasImage = true;
 		}
+@endif
 		super.drawText(ea + (vert ? font.height : 0), ea, text, color, 255, aa, shadowlevel, shadowcolor, shadowwidth, shadowofsx, shadowofsy);
 	}
 
 	function drawText(ch, color, aa, vert, max, min)
 	{
 		var lastParams = this.lastParams;
+		var lastParamsStr = this.lastParamsStr;
 		var lastParamsTmp = this.lastParamsTmp;
 		if (this.drawed === 1 && lastParams.count === 6)
 		{
 			lastParamsTmp.clear();
-			lastParamsTmp.push(ch, color, aa, vert, max, min);
-			if (lastParams.join("|") === lastParamsTmp.join("|") && !hasFontChanged())
+			lastParamsTmp.push(...);
+			if (!hasFontChanged() && lastParamsStr === lastParamsTmp.join("|"))
 			{
 				return;
 			}
 		}
+@if(MESSAGECHARLAYER_MEMORY_EFFICIENT)
 		if (!this.hasImage)
 		{
 			this.hasImage = true;
 		}
+@endif
 		var	ret	= resizeByText(ch, vert, max, min);
 		if(ret > 0)
 			drawMinimize(vert, ch, color, aa);	//	縮小描画
@@ -437,31 +465,36 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 			superDrawText(vert, ch, color, aa);
 		drawed	= 1;
 		lastParams.clear();
-		lastParams.push(ch, color, aa, vert, max, min);
+		lastParams.push(...);
+		lastParamsStr = lastParams.join("|");
 		lastFontParams.clear();
 		with (font)
 		{
 			lastFontParams.push(.face, .angle, .bold, .italic, .height, ea);
 		}
+		lastFontParamsStr = lastFontParams.join("|");
 	}
 
 	function drawTextWithShadow(ch, color, aa, shadowcolor, shadowoffsetx, shadowoffsety, vert, max, min)
 	{
 		var lastParams = this.lastParams;
+		var lastParamsStr = this.lastParamsStr;
 		var lastParamsTmp = this.lastParamsTmp;
 		if (this.drawed === 2 && lastParams.count === 9)
 		{
 			lastParamsTmp.clear();
-			lastParamsTmp.push(ch, color, aa, shadowcolor, shadowoffsetx, shadowoffsety, vert, max, min);
-			if (lastParams.join("|") === lastParamsTmp.join("|") && !hasFontChanged())
+			lastParamsTmp.push(...);
+			if (!hasFontChanged() && lastParamsStr === lastParamsTmp.join("|"))
 			{
 				return;
 			}
 		}
+@if(MESSAGECHARLAYER_MEMORY_EFFICIENT)
 		if (!this.hasImage)
 		{
 			this.hasImage = true;
 		}
+@endif
 		var	ret	= resizeByText(ch, vert, max, min);
 		if(ret > 0)
 			drawMinimize(vert, ch, color, aa, shadowcolor, 0, shadowoffsetx, shadowoffsety);
@@ -471,31 +504,36 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 			superDrawText(vert, ch, color, aa, 255, shadowcolor, 0, shadowoffsetx, shadowoffsety);
 		drawed	= 2;
 		lastParams.clear();
-		lastParams.push(ch, color, aa, shadowcolor, shadowoffsetx, shadowoffsety, vert, max, min);
+		lastParams.push(...);
+		lastParamsStr = lastParams.join("|");
 		lastFontParams.clear();
 		with (font)
 		{
 			lastFontParams.push(.face, .angle, .bold, .italic, .height, ea);
 		}
+		lastFontParamsStr = lastFontParams.join("|");
 	}
 
 	function drawTextWithEdge(ch, color, aa, edgeemphasis, edgecolor, edgeextent, vert, max, min)
 	{
 		var lastParams = this.lastParams;
+		var lastParamsStr = this.lastParamsStr;
 		var lastParamsTmp = this.lastParamsTmp;
 		if (this.drawed === 3 && lastParams.count === 9)
 		{
 			lastParamsTmp.clear();
-			lastParamsTmp.push(ch, color, aa, edgeemphasis, edgecolor, edgeextent, vert, max, min);
-			if (lastParams.join("|") === lastParamsTmp.join("|") && !hasFontChanged())
+			lastParamsTmp.push(...);
+			if (lastParamsStr === lastParamsTmp.join("|") && !hasFontChanged())
 			{
 				return;
 			}
 		}
+@if(MESSAGECHARLAYER_MEMORY_EFFICIENT)
 		if (!this.hasImage)
 		{
 			this.hasImage = true;
 		}
+@endif
 		var	ret	= resizeByText(ch, vert, max, min);
 		if(ret > 0)
 			drawMinimize(vert, ch, color, aa, edgeemphasis, edgecolor, edgeextent, 0, 0);
@@ -505,12 +543,14 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 			superDrawText(vert, ch, color, aa, edgeemphasis, edgecolor, edgeextent, 0, 0);
 		drawed	= 3;
 		lastParams.clear();
-		lastParams.push(ch, color, aa, edgeemphasis, edgecolor, edgeextent, vert, max, min);
+		lastParams.push(...);
+		lastParamsStr = lastParams.join("|");
 		lastFontParams.clear();
 		with (font)
 		{
 			lastFontParams.push(.face, .angle, .bold, .italic, .height, ea);
 		}
+		lastFontParamsStr = lastFontParams.join("|");
 	}
 
 	function getGraph(storage, key)
@@ -527,12 +567,13 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 	function drawGraph(storage, key, color=void, withresize=true)
 	{
 		var lastParams = this.lastParams;
+		var lastParamsStr = this.lastParamsStr;
 		var lastParamsTmp = this.lastParamsTmp;
 		if (this.drawed === 4 && lastParams.count === 4)
 		{
 			lastParamsTmp.clear();
 			lastParamsTmp.push(storage, key, color, withresize);
-			if (lastParams.join("|") === lastParamsTmp.join("|"))
+			if (lastParamsStr === lastParamsTmp.join("|"))
 			{
 				return;
 			}
@@ -545,10 +586,12 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 		}
 		else
 		{
+@if(MESSAGECHARLAYER_MEMORY_EFFICIENT)
 			if (!this.hasImage)
 			{
 				this.hasImage = true;
 			}
+@endif
 		}
 		if(color !== void)
 		{
@@ -560,26 +603,31 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 		drawed	= 4;
 		lastParams.clear();
 		lastParams.push(storage, key, color, withresize);
+		lastParamsStr = lastParams.join("|");
 		lastFontParams.clear();
+		lastFontParamsStr = "";
 	}
 
 	function drawGraphWithShadow(storage, key, color, shadowcolor, shadowoffsetx, shadowoffsety)
 	{
 		var lastParams = this.lastParams;
+		var lastParamsStr = this.lastParamsStr;
 		var lastParamsTmp = this.lastParamsTmp;
 		if (this.drawed === 5 && lastParams.count === 6)
 		{
 			lastParamsTmp.clear();
 			lastParamsTmp.push(storage, key, color, shadowcolor, shadowoffsetx, shadowoffsety);
-			if (lastParams.join("|") === lastParamsTmp.join("|"))
+			if (lastParamsStr === lastParamsTmp.join("|"))
 			{
 				return;
 			}
 		}
+@if(MESSAGECHARLAYER_MEMORY_EFFICIENT)
 		if (!this.hasImage)
 		{
 			this.hasImage = true;
 		}
+@endif
 		var	layer	= getGraph(storage, key);
 		var	iw = layer.imageWidth, ih = layer.imageHeight;
 		resize(iw, ih);
@@ -592,26 +640,31 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 		drawed	= 5;
 		lastParams.clear();
 		lastParams.push(storage, key, color, shadowcolor, shadowoffsetx, shadowoffsety);
+		lastParamsStr = lastParams.join("|");
 		lastFontParams.clear();
+		lastFontParamsStr = "";
 	}
 
 	function drawGraphWithEdge(storage, key, color, edgeemphasis, edgecolor, edgeextent)
 	{
 		var lastParams = this.lastParams;
+		var lastParamsStr = this.lastParamsStr;
 		var lastParamsTmp = this.lastParamsTmp;
 		if (this.drawed === 6 && lastParams.count === 6)
 		{
 			lastParamsTmp.clear();
-			lastParamsTmp.push(storage, key, color, edgeemphasis, edgecolor, edgeextent);
-			if (lastParams.join("|") === lastParamsTmp.join("|"))
+			lastParamsTmp.push(...);
+			if (lastParamsStr === lastParamsTmp.join("|"))
 			{
 				return;
 			}
 		}
+@if(MESSAGECHARLAYER_MEMORY_EFFICIENT)
 		if (!this.hasImage)
 		{
 			this.hasImage = true;
 		}
+@endif
 		var	layer	= getGraph(storage, key);
 		var	iw = layer.imageWidth, ih = layer.imageHeight;
 		resize(iw, ih);
@@ -634,8 +687,10 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 		drawGraph(storage, key, color, false);
 		drawed	= 6;
 		lastParams.clear();
-		lastParams.push(storage, key, color, edgeemphasis, edgecolor, edgeextent);
+		lastParams.push(...);
+		lastParamsStr = lastParams.join("|");
 		lastFontParams.clear();
+		lastFontParamsStr = "";
 	}
 
 	//	直前と同じ内容で描画

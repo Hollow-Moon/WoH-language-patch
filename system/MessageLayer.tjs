@@ -364,7 +364,6 @@ class MessageLayer extends KAGLayer
 	var tmpCharLayer = void;
 	var charLayers = []; // 文字を表示するレイヤー : [line][column]
 	var knownCharLayersByFont = %[]; // Character layer cache.
-	var fontParams = [];
 	var	charPool = [];	//	使っていない文字レイヤーを格納
 	var	maxCharPoolCount	= 200; // 使ってない文字レイヤーを保存しておく最大数
 	var	lastCharLayerInfos = []; // 固定化する前のレイヤー状態 : [line][column]
@@ -1703,103 +1702,6 @@ class MessageLayer extends KAGLayer
 			return void;
 		else
 			return t + charLayers[line][col].textHeight;
-	}
-
-	function getFontParamsAsString(ruby=false, graph=false, italic=false, ischar=false, key, max, min)
-	{
-		this.fontParams.clear();
-		if (graph)
-		{
-			this.fontParams.push("graph", key, ischar);
-		}
-		else
-		{
-			if (ruby)
-			{
-				this.fontParams.push(fontFace, fontAngle, rubyBold, italic, rubySize, rubyAntialiased, rubyChColor, rubyEdgeColor, rubyShadowColor, max, min);
-			}
-			else
-			{
-				this.fontParams.push(fontFace, fontAngle, bold, italic, fontSize, antialiased, chColor, edgeColor, shadowColor);
-			}
-		}
-		this.fontParams.push(edgeEmphasis, edgeExtent, shadowOffsetX, shadowOffsetY, vertical);
-		return this.fontParams.join("|");
-	}
-
-	function cacheCharLayerFromCh(ch, ruby=false, graph=false, italic=false, ischar=false, key, max, min, cache=true)
-	{
-		var fontParamsAsString = this.getFontParamsAsString(ruby, graph, italic, ischar, key, max, min);
-		var knownCharLayers = this.knownCharLayersByFont[fontParamsAsString];
-		if (knownCharLayers === void)
-		{
-			this.knownCharLayersByFont[fontParamsAsString] = %[];
-			knownCharLayers = this.knownCharLayersByFont[fontParamsAsString];
-		}
-		if (knownCharLayers[ch] !== void)
-		{
-			return;
-		}
-		with (this.tmpCharLayer)
-		{
-			.clear();
-			if (graph)
-			{
-				if(ischar)
-				{
-					if(edge)
-						.drawGraphWithEdge(ch, key, chColor, edgeEmphasis, edgeColor, edgeExtent);
-					else if(shadow)
-						.drawGraphWithShadow(ch, key, chColor, shadowColor, shadowOffsetX, shadowOffsetY);
-					else
-						.drawGraph(ch, key, chColor);
-				}
-				else
-				{
-					.drawGraph(ch, key);
-				}
-			}
-			else
-			{
-				if (ruby)
-				{
-					.setFont(fontFace, fontAngle, rubyBold, italic, rubySize);
-					if(edge)
-						.drawTextWithEdge(ch, rubyChColor, rubyAntialiased, edgeEmphasis, rubyEdgeColor, edgeExtent, vertical, max, min);
-					else if(shadow)
-						.drawTextWithShadow(ch, rubyChColor, rubyAntialiased, rubyShadowColor, shadowOffsetX, shadowOffsetY, vertical, max, min);
-					else
-						.drawText(ch, rubyChColor, rubyAntialiased, vertical, max, min);
-				}
-				else
-				{
-					.setFont(fontFace, fontAngle, bold, italic, fontSize);
-					if(edge)
-						.drawTextWithEdge(ch, chColor, antialiased, edgeEmphasis, edgeColor, edgeExtent, vertical);
-					else if(shadow)
-						.drawTextWithShadow(ch, chColor, antialiased, shadowColor, shadowOffsetX, shadowOffsetY, vertical);
-					else
-						.drawText(ch, chColor, antialiased, vertical);
-				}
-			}
-		}
-		var charlayer = createNewCharLayer();
-		charlayer.assignImages(this.tmpCharLayer);
-		if (cache)
-		{
-			knownCharLayers[ch] = charlayer;
-		}
-		return charlayer;
-	}
-
-	function cacheCharLayerFromText(text)
-	{
-		for (var i = 0; i < text.length; i += 1)
-		{
-			var ch = text[i];
-			this.cacheCharLayerFromCh(ch, false, false, false);
-			//this.cacheCharLayerFromCh(ch, false, false, true);
-		}
 	}
 @endif
 

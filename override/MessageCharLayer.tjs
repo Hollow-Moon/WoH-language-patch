@@ -406,7 +406,7 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 				spc = step = (textWidth - w) / (ch.length - 1);
 			}
 			var	l = 0, t = 0;
-			for(var i=0; i<ch.length; i++)
+			for (var i = 0, internal_forloop_count = ch.length; i < internal_forloop_count; i += 1)
 			{
 //				dm(ch[i]+": "+l+", "+t+", "+spc+", "+step);
 				.fillRect(0, 0, .imageWidth, .imageHeight, 0x00000000);
@@ -679,7 +679,7 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 		tmp.doBoxBlur(edgeextent, edgeextent);
 
 		var	cnt	= int(edgeemphasis / 256);
-		for(var i=0; i<cnt; i++)
+		for (var i = 0; i < cnt; i += 1)
 			operateRect(ea - edgeextent, ea - edgeextent, tmp, 0, 0, tmp.imageWidth, tmp.imageHeight);
 		operateRect(ea - edgeextent, ea - edgeextent, tmp, 0, 0, tmp.imageWidth, tmp.imageHeight,, edgeemphasis - cnt * 256);
 		invalidate tmp;

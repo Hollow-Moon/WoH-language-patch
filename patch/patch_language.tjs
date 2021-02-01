@@ -778,6 +778,11 @@ function get_default_userfont_settings()
 		return true;
 	};
 	global.Scripts.setCallMissing(dic);
+@if(GAME_WOHN)
+	dic.window = %[];
+	dic.window.scWidth = global.kag.scWidth;
+	dic.window.scHeight = global.kag.scHeight;
+@endif
 	(global.MessageLayer_config incontextof dic)();
 
 	return %[

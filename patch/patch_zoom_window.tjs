@@ -1245,7 +1245,7 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 	// プライマリの位置が変わった
 	function onMoviePrimaryPosChanged(ox, oy) {
 		if (!isMain) return;
-		for (var i=0;i<numMovies;i++)
+		for (var i = 0, internal_forloop_count = numMovies; i < internal_forloop_count; i += 1)
 			with (movies[i]) .setOptions(%[ primox:ox, primoy:oy ]);
 	}
 	function onMovieStatusChanged(state, id)

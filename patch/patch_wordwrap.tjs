@@ -396,7 +396,7 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 			}
 			var arr = [];
 			var additionalWords = cleaned_lines[i].split(" ");
-			for (var j = 0; j < additionalWords.count; j += 1)
+			for (var j = 0, internal_forloop_count = additionalWords.count; j < internal_forloop_count; j += 1)
 			{
 				var word = additionalWords[j];
 				if (word.length === 0)
@@ -935,7 +935,7 @@ function wordWrapSplit(text, maxWidth, font, offset=0, maxLines=0, directiveChar
 			}
 
 			if (out.count == maxLines && maxLines > 0) {
-				for (var j = i; j < words.count; j++) {
+				for (var j = i, internal_forloop_count = words.count; j < internal_forloop_count; j += 1) {
 					out[out.count-1] += space + words[j];
 				}
 				return out;
@@ -958,7 +958,7 @@ function wordWrapSplitLines(lines, maxWidth, font, offset=0, maxLines=0)
 	var out = [];
 	for (var i = 0, internal_forloop_count = lines.count; i < internal_forloop_count; i += 1) {
 		var sublines = wordWrapSplit(lines[i], maxWidth, font, offset, maxLines);
-		for (var j=0; j<sublines.count; j++) {
+		for (var j = 0, internal_forloop_count = sublines.count; j < internal_forloop_count; j += 1) {
 			out.add(sublines[j]);
 		}
 	}

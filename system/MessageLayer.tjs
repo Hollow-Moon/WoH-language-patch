@@ -723,14 +723,14 @@ class MessageLayer extends KAGLayer
 		var knownCharLayersArr = [];
 		knownCharLayersArr.assign(this.knownCharLayersByFont);
 		(global.Dictionary.clear incontextof this.knownCharLayersByFont)();
-		for (var i = 0; i < knownCharLayersArr.count; i += 2)
+		for (var i = 0, internal_forloop_count = knownCharLayersArr.count; i < internal_forloop_count; i += 2)
 		{
 			if (knownCharLayersArr[i + 1] !== void)
 			{
 				var knownCharLayersArr2 = [];
 				knownCharLayersArr2.assign(knownCharLayersArr[i + 1]);
 				(global.Dictionary.clear incontextof knownCharLayersArr[i + 1])();
-				for (var j = 0; j < knownCharLayersArr2.count; j += 2)
+				for (var j = 0, internal_forloop_count = knownCharLayersArr2.count; j < internal_forloop_count; j += 2)
 				{
 					if (knownCharLayersArr2[j + 1] !== void)
 					{
@@ -745,19 +745,19 @@ class MessageLayer extends KAGLayer
 			invalidate this.tmpCharLayer;
 			this.tmpCharLayer = void;
 		}
-		for( var i=0; i<charPool.count; i++ )
+		for (var i = 0, internal_forloop_count = charPool.count; i < internal_forloop_count; i += 1)
 			invalidate charPool[i] if charPool[i] != void;
 
 		var layers = [ charLayers, rubyLayers ];
-		for(var k=0; k<layers.count; k++)
+		for (var k = 0, internal_forloop_count = layers.count; k < internal_forloop_count; k += 1)
 		{
 			var	lss	= layers[k];
-			for(var i=0; i<lss.count; i++)
+			for (var i = 0, internal_forloop_count = lss.count; i < internal_forloop_count; i += 1)
 			{
 				var	ls = lss[i];
 				if(ls != void)
 				{
-					for(var j=0; j<ls.count; j++)
+					for (var j = 0, internal_forloop_count = ls.count; j < internal_forloop_count; j += 1)
 						invalidate ls[j] if ls[j] != void;
 					invalidate ls;
 				}
@@ -841,17 +841,17 @@ class MessageLayer extends KAGLayer
 		{
 			//	元々のテキストウィンドウに書き込まれていた文字を再現する
 			var	char	= createNewCharLayer();
-			for(var i=0; i<lastCharLayerInfos.count; i++)
+			for (var i = 0, internal_forloop_count = lastCharLayerInfos.count; i < internal_forloop_count; i += 1)
 			{
 				var	line	= lastCharLayerInfos[i];
 				if(line == void)
 					continue;
-				for(var i=0; i<line.count; i++)
+				for (var i = 0, internal_forloop_count = line.count; i < internal_forloop_count; i += 1)
 				{
 					var	col	= line[i];
 					if(col == void)
 						continue;
-					for(var i=0; i<col.count; i++)
+					for (var i = 0, internal_forloop_count = col.count; i < internal_forloop_count; i += 1)
 					{
 						char.restore(col[i]);
 						operateRect(char.left, char.top, char, 0, 0, char.width, char.height,, char.opacity);
@@ -890,21 +890,21 @@ class MessageLayer extends KAGLayer
 		initCharLayer();
 
 		// 文字レイヤーを非表示にして、プールへ
-		for(var r=0; r<charLayers.count; r++)
+		for (var r = 0, internal_forloop_count = charLayers.count; r < internal_forloop_count; r += 1)
 		{
 			var	line	= charLayers[r];
 			if(line == void)
 				continue;
-			for(var c=0; c<line.count; c++)
+			for (var c = 0, internal_forloop_count = line.count; c < internal_forloop_count; c += 1)
 				removeCharLayer(r, c);
 		}
 
 		// ルビは破棄
-		for(var i=0; i<rubyLayers.count; i++)
+		for (var i = 0, internal_forloop_count = rubyLayers.count; i < internal_forloop_count; i += 1)
 		{
 			if(rubyLayers[i] != void)
 			{
-				for(var j=0; j<rubyLayers[i].count; j++)
+				for (var j = 0, internal_forloop_count = rubyLayers[i].count; j < internal_forloop_count; j += 1)
 					removeCharLayer(i, j, rubyLayers) if rubyLayers[i][j] != void;
 			}
 		}
@@ -912,7 +912,7 @@ class MessageLayer extends KAGLayer
 		lastCharLayerInfos.clear();
 
 @if(GAME_WOHN)
-		for (var i = charPool.count; i < maxCharPoolCount; i += 1)
+		for (var i = charPool.count, internal_forloop_count = maxCharPoolCount; i < internal_forloop_count; i += 1)
 		{
 			charPool.add(createNewCharLayer());
 		}
@@ -1957,7 +1957,7 @@ class MessageLayer extends KAGLayer
 			var y = marginT + indentxpos + getCharLayerTopOffset();
 			if(chars != void)
 			{
-				for(var i=0; i<currentColumn; i++)
+				for (var i = 0, internal_forloop_count = currentColumn; i < internal_forloop_count; i += 1)
 				{
 					if(chars[i] != void) with(chars[i])
 					{
@@ -1967,7 +1967,7 @@ class MessageLayer extends KAGLayer
 				}
 				if(rubys != void)
 				{
-					for(var i=0; i<currentColumn; i++)
+					for (var i = 0, internal_forloop_count = currentColumn; i < internal_forloop_count; i += 1)
 					{
 						if(rubys[i] != void) with(rubys[i])
 						{
@@ -1983,7 +1983,7 @@ class MessageLayer extends KAGLayer
 			var x = marginL + indentxpos + getCharLayerLeftOffset();
 			if(chars != void)
 			{
-				for(var i=0; i<currentColumn; i++)
+				for (var i = 0, internal_forloop_count = currentColumn; i < internal_forloop_count; i += 1)
 				{
 					if(chars[i] !== void) with(chars[i])
 					{
@@ -1993,7 +1993,7 @@ class MessageLayer extends KAGLayer
 				}
 				if(rubys != void)
 				{
-					for(var i=0; i<currentColumn; i++)
+					for (var i = 0, internal_forloop_count = currentColumn; i < internal_forloop_count; i += 1)
 					{
 						if(rubys[i] != void) with(rubys[i])
 						{
@@ -2820,7 +2820,7 @@ class MessageLayer extends KAGLayer
 	function backspace(cnt = 1)
 	{
 		// 文字消去(改行は文字としない)
-		for(var i=0; i<cnt; i++)
+		for (var i = 0; i < cnt; i += 1)
 		{
 			currentColumn--;
 			if(currentColumn < 0)
@@ -2838,7 +2838,7 @@ class MessageLayer extends KAGLayer
 					currentColumn = 0;
 					if(chars[currentColumn].visible)
 					{
-						for(; currentColumn<chars.count; currentColumn++)
+						for (var internal_forloop_count = chars.count; currentColumn < internal_forloop_count; currentColumn += 1)
 						{
 							if(!chars[currentColumn].visible)
 							{
@@ -3753,12 +3753,12 @@ class MessageLayer extends KAGLayer
 @if(GAME_WOHN)
 	function execSameLinkChar(linkno, func, args*)
 	{
-		for(var i=0; i<charLayers.count; i++)
+		for (var i = 0, internal_forloop_count = charLayers.count; i < internal_forloop_count; i += 1)
 		{
 			var	line	= charLayers[i];
 			if(line == void)
 				continue;
-			for(var i=0; i<line.count; i++)
+			for(var i = 0, internal_forloop_count = line.count; i < internal_forloop_count; i += 1)
 				func(line[i], args*) if line[i] != void && line[i].linkno == linkno;
 		}
 	}
@@ -3987,7 +3987,7 @@ class MessageLayer extends KAGLayer
 				return tw;
 			}
 			cw.clear();
-			for(var i=0; i<text.length; i++)
+			for (var i = 0, internal_forloop_count = text.length; i < internal_forloop_count; i += 1)
 			{
 				var	ch	= text[i];
 @if(0)
@@ -4013,7 +4013,7 @@ class MessageLayer extends KAGLayer
 			}
 			.setFont(fontFace, fontAngle, rubyBold, fontItalic, rubySize);
 			var	rw	= [], tw = .font.getTextWidth(text), w;
-			for(var i=0; i<text.length; i++)
+			for (var i = 0, internal_forloop_count = text.length; i < internal_forloop_count; i += 1)
 			{
 				w	= .font.getTextWidth(text[i]);
 				rw.add(w);
@@ -4267,7 +4267,7 @@ class MessageLayer extends KAGLayer
 		{
 			var	tl	= links, sl = src.links;
 			tl.count= sl.count;
-			for(var i=sl.count-1; i>=0; i--)
+			for (var i=sl.count-1; i >= 0; i -= 1)
 			{
 				if(sl[i] === void)
 					continue;
@@ -4279,18 +4279,18 @@ class MessageLayer extends KAGLayer
 
 		// charLayers のコピー
 		var	layers	= [ "charLayers", "rubyLayers" ];
-		for(var i=0; i<layers.count; i++)
+		for (var i = 0, internal_forloop_count = layers.count; i < internal_forloop_count; i += 1)
 		{
 			var	sls	= src[layers[i]];
 			var	dls	= this[layers[i]];
-			for(var r=0; r<sls.count; r++)
+			for (var r = 0, internal_forloop_count = sls.count; r < internal_forloop_count; r += 1)
 			{
 				var	sl	= sls[r];
 				if(sl != void)
 				{
 					var	dl	= dls[r];
 					dl = dls[r] = [] if dl == void;
-					for(var c=0; c<sl.count; c++)
+					for (var c = 0, internal_forloop_count = sl.count; c < internal_forloop_count; c += 1)
 					{
 						if(sl[c] != void && sl[c].visible)
 						{
@@ -4794,11 +4794,11 @@ class MessageLayer extends KAGLayer
 	 */
 	function pauseCharAction()
 	{
-		for(var i=0; i<charLayers.count; i++)
+		for (var i = 0, internal_forloop_count = charLayers.count; i < internal_forloop_count; i += 1)
 		{
 			var	row	= charLayers[i];
 			if( row === void ) return;
-			for(var i=0; i<row.count; i++)
+			for (var i = 0, internal_forloop_count = row.count; i < internal_forloop_count; i += 1)
 				window.pauseAction(true, row[i]) if row[i] != void;
 		}
 	}
@@ -4808,11 +4808,11 @@ class MessageLayer extends KAGLayer
 	 */
 	function resumeCharAction()
 	{
-		for(var i=0; i<charLayers.count; i++)
+		for (var i = 0, internal_forloop_count = charLayers.count; i < internal_forloop_count; i += 1)
 		{
 			var	row	= charLayers[i];
 			if( row === void ) return;
-			for(var i=0; i<row.count; i++)
+			for (var i = 0, internal_forloop_count = row.count; i < internal_forloop_count; i += 1)
 				window.resumeAction(row[i]) if row[i] != void;
 		}
 	}
@@ -4831,11 +4831,11 @@ class MessageLayer extends KAGLayer
 			{
 				if(tr === void)
 				{
-					for(var i=0; i<charLayers.count; i++)
+					for (var i = 0, internal_forloop_count = charLayers.count; i < internal_forloop_count; i += 1)
 					{
 						var	row	= charLayers[i];
 						if( row === void ) continue;
-						for(var i=0; i<row.count; i++)
+						for (var i = 0, internal_forloop_count = row.count; i < internal_forloop_count; i += 1)
 							window.stopAction(row[i]) if row[i] != void;
 					}
 				}
@@ -4968,17 +4968,17 @@ class MessageLayer extends KAGLayer
 	function executeCharGroup(group, func, args*)
 	{
 		var	layers	= [ charLayers, rubyLayers ];
-		for(var i=0; i<layers.count; i++)
+		for (var i = 0, internal_forloop_count = layers.count; i < internal_forloop_count; i += 1)
 		{
 			var	lines	= layers[i];
-			for(var i=0; i<lines.count; i++)
+			for (var i = 0, internal_forloop_count = lines.count; i < internal_forloop_count; i += 1)
 			{
 				var	line	= lines[i];
 				if(line === void)
 				{
 					continue;
 				}
-				for(var i=0; i<line.count; i++)
+				for (var i = 0, internal_forloop_count = line.count; i < internal_forloop_count; i += 1)
 				{
 					var char = line[i];
 					func(char, args*) if char !== void && char.group === group;
@@ -5003,15 +5003,15 @@ class MessageLayer extends KAGLayer
 	function resetSelection()
 	{
 		var	layers	= [ charLayers, rubyLayers ];
-		for(var i=0; i<layers.count; i++)
+		for (var i = 0, internal_forloop_count = layers.count; i < internal_forloop_count; i += 1)
 		{
 			var	lines	= layers[i];
-			for(var i=0; i<lines.count; i++)
+			for (var i = 0, internal_forloop_count = lines.count; i < internal_forloop_count; i += 1)
 			{
 				var	line	= lines[i];
 				if(line == void)
 					continue;
-				for(var i=0; i<line.count; i++)
+				for (var i = 0, internal_forloop_count = line.count; i < internal_forloop_count; i += 1)
 				{
 					var char = line[i];
 					char.group	= "cur" if char !== void;
@@ -5055,15 +5055,15 @@ class MessageLayer extends KAGLayer
 	{
 		var	tog	= %[cur:"def", def:"fix"];
 		var	layerss	= [ charLayers, rubyLayers ];
-		for(var i=0; i<layerss.count; i++)
+		for (var i = 0, internal_forloop_count = layerss.count; i < internal_forloop_count; i += 1)
 		{
 			var	layers	= layerss[i];
-			for(var r=0; r<layers.count; r++)
+			for (var r = 0, internal_forloop_count = layers.count; r < internal_forloop_count; r += 1)
 			{
 				var	line	= layers[r];
 				if(line == void)
 					continue;
-				for(var c=0; c<line.count; c++)
+				for (var c = 0, internal_forloop_count = line.count; c < internal_forloop_count; c += 1)
 				{
 					var	char	= line[c];
 					if(char == void)

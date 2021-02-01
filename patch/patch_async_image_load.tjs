@@ -147,7 +147,7 @@ global.System.clearGraphicCache = function()
 {
 	var images = [];
 	images.assign(global.cached_async_images);
-	for (var i = 0; i < images.count; i += 2)
+	for (var i = 0, internal_forloop_count = images.count; i < internal_forloop_count; i += 2)
 	{
 		global.async_image_unload(images[i]);
 	}
@@ -206,7 +206,7 @@ global.System.touchImages = function(storage, limitbytes=0, timeout=0)
 	var cached_async_images = global.cached_async_images;
 	var async_image_load = global.async_image_load;
 	var image_already_cached = 0;
-	for (var i = 0; i < storage.count; i += 1)
+	for (var i = 0, internal_forloop_count = storage.count; i < internal_forloop_count; i += 1)
 	{
 		if (storage[i].indexOf(":") === -1)
 		{

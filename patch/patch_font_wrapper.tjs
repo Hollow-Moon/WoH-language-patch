@@ -169,7 +169,7 @@ global.font_remap_cache = %[];
 {
 	if (typeof(global.Font) === "Object" && typeof(global.Font.addFont) === "Object")
 	{
-		for (var i = 0; i < global.font_file_add_list.count; i += 1)
+		for (var i = 0, internal_forloop_count = global.font_file_add_list.count; i < internal_forloop_count; i += 1)
 		{
 			var item = global.font_file_add_list[i];
 			if (Storages.isExistentStorage(item))
@@ -177,7 +177,7 @@ global.font_remap_cache = %[];
 				var res = global.Font.addFont(item);
 				if (res !== void && res.count > 0)
 				{
-					for (var j = 0; j < res.count; j += 1)
+					for (var j = 0, internal_forloop_count = res.count; j < internal_forloop_count; j += 1)
 					{
 						if (res[j] === "MS PGothic")
 						{
@@ -196,7 +196,7 @@ global.font_remap_cache = %[];
 	}
 	else if (typeof(global.System.addFont) === "Object")
 	{
-		for (var i = 0; i < global.font_file_add_list.count; i += 1)
+		for (var i = 0, internal_forloop_count = global.font_file_add_list.count; i < internal_forloop_count; i += 1)
 		{
 			var item = global.font_file_add_list[i];
 			if (Storages.isExistentStorage(item))
@@ -398,8 +398,12 @@ class FontWrapper
 		{
 			return;
 		}
+		if (typeof(global.font_remap_list) !== "Object")
+		{
+			return;
+		}
 		var font_list = this.getList();
-		for (var i = 0; i < global.font_remap_list.count && typeof(global.font_remap_list) === "Object"; i += 1)
+		for (var i = 0, internal_forloop_count = global.font_remap_list.count; i < internal_forloop_count; i += 1)
 		{
 			if (global.font_remap_list[i].find(face) !== -1)
 			{
@@ -491,7 +495,7 @@ class FontWrapper
 		{
 			ret = [];
 		}
-		for (var i = 0; i < global.font_remove_list.count; i += 1)
+		for (var i = 0, internal_forloop_count = global.font_remove_list.count; i < internal_forloop_count; i += 1)
 		{
 			var to_remove = global.font_remove_list[i];
 			ret.remove(to_remove);
@@ -552,7 +556,7 @@ class FontWrapper
 		var alternativeFontFace = fontToSpecialCharacters[font.face][1];
 
 		var width = 0;
-		for (var i=0; i<text.length; i++) {
+		for (var i = 0, internal_forloop_count = text.length; i < internal_forloop_count; i += 1) {
 			var character = text[i];
 			if (specialCharacters.contains(character)) {
 				var previousFontFace = font.face;

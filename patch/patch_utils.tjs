@@ -55,7 +55,7 @@ function patchExists(name, isFolder=devMode, basePath=global.paths_base[0]) {
 function load_patches(patch_array, should_add_to_auto_path=true)
 {
 	var patches_to_add = [];
-	for (var i = 0; i < patch_array.count; i += 1)
+	for (var i = 0, internal_forloop_count = patch_array.count; i < internal_forloop_count; i += 1)
 	{
 		if (patch_array[i] === void)
 		{
@@ -93,7 +93,7 @@ function load_patches(patch_array, should_add_to_auto_path=true)
 			}
 		}
 	}
-	for (var i = 0; i < patches_to_add.count; i += 1)
+	for (var i = 0, internal_forloop_count = patches_to_add.count; i < internal_forloop_count; i += 1)
 	{
 		if (should_add_to_auto_path)
 		{
@@ -107,7 +107,7 @@ function load_patches(patch_array, should_add_to_auto_path=true)
 function unload_patches(patch_array)
 {
 	var patches_to_remove = [];
-	for (var i = 0; i < patch_array.count; i += 1)
+	for (var i = 0, internal_forloop_count = patch_array.count; i < internal_forloop_count; i += 1)
 	{
 		if (patch_array[i] === void)
 		{
@@ -132,7 +132,7 @@ function unload_patches(patch_array)
 		patches_to_remove.add(name_to_patch_path(name, false, basePath) + folderName);
 		patches_to_remove.add(name_to_patch_path(name, true, basePath) + folderName);
 	}
-	for (var i = 0; i < patches_to_remove.count; i += 1)
+	for (var i = 0, internal_forloop_count = patches_to_remove.count; i < internal_forloop_count; i += 1)
 	{
 		Storages.removeAutoPath(patches_to_remove[i]);
 	}
@@ -173,7 +173,7 @@ function reverseStr(str)
 @endif
 @if(!kirikiriz)
 	var result = "";
-	for (var i=str.length-1; i>=0; i--) {
+	for (var i = str.length - 1; i >= 0; i -= 1) {
 		result += str[i];
 	}
 	return result;
@@ -262,7 +262,7 @@ function initializeScollbar(x, y, w, h, total, moving, top, scrimgs=defaultScrol
 /// 停止所有视频图层的播放 ///
 function stopAllMovies(kag=global.kag)
 {
-	for(var i=0; i<kag.movies.count; i++)
+	for (var i = 0, internal_forloop_count = kag.movies.count; i < internal_forloop_count; i += 1)
 	{
 		with(kag.movies[i])
 		{
@@ -274,7 +274,7 @@ function stopAllMovies(kag=global.kag)
 
 function isAnyMoviePlaying(kag=global.kag)
 {
-	for(var i=0; i<kag.movies.count; i++)
+	for (var i = 0, internal_forloop_count = kag.movies.count; i < internal_forloop_count; i += 1)
 	{
 		with(kag.movies[i])
 		{
@@ -371,7 +371,7 @@ function build_exec_command_line(exepath, arguments, normalize_exepath=true, nor
 		}
 	}
 	//exe_path = ('"%s"').sprintf(exe_path);
-	for (var i = 0; i < arguments.count; i += 1)
+	for (var i = 0, internal_forloop_count = arguments.count; i < internal_forloop_count; i += 1)
 	{
 		var arg_path = arguments[i];
 		if (normalize_arguments)
@@ -391,7 +391,7 @@ function build_exec_command_line(exepath, arguments, normalize_exepath=true, nor
 			else if (typeof(arg_path) === "Object")
 			{
 				var arg_components = [];
-				for (var i = 0; i < arg_path.count; i += 1)
+				for (var i = 0, internal_forloop_count = arg_path.count; i < internal_forloop_count; i += 1)
 				{
 					var arg_component = arg_path[i];
 					var arg_path_placed = Storages.getPlacedPath(arg_component);
@@ -604,7 +604,7 @@ global.open_scenario_using_scenario_tracker = function(kag=global.kag, scenario,
 		}
 @endif
 		var new_id = 0;
-		for (var i = 0; i < flow.count; i += 1)
+		for (var i = 0, internal_forloop_count = flow.count; i < internal_forloop_count; i += 1)
 		{
 			if (typeof(flow[i]) !== "Object")
 			{
@@ -762,7 +762,7 @@ global.full_game_reload = function(extra_args*)
 @endif
 	args_arr.add("-fullscreen=" + (global.kag.fullScreen ? "true" : "false"));
 	args_arr.add("-innersizewidth=" + global.kag.innerWidth);
-	for (var i = 0; i < extra_args.count; i += 1)
+	for (var i = 0, internal_forloop_count = extra_args.count; i < internal_forloop_count; i += 1)
 	{
 		args_arr.add(extra_args[i]);
 	}
@@ -782,7 +782,7 @@ global.binary_to_decimal = function(arr)
 {
 	var decimal = 0;
 	var bits = 1;
-	for (var i = 0; i < arr.count; i += 1)
+	for (var i = 0, internal_forloop_count = arr.count; i < internal_forloop_count; i += 1)
 	{
 		var current_number = (arr[arr.count - i - 1]);
 		if (current_number === 1)

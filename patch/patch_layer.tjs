@@ -10,7 +10,7 @@ function chop_image_extension(storage)
 		var file_name_no_ext = storage;
 		var file_name_len = storage.length;
 
-		for (var i = 0; i < image_extensions.count; i += 1)
+		for (var i = 0, internal_forloop_count = image_extensions.count; i < internal_forloop_count; i += 1)
 		{
 			var file_name_ext_pos = file_name_no_ext.indexOf(image_extensions[i]);
 			if ((file_name_ext_pos !== -1) && (file_name_ext_pos + image_extensions[i].length === file_name_len))
@@ -35,7 +35,7 @@ function get_file_name_of_image_with_extension_that_exists(storage)
 		var file_name_no_ext = storage;
 		var file_name_len = storage.length;
 
-		for (var i = 0; i < image_extensions.count; i += 1)
+		for (var i = 0, internal_forloop_count = image_extensions.count; i < internal_forloop_count; i += 1)
 		{
 			var file_name_ext_pos = file_name_no_ext.indexOf(image_extensions[i]);
 			if ((file_name_ext_pos !== -1) && (file_name_ext_pos + image_extensions[i].length === file_name_len))
@@ -44,7 +44,7 @@ function get_file_name_of_image_with_extension_that_exists(storage)
 				break;
 			}
 		}
-		for (var i = 0; i < image_extensions.count; i += 1)
+		for (var i = 0, internal_forloop_count = image_extensions.count; i < internal_forloop_count; i += 1)
 		{
 			var fn = file_name_no_ext + image_extensions[i];
 			if (global.Storages.isExistentStorage(fn))
@@ -92,7 +92,7 @@ global.System.touchImages_patch_layer_original = global.System.touchImages;
 global.System.touchImages = function(storage, limitbytes=0, timeout=0)
 {
 	var storage_fixed = [];
-	for (var i = 0; i < storage.count; i += 1)
+	for (var i = 0, internal_forloop_count = storage.count; i < internal_forloop_count; i += 1)
 	{
 		var file_name = global.get_full_path_of_image(storage[i]);
 		if (file_name !== "")
@@ -245,7 +245,7 @@ class Layer_patch_layer_override extends Layer_patch_layer_original
 		var alternativeFontFace = fontToSpecialCharacters[font.face][1];
 
 		var x = 0;
-		for (var i=0; i<text.length; i++) {
+		for (var i = 0, internal_forloop_count = text.length; i < internal_forloop_count; i += 1) {
 			var character = text[i];
 			if (specialCharacters.contains(character)) {
 				var previousFontFace = font.face;

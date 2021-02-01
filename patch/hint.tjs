@@ -42,7 +42,7 @@ class Window_hint_override extends Window_hint_original
 		if (isshow) {
 			var lines = text.split("\n");
 			var longestLineIndex = 0;
-			for (var i=1; i<lines.count; i++) {
+			for (var i = 1, internal_forloop_count = lines.count; i < internal_forloop_count; i += 1) {
 				if (lines[i].length > lines[longestLineIndex].length) {
 					longestLineIndex = i;
 				}
@@ -91,7 +91,7 @@ class Window_hint_override extends Window_hint_original
 			hintlayer.colorRect(0,   h-1, w, 1, tooltipBorderColor);
 
 			var lineY = hintVerticalPadding;
-			for (var i=0; i<lines.count; i++) {
+			for (var i = 0, internal_forloop_count = lines.count; i < internal_forloop_count; i += 1) {
 				hintlayer.drawText(hintHorizontalPadding, lineY, lines[i], clInfoText, 220);
 				lineY += fontHeight + hintLineSpacing;
 			}

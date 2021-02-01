@@ -98,7 +98,7 @@
 			System.exePath + "content-data/patch/fstat.dll",
 @endif
 		];
-		for (var i = 0; i < fstat_paths.count; i += 1)
+		for (var i = 0, internal_forloop_count = fstat_paths.count; i < internal_forloop_count; i += 1)
 		{
 			var path = "" + fstat_paths[i];
 			if (path !== "" && Storages.isExistentStorage(path))
@@ -126,15 +126,15 @@
 		"content-data"
 	];
 
-	for (var i = 0; i < paths_base.count; i += 1)
+	for (var i = 0, internal_forloop_count = paths_base.count; i < internal_forloop_count; i += 1)
 	{
 		paths_base_dirlist[paths_base[i]] = %[];
 		paths_base_dirlist[paths_base[i]]["."] = global.Storages.dirlist(paths_base[i] + "/");
-		for (var j = 0; j < paths_base_dirlist[paths_base[i]]["."].count; j += 1)
+		for (var j = 0, internal_forloop_count = paths_base_dirlist[paths_base[i]]["."].count; j < internal_forloop_count; j += 1)
 		{
 			paths_base_dirlist[paths_base[i]]["."][j] = paths_base_dirlist[paths_base[i]]["."][j].toLowerCase();
 		}
-		for (var j = 0; j < paths_search_append.count; j += 1)
+		for (var j = 0, internal_forloop_count = paths_search_append.count; j < internal_forloop_count; j += 1)
 		{
 			if (paths_base_dirlist[paths_base[i]]["."].find(paths_search_append[j] + "/") !== -1)
 			{
@@ -144,7 +144,7 @@
 			{
 				paths_base_dirlist[paths_base[i]][paths_search_append[j]] = [];
 			}
-			for (var k = 0; k < paths_base_dirlist[paths_base[i]][paths_search_append[j]].count; k += 1)
+			for (var k = 0, internal_forloop_count = paths_base_dirlist[paths_base[i]][paths_search_append[j]].count; k < internal_forloop_count; k += 1)
 			{
 				paths_base_dirlist[paths_base[i]][paths_search_append[j]][k] = paths_base_dirlist[paths_base[i]][paths_search_append[j]][k].toLowerCase();
 			}
@@ -162,9 +162,9 @@
 	{
 		var path = "patch" + i;
 		var found = false;
-		for (var j = 0; j < paths_to_search_patchnums.count && typeof(paths_to_search_patchnums[j]) === "String"; j += 1)
+		for (var j = 0, internal_forloop_count = paths_to_search_patchnums.count; j < internal_forloop_count && typeof(paths_to_search_patchnums[j]) === "String"; j += 1)
 		{	
-			for (var k = 0; k < paths_base.count; k += 1)
+			for (var k = 0, internal_forloop_count = paths_base.count; k < internal_forloop_count; k += 1)
 			{
 				var path = path;
 				var path_to_search = paths_to_search_patchnums[j];
@@ -203,11 +203,11 @@
 		"content-data",
 	];
 
-	for (var i = 0; i < paths_to_search.count && typeof(paths_to_search[i]) === "String"; i += 1)
+	for (var i = 0, internal_forloop_count = paths_to_search.count; i < internal_forloop_count && typeof(paths_to_search[i]) === "String"; i += 1)
 	{
-		for (var j = 0; j < paths.count; j += 1)
+		for (var j = 0, internal_forloop_count = paths.count; j < internal_forloop_count; j += 1)
 		{
-			for (var k = 0; k < paths_base.count; k += 1)
+			for (var k = 0, internal_forloop_count = paths_base.count; k < internal_forloop_count; k += 1)
 			{
 				var path = paths[j];
 				var path_to_search = paths_to_search[i];
@@ -255,7 +255,7 @@
 			"imageshistory",
 			"patch/k2compat",
 		];
-		for (var i = 0; i < commondevpaths.count && typeof(commondevpaths[i]) === "String"; i += 1)
+		for (var i = 0, internal_forloop_count = commondevpaths.count; i < internal_forloop_count && typeof(commondevpaths[i]) === "String"; i += 1)
 		{
 			var path = global.typemoon_repo_root + "common/" + commondevpaths[i] + "/";
 			paths_to_remove.add(path);
@@ -310,9 +310,9 @@
 			"Decensor",
 @endif
 		];
-		for (var i = 0; i < devpaths.count && typeof(devpaths[i]) === "String"; i += 1)
+		for (var i = 0, internal_forloop_count = devpaths.count; i < internal_forloop_count && typeof(devpaths[i]) === "String"; i += 1)
 		{
-			for (var j = 0; j < paths_base.count; j += 1)
+			for (var j = 0, internal_forloop_count = paths_base.count; j < internal_forloop_count; j += 1)
 			{
 				var path = paths_base[j] + devpaths[i] + "/";
 				paths_to_remove.add(path);
@@ -327,11 +327,11 @@
 	}
 
 @if(!DEBUG)
-	for (var i = 0; i < paths_base.count; i += 1)
+	for (var i = 0, internal_forloop_count = paths_base.count; i < internal_forloop_count; i += 1)
 	{
 		var files = paths_base_dirlist[paths_base[i]]["."];
 		var patches = [];
-		for (var j = 0; j < files.count; j += 1)
+		for (var j = 0, internal_forloop_count = files.count; j < internal_forloop_count; j += 1)
 		{
 			var fn = files[j];
 			if (fn.substr(0, 6) === "patch_" && Storages.extractStorageExt(fn) === ".xp3")
@@ -340,7 +340,7 @@
 			}
 		}
 		patches.sort("a");
-		for (var j = 0; j < patches.count; j += 1)
+		for (var j = 0, internal_forloop_count = patches.count; j < internal_forloop_count; j += 1)
 		{
 			var path = paths_base[i] + patches[j] + arcdelim;
 			paths_to_remove.add(path);
@@ -348,7 +348,7 @@
 		}
 	}
 @endif
-	for (var i = 0; i < paths_to_add.count; i += 1)
+	for (var i = 0, internal_forloop_count = paths_to_add.count; i < internal_forloop_count; i += 1)
 	{
 		var failed = false;
 		try
@@ -375,12 +375,12 @@
 		}
 	}
 
-	for (var i = 0; i < paths_to_remove.count; i += 1)
+	for (var i = 0, internal_forloop_count = paths_to_remove.count; i < internal_forloop_count; i += 1)
 	{
 		global.Storages.removeAutoPath(paths_to_remove[i]);
 	}
 
-	for (var i = 0; i < paths_to_add.count; i += 1)
+	for (var i = 0, internal_forloop_count = paths_to_add.count; i < internal_forloop_count; i += 1)
 	{
 		global.Storages.addAutoPath(paths_to_add[i]);
 	}

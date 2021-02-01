@@ -252,7 +252,7 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 			{
 				var maps = cache[0];
 				var regexps = cache[1];
-				for (var i = 0; i < regexps.count; i += 1)
+				for (var i = 0, internal_forloop_count = regexps.count; i < internal_forloop_count; i += 1)
 				{
 					var oldstr = str;
 					str = regexps[i].replace(str, "");
@@ -367,7 +367,7 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 			var tmp_char2glyph_mapped = [];
 			var tmp_char2glyph_map = %[];
 			var tmp_layer_for_char2glyph = new Layer(this, this.primaryLayer);
-			for (var i = 0; i < tmp_char2glyph_arr.count; i += 2)
+			for (var i = 0, internal_forloop_count = tmp_char2glyph_arr.count; i < internal_forloop_count; i += 2)
 			{
 				var regexp_obj = new RegExp(tmp_char2glyph_arr[i]);
 				tmp_char2glyph_mapped.add(regexp_obj);
@@ -387,7 +387,7 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 			char2glyph_cache[test_char2glyph] = [tmp_char2glyph_map, tmp_char2glyph_mapped];
 		}
 @endif
-		for (var i = 0; i < cleaned_lines.count; i += 1)
+		for (var i = 0, internal_forloop_count = cleaned_lines.count; i < internal_forloop_count; i += 1)
 		{
 			if (cleaned_lines[i].length === 0)
 			{
@@ -426,7 +426,7 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 		}
 		if (isChinese())
 		{
-			for (var i = 0; i < cleaned_lines.count; i += 1)
+			for (var i = 0, internal_forloop_count = cleaned_lines.count; i < internal_forloop_count; i += 1)
 			{
 				if (cleaned_lines[i].length === 0)
 				{
@@ -436,7 +436,7 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 				var arr = [];
 				//	Use continuous English characters as separators to split the line into an array of substrings. / 中英文分词
 				var additionalWords = cleaned_lines[i].split(/([A-zＡ-ｚ-]+)/);
-				for (var j = 0; j < additionalWords.count; j += 1)
+				for (var j = 0, internal_forloop_count = additionalWords.count; j < internal_forloop_count; j += 1)
 				{
 					var word = additionalWords[j];
 					if (word.length === 0)
@@ -561,7 +561,7 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 		{
 			var word_length_cache_arr = [];
 			word_length_cache_arr.assign(this.word_length_cache);
-			for (var i = 0; i < word_length_cache_arr.count; i += 2)
+			for (var i = 0, internal_forloop_count = word_length_cache_arr.count; i < internal_forloop_count; i += 2)
 			{
 				var word_tag = word_length_cache_arr[i + 1];
 @if(!WORDWRAP_BOLDITALIC_MODIFIER)
@@ -579,7 +579,7 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 		var needed_lengths = %[];
 @endif
 		var word_lines_needed = this.word_lines_needed;
-		for (var i = 0; i < word_lines_needed.count; i += 1)
+		for (var i = 0, internal_forloop_count = word_lines_needed.count; i < internal_forloop_count; i += 1)
 		{
 			var word_tag = word_lines_needed[i];
 @if(!WORDWRAP_BOLDITALIC_MODIFIER)
@@ -594,7 +594,7 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 @if(WORDWRAP_BOLDITALIC_MODIFIER)
 		var needed_lengths_arr = [];
 		needed_lengths_arr.assign(needed_lengths);
-		for (var i = 0; i < needed_lengths_arr.count; i += 2)
+		for (var i = 0, internal_forloop_count = needed_lengths_arr.count; i < internal_forloop_count; i += 2)
 		{
 			var word = needed_lengths_arr[i];
 			var dic = needed_lengths_arr[i + 1];
@@ -636,7 +636,7 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 			if (typeof(this.current.cacheCharLayerFromText) === "Object")
 			{
 				var cclft = this.current.cacheCharLayerFromText;
-				for (var i = 0; i < word_lines_needed.count; i += 1)
+				for (var i = 0, internal_forloop_count = word_lines_needed.count; i < internal_forloop_count; i += 1)
 				{
 					var word_tag = word_lines_needed[i];
 					cclft(word_tag.text, 1);
@@ -667,7 +667,7 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 			dm("clean line: " + clean);
 			dm("found " + additionalWords.count + " words.");
 
-			for(var i=0; i<words.count; i++) {
+			for (var i = 0, internal_forloop_count = words.count; i < internal_forloop_count; i += 1) {
 				dm("word: '"+words[i][0]+"'");
 			}
 		}*/
@@ -693,7 +693,7 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 			dm("clean line: " + clean);
 			dm("found " + words.count + " words.");
 
-			for(var i=0; i<words.count; i++) {
+			for (var i = 0, internal_forloop_count = words.count; i < internal_forloop_count; i += 1) {
 				dm("word: ['"+words[i][0]+"', "+i%2+"]");
 			}
 		}*/
@@ -873,7 +873,7 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 
 		if (quotesMethod == afterQuotesIndentedRight) {
 			if (lineInSpeechRegex.test(conductor.curLineStr)) {
-				for (var i = 0; i < 3; i++) {
+				for (var i = 0; i < 3; i += 1) {
 					conductor.getNextTag();
 				}
 			}
@@ -922,7 +922,7 @@ function wordWrapSplit(text, maxWidth, font, offset=0, maxLines=0, directiveChar
 	var words = [].split(delimiter, text);
 
 	var tmp = "";
-	for (var i = 0; i < words.count; i++)
+	for (var i = 0, internal_forloop_count = words.count; i < internal_forloop_count; i += 1)
 	{
 		var space = i != 0 ? delimiter : "";
 		var word = space + words[i];
@@ -956,7 +956,7 @@ function wordWrapSplitLines(lines, maxWidth, font, offset=0, maxLines=0)
 		lines = lines.split("\n");
 	}
 	var out = [];
-	for (var i=0; i<lines.count; i++) {
+	for (var i = 0, internal_forloop_count = lines.count; i < internal_forloop_count; i += 1) {
 		var sublines = wordWrapSplit(lines[i], maxWidth, font, offset, maxLines);
 		for (var j=0; j<sublines.count; j++) {
 			out.add(sublines[j]);
@@ -964,9 +964,9 @@ function wordWrapSplitLines(lines, maxWidth, font, offset=0, maxLines=0)
 	}
 	if (sf.language == japaneseLanguage) {
 		var out2 = [];
-		for (var i=0; i<out.count; i++) {
+		for (var i = 0, internal_forloop_count = out.count; i < internal_forloop_count; i += 1) {
 			var sublines = wordWrapSplit(out[i], maxWidth, font, offset, maxLines,, "・", true);
-			for (var j=0; j<sublines.count; j++) {
+			for (var j = 0, internal_forloop_count = sublines.count; j < internal_forloop_count; j += 1) {
 				out2.add(sublines[j]);
 			}
 		}
@@ -980,7 +980,7 @@ function wordWrapSplitParagraphs(paragraphs, maxWidth, font, offset=0, maxLines=
 		paragraphs = paragraphs.replace(/\n\n/g, "\v");
 		paragraphs = paragraphs.split("\v");
 	}
-	for (var p = 0; p < paragraphs.count; p++) {
+	for (var p = 0, internal_forloop_count = paragraphs.count; p < internal_forloop_count; p += 1) {
 		paragraphs[p] = wordWrapSplitLines(paragraphs[p], maxWidth, font, offset, maxLines);
 	}
 	return paragraphs;

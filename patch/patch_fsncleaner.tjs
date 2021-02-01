@@ -56,7 +56,7 @@
 		var translated_lines = [];
 		translated_lines.assign(src);
 		// DoLR
-		for (var i = 0; i < translated_lines.count; i += 1)
+		for (var i = 0, internal_forloop_count = translated_lines.count; i < internal_forloop_count; i += 1)
 		{
 			var line = translated_lines[i];
 			if (is_technical_regex.match(line).count !== 0)
@@ -87,7 +87,7 @@
 			throw new Exception("Line count doesn't match while attempting to clean!");
 		}
 		// ReplaceText
-		for (var i = 0, j = 0; (i < dest.count && j < translated_lines.count); i += 1)
+		for (var i = 0, internal_forloop_count_i = dest.count, j = 0, internal_forloop_count_j = translated_lines.count; (i < internal_forloop_count_i && j < internal_forloop_count_j); i += 1)
 		{
 			if (is_technical_regex.match(dest[i]).count === 0)
 			{

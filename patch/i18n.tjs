@@ -70,7 +70,7 @@ function loadMoFile(moFile, domain=defaultDomain) {
 	var currentId;
 	var currentIdPlural;
 
-	for(var i=0; i<lines.count; i++) {
+	for (var i = 0, internal_forloop_count = lines.count; i < internal_forloop_count; i += 1) {
 		if (isEntry(msgctxt, lines, i)) {
 			var tmp = readEntry(msgctxt, lines, i);
 			context = tmp[0];
@@ -140,7 +140,7 @@ function readEntry(header, lines, i) {
 
 function readPluralForms(text) {
 	var lines = text.split(/\\n/);
-	for (var i=0; i<lines.count; i++) {
+	for (var i = 0, internal_forloop_count = lines.count; i < internal_forloop_count; i += 1) {
 		if (lines[i].substr(0, pluralForms.length) == pluralForms) {
 			pluralExpressions = lines[i].substr(pluralForms.length + 2, lines[i].length - (pluralForms.length + 2)).split(";");
 			break;

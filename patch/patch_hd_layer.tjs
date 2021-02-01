@@ -1373,7 +1373,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 			this.setClip_patch_hd_layer(originalClipLeft_tmp, originalClipTop_tmp, originalClipWidth_tmp, originalClipHeight_tmp);
 		}
 		this.setAttentionPos_patch_hd_layer(originalAttentionLeft_tmp, originalAttentionTop_tmp);
-		for (var i = 0; i < this.children.count; i += 1)
+		for (var i = 0, internal_forloop_count = this.children.count; i < internal_forloop_count; i += 1)
 		{
 			this.children[i].update_bounds_hd_layer();
 		}
@@ -1411,7 +1411,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 
 		var chosenExt = storageExt;
 		if (storageExt == "") {
-			for (var i=0; i < global.image_extensions.count; i++) {
+			for (var i = 0, internal_forloop_count = global.image_extensions.count; i < internal_forloop_count; i += 1) {
 				var currentExtension = global.image_extensions[i];
 				if (currentExtension === hdExtension && window.isHd)
 				{
@@ -1759,7 +1759,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		var tmp = new global.Layer(window, this);
 		(global.Layer_patch_hd_layer_original.setImageSize incontextof tmp)(scaleWidth, scaleHeight);
 
-		for (var i = 0; i < numberOfImages; i++) {
+		for (var i = 0, internal_forloop_count = numberOfImages; i < internal_forloop_count; i += 1) {
 			(global.Layer_patch_hd_layer_original.stretchCopy incontextof tmp)(roundedUpscaledSingleWidth*i, 0, roundedUpscaledSingleWidth, scaleHeight, this, singleWidth*i, 0, singleWidth, super.imageHeight, scaleAlgorithm);
 		}
 

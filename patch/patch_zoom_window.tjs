@@ -61,7 +61,7 @@ class PopupMenuWindow extends Window
 	// メニューを複製
 	function copyMenu(dst, srclist) {
 		var items = [];
-		for (var i = 0; i < srclist.count; i++) {
+		for (var i = 0, internal_forloop_count = srclist.count; i < internal_forloop_count; i += 1) {
 			var src = srclist[i], hasCh = src.children.count > 0;
 			var item = new MenuItem(this, src.caption);
 			with (item) {
@@ -85,11 +85,11 @@ class PopupMenuWindow extends Window
 		}
 		// 順番を設定
 		items.sort(function(a,b) { return a.src.index < b.src.index; }, true);
-		for (var i = 0; i < items.count; i++)
+		for (var i = 0, internal_forloop_count = items.count; i < internal_forloop_count; i += 1)
 			with (items[i]) .item.index = .src.index;
 
 		// rightJustify / bmpItem設定
-		for (var i = 0, item, src; i < items.count; i++) {
+		for (var i = 0, item, src, internal_forloop_count = items.count; i < internal_forloop_count; i += 1) {
 			with (items[i]) item = .item, src = .src;
 			item.bmpItem      = src.bmpItem      if (typeof src.bmpItem      != "undefined");
 			item.rightJustify = src.rightJustify if (typeof src.rightJustify != "undefined");
@@ -386,7 +386,7 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 		// 順番に呼び出し
 		var ret = false, tmp = [];
 		tmp.assign(array);
-		for (var i = 0, cnt = tmp.count; i < cnt; i++) {
+		for (var i = 0, cnt = tmp.count; i < cnt; i += 1) {
 			var func = tmp[i];
 			ret |= func(*) if (typeof func == "Object");
 		}
@@ -647,7 +647,7 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 		var list = menuBarHidePopupMenu;
 		if (typeof(list) === "Object")
 		{
-			for (var i = list.count-1; i >= 0; i--)
+			for (var i = list.count - 1; i >= 0; i -= 1)
 				 with (list[i]) .checked = (.state == menuBarState);
 		}
 
@@ -655,7 +655,7 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 			list = menuBarHideSysMenu;
 			if (typeof(list) === "Object")
 			{
-				for (var i = list.count-1; i >= 0; i--)
+				for (var i = list.count - 1; i >= 0; i -= 1)
 					with (list[i]) if (typeof .state != "undefined") .checked = (.state == menuBarState);
 			}
 		}
@@ -716,7 +716,7 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 		if (menu === void) {
 			return;
 		}
-		for (var i=0; i<menu.count; i++) {
+		for (var i = 0, internal_forloop_count = menu.count; i < internal_forloop_count; i += 1) {
 			if (menu[i]["originalCaption"] !== void) {
 				menu[i]["caption"] = __(menu[i]["originalCaption"]);
 				if (typeof menu[i].children === "Object") {
@@ -781,7 +781,7 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 	function makePseudoMenuTable(menu, table) {
 		var list = menu.children, first = (table === void);
 		table = %[] if (first);
-		for (var i = list.count-1; i >= 0; i--) {
+		for (var i = list.count - 1; i >= 0; i -= 1) {
 			var item = list[i];
 			if (item.children.count > 0) makePseudoMenuTable(item, table);
 			else if (item.shortcut != "") {
@@ -795,7 +795,7 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 				if (typeof global["VK_"+key] == "undefined") continue;
 				key =     +global["VK_"+key];
 				table[key] = %[] if (table[key] === void);
-				for (var j = sc.count-1; j >= 0; j--) {
+				for (var j = sc.count - 1; j >= 0; j -= 1) {
 					var tag = sc[j];
 					tag = tag.toLowerCase() if (tag != "");
 					switch (tag) {
@@ -1155,7 +1155,7 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 	{
 		if(typeof this["window"+windowWidthes[0]+"MenuItem"] != "undefined")
 		{
-			for(var i=0; i<windowWidthes.count; i++)
+			for (var i = 0, internal_forloop_count = windowWidthes.count; i < internal_forloop_count; i += 1)
 				this["window"+windowWidthes[i]+"MenuItem"].checked	= size == windowWidthes[i];
 		}
 		updateWindowResizeable();
@@ -1195,7 +1195,7 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 
 		//	表示されているモニタが変化したか、そのウィンドウサイズにできるかを調べ、メニューを更新
 		var	bw	= width - innerWidth, bh = height - innerHeight;	//	ウィンドウの枠のサイズ
-		for(var i=0; i<windowWidthes.count; i++)
+		for (var i = 0, internal_forloop_count = windowWidthes.count; i < internal_forloop_count; i += 1)
 		{
 			var	w	= windowWidthes[i];
 			var	h	= (w * 9) \ 16;
@@ -1214,7 +1214,7 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 	{
 		movieStore	= new AsyncTrigger(onMovieScreenChanged, "");
 		var	states	= [];
-		for (var i=0;i<numMovies;i++)
+		for (var i = 0, internal_forloop_count = numMovies; i < internal_forloop_count; i += 1)
 		{
 			var movie = movies[i], st = %[];
 			if (typeof(movie) === "Object")
@@ -1230,7 +1230,7 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 
 	function onMovieScreenChanged()
 	{
-		for(var i=0; i<numMovies; i++)
+		for (var i = 0, internal_forloop_count = numMovies; i < internal_forloop_count; i += 1)
 		{
 			var movie = movies[i];
 			if (typeof(movie) === "Object")

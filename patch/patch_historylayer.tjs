@@ -15,9 +15,8 @@ class HistoryLayer_patch_historylayer_override extends HistoryLayer_patch_histor
 	function repage()
 	{
 		//Do not repage if page is empty (whitespaces count as content if you want to force an empty page).
-		var i;
 		var allEmpty = true;
-		for(i=0; i<data[dataPage].count; i++)
+		for(var i = 0, internal_forloop_count = data[dataPage].count; i < internal_forloop_count; i += 1)
 		{
 			if(data[dataPage][i] != "")
 			{

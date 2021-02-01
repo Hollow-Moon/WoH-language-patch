@@ -26,7 +26,7 @@ class Conductor_patch_fix_call_stack_override extends Conductor_patch_fix_call_s
 			if (typeof(global.Conductor.flow_tracker_object_offset) === "Integer" && typeof(global.Conductor.flow_tracker_object_orig_line_str) === "String")
 			{
 				var frame = dic.callStack[0];
-				if (frame.storage === global.Conductor.flow_tracker_object_storage && frame.label === global.Conductor.flow_tracker_object_label)
+				if (frame.storage.toLowerCase() === global.Conductor.flow_tracker_object_storage.toLowerCase() && frame.label === global.Conductor.flow_tracker_object_label)
 				{
 					frame.offset = global.Conductor.flow_tracker_object_offset;
 					frame.orgLineStr = global.Conductor.flow_tracker_object_orig_line_str;
@@ -37,14 +37,19 @@ class Conductor_patch_fix_call_stack_override extends Conductor_patch_fix_call_s
 	}
 @endif
 
-@if(0)
+@if(1)
 	function onReturn()
 	{
-		if (this === this.owner.mainConductor && typeof(global.flow_tracker_object) === "Object" && (flow_tracker_object.scriptfile === this.curStorage) && this.callStackDepth === 0)
+		if (this === this.owner.mainConductor && this.callStackDepth === 0)
 		{
 			global.kag.conductor.clearCallStack();
-			this.loadScenario("FlowTrackerPlugin.ks");
-			this.goToLabel("*afterscene");
+@if(GAME_FATE)
+			this.loadScenario("タイトル.ks");
+@endif
+@if(GAME_FHAT)
+			this.loadScenario("title.ks");
+@endif
+			this.goToLabel("*title");
 			return false;
 		}
 		return super.onReturn(...);
@@ -62,7 +67,7 @@ global.Conductor = Conductor_patch_fix_call_stack_override;
 	var call_line_offset;
 	var lines = [];
 	lines.load(global.Conductor.flow_tracker_object_storage);
-	for (var i = 0; i < lines.count; i += 1)
+	for (var i = 0, internal_forloop_count = lines.count; i < internal_forloop_count; i += 1)
 	{
 		if (lines[i] === global.Conductor.flow_tracker_object_label)
 		{
@@ -70,7 +75,7 @@ global.Conductor = Conductor_patch_fix_call_stack_override;
 			break;
 		}
 	}
-	for (var i = label_offset; i < lines.count; i += 1)
+	for (var i = label_offset, internal_forloop_count = lines.count; i < internal_forloop_count; i += 1)
 	{
 		if (lines[i] === call_line && typeof(label_offset) === "Integer")
 		{

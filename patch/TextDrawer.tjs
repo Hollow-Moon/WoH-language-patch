@@ -96,7 +96,7 @@ class TextDrawer
 
 		playTimeSettings.dictionary = %["pt_base" => labels["playtime"]];
 		drawCenteredEntry(layer, storage, playTimeSettings);
-		for (var i = 0; i < playTimeSettings2.count; i++) {
+		for (var i = 0, internal_forloop_count = playTimeSettings2.count; i < internal_forloop_count; i += 1) {
 			playTimeSettings2[i].dictionary = %["pt_base" => labels["units"][i]];
 			drawCenteredEntry(layer, storage, playTimeSettings2[i]);
 		}
@@ -146,7 +146,7 @@ class TextDrawer
 
 	function drawWeaponsName(layer, storage, name)
 	{
-		for (var i = 0; i < weaponsNameSettings.count; i++) {
+		for (var i = 0, internal_forloop_count = weaponsNameSettings.count; i < internal_forloop_count; i += 1) {
 			weaponsNameSettings[i].text.content = name;
 			drawCenteredEntry(layer, storage, weaponsNameSettings[i]);
 		}
@@ -166,7 +166,7 @@ class TextDrawer
 	function drawStatusButtons(layer, storage)
 	{
 		layer.loadImages("ss_button_mask");
-		for (var i = 0; i < statusButtonsSettings.count; i++) {
+		for (var i = 0, internal_forloop_count = statusButtonsSettings.count; i < internal_forloop_count; i += 1) {
 			statusButtonsSettings[i].dictionary = statusButtonsDictionary;
 			if(storage == "ss_宝具ボタン" && layer.window.sflags.language == "english") {
 				statusButtonsSettings[i].text.fontHeight = 15;
@@ -196,7 +196,7 @@ class TextDrawer
 	function drawNoblePhantasmButtons(layer, storage)
 	{
 		var noblePhantasmImageWidth = layer.imageWidth;
-		for (var i = 0; i < noblePhantasmButtonsSettings.count; i++) {
+		for (var i = 0, internal_forloop_count = noblePhantasmButtonsSettings.count; i < internal_forloop_count; i += 1) {
 			with (noblePhantasmButtonsSettings[i]) {
 				with(.title) {
 					.imageWidth = noblePhantasmImageWidth;
@@ -219,7 +219,7 @@ class TextDrawer
 	function initializeStatusLabels(statusLabelLayers, layer) {
 		if (statusLabelLayers[layer] == void) {
 			statusLabelLayers[layer] = [];
-			for (var i = 0; i < statusRankSettings.count; i++) {
+			for (var i = 0, internal_forloop_count = statusRankSettings.count; i < internal_forloop_count; i += 1) {
 				var settings = statusRankSettings[i];
 				var statusLabelLayer = new global.Layer(layer.window, layer);
 				with (statusLabelLayer) {
@@ -234,7 +234,7 @@ class TextDrawer
 
 		// XXX: uses _x, so need to re-evaulate
 		var rankLabels = Scripts.evalStorage("rank_labels.ksc");
-		for (var i = 0; i < statusRankSettings.count; i++) {
+		for (var i = 0, internal_forloop_count = statusRankSettings.count; i < internal_forloop_count; i += 1) {
 			statusRankSettings[i].text.content = rankLabels[i][0];
 			statusRankSettings[i].hint = rankLabels[i][1];
 			var statusLabelLayer = statusLabelLayers[layer][i];
@@ -247,9 +247,9 @@ class TextDrawer
 	}
 
 	function setStatusLabelsVisibility(statusLabelLayers, layers, value) {
-		for (var i = 0; i < layers.count; i++) {
+		for (var i = 0, internal_forloop_count = layers.count; i < internal_forloop_count; i += 1) {
 			if (statusLabelLayers[layers[i]] != void) {
-				for (var j = 0; j < statusLabelLayers[layers[i]].count; j++) {
+				for (var j = 0, internal_forloop_count = statusLabelLayers[layers[i]].count; j < internal_forloop_count; j += 1) {
 					statusLabelLayers[layers[i]][j].visible = value;
 				}
 			}
@@ -293,7 +293,7 @@ class TextDrawer
 
 	function drawExtraButtons(layer, storage)
 	{
-		for (var i = 0; i < extraMenuButtonsSettings.count; i++) {
+		for (var i = 0, internal_forloop_count = extraMenuButtonsSettings.count; i < internal_forloop_count; i += 1) {
 			drawCenteredEntry(layer, storage, extraMenuButtonsSettings[i]);
 		}
 	}
@@ -302,7 +302,7 @@ class TextDrawer
 	{
 		var format = __(dic["format"]);
 		var arguments = dic["arguments"];
-		for (var i = 0; i < arguments.count; i += 1)
+		for (var i = 0, internal_forloop_count = arguments.count; i < internal_forloop_count; i += 1)
 		{
 			if (typeof(arguments[i]) === "String")
 			{
@@ -431,7 +431,7 @@ class TextDrawer
 				var textHeight = getTextHeight(paragraphs, settings.text, .font);
 				var textY = getYByAlignment(layer, settings.text, textHeight);
 
-				for (var p = 0; p < paragraphs.count; p++) {
+				for (var p = 0, internal_forloop_count = paragraphs.count; p < internal_forloop_count; p += 1) {
 					var textLines = paragraphs[p];
 					textY = drawLines(layer, textY, textLines, settings.text);
 					if (p < paragraphs.count-1) {
@@ -448,7 +448,7 @@ class TextDrawer
 
 	function drawLines(layer, y, lines, textSettings) {
 		with (layer) {
-			for (var i = 0; i < lines.count; i++) {
+			for (var i = 0, internal_forloop_count = lines.count; i < internal_forloop_count; i += 1) {
 				var x = getXByAlignment(layer, textSettings, lines[i]);
 
 				drawTextGlow(textSettings, x, y, lines[i], layer);
@@ -473,7 +473,7 @@ class TextDrawer
 
 	function getTextHeight(paragraphs, textSettings, font) {
 		var height = 0;
-		for (var i = 0; i < paragraphs.count; i++) {
+		for (var i = 0, internal_forloop_count = paragraphs.count; i < internal_forloop_count; i += 1) {
 			var lines = paragraphs[i];
 			height += font.height * lines.count + textSettings.lineSpace * (lines.count-1);
 			if (i < paragraphs.count - 1) {
@@ -536,7 +536,7 @@ class TextDrawer
 
 			var longestTitleWidth = getLongestTitle(.font, settings.title, abilities);
 
-			for (var i=0; i<abilities.count; i++) {
+			for (var i = 0, internal_forloop_count = abilities.count; i < internal_forloop_count; i += 1) {
 				var title = __(abilities[i][0]);
 				var rank = ": "+__(abilities[i][1]);
 				var content = __(abilities[i][2]);
@@ -558,7 +558,7 @@ class TextDrawer
 				var textMaxWidth = .imageWidth - textX - settings.text.rightOffset;
 				var textLines = wordWrapSplitLines(content, textMaxWidth, .font);
 				var textY = i*(abilityHeight+settings.distanceBetweenEntries) + (abilityHeight - textLines.count * .font.height - (textLines.count-1) * settings.text.lineSpace)/2 + settings.abilityTopOffset*-(abilities.count-2);
-				for (var j=0; j<textLines.count; j++) {
+				for (var j = 0, internal_forloop_count = textLines.count; j < internal_forloop_count; j += 1) {
 					.drawText(textX, textY, textLines[j], settings.text.color,,, settings.text.shadowOpacity, settings.text.shadowColor, settings.text.shadowWidth, settings.text.shadowOffsetX, settings.text.shadowOffsetY);
 					textY += .font.height + settings.text.lineSpace;
 				}
@@ -570,7 +570,7 @@ class TextDrawer
 	{
 		setFontFromSettings(font, settings);
 		var longestTitleWidth = settings.minWidth;
-		for (var i=0; i<abilities.count; i++) {
+		for (var i = 0, internal_forloop_count = abilities.count; i < internal_forloop_count; i += 1) {
 			var title = __(abilities[i][0]);
 			var titleWidth = font.getTextWidth(title);
 			if ((titleWidth + settings.rightOffset) > longestTitleWidth) {
@@ -584,11 +584,11 @@ class TextDrawer
 		var originalSettings = %[];
 
 		var keys = Scripts.getObjectKeys(settingsOverride);
-		for (var i=0; i<keys.count; i++) {
+		for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 1) {
 			var key = keys[i];
 			var subkeys = [].split(".", key);
 			var subsettings = settings;
-			for (var j=0; j<subkeys.count-1; j++) {
+			for (var j = 0, internal_forloop_count = subkeys.count - 1; j < internal_forloop_count; j += 1) {
 				subsettings = subsettings[subkeys[j]];
 			}
 			var subkey = subkeys[subkeys.count-1];

@@ -164,7 +164,7 @@ class MpvNamedPipeClientIPC
 		{
 			add_command_line = global.mpv_commandline;
 		}
-		for (var i = 0; i < add_command_line.count; i += 1)
+		for (var i = 0, internal_forloop_count = add_command_line.count; i < internal_forloop_count; i += 1)
 		{
 			command_line.add(add_command_line[i]);
 		}
@@ -279,7 +279,7 @@ class MpvNamedPipeClientIPC
 			return null;
 		}
 		get_stuff(dict.request_id);
-		for (var i = 0; i < this.requests.count; i += 1)
+		for (var i = 0, internal_forloop_count = this.requests.count; i < internal_forloop_count; i += 1)
 		{
 			if (this.requests[i].request_id == dict.request_id)
 			{

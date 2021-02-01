@@ -444,9 +444,9 @@ if (typeof(Storages.createDirectory) !== "Object")
 
 		global.codepointsForFont = [];
 
-		for (var i = 0; (i < codepoint_ranges.count) && (codepoint_ranges[i] !== void); i += 1)
+		for (var i = 0, internal_forloop_count = codepoint_ranges.count; (i < internal_forloop_count) && (codepoint_ranges[i] !== void); i += 1)
 		{
-			for (var codepoint = codepoint_ranges[i][0]; codepoint <= codepoint_ranges[i][1]; codepoint += 1)
+			for (var codepoint = codepoint_ranges[i][0], internal_forloop_count = codepoint_ranges[i][1]; codepoint <= internal_forloop_count; codepoint += 1)
 			{
 				global.codepointsForFont.add(codepoint);
 			}
@@ -531,7 +531,7 @@ if (typeof(Storages.createDirectory) !== "Object")
 			Storages.addAutoPath(global.typemoon_repo_root + "Common/English/");
 			Storages.addAutoPath(global.typemoon_repo_root + "RealtaNua/English/");
 			var extraFontFiles = ["calibri.ttf", "SabonNextLTPro-Display_0.ttf", "BernhardModernStd-Roman.ttf", "FZST.ttf"];
-			for (var i = 0; (i < extraFontFiles.count) && (extraFontFiles[i] !== void); i += 1)
+			for (var i = 0, internal_forloop_count = extraFontFiles.count; (i < internal_forloop_count) && (extraFontFiles[i] !== void); i += 1)
 			{
 				var result = System.addFont(extraFontFiles[i], true);
 				if (typeof(result) === "Integer" && result > 0)
@@ -546,7 +546,7 @@ if (typeof(Storages.createDirectory) !== "Object")
 			}
 			var fnttable = global.prerenderedFontTable;
 			var fnt = new Font();
-			for (var i = 0; (i < fnttable.count) && (fnttable[i] !== void); i += 1)
+			for (var i = 0, internal_forloop_count = fnttable.count; (i < internal_forloop_count) && (fnttable[i] !== void); i += 1)
 			{
 				fnt.face = fnttable[i][0];
 				fnt.height = fnttable[i][1];

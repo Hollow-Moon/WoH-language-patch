@@ -69,7 +69,7 @@ class ComplexGameFlag extends GameFlag
 			// TODO code duplication between getter and setter.
 			var path = this.name.split(".");
 			var currentHolder = this.holder;
-			for (var i=0; i<path.count-1; i++) {
+			for (var i = 0, internal_forloop_count = path.count - 1; i < internal_forloop_count; i += 1) {
 				currentHolder = currentHolder[path[i]];
 			}
 			var lastPath = path[path.count-1];
@@ -80,7 +80,7 @@ class ComplexGameFlag extends GameFlag
 		{
 			var path = this.name.split(".");
 			var currentHolder = this.holder;
-			for (var i=0; i<path.count-1; i++)
+			for (var i = 0, internal_forloop_count = path.count - 1; i < internal_forloop_count; i += 1)
 			{
 				currentHolder = currentHolder[path[i]];
 			}
@@ -109,7 +109,7 @@ class CompositeAndFlag
 	property value {
 		getter
 		{
-			for(var i=0; i<flags.count; i++) {
+			for (var i = 0, internal_forloop_count = flags.count; i < internal_forloop_count; i += 1) {
 				if (!flags[i].value) {
 					return false;
 				}
@@ -118,7 +118,7 @@ class CompositeAndFlag
 		}
 		setter(v)
 		{
-			for(var i=0; i<flags.count; i++) {
+			for (var i = 0, internal_forloop_count = flags.count; i < internal_forloop_count; i += 1) {
 				flags[i].value = v;
 			}
 		}
@@ -126,7 +126,7 @@ class CompositeAndFlag
 
 	function toggleValue()
 	{
-		for(var i=0; i<flags.count; i++) {
+		for (var i = 0, internal_forloop_count = flags.count; i < internal_forloop_count; i += 1) {
 			flags[i].toggleValue();
 		}
 	}
@@ -258,7 +258,7 @@ class KAGFlagFolderMenuItem extends KAGFlagMenuItem
 		this.inverseFolderNames = inverseFolderNames;
 		this.languageSpecific = languageSpecific;
 		super.KAGFlagMenuItem(window, name, group, flag);
-		for (var i=0; i<patchNames.count; i++) {
+		for (var i = 0, internal_forloop_count = patchNames.count; i < internal_forloop_count; i += 1) {
 			disableIfPatchDoesntExist(patchNames[i]);
 		}
 	}
@@ -278,7 +278,7 @@ class KAGFlagFolderMenuItem extends KAGFlagMenuItem
 	function loadFolders(folderNames)
 	{
 		var patches_arr = [];
-		for (var i=0; i<patchNames.count; i++) {
+		for (var i = 0, internal_forloop_count = patchNames.count; i < internal_forloop_count; i += 1) {
 			if (patchNames[i] !== void) {
 				//dm("loading: " + patchNames[i] + ">" + folderNames[i]);
 				patches_arr.add([patchNames[i], folderNames[i]]);
@@ -299,7 +299,7 @@ class KAGFlagFolderMenuItem extends KAGFlagMenuItem
 	function unloadFolders(folderNames)
 	{
 		var patches_arr = [];
-		for (var i=0; i<patchNames.count; i++) {
+		for (var i = 0, internal_forloop_count = patchNames.count; i < internal_forloop_count; i += 1) {
 			if (languageSpecific) {
 				patches_arr.add([languagePatchName(owner.sflags.language), folderNames[i]]) if owner.sflags.language !== void && owner.sflags.language !== japaneseLanguage;
 				patches_arr.add([languagePatchName(japaneseLanguage), folderNames[i]]);
@@ -395,7 +395,7 @@ class KAGCensorMenuItem extends KAGMenuItem
 	function updateCurrentState()
 	{
 		var items = [hCensoredMenuItem, hUncensoredMenuItem, hDecensoredMenuItem];
-		for (var i=0; i<items.count; i++) {
+		for (var i = 0, internal_forloop_count = items.count; i < internal_forloop_count; i += 1) {
 			if (items[i].checked) {
 				currentState = items[i];
 				break;
@@ -794,7 +794,7 @@ function addHdMenu(displayMenu) {
 			function(sender) { onWideMenuItemClick(sender,'wide'); }, false));
 
 		var keys = Scripts.getObjectKeys(wideResolutions);
-		for (var i=0; i<keys.count; i++) {
+		for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 1) {
 			var key = keys[i];
 			var ratio = wideResolutions[key];
 			var wideMenuItemName = "wideRatio"+key.replace(/[:&\() ]/g, "")+"MenuItem";

@@ -83,7 +83,7 @@ class KAGWindow_patch_savedatalocation_override_override extends KAGWindow_patch
 					{
 						test_paths.add(test_save_data_location);
 					}
-					for (var i = 0; i < test_paths.count; i += 1)
+					for (var i = 0, internal_forloop_count = test_paths.count; i < internal_forloop_count; i += 1)
 					{
 						if (Storages.isExistentDirectory(test_paths[i] + "/"))
 						{
@@ -148,8 +148,8 @@ class KAGWindow_patch_savedatalocation_override_override extends KAGWindow_patch
 			{//	初回起動時
 				//	ユニークなフォルダ名を取得("Fate_Savedata"等)
 				var	savefolder	= this.wanted_save_data_location;
-				var	pos, chr = "/";
-				for(pos=savefolder.length-1; pos>=0; pos--)
+				var	chr = "/";
+				for (var pos = savefolder.length - 1; pos >= 0; pos -= 1)
 				{
 					if(savefolder[pos] == chr)
 					{
@@ -190,7 +190,7 @@ class KAGWindow_patch_savedatalocation_override_override extends KAGWindow_patch
 					{
 						test_paths.add(System.appDataPath);
 					}
-					for (var i = 0; i < test_paths.count; i += 1)
+					for (var i = 0, internal_forloop_count = test_paths.count; i < internal_forloop_count; i += 1)
 					{
 						if (Storages.isExistentDirectory(test_paths[i] + "/"))
 						{

@@ -85,7 +85,7 @@ function loadDictionaryIfExists(dictionaryName) {
 	return void;
 }
 
-var textDrawerSettingsFileName = "TextDrawerSettings.tjs";
+global.textDrawerSettingsFileName = "TextDrawerSettings.tjs";
 Scripts.execStorage(textDrawerSettingsFileName) if Storages.isExistentStorage(textDrawerSettingsFileName);
 
 class TextDrawer
@@ -94,10 +94,10 @@ class TextDrawer
 		// XXX: uses _x, so need to re-evaluate
 		var labels = Scripts.evalStorage("play_time.ksc");
 
-		playTimeSettings.dictionary = %["pt_base" => labels["playtime"]];
+		playTimeSettings.dictionary = %["pt_base" => labels.playtime];
 		drawCenteredEntry(layer, storage, playTimeSettings);
 		for (var i = 0, internal_forloop_count = playTimeSettings2.count; i < internal_forloop_count; i += 1) {
-			playTimeSettings2[i].dictionary = %["pt_base" => labels["units"][i]];
+			playTimeSettings2[i].dictionary = %["pt_base" => labels.units[i]];
 			drawCenteredEntry(layer, storage, playTimeSettings2[i]);
 		}
 	}
@@ -260,9 +260,9 @@ class TextDrawer
 	{
 		// XXX: uses _x, so need to re-evaulate
 		var labels = Scripts.evalStorage("status_labels.ksc");
-		statusLabelsSettings.text.content = labels["labels"].join("\n");
+		statusLabelsSettings.text.content = labels.labels.join("\n");
 		drawCenteredEntry(layer, storage, statusLabelsSettings);
-		classAbilitiesSettings.title.content = labels["abilities"];
+		classAbilitiesSettings.title.content = labels.abilities;
 		drawCenteredEntry(layer, storage, classAbilitiesSettings);
 	}
 
@@ -300,15 +300,15 @@ class TextDrawer
 
 	function formatDictionary(dic)
 	{
-		var format = __(dic["format"]);
-		var arguments = dic["arguments"];
+		var format = __(dic.format);
+		var arguments = dic.arguments;
 		for (var i = 0, internal_forloop_count = arguments.count; i < internal_forloop_count; i += 1)
 		{
 			if (typeof(arguments[i]) === "String")
 			{
 				arguments[i] = __(arguments[i]);
 			}
-			else if (typeof(arguments[i]) === "Object" && typeof(arguments[i]["format"]) === "String")
+			else if (typeof(arguments[i]) === "Object" && typeof(arguments[i].format) === "String")
 			{
 				arguments[i] = formatDictionary(arguments[i]);
 			}
@@ -355,10 +355,10 @@ class TextDrawer
 				var dictionaryItem = settings.dictionary[storage];
 				if (typeof dictionaryItem == "String") {
 					text = __(dictionaryItem);
-				} else if (typeof(dictionaryItem) === "Object" && typeof(dictionaryItem["format"]) === "String") {
+				} else if (typeof(dictionaryItem) === "Object" && typeof(dictionaryItem.format) === "String") {
 					text = formatDictionary(dictionaryItem);
 				} else {
-					if (typeof(dictionaryItem[0]) === "Object" && typeof(dictionaryItem[0]["format"]) === "String")
+					if (typeof(dictionaryItem[0]) === "Object" && typeof(dictionaryItem[0].format) === "String")
 					{
 						text = formatDictionary(dictionaryItem[0]);
 					}
@@ -387,7 +387,7 @@ class TextDrawer
 				var titleRuby;
 				var titleText;
 				var textHeight = 0;
-				if (settings.rubyTitle.exists && /\$/.test(title)) {
+				if (settings.rubyTitle.exists && title.indexOf("$") !== -1) {
 					var titleItems = [].split("$",title);
 					titleRuby = titleItems[0];
 					titleText = titleItems[1];

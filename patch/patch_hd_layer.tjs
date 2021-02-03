@@ -1,13 +1,13 @@
 ﻿
-var hdExtension = ".webp";
+global.hdExtension = ".webp";
 @if(GAME_FATE)
-var upscaledFactor = 1.6;
+global.upscaledFactor = 1.6;
 @endif
 @if(GAME_FHAT||GAME_WOHN)
-var upscaledFactor = 2;
+global.upscaledFactor = 2;
 @endif
 
-var originalToHdName = %[
+global.originalToHdName = %[
 	"01空・雨(夜)" => "01空・雨（夜）", // Different parentheses
 	"fate" => "fate2",
 	"el_タイガー0段階" => "30_tiger_00a",
@@ -16,10 +16,10 @@ var originalToHdName = %[
 	"el_タイガー3段階" => "30_tiger_03a",
 	"el_タイガー4段階" => "30_tiger_04a",
 ];
-var messageLayerImages = ["tw_ノーマル(薄い)", "tw_ノーマル(通常)", "tw_ノーマル(濃い)", "tw_たいがー(通常)", "tw_たいがー(模様)"];
-var messageBreakImages = ["linebreak_a", "pagebreak_a"];
+global.messageLayerImages = ["tw_ノーマル(薄い)", "tw_ノーマル(通常)", "tw_ノーマル(濃い)", "tw_たいがー(通常)", "tw_たいがー(模様)"];
+global.messageBreakImages = ["linebreak_a", "pagebreak_a"];
 
-var imageNameToNumberOfImages = %[
+global.imageNameToNumberOfImages = %[
 	"pt_number" => 10,
 @if(GAME_FATE||GAME_FHAT)
 	"linebreak_a" => 21,
@@ -83,14 +83,14 @@ var imageNameToNumberOfImages = %[
 	"scroll_slider4opac" => 4
 ];
 
-var fixedBgImages = [
+global.fixedBgImages = [
 	"black" // Sometimes used for letter-boxing, in which case it needs a special treatment.
 ];
-var movingBgImages = [
+global.movingBgImages = [
 	"c_cs16(03落石)", "cs29アンリマユ崩壊(01落石大)",
 	"csラストep04(雲01)", "csラストep04(雲02)", "csラストep04(雲03)", "csラストep04(雲04)"
 ];
-var bottomImages = [
+global.bottomImages = [
 	"cs29アンリマユ崩壊(04手前岩盤・右)" // A bottom aligned image moving from negative to positive top position, in which case it needs a special treatment.
 ];
 
@@ -1120,7 +1120,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 @endif
 
 			// Applying the correction only to sprites, otherwise the blur function is buggy (I'm pretty sure it's only applied to sprites anyway...)
-			if (typeof this.correctleft !== "undefined") {
+			if (["Integer", "Real"].find(typeof(this.correctleft)) !== -1) {
 @if(SCALE_USING_FLOATING_POINT)
 				result += this.correctleft / wideFactor;
 @endif
@@ -1165,7 +1165,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		if (stretch !== void) {
 			return stretch;
 		}
-		if (typeof window.sflags !== "undefined" && !window.sflags.wideStrechWindow && (isMessageLayer || isLineLayer)) {
+		if (typeof window.sflags === "Object" && !window.sflags.wideStrechWindow && (isMessageLayer || isLineLayer)) {
 			return false;
 		}
 		return isMessageLayer || isLineLayer || isHistoryLayer || isCinescoLayer || isYesNoBackground || isGameMenuLayer || isShortcutBaseLayer;
@@ -1332,7 +1332,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 	}
 
 	function updateMessageLayerMobile() {
-		if (isMessageLayer && messageLayerImages.contains(imageStorage) && window.sflags !== "undefined") {
+		if (isMessageLayer && messageLayerImages.contains(imageStorage) && window.sflags === "Object") {
 			if (window.sflags.mobileWindow) {
 				type = ltAlpha;
 				lineLayer.type = ltTransparent;
@@ -1392,9 +1392,9 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		}
 
 @if(!GAME_WOHN)
-		if (messageLayerImages.contains(imageStorage) && typeof window.sflags !== "undefined" && !window.sflags.mobileWindow) {
+		if (messageLayerImages.contains(imageStorage) && typeof(window.sflags) === "Object" && !window.sflags.mobileWindow) {
 			storageExt = ".png";
-		} else if (messageBreakImages.contains(imageStorage) && typeof window.sflags !== "undefined" && !window.sflags.mobileBreakGlyphs) {
+		} else if (messageBreakImages.contains(imageStorage) && typeof(window.sflags) === "Object" && !window.sflags.mobileBreakGlyphs) {
 			storageExt = ".png";
 		}
 
@@ -1427,11 +1427,11 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 
 @if(!GAME_WOHN)
 				if (!isBaseLayer && !isMessageLayer && !isMask) {
-					isbg = /bgimage/.test(currentPath); // TODO only works in dev mode
+					isbg = currentPath.indexOf("bgimage") !== -1; // TODO only works in dev mode
 				}
 @endif
 
-				if (/hd/.test(currentPath)) {
+				if (currentPath.indexOf("hd") !== -1) {
 					// TODO the /hd/.test is being used twice in this method, find a way to optimize...
 					isHd = true;
 				}
@@ -1458,7 +1458,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 					}
 					else
 @endif
-					if (/hd/.test(currentPath))
+					if (currentPath.indexOf("hd") !== -1)
 					{
 						// HD versions of patch assets (mostly the HD masks for the status menu).
 @if(SCALE_USING_FLOATING_POINT)

@@ -1,9 +1,9 @@
-﻿var opPatchName = "op";
+﻿global.opPatchName = "op";
 function get_opPatchExists() { { return patchExists(opPatchName); } }
 function get_movieMenuPatch(kag=global.kag) { { return get_opPatchExists() && kag.sflags.movieMenuPatch; } }
 function get_playVitaOp(kag=global.kag) { { return get_opPatchExists() && kag.sflags.playVitaOp; } }
 
-var patchMenuIndex = -1;
+global.patchMenuIndex = -1;
 function getPatchMenuIndex(kag)
 {
 @if(kirikiriz)
@@ -474,7 +474,7 @@ class LoadScenarioMenuItem extends KAGMenuItem
 
 	function onLoadScenarioMenuItemClick(sender)
 	{
-		if (typeof global.titlemenu_object !== "undefined") {
+		if (typeof(global.titlemenu_object) === "Object") {
 			titlemenu_object.menulayer.goLabel(scenarioFileName, labelName);
 		} else {
 			owner.processCall(scenarioFileName, labelName);
@@ -649,7 +649,7 @@ function addMovieMenu(patchMenu) {
 	movieMenuItem.add(this.subbedVideosMenuItem = new KAGFlagFolderMenuItem(this, __t("ムービー再生中に字幕を表示する(&S)"),, subbedVideosFlag,,videosFolderName));
 	movieMenuItem.add(this.skipMoviesMenuItem = new KAGFlagMenuItem(this, __t("ゲーム中にムービーをスキップする(&K)"),,skipMoviesFlag));
 	movieMenuItem.add(this.forceMpvPlaybackMenuItem = new KAGFlagMenuItem(this, __t("mpvを使用して強制的に動画を再生する"),,forceMpvPlaybackFlag));
-	if(typeof(global.playVideoMPV) == "undefined") {
+	if(typeof(global.playVideoMPV) === "Object") {
 		this.forceMpvPlaybackMenuItem.enabled = false;
 	}
 }

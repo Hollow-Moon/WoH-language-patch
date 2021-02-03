@@ -11,7 +11,7 @@ class Window_hint_override extends Window_hint_original
 			.visible = false;
 			.ignoreHintSensing = true;
 			.hitThreshold = 256;
-			if (typeof this.innerHeightScale !== "undefined") {
+			if (["Integer", "Real"].find(typeof(this.innerHeightScale)) !== -1) {
 				.font.height = Math.ceil(9 / Math.min(1, innerHeightScale)); // upscale font when using window size < x1.0
 			} else {
 				.font.height = 9;
@@ -55,7 +55,7 @@ class Window_hint_override extends Window_hint_original
 			hintlayer.setSizeToImageSize();
 
 @if(HD_MODE)
-			if (typeof this.fullScreened !== "undefined" && fullScreened) {
+			if (typeof this.fullScreened === "Integer" && fullScreened) {
 				var windowToScreenRatio = (innerHeight*scaleFactor) / System.screenHeight;
 				x -= (System.screenWidth - (innerWidth*wideScaleFactor / windowToScreenRatio)) / 2;
 				x *= windowToScreenRatio;
@@ -66,7 +66,7 @@ class Window_hint_override extends Window_hint_original
 			y /= scaleFactor;
 @endif
 @if(ZOOM_WINDOW)
-			if (typeof this.innerHeightScale !== "undefined")
+			if (["Integer", "Real"].find(typeof(this.innerHeightScale)) !== -1)
 			{
 				x /= innerWidthScale;
 				y /= innerHeightScale;

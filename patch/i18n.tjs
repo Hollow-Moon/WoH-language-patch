@@ -1,18 +1,18 @@
-﻿var msgctxt = "msgctxt";
-var msgid = "msgid";
-var msgidPlural = "msgid_plural";
-var msgstr = "msgstr";
+﻿global.msgctxt = "msgctxt";
+global.msgid = "msgid";
+global.msgidPlural = "msgid_plural";
+global.msgstr = "msgstr";
 
-var msgstrPlural = "msgstr[";
-var pluralForms = "Plural-Forms";
-var pluralExpressions = void;
+global.msgstrPlural = "msgstr[";
+global.pluralForms = "Plural-Forms";
+global.pluralExpressions = void;
 
-var defaultDomain = "default";
-var defaultContext = "";
+global.defaultDomain = "default";
+global.defaultContext = "";
 
-var domains = %[];
+global.domains = %[];
 
-var contextDelimiter = "\x04"; // EOT
+global.contextDelimiter = "\x04"; // EOT
 
 function __(text, domain=defaultDomain) {
 	return _x(text,,domain);
@@ -139,7 +139,7 @@ function readEntry(header, lines, i) {
 }
 
 function readPluralForms(text) {
-	var lines = text.split(/\\n/);
+	var lines = text.split("\n");
 	for (var i = 0, internal_forloop_count = lines.count; i < internal_forloop_count; i += 1) {
 		if (lines[i].substr(0, pluralForms.length) == pluralForms) {
 			pluralExpressions = lines[i].substr(pluralForms.length + 2, lines[i].length - (pluralForms.length + 2)).split(";");

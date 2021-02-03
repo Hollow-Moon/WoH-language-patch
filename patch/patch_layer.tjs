@@ -142,7 +142,7 @@ class Layer_patch_layer_override extends Layer_patch_layer_original
 	{
 		getter()
 		{
-			return this === window.primaryLayer || (typeof window.fore !== "undefined" && this === window.fore.base);
+			return this === window.primaryLayer || (typeof(window.fore) === "Object" && this === window.fore.base);
 		}
 	}
 
@@ -234,7 +234,7 @@ class Layer_patch_layer_override extends Layer_patch_layer_original
 @if(DRAWTEXT_ESCAPE)
 	function drawText(left, top, text, color, opacity, aa, slevel, scolor, swidth, sofsx, sofxy, language=(typeof(global.kag) === "Object" ? global.kag.sflags.language : this.window.sflags.language))
 	{
-		var fontToSpecialCharacters = languageSettings[language]["special_characters"];
+		var fontToSpecialCharacters = languageSettings[language].special_characters;
 @if(!KIRIKIROID)
 		if (fontToSpecialCharacters === void || fontToSpecialCharacters[font.face] === void)
 @endif
@@ -289,7 +289,7 @@ class Window_patch_layer_override extends Window_patch_layer_original
 @if(kirikiriz)
 	function onMouseMove(x, y)
 	{
-		if (typeof this.fullScreened !== "undefined" && fullScreened) {
+		if (typeof this.fullScreened === "Integer" && fullScreened) {
 			var systemRatio = System.screenWidth / System.screenHeight;
 @if(HD_MODE)
 			var wideRatio = this.wideRatio;
@@ -301,11 +301,11 @@ class Window_patch_layer_override extends Window_patch_layer_original
 			var screenTop = Math.ceil((h-System.screenHeight)/2);
 			
 			if (y > screenTop) {
-				if(typeof(this.menu) != "undefined")
+				if(typeof(this.menu) === "Object")
 					menu.visible = false;
 			}
 			else if (y <= screenTop) {
-				if(typeof(this.menu) != "undefined")
+				if(typeof(this.menu) === "Object")
 					menu.visible = true;
 			}
 		}

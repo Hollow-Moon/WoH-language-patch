@@ -1,73 +1,73 @@
 ﻿@if(GAME_FATE||GAME_FHAT)
-var originalResWidth = 800;
-var originalResHeight = 600;
+global.originalResWidth = 800;
+global.originalResHeight = 600;
 @endif
 @if(GAME_WOHN)
-var originalResWidth = 1024;
-var originalResHeight = 576;
+global.originalResWidth = 1024;
+global.originalResHeight = 576;
 @endif
 @if(GAME_FATE)
-var highResWidth = 1280;
-var highResHeight = 960;
-var veryHighResWidth = 1920;
-var veryHighResHeight = 1440;
+global.highResWidth = 1280;
+global.highResHeight = 960;
+global.veryHighResWidth = 1920;
+global.veryHighResHeight = 1440;
 @endif
 @if(GAME_FHAT)
-var highResWidth = 1600;
-var highResHeight = 1200;
-var veryHighResWidth = 3200;
-var veryHighResHeight = 2400;
+global.highResWidth = 1600;
+global.highResHeight = 1200;
+global.veryHighResWidth = 3200;
+global.veryHighResHeight = 2400;
 @endif
 @if(GAME_WOHN)
-var highResWidth = 2048;
-var highResHeight = 1152;
-var veryHighResWidth = 4096;
-var veryHighResHeight = 2304;
+global.highResWidth = 2048;
+global.highResHeight = 1152;
+global.veryHighResWidth = 4096;
+global.veryHighResHeight = 2304;
 @endif
 @if(SCALE_USING_FLOATING_POINT)
-var defaultScaleFactor = highResWidth / originalResWidth;
-var defaultHighScaleFactor = veryHighResWidth / originalResWidth;
+global.defaultScaleFactor = highResWidth / originalResWidth;
+global.defaultHighScaleFactor = veryHighResWidth / originalResWidth;
 @endif
 @if(!SCALE_USING_FLOATING_POINT)
-var defaultScaleFactor = highResWidth \ originalResWidth;
-var defaultHighScaleFactor = veryHighResWidth \ originalResWidth;
+global.defaultScaleFactor = highResWidth \ originalResWidth;
+global.defaultHighScaleFactor = veryHighResWidth \ originalResWidth;
 @endif
-var isCropped = false;
-var scaleFactor = 1;
-var wideFactor = 1;
-var cropFactor = 1;
+global.isCropped = false;
+global.scaleFactor = 1;
+global.wideFactor = 1;
+global.cropFactor = 1;
 @if(GAME_FATE||GAME_FHAT)
-var cubicRatio = 4/3;
+global.cubicRatio = 4/3;
 @endif
 @if(GAME_WOHN)
-var cubicRatio = 16/9;
+global.cubicRatio = 16/9;
 @endif
-var standardWideRatio = 16/9;
+global.standardWideRatio = 16/9;
 
-var hdFolderSuffix = "-hd";
+global.hdFolderSuffix = "-hd";
 
 @if(GAME_FATE)
-var hdPatchName = devMode? "ImagesHD" : "HD";
-var fhdPatchName = devMode?  "ImagesHD2" : "HD";
+global.hdPatchName = devMode? "ImagesHD" : "HD";
+global.fhdPatchName = devMode?  "ImagesHD2" : "HD";
 @endif
 @if(GAME_FHAT)
-var hdPatchName = devMode? "ImageHD" : "HD";
-var fhdPatchName = devMode?  "ImageHD2" : "HD";
+global.hdPatchName = devMode? "ImageHD" : "HD";
+global.fhdPatchName = devMode?  "ImageHD2" : "HD";
 @endif
 @if(GAME_WOHN)
-var hdPatchName = devMode? "ImageHD" : "HD";
-var fhdPatchName = devMode?  "ImageHD2" : "HD";
+global.hdPatchName = devMode? "ImageHD" : "HD";
+global.fhdPatchName = devMode?  "ImageHD2" : "HD";
 @endif
 
-var wideRulePatchName = devMode? "RuleWide" : hdPatchName;
-var wideRuleFolderName = devMode? "" : "RuleWide";
+global.wideRulePatchName = devMode? "RuleWide" : hdPatchName;
+global.wideRuleFolderName = devMode? "" : "RuleWide";
 
-var hdScaleFactorFlagName = "hdScaleFactor";
-var wideScreenFlagName = "wideScreen";
-var autoWideRatioFlagName = "autoWideRatio";
-var wideRatioFlagName = "wideRatio";
+global.hdScaleFactorFlagName = "hdScaleFactor";
+global.wideScreenFlagName = "wideScreen";
+global.autoWideRatioFlagName = "autoWideRatio";
+global.wideRatioFlagName = "wideRatio";
 
-var devHdImageFolders = ["BGImageHD", "FGImageHD", "ImageHD", "ImagesClassicHD", "ImagesConfigHD", "ImagesMobile", "ImagesPatchHD", "ImagesPS2HD", "ImagesTitleHD", "ImagesTrialHD", "ImagesHanafudaHD", "RuleHD", "Image_transparentHDcolor"];
+global.devHdImageFolders = ["BGImageHD", "FGImageHD", "ImageHD", "ImagesClassicHD", "ImagesConfigHD", "ImagesMobile", "ImagesPatchHD", "ImagesPS2HD", "ImagesTitleHD", "ImagesTrialHD", "ImagesHanafudaHD", "RuleHD", "Image_transparentHDcolor"];
 
 property systemRatio { getter { return System.screenWidth / System.screenHeight; } }
 property hdPatchExists { getter { return patchExists(hdPatchName) || patchExists(fhdPatchName); } }

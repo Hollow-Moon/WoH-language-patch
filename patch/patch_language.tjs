@@ -9,7 +9,7 @@ function _mt(text)
 	return text;
 }
 
-var settingsDomain = "settings";
+global.settingsDomain = "settings";
 function __s(text, context)
 {
 	return _x(text, context, settingsDomain);
@@ -52,7 +52,7 @@ function loadMOs(language)
 
 function refreshMenuString(kag, menu)
 {
-	if(typeof menu.originalCaption !== "undefined") {
+	if(typeof(menu.originalCaption) === "String") {
 		menu.caption = __(menu.originalCaption);
 	}
 
@@ -91,12 +91,12 @@ function refreshStringWithLanguage(kag, language) {
 	}
 }
 @if(FREETYPE_FONT)
-if(typeof(global.frFreeType) !== "undefined" && typeof(global.Font.rasterizer) !== "undefined")
+if(typeof(global.frFreeType) === "Integer" && typeof(global.Font.rasterizer) === "Integer")
 {
 	global.Font.rasterizer = frFreeType;
 }
 @endif
-var loaded_language_fonts = [];
+global.loaded_language_fonts = [];
 function load_fonts(language) {
 	if (loaded_language_fonts.contains(language)) {
 		return;
@@ -107,7 +107,7 @@ function load_fonts(language) {
 		var font_file_path = find_file_in_language_paths(fontFiles[i], language);
 		if (typeof(font_file_path) === "String")
 		{
-			if (typeof(global.Font) !== "undefined" && typeof(global.Font.addFont) !== "undefined")
+			if (typeof(global.Font) === "Object" && typeof(global.Font.addFont) === "Object")
 			{
 				var result = global.Font.addFont(font_file_path);
 				if (typeof(result) === "Object" && result.count > 0)
@@ -119,7 +119,7 @@ function load_fonts(language) {
 					Debug.message(("Failed to add font file \"%s\"").sprintf(fontFiles[i]));
 				}
 			}
-			if (typeof(System.addFont) !== "undefined")
+			if (typeof(System.addFont) === "Object")
 			{
 				var result = System.addFont(font_file_path, true);
 				if (typeof(result) === "Integer" && result > 0)
@@ -141,7 +141,7 @@ function load_fonts(language) {
 	loaded_language_fonts.add(language);
 }
 
-var loaded_language_prerendered_fonts = [];
+global.loaded_language_prerendered_fonts = [];
 function load_prerendered_fonts(language) {
 	if (loaded_language_prerendered_fonts.contains(language)) {
 		return;
@@ -268,18 +268,18 @@ function saveFontWithLanguage(kag=global.kag)
 	}
 }
 
-var chara2displaynamefile = "chara2displayname.dic";
-var chara2displayname = %[];
-var imagesFolderName = "images";
-var subbedVideosFlagName = "subbedVideos";
-var videosFolderName = "videos";
-var japanese_patch_name = devMode? "Japanese" : mainPatchName;
-var japaneseLanguageLoaded = false;
-var languageSearchPathFile = "LanguageSearchpath.ksc";
-var languageSearchPath = [];
-var languagePatchPaths = [];
-var languageFilePathCache = %[];
-var languageFileCache = %[];
+global.chara2displaynamefile = "chara2displayname.dic";
+global.chara2displayname = %[];
+global.imagesFolderName = "images";
+global.subbedVideosFlagName = "subbedVideos";
+global.videosFolderName = "videos";
+global.japanese_patch_name = devMode? "Japanese" : mainPatchName;
+global.japaneseLanguageLoaded = false;
+global.languageSearchPathFile = "LanguageSearchpath.ksc";
+global.languageSearchPath = [];
+global.languagePatchPaths = [];
+global.languageFilePathCache = %[];
+global.languageFileCache = %[];
 
 function find_file_in_language_paths(filename, language = void, exts = "")
 {
@@ -640,13 +640,13 @@ function loadLanguageSettings() {
 }
 
 // constants
-var japaneseLanguage = "japanese";
-var englishLanguage = "english";
-var koreanLanguage = "korean";
-var frenchLanguage = "french";
-var simplifiedChineseLanguage = "simplified_chinese";
-var russianLanguage = "russian";
-var languagesPatches = [englishLanguage, koreanLanguage, russianLanguage, frenchLanguage, simplifiedChineseLanguage];
+global.japaneseLanguage = "japanese";
+global.englishLanguage = "english";
+global.koreanLanguage = "korean";
+global.frenchLanguage = "french";
+global.simplifiedChineseLanguage = "simplified_chinese";
+global.russianLanguage = "russian";
+global.languagesPatches = [englishLanguage, koreanLanguage, russianLanguage, frenchLanguage, simplifiedChineseLanguage];
 
 function loadLanguagesList() {
 	if (devMode || isKirikiroid) {
@@ -696,13 +696,13 @@ function loadLanguagesList() {
 	return loadedLanguages;
 }
 
-var language_patch_prefix = devMode? "" : "lang_";
-var languageMenuItemFormat = "language%sMenuItem";
+global.language_patch_prefix = devMode? "" : "lang_";
+global.languageMenuItemFormat = "language%sMenuItem";
 
-var languages = loadLanguagesList();
+global.languages = loadLanguagesList();
 
-var default_language = japaneseLanguage;
-var languageSettings = %[];
+global.default_language = japaneseLanguage;
+global.languageSettings = %[];
 
 // Initialize the Japanese language first.
 load_language_patch(default_language, void);
@@ -724,28 +724,28 @@ if (default_language !== japaneseLanguage)
 
 // For convenience
 function get_currentLanguageSettings(kag=global.kag) { { return languageSettings[kag.sflags.language]; } }
-function get_special_characters(kag=global.kag) { { return get_currentLanguageSettings(kag)["special_characters"] !== void? get_currentLanguageSettings(kag)["special_characters"] : %[]; } }
+function get_special_characters(kag=global.kag) { { return get_currentLanguageSettings(kag).special_characters !== void? get_currentLanguageSettings(kag).special_characters : %[]; } }
 function get_default_history_font(kag=global.kag)
 {
 	var cur_langset = get_currentLanguageSettings(kag);
-	if (cur_langset["history_default"] === void)
+	if (cur_langset.history_default === void)
 	{
 		global.set_default_history_settings(global.get_currentLanguageSettings(kag));
 	}
-	return cur_langset["history_default"];
+	return cur_langset.history_default;
 }
 function get_default_history_bold(kag=global.kag)
 {
 	var cur_langset = get_currentLanguageSettings(kag);
-	if (cur_langset["history_default_bold"] === void)
+	if (cur_langset.history_default_bold === void)
 	{
 		global.set_default_history_settings(global.get_currentLanguageSettings(kag));
 	}
-	return cur_langset["history_default_bold"];
+	return cur_langset.history_default_bold;
 }
 function get_historyFontDefault(kag=global.kag) { { return [ get_default_history_font(kag), get_default_history_bold(kag) ]; } }
-function get_historyFont(kag=global.kag) { { return get_currentLanguageSettings(kag)["history"] !== void? get_currentLanguageSettings(kag)["history"] : %[]; } }
-function get_fsncleaner_rescript_enabled(kag=global.kag) { { return !!(get_currentLanguageSettings(kag)["fsncleaner_rescript_enabled"]); } }
+function get_historyFont(kag=global.kag) { { return get_currentLanguageSettings(kag).history !== void? get_currentLanguageSettings(kag).history : %[]; } }
+function get_fsncleaner_rescript_enabled(kag=global.kag) { { return !!(get_currentLanguageSettings(kag).fsncleaner_rescript_enabled); } }
 
 
 function get_default_font()
@@ -811,19 +811,19 @@ function get_default_history_settings()
 }
 
 function getFontFiles(language) {
-	var fontFiles = languageSettings[language]["fontFiles"];
+	var fontFiles = languageSettings[language].fontFiles;
 	return (fontFiles !== void? fontFiles : []);
 }
 
 function getPrerenderedFontFiles(language) {
-	var fontFiles = languageSettings[language]["prerenderedFontFiles"];
+	var fontFiles = languageSettings[language].prerenderedFontFiles;
 	return (fontFiles !== void? fontFiles : []);
 }
 
 
 function isChinese(kag=global.kag) {
 	//Catch simplified and traditional.
-	return /chinese/.test(kag.sflags.language.toLowerCase());
+	return kag.sflags.language.toLowerCase().indexOf("chinese") !== -1;
 }
 
 function isJapanese(kag=global.kag) {
@@ -858,7 +858,7 @@ function addLanguageMenu() {
 	for (var i = 0, internal_forloop_count = languages.count; i < internal_forloop_count; i += 1) {
 		var language = languages[i];
 		var languageMenuItemName = languageMenuItemFormat.sprintf(language);
-		this.languageMenu.add(this[languageMenuItemName] = new KAGMenuItem(this, languageSettings[language]["menu_name"], 1,
+		this.languageMenu.add(this[languageMenuItemName] = new KAGMenuItem(this, languageSettings[language].menu_name, 1,
 		function (sender) { sender.owner.onLanguageMenuItemClick(sender, sender.language); }, false));
 		this[languageMenuItemName].language = language;
 	}
@@ -971,7 +971,7 @@ class Window_PatchLanguage_override extends Window_PatchLanguage_original
 		setFontWithLanguage(this.sflags.language, this);
 @endif
 		onReloadScenarioMenuItemClick(sender);
-		if(typeof global.flow_tracker_object !== "undefined" && typeof flow_tracker_object.flowchart !== "undefined" && flow_tracker_object.flowchart.filename !== void)
+		if(typeof(global.flow_tracker_object) === "Object" && typeof(flow_tracker_object.flowchart) === "Object" && flow_tracker_object.flowchart.filename !== void)
 		{
 			flow_tracker_object.isPlayOK();
 			currentPageName = f.scripttitle;
@@ -1056,7 +1056,7 @@ class System_PatchLanguage_override extends System_PatchLanguage_original
 }
 global.System = System_PatchLanguage_override;
 
-var pluralNames = %[
+global.pluralNames = %[
  "氷室と蒔寺" => 2,
  "桜と藤ねえ" => 2,
  "桜とライダー" => 2,

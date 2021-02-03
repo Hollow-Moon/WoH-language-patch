@@ -1,5 +1,5 @@
 ﻿
-if (typeof(Storages.getLastModifiedFileTime) == "undefined")
+if (typeof(Storages.getLastModifiedFileTime) !== "Object")
 {
 	if (Storages.isExistentStorage("fstat.dll"))
 	{
@@ -7,7 +7,7 @@ if (typeof(Storages.getLastModifiedFileTime) == "undefined")
 	}
 }
 
-if (typeof(Storages.getLastModifiedFileTime) != "undefined" && typeof(Scripts.compileStorage) != "undefined" && typeof(global.GameID) != "undefined")
+if (typeof(Storages.getLastModifiedFileTime) === "Object" && typeof(Scripts.compileStorage) === "Object" && typeof(global.GameID) === "String")
 {
 	global.Scripts.execStorageOld = global.Scripts.execStorage;
 	global.Scripts.evalStorageOld = global.Scripts.evalStorage;
@@ -175,15 +175,15 @@ else
 {
 	var msg = "";
 	msg += "patch_bytecode: failed to initialize for the following reasons:\n";
-	if (typeof(Storages.getLastModifiedFileTime) == "undefined")
+	if (typeof(Storages.getLastModifiedFileTime) !== "Object")
 	{
 		msg += "patch_bytecode: getLastModifiedFileTime function not found\n";
 	}
-	if (typeof(Scripts.compileStorage) == "undefined")
+	if (typeof(Scripts.compileStorage) !== "Object")
 	{
 		msg += "patch_bytecode: compileStorage function not found (probably not Kirikiri Z)\n";
 	}
-	if (typeof(global.GameID) == "undefined")
+	if (typeof(global.GameID) !== "String")
 	{
 		msg += "patch_bytecode: GameID variable not found\n";
 	}

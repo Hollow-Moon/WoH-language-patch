@@ -22,7 +22,7 @@ class PopupMenuWindow extends Window
 		}
 
 		menu.visible = true;
-		if (typeof this.registerExEvent != "undefined") {
+		if (typeof(this.registerExEvent) === "Object") {
 			registerExEvent();
 		} else if (autoclose) {
 			var f10 = new MenuItem(this, "");
@@ -39,7 +39,7 @@ class PopupMenuWindow extends Window
 		copyMenu(menu, win.menu.children);
 
 		// 位置を決定
-		if (typeof win.getClientRect == "undefined") {
+		if (typeof(win.getClientRect) !== "Object") {
 			x = win.left if (x === void);
 			y = win.top  if (y === void);
 			w = win.innerWidth if (w === void);
@@ -91,8 +91,8 @@ class PopupMenuWindow extends Window
 		// rightJustify / bmpItem設定
 		for (var i = 0, item, src, internal_forloop_count = items.count; i < internal_forloop_count; i += 1) {
 			with (items[i]) item = .item, src = .src;
-			item.bmpItem      = src.bmpItem      if (typeof src.bmpItem      != "undefined");
-			item.rightJustify = src.rightJustify if (typeof src.rightJustify != "undefined");
+			item.bmpItem      = src.bmpItem      if (typeof src.bmpItem      === "Object");
+			item.rightJustify = src.rightJustify if (typeof src.rightJustify === "Integer");
 		}
 	}
 	function onMouseLeave() {
@@ -117,7 +117,7 @@ class PopupMenuWindow extends Window
 function SetWindowControlMenu(win, min, max, res, cls) {
 	if (typeof win.minimize != "Object") return;
 	var btns, tag = "__windowControlMenus";
-	if (typeof win[tag] == "undefined") {
+	if (typeof win[tag] !== "Object") {
 		var names = (typeof win.windowControlMenusNames == "Object") ?
 			/**/            win.windowControlMenusNames : %[];
 		// メニューアイテム生成
@@ -270,7 +270,7 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 							 /**/  w:.screenWidth,	 h:.screenHeight  ];
 
 			// WindowExプラグインが使える場合はそちらを使用する
-			if (typeof .getMonitorInfo != "undefined") {
+			if (typeof .getMonitorInfo === "Object") {
 				var info = .getMonitorInfo(true, x, y, w, h);
 				if (typeof info == "Object") {
 					(Dictionary.assign incontextof desktop)(info.work,	  true);
@@ -302,7 +302,7 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 				y = .y		  if (y		   < .y	  );
 			}
 			setPos(x, y) if (left != x || top != y);
-			maximize() if (max && typeof this.maximize != "undefined");
+			maximize() if (max && typeof this.maximize === "Object");
 		}
 
 		if (typeof(this.noneMagnifyMenuItem) === "Object")
@@ -324,12 +324,12 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 			}
 		}
 		else
-			this[fszoom+"MagnifyMenuItem"].checked	= true if typeof this[fszoom+"MagnifyMenuItem"] != "undefined";
+			this[fszoom+"MagnifyMenuItem"].checked	= true if typeof this[fszoom+"MagnifyMenuItem"] === "Object";
 	}
 
 	function init_zoom_window_menubar_hide()
 	{
-		if (typeof this.registerExEvent != "undefined") {
+		if (typeof(this.registerExEvent) === "Object") {
 			// windowEx 拡張イベントを使用可能
 			registerExEvent();
 			exEventEnabled = true;
@@ -351,13 +351,13 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 		scflags.windowResizeable = windowResizeable;
 		scflags.windowMaximized  = false;
 		var rect;
-		if (typeof this.maximized != "undefined" && maximized) {
+		if (typeof this.maximized === "Integer" && maximized) {
 			scflags.windowMaximized	 = !fullScreen;
 			if (_pseudoFullScreen !== void) with (_pseudoFullScreen) {
 				rect = .rect;
 				scflags.windowMaximized = .max && .restmax;
 			} else
-			if (typeof getNormalRect != "undefined")
+			if (typeof(this.getNormalRect) === "Object")
 				rect = getNormalRect();
 		} else if (fullScreened && typeof _lastWindowSize == "Object") {
 			rect = _lastWindowSize.window; //if (!pseudoFullScreened);
@@ -412,7 +412,7 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 	property fullScreenMode { getter {
 		var tag = System.getArgument("-fullscreenmode");
 		var map = %[ auto:-1, primaryonly:0, usepseudo:1, pseudoall:3 ];
-		return (tag != "" && typeof map[tag] != "undefined") ? map[tag] : -1;
+		return (tag != "" && typeof map[tag] === "Integer") ? map[tag] : -1;
 	} }
 
 	function isPseudoMode() {
@@ -422,13 +422,13 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 		switch (mode) {
 		case -1:
 			// マルチモニタ環境の場合は擬似フルスクリーン
-			mode = (typeof  System.getDisplayMonitors != "undefined" &&
+			mode = (typeof  System.getDisplayMonitors === "Object" &&
 					(info = System.getDisplayMonitors()) !== void &&
 					(info.count > 1));
 			break;
 		case 1:
 			// ウィンドウがセカンダリ以降なら擬似フルスクリーン
-			mode = (typeof  System.getMonitorInfo != "undefined" &&
+			mode = (typeof  System.getMonitorInfo === "Object" &&
 					(info = System.getMonitorInfo(true, this)) !== void &&
 					!info.primary);
 			break;
@@ -444,7 +444,7 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 		getter { return super.fullScreen || pseudoFullScreened; }
 		setter(v) {
 			if (!fullScreen == !v) return;
-			if (typeof this.screenModeChangedTrigger == "undefined") {
+			if (typeof this.screenModeChangedTrigger !== "Object") {
 				add(   this.screenModeChangedTrigger = new AsyncTrigger(this, "screenModeChanged"));
 				with (      screenModeChangedTrigger) .cached = true, .mode = atmAtIdle, .trigged = false;
 			}
@@ -467,7 +467,7 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 				_lastWindowSize.window	= %[ x:left, y:top, w:width, h:height ] if _lastWindowSize.window.left === void;
 				if (isPseudoMode()) {
 					// 擬似フルスクリーン
-					var max = (typeof this.maximized != "undefined") ? maximized : false;
+					var max = (typeof this.maximized === "Integer") ? maximized : false;
 					_pseudoFullScreen =
 						%[	/**/x:left, y:top, w:width, h:height,
 							/**/max:max, restmax:(System.getArgument("-restoremaximizebyf2w") == "yes"),
@@ -477,7 +477,7 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 						visible = false;
 						trig.maximize = true;
 					}
-					if(typeof(this.menu) != "undefined")
+					if(typeof(this.menu) === "Object")
 						menu.visible = false;
 					borderStyle = bsNone;
 				}
@@ -488,7 +488,7 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 					resetPrimaryPos();
 					trig = void;
 					if(exEventEnabled)
-						if(typeof(this.menu) != "undefined")
+						if(typeof(this.menu) === "Object")
 							menu.visible = menuBarEnable && menuBarState;
 					super.fullScreen = true;
 					min = -1;
@@ -546,7 +546,7 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 	}
 	function screenModeChanged() {
 		with (screenModeChangedTrigger) {
-			resetWindowIcon() if (.resetIcon && typeof this.resetWindowIcon != "undefined");
+			resetWindowIcon() if (.resetIcon && typeof this.resetWindowIcon === "Object");
 			if (.windowPos !== void) with (.windowPos) {
 				setPos (.x, .y);
 				setSize(.w, .h);
@@ -642,7 +642,7 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 		menuBarState = -1 if (menuBarState < 0);
 		menuBarState =  1 if (menuBarState > 0 || (!menuBarHideAutoVisible && menuBarState < 0));
 
-		if(typeof(this.menu) != "undefined")
+		if(typeof(this.menu) === "Object")
 			menu.visible = (menuBarState > 0) if (!fullScreen);
 		var list = menuBarHidePopupMenu;
 		if (typeof(list) === "Object")
@@ -656,7 +656,7 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 			if (typeof(list) === "Object")
 			{
 				for (var i = list.count - 1; i >= 0; i -= 1)
-					with (list[i]) if (typeof .state != "undefined") .checked = (.state == menuBarState);
+					with (list[i]) if (typeof .state === "Integer") .checked = (.state == menuBarState);
 			}
 		}
 		if (menuBarHideMenuItem !== void) with (menuBarHideMenuItem) {
@@ -675,7 +675,7 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 	function changeMenuBarState(stat) {
 		if (!menuBarHideModeEnable) return;
 		menuBarState = stat;
-		if(typeof(this.menu) != "undefined")
+		if(typeof(this.menu) === "Object")
 			menuBarHidePseudoShortcut = makePseudoMenuTable(menu) if (menuBarState <= 0 && menuBarHidePseudoShortcut === void);
 		updateMenuBarState();
 		onResize();
@@ -717,8 +717,8 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 			return;
 		}
 		for (var i = 0, internal_forloop_count = menu.count; i < internal_forloop_count; i += 1) {
-			if (menu[i]["originalCaption"] !== void) {
-				menu[i]["caption"] = __(menu[i]["originalCaption"]);
+			if (menu[i].originalCaption !== void) {
+				menu[i].caption = __(menu[i].originalCaption);
 				if (typeof menu[i].children === "Object") {
 					refreshExSystemMenu(menu[i].children);
 				}
@@ -792,7 +792,7 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 				key = key.toUpperCase();
 				vk  = shortcutTextToVirtualKeyString[key];
 				key = vk if (vk != "");
-				if (typeof global["VK_"+key] == "undefined") continue;
+				if (typeof global["VK_"+key] !== "String") continue;
 				key =     +global["VK_"+key];
 				table[key] = %[] if (table[key] === void);
 				for (var j = sc.count - 1; j >= 0; j -= 1) {
@@ -842,7 +842,7 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 		return  table !== void && (info = table[key]) !== void && info[+ssAlt] !== void;
 	}
 	function onStartKeyMenu(key) {
-		if (key || ((typeof(this.menu) != "undefined") && menu.visible)) return;
+		if (key || ((typeof(this.menu) === "Object") && menu.visible)) return;
 		return (trackMenuByKey(true) <= 0);
 	}
 
@@ -868,7 +868,7 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 		if (vis && !bykey && ignoreTrackPseudoMenu) return;
 		var old = trackTempMenuShowing;
 		trackTempMenuShowing = !vis ? 0 : bykey ? -1 : 1;
-		if ((force || !old != !vis) && (typeof(this.menu) != "undefined")) {
+		if ((force || !old != !vis) && (typeof(this.menu) === "Object")) {
 			if  (vis) menu.visible = true;
 			else {
 				menu.visible = false if (pseudoFullScreened);
@@ -916,7 +916,7 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 	property maximizeMode { getter {
 		var tag = System.getArgument("-maximizemode");
 		var map = %[ auto:-1, maximize:0, fullscreen:1 ];
-		return (tag != "" && typeof map[tag] != "undefined") ? map[tag] : -1;
+		return (tag != "" && typeof map[tag] === "Object") ? map[tag] : -1;
 	} }
 
 	function onMaximizeQuery() {
@@ -979,7 +979,7 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 		{
 			_onResizeProcess = false;
 			var numer = innerWidth, denom = pxWidth;
-			var max = (typeof this.maximized != "undefined") ? maximized : false;
+			var max = (typeof this.maximized === "Integer") ? maximized : false;
 			if (max) {
 				var vert = (innerWidth/innerHeight > pxWidth/pxHeight);
 				var zoom = System.getArgument("-fszoom");
@@ -1153,7 +1153,7 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 @endif
 	function updateWindowSizeChecked(size)
 	{
-		if(typeof this["window"+windowWidthes[0]+"MenuItem"] != "undefined")
+		if(typeof this["window"+windowWidthes[0]+"MenuItem"] === "Object")
 		{
 			for (var i = 0, internal_forloop_count = windowWidthes.count; i < internal_forloop_count; i += 1)
 				this["window"+windowWidthes[i]+"MenuItem"].checked	= size == windowWidthes[i];
@@ -1163,8 +1163,8 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 
 	function updateWindowResizeable()
 	{
-		if(typeof this["windowResizeableMenuItem"] != "undefined")
-			this["windowResizeableMenuItem"].checked = !windowResizeable;
+		if(typeof this.windowResizeableMenuItem === "Object")
+			this.windowResizeableMenuItem.checked = !windowResizeable;
 	}
 @endif
 
@@ -1276,7 +1276,7 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 	function onCheckFS
 	{
 		//	フルスクリーンの解除処理が終了したら、再度フルスクリーンにする
-		if(typeof this.screenModeChangedTrigger == "undefined" || !screenModeChangedTrigger.trigged)
+		if(typeof this.screenModeChangedTrigger !== "Object" || !screenModeChangedTrigger.trigged)
 		{
 			try
 				fullScreen	= true;

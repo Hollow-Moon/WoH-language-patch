@@ -1,22 +1,22 @@
 ﻿// Patch names
-var vitaAssetsPatchName = devMode? "ImagesVita" : "vita"; // not the best place to decalre the vita patch name but we need it at this stage
+global.vitaAssetsPatchName = devMode? "ImagesVita" : "vita"; // not the best place to decalre the vita patch name but we need it at this stage
 @if(GAME_FATE)
-var hPatchName = "h";
-var hCensorPatchName = mainPatchName;
-var maturePatchName = devMode? "mature" : mainPatchName;
+global.hPatchName = "h";
+global.hCensorPatchName = mainPatchName;
+global.maturePatchName = devMode? "mature" : mainPatchName;
 @endif
 @if(GAME_FHAT)
-var hPatchName = mainPatchName;
-var hCensorPatchName = vitaAssetsPatchName;
-var maturePatchName = vitaAssetsPatchName;
+global.hPatchName = mainPatchName;
+global.hCensorPatchName = vitaAssetsPatchName;
+global.maturePatchName = vitaAssetsPatchName;
 @endif
-var decensoredPatchName = "decensor";
+global.decensoredPatchName = "decensor";
 
 // Flag names
-var hFlagName = "ghentai";
-var hCensoredFlagName = "censored";
-var matureFlagName = "gmature";
-var decensoredFlagName = "decensor";
+global.hFlagName = "ghentai";
+global.hCensoredFlagName = "censored";
+global.matureFlagName = "gmature";
+global.decensoredFlagName = "decensor";
 
 function get_hPatchExists() { { return patchExists(hPatchName); } }
 function get_isHCensored(kag=global.kag) { { return kag.sflags[hCensoredFlagName] !== void? kag.sflags[hCensoredFlagName] : !kag.sflags[hFlagName]; } } // RN uses hFlagName while HA uses hCensoredFlagName
@@ -25,15 +25,15 @@ function get_fullyCensored(kag=global.kag) { { return get_isHCensored(kag) && ge
 function get_isDecensored(kag=global.kag) { { return kag.sflags[decensoredFlagName]; } };
 
 // Folder names
-var fullyCensoredFolderName = "censored";
+global.fullyCensoredFolderName = "censored";
 
-var censoredHFolderName = "censored_h";
-var censoredMatureFolderName = "censored_mature";
+global.censoredHFolderName = "censored_h";
+global.censoredMatureFolderName = "censored_mature";
 
-var uncensoredHFolderName = "h";
-var uncensoredMatureFolderName = "mature";
+global.uncensoredHFolderName = "h";
+global.uncensoredMatureFolderName = "mature";
 
-var decensoredFolderName = "decensored";
+global.decensoredFolderName = "decensored";
 
 function getTextCensored(text, kag=global.kag) {
 	if (text == void) return text;

@@ -247,7 +247,7 @@ class FontWrapper
 		{
 			font.face = to_remap_face;
 		}
-		global.automapPrerenderedFont(font) if typeof global.automapPrerenderedFont !== "undefined";
+		global.automapPrerenderedFont(font) if typeof global.automapPrerenderedFont === "Object";
 	}
 
 	property height
@@ -277,7 +277,7 @@ class FontWrapper
 @if(!HD_MODE)
 				font.height = v;
 @endif
-				global.automapPrerenderedFont(font) if typeof global.automapPrerenderedFont !== "undefined";
+				global.automapPrerenderedFont(font) if typeof global.automapPrerenderedFont === "Object";
 			}
 		}
 	}
@@ -298,7 +298,7 @@ class FontWrapper
 				{
 					font.face = to_remap_face;
 				}
-				global.automapPrerenderedFont(font) if typeof global.automapPrerenderedFont !== "undefined";
+				global.automapPrerenderedFont(font) if typeof global.automapPrerenderedFont === "Object";
 			}
 		}
 	}
@@ -314,7 +314,7 @@ class FontWrapper
 			if (v != font.angle)
 			{
 				font.angle = v;
-				global.automapPrerenderedFont(font) if typeof global.automapPrerenderedFont !== "undefined";
+				global.automapPrerenderedFont(font) if typeof global.automapPrerenderedFont === "Object";
 			}
 
 		}
@@ -331,7 +331,7 @@ class FontWrapper
 			if (v != font.bold)
 			{
 				font.bold = v;
-				global.automapPrerenderedFont(font) if typeof global.automapPrerenderedFont !== "undefined";
+				global.automapPrerenderedFont(font) if typeof global.automapPrerenderedFont === "Object";
 			}
 		}
 	}
@@ -347,7 +347,7 @@ class FontWrapper
 			if (v != font.italic)
 			{
 				font.italic = v;
-				global.automapPrerenderedFont(font) if typeof global.automapPrerenderedFont !== "undefined";
+				global.automapPrerenderedFont(font) if typeof global.automapPrerenderedFont === "Object";
 			}
 		}
 	}
@@ -363,7 +363,7 @@ class FontWrapper
 			if (v != font.strikeout)
 			{
 				font.strikeout = v;
-				global.automapPrerenderedFont(font) if typeof global.automapPrerenderedFont !== "undefined";
+				global.automapPrerenderedFont(font) if typeof global.automapPrerenderedFont === "Object";
 			}
 		}
 	}
@@ -379,7 +379,7 @@ class FontWrapper
 			if (v != font.underline)
 			{
 				font.underline = v;
-				global.automapPrerenderedFont(font) if typeof global.automapPrerenderedFont !== "undefined";
+				global.automapPrerenderedFont(font) if typeof global.automapPrerenderedFont === "Object";
 			}
 		}
 	}
@@ -534,7 +534,7 @@ class FontWrapper
 @if(DRAWTEXT_ESCAPE)
 	function getTextWidth(text, language=(typeof(global.kag) === "Object" ? global.kag.sflags.language : this.layer.window.sflags.language))
 	{
-		var fontToSpecialCharacters = languageSettings[language]["special_characters"];
+		var fontToSpecialCharacters = languageSettings[language].special_characters;
 		fontToSpecialCharacters = %[] if fontToSpecialCharacters === void;
 @if(!KIRIKIROID)
 		if (fontToSpecialCharacters[font.face] === void)

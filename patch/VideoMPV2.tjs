@@ -448,7 +448,7 @@ if ((typeof(global.NamedPipeClient) === "Object") && (typeof(Scripts.evalJSON) =
 		{
 			return (videosubsystem === "mpv");
 		}
-		return global.iswine || (typeof(global.kag.sflags.forceMpvPlayback) !== "undefined" && global.kag.sflags.forceMpvPlayback); // TODO should also return true in windows without WMF (need to find a way to query that...)
+		return global.iswine || (typeof(global.kag.sflags.forceMpvPlayback) === "Integer" && global.kag.sflags.forceMpvPlayback); // TODO should also return true in windows without WMF (need to find a way to query that...)
 	};
 
 	Debug.notice("VideoMPV2: initialized successfully");

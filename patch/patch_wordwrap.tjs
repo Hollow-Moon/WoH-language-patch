@@ -353,6 +353,11 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 		var cleaned_lines = conductor.cleaned_lines;
 		var word_lines_needed = this.word_lines_needed;
 @if(GAME_WOHN)
+		if ((typeof(this.current) === "Object" && !isvalid(this.current)) || (typeof(this.current) !== "Object") || (this.fore.messages.count === 0))
+		{
+			this.allocateMessageLayers(1);
+			global.reload_messagelayer_config(this);
+		}
 		var mlf = this.get_mlf();
 		var mlf_size = mlf.height;
 		var char2glyph_cache = this.char2glyph_cache;

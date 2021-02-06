@@ -699,10 +699,10 @@ class MessageLayer extends KAGLayer
 
 @if(GAME_WOHN)
 		this.cached = true;
-		this.tmpCharLayer = createNewCharLayer();
+		this.tmpCharLayer = createNewCharLayer(false);
 		for (var i = 0; i < maxCharPoolCount; i += 1)
 		{
-			charPool.add(createNewCharLayer());
+			charPool.add(createNewCharLayer(false));
 		}
 		//	run ハンドラを追加
 		owner.runHandlers.add(runHandler);
@@ -914,7 +914,7 @@ class MessageLayer extends KAGLayer
 @if(GAME_WOHN)
 		for (var i = charPool.count, internal_forloop_count = maxCharPoolCount; i < internal_forloop_count; i += 1)
 		{
-			charPool.add(createNewCharLayer());
+			charPool.add(createNewCharLayer(false));
 		}
 @endif
 
@@ -1604,10 +1604,10 @@ class MessageLayer extends KAGLayer
 	}
 
 	//	新しい文字レイヤーを取得
-	function createNewCharLayer()
+	function createNewCharLayer(should_use_char_pool=true)
 	{
 		var	nc;
-		if(charPool.count > 0)
+		if(should_use_char_pool && charPool.count > 0)
 		{
 			nc	= charPool[0];
 			charPool.erase(0);
@@ -2330,10 +2330,10 @@ class MessageLayer extends KAGLayer
 			{
 				//	初期化
 				var	init	= appearActions[appearType+"_init"];
-				init! if init != void;
+				(init incontextof this)() if init != void;
 
 				//	実行
-				actionLastChar(aa!, appearTimeRate != void ? appearTimeRate : 1);
+				actionLastChar((aa incontextof this)(), appearTimeRate != void ? appearTimeRate : 1);
 			}
 
 			//	継続的に行うアクション(プロパティが競合しないなら、出現時のアクションと同時に実行可能)
@@ -2492,11 +2492,11 @@ class MessageLayer extends KAGLayer
 			{
 				//	初期化
 				var	init	= appearActions[appearType+"_init"];
-				init! if init != void;
+				(init incontextof this)() if init != void;
 
 				//	実行
 				var	charcnt	= Math.abs(edcol - stcol) + 1;
-				actionLastChar(aa!, appearTimeRate != void ? appearTimeRate * charcnt : charcnt);
+				actionLastChar((aa incontextof this)(), appearTimeRate != void ? appearTimeRate * charcnt : charcnt);
 			}
 		}
 	}
@@ -4783,10 +4783,10 @@ class MessageLayer extends KAGLayer
 	{
 		//	初期化
 		var	init	= continuousActions[type+"_init"];
-		init! if init != void;
+		(init incontextof this)() if init != void;
 
 		//	実行
-		actionChar(layer, (continuousActions[type])!, 0);
+		actionChar(layer, (continuousActions[type] incontextof this)(), 0);
 	}
 
 	/**
@@ -4850,74 +4850,81 @@ class MessageLayer extends KAGLayer
 	//	文字出現用のアクション
 	var	appearActions	= %[
 		//	透明→不透明となるアクション
-		opaque:"%[
+		opaque:function {
+			return %[
 			opacity:%[
 				handler:MoveAction,
 				start:0,
 				value:255,
 				acttype:'char'
 			]
-		]",
-		opaque_init:"lastCharLayer.opacity=0",
+		];},
+		opaque_init:function {lastCharLayer.opacity=0;},
 
 		//	飛び出るアクション
-		bound:"%[
+		bound:function {
+			return %[
 			top:%[
 				handler:SinAction,
 				vibration:-10,
 				cycle:kag.actualChSpeed * 6,
 				acttype:'char'
 			]
-		]",
+		];},
 
 		//	左からのシャッター
-		lshutter:"%[
+		lshutter:function {
+			return %[
 			width:%[
 				handler:MoveAction,
 				start:0,
 				value:lastCharLayer.width,
 				acttype:'char'
 			]
-		]",
-		lshutter_init:"lastCharLayer.width=0",
+		];},
+		lshutter_init:function {lastCharLayer.width=0;},
 
 		//	上からのシャッター
-		ushutter:"%[
+		ushutter:function {
+			return %[
 			height:%[
 				handler:MoveAction,
 				start:0,
 				value:lastCharLayer.height,
 				acttype:'char'
 			]
-		]",
-		lshutter_init:"lastCharLayer.height=0",
+		];},
+		lshutter_init:function {lastCharLayer.height=0;},
 
 		//	下からのシャッター
-		bshutter:"%[
+		bshutter:function {
+			return %[
 			BShutter:%[
 				handler:MoveAction,
 				start:lastCharLayer.height,
 				value:0,
 				acttype:'char'
 			]
-		]",
-		bshutter_init:"lastCharLayer.initBShutter()",	//	初期化処理
+		];},
+		bshutter_init:function {lastCharLayer.initBShutter();},	//	初期化処理
 	];
 
 	//	継続的に行う文字のアクション
 	var	continuousActions	= %[
 		//	次々フォントを切り替えるアクション
 		//	(とても重いので、一度描画した文字画像はキャッシュされるべき/フォント名と文字で整理)
-		chgfont:"%[
+		chgfont:function {
+			return %[
 			changefont:%[
 				handler:CommuteValueAction,
 				cycle:100,
 				finalValue:lastCharLayer.font.face
 			]
-		]",
+		];},
 
 		//	ゆらゆら揺れる(とても重い)
-		swing:"%[
+		swing: function {
+			return %[
 			left:%[
 				handler:RandomSinAction,
 				minvibration:0,
@@ -4932,10 +4939,11 @@ class MessageLayer extends KAGLayer
 				maxcycle:2500,
 				mincycle:1500
 			],
-		]",
+		];},
 
 		//	縦に揺れる(とても重い)
-		shake:"%[
+		shake: function {
+			return %[
 			top:%[
 				handler:RandomSinAction,
 				minvibration:0,
@@ -4943,7 +4951,7 @@ class MessageLayer extends KAGLayer
 				maxcycle:2500,
 				mincycle:1500
 			],
-		]",
+		];},
 	];
 
 	//	グループ管理

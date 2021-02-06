@@ -31,9 +31,10 @@ class ActionManager
 	{
 		stopFlip();
 		invalidate actionDict if actionDict != void;
+		var actionList = this.actionList;
 		if(actionList != void)
 		{
-			for(var i=0; i<actionList.count; i++)
+			for (var i = 0, internal_forloop_count = actionList.count; i < internal_forloop_count; i += 1)
 				invalidate actionList[i] if actionList[i] != void;
 			invalidate actionList;
 		}
@@ -45,7 +46,8 @@ class ActionManager
 		getter
 		{
 			var	cnt	= 0;
-			for(var i=0; i<actionList.count; i++)
+			var actionList = this.actionList;
+			for (var i = 0, internal_forloop_count = actionList.count; i < internal_forloop_count; i += 1)
 				cnt++ if !actionList[i].isDone;
 			return cnt;
 		}
@@ -58,7 +60,8 @@ class ActionManager
 	}
 	function inAction()
 	{
-		for(var i=0; i<actionList.count; i++)
+		var actionList = this.actionList;
+		for (var i = 0, internal_forloop_count = actionList.count; i < internal_forloop_count; i += 1)
 		{
 			if(!actionList[i].isDone)
 				return true;
@@ -176,9 +179,10 @@ class ActionManager
 	function pause(force=false, target)
 	{
 		var	now		= System.getTickCount();
+		var actionList = this.actionList;
 		if(target == void)
 		{
-			for(var i=0; i<actionList.count; i++)
+			for (var i = 0, internal_forloop_count = actionList.count; i < internal_forloop_count; i += 1)
 			{
 				var	info	= actionList[i];
 				if(force || info.canPause)
@@ -200,9 +204,10 @@ class ActionManager
 	function resume(target)
 	{
 		var	now		= System.getTickCount();
+		var actionList = this.actionList;
 		if(target == void)
 		{
-			for(var i=0; i<actionList.count; i++)
+			for (var i = 0, internal_forloop_count = actionList.count; i < internal_forloop_count; i += 1)
 				actionList[i].resumeAction(now);
 		}
 		else
@@ -297,7 +302,8 @@ class ActionManager
 	{
 		var	hasAction	= count > 0;
 		var	nowaitCount	= 0;
-		for(var i=0; i<actionList.count; i++)
+		var actionList = this.actionList;
+		for (var i = 0, internal_forloop_count = actionList.count; i < internal_forloop_count; i += 1)
 		{
 			var	info	= actionList[i];
 			if((all || (!info.nowait && !info.isPause)) &&	// すべて無条件に停止するか、nowait も isPause でもない時
@@ -306,6 +312,7 @@ class ActionManager
 //				dm("stop action: "+info.target.name);
 				internalActionCompleted(info, true);
 				i--;
+				internal_forloop_count -= 1;
 			}
 			else
 			{
@@ -330,7 +337,8 @@ class ActionManager
 	{
 		//dm("stopAllActionsByType: " + acttype);
 		var	hasAction	= count > 0;
-		for(var i=0; i<actionList.count; i++)
+		var actionList = this.actionList;
+		for (var i = 0, internal_forloop_count = actionList.count; i < internal_forloop_count; i += 1)
 		{
 			var	info = actionList[i];
 			var cnt = info.stopActionByType(acttype);
@@ -338,6 +346,7 @@ class ActionManager
 			{
 				internalActionCompleted(info, true);
 				i--;
+				internal_forloop_count -= 1;
 			}
 		}
 		if(hasAction && !count)
@@ -351,7 +360,8 @@ class ActionManager
 	function countActionByType(acttype)
 	{
 		var cnt = 0;
-		for(var i=0; i<actionList.count; i++)
+		var actionList = this.actionList;
+		for (var i = 0, internal_forloop_count = actionList.count; i < internal_forloop_count; i += 1)
 		{
 			var	info = actionList[i];
 			cnt += info.countActionByType(acttype);
@@ -393,7 +403,8 @@ class ActionManager
 		var	nowaitCount	= 0;
 		var	pauseCount	= 0;
 		var	loopCount	= 0;
-		for(var i=0; i<actionList.count; i++)
+		var actionList = this.actionList;
+		for (var i = 0, internal_forloop_count = actionList.count; i < internal_forloop_count; i += 1)
 		{
 			var	info	= actionList[i];
 //			dm((typeof info.target.name != "undefined" ? info.target.name : info.target)+": "+info.actionList.count) if info.actionList;
@@ -403,11 +414,13 @@ class ActionManager
 				dm("無効化されているオブジェクト("+info.target+")に対するアクションが存在していたため削除しました。");
 				removeInfo(info);
 				i--;
+				internal_forloop_count -= 1;
 			}
 			else if(info.doAction(now, false))
 			{
 				internalActionCompleted(info, false);
 				i--;
+				internal_forloop_count -= 1;
 			}
 			else if(info.nowait)
 				nowaitCount++;
@@ -588,10 +601,11 @@ class ActionManager
 
 	function store(f)
 	{
+		var actionList = this.actionList;
 		with(f)
 		{
 			.actionList	= [];
-			for(var i=0; i<actionList.count; i++)
+			for (var i = 0, internal_forloop_count = actionList.count; i < internal_forloop_count; i += 1)
 			{
 				var dat = actionList[i].store();
 				.actionList.add(dat) if dat !== void;
@@ -606,6 +620,7 @@ class ActionManager
 
 		//現在のアクション情報を全て破棄
 		waitStackByType.clear();
+		var actionList = this.actionList;
 		for(var i=actionList.count-1; actionList.count; i--)
 			removeInfo(actionList[i], true);
 

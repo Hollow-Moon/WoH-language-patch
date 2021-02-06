@@ -140,9 +140,8 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 			pitch		= .pitch;
 			textWidth	= .textWidth;
 			textHeight	= .textHeight;
-			setSizeToImageSize();
-			left		= .left;
-			top			= .top;
+			this.setSizeToImageSize();
+			this.setPos(.left, .top);
 			opacity		= .opacity;
 			lastParams.clear();
 			lastParams.assign(.lastParams);
@@ -261,16 +260,14 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 
 	function clear()
 	{
-		setSize(1, 1);
-		left = 0;
-		top = 0;
+		this.setPos(0, 0, 1, 1);
 @if(MESSAGECHARLAYER_MEMORY_EFFICIENT)
 		if (drawed)
 		{
 			this.hasImage = false;
 		}
 @endif
-@if(0)
+@if(!MESSAGECHARLAYER_MEMORY_EFFICIENT)
 		fillRect(0, 0, imageWidth, imageHeight, clearcolor) if drawed;
 @endif
 		drawed	= 0;

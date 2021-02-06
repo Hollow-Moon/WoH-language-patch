@@ -1,11 +1,6 @@
 ﻿// Conductor.tjs - KAG シナリオ進行処理
 // Copyright (C)2001-2009, W.Dee and contributors  改変・配布は自由です
 
-@if(GAME_WOHN)
-//	タグ属性の未定義チェックを行うか
-@set(USE_CHECK_TAG_PARAM=1)
-@endif
-
 @if(GAME_FATE||GAME_FHAT||GAME_WOHN)
 //	デバッグレベルの設定
 @set(CONDUCTOR_VERBOSE=0)
@@ -23,39 +18,6 @@ class ConductorException extends Exception
 	function finalize() { super.finalize(...); }
 };
 
-@if(GAME_WOHN)
-var	isStopTag	= %[
-	l:1, lr:1, p:1, pg:1, s:1, stopcache:1, autocache:1,	//	コンダクタが解釈してしまうタグ以外(macro を登録しても、先にコンダクタが元のタグに分解してしまう)
-];
-var	isSoundTags	= %[
-	se:1, sestop:1, fadese:1, seact:1,
-	play:1, playstop:1, bgmact:1,
-];
-var	isActionTags= %[
-	action:1, bgact:1, fgact:1, partbgact:1
-];
-//	トランジションを行うタグ
-var	isTransTag	= %[
-	trans:1, bg:1, fg:1, clfg:1, chgfg:1, partbg:1, clpartbg:1, chgpartbg:1,
-	monocro:1, red:1, green:1, blue:1, sepia:1, nega:1, contrast:1, blur:1, bluroff:1,
-];
-var	isSpecialTag = %[
-	"if" => 1,
-	"ignore" => 1,
-	"endif" => 1,
-	"endignore" => 1,
-	"else" => 1,
-	"elsif" => 1,
-	"emb" => 1,
-	"macro" => 1,
-	"endmacro" => 1,
-	"erasemacro" => 1,
-	"jump" => 1,
-	"call" => 1,
-	"return" => 1,
-];
-@endif
-
 class BaseConductor extends KAGParser
 {
 	// BaseConductor - シナリオ進行処理のベースクラス
@@ -67,9 +29,6 @@ class BaseConductor extends KAGParser
 	var inProcessing = false; // timerCallback を処理中かどうか
 	var reentered = false; // timerCallback 中に 再入したか
 	var nextTimerTick = 0; // 次にタイマーが発動されるはずの tick
-@if(GAME_WOHN)
-	var autoCache = false; // 自動キャッシュの有効/無効
-@endif
 
 	function BaseConductor()
 	{
@@ -101,40 +60,8 @@ class BaseConductor extends KAGParser
 		super.clear();
 	}
 
-@if(GAME_WOHN)
-	function doOneshot(mode)
-	{
-		oneshot.mode= mode;
-		oneshot.trigger(); // トリガ
-		_doOneshot	= true;
-	}
-
-	function cancelOneshot()
-	{
-		oneshot.cancel();
-		_doOneshot	= false;
-	}
-
-	var	_doOneshot	= false;	//	timer.enabled=false でも、oneshot で実行されたときは処理を行うためのフラグ
-@endif
 	function timerCallback()
 	{
-@if(GAME_WOHN)
-		if(!timer.enabled)
-		{
-			if(!_doOneshot)
-			{
-				dmt("timerCallback: conductor.timer.enabled = "+timer.enabled);
-				return;
-			}
-			else
-			{
-				dm("do oneshot");
-				_doOneshot	= false;
-			}
-		}
-@endif
-
 		// 次の要素を得る
 		nextTimerTick = timer.interval + System.getTickCount();
 		var obj;
@@ -198,54 +125,29 @@ class BaseConductor extends KAGParser
 						{
 						case -5: // いったんイベントを処理(現在のタグは後回し)
 							pendings.insert(0, obj);
-@if(!GAME_WOHN)
 							oneshot.mode = atmAtIdle;
 							oneshot.trigger(); // トリガ
-@endif
-@if(GAME_WOHN)
-							doOneshot(atmAtIdle);
-@endif
 							timer.interval = 0; // タイマは停止
 							inProcessing = false;
 							reentered = false;
 							return;
 						case -4: // いったんイベントを処理
-@if(!GAME_WOHN)
 							oneshot.mode = atmAtIdle;
 							oneshot.trigger(); // トリガ
-@endif
-@if(GAME_WOHN)
-							doOneshot(atmAtIdle);
-@endif
 							timer.interval = 0; // タイマは停止
 							inProcessing = false;
 							reentered = false;
-@if(GAME_WOHN)
-							touchNextImages() if isStopTag[obj.tagname]; // タグを先読みして次で使用する画像をキャッシュする
-@endif
 							return;
 						case -3: // 後回ししてブレーク
 							pendings.insert(0, obj);
-@if(GAME_WOHN)
-							cancelOneshot();
-@endif
 							timer.interval = 0; // タイマは停止
 							inProcessing = false;
 							reentered = false;
-@if(GAME_WOHN)
-							touchNextImages() if isStopTag[obj.tagname]; // タグを先読みして次で使用する画像をキャッシュする
-@endif
 							return;
 						case -2: // ブレーク
-@if(GAME_WOHN)
-							cancelOneshot();
-@endif
 							timer.interval = 0; // タイマは停止
 							inProcessing = false;
 							reentered = false;
-@if(GAME_WOHN)
-							touchNextImages() if isStopTag[obj.tagname]; // タグを先読みして次で使用する画像をキャッシュする
-@endif
 							return;
 						case -1: // シナリオ終了
 							timer.interval = 0;
@@ -265,14 +167,6 @@ class BaseConductor extends KAGParser
 							timer.interval = step;
 							nextTimerTick = step + System.getTickCount();
 						}
-@if(GAME_WOHN)
-						// 処理したのが p タグなら時間が指定されていても自動実行中だと思われるので、タグの先読みだけ行う
-						if(obj.tagname == "p")
-							touchNextImages(step - 150);
-						// 次の処理まで多少時間が出来たので、先ほど読み込みきれなかった画像を読み込む
-						else if(step > 200 && lastTouchImages.count > 0)
-							touchImages(lastTouchImages, step - 150);	//	立ち絵全だと150ミリ秒近く掛かってしまうので、余裕を見て
-@endif
 
 						inProcessing = false;
 						reentered = false;
@@ -319,115 +213,6 @@ class BaseConductor extends KAGParser
 		}
 	}
 
-@if(GAME_WOHN)
-	property doCache
-	{
-		getter	{ return autoCache; }// && kag.actionCount == 0; }
-	}
-
-	//	次に停止するまでの間でタグを先読みし、画像をキャッシュする
-	var	lastTouchImages	= [];
-	function touchNextImages(wait=0)
-	{
-		if(!autoCache)
-			return;
-
-//		dm("touchNextImages() / "+Scripts.getTraceString());
-//		dm("touchNextImages("+wait+"): pendings = "+pendings.count);
-		var next_pendings = [];
-		var	list	= [];
-		var last_label = this.curLabel;
-		var save_processSpecialTags = this.processSpecialTags;
-		this.processSpecialTags = false;
-		for(;;)
-		{
-			//	キャッシュしないならスキップ
-			//	アクションが実行されている間も
-//			if(!doCache)
-//				break;
-
-			//	シナリオ終了だったら、次へ進む
-			var ntag = getNextTag();
-			if(ntag === void)
-				break;
-//			dm("touchNextImages: "+ntag.tagname);
-
-			// We need to handle macropop ourselves since special tag processing is disabled
-			if (ntag.tagname === "macropop")
-			{
-				this.popMacroArgs();
-				continue;
-			}
-
-			//	タグを複製して pendings へ
-			var obj = %[];
-			(Dictionary.assignStruct incontextof obj)(ntag); // 次のタグを得る
-			next_pendings.add(obj); // すべて後回しにする
-
-			// Empty pending queue to pendings if label changed.
-			var cur_label = this.curLabel;
-			if (cur_label !== last_label && next_pendings.count > 0)
-			{
-				this.pendings.push(next_pendings*);
-				next_pendings.clear();
-			}
-
-			// If a control flow tag has been hit, clear pending queue (we don't want to add it), rewind to label, and stop here.
-			if (isSpecialTag[obj.tagname])
-			{
-				next_pendings.clear();
-				this.goToLabel(this.curLabel);
-				break;
-			}
-
-			// 実行停止するタグが見つかったら、次へ進む
-			if(isStopTag[obj.tagname])
-			{
-//				dm("-- break --");
-				break;
-			}
-
-			//	キャッシュしないならスキップ
-			//	アクションが実行されている間も
-			if(!doCache)
-			{
-//				dm("-- no cache --");
-				continue;
-			}
-
-			global.handle_cache_of_tag(list, obj);
-		}
-		this.processSpecialTags = save_processSpecialTags;
-		// Empty pending queue.
-		if (next_pendings.count > 0)
-		{
-			this.pendings.push(next_pendings*);
-			next_pendings.clear();
-		}
-
-		// 次で使用する画像をキャッシュへ読み込む
-		for(var i=0; i<list.count; i++)
-		{
-			if(list[i] == "")
-				list.erase(i--);
-		}
-		if(list.count > 0)
-		{
-			touchImages(list, wait) if wait > 0 || !timer.enabled;
-//			System.touchImages(list,, wait) if wait > 0 && kag.transCount == 0;
-			lastTouchImages	= list;
-		}
-		else
-			lastTouchImages.clear();
-	}
-
-	function touchImages(storages, timeout)
-	{
-//		dm("touchImages("+timeout+"): "+storages.join(", "));
-		System.touchImages(storages,, timeout);
-	}
-@endif
-
 	function onTag()
 	{
 		// オーバーライドすること
@@ -462,16 +247,9 @@ class BaseConductor extends KAGParser
 			}
 			else
 			{
-@if(!GAME_WOHN)
 				oneshot.mode = atmExclusive;
-@endif
-@if(GAME_WOHN)
-				doOneshot(atmExclusive);
-@endif
 					// イベントが配信されるまで他の非同期イベントをブロック
-@if(!GAME_WOHN)
 				oneshot.trigger(); // トリガ
-@endif
 			}
 		}
 	}
@@ -502,27 +280,15 @@ class BaseConductor extends KAGParser
 				{
 					timer.interval = 0;
 					timer.enabled = true;
-@if(!GAME_WOHN)
 					oneshot.mode = atmExclusive;
-@endif
-@if(GAME_WOHN)
-					doOneshot(atmExclusive);
-@endif
 						// イベントが配信されるまで他の非同期イベントをブロック
-@if(!GAME_WOHN)
 					oneshot.trigger(); // トリガ
-@endif
 				}
 			}
 			else
 			{
 				// disable
-@if(!GAME_WOHN)
 				oneshot.cancel();
-@endif
-@if(GAME_WOHN)
-				cancelOneshot();
-@endif
 				timer.enabled = false;
 			}
 			_interrupted = x;
@@ -556,23 +322,13 @@ class BaseConductor extends KAGParser
 	function store()
 	{
 		// store オーバーライド
-@if(!GAME_WOHN)
 		return super.store(...);
-@endif
-@if(GAME_WOHN)
-		var	dic	= super.store(...);
-		dic.autoCache	= autoCache;
-		return dic;
-@endif
 	}
 
 	function restore(dic)
 	{
 		// restore オーバーライド
 		super.restore(...);
-@if(GAME_WOHN)
-		autoCache	= dic.autoCache;
-@endif
 		pendings.clear();
 	}
 
@@ -628,9 +384,6 @@ class Conductor extends BaseConductor
 		this.owner = owner;
 		this.handlers = handlers;
 		timeOutTimer = new Timer(onTimeOut, '');
-@if(GAME_WOHN)
-		timeOutTimer.enabledPause	= false;
-@endif
 	}
 
 	function finalize()
@@ -678,9 +431,6 @@ class Conductor extends BaseConductor
 		(Dictionary.assign incontextof waitUntil)(until);
 		timeOutTimer.interval = timeout;
 		timeOutTimer.enabled = true;
-@if(GAME_WOHN)
-		timeOutTimer.enabledPause = false;
-@endif
 	}
 
 	function onTimeOut()
@@ -689,34 +439,6 @@ class Conductor extends BaseConductor
 		timeOutTimer.enabled = false;
 		trigger('timeout'); // 自分自身で timeout をトリガする
 	}
-
-@if(GAME_WOHN)
-	function waitWithTimeOutAndPause(until, timeout)
-	{
-		// 待ちを行うが、タイムアウトとタイムアウトの一時停止がある
-		waitWithTimeOut(...);
-		timeOutTimer.enabledPause	= true;
-		timeOutTimer.startTick		= System.getTickCount();	//	pause したときのため、開始時刻を記録
-	}
-
-	function pauseTimeout()
-	{
-		if(timeOutTimer.enabledPause)
-		{
-			timeOutTimer.enabled	= false;
-			timeOutTimer.interval	-= System.getTickCount() - timeOutTimer.startTick;	//	経過時間を引いて、resume したときに残り時間分だけ待つように
-		}
-	}
-
-	function resumeTimeout()
-	{
-		if(timeOutTimer.enabledPause)
-		{
-			timeOutTimer.enabled	= true;
-			timeOutTimer.startTick	= System.getTickCount();	//	resume した時刻を記録
-		}
-	}
-@endif
 
 	function trigger(name)
 	{
@@ -762,95 +484,6 @@ class Conductor extends BaseConductor
 		}
 		return onUnknownTag(tagname, elm);
 	}
-
-@if(GAME_WOHN)
-	property doCache
-	{
-		getter	{ return super.doCache && owner.previousCache; }
-	}
-
-	function touchNextImages()
-	{
-		super.touchNextImages(...);
-
-		if(owner.asyncTransInChar)
-		{
-			//	前後を文字表示に挟まれた、トランジションを実行するタグがあれば、非同期トランジションに変更する
-			var	islastch	= false;
-			var	lasttrans;
-			for(var i=0; i<pendings.count; i++)
-			{
-				var	tag	= pendings[i];
-				if(tag.tagname == "ch")
-				{
-					islastch	= true;
-					lasttrans	= void;
-				}
-				else if(isStopTag[tag.tagname])
-					islastch	= false;
-				else if(islastch && isTransTag[tag.tagname] && tag.time != void)
-				{
-					if(lasttrans !== void)
-					{
-						delete pendings[lasttrans].texton;	//	文字と文字の間に複数のトランジションが存在するので、同期トランジションに戻す
-//						delete pendings[lasttrans].nowait;
-						lasttrans	= void;
-					}
-					else
-					{
-						if(tag.textoff === void && tag.texton === void)
-						{
-							tag.texton	= true;	//	非同期トランジションへ変更
-//							tag.nowait	= true;	//	nowait=true にすると、トランジション後の backlay が行われないため、意図した演出にならないことがある
-						}
-						lasttrans	= i;
-					}
-					islastch	= false;
-				}
-			}
-		}
-	}
-
-	//	アクションやトランジションを実行していたら、処理を邪魔しないよう一枚ずつキャッシュする
-	var	touchEndTick;
-	var	touchAsyncCaller;
-	function touchImages(storages, timeout)
-	{
-		//	アクション、トランジションが実行されていないので、まとめてキャッシュする
-		if(owner.transCount == 0 && !owner.inAction())
-			super.touchImages(storages, timeout);
-		else
-		{
-			if(timeout > 0)
-				touchEndTick	= System.getTickCount() + timeout;
-			else
-				touchEndTick	= -1;	//	タイマーが止まっているなら、動き出すまで読み込みを行う
-			super.touchImages(storages, 1);
-			storages.erase(0);
-			var	tick	= System.getTickCount();
-			if((tick < touchEndTick || (touchEndTick < 0 && !timer.enabled)) && storages.count > 0)
-			{
-				if(touchAsyncCaller == void)
-				{
-					touchAsyncCaller		= new AsyncTrigger(_touchImages, "");
-					touchAsyncCaller.cached	= true;
-				}
-				touchAsyncCaller.trigger();
-			}
-		}
-	}
-
-	function _touchImages()
-	{
-		var	tick	= System.getTickCount();
-		if((tick < touchEndTick || (touchEndTick < 0 && !timer.enabled)) && lastTouchImages.count > 0)
-		{
-			super.touchImages(lastTouchImages, 1);
-			lastTouchImages.erase(0);
-			touchAsyncCaller.trigger() if lastTouchImages.count > 0;
-		}
-	}
-@endif
 
 	function onStop()
 	{
@@ -932,52 +565,3 @@ class Conductor extends BaseConductor
 		return owner.onConductorUnknownTag(...);
 	}
 }
-
-@if(GAME_WOHN)
-//	画像をリストへ入れる
-//	立ち絵ならパーツ画像も入れる
-function addTouchList(list, storage)
-{
-	if(storage == "")
-		return;
-//	dm("addTouchList("+storage+")");
-	var	pos	= storage.indexOf(__Layer_partsSeparateKey);
-	if(pos >= 0)
-	{
-		storage	= storage.substr(0, pos);
-		list.add(storage) if list.find(storage) < 0;
-		storage	= __Layer_monoPartsFormat.sprintf(storage);
-	}
-	list.add(storage) if list.find(storage) < 0;
-}
-
-global.handle_cache_of_tag = function(list, obj)
-{
-	var	ext;
-	// タグで使用する画像をリストへ追加
-	if(isActionTags[obj.tagname] && obj.props !== void)
-	{
-		var	props	= typeof(obj.props) === "String" ? obj.props.split(",") : obj.props;
-		var	ii;
-		for(var i=0; i<props.count; i++)
-		{
-			if(props[i] == "-storage")
-			{
-				ii	= i + 3;
-				break;
-			}
-		}
-		if(ii !== void)
-		{
-			var	keys	= obj.keys.split(/\)\(/);
-			for(var i=0; i<keys.count; i++)
-				addTouchList(list, (keys[i].split(","))[ii]);
-		}
-	}
-	else if(obj.tagname == "playtimeline")
-		timeline_object.getCacheStorageList(obj.scene, list);	//	シーンで使われる画像
-	else if(obj.storage != void && !isSoundTags[obj.tagname] &&	//	storage があり、サウンド関連のタグでなく、
-		((ext = Storages.extractStorageExt(obj.storage)) == "" || (global.image_extensions.find(ext) !== -1)))	//	拡張子がない場合は、画像としておく
-		addTouchList(list, obj.storage);	// storage 属性は画像の可能性がある
-};
-@endif

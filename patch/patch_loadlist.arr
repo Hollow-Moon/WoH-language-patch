@@ -116,6 +116,7 @@
 	[,,,,, "After KAG system scripts"],
 	"patch_kagconfig.tjs",
 	"patch_historylayer.tjs",
+	["patch_conductor_woh_override.tjs", ,,, "GAME_WOHN"],
 	["patch_messagecharlayer_cache_override.tjs", ,,, "GAME_WOHN"],
 	["patch_async_image_load_override.tjs", , [["Bitmap", , "==="]],, "ASYNC_IMAGE_LOAD"],
 	["Override.tjs", ,,, "GAME_FATE||GAME_FHAT"],

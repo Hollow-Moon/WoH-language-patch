@@ -421,10 +421,15 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 		mode = 0 if (!exEventEnabled);
 		switch (mode) {
 		case -1:
+@if(0)
 			// マルチモニタ環境の場合は擬似フルスクリーン
 			mode = (typeof  System.getDisplayMonitors === "Object" &&
 					(info = System.getDisplayMonitors()) !== void &&
 					(info.count > 1));
+@endif
+			// Pseudo full screen mode does not work correctly at the moment, so disable it even for multiple monitors.
+			// We only support primary monitor fullscreen at the moment.
+			mode = 0;
 			break;
 		case 1:
 			// ウィンドウがセカンダリ以降なら擬似フルスクリーン

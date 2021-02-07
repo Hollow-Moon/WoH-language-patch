@@ -96,6 +96,16 @@ global.async_image_unload = function(storage)
 	return false;
 };
 
+global.async_image_unload_all = function()
+{
+	var images = [];
+	images.assign(global.cached_async_images);
+	for (var i = 0, internal_forloop_count = images.count; i < internal_forloop_count; i += 2)
+	{
+		global.async_image_unload(images[i]);
+	}
+};
+
 global.Layer_async_image_load_original = Layer;
 class Layer_async_image_load_override extends Layer_async_image_load_original
 {
@@ -145,15 +155,24 @@ global.Layer = Layer_async_image_load_override;
 global.System.clearGraphicCache_patch_async_image_load_orig = global.System.clearGraphicCache;
 global.System.clearGraphicCache = function()
 {
-	var images = [];
-	images.assign(global.cached_async_images);
-	for (var i = 0, internal_forloop_count = images.count; i < internal_forloop_count; i += 2)
-	{
-		global.async_image_unload(images[i]);
-	}
+	global.async_image_unload_all();
 	return global.System.clearGraphicCache_patch_async_image_load_orig();
 };
 
+global.async_image_garbage_collection_hook = function(level)
+{
+	if (level >= clDeactivate)
+	{
+		global.async_image_unload_all();
+	}
+};
+
+{
+	if (typeof(global.System.addGarbageCollectionHook) === "Object")
+	{
+		global.System.addGarbageCollectionHook(global.async_image_garbage_collection_hook);
+	}
+}
 
 global.last_set_value_of_graphicCacheLimit = 0;
 class internal_for_patch_async_image_load

@@ -301,7 +301,8 @@ class TextDrawer
 	function formatDictionary(dic)
 	{
 		var format = __(dic.format);
-		var arguments = dic.arguments;
+		var arguments = [];
+		arguments.assignStruct(dic.arguments);
 		for (var i = 0, internal_forloop_count = arguments.count; i < internal_forloop_count; i += 1)
 		{
 			if (typeof(arguments[i]) === "String")

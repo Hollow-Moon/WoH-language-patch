@@ -346,12 +346,17 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 		{
 			return;
 		}
-		this.word_lines_space.clear();
-		this.word_lines_chinese.clear();
+		var word_length_cache = this.word_length_cache;
+		var word_lines_space = this.word_lines_space;
+		var word_lines_chinese = this.word_lines_chinese;
+		word_lines_space.clear();
+		word_lines_chinese.clear();
 		var empty_line = this.empty_line;
 		var empty_word = this.empty_word;
 		var cleaned_lines = conductor.cleaned_lines;
 		var word_lines_needed = this.word_lines_needed;
+		var getLengthsForString = this.getLengthsForString;
+		var nextWordTagName = this.nextWordTagName;
 @if(GAME_WOHN)
 		if ((typeof(this.current) === "Object" && !isvalid(this.current)) || (typeof(this.current) !== "Object") || (this.fore.messages.count === 0))
 		{
@@ -396,7 +401,7 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 		{
 			if (cleaned_lines[i].length === 0)
 			{
-				this.word_lines_space[i] = empty_line;
+				word_lines_space[i] = empty_line;
 				continue;
 			}
 			var arr = [];
@@ -409,25 +414,25 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 					arr[j] = empty_word;
 					continue;
 				}
-				if (this.word_length_cache[word] === void)
+				if (word_length_cache[word] === void)
 				{
 @if(!WORDWRAP_BOLDITALIC_MODIFIER)
-					this.word_length_cache[word] = %[
-						tagname: this.nextWordTagName,
+					word_length_cache[word] = %[
+						tagname: nextWordTagName,
 						text: word
 					];
 @endif
 @if(WORDWRAP_BOLDITALIC_MODIFIER)
-					this.word_length_cache[word] = %[
-						tagname: this.nextWordTagName,
+					word_length_cache[word] = %[
+						tagname: nextWordTagName,
 						text: word,
 					];
 @endif
-					word_lines_needed.add(this.word_length_cache[word]);
+					word_lines_needed.add(word_length_cache[word]);
 				}
-				arr[j] = this.word_length_cache[word];
+				arr[j] = word_length_cache[word];
 			}
-			this.word_lines_space[i] = arr;
+			word_lines_space[i] = arr;
 		}
 		if (isChinese())
 		{
@@ -435,7 +440,7 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 			{
 				if (cleaned_lines[i].length === 0)
 				{
-					this.word_lines_chinese[i] = empty_line;
+					word_lines_chinese[i] = empty_line;
 					continue;
 				}
 				var arr = [];
@@ -449,26 +454,26 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 						arr[j] = empty_word;
 						continue;
 					}
-					if (this.word_length_cache[word] === void)
+					if (word_length_cache[word] === void)
 					{
 @if(!WORDWRAP_BOLDITALIC_MODIFIER)
-						var lengths = this.getLengthsForString(word, hlf, mlf);
-						this.word_length_cache[word] = %[
-							tagname: this.nextWordTagName,
+						var lengths = getLengthsForString(word, hlf, mlf);
+						word_length_cache[word] = %[
+							tagname: nextWordTagName,
 							text: word
 						];
 @endif
 @if(WORDWRAP_BOLDITALIC_MODIFIER)
-						this.word_length_cache[word] = %[
-							tagname: this.nextWordTagName,
+						word_length_cache[word] = %[
+							tagname: nextWordTagName,
 							text: word,
 						];
 @endif
-						word_lines_needed.add(this.word_length_cache[word]);
+						word_lines_needed.add(word_length_cache[word]);
 					}
-					arr[j] = this.word_length_cache[word];
+					arr[j] = word_length_cache[word];
 				}
-				this.word_lines_chinese[i] = arr;
+				word_lines_chinese[i] = arr;
 			}
 		}
 	}

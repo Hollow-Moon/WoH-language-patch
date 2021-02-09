@@ -1413,7 +1413,12 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		if (storageExt == "") {
 			for (var i = 0, internal_forloop_count = global.image_extensions.count; i < internal_forloop_count; i += 1) {
 				var currentExtension = global.image_extensions[i];
-				if (currentExtension === hdExtension && window.isHd)
+				if (
+					currentExtension === hdExtension
+@if(ENABLE_WEBP_ON_LOW_QUALITY)
+					&& window.isHd
+@endif
+				)
 				{
 					continue;
 				}

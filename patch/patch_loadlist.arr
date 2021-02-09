@@ -56,6 +56,7 @@
 	["layerExImage.dll", , [["Layer.light"]], , "GAME_WOHN"],
 	["saveStruct.dll", , [["Array.save2"]], , "GAME_WOHN"],
 	["json.dll", , [["Scripts.evalJSON"]], , "GAME_WOHN"],
+	["win32dialog.dll", , [["WIN32Dialog"]], true, "GAME_FATE||GAME_FHAT"],
 	["global.k2compat_exist_check_patch_array = load_patches([[mainPatchName, 'k2compat']]);", , "!devMode", , "GAME_FATE||GAME_FHAT"],
 	["global.k2compat_exist_count_validate = global.k2compat_exist_check_patch_array.count > 0;", , "!devMode", , "GAME_FATE||GAME_FHAT"],
 	["global.k2compat_exists = global.Storages.isExistentStorageNoSearchNoNormalize(global.k2compat_exist_check_patch_array[0] + 'k2compat.tjs') ? true : void;", , "(!devMode) && (typeof(global.k2compat_exist_count_validate) === 'Integer') && (global.k2compat_exist_count_validate)", , "GAME_FATE||GAME_FHAT"],

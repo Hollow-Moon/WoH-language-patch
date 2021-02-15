@@ -85,10 +85,11 @@ global.async_image_load = function(storage, key, async, source_layer)
 global.async_image_unload = function(storage)
 {
 	var cached_async_images = global.cached_async_images;
-	if (cached_async_images[storage] !== void && !cached_async_images[storage].loading && cached_async_images[storage].retrieve_count)
+	var cached_async_image = cached_async_images[storage];
+	if (cached_async_image !== void && isvalid(cached_async_image) && !cached_async_image.loading && cached_async_image.retrieve_count)
 	{
-		global.total_size_async_images -= cached_async_images[storage].total_size;
-		invalidate cached_async_images[storage];
+		global.total_size_async_images -= cached_async_image.total_size;
+		invalidate cached_async_image;
 		delete cached_async_images[storage];
 		global.touched_async_images.remove(storage);
 		return true;
@@ -98,6 +99,10 @@ global.async_image_unload = function(storage)
 
 global.async_image_unload_all = function()
 {
+	if (!isvalid(global.cached_async_images) || !isvalid(global.async_image_unload) || !isvalid(global.touched_async_images))
+	{
+		return;
+	}
 	var images = [];
 	images.assign(global.cached_async_images);
 	for (var i = 0, internal_forloop_count = images.count; i < internal_forloop_count; i += 2)
@@ -161,7 +166,7 @@ global.System.clearGraphicCache = function()
 
 global.async_image_garbage_collection_hook = function(level)
 {
-	if (level >= clDeactivate)
+	if (level >= clDeactivate && isvalid(global) && isvalid(global.async_image_unload_all))
 	{
 		global.async_image_unload_all();
 	}

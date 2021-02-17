@@ -28,6 +28,7 @@ global.KAGWindow_patch_savedatalocation_override_original = KAGWindow;
 class KAGWindow_patch_savedatalocation_override_override extends KAGWindow_patch_savedatalocation_override_original
 {
 	var wanted_save_data_location;
+	var save_data_applock;
 	var __saveDataLocation;
 	var disable_system_save_data_write;
 	function get_or_prompt_save_data_location()
@@ -37,7 +38,16 @@ class KAGWindow_patch_savedatalocation_override_override extends KAGWindow_patch
 		{
 			this.readOnlyMode = true;
 		}
+		if (typeof(this.save_data_applock) === "Integer")
+		{
+			if (this.save_data_applock && typeof(global.System.releaseAppLock) === "Object")
+			{
+				global.System.releaseAppLock(this.save_data_applock);
+			}
+			this.save_data_applock = void;
+		}
 		var saveDataLocation;
+		var app_lock;
 		//	セーブディレクトリの位置をユーザーが任意に指定できるようにする
 		var	configconfigfile	= global.paths_base[0]+"config.ksc";
 		var	config;
@@ -95,7 +105,8 @@ class KAGWindow_patch_savedatalocation_override_override extends KAGWindow_patch
 							}
 							if (global.test_write_in_directory(test_paths[i]))
 							{
-								if (System.createAppLock(test_paths[i].replace(/[^A-Za-z]/g, '_')))
+								app_lock = System.createAppLock(test_paths[i].replace(/[^A-Za-z]/g, '_'));
+								if (app_lock)
 								{
 									test_save_data_location = test_paths[i];
 									success = true;
@@ -213,6 +224,10 @@ class KAGWindow_patch_savedatalocation_override_override extends KAGWindow_patch
 				(Dictionary.saveStruct incontextof config)(configconfigfile);
 			}
 		}
+		if (app_lock)
+		{
+			this.save_data_applock = app_lock;
+		}
 		return saveDataLocation;
 	}
 	property saveDataLocation
@@ -260,6 +275,16 @@ class KAGWindow_patch_savedatalocation_override_override extends KAGWindow_patch
 			return;
 		}
 		return super.saveSystemVariables();
+	}
+
+	function onCloseQuery(actual_close)
+	{
+		if (actual_close && this.save_data_applock && typeof(global.System.releaseAppLock) === "Object")
+		{
+			global.System.releaseAppLock(this.save_data_applock);
+			this.save_data_applock = void;
+		}
+		return super.onCloseQuery(...);
 	}
 }
 global.KAGWindow = KAGWindow_patch_savedatalocation_override_override;

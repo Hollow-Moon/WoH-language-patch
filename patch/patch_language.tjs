@@ -277,7 +277,7 @@ global.japanese_patch_name = devMode? "Japanese" : mainPatchName;
 global.japaneseLanguageLoaded = false;
 global.languageSearchPathFile = "LanguageSearchpath.ksc";
 global.languageSearchPath = [];
-global.languagePatchPaths = [];
+global.languagePatchPaths = %[];
 global.languageFilePathCache = %[];
 global.languageFileCache = %[];
 
@@ -315,6 +315,10 @@ function find_file_in_language_paths(filename, language = void, exts = "")
 	{
 		return false;
 	}
+	if (typeof(languagePatchPaths[language]) !== "Object")
+	{
+		languagePatchPaths[language] = [];
+	}
 	if (typeof(languageFileCache[language]) !== "Object")
 	{
 		languageFileCache[language] = %[];
@@ -344,13 +348,14 @@ function find_file_in_language_paths(filename, language = void, exts = "")
 		exts = [""];
 	}
 	var potential_path = false;
+	var languagePatchPaths_language = languagePatchPaths[language];
 	for (var j = 0, internal_forloop_count = exts.count; j < internal_forloop_count; j += 1)
 	{
-		for (var i = 0, internal_forloop_count = languagePatchPaths.count; i < internal_forloop_count; i += 1)
+		for (var i = 0, internal_forloop_count = languagePatchPaths_language.count; i < internal_forloop_count; i += 1)
 		{
 			try
 			{
-				var current_potential_path = ("%s%s%s").sprintf(languagePatchPaths[i], filename, exts[j]);
+				var current_potential_path = ("%s%s%s").sprintf(languagePatchPaths_language[i], filename, exts[j]);
 				if (global.Storages.isExistentStorageNoSearchNoNormalize(current_potential_path))
 				{
 					potential_path = current_potential_path;
@@ -510,51 +515,71 @@ function languagePatchExists(language) {
 
 function load_language_patch(language, kag) {
 	var languagePatchName = languagePatchName(language);
-	var patches_arr = [];
-
-	if (language != japaneseLanguage || !japaneseLanguageLoaded) {
-		patches_arr.add([languagePatchName]);
-		if (devMode)
-		{
-			patches_arr.add([languagePatchName, "", global.typemoon_repo_root + "common/"]);
-		}
-
-		patches_arr.add([languagePatchName, imagesFolderName]);
-		if (typeof(kag) === "Object")
-		{
-@if(HD_MODE)
-			patches_arr.add([languagePatchName, imagesFolderName + hdFolderSuffix]) if kag.isHd;
-@endif
-			patches_arr.add([languagePatchName, censoredHFolderName]) if kag.sflags[hCensoredFlagName];
-			patches_arr.add([languagePatchName, censoredMatureFolderName]) if !kag.sflags[matureFlagName];
-			patches_arr.add([languagePatchName, fullyCensoredFolderName]) if get_fullyCensored(kag);
-			patches_arr.add([languagePatchName, videosFolderName]) if kag.sflags[subbedVideosFlagName];
-		}
-	}
-
-	languagePatchPaths = load_patches(patches_arr, false);
-
-	var language_search_path = find_file_in_language_paths(languageSearchPathFile, language);
-	languageSearchPath = (typeof(language_search_path) === "String") ? Scripts.evalStorage(language_search_path) : [];
-	if (language != japaneseLanguage || !japaneseLanguageLoaded)
+	if (typeof(languagePatchPaths[language]) !== "Object")
 	{
-		for (var i = 0, internal_forloop_count = languageSearchPath.count; i < internal_forloop_count; i += 1)
+		if (!devMode && typeof(global.Storages.mountSquashFs) === "Object")
 		{
-			patches_arr.add([languagePatchName, languageSearchPath[i]]);
+			var basePath = global.paths_base[0];
+			var squashfs_basename = "patch_lang_" + language + ".xp3";
+			if (global.paths_base_dirlist[basePath]["."].find(squashfs_basepath) !== -1)
+			{
+				var squashfs_path = basePath + "/" + squashfs_basename;
+				var squashfs_storage = global.Storages.mountSquashFs(squashfs_path);
+				if (squashfs_storage !== "")
+				{
+					languagePatchPaths[language] = [squashfs_storage + "://./"];
+				}
+			}
+		}
+		if (typeof(languagePatchPaths[language]) !== "Object")
+		{
+			var patches_arr = [];
+
+			if (language != japaneseLanguage || !japaneseLanguageLoaded) {
+				patches_arr.add([languagePatchName]);
+				if (devMode)
+				{
+					patches_arr.add([languagePatchName, "", global.typemoon_repo_root + "common/"]);
+				}
+
+				patches_arr.add([languagePatchName, imagesFolderName]);
+				if (typeof(kag) === "Object")
+				{
+		@if(HD_MODE)
+					patches_arr.add([languagePatchName, imagesFolderName + hdFolderSuffix]) if kag.isHd;
+		@endif
+					patches_arr.add([languagePatchName, censoredHFolderName]) if kag.sflags[hCensoredFlagName];
+					patches_arr.add([languagePatchName, censoredMatureFolderName]) if !kag.sflags[matureFlagName];
+					patches_arr.add([languagePatchName, fullyCensoredFolderName]) if get_fullyCensored(kag);
+					patches_arr.add([languagePatchName, videosFolderName]) if kag.sflags[subbedVideosFlagName];
+				}
+			}
+
+			languagePatchPaths[language] = load_patches(patches_arr, false);
+
+			var language_search_path = find_file_in_language_paths(languageSearchPathFile, language);
+			languageSearchPath = (typeof(language_search_path) === "String") ? Scripts.evalStorage(language_search_path) : [];
+			if (language != japaneseLanguage || !japaneseLanguageLoaded)
+			{
+				for (var i = 0, internal_forloop_count = languageSearchPath.count; i < internal_forloop_count; i += 1)
+				{
+					patches_arr.add([languagePatchName, languageSearchPath[i]]);
+				}
+			}
+
+			if (language === japaneseLanguage && devMode)
+			{
+				load_patches(patches_arr, true);
+				languagePatchPaths[language] = [];
+			}
+			else
+			{
+				languagePatchPaths[language] = load_patches(patches_arr, false);
+			}
+			invalidate patches_arr;
+			delete patches_arr;
 		}
 	}
-
-	if (language === japaneseLanguage && devMode)
-	{
-		load_patches(patches_arr, true);
-		languagePatchPaths = [];
-	}
-	else
-	{
-		languagePatchPaths = load_patches(patches_arr, false);
-	}
-	invalidate patches_arr;
-	delete patches_arr;
 
 	refreshStringWithLanguage(kag, language);
 	loadLanguageDict(language);

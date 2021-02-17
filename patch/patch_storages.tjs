@@ -109,13 +109,15 @@
 		}
 	}
 	var currentpath = Storages.getFullPath("./");
-	if (currentpath.indexOf(arcdelim) === -1)
+	var in_archive = false;
+	if (currentpath.indexOf(arcdelim) === -1 && currentpath.indexOf("file:") !== -1)
 	{
 		paths_base.add(Storages.getFullPath("../"));
 	}
 	else
 	{
 		paths_base.add(System.exePath);
+		in_archive = true;
 	}
 
 	global.paths_base_dirlist = %[];
@@ -202,6 +204,20 @@
 		"patch",
 		"content-data",
 	];
+
+	if (devMode || devMode2)
+	{
+		paths_to_search.add("data");
+	}
+	if (in_archive || (devMode || devMode2))
+	{
+		paths_to_search.add(".");
+	}
+	if (devMode || devMode2)
+	{
+		paths_to_search.add("patch");
+		paths_to_search.add("content-data");
+	}
 
 	for (var i = 0, internal_forloop_count = paths_to_search.count; i < internal_forloop_count && typeof(paths_to_search[i]) === "String"; i += 1)
 	{

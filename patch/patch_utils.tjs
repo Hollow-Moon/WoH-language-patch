@@ -769,6 +769,10 @@ global.full_game_reload = function(extra_args*)
 	global.kag.saveSystemVariables();
 	global.build_exec_command_line(global.System.exeName, args_arr);
 	// Possible savedata mutex race condition?
+	if (typeof(global.kag) === "Object")
+	{
+		global.kag.onCloseQuery(true);
+	}
 	global.System.exit();
 };
 
@@ -899,5 +903,27 @@ function reload_messagelayer_config(window=global.kag)
 		{
 			Debug.message(arg);
 		};
+	}
+}
+
+function parse_iso8601(str)
+{
+	// https://www.myintervals.com/blog/2009/05/20/iso-8601-date-validation-that-doesnt-suck/
+	var re = new RegExp("^([\\+-]?\\d{4}(?!\\d{2}\\b))((-?)((0[1-9]|1[0-2])(\\3([12]\\d|0[1-9]|3[01]))?|W([0-4]\\d|5[0-2])(-?[1-7])?|(00[1-9]|0[1-9]\\d|[12]\\d{2}|3([0-5]\\d|6[1-6])))([T\\s]((([01]\\d|2[0-3])((:?)[0-5]\\d)?|24\\:?00)([\\.,]\\d+(?!:))?)?(\\17[0-5]\\d([\\.,]\\d+)?)?([zZ]|([\\+-])([01]\\d|2[0-3]):?([0-5]\\d)?)?)?)?$");
+	var match = re.match(str);
+	if (match.count > 0)
+	{
+		var date_offset = new Date(1970, 0, 1, 0, 0, 0);
+		var date_offset_seconds_total = date_offset.getTime() \ 1000;
+		var date_offset_seconds =  (date_offset_seconds_total % 60);
+		var date_offset_minutes =  (date_offset_seconds_total \ 60) % 60;
+		var date_offset_hours   = ((date_offset_seconds_total \ 60) \ 60) % 60;
+		var year = match[1] | 0;
+		var month = (match[5] | 0) - 1;
+		var day = match[7] | 0;
+		var hour = (match[15] | 0) - date_offset_hours;
+		var minute = (("" + match[16]).substr(1,3) | 0) - date_offset_minutes;
+		var second = (("" + match[19]).substr(1,3) | 0) - date_offset_seconds;
+		return new Date(year, month, day, hour, minute, second);
 	}
 }

@@ -137,6 +137,7 @@ System.exceptionHandler = function(e)
 
 	//	セーブデータディレクトリの存在チェックと作成
 	var dir;
+	var dir_unarchived;
 	var saveDataLocation;
 	try
 	{
@@ -147,7 +148,7 @@ System.exceptionHandler = function(e)
 	}
 	catch (e)
 	{
-		print_exception(e, "moving the savedata location");
+		print_exception(e, "retrieving the savedata location");
 	}
 	var exception_files = [];
 	if (typeof(saveDataLocation) === "String")
@@ -190,6 +191,16 @@ System.exceptionHandler = function(e)
 			success = false;
 			print_exception(e, "creating the log directory");
 		}
+		dir_unarchived = dir + "unarchived/";
+		if (success) try
+		{
+			Storages.createDirectory(dir_unarchived) if !Storages.isExistentDirectory(dir_unarchived);
+		}
+		catch (e)
+		{
+			success = false;
+			print_exception(e, "creating the unarchived log directory");
+		}
 
 		if (success) try
 		{
@@ -200,16 +211,29 @@ System.exceptionHandler = function(e)
 				{
 					global.System.setArgument("-forcelog", "yes");
 				}
-				global.Debug.logLocation = dir;
+				global.Debug.logLocation = dir_unarchived;
 				Debug.startLogToFile(true);
-				exception_files.add(dir + logname);
+				if (Storages.isExistentStorage(dir_unarchived + logname))
+				{
+					exception_files.add(dir_unarchived + logname);
+				}
+				if (!global.forceLog)
+				{
+					var arcdelim = System.getArgument("-arcdelim");
+					if (!arcdelim)
+					{
+						arcdelim = ">";
+					}
+					// global.Debug.logLocation will be cleared if there is an archive delimiter in the path
+					global.Debug.logLocation = "__this_path_should_be_fake__" + arcdelim;
+				}
 			}
 			else if (logpath !== "" && Storages.isExistentStorage(logpath + logname))
 			{
 				if (typeof(Storages.exportFile) === "Object")
 				{
 					Debug.startLogToFile(true);
-					var log_file = dir + "krkr.console.log";
+					var log_file = dir_unarchived + "krkr.console.log";
 					Storages.exportFile(logpath + logname, log_file);
 					exception_files.add(log_file);
 				}
@@ -230,7 +254,7 @@ System.exceptionHandler = function(e)
 			{
 				if (typeof(Storages.moveFile) === "Object")
 				{
-					var hwexcept_file = dir + "hwexcept.log";
+					var hwexcept_file = dir_unarchived + "hwexcept.log";
 					Storages.moveFile(hwexceptpath + hwexceptname, hwexcept_file);
 					exception_files.add(hwexcept_file);
 				}
@@ -241,10 +265,35 @@ System.exceptionHandler = function(e)
 			print_exception(e, "moving the log file");
 		}
 
+		if (success) try
+		{
+			if (typeof(Debug.getLastLog) === "Object")
+			{
+				var last_log_file = dir_unarchived + "last_log.console.log";
+				var arr = [Debug.getLastLog()];
+				arr.save(last_log_file);
+				exception_files.add(last_log_file);
+			}
+		}
+		catch (e)
+		{
+			print_exception(e, "saving the last lines of the log file");
+		}
+
 		if (success && typeof(global.kag.dataName) === "String")
 		{
+@if(0)
+			// XXX: File handles leak in GCC compiled Kirikiri in "b" mode
+			var last_savedata_mode;
+			if (typeof(global.kag.saveDataMode) === "String")
+			{
+				last_savedata_mode = global.kag.saveDataMode;
+				// Should be more efficient in terms of compression
+				global.kag.saveDataMode = "b";
+			}
+@endif
 			var lastdataname = global.kag.dataName;
-			global.kag.dataName = "excepted/" + now + "/" + lastdataname;
+			global.kag.dataName = dir_unarchived.substring(saveDataLocation.length, dir_unarchived.length - saveDataLocation.length) + lastdataname;
 			try
 			{
 				var ticketfile;
@@ -254,7 +303,7 @@ System.exceptionHandler = function(e)
 				}
 				if (typeof(global.makeTicketFile) === "String")
 				{
-					var ticket_file = dir + ticketfile;
+					var ticket_file = dir_unarchived + ticketfile;
 					global.makeTicketFile(ticket_file);
 					exception_files.add(ticket_file);
 				}
@@ -267,7 +316,7 @@ System.exceptionHandler = function(e)
 			{
 				if (global.kag.storeEnabled)
 				{
-					var save_file = dir + "data.kdt";
+					var save_file = dir_unarchived + "data.kdt";
 					global.kag.saveBookMarkToFile(save_file);
 					exception_files.add(save_file);
 				}
@@ -279,13 +328,19 @@ System.exceptionHandler = function(e)
 			try
 			{
 				global.kag.saveSystemVariables();
-				exception_files.add(dir + "datasc.ksd");
-				exception_files.add(dir + "datasu.ksd");
+				exception_files.add(dir_unarchived + "datasc.ksd");
+				exception_files.add(dir_unarchived + "datasu.ksd");
 			}
 			catch (e)
 			{
 				print_exception(e, "saving the system variable file");
 			}
+@if(0)
+			if (typeof(last_savedata_mode) === "String")
+			{
+				global.kag.saveDataMode = last_savedata_mode;
+			}
+@endif
 			global.kag.dataName = lastdataname;
 		}
 
@@ -297,6 +352,48 @@ System.exceptionHandler = function(e)
 	var ed	= System.eventDisabled;
 	System.eventDisabled	= true;
 	var msg_components = [];
+
+	if (exception_files.count > 0 && typeof(global.Zip) === "Object") try
+	{
+		var exception_archive = dir + "exception.zip";
+		// 1: overwrite
+		var zip = new Zip();
+		var success = true;
+		zip.open(exception_archive, 1);
+		for (var i = 0, internal_forloop_count = exception_files.count; i < internal_forloop_count; i += 1)
+		{
+			var file = exception_files[i];
+			if (!zip.add(file, file.substring(dir_unarchived.length, file.length - dir_unarchived.length), void, void, void))
+			{
+				success = false;
+				break;
+			}
+		}
+		zip.close();
+		if (success)
+		{
+			var delete_unarchived_success = true;
+			for (var i = 0, internal_forloop_count = exception_files.count; i < internal_forloop_count; i += 1)
+			{
+				var file = exception_files[i];
+				// Deletion may not succeed because file handles are leaking
+				if (!Storages.deleteFile(file))
+				{
+					delete_unarchived_success = false;
+				}
+			}
+			if (delete_unarchived_success)
+			{
+				Storages.removeDirectory(dir_unarchived);
+			}
+			exception_files.clear();
+			exception_files.add(exception_archive);
+		}
+	}
+	catch (e)
+	{
+		print_exception(e, "archiving the exception files");
+	}
 
 	if (exception_files.count > 0)
 	{

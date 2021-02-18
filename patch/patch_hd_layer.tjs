@@ -1650,14 +1650,14 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		return super.getLayerAt(x, y, exclude_self, get_disabled);
 	}
 
-	function setSize_patch_hd_layer(width, height)
+	function setSize_patch_hd_layer(width, height, fromloadImages=false)
 	{
 @if(!SCALE_USING_FLOATING_POINT)
 		width = ((width < 0 ? -width : width) & 0x7fffffff) * (width < 0 ? -1 : 1);
 		height = ((height < 0 ? -height : height) & 0x7fffffff) * (height < 0 ? -1 : 1);
 @endif
 
-		updateBg(width, height);
+		updateBg(width, height, fromloadImages);
 
 		originalWidth = transformDiscrete(width, widthScale);
 		originalHeight = transformDiscrete(height, heightScale);
@@ -1742,7 +1742,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 
 	function setSizeToImageSize()
 	{
-		this.setSize_patch_hd_layer(originalImageWidth, originalImageHeight);
+		this.setSize_patch_hd_layer(originalImageWidth, originalImageHeight, true);
 	}
 
 	function upscale()

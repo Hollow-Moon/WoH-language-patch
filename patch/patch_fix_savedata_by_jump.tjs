@@ -40,7 +40,7 @@ class KAGWindow_patch_fix_savedata_by_jump_override extends KAGWindow_patch_fix_
 @endif
 @if(GAME_WOHN)
 			var wanted_scriptno = pcflags.scriptno - 1;
-			if (typeof(pcflags.scriptno) === "Integer" && typeof(pcflags.scripts) === "Object" && pcflags.scripts.count > wanted_scriptno)
+			if (typeof(pcflags.scriptno) === "Integer" && typeof(pcflags.scripts) === "Object" && pcflags.scripts.count > wanted_scriptno && pcflags.scripts[wanted_scriptno] !== "teatime.ks")
 			{
 				scenario = pcflags.scripts[wanted_scriptno];
 			}
@@ -59,7 +59,12 @@ class KAGWindow_patch_fix_savedata_by_jump_override extends KAGWindow_patch_fix_
 			{
 				global.open_scenario_using_scenario_tracker(this, scenario, flowid, flowfile);
 			}
-			this.set_skip(, pcflags.mainConductor.curLabel);
+@if(GAME_WOHN)
+			if (typeof(scenario) !== "String")
+@endif
+			{
+				this.set_skip(, pcflags.mainConductor.curLabel);
+			}
 @if(!GAME_WOHN)
 			this.do_immediate_skip();
 @endif

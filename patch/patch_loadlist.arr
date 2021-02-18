@@ -27,6 +27,7 @@
 	["layerExSave.dll", ,, true],
 	["extrans.dll", ,, true],
 	["addFont.dll", , [["System.addFont"]]],
+	["minizip.dll", , [["Zip"]], true],
 	[,,,,, "initial patch scripts"],
 	"patch_msgmap.tjs",
 	["patch_bytecode.tjs", ,,, "USE_BYTECODE"],

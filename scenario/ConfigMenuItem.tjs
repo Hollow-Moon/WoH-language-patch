@@ -120,7 +120,7 @@ class NumberMenuItemLayer extends MenuItemLayer
 					_image.fillRect(0, 0, (iw + spacing) * digit, ih, 0);
 				lastofs = ofs;
 			}
-			for(var i=0; i<digit; i++)
+			for (var i = 0, internal_forloop_count = digit; i < internal_forloop_count; i += 1)
 			{
 				//dm("v=" + v + " d=" + d + " dec=" + ((d>-1)?v[d]:"") );
 				if(d >= 0 && v[d] != "")
@@ -149,7 +149,7 @@ class NumberMenuItemLayer extends MenuItemLayer
 			//	値を描画
 			var	v	= string (+value);
 			var	l	= (iw + spacing) * (digit - 1), d = v.length - 1;
-			for(var i=0; i<digit; i++)
+			for (var i = 0, internal_forloop_count = digit; i < internal_forloop_count; i += 1)
 			{
 				if(v[d] != "")
 				{
@@ -280,7 +280,7 @@ class PlayTimeMenuItemLayer extends MenuItemLayer
 			var	l	= 0;
 			var	str	= "%2d:%02d.%03d".sprintf(minute, second, millisecond);
 			_image.fillRect(0, 0, _image.width, _image.height, neutralColor) if spacing < 0;
-			for(var i=0; i<digit; i++)
+			for (var i = 0, internal_forloop_count = digit; i < internal_forloop_count; i += 1)
 			{
 				var	chr	= str[i];
 				var	idx	= chr2idx[chr];
@@ -736,7 +736,7 @@ class ScrollSliderMenuItemLayer extends SliderMenuItemLayer
 					var	l	= sdsz, w = vaw - sdsz * 2;
 					var	ws	= _orgimage._imageWidth \ vac;
 					var	ls	= (ws - 1) \ 2;
-					for(var i=0; i<vac; i++)
+					for (var i = 0, internal_forloop_count = vac; i < internal_forloop_count; i += 1)
 					{
 						.stretchCopy(l, 0, w, oh, _orgimage, ls, 0, 1, oh);
 						.copyRect(l+w, 0, _orgimage, ls+1, 0, ws * 2, oh);
@@ -1030,7 +1030,7 @@ class ListMenuItemLayer extends ScrollMenuItemLayer
 		{
 			changed	= true;
 			changes	= %[];
-			for(var i=0; i<nums.count; i++)
+			for (var i = 0, internal_forloop_count = nums.count; i < internal_forloop_count; i += 1)
 				changes[nums[i]]	= 1 if nums[i] !== void;
 			update();
 		}
@@ -1038,7 +1038,7 @@ class ListMenuItemLayer extends ScrollMenuItemLayer
 			changes	= void;
 		else if(changes != void)
 		{
-			for(var i=0; i<nums.count; i++)
+			for (var i = 0, internal_forloop_count = nums.count; i < internal_forloop_count; i += 1)
 				changes[nums[i]]	= 1 if nums[i] !== void;
 		}
 	}
@@ -1136,7 +1136,7 @@ class ListMenuItemLayer extends ScrollMenuItemLayer
 			//	範囲内を描画
 			var	t	= -position + margint;
 			var	h	= lineheight;
-			for(var i=0; i<list.count; i++)
+			for (var i = 0, internal_forloop_count = list.count; i < internal_forloop_count; i += 1)
 			{
 				if(t > height)
 					break;
@@ -1249,7 +1249,7 @@ class FontListMenuItemLayer extends ListMenuItemLayer
 		else
 			list		= font.getList(fsfSameCharSet | fsfNoVertical);
 		var	removes	= [ "FixedSys", "System", "Terminal", "メイリオ", "Meiryo UI", "Arial Unicode MS", ];
-		for(var i=0; i<removes.count; i++)
+		for (var i = 0, internal_forloop_count = removes.count; i < internal_forloop_count; i += 1)
 			list.remove(removes[i]) if removes[i] != void;
 		textcolor	= kag.current.chColor | 0xFF000000;
 	}
@@ -1313,7 +1313,7 @@ class MessageMenuItemLayer extends MessageLayer
 	function finalize()
 	{
 		//dm("MessageItemLayer["+name+"].finalize() act=" + kag.isInAction(this));
-		for( var i=0; i<children.count; i++ )
+		for (var i = 0, internal_forloop_count = children.count; i < internal_forloop_count; i += 1)
 			if( kag.isInAction(children[i]) )
 				kag.removeAction(children[i]);
 
@@ -1587,7 +1587,7 @@ class MessageMenuItemLayer extends MessageLayer
 				v = "";
 			_text.clear();
 			_text_org = v;
-			for(var i=0; i<v.length; i++)
+			for (var i = 0, internal_forloop_count = v.length; i < internal_forloop_count; i += 1)
 			{
 				if(v[i] == "<")
 				{

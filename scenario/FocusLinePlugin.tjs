@@ -121,7 +121,7 @@ class FocusLinePlugin extends AsyncAnimationBasePlugin
 	function clear()
 	{
 		var	keys	= getAllItems();
-		for(var i=0; i<keys.count; i+=2)
+		for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 2)
 			invalidate keys[i+1].imageLayer if keys[i+1].imageLayer != void && keys[i+1].imageLayer isvalid;
 		super.clear();
 	}
@@ -184,7 +184,7 @@ class FocusLinePlugin extends AsyncAnimationBasePlugin
 	{
 		var	layers	= [];
 		var	pgs		= [ "fore", "back" ];
-		for(var i=0; i<pgs.count; i++)
+		for (var i = 0, internal_forloop_count = pgs.count; i < internal_forloop_count; i += 1)
 		{
 			var	layer	= getprop("imageLayer", kag[pgs[i]].base);
 			if(layer != void)
@@ -201,7 +201,7 @@ class FocusLinePlugin extends AsyncAnimationBasePlugin
 	function getLayerFromObject(object)
 	{
 		var	layers	= getLayers();
-		for(var i=0; i<layers.count; i++)
+		for (var i = 0, internal_forloop_count = layers.count; i < internal_forloop_count; i += 1)
 		{
 			if(layers[i] == object)
 				return %[page:pgs[i], plugin:name];
@@ -214,7 +214,7 @@ class FocusLinePlugin extends AsyncAnimationBasePlugin
 		var	dic	= f[name]	= %[];
 		var	pgs	= [ "fore", "back" ];
 		var str = false;
-		for(var i=0; i<pgs.count; i++)
+		for (var i = 0, internal_forloop_count = pgs.count; i < internal_forloop_count; i += 1)
 		{
 			var	il	= getprop("imageLayer", kag[pgs[i]].base);
 			if(il != void && il isvalid)
@@ -234,7 +234,7 @@ class FocusLinePlugin extends AsyncAnimationBasePlugin
 		var	dic	= f[name];
 		if( dic === void ) return;
 		var	pgs	= [ "fore", "back" ];
-		for(var i=0; i<pgs.count; i++)
+		for (var i = 0, internal_forloop_count = pgs.count; i < internal_forloop_count; i += 1)
 		{
 			if(dic[pgs[i]+"_imageLayer"] != void)
 			{
@@ -253,7 +253,7 @@ class FocusLinePlugin extends AsyncAnimationBasePlugin
 			layers	= [ getprop("imageLayer", kag[page].base) ];
 		if(layers != void)
 		{
-			for(var i=0; i<layers.count; i++)
+			for (var i = 0, internal_forloop_count = layers.count; i < internal_forloop_count; i += 1)
 				layers[i].status	= "stop" if layers[i] != void && layers[i] isvalid;
 		}
 	}
@@ -264,7 +264,7 @@ class FocusLinePlugin extends AsyncAnimationBasePlugin
 	function onPauseAction(target=void, forceAll=false)
 	{
 		var	layers	= getLayers();
-		for(var i=0; i<layers.count; i++)
+		for (var i = 0, internal_forloop_count = layers.count; i < internal_forloop_count; i += 1)
 		{
 			if((target == void || target == layers[i] || forceAll) &&
 				(layers[i] != void && layers[i] isvalid && layers[i].status == "play"))
@@ -275,7 +275,7 @@ class FocusLinePlugin extends AsyncAnimationBasePlugin
 	function onResumeAction(target=void)
 	{
 		var	layers	= getLayers();
-		for(var i=0; i<layers.count; i++)
+		for (var i = 0, internal_forloop_count = layers.count; i < internal_forloop_count; i += 1)
 		{
 			if((target == void || target == layers[i]) &&
 				(layers[i] != void && layers[i] isvalid && layers[i].status == "systempause"))
@@ -316,7 +316,7 @@ class FocusLinePlugin extends AsyncAnimationBasePlugin
 	{
 		//	全てのレイヤーに「使っていない」フラグを立てる
 		var	layers	= getLayers();
-		for(var i=0; i<layers.count; i++)
+		for (var i = 0, internal_forloop_count = layers.count; i < internal_forloop_count; i += 1)
 			layers[i].notuse = true if layers[i] != void && layers[i] isvalid;
 	}
 
@@ -325,7 +325,7 @@ class FocusLinePlugin extends AsyncAnimationBasePlugin
 	{
 		//	「使っていない」フラグが立っているレイヤーは
 		var	layers	= getLayers();
-		for(var i=0; i<layers.count; i++)
+		for (var i = 0, internal_forloop_count = layers.count; i < internal_forloop_count; i += 1)
 		{
 			if(layers[i].notuse)
 			{
@@ -339,7 +339,7 @@ class FocusLinePlugin extends AsyncAnimationBasePlugin
 	function clearLayers()
 	{
 		var	layers	= getLayers();
-		for(var i=0; i<layers.count; i++)
+		for (var i = 0, internal_forloop_count = layers.count; i < internal_forloop_count; i += 1)
 		{
 			setprop("imageLayer", void, layers[i].parent);
 			invalidate layers[i];
@@ -960,7 +960,7 @@ class FocusLineObject extends PluginObject
 		var	params	= tags[tag.name];
 		if(params == void)
 			return false;
-		for(var i=0; i<params.count; i++)
+		for (var i = 0, internal_forloop_count = params.count; i < internal_forloop_count; i += 1)
 		{
 			if(tag.get(params[i][0]) != params[i][1])
 				return false;
@@ -1085,7 +1085,7 @@ class FocusLineLayer extends PluginLayer
 			markers.add(new MarkerLayer(window, parent, this, MARKER_FOCUSLINE_CMAX));
 			markers.add(new MarkerLayer(window, parent, this, MARKER_FOCUSLINE_EMIN));
 			markers.add(new MarkerLayer(window, parent, this, MARKER_FOCUSLINE_EMAX));
-			for(var i=0; i<markers.count; i++)
+			for (var i = 0, internal_forloop_count = markers.count; i < internal_forloop_count; i += 1)
 				markers[i].hint	= FocusLineLayer_markers_hints[i];
 		}
 		super.addMarker();

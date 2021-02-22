@@ -28,7 +28,7 @@ Layer.loadImages	= function(storage, colorkey)
 		if(storage == void)
 		{
 			//	パーツ個別ファイル
-			for(var i=1; i<parts.count; i++)
+			for (var i = 1, internal_forloop_count = parts.count; i < internal_forloop_count; i += 1)
 			{
 				img	= parts[0]+"."+parts[i];
 				storage	= getExistImageName(img);
@@ -44,7 +44,7 @@ Layer.loadImages	= function(storage, colorkey)
 		{
 			//	パーツ一括ファイル
 			var	ptags	= layer.loadImages(img);
-			for(var i=1; i<parts.count; i++)
+			for (var i = 1, internal_forloop_count = parts.count; i < internal_forloop_count; i += 1)
 			{
 				var	ptag	= %[];
 				(Dictionary.assign incontextof ptag)(ptags[parts[i]].split("@"));

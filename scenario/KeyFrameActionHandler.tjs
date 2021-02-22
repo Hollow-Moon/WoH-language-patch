@@ -72,7 +72,7 @@ class _KeyFrameAction extends ActionHandler
 		if(propName == "storage" && target instanceof "Layer")
 		{
 			var	list	= [];
-			for(var i=0; i<keys.count; i++)
+			for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 1)
 				addTouchList(list, keys[i][1]);		//	addTouchList は Conductor.tjs で定義
 			System.touchImages(list) if list.count > 0;
 		}
@@ -82,7 +82,7 @@ class _KeyFrameAction extends ActionHandler
 		if( keys.count == 0 ){
 			dm("WARNING: KeyFrameAction keys.count==0");
 		}
-		for(var i=0; i<keys.count; i++)
+		for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 1)
 			dm(i+": "+keys[i][0]+", "+keys[i][1]+", "+keys[i][2]+", "+keys[i][3]);
 @endif
 
@@ -169,7 +169,7 @@ class _KeyFrameAction extends ActionHandler
 @if(DEBUG)
 				dm("KeyFrameAction["+propName+"]: キーフレームがスプライン補間に必要な数(3つ)ありません。線形補間を行います。");
 @endif
-				for(var i=0; i<keys.count; i++)
+				for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 1)
 					keys[i][3]	= "l";	//	線形補間に変更
 				return false;
 			}
@@ -242,11 +242,12 @@ class _KeyFrameAction extends ActionHandler
 //			dm("now = %4d → %4d(%7.3f)".sprintf(ln, now, now/ln));
 			cpfunc	= normarlPosition;	//	既に now の値で加速度を反映させているので、進行度は等速に処理する
 		}
-		for(var i=1; i<keys.count; i++)
+		for (var i = 1, internal_forloop_count = keys.count; i < internal_forloop_count; i += 1)
 		{
 			if(keys[i][0] >= now)
 			{
 				i--;
+				internal_forloop_count -= 1;
 				if(keys[i][3] === void)
 					return keys[i][1];
 				switch(keys[i][3][0])
@@ -336,7 +337,7 @@ class _KeyFrameAction extends ActionHandler
 		dic.keys	= [];
 //		dic.keys.assign(keys);
 		dic.keys.assignStruct(keys);
-		for( var i=0; i<keys.count; i++ )	//加速によらない本来の時間設定で保存する
+		for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 1)	//加速によらない本来の時間設定で保存する
 			dic.keys[i][0] = +orgtimes[i];
 		if(dic.keys[0][0] > 0 )		//	0 以下のフレームが挿入されていなければ、
 			dic.keys.insert(0, keys[0]);	//	計算後の 0 フレームを挿入する
@@ -355,7 +356,7 @@ class _KeyFrameAction extends ActionHandler
 			force = .force if .force !== void;			//無指定時は保存しないで節約
 			keys	= [];
 			keys.assignStruct(.keys) if .keys !== void;
-			for( var i=0; i<keys.count; i++ )
+			for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 1)
 				orgtimes[i] = +keys[i][0];
 			if(.work != void)
 			{
@@ -455,7 +456,7 @@ function parseKeyFrame(keyframe)
 	else
 	{
 		var	k;
-		for(var i=0; i<keyframe.count; i++)
+		for (var i = 0, internal_forloop_count = keyframe.count; i < internal_forloop_count; i += 1)
 			k	+= "(" + keyframe[i].join(",") + ")";
 		dm("keyframe = "+k);
 	}
@@ -480,7 +481,7 @@ function parseKeyFrame(keyframe)
 		throw new Exception("キーフレームの最後が不正です: "+keyframe);
 	keys.add(keyframe.substr(0, keyframe.length - 1));
 
-	for(var i=0; i<keys.count; i++)
+	for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 1)
 	{
 //		keys[i]		= keys[i].split(",");
 		var	key	= keys[i], j = 0;
@@ -512,7 +513,7 @@ function parseKeyFrame(keyframe)
 		keys[i][0]	= +keys[i][0];
 @if(0)
 		var	v	= "";
-		for(var j=0; j<keys[i].count; j++)
+		for (var j = 0, internal_forloop_count = keys[i].count; j < internal_forloop_count; j += 1)
 			v	+= keys[i][j] + ",";
 		dm("keys["+i+"] = "+v);
 @endif
@@ -561,7 +562,7 @@ function MixedKeyFrameActionModule(info, elm,
 	var	props	= typeof elm.props == "String" ? elm.props.split(",",, true) : elm.props;
 	var	keys	= typeof elm.keys == "String" ? parseKeyFrame(elm.keys) : elm.keys;
 /*	dm(elm.keys);
-	for(var i=0; i<keys.count; i++)
+	for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 1)
 		dm(i+": "+keys[i].join(", "));
 */
 //	dm("keys " + getDebugStringFromElm(keys));
@@ -581,7 +582,7 @@ function MixedKeyFrameActionModule(info, elm,
 		dm("MixedKeyFrameActionModule(): elm.init = "+elm.init);
 		var	keys	= [];
 		keys.assign(elm.init);
-		for(var i=0; i<keys.count; i+=2)
+		for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 2)
 			dm("\t\t"+keys[i]+" = "+keys[i+1]);
 	}
 @endif
@@ -602,7 +603,7 @@ function MixedKeyFrameActionModule(info, elm,
 	var	existsrcopacity	= false;	//	srcopacity が存在するかどうか
 @endif
 //	var	middleRates;
-	for(var i=0; i<props.count; i++)
+	for (var i = 0, internal_forloop_count = props.count; i < internal_forloop_count; i += 1)
 	{
 		//	プロパティ
 		var	prop	= props[i];
@@ -626,7 +627,7 @@ function MixedKeyFrameActionModule(info, elm,
 		var	changed	= false;
 		var	accel = 0, interpolate = "n";
 		var	usemiddle	= false;
-		for(var j=0; j<keys.count; j++)
+		for (var j = 0, internal_forloop_count = keys.count; j < internal_forloop_count; j += 1)
 		{
 			var	key	= keys[j];
 			var	val	= key[i+3];
@@ -702,7 +703,7 @@ function MixedKeyFrameActionModule(info, elm,
 
 @if(KEYFRAMEACTION_VERVOSE)
 		var	text;
-		for(var i=0; i<elmkeys.count; i++)
+		for (var i = 0, internal_forloop_count = elmkeys.count; i < internal_forloop_count; i += 1)
 			text	+= elmkeys[i][1]+", ";
 		dm("MixedKeyFrameActionModule "+prop+": "+text+" / init = "+initvalues[prop]);
 @endif
@@ -710,7 +711,7 @@ function MixedKeyFrameActionModule(info, elm,
 		//	補間しないプロパティなら、補間方法を"n"(none)に変える
 		if(nip && prop != "storage")
 		{
-			for(var i=0; i<elmkeys.count; i++)
+			for (var i = 0, internal_forloop_count = elmkeys.count; i < internal_forloop_count; i += 1)
 				elmkeys[i][3]	= "n";
 		}
 
@@ -726,7 +727,7 @@ function MixedKeyFrameActionModule(info, elm,
 			{
 				//	比率を計算する
 				var	st;
-				for(var i=1; i<elmkeys.count; i++)
+				for (var i = 1, internal_forloop_count = elmkeys.count; i < internal_forloop_count; i += 1)
 				{
 					if(elmkeys[i][1] == meansMiddle)
 					{
@@ -745,7 +746,7 @@ function MixedKeyFrameActionModule(info, elm,
 //						dm(st+" - "+ed+"\n\t\ttime = "+sttime+" 〜 "+edtime+" ("+(edtime-sttime)+")\n\t\tvalue= "+stval+" 〜 "+edval+" ("+(edval-stval)+")");
 
 						//	比率の計算を複数回行って、集束させる
-//						for(var cnt=0; cnt<1; cnt++)
+//						for (var cnt = 0, internal_forloop_count = 1; cnt < internal_forloop_count; cnt += 1)
 						{
 							//	最初の区間の最後のフレーム(16ミリ秒)の、値の速度を取得
 							var	pasttime	= +elmkeys[st+1][0] - sttime;
@@ -773,12 +774,12 @@ function MixedKeyFrameActionModule(info, elm,
 
 							//	各区間にふさわしいと思われる時間から、実際の時間と値を計算
 							var	tt	= 0;
-							for(var i=0; i<times.count; i++)
+							for (var i = 0, internal_forloop_count = times.count; i < internal_forloop_count; i += 1)
 								tt	+= times[i];
 							tt	= totaltime / tt;
 							var	ttr		= 1 / totaltime;
 							var	time1	= elmkeys[st][0];
-							for(var i=st; i<ed-1; i++)
+							for (var i = st, internal_forloop_count = ed-1; i < internal_forloop_count; i += 1)
 							{
 								var	time= times[i-st] * tt;
 								time1	+= time;
@@ -797,7 +798,7 @@ function MixedKeyFrameActionModule(info, elm,
 				if(st !== void)
 				{
 					//	中間値指定を削除
-					for(var i=st+1; i<elmkeys.count; i++)
+					for (var i = st+1, internal_forloop_count = elmkeys.count; i < internal_forloop_count; i += 1)
 					{
 						if(elmkeys[i][1] == meansMiddle)
 						{
@@ -816,7 +817,7 @@ function MixedKeyFrameActionModule(info, elm,
 				act	= exchg ? kfeact : kfact;
 			info.addAction(prop, act, elm);
 @if(KEYFRAMEACTION_VERVOSE)
-			var	func	= function(keys) { var text; for(var i=0; i<keys.count; i++) { text += "("+keys[i].join(",")+")"; } return text; };
+			var	func	= function(keys) { var text; for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 1) { text += "("+keys[i].join(",")+")"; } return text; };
 			dm("MixedKeyFrameActionModule: addAction " + prop+" / "+func(elmkeys));
 @endif
 			delete initvalues[prop];	//	値の指定があるプロパティは、初期値のリストから取り除く
@@ -827,7 +828,7 @@ function MixedKeyFrameActionModule(info, elm,
 			{
 				if(srcopacity !== null)
 				{
-					for(var i=0; i<elmkeys.count-1; i++)
+					for (var i = 0, internal_forloop_count = elmkeys.count-1; i < internal_forloop_count; i += 1)
 					{
 						var	delta	= (elmkeys[i+1][1] - elmkeys[i][1]) / elmkeys[i+1][0] * 1000;
 						if(delta <= 32)
@@ -865,7 +866,7 @@ function MixedKeyFrameActionModule(info, elm,
 	//	srcopacity のキーを登録
 	if(srcopacity != void && srcopacity != null)
 	{
-		for(var i=0; i<keys.count-1; i++)
+		for (var i = 0, internal_forloop_count = keys.count-1; i < internal_forloop_count; i += 1)
 			srcopacity[i]	= [ keys[i][0], 255, 0, "n" ] if srcopacity[i] == void;
 		elm.prop	= "srcopacity";
 		elm.keys	= srcopacity;
@@ -984,7 +985,7 @@ function MixedRelativeKeyFrameActionModule(info, elm,
 	initvalues.center	= 512;
 	initvalues.vcenter	= 288;
 
-	for(var i=0; i<props.count; i++)
+	for (var i = 0, internal_forloop_count = props.count; i < internal_forloop_count; i += 1)
 	{
 		//	プロパティ
 		var	prop	= props[i];
@@ -1002,7 +1003,7 @@ function MixedRelativeKeyFrameActionModule(info, elm,
 		var	firsttime;
 		var	changed	= false;
 		var	accel = 0, interpolate = "n";
-		for(var j=0; j<keys.count; j++)
+		for (var j = 0, internal_forloop_count = keys.count; j < internal_forloop_count; j += 1)
 		{
 			var	key		= keys[j];
 			var	val	= key[i+3];
@@ -1061,7 +1062,7 @@ function MixedRelativeKeyFrameActionModule(info, elm,
 		//	補間しないプロパティなら、補間方法を"n"(none)に変える
 		if(nip)
 		{
-			for(var i=0; i<elm.keys.count; i++)
+			for (var i = 0, internal_forloop_count = elm.keys.count; i < internal_forloop_count; i += 1)
 				elm.keys[i][3]	= "n";
 		}
 
@@ -1107,7 +1108,7 @@ class InitializeAction extends AbsoluteActionHandler
 		inits	= elm.inits;
 		force	= elm.force;
 
-		for(var i=0; i<inits.count; i+=2)
+		for (var i = 0, internal_forloop_count = inits.count; i < internal_forloop_count; i += 2)
 		{
 			var	prop	= inits[i];
 			var	val	= inits[i+1];
@@ -1164,7 +1165,7 @@ class KeyFrameExecuteAction extends AbsoluteActionHandler
 		{
 			if(keys[0][0] > 0)
 				keys.insert(0, [ 0 ]);	//	time=0のフレームに、何もしないを入れる
-			for(var i=0; i<keys.count; i++)
+			for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 1)
 				keys[i][0]	*= drawspeed;
 			time	= keys[keys.count - 1][0];	//	トータル時間
 		}
@@ -1173,7 +1174,7 @@ class KeyFrameExecuteAction extends AbsoluteActionHandler
 		if(propName == "storage" && target instanceof "Layer")
 		{
 			var	list	= [];
-			for(var i=0; i<keys.count; i++)
+			for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 1)
 				addTouchList(list, keys[i][1]);		//	addTouchList は Conductor.tjs で定義
 			System.touchImages(list) if list.count > 0;
 		}
@@ -1181,7 +1182,7 @@ class KeyFrameExecuteAction extends AbsoluteActionHandler
 		lastKeyFrameNo	= -1;
 @if(KEYFRAMEACTION_VERVOSE)
 		dm(target+"."+propName+" / current = "+target[propName]) if target != void && typeof target[propName] != "undefined";
-		for(var i=0; i<keys.count; i++)
+		for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 1)
 			dm(i+": "+keys[i].join(", "));
 @endif
 	}
@@ -1254,7 +1255,7 @@ class KeyFrameExecuteAction extends AbsoluteActionHandler
 	function currentFrame(now)
 	{
 //		dm("currentFrame("+now+"), keys.count = "+keys.count);
-		for(var i=1; i<keys.count; i++)
+		for (var i = 1, internal_forloop_count = keys.count; i < internal_forloop_count; i += 1)
 		{
 //			dm(i+": "+keys[i][0]+" >= "+now);
 			if(keys[i][0] >= now)
@@ -1314,7 +1315,7 @@ class KeyFrameTransitionAction extends KeyFrameExecuteAction
 	{
 		super.construct(...);
 		//	keys の整理
-		for(var i=0; i<keys.count; i++)
+		for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 1)
 		{
 			if(keys[i][1] != void)
 			{
@@ -1850,7 +1851,7 @@ class KeyFrameExchangeAction extends KeyFrameExecuteAction
 		if(keys.count > 0)
 		{
 			var	newkeys		= [];
-			for(var i=0; i<keys.count-1; i++)
+			for (var i = 0, internal_forloop_count = keys.count-1; i < internal_forloop_count; i += 1)
 			{
 				var	key	= keys[i];
 				var	next= keys[i+1];
@@ -1863,7 +1864,7 @@ class KeyFrameExchangeAction extends KeyFrameExecuteAction
 			newkeys.add([ last[0],, 0,, last[1] ]);
 			keys	= newkeys;
 @if(KEYFRAMEACTION_VERVOSE)
-			for(var i=0; i<keys.count; i++)
+			for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 1)
 			{
 				var	key	= keys[i];
 				dm(i+" / "+target.name+": "+key[0]+", "+key[1]+", "+key[2]+", "+key[4]+" → "+key[5]+"("+key[6]+")");
@@ -2142,10 +2143,10 @@ function getObjectTJSFromLayerObject(obj)
 	else
 	{
 		var	pgs	= [ "fore", "back" ];
-		for(var i=0; i<pgs.count; i++)
+		for (var i = 0, internal_forloop_count = pgs.count; i < internal_forloop_count; i += 1)
 		{
 			var	ls	= global.kag[pgs[i]].layers;
-			for(var j=0; j<ls.count; j++)
+			for (var j = 0, internal_forloop_count = ls.count; j < internal_forloop_count; j += 1)
 			{
 				if(ls[j] == obj)
 					return "global.kag."+pgs[i]+".layers["+j+"]";

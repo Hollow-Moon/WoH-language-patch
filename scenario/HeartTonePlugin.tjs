@@ -139,7 +139,7 @@ class HeartTonePlugin extends AsyncAnimationBasePlugin
 	function clear()
 	{
 		var	keys	= getAllItems();
-		for(var i=0; i<keys.count; i+=2)
+		for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 2)
 			invalidate keys[i+1].layer if keys[i+1].layer != void;
 		super.clear();
 	}
@@ -197,7 +197,7 @@ class HeartToneImageLayer extends GraphicLayer
 			operateRect(0, 0, parent, 0, 0, w, h, omOpaque, 255);
 			var	layers	= parent == kag.fore.base ? kag.fore.layers : kag.back.layers;
 			var dspLays = kag.forEachGetToPileLayers( parent == kag.fore.base ? "fore" : "back" );
-			for(var i=0; i<layers.count; i++)
+			for (var i = 0, internal_forloop_count = layers.count; i < internal_forloop_count; i += 1)
 			{
 				with(layers[i])
 				{
@@ -207,7 +207,7 @@ class HeartToneImageLayer extends GraphicLayer
 				}
 			}
 			//absolute順にソート
-			for( var i=0; i<dspLays.count-1; i++ )
+			for (var i = 0, internal_forloop_count = dspLays.count-1; i < internal_forloop_count; i += 1)
 			{
 				for( var j=dspLays.count-1; j > i; j-- )
 				{
@@ -215,7 +215,7 @@ class HeartToneImageLayer extends GraphicLayer
 						dspLays[j-1] <-> dspLays[j];
 				}
 			}
-			for( var i=0; i<dspLays.count; i++ )
+			for (var i = 0, internal_forloop_count = dspLays.count; i < internal_forloop_count; i += 1)
 			{
 				with(dspLays[i])
 				{
@@ -236,7 +236,7 @@ class HeartToneImageLayer extends GraphicLayer
 			//_image.saveLayerImage("HT.bmp","bmp24");
 /*			var	vischg	= function(kag, vis)
 			{
-				for(var i=0; i<kag.fore.messages.count; i++)
+				for (var i = 0, internal_forloop_count = kag.fore.messages.count; i < internal_forloop_count; i += 1)
 					kag.fore.messages[i].visible <-> vis[i];
 			};
 			var	vis	= [];
@@ -442,7 +442,7 @@ class HeartToneObject extends PluginObject
 		var	params	= tags[tag.name];
 		if(params == void)
 			return false;
-		for(var i=0; i<params.count; i++)
+		for (var i = 0, internal_forloop_count = params.count; i < internal_forloop_count; i += 1)
 		{
 			if(tag.get(params[i][0]) != params[i][1])
 				return false;

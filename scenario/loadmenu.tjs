@@ -52,7 +52,7 @@ function setLoadMenuTimeline(name2pos, creates, pgno, isclose=false)
 		setCreateProp(target, "mouseUp", (!exist || isclose) ? ";" : "loadByLoadMenu("+i+");release();");
 		setCreateProp(target, "mute", true);	//	効果音を鳴らさない
 	}
-	for(var i=0; i<kag.bookMarkPages; i++)
+	for (var i = 0, internal_forloop_count = kag.bookMarkPages; i < internal_forloop_count; i += 1)
 	{
 		var	target	= creates[name2pos["Loadページ"+(i+1)]];
 		setCreateProp(target, "on", i == pgno);
@@ -134,7 +134,7 @@ function openLoadMenu()
 
 	with(Menu_object)
 	{
-		for(var i=0; i<kag.pageBookMarks; i++)
+		for (var i = 0, internal_forloop_count = kag.pageBookMarks; i < internal_forloop_count; i += 1)
 		{
 			var	tmp	= .find("Loadテキスト"+(i+1), PRIMARY);
 			tmp.noNormalMenuItem= true;		//	メソッドを置き換える等、通常の MenuItemLayer としては使えない
@@ -242,16 +242,16 @@ function doLoadByLoadMenu(no)
 
 	//	メッセージレイヤーを非表示に
 	var pages = ["fore","back"];
-	for( var i=0; i<pages.count; i++ )
+	for (var i = 0, internal_forloop_count = pages.count; i < internal_forloop_count; i += 1)
 	{
 		var pg = kag[pages[i]];
-		for( var j=0; j<pg.messages.count; j++ )
+		for (var j = 0, internal_forloop_count = pg.messages.count; j < internal_forloop_count; j += 1)
 			pg.messages[j].visible = false;
 	}
 
 	//	アイテムが反応しないようにする
 	var	menuitems	= Menu_object.getMenuItems(PRIMARY);
-	for(var i=0; i<menuitems.count; i++)
+	for (var i = 0, internal_forloop_count = menuitems.count; i < internal_forloop_count; i += 1)
 	{
 		if(menuitems[i] == void)
 			continue;

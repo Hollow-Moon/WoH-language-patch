@@ -38,7 +38,7 @@ function TTMsetProps(name2pos, creates)
 	}
 */
 	//	左右のキー移動を無効化
-	for(var i=0; i<creates.count; i++)
+	for (var i = 0, internal_forloop_count = creates.count; i < internal_forloop_count; i += 1)
 	{
 		setCreateProp(creates[i], "leftItems", "");
 		setCreateProp(creates[i], "rightItems", "");
@@ -62,10 +62,10 @@ function openTeatime()
 		.stopAllTransitions();
 		.stopAllActions(true);
 		var pages = ["fore","back"];
-		for( var i=0; i<pages.count; i++ )
+		for (var i = 0, internal_forloop_count = pages.count; i < internal_forloop_count; i += 1)
 		{
 			var pg = kag[pages[i]];
-			for( var j=0; j<pg.messages.count; j++ )
+			for (var j = 0, internal_forloop_count = pg.messages.count; j < internal_forloop_count; j += 1)
 				pg.messages[j].clear();
 		}
 	}
@@ -148,7 +148,7 @@ function TTMonSaveMenuClosed()
 {
 	//	セーブメニューが閉じたら、状態を更新する
 	var	menuitems	= Menu_object.getMenuItems();
-	for(var i=0; i<menuitems.count; i++)
+	for (var i = 0, internal_forloop_count = menuitems.count; i < internal_forloop_count; i += 1)
 		menuitems[i].updateState() if menuitems[i] != void && menuitems[i] isvalid;
 }
 function TTMstopMovie()
@@ -173,10 +173,10 @@ function returnTeatime()
 
 	//	メッセージレイヤーを非表示に
 	var pages = ["fore","back"];
-	for( var i=0; i<pages.count; i++ )
+	for (var i = 0, internal_forloop_count = pages.count; i < internal_forloop_count; i += 1)
 	{
 		var pg = kag[pages[i]];
-		for( var j=0; j<pg.messages.count; j++ )
+		for (var j = 0, internal_forloop_count = pg.messages.count; j < internal_forloop_count; j += 1)
 			pg.messages[j].visible = false;
 	}
 @if(0)

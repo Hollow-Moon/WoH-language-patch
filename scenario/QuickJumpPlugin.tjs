@@ -143,7 +143,7 @@ class QuickJumpPlugin extends KAGPlugin
 			var backup = %[];
 			if( pcflags.historyData !== void )
 			{
-				for( var j=0; j<DEL_HIST_PARAM.count; j++ )
+				for (var j = 0, internal_forloop_count = DEL_HIST_PARAM.count; j < internal_forloop_count; j += 1)
 				{
 					var src = pcflags.historyData[DEL_HIST_PARAM[j]];
 					if( src instanceof "Dictionary" )
@@ -177,7 +177,7 @@ class QuickJumpPlugin extends KAGPlugin
 			//dm("backup: " + getDebugStringFromElm(backup));
 			if( pcflags.historyData !== void )
 			{
-				for( var j=0; j<DEL_HIST_PARAM.count; j++ )
+				for (var j = 0, internal_forloop_count = DEL_HIST_PARAM.count; j < internal_forloop_count; j += 1)
 				{
 					var src = backup[DEL_HIST_PARAM[j]];
 
@@ -340,7 +340,7 @@ class QuickJumpPlugin extends KAGPlugin
 
 					var cur = _lastLabel + "/" + _lastPageName;
 					//dm( "current: " + cur );
-					for( var i=0; i<3; i++ )
+					for (var i = 0, internal_forloop_count = 3; i < internal_forloop_count; i += 1)
 					{
 						if( historyOfStore[i] === void || historyOfStore[i].core === void )
 							continue;
@@ -421,7 +421,7 @@ class QuickJumpPlugin extends KAGPlugin
 /* no compress
 					// 機能追加(通過記録をそのまま保存すると１ページ分だけ違うデータが大量に重複するので
 					// 大きなサイズの配列データを削除する)
-					for( var j=0; j<DEL_HIST_PARAM.count; j++ )
+					for (var j = 0, internal_forloop_count = DEL_HIST_PARAM.count; j < internal_forloop_count; j += 1)
 					{
 						var tgt = dic.core.historyData;
 						if( tgt !== void )
@@ -471,7 +471,7 @@ class QuickJumpPlugin extends KAGPlugin
 						}
 @if(__QUICK_JUMP_VERBOSE__)
 	dm("-".repeat(80));
-	for(var i=0; i<historyOfStore.count; i++)
+	for (var i = 0, internal_forloop_count = historyOfStore.count; i < internal_forloop_count; i += 1)
 		dm(i+": "+historyOfStore[i].core.mainConductor.curLabel+" / "+historyOfStore[i].core.currentLabel);
 	dm("-".repeat(80));
 						dm("pushHistoryOfStore: write " + _lastLabel + "/" + _lastPageName);

@@ -59,7 +59,7 @@ function freeRClickCursor(carry=false)
 {
 	var	list	= Menu_object.getMenuItems(PRIMARY);
 	var	cursor	= void;
-	for(var i=0; i<list.count; i++)
+	for (var i = 0, internal_forloop_count = list.count; i < internal_forloop_count; i += 1)
 	{
 		if(list[i] != void && list[i] isvalid && list[i].name == "ボタンカーソル")
 			list[i].vanish(300);
@@ -90,7 +90,7 @@ function openRClickMenu()
 	//	開くときだけキーボード操作を設定
 	var	keys	= [], right = [ void ];
 	keys.assign(RClickTips);
-	for(var i=0; i<keys.count; i+=2)
+	for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 2)
 	{
 		var	pos	= tdata[0][keys[i]];
 		if(pos === void)
@@ -154,7 +154,7 @@ function closeRClickMenu(forbacklog=false)
 
 	//	カーソルが表示されていたら隠す
 	var	list	= Menu_object.getMenuItems(PRIMARY);
-	for(var i=0; i<list.count; i++)
+	for (var i = 0, internal_forloop_count = list.count; i < internal_forloop_count; i += 1)
 	{
 		if(list[i] != void && list[i] isvalid && list[i].name == "ボタンカーソル") with(list[i])
 		{
@@ -182,7 +182,7 @@ function hideRClickMenu()
 
 	//	すべて隠す
 	var	list	= Menu_object.getMenuItems(PRIMARY);
-	for(var i=0; i<list.count; i++)
+	for (var i = 0, internal_forloop_count = list.count; i < internal_forloop_count; i += 1)
 	{
 		if(list[i] == void)
 			continue;
@@ -217,7 +217,7 @@ function appearRClickMenu()
 
 	//	出現させる
 	var	list	= Menu_object.getMenuItems(PRIMARY);
-	for(var i=0; i<list.count; i++)
+	for (var i = 0, internal_forloop_count = list.count; i < internal_forloop_count; i += 1)
 	{
 		if(list[i] == void || typeof list[i].last_opacity == "undefined")
 			continue;

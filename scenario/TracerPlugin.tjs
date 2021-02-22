@@ -130,7 +130,7 @@ class TracerPlugin extends KAGPlugin
 @if(__USE_SUBWINDOWS__!=0)
 		var	keys	= [];
 		keys.assign(subwindows);
-		for(var i=0; i<keys.count; i+=2)
+		for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 2)
 			invalidate keys[i+1] if keys[i+1] != void;
 @endif
 
@@ -321,7 +321,7 @@ class TracerPlugin extends KAGPlugin
 @if(!__SYNC_ASK__)
 		kag.process("tracerplugin.ks", "*play2");
 @endif
-//		for(var i=0; i<pendings.count; i++) dm(@"pendings[${i}].tagname = ${pendings[i].tagname}");
+//		for (var i = 0, internal_forloop_count = pendings.count; i < internal_forloop_count; i += 1) dm(@"pendings[${i}].tagname = ${pendings[i].tagname}");
 		return true;
 	}
 
@@ -347,7 +347,7 @@ class TracerPlugin extends KAGPlugin
 		if(typeof block.script == "Object")
 		{
 			label = getTrailLabel(block.script[0]);
-			for(var i=0; i<block.script.count; i++)
+			for (var i = 0, internal_forloop_count = block.script.count; i < internal_forloop_count; i += 1)
 				globalflags.trail[getTrailLabel(block.script[i])]++;
 		}
 		else
@@ -359,7 +359,7 @@ class TracerPlugin extends KAGPlugin
 		//	他に既読フラグを立てるべきスクリプトがあれば、立てる
 		if(block.readblocks != void)
 		{
-			for(var i=0; i<block.readblocks.count; i++)
+			for (var i = 0, internal_forloop_count = block.readblocks.count; i < internal_forloop_count; i += 1)
 			{
 				var	b	= chart.getObjectByID(block.readblocks[i]);
 				var	scr	= typeof block.script == "Object" ? block.script[0] : block.script;
@@ -402,7 +402,7 @@ class TracerPlugin extends KAGPlugin
 
 		//	分岐処理を行う
 		var	alternatives	= [];
-		for(var i=0; i<block.routes.count; i++)
+		for (var i = 0, internal_forloop_count = block.routes.count; i < internal_forloop_count; i += 1)
 		{
 			var	route	= block.routes[i];
 
@@ -446,7 +446,7 @@ class TracerPlugin extends KAGPlugin
 				handlers.initmap(block.divergedata);
 
 				//	マップ前景(ボタン)の準備を行う
-				for(var i=0; i<alternatives.count; i++)
+				for (var i = 0, internal_forloop_count = alternatives.count; i < internal_forloop_count; i += 1)
 				{
 					var	alter	= alternatives[i];
 
@@ -477,7 +477,7 @@ class TracerPlugin extends KAGPlugin
 				var	parts	= block.divergedata.parts;
 				if(parts != void)
 				{
-					for(var i=0; i<parts.count; i++)
+					for (var i = 0, internal_forloop_count = parts.count; i < internal_forloop_count; i += 1)
 					{
 						//	マップ上にパーツを追加
 						handlers.addmapparts(parts[i]);
@@ -501,7 +501,7 @@ class TracerPlugin extends KAGPlugin
 				var	handlers	= kag.tagHandlers;
 				if(typeof handlers.addalter != "undefined")
 				{
-					for(var i=0; i<alternatives.count; i++)
+					for (var i = 0, internal_forloop_count = alternatives.count; i < internal_forloop_count; i += 1)
 					{
 						var	alter	= alternatives[i];
 @if(DEBUG)
@@ -549,7 +549,7 @@ class TracerPlugin extends KAGPlugin
 						}
 						var	keys	= [];
 						keys.assign(tmp);
-						for(var i=0; i<keys.count; i+=2)
+						for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 2)
 							dm("addalter: "+keys[i]+" = "+keys[i+1]);
 						handlers.addalter(tmp);
 					}
@@ -562,14 +562,14 @@ class TracerPlugin extends KAGPlugin
 				{
 					//	通常の選択肢表示
 					handlers.r(%[]);	//	空行を挿入
-					for(var i=0; i<alternatives.count; i++)
+					for (var i = 0, internal_forloop_count = alternatives.count; i < internal_forloop_count; i += 1)
 					{
 						//	データの置換
 						var	fmt	= alternative_format;
 //						dm("fmt = \""+fmt+"\"");
 						var	ptn	= [ "<no>", i + 1, "<no_z>", $(#"０" + i + 1), "<text>", alternatives[i][0] ];
 						var	pos, key;
-						for(var i=0; i<ptn.count; i+=2)
+						for (var i = 0, internal_forloop_count = ptn.count; i < internal_forloop_count; i += 2)
 						{
 							key	= ptn[i];
 							pos	= fmt.indexOf(key);
@@ -664,7 +664,7 @@ class TracerPlugin extends KAGPlugin
 @if(__USE_SUBWINDOWS__!=0)
 		var	keys	= [];
 		keys.assign(subwindows);
-		for(var i=0; i<keys.count; i+=2)
+		for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 2)
 			keys[i+1].saveSetting() if keys[i+1] != void && typeof keys[i+1].saveSetting != "undefined";
 @endif
 	}
@@ -675,7 +675,7 @@ class TracerPlugin extends KAGPlugin
 		var	names	= op.split("+-*/=,<>?: ",, true);
 		var	numreg	= /^[0-9\.-]+$/;
 		var	updateglobalflag	= false;
-		for(var i=0; i<names.count; i++)
+		for (var i = 0, internal_forloop_count = names.count; i < internal_forloop_count; i += 1)
 		{
 //			dm(i+": "+names[i]);
 			var	pos	= op.indexOf(names[i]);
@@ -701,7 +701,7 @@ class TracerPlugin extends KAGPlugin
 	{
 		var	names	= cond.split("!()|&<>=",, true);
 		var	numreg	= /^[0-9\.-]+$/;
-		for(var i=0; i<names.count; i++)
+		for (var i = 0, internal_forloop_count = names.count; i < internal_forloop_count; i += 1)
 		{
 			var	name	= names[i];
 			if(numreg.test(name))	//	数値はわざわざ置換しない
@@ -742,7 +742,7 @@ class TracerPlugin extends KAGPlugin
 		//	分岐をチェック
 		var	result;
 		var	short	= 0;
-		for(var i=0; i<block.routes.count; i++)
+		for (var i = 0, internal_forloop_count = block.routes.count; i < internal_forloop_count; i += 1)
 		{
 			var	route	= block.routes[i];
 			if(route.condition == "" || checkcondition(route.condition, dup_f, dup_sf))
@@ -791,7 +791,7 @@ class TracerPlugin extends KAGPlugin
 		var	c	= chart.getObjectByID(cid);
 
 		var	ret	= [];
-		for(var i=0; i<c.children.count; i++)
+		for (var i = 0, internal_forloop_count = c.children.count; i < internal_forloop_count; i += 1)
 		{
 			var	data	= c.children[i];
 			var	item	= %[];
@@ -860,12 +860,12 @@ class TracerPlugin extends KAGPlugin
 		pendings.insert(pi++, %[tagname:"cm"]);							//	メッセージレイヤーを消去
 		if(typeof b.script == "Object")
 		{
-			for(var i=0; i<b.script.count; i++)
+			for (var i = 0, internal_forloop_count = b.script.count; i < internal_forloop_count; i += 1)
 				pendings.insert(pi++, %[tagname:"calltag",storage:b.script[i]]);	//	スクリプトの再生を開始
 		}
 		else
 			pendings.insert(pi++, %[tagname:"calltag",storage:b.script]);	//	スクリプトの再生を開始
-//		for(var i=0; i<pendings.count; i++) dm(@"pendings[${i}].tagname = ${pendings[i].tagname}");
+//		for (var i = 0, internal_forloop_count = pendings.count; i < internal_forloop_count; i += 1) dm(@"pendings[${i}].tagname = ${pendings[i].tagname}");
 		return true;
 	}
 
@@ -901,7 +901,7 @@ class TracerPlugin extends KAGPlugin
 		{
 			data.children	= [];
 			var	cnt	= 0;
-			for(var i=0; i<cates.count; i++)
+			for (var i = 0, internal_forloop_count = cates.count; i < internal_forloop_count; i += 1)
 			{
 				//	カテゴリ
 				if(typeof cates[i] == "Object")
@@ -940,7 +940,7 @@ class TracerPlugin extends KAGPlugin
 //		dm("getBlockFromScript("+script+")");
 		var	keys	= [];
 		keys.assign(chart.objects);
-		for(var i=0; i<keys.count; i+=2) with(keys[i+1])
+		for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 2) with(keys[i+1])
 		{
 			var	block	= keys[i+1];
 			if(block instanceof "NFEBlockData")
@@ -954,7 +954,7 @@ class TracerPlugin extends KAGPlugin
 				else
 				{
 //					dm(.title+": "+.script.join(", "));
-					for(var i=0; i<.script.count; i++)
+					for (var i = 0, internal_forloop_count = .script.count; i < internal_forloop_count; i += 1)
 					{
 						if(.script[i] == script)
 							return block;

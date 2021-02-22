@@ -38,7 +38,7 @@ function setTargetObject(mp)
 		//	指定のリストをクロールする
 		var	crawlfunc	= function(list, chkfunc, mp)
 		{
-			for(var i=0; i<list.count; i++)
+			for (var i = 0, internal_forloop_count = list.count; i < internal_forloop_count; i += 1)
 			{
 				if(chkfunc(list[i], mp))
 					return list[i];
@@ -60,7 +60,7 @@ function setTargetObject(mp)
 				return se;
 			//	ループ再生されてなくて、再生完了率(=現再生時間/総再生時間)のもっとも高い
 			var	finishrate = 0;
-			for(var i=0; i<kag.se.count; i++) with(kag.se[i])
+			for (var i = 0, internal_forloop_count = kag.se.count; i < internal_forloop_count; i += 1) with(kag.se[i])
 			{
 				if(.looping || .status == "unload")
 					continue;
@@ -247,7 +247,7 @@ kt.stopallplugin	= function(mp)
 {
 	var	keys	= [];
 	keys.assign(effectPluginList);
-	for(var i=0; i<keys.count; i+=2)
+	for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 2)
 	{
 		if(typeof keys[i+1].clear != "undefined")
 			keys[i+1].clear();

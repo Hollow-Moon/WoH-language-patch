@@ -223,7 +223,7 @@ class HistoryLayer_override extends HistoryLayer_original
 
 		var notdef = 0;
 
-		for( var i=0; i<obj.count; i++ )
+		for (var i = 0, internal_forloop_count = obj.count; i < internal_forloop_count; i += 1)
 		{
 			if( obj[i] instanceof "Array" )
 			{
@@ -426,7 +426,7 @@ class HistoryLayer_override extends HistoryLayer_original
 				historyFontSize[dataPage]	= [];
 			if(historyFontSize[dataPage][dataPos] == void)
 				historyFontSize[dataPage][dataPos]	= [];
-			for(var i=0; i<ch.length; i++)
+			for (var i = 0, internal_forloop_count = ch.length; i < internal_forloop_count; i += 1)
 				historyFontSize[dataPage][dataPos].add(font.height);
 		}
 
@@ -437,7 +437,7 @@ class HistoryLayer_override extends HistoryLayer_original
 			if(currentRuby[5])
 			{//	一文字ずつに分けて割り付ける
 				var	text= currentRuby[0];
-				for(var i=0; i<text.length; i++)
+				for (var i = 0, internal_forloop_count = text.length; i < internal_forloop_count; i += 1)
 				{
 					var	rb	= [ currentRuby[0][i], dataPos, currentLine.length + i - 1, currentRuby[3] ];
 					rb[5]	= currentRuby[6] if currentRuby[6] != void;
@@ -462,7 +462,7 @@ class HistoryLayer_override extends HistoryLayer_original
 		if( typeof global.quickjump_object != "undefined" )
 		{
 			var heads = quickjump_object.QUICK_HEADS;
-			for( var i=0; i<heads.count; i++ )
+			for (var i = 0, internal_forloop_count = heads.count; i < internal_forloop_count; i += 1)
 				if( lb == heads[i] ) lb = "*page0";
 		}
 
@@ -478,7 +478,7 @@ class HistoryLayer_override extends HistoryLayer_original
 	{
 		// 指定の文字数バックスペース
 		var	cnt	= elm.cnt !== void ? +elm.cnt : 1;
-		for(var i=0; i<cnt; i++)
+		for (var i = 0, internal_forloop_count = cnt; i < internal_forloop_count; i += 1)
 		{
 			if(currentLine.length == 0)
 			{
@@ -568,7 +568,7 @@ class HistoryLayer_override extends HistoryLayer_original
 		if( tmp === void || ! isvalid tmp )
 			contitune;
 
-		for( var j=0; j<tmp.count; j++ )
+		for (var j = 0, internal_forloop_count = tmp.count; j < internal_forloop_count; j += 1)
 		{
 			if( tmp[j] === void || tmp[j] == "" )
 				continue;
@@ -619,7 +619,7 @@ class HistoryLayer_override extends HistoryLayer_original
 		if(verticalView)
 		{
 			var x = width - marginR, y;
-			for(var i = 0; i < repageLine; i++)
+			for (var i = 0, internal_forloop_count = repageLine; i < internal_forloop_count; i += 1)
 			{
 				//	フォントサイズを変更
 				fszs = [] if fszs === void;
@@ -662,7 +662,7 @@ class HistoryLayer_override extends HistoryLayer_original
 			var	right	= width - marginR;
 			var	nrx, nrc, rt, rp;	//	描画を開始する位置、ルビ終了の文字番号、ルビテキスト、ルビ位置
 			var	rcp, rcc;	//	ルビ当て開始位置、ルビ当て文字数
-			for(var l=0; l<repageLine; l++)
+			for (var l = 0, internal_forloop_count = repageLine; l < internal_forloop_count; l += 1)
 			{
 				var	x = marginL;
 				var	line	= page[l];
@@ -672,11 +672,11 @@ class HistoryLayer_override extends HistoryLayer_original
 					fszs = [] if fszs === void;
 					var	fhs	= fszs[l];
 					fhs = [] if fhs === void;
-					for(var c=0; c<fhs.count; c++)
+					for (var c = 0, internal_forloop_count = fhs.count; c < internal_forloop_count; c += 1)
 						maxfh	= fhs[c] if maxfh < fhs[c];
 					var	len	= line.length;
 					var	cw	= 0;
-					for(var c=0; c<len; c++)
+					for (var c = 0, internal_forloop_count = len; c < internal_forloop_count; c += 1)
 					{
 						font.height	= ( fhs[c] !== void ) ? fhs[c] : fontHeight;
 						cw	= font.getTextWidth(line[c]);
@@ -755,7 +755,7 @@ class HistoryLayer_override extends HistoryLayer_original
 		//整合処理対象項目のデフォルト値
 		var defs = ["",void,0];
 
-		for( var i=0; i<tgts.count; i++ )
+		for (var i = 0, internal_forloop_count = tgts.count; i < internal_forloop_count; i += 1)
 		{
 			var tgt = tgts[i];
 			var def = defs[i];
@@ -789,7 +789,7 @@ class HistoryLayer_override extends HistoryLayer_original
 		var	lines	= data[page];
 		if(lines != void)
 		{
-			for(var i=0; i<lines.count; i++)
+			for (var i = 0, internal_forloop_count = lines.count; i < internal_forloop_count; i += 1)
 				dm(lines[i]);
 		}
 	}

@@ -190,7 +190,7 @@ class AlternativePlugin extends KAGPlugin
 			var	mw	= 0;	//	最も大きな幅
 			var	tth	= 0;	//	ボタンのトータルの高さ
 			var	lfregexp	= new RegExp(lineFeedString.replace(/\\/, "\\\\"));
-			for(var i=0; i<alters.count; i++)
+			for (var i = 0, internal_forloop_count = alters.count; i < internal_forloop_count; i += 1)
 			{
 				with(alters[i])
 				{
@@ -203,7 +203,7 @@ class AlternativePlugin extends KAGPlugin
 					{
 						var	tw;
 						ths[i]	= 0;
-						for(var j=0; j<.text.count; j++)
+						for (var j = 0, internal_forloop_count = .text.count; j < internal_forloop_count; j += 1)
 						{
 							var cur_text = __(.text[j]);
 							tw	= base.font.getTextWidth(getPrefix(i) + cur_text);
@@ -232,7 +232,7 @@ class AlternativePlugin extends KAGPlugin
 			var	fw, fh;
 			if(ths.count > 0)
 			{
-				for(var i=0; i<frameTypes.count; i++)
+				for (var i = 0, internal_forloop_count = frameTypes.count; i < internal_forloop_count; i += 1)
 				{
 					with(frames[i] = new global.Layer(kag, base))
 					{
@@ -255,7 +255,7 @@ class AlternativePlugin extends KAGPlugin
 			var	l		= (.width - bw) \ 2;	//	表示位置(文章の幅が異なっても、ボタンは最大サイズに合わせる)
 //			var	h		= tth + (ee + fih) * 2 * alters.count;
 			var	h	= 0;
-			for(var i=0; i<ths.count; i++)
+			for (var i = 0, internal_forloop_count = ths.count; i < internal_forloop_count; i += 1)
 			{
 				if(ths[i] + (ee << 1) < fh)
 					h	+= fh;
@@ -272,7 +272,7 @@ class AlternativePlugin extends KAGPlugin
 			var stype	= stNearest;
 			var	keys	= [ "storage", "target", "exp", "enabled", "onenter", "onleave" ];
 			var	btn;
-			for(var i=0; i<alters.count; i++)
+			for (var i = 0, internal_forloop_count = alters.count; i < internal_forloop_count; i += 1)
 			{
 				var	alter	= alters[i];
 				var	prfx	= getPrefix(i);
@@ -297,7 +297,7 @@ class AlternativePlugin extends KAGPlugin
 //						var	tp	= (mw - tws[i]) \ 2 + fiw;
 						var	tp	= fiw;
 						var	tw	= tws[i];
-						for(var i=0; i<frameTypes.count; i++)
+						for (var i = 0, internal_forloop_count = frameTypes.count; i < internal_forloop_count; i += 1)
 						{
 							if(fh > th)
 							{//	高さが十分あるので、左右方向だけ拡張する
@@ -367,7 +367,7 @@ class AlternativePlugin extends KAGPlugin
 								}
 								if(typeof text == "Object")
 								{
-									for(var i=0; i<text.count; i++)
+									for (var i = 0, internal_forloop_count = text.count; i < internal_forloop_count; i += 1)
 									{
 										var cur_text = __(text[i]);
 	//									.drawText(l, t, prfx+cur_text, textColor, 255, true, edgeEmphasis, edgeColor, ee, 0, 0);
@@ -411,7 +411,7 @@ class AlternativePlugin extends KAGPlugin
 						.visible	= true;
 					}
 				}
-				for(var i=0; i<keys.count; i++)
+				for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 1)
 					btn[keys[i]]	= alter[keys[i]];
 				if(!btn.enabled)
 					btn.hint	= "この選択肢は選べません。";
@@ -435,7 +435,7 @@ class AlternativePlugin extends KAGPlugin
 						alter.optalign	= defaultoptalign if alter.optalign == void;
 						var	aligns	= alter.optalign.split("-");
 						var	l, t;
-						for(var i=0; i<aligns.count; i++)
+						for (var i = 0, internal_forloop_count = aligns.count; i < internal_forloop_count; i += 1)
 						{
 							switch(aligns[i])
 							{
@@ -459,7 +459,7 @@ class AlternativePlugin extends KAGPlugin
 			}
 			.visible	= true;
 
-			for(var i=0; i<frames.count; i++)
+			for (var i = 0, internal_forloop_count = frames.count; i < internal_forloop_count; i += 1)
 				invalidate frames[i];
 			invalidate frames;
 		}
@@ -471,7 +471,7 @@ class AlternativePlugin extends KAGPlugin
 		enabled	= e;
 		if(buttons != void)
 		{
-			for(var i=0; i<buttons.count; i++)
+			for (var i = 0, internal_forloop_count = buttons.count; i < internal_forloop_count; i += 1)
 			{
 				with(buttons[i])
 				{

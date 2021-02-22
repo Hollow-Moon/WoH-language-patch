@@ -130,7 +130,7 @@ class TextHolder
 						//	レイヤーサイズを計算
 						var w, h, fw, fh;
 						var fws = [], fhs = [];
-						for(var i=0; i<name.length; i++)
+						for (var i = 0, internal_forloop_count = name.length; i < internal_forloop_count; i += 1)
 						{
 							fw = .font.getTextWidth(name[i]);
 							fh = .font.getTextHeight(name[i]);
@@ -147,7 +147,7 @@ class TextHolder
 						//	文字を描画
 						.fillRect(0, 0, .width, .height, 0x00000000);	//	背景透明に。
 						var l, t = mt;
-						for(var i=0; i<name.length; i++)
+						for (var i = 0, internal_forloop_count = name.length; i < internal_forloop_count; i += 1)
 						{
 							if(plugin.rotatechar.indexOf(name[i]) >= 0)
 							{
@@ -341,7 +341,7 @@ class StaffRollPlugin extends KAGPlugin
 	var	pools	= [];
 	function getlayer(window, parent)
 	{
-		for(var i=0; i<pools.count; i++)
+		for (var i = 0, internal_forloop_count = pools.count; i < internal_forloop_count; i += 1)
 		{
 			if(pools[i].parent == parent)
 			{
@@ -591,12 +591,12 @@ class StaffRollPlugin extends KAGPlugin
 		moveTime = time;
 		var spd = height / time;
 
-		for(var i = 0; i < foreLayers.count; i ++)
+		for (var i = 0, internal_forloop_count = foreLayers.count; i < internal_forloop_count; i += 1)
 		{
 			foreLayers[i].visible = true;
 			backLayers[i].visible = true;
 		}
-		for(var i = 0; i < foreStationaryLayers.count; i++)
+		for (var i = 0, internal_forloop_count = foreStationaryLayers.count; i < internal_forloop_count; i += 1)
 		{
 			with(foreStationaryLayers[i])
 				.len	+= int(.disappeartime * spd);	//	レイヤーが表示している間に移動する距離
@@ -621,15 +621,15 @@ class StaffRollPlugin extends KAGPlugin
 		// 停止とクリーンアップ
 		stopMove();
 
-		for(var i = 0; i < foreLayers.count; i ++)
+		for (var i = 0, internal_forloop_count = foreLayers.count; i < internal_forloop_count; i += 1)
 			invalidate foreLayers[i];
-		for(var i = 0; i < backLayers.count; i ++)
+		for (var i = 0, internal_forloop_count = backLayers.count; i < internal_forloop_count; i += 1)
 			invalidate backLayers[i];
-		for(var i = 0; i < foreStationaryLayers.count; i++)
+		for (var i = 0, internal_forloop_count = foreStationaryLayers.count; i < internal_forloop_count; i += 1)
 			invalidate foreStationaryLayers[i];
-		for(var i = 0; i < backStationaryLayers.count; i++)
+		for (var i = 0, internal_forloop_count = backStationaryLayers.count; i < internal_forloop_count; i += 1)
 			invalidate backStationaryLayers[i];
-		for(var i=0; i<pools.count; i++)
+		for (var i = 0, internal_forloop_count = pools.count; i < internal_forloop_count; i += 1)
 			invalidate pools[i] if pools[i] != void;
 
 		foreLayers.count = 0;
@@ -658,9 +658,9 @@ class StaffRollPlugin extends KAGPlugin
 			sls	= backStationaryLayers;
 		}
 
-		for(var i=0; i<ls.count; i++)
+		for (var i = 0, internal_forloop_count = ls.count; i < internal_forloop_count; i += 1)
 			invalidate ls[i];
-		for(var i=0; i<sls.count; i++)
+		for (var i = 0, internal_forloop_count = sls.count; i < internal_forloop_count; i += 1)
 			invalidate sls[i];
 		ls.count	= 0;
 		sls.count	= 0;
@@ -701,7 +701,7 @@ class StaffRollPlugin extends KAGPlugin
 		var b = backLayers;
 		if(!vertical)
 		{
-			for(var i = 0; i < laycount; i++)
+			for (var i = 0, internal_forloop_count = laycount; i < internal_forloop_count; i += 1)
 			{
 				var fl = f[i], bl = b[i];
 				fl.top = bl.top = fl.orgY - current;
@@ -709,7 +709,7 @@ class StaffRollPlugin extends KAGPlugin
 		}
 		else
 		{
-			for(var i = 0; i < laycount; i++)
+			for (var i = 0, internal_forloop_count = laycount; i < internal_forloop_count; i += 1)
 			{
 				var fl = f[i], bl = b[i];
 				fl.left = bl.left = fl.orgX + current;

@@ -14,7 +14,7 @@ var	bitmapFonts	= [
 	"ゴシックE",	%[26=>"筑紫ゴシックe",	24=>"筑紫ゴシックe24",	12=>"筑紫ゴシックe_rb" ]
 ];
 var	loadedBitmapFonts	= %[];
-for(var i=0; i<bitmapFonts.count; i+=2)
+for (var i = 0, internal_forloop_count = bitmapFonts.count; i < internal_forloop_count; i += 2)
 	loadedBitmapFonts[bitmapFonts[i]]	= bitmapFonts[i+1];
 global.all_bitmap_fonts = [];
 
@@ -98,19 +98,19 @@ Layer.getFontList	= function(opt)
 		"Roman",
 		"MS Serif"
 	];
-	for (var i = 0; i < list.count; i += 1)
+	for (var i = 0, internal_forloop_count = list.count; i < internal_forloop_count; i += 1)
 	{
 		if (list[i].length > 1 && list[i][0] === "@")
 		{
 			removes.add(list[i]);
 		}
 	}
-	for (var i = 0; i < removes.count; i += 1)
+	for (var i = 0, internal_forloop_count = removes.count; i < internal_forloop_count; i += 1)
 	{
 		list.remove(removes[i]);
 	}
 	removes.clear();
-	for (var i = 0; i < list.count; i += 1)
+	for (var i = 0, internal_forloop_count = list.count; i < internal_forloop_count; i += 1)
 	{
 		try
 		{
@@ -125,7 +125,7 @@ Layer.getFontList	= function(opt)
 			throw new Exception(("An error occurred while attempting to enumerate the font \"%s\".").sprintf(list[i]));
 		}
 	}
-	for (var i = 0; i < removes.count; i += 1)
+	for (var i = 0, internal_forloop_count = removes.count; i < internal_forloop_count; i += 1)
 	{
 		list.remove(removes[i]);
 	}
@@ -133,14 +133,14 @@ Layer.getFontList	= function(opt)
 	delete removes;
 
 	var prerendered_fonts_added = 0;
-	for(var i=0; i<bitmapFonts.count; i+=2)
+	for (var i = 0, internal_forloop_count = bitmapFonts.count; i < internal_forloop_count; i += 2)
 	{
 		var	fc	= bitmapFonts[i];
 //		list.add(fc);
 		var	keys	= [];
 		keys.assign(bitmapFonts[i+1]);
 		var has_rendered = false;
-		for(var j=0; j<keys.count; j+=2)
+		for (var j = 0, internal_forloop_count = keys.count; j < internal_forloop_count; j += 2)
 		{
 			var	fh	= keys[i];
 			var	st	= keys[i+1]+fontFileExt;

@@ -24,7 +24,7 @@ function setCGMenuTimeline(name2pos, creates, actions, novisible=false)
 {
 	var	ignore	= %["cgページスライダー" => 1];
 	tf.thumbnailPos	= [] if tf.thumbnailPos == void;
-	for(var i=0; i<cgMaxCount; i++)
+	for (var i = 0, internal_forloop_count = cgMaxCount; i < internal_forloop_count; i += 1)
 	{
 		var	name	= "cgサムネイル"+(i+1);
 		var	target	= creates[name2pos[name]];
@@ -123,7 +123,7 @@ function setCGMenuTimeline(name2pos, creates, actions, novisible=false)
 	//	閉じるときはopacityを変化させない(トランジションするので)
 	if(novisible)
 	{
-		for(var i=0; i<actions.count; i++)
+		for (var i = 0, internal_forloop_count = actions.count; i < internal_forloop_count; i += 1)
 			removeActionData(actions[i], "opacity") if actions[i] != void;
 	}
 
@@ -395,21 +395,21 @@ function openCGMenu(page="fore")
 			[ "sp1", "wik_fin", [ "nz1", "nz2", "nz3", "nz4", "nz5", "nz6" ] ]
 		];
 		var	cut	= 0, no = 0;
-		for(var i=0; i<sf.chapterInt; i++)
+		for (var i = 0, internal_forloop_count = sf.chapterInt; i < internal_forloop_count; i += 1)
 		{
 			var	cno	= i+1;
 //			dm("chapter."+cno+": "+scs[cno], subchapterFlags[i].count);
 			if(scs[cno] != void)
 			{
 				var	scf	= subchapterFlags[i];
-				for(var i=1; i<scf.count; i++)
+				for (var i = 1, internal_forloop_count = scf.count; i < internal_forloop_count; i += 1)
 				{
 					//	全て既読かどうか
 					var	f	= scf[i];
 					var	readed	= true;
 					if(f instanceof "Array")
 					{
-						for(var i=0; i<f.count; i++)
+						for (var i = 0, internal_forloop_count = f.count; i < internal_forloop_count; i += 1)
 							readed	&= sf.trail[f[i]] > 0;
 					}
 					else
@@ -424,14 +424,14 @@ function openCGMenu(page="fore")
 						if(delcnt > 0)
 						{
 //							dm("del: "+st+"〜"+cgChapters[cno+1]+" / cnt = "+delcnt);
-							for(var j=st; j<cgChapters[cno+1]; j++)
+							for (var j = st, internal_forloop_count = cgChapters[cno+1]; j < internal_forloop_count; j += 1)
 								page.erase(st);
-							for(var i=cno+1; i<cgChapters.count; i++)
+							for (var i = cno+1, internal_forloop_count = cgChapters.count; i < internal_forloop_count; i += 1)
 							{
 								cgChapters[i]	-= delcnt;
 								if(scs[i] != void)
 								{
-									for(var j=1; j<scs[i].count; j++)
+									for (var j = 1, internal_forloop_count = scs[i].count; j < internal_forloop_count; j += 1)
 										scs[i][j]	-= delcnt;
 								}
 							}
@@ -443,7 +443,7 @@ function openCGMenu(page="fore")
 //			dm(cno+1, cgChapters[cno+1]);
 			cut	= cgChapters[cno+1];
 		}
-//		for(var i=1; i<cgChapters.count; i++)	dm(i+": "+cgChapters[i]);
+//		for (var i = 1, internal_forloop_count = cgChapters.count; i < internal_forloop_count; i += 1)	dm(i+": "+cgChapters[i]);
 		//	未表示も出さないので、削除
 //		dm("cut = "+cut, "page.count = "+page.count);
 		if(cut != void)
@@ -500,13 +500,13 @@ function openCGMenu(page="fore")
 			[ "cg背景ボタン", , curbtn, backbtn, none ],
 			[ "cgback", bgbtn, dwnbtn, , none ],
 		];
-		for(var i=0; i<diriteminfo.count; i++)
+		for (var i = 0, internal_forloop_count = diriteminfo.count; i < internal_forloop_count; i += 1)
 		{
 			var	info	= diriteminfo[i];
 			if(info == void)
 				continue;
 			var	trg		= creates[name2pos[info[0]]];
-			for(var i=1; i<5; i++)
+			for (var i = 1, internal_forloop_count = 5; i < internal_forloop_count; i += 1)
 				setCreateProp(trg, dirname[i-1], info[i]) if info[i] != void;
 		}
 
@@ -550,7 +550,7 @@ function closeCGMenu()
 		invalidate tf.cg_cascadeimage;
 		delete tf.cg_cascadeimage;
 	}
-	for(var i=0; i<cgImageLayers.count; i++)
+	for (var i = 0, internal_forloop_count = cgImageLayers.count; i < internal_forloop_count; i += 1)
 	{
 		invalidate cgImageLayers[i] if cgImageLayers[i] != void;
 		cgImageLayers[i]	= void;
@@ -615,7 +615,7 @@ function adjustCGCursor(no, page="fore", dofocus=true)
 	{
 		var	items	= Menu_object.getMenuItems(page);
 		var	regexp	= /^cgサムネイル([0-9]+)$/;
-		for(var i=0; i<items.count; i++)
+		for (var i = 0, internal_forloop_count = items.count; i < internal_forloop_count; i += 1)
 		{
 			var	item	= items[i];
 			if(item == void || !(item isvalid))
@@ -819,7 +819,7 @@ function CGupdateCurrentPage(animate=false, page="fore")
 	mv	*= -1 if animate < 0;
 
 	Menu_object.finishVanish(page);	//	消える途中のサムネイルが存在したら、即座に消す
-	for(var i=0; i<cgMaxCount; i++)
+	for (var i = 0, internal_forloop_count = cgMaxCount; i < internal_forloop_count; i += 1)
 	{
 		var	no	= i + pgtopno, cno, dno;
 		if(cgDiffMode)
@@ -900,9 +900,9 @@ function CGscrollLine()
 	//	既存のサムネイルを処理
 	var	mvc	= scrcnt * cgColCount;
 	var	items	= [];
-	for(var i=0; i<cgMaxCount; i++)
+	for (var i = 0, internal_forloop_count = cgMaxCount; i < internal_forloop_count; i += 1)
 		items[i]	= Menu_object.find("cgサムネイル"+(i+1));
-	for(var i=0; i<cgMaxCount; i++)
+	for (var i = 0, internal_forloop_count = cgMaxCount; i < internal_forloop_count; i += 1)
 	{
 		var	item	= items[i];
 		if(item != void) with(item)
@@ -935,7 +935,7 @@ function CGscrollLine()
 	else
 		st	= 0, ed	= -mvc;
 	var	cno, dno;
-	for(var i=st; i<ed; i++)
+	for (var i = st, internal_forloop_count = ed; i < internal_forloop_count; i += 1)
 	{
 		//	新しいサムネイルを出現させる
 //		dm("new: "+i);
@@ -976,7 +976,7 @@ function CGscrollLine()
 	return slider == void || !slider.focused;
 
 /*	var	items	= Menu_object.getMenuItems();
-	for(var i=0; i<items.count; i++)
+	for (var i = 0, internal_forloop_count = items.count; i < internal_forloop_count; i += 1)
 		dm(i+": "+items[i].name) if items[i] != void && items[i].name.substr(0, 7) == "cgサムネイル";
 	dm("-".repeat(80));
 */}
@@ -1074,7 +1074,7 @@ function openCGImage(no, diffno=0, nolauncher=false)
 		return;
 	tf.cg_image_opened	= true;
 	tf.cg_nolauncher	= nolauncher;
-	for(var i=0; i<2; i++)
+	for (var i = 0, internal_forloop_count = 2; i < internal_forloop_count; i += 1)
 		cgImageLayers[i]	= new CGImageLayer(kag, kag.back.base) if cgImageLayers[i] == void;
 
 	//	表示初回カーソルの状態を戻す
@@ -1118,7 +1118,7 @@ function getCGStorage(no, diffno, groupdisplayed=false)
 		{
 			if(groupdisplayed && !isDisplayedPicture(data[0]))
 			{//	差分の中で、何れか既に表示されたものを出す場合
-				for(var i=3; i<data.count; i++)
+				for (var i = 3, internal_forloop_count = data.count; i < internal_forloop_count; i += 1)
 				{
 					if(isDisplayedPicture(data[i]))
 						return data[i];
@@ -1359,7 +1359,7 @@ class CGImageLayer extends Layer
 @endif
 			var	loaded	= false;
 @if(0)
-			for(var i=0; i<exts.count; i++)
+			for (var i = 0, internal_forloop_count = exts.count; i < internal_forloop_count; i += 1)
 @endif
 			{
 				if(Storages.isExistentImage(storage))
@@ -1633,7 +1633,7 @@ function CGMenuThumbnailMouseUp(thumb, x, y)
 		{
 			dispDiffCGPage(thumb.cno);	//	差分リストを開く
 			var	data	= cgCurrentPage[thumb.cno];
-			for(var i=3; i<data.count; i++)
+			for (var i = 3, internal_forloop_count = data.count; i < internal_forloop_count; i += 1)
 			{
 				if(isDisplayedPicture(data[i]))
 				{

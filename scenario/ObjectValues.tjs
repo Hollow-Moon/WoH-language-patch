@@ -26,10 +26,10 @@ function createDefaultValuesFunc(keys, init, noblank)
 	var	dic	= %[];
 @if(IS_TLE)
 	dic["blank"]	= noblank ? false : true;
-	for(var i=1; i<global.KeyDataBasicKeys.count; i++)
+	for (var i = 1, internal_forloop_count = global.KeyDataBasicKeys.count; i < internal_forloop_count; i += 1)
 		dic[KeyDataBasicKeys[i]]	= KeyDataBasicInit[i];
 @endif
-	for(var i=0; i<keys.count; i++)
+	for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 1)
 		dic[keys[i]]	= init[i];
 	return dic;
 }
@@ -44,7 +44,7 @@ function cloneObjectSettings(src, keys)
 		newset.assignStruct(src);
 		if(keys != void)
 		{
-			for(var i=0; i<keys.count; i++)
+			for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 1)
 				newset.add(keys[i]);
 		}
 	}
@@ -56,7 +56,7 @@ function cloneObjectSettings(src, keys)
 		{
 			var	values	= [];
 			values.assign(keys);
-			for(var i=0; i<values.count; i+=2)
+			for (var i = 0, internal_forloop_count = values.count; i < internal_forloop_count; i += 2)
 				newset[values[i]]	= values[i+1];
 		}
 	}

@@ -68,7 +68,7 @@ function __isLoadedOrNewScript(script)
 		else
 		{
 			on	= true;
-			for(var i=0; i<flag.count; i++)
+			for (var i = 0, internal_forloop_count = flag.count; i < internal_forloop_count; i += 1)
 				on	&= sf[flag[i]] != 0;
 		}
 //		dm(script+": "+(typeof flag == "String" ? flag : flag.join(" && "))+" = "+on);
@@ -87,7 +87,7 @@ function __isLoadedOrNewScript(script)
 function __isReadedScript(bookno, sceneno)
 {
 	var	list	= archive_list[bookno][1][sceneno];
-	for(var i=0; i<list.count; i++)
+	for (var i = 0, internal_forloop_count = list.count; i < internal_forloop_count; i += 1)
 	{
 		var	script	= Storages.chopStorageExt(list[i]);
 		if(sf.trail[script] < 1)// && sf.alreadyNotified[script] == 1)
@@ -100,7 +100,7 @@ function AMisLoadedScript(script)
 	if(sf == void || sf.trail == void || script == void)
 		return false;
 	var	readed	= 0;
-	for(var i=0; i<script.count; i++)
+	for (var i = 0, internal_forloop_count = script.count; i < internal_forloop_count; i += 1)
 	{
 		if(!__isLoadedOrNewScript(script[i]))
 		{
@@ -135,12 +135,12 @@ function getArchiveList(listall=false)
 	{//	カテゴリーからリストを取得する
 		global.archive_list	= [];
 		var	children	= .categories.children;
-		for(var i=0; i<children.count; i++)
+		for (var i = 0, internal_forloop_count = children.count; i < internal_forloop_count; i += 1)
 		{
 			var	cate	= children[i];
 			var	list	= cate.children;
 			var	tlist = [], fnlist = [];
-			for(var i=0; i<list.count; i++)
+			for (var i = 0, internal_forloop_count = list.count; i < internal_forloop_count; i += 1)
 			{
 				var	block	= .objects[list[i]];
 				block.script= [ block.script ] if typeof block.script != "Object";
@@ -162,7 +162,7 @@ function setArchiveMenuTimeline(name2pos, creates, isclose=false)
 	//	ついでにボタンをおした時の動作(ウィンドウを開く)を設定
 	var	vis	= [];
 	var	ignore	= %[];
-	for(var i=0; i<archiveBookCount; i++)
+	for (var i = 0, internal_forloop_count = archiveBookCount; i < internal_forloop_count; i += 1)
 	{
 		var	v = vis[i] = AMisLoadedScenarios(i);
 		if(v && i != 1)
@@ -180,14 +180,14 @@ function setArchiveMenuTimeline(name2pos, creates, isclose=false)
 	}
 
 	//	次の本が表示されていない本だけ表示する
-	for(var i=0; i<17; i++)
+	for (var i = 0, internal_forloop_count = 17; i < internal_forloop_count; i += 1)
 	{
 		if(!vis[i] || vis[i+1] || i == 1)
 			ignore["本影"+(i+1)]	= true;
 	}
 
 	//	前の本が表示されていない本だけ表示する
-	for(var i=17; i<archiveBookCount; i++)
+	for (var i = 17, internal_forloop_count = archiveBookCount; i < internal_forloop_count; i += 1)
 	{
 		if(!vis[i] || vis[i-1])
 			ignore["本影"+(i+1)]	= true;
@@ -224,7 +224,7 @@ function openArchiveMenu(page="fore")
 		var	flag	= archiveFlagByScript[f.av_storage[0]];
 		if(flag != void)
 			sf[flag]	= true;
-		for(var i=0; i<f.av_storage.count; i++)
+		for (var i = 0, internal_forloop_count = f.av_storage.count; i < internal_forloop_count; i += 1)
 			sf.trail[Storages.chopStorageExt(f.av_storage[i])]++;	//	読んだカウント
 		delete f.av_readall;
 	}
@@ -235,7 +235,7 @@ function openArchiveMenu(page="fore")
 	//	メニュースタックを復帰させる
 	if(f.archiveMenuStack != void)
 	{
-		for(var i=0; i<f.archiveMenuStack.count; i++)
+		for (var i = 0, internal_forloop_count = f.archiveMenuStack.count; i < internal_forloop_count; i += 1)
 			inMenu(f.archiveMenuStack[i]);
 		delete f.archiveMenuStack;
 	}
@@ -320,7 +320,7 @@ function openArchiveMenu(page="fore")
 			return this;
 		};
 		var	back	= [ "archive_back" ], none = [ void ];
-		for(var i=0; i<10; i++)
+		for (var i = 0, internal_forloop_count = 10; i < internal_forloop_count; i += 1)
 		{
 			if(i==1)
 				continue;
@@ -330,7 +330,7 @@ function openArchiveMenu(page="fore")
 			setCreateProp(trg, "upItems", none);
 			setCreateProp(trg, "searchDown", searchup_down);
 		}
-		for(var i=10; i<archiveBookCount; i++)
+		for (var i = 10, internal_forloop_count = archiveBookCount; i < internal_forloop_count; i += 1)
 		{
 			var	trg	= tdata[1][tdata[0]["book"+(i+1)]];
 			setCreateProp(trg, "searchLeft", searchleft);
@@ -342,13 +342,13 @@ function openArchiveMenu(page="fore")
 @if(ARCHIVE_UNREAD_DELAY_APPEAR)
 		//	未読のシーンを含む本アイコンは、遅延表示する
 		var	unreadList	= [];
-		for(var i=0; i<archiveBookCount; i++)
+		for (var i = 0, internal_forloop_count = archiveBookCount; i < internal_forloop_count; i += 1)
 		{
 			if(i==1)
 				continue;
 			var	scrlist	= archive_list[i][1];
 			var	unread	= false;
-			for(var j=0; j<scrlist.count; j++)
+			for (var j = 0, internal_forloop_count = scrlist.count; j < internal_forloop_count; j += 1)
 				unread	|= !__isReadedScript(i, j);
 			if(unread)
 			{//	未読の本はとりあえず非表示
@@ -374,13 +374,13 @@ function openArchiveMenu(page="fore")
 @if(ARCHIVE_UNREAD_LABEL)
 		//	未読のシーンを含む本アイコンに、(未)ラベルを張る
 		sf.notifiedUnreads	= %[] if sf.notifiedUnreads == void;
-		for(var i=0; i<archiveBookCount; i++)
+		for (var i = 0, internal_forloop_count = archiveBookCount; i < internal_forloop_count; i += 1)
 		{
 			if(i==1)
 				continue;
 			var	scrlist	= archive_list[i][1];
 			var	unread	= false;
-			for(var j=0; j<scrlist.count; j++)
+			for (var j = 0, internal_forloop_count = scrlist.count; j < internal_forloop_count; j += 1)
 			{
 				var	pos;
 				if(!__isReadedScript(i, j) && (pos = archiveLabelPos[i+"-"+j]) != void)
@@ -411,7 +411,7 @@ function openArchiveMenu(page="fore")
 			popupMessage(__("新しい蔵書が入庫しました。%s").sprintf((f.chapter==5 ? __("是非、ご覧ください。") : __("お暇なときに、どうぞ。"))),,, transtime+5000);
 @if(ARCHIVE_UNREAD_DELAY_APPEAR)
 			//	あと、トランジション後に「メッセージ表示→未読の本がフェードイン」を行う
-			for(var i=0; i<unreadList.count; i++)
+			for (var i = 0, internal_forloop_count = unreadList.count; i < internal_forloop_count; i += 1)
 			{
 				var	item	= .find(unreadList[i], page);
 				item.ssact(500, "opacity", 255, transtime+2000) if item != void;
@@ -535,7 +535,7 @@ function ASWchangeCursor(no, item)
 //		moveCursor(Menu_object.find("archive_ok")) if cf.autoMouseMove;	//	ダブルクリックでも読めるので、要らないかも
 
 		//	対応する画像が存在すれば、それを表示する
-		for(var i=0; i<list[no].count; i++)
+		for (var i = 0, internal_forloop_count = list[no].count; i < internal_forloop_count; i += 1)
 		{
 			var	fn	= AMgetThumbnailName(list[no][i]);
 
@@ -604,11 +604,11 @@ function startArchive(index, direct_index)
 function startArchiveWithScenario(storage)
 {
 	getArchiveList(true);
-	for (var i = 0; i < global.archive_list.count; i += 1)
+	for (var i = 0, internal_forloop_count = global.archive_list.count; i < internal_forloop_count; i += 1)
 	{
-		for (var ii = 0; ii < global.archive_list[i][1].count; ii += 1)
+		for (var ii = 0, internal_forloop_count = global.archive_list[i][1].count; ii < internal_forloop_count; ii += 1)
 		{
-			for (var iii = 0; iii < global.archive_list[i][1][ii].count; iii += 1)
+			for (var iii = 0, internal_forloop_count = global.archive_list[i][1][ii].count; iii < internal_forloop_count; iii += 1)
 			{
 				if (global.archive_list[i][1][ii][iii] === storage)
 				{

@@ -84,12 +84,12 @@ class MapPlugin extends KAGPlugin
 	{
 		//	buttons, parts を破棄
 		var arrays	= [ buttons, parts ];
-		for(var i=0; i<arrays.count; i++)
+		for (var i = 0, internal_forloop_count = arrays.count; i < internal_forloop_count; i += 1)
 		{
 			var	array = arrays[i];
 			if(array != void)
 			{
-				for(var i=0; i<array.count; i++)
+				for (var i = 0, internal_forloop_count = array.count; i < internal_forloop_count; i += 1)
 					invalidate array[i] if array[i] != void;
 				invalidate array;
 			}
@@ -114,7 +114,7 @@ class MapPlugin extends KAGPlugin
 	function disableButtons()
 	{
 //		dm("MapPlugin.disableButtons()");
-		for(var i=0; i<buttons.count; i++)
+		for (var i = 0, internal_forloop_count = buttons.count; i < internal_forloop_count; i += 1)
 			buttons[i].enabled	= false;
 	}
 
@@ -122,7 +122,7 @@ class MapPlugin extends KAGPlugin
 	function clearButtons()
 	{
 //		dm("MapPlugin.clearButtons()");
-		for(var i=0; i<buttons.count; i++)
+		for (var i = 0, internal_forloop_count = buttons.count; i < internal_forloop_count; i += 1)
 			invalidate buttons[i] if buttons[i] != void;
 		buttons.clear();
 	}
@@ -141,7 +141,7 @@ class MapPlugin extends KAGPlugin
 			.byCursorKey= true;	//	カーソルキーの方向に合わせたフォーカスの移動を行なう(ボタンに限らず)
 
 			var	keys	= [ "storage", "target", "exp", "enabled", "hint", "onenter", "onleave" ];
-			for(var i=0; i<keys.count; i++)
+			for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 1)
 				btn[keys[i]]	= mp[keys[i]];
 			if(!.enabled)
 				.hint	= "選択不可";
@@ -149,7 +149,7 @@ class MapPlugin extends KAGPlugin
 			var	l = mp.left, t = mp.top;
 			mp.align	= defaultalign if mp.align == void;
 			var	aligns	= mp.align.split("-");
-			for(var i=0; i<aligns.count; i++)
+			for (var i = 0, internal_forloop_count = aligns.count; i < internal_forloop_count; i += 1)
 			{
 				switch(aligns[i])
 				{
@@ -180,7 +180,7 @@ class MapPlugin extends KAGPlugin
 			{
 				var	aligns	= (mp.optalign !== void ? mp.optalign : defaultoptalign).split("-");
 				var	l, t;
-				for(var i=0; i<aligns.count; i++)
+				for (var i = 0, internal_forloop_count = aligns.count; i < internal_forloop_count; i += 1)
 				{
 					switch(aligns[i])
 					{
@@ -224,7 +224,7 @@ class MapPlugin extends KAGPlugin
 	//	パーツの取得
 	function getParts(id)
 	{
-		for(var i=0; i<parts.count; i++)
+		for (var i = 0, internal_forloop_count = parts.count; i < internal_forloop_count; i += 1)
 		{
 			if(parts[i].id == id)
 				return parts[i];
@@ -319,7 +319,7 @@ class MapPlugin extends KAGPlugin
 		//	現在の裏画面に属する buttons, parts を破棄
 		dmt("MapPlugin.onEndOfShowMap()");
 		var	itemss	= [ buttons, parts ];
-		for(var i=0; i<itemss.count; i++)
+		for (var i = 0, internal_forloop_count = itemss.count; i < internal_forloop_count; i += 1)
 		{
 			var	items	= itemss[i];
 			for(var i=items.count-1; i>=0; i--)
@@ -342,7 +342,7 @@ class MapPlugin extends KAGPlugin
 		onEndOfShowMap();	//	buttons, parts は裏画面に全てあるはずなので、これでも同じ
 /*		//	buttons, parts をすべて破棄
 		var	itemss	= [ buttons, parts ];
-		for(var i=0; i<itemss.count; i++)
+		for (var i = 0, internal_forloop_count = itemss.count; i < internal_forloop_count; i += 1)
 		{
 			var	items	= itemss[i];
 			for(var i=items.count; i>=0; i--)

@@ -156,7 +156,7 @@ class BasePlugin extends KAGPlugin
 	function getInitializedPage()
 	{
 		var	elm	= %[];
-		for(var i=0; i<params.count; i++)
+		for (var i = 0, internal_forloop_count = params.count; i < internal_forloop_count; i += 1)
 			elm[params[i][0]]	= params[i][1];
 		elm.visible	= false;	//	表示されるか
 		elm.page	= page;		//	ページ
@@ -170,7 +170,7 @@ class BasePlugin extends KAGPlugin
 	function setOptions(values)
 	{
 		switching(values);
-		for(var i=0; i<params.count; i++)
+		for (var i = 0, internal_forloop_count = params.count; i < internal_forloop_count; i += 1)
 		{
 			var	param	= params[i];
 			var	value	= values[param[0]];
@@ -214,7 +214,7 @@ class BasePlugin extends KAGPlugin
 
 	function copyParams(from, to, keys)
 	{
-		for(var i=0; i<keys.count; i++)
+		for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 1)
 			to[keys[i]]	= from[keys[i]] if keys[i] != void;
 	}
 
@@ -237,7 +237,7 @@ class BasePlugin extends KAGPlugin
 		{
 			var	keys	= getAllItems();
 			.pages = %[];
-			for(var i=0; i<keys.count; i+=2)
+			for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 2)
 			{
 				//	page には実体が入っているので、その実体を示すTJS式を取得する
 				var	pg	= getObjectTJSFromLayerObject(keys[i+1].page);
@@ -263,7 +263,7 @@ class BasePlugin extends KAGPlugin
 		{
 			var	keys	= [];
 			keys.assign(.pages);
-			for(var i=0; i<keys.count; i+=2)
+			for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 2)
 				copyParams(keys[i+1], get((keys[i])!), storePageKeys);
 			copyParams(f[name], this, storeKeys);
 		}
@@ -402,13 +402,13 @@ class BasePlugin extends KAGPlugin
 
 		var	values	= [];
 		values.assign(nextelm);
-		for(var i=0; i<trgpages.count; i+=2)
+		for (var i = 0, internal_forloop_count = trgpages.count; i < internal_forloop_count; i += 2)
 		{
 			var	pg	= trgpages[i];
 			pg		= "kag."+pg+".base" if pg == "fore" || pg == "back";
 			dm("page = "+pg);
 			page	= typeof pg == "String" ? pg! : pg;
-			for(var i=0; i<values.count; i+=2)
+			for (var i = 0, internal_forloop_count = values.count; i < internal_forloop_count; i += 2)
 			{
 @if(DEBUG)
 				if(typeof target[values[i]] == "undefined")
@@ -476,7 +476,7 @@ class BasePlugin extends KAGPlugin
 			array.assign(defs);
 			return array;
 		};
-		for(var i=0; i<pks.count; i++)
+		for (var i = 0, internal_forloop_count = pks.count; i < internal_forloop_count; i += 1)
 		{
 			var	key		= pks[i];
 			var	def		= defs[i];
@@ -486,7 +486,7 @@ class BasePlugin extends KAGPlugin
 			var	values	= [];
 			if( elm[key] !== void && typeof elm[key] == "String" )
 				values =  elm[key].split(",");
-			for(var j=0; j<values.count; j++)
+			for (var j = 0, internal_forloop_count = values.count; j < internal_forloop_count; j += 1)
 			{
 				keys[j+1]	= clonedef(defs) if keys[j+1] == void;
 				keys[j+1][i]= values[j] if values[j] !== void;
@@ -497,7 +497,7 @@ class BasePlugin extends KAGPlugin
 		var	props	= [ "-visible" ];
 		var	stprop	= pks.count;
 		delete elm.time if elm.time != void;	//	アクションの時間としての指定なので
-		for(var i=0; i<params.count; i++)
+		for (var i = 0, internal_forloop_count = params.count; i < internal_forloop_count; i += 1)
 		{
 			var	param	= params[i];
 			var	prop	= param[0];
@@ -510,7 +510,7 @@ class BasePlugin extends KAGPlugin
 			if(elm[prop] !== void)
 			{
 				var	values	= elm[prop].split(",");
-				for(var j=0; j<values.count; j++)
+				for (var j = 0, internal_forloop_count = values.count; j < internal_forloop_count; j += 1)
 				{
 					keys[j+1]	= clonedef(defs) if keys[j+1] == void;
 					keys[j+1].add(values[j] != "" ? values[j] : "~");
@@ -521,10 +521,10 @@ class BasePlugin extends KAGPlugin
 
 		//	空欄を埋める
 		var	cnt	= keys[0].count;
-		for(var i=1; i<keys.count; i++)
+		for (var i = 1, internal_forloop_count = keys.count; i < internal_forloop_count; i += 1)
 		{
 			var	kd	= keys[i];
-			for(var i=0; i<cnt; i++)
+			for (var i = 0, internal_forloop_count = cnt; i < internal_forloop_count; i += 1)
 				kd[i]	= "~" if kd[i] === void;
 		}
 
@@ -547,7 +547,7 @@ class BasePlugin extends KAGPlugin
 		var	props	= ["-visible"];
 		var	keys	= [[0, 0, "l", 1], [elm.time, 0, "n", 1]];
 		delete elm.time if elm.time != void;	//	アクションの時間としての指定なので
-		for(var i=0; i<params.count; i++)
+		for (var i = 0, internal_forloop_count = params.count; i < internal_forloop_count; i += 1)
 		{
 			var	prop	= params[i][0];
 			if(elm[prop] === void)
@@ -709,7 +709,7 @@ class AsyncAnimationBasePlugin extends BasePlugin
 	{
 		preConstruct(tick);
 		var	keys	= getAllItems();
-		for(var i=0; i<keys.count; i+=2)
+		for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 2)
 		{
 //			dm(name+"["+page+"]: "+status);
 			switching(keys[i+1]);
@@ -811,7 +811,7 @@ class AsyncAnimationBasePlugin extends BasePlugin
 	//	現在の設定を取得
 	function getStates(states=%[])
 	{
-		for(var i=0; i<params.count; i++)
+		for (var i = 0, internal_forloop_count = params.count; i < internal_forloop_count; i += 1)
 			states[params[i][0]]	= this[params[i][0]];
 		return states;
 	}
@@ -821,7 +821,7 @@ class AsyncAnimationBasePlugin extends BasePlugin
 	{
 		if(states == void)
 			return false;
-		for(var i=0; i<params.count; i++)
+		for (var i = 0, internal_forloop_count = params.count; i < internal_forloop_count; i += 1)
 			if(states[params[i][0]] !== this[params[i][0]])
 				return true;
 		return false;
@@ -831,7 +831,7 @@ class AsyncAnimationBasePlugin extends BasePlugin
 	function getCanvasLayer(layerclass)
 	{
 		var	layers	= kag.canvas.layers;
-		for(var i=0; i<layers.count; i++)
+		for (var i = 0, internal_forloop_count = layers.count; i < internal_forloop_count; i += 1)
 		{
 			if(layers[i].parent == page && layers[i] instanceof layerclass)
 				return layers[i];
@@ -869,7 +869,7 @@ class AsyncAnimationBasePlugin extends BasePlugin
 function getPluginPropertyKeys(params)
 {
 	var	array	= [];
-	for(var i=0; i<params.count; i++)
+	for (var i = 0, internal_forloop_count = params.count; i < internal_forloop_count; i += 1)
 		array.add(params[i][0]);
 	return array;
 }
@@ -877,7 +877,7 @@ function getPluginPropertyKeys(params)
 function getPluginPropertyInit(params)
 {
 	var	array	= [];
-	for(var i=0; i<params.count; i++)
+	for (var i = 0, internal_forloop_count = params.count; i < internal_forloop_count; i += 1)
 		array.add(params[i][1]);
 	return array;
 }
@@ -885,7 +885,7 @@ function getPluginPropertyInit(params)
 function getPluginPropertyType(params)
 {
 	var	hash	= %[];
-	for(var i=0; i<params.count; i++)
+	for (var i = 0, internal_forloop_count = params.count; i < internal_forloop_count; i += 1)
 		hash[params[i][0]]	= typeof params[i][1];
 	return hash;
 }
@@ -893,7 +893,7 @@ function getPluginPropertyType(params)
 function getPluginPropertyRange(params)
 {
 	var	hash	= %[];
-	for(var i=0; i<params.count; i++)
+	for (var i = 0, internal_forloop_count = params.count; i < internal_forloop_count; i += 1)
 		hash[params[i][0]]	= params[i][2];
 	return hash;
 }

@@ -13,11 +13,11 @@ function dispImageResources()
 	var	keys	= [];
 	keys.assign(imageResources);
 	var	invalid	= false;
-	for(var i=0; i<keys.count; i+=2)
+	for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 2)
 	{
 		var	fn		= keys[i];
 		var	list	= keys[i+1], text;
-		for(var i=0; i<list.count; i++)
+		for (var i = 0, internal_forloop_count = list.count; i < internal_forloop_count; i += 1)
 		{
 			text	+= list[i].owner.name+"("+list[i].storage+"), ";
 			if(list[i].storage != fn)
@@ -123,10 +123,10 @@ class AffineSourceLayer extends CompositionLayer
 			if(orgTag.divideArea != void)
 			{
 				var	da	= orgTag.divideArea.split("/");
-				for(var i=0; i<da.count; i++)
+				for (var i = 0, internal_forloop_count = da.count; i < internal_forloop_count; i += 1)
 				{
 					da[i]	= da[i].split(",");
-					for(var j=0; j<da[i].count; j++)
+					for (var j = 0, internal_forloop_count = da[i].count; j < internal_forloop_count; j += 1)
 						da[i][j]	= +da[i][j];
 				}
 				divideArea	= da;
@@ -315,7 +315,7 @@ class AffineSourceLayer extends CompositionLayer
 					iw = target.realImageWidth, ih = target.realImageHeight;
 				else
 					iw = target.imageWidth, ih = target.imageHeight;
-				for(var i=0; i<divideArea.count; i++)
+				for (var i = 0, internal_forloop_count = divideArea.count; i < internal_forloop_count; i += 1)
 				{
 					var	da	= divideArea[i];
 					var	l	= left - margin + da[0], t = top - margin + da[1];
@@ -416,7 +416,7 @@ class AffineSourceLayer extends CompositionLayer
 					iw = target.imageWidth, ih = target.imageHeight;
 				var	tx = [], ty = [];
 				var	px = [], py = [];
-				for(var i=0; i<divideArea.count; i++)
+				for (var i = 0, internal_forloop_count = divideArea.count; i < internal_forloop_count; i += 1)
 				{
 					var	da	= divideArea[i];
 					lx = da[0] -(afx + margin);
@@ -516,7 +516,7 @@ class AffineSourceLayer extends CompositionLayer
 	{
 		if(_regions != void)
 		{
-			for(var i=0; i<_regionCount; i++) with(_regions[i])
+			for (var i = 0, internal_forloop_count = _regionCount; i < internal_forloop_count; i += 1) with(_regions[i])
 			{
 				(global.Layer.fillRect incontextof .target)(.left, .top, .width, .height, neutralColor);
 				.clear();

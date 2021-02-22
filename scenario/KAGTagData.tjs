@@ -32,7 +32,7 @@ class KAGTagData
 					}
 					var	ks	= [];
 					ks.assign(data);
-					for(var i=0; i<ks.count; i+=2)
+					for (var i = 0, internal_forloop_count = ks.count; i < internal_forloop_count; i += 2)
 						set(ks[i], ks[i+1]);
 				}
 				else if(data instanceof "KAGTagData")
@@ -48,7 +48,7 @@ class KAGTagData
 			name	= .name;
 			keys.assign(.keys);
 			(Dictionary.clear incontextof values)();
-			for(var i=0; i<keys.count; i++)
+			for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 1)
 				values[keys[i]]	= .values[keys[i]];
 		}
 	}
@@ -56,7 +56,7 @@ class KAGTagData
 	function display()
 	{
 		dm("TAG: "+name);
-		for(var i=0; i<keys.count; i++)
+		for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 1)
 			dm("  "+keys[i]+" = "+values[keys[i]]);
 	}
 
@@ -96,7 +96,7 @@ class KAGTagData
 			// 解析
 			var	data	= str.split(" ");
 			name	= data[0];
-			for(var i=1; i<data.count; i++)
+			for (var i = 1, internal_forloop_count = data.count; i < internal_forloop_count; i += 1)
 			{
 				var	pos		= data[i].indexOf("=");
 				var	key, value;
@@ -115,7 +115,7 @@ class KAGTagData
 				if(value != "")
 				{
 					var	chkquot	= [ '"', "'" ];
-					for(var j=0; j<chkquot.count; j++)
+					for (var j = 0, internal_forloop_count = chkquot.count; j < internal_forloop_count; j += 1)
 					{
 						var	quot	= chkquot[j];
 						if(value[0] == quot)
@@ -156,7 +156,7 @@ class KAGTagData
 //			dm("tag name = "+name);
 			var	str	= name;
 			var	nqc = %[ "=" => 1, " " => 1, '"' => 2, "'" => 4, "\\" => 1, "　" => 1 ];
-			for(var i=0; i<keys.count; i++)
+			for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 1)
 			{
 				var	key	= keys[i];
 				var	value	= values[key];
@@ -164,7 +164,7 @@ class KAGTagData
 //				dm(key+"="+value);
 				if(typeof value == "String")
 				{
-					for(var p=0; p<value.length; p++)
+					for (var p = 0, internal_forloop_count = value.length; p < internal_forloop_count; p += 1)
 					{
 						st	|= nqc[value[p]];
 					}
@@ -182,7 +182,7 @@ class KAGTagData
 						if(value[0] instanceof "Array")
 						{
 							var	val	= [];
-							for(var i=0; i<value.count; i++)
+							for (var i = 0, internal_forloop_count = value.count; i < internal_forloop_count; i += 1)
 								val[i]	= value[i].join(",");
 							value	= "(" + val.join(")(") + ")";
 						}
@@ -271,7 +271,7 @@ class KAGTagData
 		getter
 		{
 			var	data	= "tagname\t"+name;
-			for(var i=0; i<keys.count; i++)
+			for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 1)
 				data	+= "\t" + keys[i] + "\t" + values[key];
 			return data;
 		}
@@ -280,7 +280,7 @@ class KAGTagData
 	//	属性名の変更
 	function renameList(list)
 	{
-		for(var i=0; i<list.count; i+=2)
+		for (var i = 0, internal_forloop_count = list.count; i < internal_forloop_count; i += 2)
 		{
 			var	lk	= list[i];
 			var	pos	= keys.find(lk);
@@ -328,7 +328,7 @@ function getKAGTagDatas(text)
 		}
 	};
 	var	iscript	= void;
-	for(var i=0; i<lines.count; i++)
+	for (var i = 0, internal_forloop_count = lines.count; i < internal_forloop_count; i += 1)
 	{
 		var	line	= lines[i];
 		var	st		= 0;
@@ -426,7 +426,7 @@ function getKAGTagDatas(text)
 
 			var	state	= 1;	//	"大括弧開く"が見つかっている
 			var	pos, lno = i;
-			for(var i=bkpos+1; i<line.length; i++)
+			for (var i = bkpos+1, internal_forloop_count = line.length; i < internal_forloop_count; i += 1)
 			{
 				switch(state)
 				{
@@ -475,7 +475,7 @@ if(typeof Array.save2 == "undefined" && Storages.isExistentStorage("saveStruct.d
 function saveKAGTagDatas(tags, storage)
 {
 	var	lines	= [], lno = 0;
-	for(var i=0; i<tags.count; i++)
+	for (var i = 0, internal_forloop_count = tags.count; i < internal_forloop_count; i += 1)
 	{
 		var	tag	= tags[i];
 		var	text= tag.text;

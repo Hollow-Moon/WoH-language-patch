@@ -73,7 +73,7 @@ class LastMessageEffectPlugin extends KAGPlugin
 		{
 			var	pages	= [ "fore" ];
 			pages.add("back") if kag.currentWithBack;
-			for(var i=0; i<pages.count; i++)
+			for (var i = 0, internal_forloop_count = pages.count; i < internal_forloop_count; i += 1)
 				targets.add(kag.getMessageLayerObjectFromElm(%[page:pages[i]]));
 		}
 		else
@@ -90,10 +90,10 @@ class LastMessageEffectPlugin extends KAGPlugin
 				actionChar(layer, elm, time);
 			}
 		};
-		for(var i=0; i<targets.count; i++)
+		for (var i = 0, internal_forloop_count = targets.count; i < internal_forloop_count; i += 1)
 		{
 			var	layer	= targets[i];
-			for(var i=0; i<groups.count; i++)
+			for (var i = 0, internal_forloop_count = groups.count; i < internal_forloop_count; i += 1)
 				layer.executeCharGroup(groups[i], func incontextof layer, elm, time);
 		}
 	}

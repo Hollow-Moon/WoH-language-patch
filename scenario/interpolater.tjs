@@ -38,7 +38,7 @@ class LinearInterpolater
 		var	curp	= path[pos[0]];		//	現在の位置
 		var	nextp	= path[pos[0]+1];	//	次の位置
 		var	ratio	= pos[1];			//	比率
-		for(var i=0; i<valuecnt; i++)
+		for (var i = 0, internal_forloop_count = valuecnt; i < internal_forloop_count; i += 1)
 			values[i]	= (nextp[i] - curp[i]) * ratio + curp[i] if curp[i] !== void;
 
 		return values;
@@ -103,7 +103,7 @@ class SplineInterpolater extends LinearInterpolater
 		tmpy[1] = 4;
 
 		var lim = points - 2;
-		for(var i = 1; i < lim; i++)
+		for (var i = 1, internal_forloop_count = lim; i < internal_forloop_count; i += 1)
 		{
 			var x = 1 / tmpx[i];
 			var y = 1 / tmpy[i];
@@ -145,7 +145,7 @@ class SplineInterpolater extends LinearInterpolater
 					((nextp[1] - curp[1]) - (zy[index]*2 + zy[index+1]))) * ratio + curp[1];
 
 		//	それ以外は線形補間
-		for(var i=2; i<valuecnt; i++)
+		for (var i = 2, internal_forloop_count = valuecnt; i < internal_forloop_count; i += 1)
 			values[i]	= (nextp[i] - curp[i]) * ratio + curp[i] if curp[i] !== void;
 
 		return values;
@@ -171,7 +171,7 @@ class LinearInterpolaterEx extends LinearInterpolater
 	/------------------------------------------------------------------------*/
 	function getPos(time, tick)
 	{
-		for(var i=0; i<time.count; i++)
+		for (var i = 0, internal_forloop_count = time.count; i < internal_forloop_count; i += 1)
 		{
 			if(time[i] > tick)
 				return [ i, tick / time[i] ];	//	現在の区間が見つかった
@@ -201,7 +201,7 @@ class SplineInterpolaterEx extends SplineInterpolater
 	/------------------------------------------------------------------------*/
 	function getPos(time, tick)
 	{
-		for(var i=0; i<time.count; i++)
+		for (var i = 0, internal_forloop_count = time.count; i < internal_forloop_count; i += 1)
 		{
 			if(time[i] > tick)
 				return [ i, tick / time[i] ];	//	現在の区間が見つかった

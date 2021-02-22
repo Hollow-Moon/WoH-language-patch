@@ -19,7 +19,7 @@ function setCreateProp(target, propname, value, overwrite=false)
 	overwrite	= true if propname == "storage";
 	if(overwrite)
 	{
-		for(var i=2; i<target.count; i+=2)
+		for (var i = 2, internal_forloop_count = target.count; i < internal_forloop_count; i += 2)
 		{
 			if(target[i] == propname)
 			{
@@ -37,7 +37,7 @@ function setCreateProp(target, propname, value, overwrite=false)
 
 function setCreateProps(target, props, cnt)
 {
-	for(var i=2; i<target.count; i+=2)
+	for (var i = 2, internal_forloop_count = target.count; i < internal_forloop_count; i += 2)
 	{
 		var	prop	= target[i];
 		if(typeof props[prop] != "undefined")
@@ -53,7 +53,7 @@ function setCreateProps(target, props, cnt)
 	keys.assign(props);
 	with(target)
 	{
-		for(var i=0; i<keys.count; i+=2)
+		for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 2)
 			.add(keys[i]), .add(keys[i+1]);
 	}
 }
@@ -63,7 +63,7 @@ function getCreateProp(target, propname)
 {
 	if(typeof propname == "String")
 	{
-		for(var i=2; i<target.count; i+=2)
+		for (var i = 2, internal_forloop_count = target.count; i < internal_forloop_count; i += 2)
 		{
 			if(target[i] == propname)
 				return target[i+1];
@@ -72,7 +72,7 @@ function getCreateProp(target, propname)
 	else if(propname instanceof "Array")
 	{
 		var	values	= [], idx, cnt = 0;
-		for(var i=2; i<target.count; i+=2)
+		for (var i = 2, internal_forloop_count = target.count; i < internal_forloop_count; i += 2)
 		{
 			if((idx = propname.find(target[i])) >= 0)
 			{
@@ -93,7 +93,7 @@ function clearCreateProp(target, propname, cnt)
 	var	type	= typeof propname;
 	if(type == "Object")
 	{//	辞書配列指定で複数のプロパティを削除
-		for(var i=2; i<target.count; i+=2)
+		for (var i = 2, internal_forloop_count = target.count; i < internal_forloop_count; i += 2)
 		{
 			if(propname[target[i]])
 			{
@@ -108,7 +108,7 @@ function clearCreateProp(target, propname, cnt)
 	}
 	else if(type == "String")
 	{//	文字列指定で一つのプロパティを削除
-		for(var i=2; i<target.count; i+=2)
+		for (var i = 2, internal_forloop_count = target.count; i < internal_forloop_count; i += 2)
 		{
 			if(target[i] == propname)
 			{
@@ -123,7 +123,7 @@ function clearCreateProp(target, propname, cnt)
 //	storage プロパティに文字列を付加する
 function addCreateStorageProp(target, addval)
 {
-	for(var i=2; i<target.count; i+=2)
+	for (var i = 2, internal_forloop_count = target.count; i < internal_forloop_count; i += 2)
 	{
 		if(target[i] == "storage")
 		{
@@ -136,7 +136,7 @@ function addCreateStorageProp(target, addval)
 //	アクションの最終フレームを設定
 function setActionLast(act, prop, value)
 {
-	for(var i=0; i<act.count; i+=2)
+	for (var i = 0, internal_forloop_count = act.count; i < internal_forloop_count; i += 2)
 	{
 		if(act[i] == prop)
 		{
@@ -147,7 +147,7 @@ function setActionLast(act, prop, value)
 }
 function setActionTop(act, prop, value)
 {
-	for(var i=0; i<act.count; i+=2)
+	for (var i = 0, internal_forloop_count = act.count; i < internal_forloop_count; i += 2)
 	{
 		if(act[i] == prop)
 		{
@@ -161,7 +161,7 @@ function setActionTop(act, prop, value)
 //	アクションの最終フレームを複数設定
 function setActionsLast(act, props, cnt)
 {
-	for(var i=0; i<act.count; i+=2)
+	for (var i = 0, internal_forloop_count = act.count; i < internal_forloop_count; i += 2)
 	{
 		var	prop	= act[i];
 		if(typeof props[prop] != "undefined")
@@ -177,7 +177,7 @@ function setActionsLast(act, props, cnt)
 }
 function setActionsTop(act, props, cnt)
 {
-	for(var i=0; i<act.count; i+=2)
+	for (var i = 0, internal_forloop_count = act.count; i < internal_forloop_count; i += 2)
 	{
 		var	prop	= act[i];
 		if(typeof props[prop] != "undefined")
@@ -197,7 +197,7 @@ function getActionLast(act, prop)
 {
 	if(typeof prop == "String")
 	{
-		for(var i=0; i<act.count; i+=2)
+		for (var i = 0, internal_forloop_count = act.count; i < internal_forloop_count; i += 2)
 		{
 			if(act[i] == prop)
 			{
@@ -210,7 +210,7 @@ function getActionLast(act, prop)
 	else if(prop instanceof "Array")
 	{
 		var	values	= [], idx, cnt = 0;
-		for(var i=0; i<act.count; i+=2)
+		for (var i = 0, internal_forloop_count = act.count; i < internal_forloop_count; i += 2)
 		{
 			if((idx = prop.find(act[i])) >= 0)
 			{
@@ -229,7 +229,7 @@ function getActionLast(act, prop)
 //	アクションを削除
 function removeActionData(act, prop)
 {
-	for(var i=0; i<act.count; i+=2)
+	for (var i = 0, internal_forloop_count = act.count; i < internal_forloop_count; i += 2)
 	{
 		if(act[i] == prop)
 		{
@@ -266,7 +266,7 @@ function inMenu(name, vismsg=false)
 		enabledShortcutKey	= false;	//	ショートカットキーを無効化
 		alternative_object.setButtonEnabled(false) if alternative_object != void;	//	選択肢を無効化
 		__lastEnabledHide	= setHideCursor(false) if __lastEnabledHide === void;	//	カーソル消去状態を破棄
-		for(var i=0; i<__inMenuFuncs.count; i++)
+		for (var i = 0, internal_forloop_count = __inMenuFuncs.count; i < internal_forloop_count; i += 1)
 			__inMenuFuncs[i]() if __inMenuFuncs[i] != void;
 		lockQuickMenu();	//	クイックメニューを使用不可にする
 		asyncCaller.call(__hideMessage) if !vismsg;	//	メッセージ消去
@@ -307,7 +307,7 @@ function outMenu(name, force=false, vismsg=true)
 			.setHistoryOptions(%[enabled:true]);	//	テキスト履歴有効
 			enabledShortcutKey	= true;	//	ショートカットキーを有効化
 			unlockQuickMenu();			//	クイックメニューを使用可能にする(アーカイブでない間)
-			for(var i=0; i<__outMenuFuncs.count; i++)
+			for (var i = 0, internal_forloop_count = __outMenuFuncs.count; i < internal_forloop_count; i += 1)
 				__outMenuFuncs[i]() if __outMenuFuncs[i] != void;
 			.resumeAction();			//	アクションを再開する
 			.resumeTransition();		//	トランジションを再開する
@@ -408,7 +408,7 @@ kag.tagHandlers.resumeautomode	= function(elm) { resumeAutoMode(); return 0; } i
 function muteAllMenuItem(tdata, mute=true, itemmode)
 {
 	var	creates	= tdata[1];
-	for(var i=0; i<creates.count; i++)
+	for (var i = 0, internal_forloop_count = creates.count; i < internal_forloop_count; i += 1)
 	{
 		setCreateProp(creates[i], "mute", mute);
 		setCreateProp(creates[i], "itemMode", itemmode) if itemmode !== void;
@@ -614,7 +614,7 @@ kag.tagHandlers.createscenethumbnail	= function()
 
 	//	メッセージウィンドウを隠す
 	var	vis	= [];
-	for(var i=0; i<fore.messages.count; i++)
+	for (var i = 0, internal_forloop_count = fore.messages.count; i < internal_forloop_count; i += 1)
 		vis[i] <-> fore.messages[i].visible;
 
 	//	サムネイルを保存
@@ -635,7 +635,7 @@ kag.tagHandlers.createscenethumbnail	= function()
 	unlockSnapshot();
 
 	//	メッセージウィンドウを元に戻す
-	for(var i=0; i<fore.messages.count; i++)
+	for (var i = 0, internal_forloop_count = fore.messages.count; i < internal_forloop_count; i += 1)
 		vis[i] <-> fore.messages[i].visible;
 	return 0;
 } incontextof kag;
@@ -647,7 +647,7 @@ property isAllCleared
 	getter
 	{
 		var	alls	= [ "7-ex", "8.5", "8-ex", "wik_fin", "nz1", "nz2", "nz3", "nz4", "nz5", "nz6" ];
-		for(var i=0; i<alls.count; i++)
+		for (var i = 0, internal_forloop_count = alls.count; i < internal_forloop_count; i += 1)
 		{
 //			dm(i+": "+alls[i]+" = "+sf.trail[alls[i]]);
 			if(sf.trail[alls[i]] < 1)

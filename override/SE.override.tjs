@@ -82,7 +82,7 @@ class SESoundBuffer_override extends SESoundBuffer_original
 		(Dictionary.assignStruct incontextof tmp[2])(elm);
 		delete tmp[2].delay;
 
-		for(var i=0; i<funcs.count; i++)
+		for (var i = 0, internal_forloop_count = funcs.count; i < internal_forloop_count; i += 1)
 		{
 			if(funcs[i][0] > time)
 			{
@@ -95,7 +95,7 @@ class SESoundBuffer_override extends SESoundBuffer_original
 
 @if(SE_DELAY_VERBOSE)
 		dm("se.doDelay("+func, elm.delay+")", tick);
-		for(var i=0; i<funcs.count; i++)
+		for (var i = 0, internal_forloop_count = funcs.count; i < internal_forloop_count; i += 1)
 			dm(i+": "+funcs[i][1]+"()", funcs[i][0], (funcs[i][0] - tick));
 @endif
 
@@ -120,7 +120,7 @@ class SESoundBuffer_override extends SESoundBuffer_original
 		{
 			storage		= Storages.chopStorageExt(storage);
 			var	funcs	= delayTimer.funcs;
-			for(var i=0; i<funcs.count; i++)
+			for (var i = 0, internal_forloop_count = funcs.count; i < internal_forloop_count; i += 1)
 				if(funcs[i] != void && Storages.chopStorageExt(funcs[i][2].storage) == storage)
 					return true;
 		}
@@ -447,7 +447,7 @@ class SESoundBuffer_override extends SESoundBuffer_original
 			{
 				var	list	= [], tick = System.getTickCount();
 				list.assignStruct(delayTimer.funcs);
-				for(var i=0; i<list.count; i++)
+				for (var i = 0, internal_forloop_count = list.count; i < internal_forloop_count; i += 1)
 				{
 					list[i][2].delay	= list[i][0] - tick;
 					list[i].erase(0);
@@ -487,7 +487,7 @@ class SESoundBuffer_override extends SESoundBuffer_original
 			if(dic.delayFuncs != void)
 			{//	遅延実行が記録されていたらそれも復元
 				var	list	= dic.delayFuncs;
-				for(var i=0; i<list.count; i++)
+				for (var i = 0, internal_forloop_count = list.count; i < internal_forloop_count; i += 1)
 					doDelay(list[i][0], list[i][1]);
 			}
 		}
@@ -513,7 +513,7 @@ class SESoundBuffer_override extends SESoundBuffer_original
 			//トリガ文字列を伴う終了通知(個別にwact指定しているものなど)
 			owner.onActionCompleted(trigger);
 			if( typeof this.trigger != "undefined" ){
-				for(var i=0; i<this.trigger.count; i++ ){
+				for (var i = 0, internal_forloop_count = this.trigger.count; i < internal_forloop_count; i += 1){
 					if( this.trigger[i] == trigger ){
 						this.trigger.erase(i);
 						//通知の終わったトリガ文字列を消去

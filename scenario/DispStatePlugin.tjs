@@ -112,7 +112,7 @@ class DispStateWindow extends Window
 		var	t	= 0;
 		var	w	= primaryLayer.width;
 		var	last;
-		for(var i=0; i<primaryLayer.children.count; i++)
+		for (var i = 0, internal_forloop_count = primaryLayer.children.count; i < internal_forloop_count; i += 1)
 		{
 			var	layer	= primaryLayer.children[i];
 			if(layer instanceof "StateDisplayLayer")
@@ -134,7 +134,7 @@ class DispStateWindow extends Window
 	function onTimeout()
 	{
 //		dm("on timeout");
-		for(var i=0; i<primaryLayer.children.count; i++)
+		for (var i = 0, internal_forloop_count = primaryLayer.children.count; i < internal_forloop_count; i += 1)
 		{
 			var	layer	= primaryLayer.children[i];
 			if(layer instanceof "StateDisplayLayer")
@@ -253,7 +253,7 @@ class StateDisplayLayer extends Layer
 
 		text	= updateText() if updateText != void;	//	テキストを更新
 		var	mfw;
-		for(var i=0; i<_text.count; i++)
+		for (var i = 0, internal_forloop_count = _text.count; i < internal_forloop_count; i += 1)
 		{
 			var	fw	= font.getTextWidth(_text[i]);
 			mfw	= fw if fw > mfw;
@@ -273,7 +273,7 @@ class StateDisplayLayer extends Layer
 
 		var	t	= margin;
 		var	ls	= font.getTextHeight(_text[0]) + spacing;
-		for(var i=0; i<_text.count; i++)
+		for (var i = 0, internal_forloop_count = _text.count; i < internal_forloop_count; i += 1)
 		{
 			drawText(margin, t, _text[i], textcolor, 255, false);
 			t	+= ls;

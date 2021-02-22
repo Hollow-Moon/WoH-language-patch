@@ -135,7 +135,7 @@ class SnowPlugin extends AsyncAnimationBasePlugin
 		getter
 		{
 			var	keys	= getAllItems();
-			for(var i=0; i<keys.count; i+=2)
+			for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 2)
 			{
 				if(keys[i+1].status == "play")
 					return true;
@@ -156,7 +156,7 @@ class SnowPlugin extends AsyncAnimationBasePlugin
 		if(snows.count > 0)
 		{
 			var	ss	= snows;
-			for(var i=0; i<ss.count; i++)
+			for (var i = 0, internal_forloop_count = ss.count; i < internal_forloop_count; i += 1)
 				ss[i].update();
 		}
 		else
@@ -174,7 +174,7 @@ class SnowPlugin extends AsyncAnimationBasePlugin
 		dm("Snow.doStop()");
 		//	停止したら、レイヤーを片付ける
 		var	ss	= snows;
-		for(var i=0; i<ss.count; i++)
+		for (var i = 0, internal_forloop_count = ss.count; i < internal_forloop_count; i += 1)
 			invalidate ss[i] if ss[i] != void;	//	破棄
 		snows.clear();
 	}
@@ -230,7 +230,7 @@ class SnowPlugin extends AsyncAnimationBasePlugin
 		var	_bsz	= 1 / bsz;
 		var	keys	= getAllItems();
 		var	invcnt	= 0;
-		for(var i=0; i<keys.count; i+=2)
+		for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 2)
 		{
 			page	= keys[i+1].page;
 			if( ! isvalid page )
@@ -239,7 +239,7 @@ class SnowPlugin extends AsyncAnimationBasePlugin
 			var	layers	= snows;
 			if(!visible)
 			{
-				for(var i=0; i<layers.count; i++)
+				for (var i = 0, internal_forloop_count = layers.count; i < internal_forloop_count; i += 1)
 					layers[i].visible	= false;	//	画面に表示しない
 				invcnt++;	//	非表示の数
 				continue;
@@ -252,7 +252,7 @@ class SnowPlugin extends AsyncAnimationBasePlugin
 			//	状態が変わってなければ、計算する必要がない
 			var	changed	= false;
 			laststate[string(page)]	= %[] if laststate[string(page)] == void;
-			for(var i=0; i<params.count; i++)
+			for (var i = 0, internal_forloop_count = params.count; i < internal_forloop_count; i += 1)
 			{
 				var	n	= params[i][0];
 				if(this[n] !== laststate[n])
@@ -303,7 +303,7 @@ class SnowPlugin extends AsyncAnimationBasePlugin
 			if( ! isvalid page )
 				return false;
 
-			for(var i=0; i<snowpos.count; i+=3)
+			for (var i = 0, internal_forloop_count = snowpos.count; i < internal_forloop_count; i += 3)
 			{
 				var	z		= snowpos[i+2];
 				var	dist	= (bsz - z) * _bsz;
@@ -342,7 +342,7 @@ class SnowPlugin extends AsyncAnimationBasePlugin
 			var	mx	= (lower.x - x) * dvcp;
 			var	my	= (lower.y - y) * dvcp;
 			var	mz	= (lower.z - z) * dvcp;
-			for(var i=0; i<dvc; i++)
+			for (var i = 0, internal_forloop_count = dvc; i < internal_forloop_count; i += 1)
 			{
 				var	dist	= (bsz - z) * _bsz;
 				var	size	= dist * snowImage.height;
@@ -390,10 +390,10 @@ class SnowPlugin extends AsyncAnimationBasePlugin
 	function clear()
 	{
 		var	keys	= getAllItems();
-		for(var i=0; i<keys.count; i+=2)
+		for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 2)
 		{
 			var	ss	= keys[i+1].snows;
-			for(var i=0; i<ss.count; i++)
+			for (var i = 0, internal_forloop_count = ss.count; i < internal_forloop_count; i += 1)
 				invalidate ss[i] if ss[i] != void;
 			invalidate ss;
 		}
@@ -727,7 +727,7 @@ class SnowObject extends PluginObject
 		var	params	= tags[tag.name];
 		if(params == void)
 			return false;
-		for(var i=0; i<params.count; i++)
+		for (var i = 0, internal_forloop_count = params.count; i < internal_forloop_count; i += 1)
 		{
 			if(tag.get(params[i][0]) != params[i][1])
 				return false;

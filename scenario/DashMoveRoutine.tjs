@@ -135,7 +135,7 @@ kt.move	= function(mp)
 				.keys.add(["0", .accel, interpval, mc, mc, mc]);	//先頭キーフレーム
 				var pathes = .path.split(")");
 				var timeval = 0;
-				for( var i=0; i<pathes.count-1; i++ )
+				for (var i = 0, internal_forloop_count = pathes.count-1; i < internal_forloop_count; i += 1)
 				{
 					var values = pathes[i].split(",");
 					if( values[0].indexOf("(") > -1 ){	//)
@@ -289,7 +289,7 @@ kt.loopmove	= function(mp)
 			.keys.add(["0", .accel, interpval, obj.left, obj.top, obj.opacity, obj.absolute]);	//先頭キーフレーム
 			var pathes = .path.split(")");
 			var timeval = 0;
-			for( var i=0; i<pathes.count; i++ )
+			for (var i = 0, internal_forloop_count = pathes.count; i < internal_forloop_count; i += 1)
 			{
 				var values = pathes[i].split(",");
 				if( values[0].indexOf("(") > -1 ){	//)
@@ -441,10 +441,10 @@ kt.dash	= function(mp)
 			{
 				//	前景以外を隠す
 				var	fg	= %[];
-				for(var i=0; i<target.layers.count; i++)
+				for (var i = 0, internal_forloop_count = target.layers.count; i < internal_forloop_count; i += 1)
 					fg[target.layers[i]]	= true;
 				var	ch	= target.children;
-				for(var i=0; i<ch.count; i++)
+				for (var i = 0, internal_forloop_count = ch.count; i < internal_forloop_count; i += 1)
 				{
 					if(fg[ch[i]] != true)
 					{
@@ -458,7 +458,7 @@ kt.dash	= function(mp)
 				if(visible_other_layer != void)
 				{
 					var	ch	= target.children;
-					for(var i=0; i<ch.count; i++)
+					for (var i = 0, internal_forloop_count = ch.count; i < internal_forloop_count; i += 1)
 					{
 						if(visible_other_layer[ch[i]] !== void)
 							ch[i].visible	= visible_other_layer[ch[i]];
@@ -494,7 +494,7 @@ kt.dash	= function(mp)
 		{
 			var tgt = (.page != "fore")?"back":"fore";
 			//dm("hidefg " + tgt);
-			for( var i=0; i<kag[tgt].layers.count; i++ )
+			for (var i = 0, internal_forloop_count = kag[tgt].layers.count; i < internal_forloop_count; i += 1)
 				kag[tgt].layers[i].visible = false;
 		}
 
@@ -694,7 +694,7 @@ kt.fadein = kt.bg;/*function(mp)
 {
 	//	メッセージレイヤーを退避
 	var msgs = fore.messages;
-	for(var i=0; i<msgs.count; i++)
+	for (var i = 0, internal_forloop_count = msgs.count; i < internal_forloop_count; i += 1)
 		msgs[i].assignComp();
 
 	var th = kag.tagHandlers;
@@ -703,14 +703,14 @@ kt.fadein = kt.bg;/*function(mp)
 		th.cl_notrans(%[]);	//	立ち絵はすべて消去
 	//	コンディションが変わったりぼかし状態であれば、立ち絵を描画しなおす
 	var pages	= [ "back", "fore" ];
-	for(var i=0; i<pages.count; i++)
+	for (var i = 0, internal_forloop_count = pages.count; i < internal_forloop_count; i += 1)
 	{
 //		var layers = kag.fore.layers;	//	noclear = true: 表に表示されている前景レイヤーを裏に読み込みなおす
 		var layers = kag[pages[i]].layers;	//	裏、表の順で読み込みなおす
 		var elm = %[];
 //		var	keys	= ["left", "top", "opacity", "magnify", "magnify2", "cx", "cy", "rotate"];
 		var	keys	= ["left", "top", "opacity", "zoom", "zoomx", "zoomy", "afx", "afy", "rotate" ];
-		for(var j=0; j<layers.count; j++)
+		for (var j = 0, internal_forloop_count = layers.count; j < internal_forloop_count; j += 1)
 		{
 			var layer	= layers[j];
 			if(layer.visible)
@@ -720,7 +720,7 @@ kt.fadein = kt.bg;/*function(mp)
 				(Dictionary.assign incontextof elm)(layer.Anim_loadParams);
 				elm.page	= pages[i];
 				elm.pos		= void;
-				for(var k=0; k<keys.count; k++)
+				for (var k = 0, internal_forloop_count = keys.count; k < internal_forloop_count; k += 1)
 					elm[keys[k]]	= layer[keys[k]];
 
 				elm.layer	= string j;
@@ -851,7 +851,7 @@ kt.cl_notrans	= function(mp)
 			if(.pos != "all")
 			{
 				var l = kag.fore.layers;
-				for(var i=0; i<l.count; i++)
+				for (var i = 0, internal_forloop_count = l.count; i < internal_forloop_count; i += 1)
 				{
 					if(l[i].visible && l[i].Anim_loadParams && l[i].Anim_loadParams.pos == .pos)
 					{
@@ -874,7 +874,7 @@ kt.cl_notrans	= function(mp)
 				{
 					var name = ch[0];
 					var l = kag.fore.layers;
-					for(var i=0; i<l.count; i++)
+					for (var i = 0, internal_forloop_count = l.count; i < internal_forloop_count; i += 1)
 					{
 						ch	= reg.exec(Storages.extractStorageName(l[i].storage));
 						if(ch.count > 0 && ch[0] == name)

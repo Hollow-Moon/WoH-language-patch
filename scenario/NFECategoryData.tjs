@@ -31,7 +31,7 @@ class NFECategoryData
 
 		if(children != void)
 		{
-			for(var i=0; i<children.count; i++)
+			for (var i = 0, internal_forloop_count = children.count; i < internal_forloop_count; i += 1)
 				invalidate children[i] if children[i] != void && typeof children[i] == "Object";
 			invalidate children;
 		}
@@ -49,7 +49,7 @@ class NFECategoryData
 			.parent		= parent;
 			.name		= name;
 			.children	= [];
-			for(var i=0; i<children.count; i++)
+			for (var i = 0, internal_forloop_count = children.count; i < internal_forloop_count; i += 1)
 			{
 				if(typeof children[i] == "Object")
 					.children.add(children[i].getSaveData());
@@ -68,7 +68,7 @@ class NFECategoryData
 			parent	= .parent;
 			name	= .name;
 			children.clear();
-			for(var i=0; i<.children.count; i++)
+			for (var i = 0, internal_forloop_count = .children.count; i < internal_forloop_count; i += 1)
 			{
 				if(typeof .children[i] == "Object")
 				{
@@ -83,7 +83,7 @@ class NFECategoryData
 
 	function clear()
 	{
-		for(var i=0; i<children.count; i++)
+		for (var i = 0, internal_forloop_count = children.count; i < internal_forloop_count; i += 1)
 			children[i].clear() if typeof children[i] == "Object";
 		children.clear();
 

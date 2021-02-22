@@ -23,7 +23,7 @@ class FGPlugin extends KAGPlugin
 		super.KAGPlugin(...);
 		var	keys	= [];
 		keys.assign(imageTagLayerType);
-		for(var i=0; i<keys.count; i+=2)
+		for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 2)
 			invertImageTagLayerType[keys[i+1].type]	= keys[i];
 	}
 
@@ -70,7 +70,7 @@ class FGPlugin extends KAGPlugin
 		{
 			var	cn	= res[1];	//	キャラクター名
 			var	layers = page == "fore" ? kag.fore.layers : kag.back.layers, p, n;
-			for(var i=0; i<layers.count; i++)
+			for (var i = 0, internal_forloop_count = layers.count; i < internal_forloop_count; i += 1)
 			{
 				if(	(p = layers[i].Anim_loadParams) != void &&
 					layers[i].visible &&
@@ -91,7 +91,7 @@ class FGPlugin extends KAGPlugin
 		var	dist= dre.exec(storage);		//	距離
 //		dm("distance = "+dist[1]);
 		var	lno	= void;
-		for(var i=0; i<lnos.count; i++)
+		for (var i = 0, internal_forloop_count = lnos.count; i < internal_forloop_count; i += 1)
 		{
 			if(lnos[i][1].indexOf(dist[1]) > 0)
 			{
@@ -124,7 +124,7 @@ class FGPlugin extends KAGPlugin
 	function getLayerNoByPos(pos, page = "back")
 	{
 		var	layers = page == "fore" ? kag.fore.layers : kag.back.layers, p, nums = [];
-		for(var i=0; i<layers.count; i++)
+		for (var i = 0, internal_forloop_count = layers.count; i < internal_forloop_count; i += 1)
 		{
 			if(layers[i].visible && (p = layers[i].Anim_loadParams) != void && p.pos == .pos)
 				nums.add(i);
@@ -134,7 +134,7 @@ class FGPlugin extends KAGPlugin
 	function getLayerByPos(pos, page="back")
 	{
 		var	layers = page == "fore" ? kag.fore.layers : kag.back.layers, p, nums = [];
-		for(var i=0; i<layers.count; i++)
+		for (var i = 0, internal_forloop_count = layers.count; i < internal_forloop_count; i += 1)
 		{
 			if(layers[i].visible && (p = layers[i].Anim_loadParams) != void && p.pos == .pos)
 				nums.add(layers[i]);
@@ -235,7 +235,7 @@ class FGPlugin extends KAGPlugin
 		{
 			var	layer	= .__layer !== void ? .__layer : kag.getLayerFromElm(elm);
 
-			for(var i=0; i<particleParams.count; i+=2)
+			for (var i = 0, internal_forloop_count = particleParams.count; i < internal_forloop_count; i += 2)
 				layer[particleParams[i]]	= +elm[particleParams[i+1]] if elm[particleParams[i+1]] !== void;
 		}
 	}
@@ -342,7 +342,7 @@ class FGPlugin extends KAGPlugin
 			if(.pos === void && .storage === void && .id === void)
 			{//	全て消去
 				var	pagelayers	= .page == "fore" ? kag.fore.layers : kag.back.layers;
-				for(var i=0; i<pagelayers.count; i++)
+				for (var i = 0, internal_forloop_count = pagelayers.count; i < internal_forloop_count; i += 1)
 					layers.add(pagelayers[i]) if pagelayers[i].visible;
 			}
 @if(DEBUG)
@@ -353,7 +353,7 @@ class FGPlugin extends KAGPlugin
 			}
 @endif
 			//	消去実行
-			for(var i=0; i<layers.count; i++)
+			for (var i = 0, internal_forloop_count = layers.count; i < internal_forloop_count; i += 1)
 			{
 				with(layers[i])
 				{
@@ -382,7 +382,7 @@ class FGPlugin extends KAGPlugin
 			{
 				.page	= "fore" if .page === void;
 				var	layers	= .page === "fore" ? kag.fore.layers : kag.back.layers;
-				for(var i=0; i<layers.count; i++)
+				for (var i = 0, internal_forloop_count = layers.count; i < internal_forloop_count; i += 1)
 					layers[i].visible = false if layers[i].visible && layers[i].opacity == 0;
 //					kag.tagHandlers.freeimage(%[page:.page, layer:i]) if layers[i].visible && layers[i].opacity == 0;
 			}
@@ -586,7 +586,7 @@ class FGPlugin extends KAGPlugin
 				var	names	= [ "center", "vcenter", "opacity" ];
 				var	props	= [];
 				var	keys	= [[0, accel, "l"], [.time, accel, void]];
-				for(var i=0; i<names.count; i++)
+				for (var i = 0, internal_forloop_count = names.count; i < internal_forloop_count; i += 1)
 				{
 					var	prop	= names[i];
 					var	value	= +elm[prop];
@@ -733,10 +733,10 @@ class FGPlugin extends KAGPlugin
 		cond.add(elm.opacity === void ? 0 : +elm.opacity);
 
 		var	freeimage	= kag.tagHandlers.freeimage;
-		for(var i=0; i<kag.fore.layers.count; i++)
+		for (var i = 0, internal_forloop_count = kag.fore.layers.count; i < internal_forloop_count; i += 1)
 		{
 			var	layer	= kag.fore.layers[i];
-			for(var j=0; j<cond.count; j+=2)
+			for (var j = 0, internal_forloop_count = cond.count; j < internal_forloop_count; j += 2)
 			{
 				if(layer[cond[0]] == cond[1])
 				{
@@ -1066,7 +1066,7 @@ function getLayerNoById(id, page = "back")
 		id		= id.id;
 	}
 	var	layers	= page == "fore" ? kag.fore.layers : kag.back.layers;
-	for(var i=0; i<layers.count; i++)
+	for (var i = 0, internal_forloop_count = layers.count; i < internal_forloop_count; i += 1)
 	{
 		if(layers[i].layerID == id)
 			return i;

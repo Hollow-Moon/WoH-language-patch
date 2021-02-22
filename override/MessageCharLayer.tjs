@@ -676,7 +676,7 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 		tmp.doBoxBlur(edgeextent, edgeextent);
 
 		var	cnt	= int(edgeemphasis / 256);
-		for (var i = 0; i < cnt; i += 1)
+		for (var i = 0, internal_forloop_count = cnt; i < internal_forloop_count; i += 1)
 			operateRect(ea - edgeextent, ea - edgeextent, tmp, 0, 0, tmp.imageWidth, tmp.imageHeight);
 		operateRect(ea - edgeextent, ea - edgeextent, tmp, 0, 0, tmp.imageWidth, tmp.imageHeight,, edgeemphasis - cnt * 256);
 		invalidate tmp;

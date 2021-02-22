@@ -50,7 +50,7 @@ class BasicMenuPlugin extends KAGPlugin
 	{
 		if(objects != void)
 		{
-			for(var i=0; i<objects.count; i++)
+			for (var i = 0, internal_forloop_count = objects.count; i < internal_forloop_count; i += 1)
 				invalidate objects[i] if objects[i] != void;
 			invalidate objects;
 		}
@@ -62,7 +62,7 @@ class BasicMenuPlugin extends KAGPlugin
 	//		リストへ追加されていると、終了時自動的に破棄する
 	function add(obj)
 	{
-		for(var i=0; i<objects.count; i++)
+		for (var i = 0, internal_forloop_count = objects.count; i < internal_forloop_count; i += 1)
 			if(objects[i] == obj) return;
 
 		objects.add(obj);
@@ -84,7 +84,7 @@ class BasicMenuPlugin extends KAGPlugin
 	//	全ての objects を削除
 	function clear()
 	{
-		for(var i=0; i<objects.count; i++)
+		for (var i = 0, internal_forloop_count = objects.count; i < internal_forloop_count; i += 1)
 			invalidate objects[i] if objects[i] != void;
 		objects.clear();
 	}
@@ -116,7 +116,7 @@ class BasicMenuPlugin extends KAGPlugin
 			kag.rightClickHook,	onRightClickDown,
 			kag.keyDownHook,	onKeyDown
 		];
-		for(var i=0; i<hooks.count; i+=2)
+		for (var i = 0, internal_forloop_count = hooks.count; i < internal_forloop_count; i += 2)
 		{
 			var	hook	= hooks[i];
 			var	func	= hooks[i+1];

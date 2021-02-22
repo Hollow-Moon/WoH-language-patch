@@ -110,7 +110,7 @@ function CFonAfterChangeWindowSize()
 	if (typeof(global.kag.windowWidthes) === "Object")
 	{
 		var	fs	= kag.fullScreen;
-		for(var i=0; i<kag.windowWidthes.count; i++)
+		for (var i = 0, internal_forloop_count = kag.windowWidthes.count; i < internal_forloop_count; i += 1)
 		{
 			var	sz	= kag.windowWidthes[i];
 			var	target	= Menu_object.find("サイズ" + sz, PRIMARY);
@@ -139,7 +139,7 @@ function CFonAfterChangeScreenMode()
 	{
 		.setProp("フルスクリーン表示", "on", v, PRIMARY);
 		var	fszoom	= System.getArgument("-fszoom");
-		for(var i=0; i<CFfullScreenModes.count; i+=3)
+		for (var i = 0, internal_forloop_count = CFfullScreenModes.count; i < internal_forloop_count; i += 3)
 		{
 			var	enabled	= v;
 			if (typeof(global.kag.fullScreenMode) === "Integer")
@@ -156,7 +156,7 @@ function CFonAfterChangeScreenMode()
 		.setProp("ウィンドウ表示", "on", !v, PRIMARY);
 		if (typeof(global.kag.windowWidthes) === "Object")
 		{
-			for(var i=0; i<kag.windowWidthes.count; i++)
+			for (var i = 0, internal_forloop_count = kag.windowWidthes.count; i < internal_forloop_count; i += 1)
 			{
 				var	sz	= kag.windowWidthes[i];
 				.setProp("サイズ"+sz, "enabled", !v && kag["window"+sz+"MenuItem"].enabled, PRIMARY);
@@ -171,7 +171,7 @@ function CFonAfterChangeMagnifyType()
 	with(Menu_object)
 	{
 		var	fszoom	= System.getArgument("-fszoom");
-		for(var i=0; i<CFfullScreenModes.count; i+=3)
+		for (var i = 0, internal_forloop_count = CFfullScreenModes.count; i < internal_forloop_count; i += 3)
 			.setProp(CFfullScreenModes[i], "on", CFfullScreenModes[i+1] == fszoom, PRIMARY);
 	}
 }
@@ -251,7 +251,7 @@ function CFopenPage(pgno, firsttime=false)
 
 	//	コンフィグで開始されたアクションが存在していたら、停止する
 /*	var	menuitems	= Menu_object.getMenuItems(PRIMARY);
-	for(var i=0; i<menuitems.count; i++)
+	for (var i = 0, internal_forloop_count = menuitems.count; i < internal_forloop_count; i += 1)
 	{
 		var	item	= menuitems[i];
 		if(item != void && item isvalid && kag.isInAction(item))
@@ -298,7 +298,7 @@ function CFplayTimeline(sno, setfunc, firsttime=false, isclose=false, closeall=f
 	var names	= ["システム","メッセージ","サウンド/エフェクト","ショートカットキー"];
 	if(firsttime)
 	{//	初回はページ切り替えボタンの設定を行う
-		for(var i=0; i<names.count; i++)
+		for (var i = 0, internal_forloop_count = names.count; i < internal_forloop_count; i += 1)
 		{
 			var	selected	= i+1 == sf.cf_page;
 			setCreateProps(creates[name2pos[names[i]]], %[on:false, itemMode:imButton,
@@ -320,7 +320,7 @@ function CFplayTimeline(sno, setfunc, firsttime=false, isclose=false, closeall=f
 	else
 	{//	二回目以降はフェード等行わず、ボタンの状態変更のみ
 		ignore	= %[基本背景:1, タイトル:1, タイトルコピー:1, タイトル草1:1, タイトル草2:1, タイトル草3:1, Back:1, Default:1];
-		for(var i=0; i<names.count; i++)
+		for (var i = 0, internal_forloop_count = names.count; i < internal_forloop_count; i += 1)
 		{
 			ignore[names[i]]= 1;
 			var	item		= Menu_object.find(names[i], PRIMARY);
@@ -335,7 +335,7 @@ function CFplayTimeline(sno, setfunc, firsttime=false, isclose=false, closeall=f
 	if(isclose)
 	{
 		var	items	= Menu_object.getMenuItems(PRIMARY);
-		for(var i=0; i<items.count; i++)
+		for (var i = 0, internal_forloop_count = items.count; i < internal_forloop_count; i += 1)
 		{
 			var	item	= items[i], pos;
 			if(item != void && item isvalid && (pos = name2pos[item.name]) !== void)
@@ -373,7 +373,7 @@ function CFsetSystemMenuItems(name2pos, creates, actions, isclose)
 	if(isclose)
 	{
 		var	onoffnames	= [ "フェードアウト濃", "フェードアウト薄", "フェードアウト長", "フェードアウト短" ];
-		for(var i=0; i<onoffnames.count; i++)
+		for (var i = 0, internal_forloop_count = onoffnames.count; i < internal_forloop_count; i += 1)
 		{
 			clearCreateProp(creates[name2pos[onoffnames[i]]], %[opacity:1], 1);
 			var	item	= Menu_object.find(onoffnames[i], PRIMARY);
@@ -388,7 +388,7 @@ function CFsetSystemMenuItems(name2pos, creates, actions, isclose)
 		v	= cf.lme_disable;
 //		var	opac	= v ? 64 : 255;
 		var	btnnames= ["フェードアウト濃", "フェードアウト薄", "フェードアウト長", "フェードアウト短" ];
-		for(var i=0; i<btnnames.count; i++)
+		for (var i = 0, internal_forloop_count = btnnames.count; i < internal_forloop_count; i += 1)
 		{
 			name	= btnnames[i];
 //			setActionLast(actions[name2pos[name]], "opacity", opac);
@@ -398,7 +398,7 @@ function CFsetSystemMenuItems(name2pos, creates, actions, isclose)
 
 	var	v	= kag.fullScreen;
 	var	fszoom	= System.getArgument("-fszoom");
-	for(var i=0; i<CFfullScreenModes.count; i+=3)
+	for (var i = 0, internal_forloop_count = CFfullScreenModes.count; i < internal_forloop_count; i += 3)
 	{
 		name	= CFfullScreenModes[i];
 		var	elm	= %[on:fszoom == CFfullScreenModes[i+1], enabled:v];
@@ -415,7 +415,7 @@ function CFsetSystemMenuItems(name2pos, creates, actions, isclose)
 
 	if (typeof(global.kag.windowWidthes) === "Object")
 	{
-		for(var i=0; i<kag.windowWidthes.count; i++)
+		for (var i = 0, internal_forloop_count = kag.windowWidthes.count; i < internal_forloop_count; i += 1)
 		{
 			var	sz	= kag.windowWidthes[i];
 			setCreateProps(creates[name2pos["サイズ"+sz]], %[enabled:(!v & kag["window"+sz+"MenuItem"].enabled), on:sz == kag.innerWidth]);
@@ -486,7 +486,7 @@ function CFopenSystem(firsttime=false)
 
 		var	delay	= 100;
 		var	time	= firsttime ? 200 : 150;
-		for(var i=0; i<items.count; i++)
+		for (var i = 0, internal_forloop_count = items.count; i < internal_forloop_count; i += 1)
 		{
 			var	item	= items[i];
 			item.top	-= 10;
@@ -511,7 +511,7 @@ function CFcloseSystem(closeall=false)
 	//	追加メニューアイテムを隠す
 	var	items	= [ "既読フェードアウト時間表示", "既読フェードアウト不透明度表示", "フェードサンプル表示" ];
 	var	time	= closeall ? 300 : 250;
-	for(var i=0; i<items.count; i++)
+	for (var i = 0, internal_forloop_count = items.count; i < internal_forloop_count; i += 1)
 	{
 		var	item	= Menu_object.find(items[i], PRIMARY);
 		if(item == void || !(item isvalid))
@@ -556,7 +556,7 @@ function configChgWindowStyle(item)
 	else
 	{
 		var	fszoom	= System.getArgument("-fszoom");
-		for(var i=0; i<CFfullScreenModes.count; i+=3)
+		for (var i = 0, internal_forloop_count = CFfullScreenModes.count; i < internal_forloop_count; i += 3)
 		{
 			if(item.name == CFfullScreenModes[i])
 			{
@@ -676,10 +676,10 @@ function configSystemMouseUp(item)
 			.setProp("フェードアウトOFF", "visible", cf.lme_disable, PRIMARY);
 			item.on	= true;
 			item.enter();
-			for(var i=0; i<names.count; i++)
+			for (var i = 0, internal_forloop_count = names.count; i < internal_forloop_count; i += 1)
 //				.setProps(names[i], ["enabled", !cf.lme_disable, "opacity", cf.lme_disable ? 64 : 255], PRIMARY);
 				.setProp(names[i], "enabled", !cf.lme_disable, PRIMARY);
-			for(var i=0; i<numnames.count; i++)
+			for (var i = 0, internal_forloop_count = numnames.count; i < internal_forloop_count; i += 1)
 				.setProp(numnames[i], "opacity", cf.lme_disable ? 128 : 255, PRIMARY);
 			obj	= .setProp("フェードサンプル表示", "opacity", cf.lme_disable ? 1 : 255, PRIMARY);
 			if(obj != void && obj isvalid)
@@ -955,7 +955,7 @@ function CFopenMessage(firsttime=false)
 
 		var	delay	= 100;
 		var	time	= firsttime ? 200 : 150;
-		for(var i=0; i<items.count; i++)
+		for (var i = 0, internal_forloop_count = items.count; i < internal_forloop_count; i += 1)
 		{
 			item	= items[i];
 			item.ssact(time + delay, "top", item.top + 10);
@@ -969,7 +969,7 @@ function CFopenMessage(firsttime=false)
 			"スキップの確認",	"既読MsgSkipON",				"早送りキーenter",
 			"早送りキーenter",	"スキップの確認",				"早送り既読のみOFF"
 		];
-		for(var i=0; i<btndirs.count; i+=3)
+		for (var i = 0, internal_forloop_count = btndirs.count; i < internal_forloop_count; i += 3)
 		{
 			item	= .find(btndirs[i], PRIMARY);
 			if(item != void && item isvalid)
@@ -995,7 +995,7 @@ function CFcloseMessage(closeall=false)
 					"オートページ切替時間アニメ", "メッセージサンプル表示" ];
 	var	time	= closeall ? 300 : 150;
 	var	delay	= closeall ? 0 : 100;
-	for(var i=0; i<items.count; i++)
+	for (var i = 0, internal_forloop_count = items.count; i < internal_forloop_count; i += 1)
 	{
 		var	item	 = Menu_object.find(items[i], PRIMARY);
 		if(item == void || !(item isvalid))
@@ -1057,7 +1057,7 @@ function configMessageMouseUp(item)
 	case "早送りキーctrl":
 	case "早送りキーshift":
 		var	skipbtns	= [ "早送りキーenter", "早送りキーctrl", "早送りキーshift" ];
-		for(var i=0; i<skipbtns.count; i++)
+		for (var i = 0, internal_forloop_count = skipbtns.count; i < internal_forloop_count; i += 1)
 		{
 			var	name	= skipbtns[i];
 			if(item.name == name)
@@ -1168,7 +1168,7 @@ function CFsetFontMenuItem(name2pos, creates, actions, isclose)
 	else
 	{
 		var	names	= [ "太字", "太字ルビ" ];
-		for(var i=0; i<names.count; i++)
+		for (var i = 0, internal_forloop_count = names.count; i < internal_forloop_count; i += 1)
 		{
 			var	name	= names[i];
 			var	item	= Menu_object.find(name, PRIMARY);
@@ -1344,7 +1344,7 @@ function CFsetSoundMenuItem(name2pos, creates, actions, isclose)
 		"画面切替時TXT消",	!cf.noTextOff,
 		"特殊効果表示",		cf.speffect
 	];
-	for(var i=0; i<btns.count; i+=2)
+	for (var i = 0, internal_forloop_count = btns.count; i < internal_forloop_count; i += 2)
 	{
 		setCreateProp(creates[name2pos[btns[i]+"する"]], "on", btns[i+1]);
 		setCreateProp(creates[name2pos[btns[i]+"しない"]], "on", !btns[i+1]);
@@ -1474,7 +1474,7 @@ function CFopenSound(firsttime=false)
 		} incontextof item;
 @endif
 
-		for(var i=0; i<items.count; i++)
+		for (var i = 0, internal_forloop_count = items.count; i < internal_forloop_count; i += 1)
 		{
 			item	= items[i];
 			item.ssact(time+delay, "top", item.top + 10);
@@ -1495,7 +1495,7 @@ function CFcloseSound(closeall=false)
 				  ];
 	var	item;
 	var	time	= closeall ? 300 : 250;
-	for(var i=0; i<names.count; i++)
+	for (var i = 0, internal_forloop_count = names.count; i < internal_forloop_count; i += 1)
 	{
 		item	= Menu_object.find(names[i], PRIMARY);
 		if(item == void || !(item isvalid))
@@ -1595,7 +1595,7 @@ function configSeMouseUp(item)
 			"se01047c.wav"
 		];
 		var	storage;
-		for(var i=0; i<100; i++)
+		for (var i = 0, internal_forloop_count = 100; i < internal_forloop_count; i += 1)
 		{
 			storage	= seTestFiles[int(Math.random() * seTestFiles.count)];
 			if(Storages.isExistentStorage(storage))

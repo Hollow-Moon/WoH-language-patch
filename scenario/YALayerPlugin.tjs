@@ -22,8 +22,8 @@ class YALayerPlugin extends KAGPlugin
 
 	function finalize()
 	{
-		for(var i=0; i<fore.count; i++) invalidate fore[i];
-		for(var i=0; i<back.count; i++) invalidate back[i];
+		for (var i = 0, internal_forloop_count = fore.count; i < internal_forloop_count; i += 1) invalidate fore[i];
+		for (var i = 0, internal_forloop_count = back.count; i < internal_forloop_count; i += 1) invalidate back[i];
 
 		super.finalize();
 	}
@@ -65,9 +65,9 @@ class YALayerPlugin extends KAGPlugin
 		with(f.fg_plugin = %[])
 		{
 			.fore	= [];
-			for(var i=0; i<fore.count; i++)	.fore[i]	= fore[i].store();
+			for (var i = 0, internal_forloop_count = fore.count; i < internal_forloop_count; i += 1)	.fore[i]	= fore[i].store();
 			.back	= [];
-			for(var i=0; i<back.count; i++)	.back[i]	= back[i].store();
+			for (var i = 0, internal_forloop_count = back.count; i < internal_forloop_count; i += 1)	.back[i]	= back[i].store();
 		}
 	}
 
@@ -82,14 +82,14 @@ class YALayerPlugin extends KAGPlugin
 			if(elm != void && elm.backlay != void && +elm.backlay)
 			{
 				fore.clear();
-				for(var i=0; i<.fore.count; i++)
+				for (var i = 0, internal_forloop_count = .fore.count; i < internal_forloop_count; i += 1)
 				{
 					try { fore[i].restore(.fore[i]); }
 					catch(e) { dm("画像の読み込みに失敗しました(fore["+i+"])"); }
 				}
 			}
 			back.clear();
-			for(var i=0; i<.back.count; i++)
+			for (var i = 0, internal_forloop_count = .back.count; i < internal_forloop_count; i += 1)
 			{
 				try { back[i].restore(.back[i]); }
 				catch(e) { dm("画像の読み込みに失敗しました(back["+i+"])"); }
@@ -101,10 +101,10 @@ class YALayerPlugin extends KAGPlugin
 	function getLayerFromObject(layer)
 	{
 		var	pages	= [ fore, back ];
-		for(var i=0; i<pages.count; i++)
+		for (var i = 0, internal_forloop_count = pages.count; i < internal_forloop_count; i += 1)
 		{
 			var	layers	= pages[i];
-			for(var j = 0; j<layers.count; j++)
+			for (var j = 0, internal_forloop_count = layers.count; j < internal_forloop_count; j += 1)
 			{
 				if(layers[j] == layer)
 					return %[page:(i == 0 ? "fore" : "back"), elmname => j];

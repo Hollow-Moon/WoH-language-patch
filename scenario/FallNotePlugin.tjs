@@ -48,7 +48,7 @@ class FallNotePlugin extends KAGPlugin
 		if(bases == void)
 		{
 			bases	= [];
-			for(var i=0; i<animations.count; i++)
+			for (var i = 0, internal_forloop_count = animations.count; i < internal_forloop_count; i += 1)
 			{
 				var	anim	= animations[i];
 				var	base;
@@ -61,7 +61,7 @@ class FallNotePlugin extends KAGPlugin
 				if(anim[2] == void)
 				{
 					anim[2]	= [];
-					for(var i=0; i<anim[1]; i++)
+					for (var i = 0, internal_forloop_count = anim[1]; i < internal_forloop_count; i += 1)
 						anim[2][i]	= i;
 				}
 			}
@@ -136,7 +136,7 @@ class FallNotePlugin extends KAGPlugin
 		clearNotes(pool);
 		if(bases != void)
 		{
-			for(var i=0; i<bases.count; i++)
+			for (var i = 0, internal_forloop_count = bases.count; i < internal_forloop_count; i += 1)
 				invalidate bases[i] if bases[i] != void;
 			bases	= void;
 		}
@@ -207,10 +207,10 @@ class FallNotePlugin extends KAGPlugin
 				_page	= v;
 
 				var	fv	= v != "back";
-				for(var i=0; i<kag.fore.notes.count; i++)
+				for (var i = 0, internal_forloop_count = kag.fore.notes.count; i < internal_forloop_count; i += 1)
 					kag.fore.notes[i].visible	= fv;
 				var	bv	= v != "fore";
-				for(var i=0; i<kag.back.notes.count; i++)
+				for (var i = 0, internal_forloop_count = kag.back.notes.count; i < internal_forloop_count; i += 1)
 					kag.back.notes[i].visible	= bv;
 			}
 		}
@@ -225,10 +225,10 @@ class FallNotePlugin extends KAGPlugin
 		var	tick	= System.getTickCount();
 		var	past	= tick - lasttick;
 		var	pages	= [ kag.fore.notes, kag.back.notes ];
-		for(var i=0; i<pages.count; i++)
+		for (var i = 0, internal_forloop_count = pages.count; i < internal_forloop_count; i += 1)
 		{
 			var	notes	= pages[i];
-			for(var i=0; i<notes.count; i++)
+			for (var i = 0, internal_forloop_count = notes.count; i < internal_forloop_count; i += 1)
 				notes[i].past(past) if notes[i].main;
 		}
 		lasttick	= tick;
@@ -255,7 +255,7 @@ class FallNotePlugin extends KAGPlugin
 	{
 		if(notes != void)
 		{
-			for(var i=0; i<notes.count; i++) with(notes[i])
+			for (var i = 0, internal_forloop_count = notes.count; i < internal_forloop_count; i += 1) with(notes[i])
 			{
 				if(notes[i] != void)
 				{
@@ -294,10 +294,10 @@ class FallNotePlugin extends KAGPlugin
 			f.notesIndex	= index;
 			f.notes	= [];
 			var	pages	= [ "fore", "back" ];
-			for(var i=0; i<pages.count; i++)
+			for (var i = 0, internal_forloop_count = pages.count; i < internal_forloop_count; i += 1)
 			{
 				var	page	= pages[i];
-				for(var i=0; i<kag[page].notes.count; i++) with(kag[page].notes[i])
+				for (var i = 0, internal_forloop_count = kag[page].notes.count; i < internal_forloop_count; i += 1) with(kag[page].notes[i])
 				{
 					if(.main)
 					{
@@ -323,7 +323,7 @@ class FallNotePlugin extends KAGPlugin
 			init();
 			page	= f.notesPage;
 			index	= f.notesIndex;
-			for(var i=0; i<f.notes.count; i++)
+			for (var i = 0, internal_forloop_count = f.notes.count; i < internal_forloop_count; i += 1)
 			{
 				var	note	= getNote(f.notes[i].animationNo);
 				note	= note.comp if f.notes[i].page == "back";

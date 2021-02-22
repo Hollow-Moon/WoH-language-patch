@@ -139,7 +139,7 @@ class ScenarioPlayMenuPlugin extends BasicMenuPlugin
 		var	list	= [];
 		var	func	= function(cates, open, list, rank, func)	//	開いているかどうかで再帰的に登録
 		{
-			for(var i=0; i<cates.count; i++)
+			for (var i = 0, internal_forloop_count = cates.count; i < internal_forloop_count; i += 1)
 			{
 				var	cate	= cates[i];
 				if(typeof cate == "Object")
@@ -196,7 +196,7 @@ class ScenarioPlayMenuPlugin extends BasicMenuPlugin
 			var	func	= function(cates, id, func)
 			{
 				var	cate;
-				for(var i=0; i<cates.count; i++)
+				for (var i = 0, internal_forloop_count = cates.count; i < internal_forloop_count; i += 1)
 				{
 					if(typeof cates[i] == "Object")
 					{
@@ -213,7 +213,7 @@ class ScenarioPlayMenuPlugin extends BasicMenuPlugin
 			if(cate == void)
 				return;
 			var	sces	= cate.children;
-			for(var i=0; i<sces.count; i++)
+			for (var i = 0, internal_forloop_count = sces.count; i < internal_forloop_count; i += 1)
 			{
 				if(typeof sces[i] == "String")
 				{
@@ -497,7 +497,7 @@ class ButtonListLayer extends KAGLayer
 		var	btn;
 		var	btns	= [];
 		_start	= st if st !== void;
-		for(var i=0; i<array.count; i++)
+		for (var i = 0, internal_forloop_count = array.count; i < internal_forloop_count; i += 1)
 		{
 			var	data	= array[i];
 			var	j;
@@ -549,14 +549,14 @@ class ButtonListLayer extends KAGLayer
 	//	ボタンを並べ直す
 	function lineupButtons()
 	{
-		for(var i=0; i<buttons.count; i++)
+		for (var i = 0, internal_forloop_count = buttons.count; i < internal_forloop_count; i += 1)
 			buttons[i].no	= i - start;
 	}
 
 	//	ボタンを全て破棄
 	function clearButtons()
 	{
-		for(var i=0; i<buttons.count; i++)
+		for (var i = 0, internal_forloop_count = buttons.count; i < internal_forloop_count; i += 1)
 			invalidate buttons[i] if buttons[i] != void;
 		buttons.clear();
 	}

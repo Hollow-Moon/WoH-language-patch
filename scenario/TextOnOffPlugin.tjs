@@ -80,7 +80,7 @@ class TextOnOffPlugin extends KAGPlugin
 		msgs = kag.fore.messages;
 		if(layer == "all")
 		{
-			for(var i=0; i<msgs.count; i++)
+			for (var i = 0, internal_forloop_count = msgs.count; i < internal_forloop_count; i += 1)
 				msgs[i]["start_opacity"]= (tovisible ? (msgs[i].opacity < 255 ? msgs[i].opacity : 0) : (msgs[i].opacity > 0 ? msgs[i].opacity : 255));
 		}
 		else
@@ -137,7 +137,7 @@ class TextOnOffPlugin extends KAGPlugin
 		var wb		= kag.currentWithBack;
 		if(layer == "all")
 		{
-			for(var i=0; i<msgs.count; i++)
+			for (var i = 0, internal_forloop_count = msgs.count; i < internal_forloop_count; i += 1)
 			{
 				with(msgs[i])
 				{
@@ -222,7 +222,7 @@ kag.isMessageInvisible	= function(layer=string currentNum)
 	if(layer == "all")
 	{
 		opac	= 255;
-		for(var i=0; i<fore.messages.count; i++)
+		for (var i = 0, internal_forloop_count = fore.messages.count; i < internal_forloop_count; i += 1)
 		{
 			vis	|= fore.messages[i].visible;
 			opac = fore.messages[i].opacity if fore.messages[i].opacity < opac;
@@ -247,7 +247,7 @@ kag.isMessageVisible	= function(layer="all")
 	if(layer == "all")
 	{
 		opac	= 0;
-		for(var i=0; i<fore.messages.count; i++)
+		for (var i = 0, internal_forloop_count = fore.messages.count; i < internal_forloop_count; i += 1)
 		{
 			vis	|= fore.messages[i].visible;
 			opac+= fore.messages[i].opacity if fore.messages[i].opacity > opac;
@@ -412,7 +412,7 @@ kag.hidebeforeexecute	= function(elm)
 	{
 //		dm("hidebeforeexecute: textoff");
 		//	トランジション前にメッセージレイヤーをバックアップ
-		for(var i=0; i<fore.messages.count; i++)
+		for (var i = 0, internal_forloop_count = fore.messages.count; i < internal_forloop_count; i += 1)
 		{
 			//	currentWithBack == false の時だけバックアップ
 			backupLayer(%[layer:"message"+i], true) if !currentWithBack;

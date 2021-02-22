@@ -124,7 +124,7 @@ function openSoundMenu(page="fore")
 	tf.sm_playbgmno	= void;	//	再生中のBGM番号
 	tf.sm_lastx = tf.sm_lasty	= void;	//	直前のカーソル位置
 	tf.sm_playedbgms	= [];	//	再生済みの曲番号
-	for(var i=0; i<smBGMCount; i++)
+	for (var i = 0, internal_forloop_count = smBGMCount; i < internal_forloop_count; i += 1)
 		tf.sm_playedbgms.add(i) if SMisPlayed(i);
 	tf.sm_randomplayed	= [];	//	曲をランダム再生したかどうか
 	tf.sm_randomplaylist	= [];	//	曲をランダム再生した順番
@@ -269,7 +269,7 @@ function SMselectRandom(nofocus=false)
 
 		//	すべてランダム再生されたらリセットする
 		var	cnt	= 0;
-		for(var i=0; i<tf.sm_playedbgms.count; i++)
+		for (var i = 0, internal_forloop_count = tf.sm_playedbgms.count; i < internal_forloop_count; i += 1)
 			cnt++ if tf.sm_randomplayed[tf.sm_playedbgms[i]];
 		if(cnt == tf.sm_playedbgms.count)
 		{
@@ -463,7 +463,7 @@ function getSoundMenuIgnoreList(ignore=%[])
 	ignore["bgm56"]				= 1;
 @if(SOUNDMENU_INVISIBLE_NOPLAY)
 	//	未聴のBGMを入れる
-	for(var i=0; i<smBGMCount; i++)
+	for (var i = 0, internal_forloop_count = smBGMCount; i < internal_forloop_count; i += 1)
 		ignore["bgm"+(i+1)]	= !SMisPlayed(i);
 @endif
 	return ignore;
@@ -472,7 +472,7 @@ function getSoundMenuIgnoreList(ignore=%[])
 //	未聴のBGMボタンを無効にする
 function setBGMButtons(name2pos, creates)
 {
-	for(var i=0; i<smBGMCount; i++)
+	for (var i = 0, internal_forloop_count = smBGMCount; i < internal_forloop_count; i += 1)
 	{
 		var	no	= name2pos["bgm"+(i+1)];
 //		dm("bgm"+(i+1)+" = "+SMisPlayed(i)) if no !== void;
@@ -578,13 +578,13 @@ function closeSoundMenu()
 	setBGMButtons(name2pos, creates);
 @endif
 	muteAllMenuItem(tdata);		//	すべて効果音mute
-	for(var i=0; i<actions.count; i++)
+	for (var i = 0, internal_forloop_count = actions.count; i < internal_forloop_count; i += 1)
 		removeActionData(actions[i], "opacity") if actions[i] != void;	//	トランジションするので、不透明度を変化させない
 	Menu_object.playTimeline("fore", tdata[1], tdata[2], %[absolute:1100000], getSoundMenuIgnoreList(), true);
 
 	var	ttime	= 600;
 	var	items	= [ "SM演出1", "SM演出2", "SM再生時間", "SM総再生時間", "SM再生時間バー" ];
-	for(var i=0; i<items.count; i++)
+	for (var i = 0, internal_forloop_count = items.count; i < internal_forloop_count; i += 1)
 	{
 		var	item	= Menu_object.find(items[i]);
 		if(item != void)
@@ -648,7 +648,7 @@ function SMchangePage(pgno)
 		Menu_object.playTimeline("fore", creates, tdata[2], %[absolute:1100000], ignore, true);
 	else
 	{
-		for(var i=0; i<creates.count; i++)
+		for (var i = 0, internal_forloop_count = creates.count; i < internal_forloop_count; i += 1)
 			setCreateProp(creates[i], "visible", false);
 		Menu_object.lastTimeline("fore", creates, tdata[2], %[absolute:1100000], ignore, true);
 	}
@@ -685,7 +685,7 @@ function SMchangePage(pgno)
 		Menu_object.playTimeline("fore", creates, tdata[2], %[absolute:1100000], ignore,, true);
 	else
 	{
-		for(var i=0; i<creates.count; i++)
+		for (var i = 0, internal_forloop_count = creates.count; i < internal_forloop_count; i += 1)
 			setCreateProp(creates[i], "visible", false);
 		Menu_object.lastTimeline("fore", creates, tdata[2], %[absolute:1100000], ignore,, true);
 	}
@@ -849,7 +849,7 @@ function SMplayCurrent(begin=false)
 		if(images != void)
 		{
 			sf.displayedPictures	= %[] if sf.displayedPictures == void;
-			for(var i=0; i<images.count; i++)
+			for (var i = 0, internal_forloop_count = images.count; i < internal_forloop_count; i += 1)
 			{
 				var	image	= images[i];
 				var	fn	= typeof image == "Object" ? image[0] : image;
@@ -896,7 +896,7 @@ function SMexchangeBG(begin=false)
 	var	l, t;
 	if(tf.sm_bglist.count > 1)
 	{
-		for(var i=0; i<200; i++)
+		for (var i = 0, internal_forloop_count = 200; i < internal_forloop_count; i += 1)
 		{
 			data	= tf.sm_bglist[int(Math.random() * tf.sm_bglist.count)];
 			if(typeof data == "Object")
@@ -1097,7 +1097,7 @@ function SMplayByButton(btn)
 		SMplayRandom();
 	else// if(sf.sm_playmode == "repeat all")
 	{
-		for(var i=0; i<smBGMCount; i++)
+		for (var i = 0, internal_forloop_count = smBGMCount; i < internal_forloop_count; i += 1)
 		{
 			if(SMisPlayed(i))
 			{
@@ -1145,7 +1145,7 @@ function SMmove(step, nofocus=false)
 			return;
 		}
 		var	last= no;
-		for(var i=0; i<100; i++)
+		for (var i = 0, internal_forloop_count = 100; i < internal_forloop_count; i += 1)
 		{
 			no	+= step;
 			no	= smBGMCount - 1 if no < 0;
@@ -1184,7 +1184,7 @@ function SMplayModeButtonName(idx)
 //	再生モードのボタン状態を変更する
 function SMchangePlayModeButtons(idx, page="fore")
 {
-	for(var i=0; i<3; i++)
+	for (var i = 0, internal_forloop_count = 3; i < internal_forloop_count; i += 1)
 		Menu_object.find(SMplayModeButtonName(i), page).on	= i == idx;
 }
 //	再生モードをリセット

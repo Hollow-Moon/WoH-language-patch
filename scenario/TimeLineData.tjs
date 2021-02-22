@@ -60,15 +60,15 @@ var	interpolateTypes	= [
 function array2idDict(array)
 {
 	var	dic	= %[];
-	for(var i=0; i<array.count; i++)
+	for (var i = 0, internal_forloop_count = array.count; i < internal_forloop_count; i += 1)
 		dic[array[i]]	= i;
 	return dic;
 }
 var	interpolate2id	= array2idDict(interpolateTypes);
 
 var	KeyDataExclusiveKeyDic	= %[currentKeys:true, visible:true, frame:true];
-	for(var i=0; i<KeyDataBasicKeys.count; i++) { KeyDataExclusiveKeyDic[KeyDataBasicKeys[i]] = true; }
-	for(var i=0; i<KeyDataSpecialKeys.count; i++) { KeyDataExclusiveKeyDic[KeyDataSpecialKeys[i]] = true; }
+	for (var i = 0, internal_forloop_count = KeyDataBasicKeys.count; i < internal_forloop_count; i += 1) { KeyDataExclusiveKeyDic[KeyDataBasicKeys[i]] = true; }
+	for (var i = 0, internal_forloop_count = KeyDataSpecialKeys.count; i < internal_forloop_count; i += 1) { KeyDataExclusiveKeyDic[KeyDataSpecialKeys[i]] = true; }
 
 //	キーフレーム
 class KeyData
@@ -133,7 +133,7 @@ class KeyData
 			accel		= elm.accel if typeof elm.accel != "undefined";
 			interpolate	= elm.interpolate if typeof elm.interpolate != "undefined";
 
-			for(var i=0; i<keys.count; i++)
+			for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 1)
 			{
 				var	key	= keys[i];
 				if(elm[key] == defaultValues[key])
@@ -164,22 +164,22 @@ class KeyData
 	{
 		//	基本キーは変えないので、状態保存
 		var	state	= %[];
-		for(var i=0; i<global.KeyDataBasicKeys.count; i++)
+		for (var i = 0, internal_forloop_count = global.KeyDataBasicKeys.count; i < internal_forloop_count; i += 1)
 //			this[global.KeyDataBasicKeys[i]]	= global.KeyDataBasicInit[i];
 			state[global.KeyDataBasicKeys[i]]	= this[global.KeyDataBasicKeys[i]];
 
 		//	拡張キー
 		var	keys	= [];
 		keys.assign(defaultValues);
-		for(var i=0; i<keys.count; i+=2)
+		for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 2)
 			delete this[keys[i]] if typeof this[keys[i]] != "undefined";
 
 		//	特殊キー
-		for(var i=0; i<global.KeyDataSpecialKeys.count; i++)
+		for (var i = 0, internal_forloop_count = global.KeyDataSpecialKeys.count; i < internal_forloop_count; i += 1)
 			delete this[global.KeyDataSpecialKeys[i]] if typeof this[global.KeyDataSpecialKeys[i]] != "undefined";
 
 		//	基本キーを元に戻す
-		for(var i=0; i<global.KeyDataBasicKeys.count; i++)
+		for (var i = 0, internal_forloop_count = global.KeyDataBasicKeys.count; i < internal_forloop_count; i += 1)
 			this[global.KeyDataBasicKeys[i]]	= state[global.KeyDataBasicKeys[i]];
 	}
 
@@ -190,7 +190,7 @@ class KeyData
 		{
 			var	keys= [];
 			keys.assign(dic);
-			for(var i=0; i<keys.count; i+=2)
+			for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 2)
 			{
 				var	key	= keys[i];
 				if(keys[i+1] == defaultValues[key])
@@ -205,20 +205,20 @@ class KeyData
 	//	中間を意味する値を設定
 	function setMiddle(keys)
 	{
-		for(var i=0; i<keys.count; i++)
+		for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 1)
 			this[keys[i]]	= global.meansMiddle;
 	}
 
 	//	コピー
 	function assign(src, keys)
 	{
-		for(var i=0; i<global.KeyDataBasicKeys.count; i++)
+		for (var i = 0, internal_forloop_count = global.KeyDataBasicKeys.count; i < internal_forloop_count; i += 1)
 			this[global.KeyDataBasicKeys[i]]	= src[global.KeyDataBasicKeys[i]];
 		var	lists	= [ keys, global.KeyDataSpecialKeys ];
-		for(var i=0; i<lists.count; i++)
+		for (var i = 0, internal_forloop_count = lists.count; i < internal_forloop_count; i += 1)
 		{
 			var	list	= lists[i];
-			for(var i=0; i<list.count; i++)
+			for (var i = 0, internal_forloop_count = list.count; i < internal_forloop_count; i += 1)
 			{
 				var	key	= list[i];
 				if(src[key] === void)
@@ -242,10 +242,10 @@ class KeyData
 		array[p++]	= accel;
 		array[p++]	= interpolate != void ? global.interpolate2id[interpolate] : 0;
 		var	lists	= [ keys, global.KeyDataSpecialKeys ];
-		for(var i=0; i<lists.count; i++)
+		for (var i = 0, internal_forloop_count = lists.count; i < internal_forloop_count; i += 1)
 		{
 			var	list	= lists[i];
-			for(var i=0; i<list.count; i++)
+			for (var i = 0, internal_forloop_count = list.count; i < internal_forloop_count; i += 1)
 			{
 				var	type	= typeof this[list[i]];
 				if(type != "undefined")
@@ -268,10 +268,10 @@ class KeyData
 		if(dic instanceof "Dictionary")
 		{//	old ver.
 			var	lists	= [ keys, global.KeyDataBasicKeys, global.KeyDataSpecialKeys ];
-			for(var i=0; i<lists.count; i++)
+			for (var i = 0, internal_forloop_count = lists.count; i < internal_forloop_count; i += 1)
 			{
 				var	list	= lists[i];
-				for(var i=0; i<list.count; i++)
+				for (var i = 0, internal_forloop_count = list.count; i < internal_forloop_count; i += 1)
 				{
 					var	key	= list[i];
 					this[key]	= (dic[key] !== void) ? dic[key] : def[key];
@@ -285,7 +285,7 @@ class KeyData
 				return false;		//	フレーム番号が null のキーフレームは破棄する
 			this.frame	= dic[p++];
 			var	lists	= [ global.KeyDataBasicKeys, keys, global.KeyDataSpecialKeys ];
-			for(var i=0; i<lists.count; i++)
+			for (var i = 0, internal_forloop_count = lists.count; i < internal_forloop_count; i += 1)
 			{
 				var	list	= lists[i];
 				for(var i=0; i<list.count; i++, p++)
@@ -328,7 +328,7 @@ class KeyData
 			var	keys	= [];
 			var	data	= [];
 			data.assign(this);
-			for(var i=0; i<data.count; i+=2)
+			for (var i = 0, internal_forloop_count = data.count; i < internal_forloop_count; i += 2)
 			{
 				var	name	= data[i];
 				if(global.KeyDataExclusiveKeyDic[name] || typeof data[i+1] == "Object")
@@ -560,7 +560,7 @@ class TimeLineData
 	//	すべてのキーフレームのプロパティに値を入れる
 	function setPropertyAllKeyFrame(prop, value)
 	{
-		for(var i=0; i<frames.count; i++)
+		for (var i = 0, internal_forloop_count = frames.count; i < internal_forloop_count; i += 1)
 			frames[i][prop]	= value;
 @if(!SIMPLE_TIMELINEDATA)
 		delete currentValues[prop];
@@ -685,16 +685,16 @@ class TimeLineData
 @if(FIXED_MEANMIDDLE)
 			//	前後のキーフレームに"~"が入っていれば、その値を確定させる
 			var	ks	= [ prev, next ];
-			for(var i=0; i<ks.count; i++)
+			for (var i = 0, internal_forloop_count = ks.count; i < internal_forloop_count; i += 1)
 			{
 				var	kf	= ks[i];
 				var	fs	= getFrameState(kf.frame);
-				for(var i=0; i<keys.count; i++)
+				for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 1)
 					kf[keys[i]]	= fs[keys[i]] if prev[keys[i]] == meansMiddle;
 			}
 @endif
 			//	中間値を取るものは中間値を示す値を入れる
-			for(var i=0; i<keys.count; i++)
+			for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 1)
 				key[keys[i]]	= meansMiddle if middleProperties[keys[i]];
 		}
 		return key;
@@ -927,7 +927,7 @@ class TimeLineData
 			accel:key1.accel,
 			interpolate:key1.interpolate
 		];
-		for(var i=0; i<keys.count; i++)
+		for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 1)
 		{
 			if(middleProperties[keys[i]])
 				data[keys[i]]	= getValueInFrame(frame, keys[i]);
@@ -950,7 +950,7 @@ class TimeLineData
 
 		var	_sindex	= getKeyFrameIndexLE(st);
 		var	lf		= lastKeyFrame.frame;
-		for(var i=0; i<props.count; i++)
+		for (var i = 0, internal_forloop_count = props.count; i < internal_forloop_count; i += 1)
 		{
 			var	prop	= props[i];
 
@@ -1039,7 +1039,7 @@ class TimeLineData
 		//	最後にキーフレームのフレームと番号を入れる
 		if(addlast_keyframe)
 		{
-			for(var i=_sindex; i<frames.count; i++)
+			for (var i = _sindex, internal_forloop_count = frames.count; i < internal_forloop_count; i += 1)
 			{
 				var	f	= frames[i].frame;
 				if(f < st)
@@ -1062,7 +1062,7 @@ class TimeLineData
 			work	= [];
 		else
 		{
-			for(var i=0; i<work.count; i++)
+			for (var i = 0, internal_forloop_count = work.count; i < internal_forloop_count; i += 1)
 				invalidate work[i] if work[i] != void;
 			work.clear();
 		}
@@ -1073,11 +1073,11 @@ class TimeLineData
 			return;
 
 		//	キーフレームの番号をリスト化
-		for(var i=0; i<frames.count; i++)
+		for (var i = 0, internal_forloop_count = frames.count; i < internal_forloop_count; i += 1)
 			work[i]	= %[];	//	値を保管する辞書
 
 		//	各キー毎にワークを更新
-		for(var i=0; i<keys.count; i++)
+		for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 1)
 		{
 			var	n	= keys[i];
 			if(!middleProperties[n])
@@ -1093,7 +1093,7 @@ class TimeLineData
 			work[1][n]	= tmp[2] - tmp[1] - work[0][n];
 			tmp[1]	= 4;
 
-			for(var i=1; i<lim; i++)
+			for (var i = 1, internal_forloop_count = lim; i < internal_forloop_count; i += 1)
 			{
 				var	x	= i / tmp[i];
 				work[i+1][n]	= tmp[i+2] - tmp[i+1] - tmp[i] * x;
@@ -1170,7 +1170,7 @@ class TimeLineData
 	{
 		if(typeof prop == "String")
 		{
-			for(var i=0; i<frames.count; i++)
+			for (var i = 0, internal_forloop_count = frames.count; i < internal_forloop_count; i += 1)
 				frames[i][prop]	= value;
 @if(!SIMPLE_TIMELINEDATA)
 			delete currentValues[prop];
@@ -1178,14 +1178,14 @@ class TimeLineData
 		}
 		else
 		{
-			for(var i=0; i<frames.count; i++)
+			for (var i = 0, internal_forloop_count = frames.count; i < internal_forloop_count; i += 1)
 			{
 				var	f	= frames[i];
-				for(var i=0; i<prop.count; i++)
+				for (var i = 0, internal_forloop_count = prop.count; i < internal_forloop_count; i += 1)
 					f[prop[i]]	= value[i];
 			}
 @if(!SIMPLE_TIMELINEDATA)
-			for(var i=0; i<prop.count; i++)
+			for (var i = 0, internal_forloop_count = prop.count; i < internal_forloop_count; i += 1)
 				delete currentValues[prop];
 @endif
 		}
@@ -1201,14 +1201,14 @@ class TimeLineData
 		var value = [];
 		if(typeof prop == "String")
 		{
-			for(var i=0; i<frames.count; i++)
+			for (var i = 0, internal_forloop_count = frames.count; i < internal_forloop_count; i += 1)
 			{
 				var val = frames[i][prop];
 				if( val !== void && val != "" )
 					tmp[val] = true;
 			}
 			ary.assign(tmp);
-			for(var i=0; i<ary.count; i+=2)
+			for (var i = 0, internal_forloop_count = ary.count; i < internal_forloop_count; i += 2)
 				value.add(ary[i]);
 		}
 		return value;
@@ -1294,7 +1294,7 @@ class TimeLineData
 		//	実際の値に変更する
 		var	prevkey	= frames[prev];
 		var	nextkey	= next !== void ? frames[next] : void;
-		for(var i=0; i<keys.count; i++)
+		for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 1)
 		{
 			if(prevkey[keys[i]] === meansMiddle)
 				prevkey[keys[i]]	= getValueInFrame(prev, keys[i]);
@@ -1347,7 +1347,7 @@ class TimeLineData
 		if(blank)
 		{
 			var	nb	= false;
-			for(var i=0; i<frames.count; i++)
+			for (var i = 0, internal_forloop_count = frames.count; i < internal_forloop_count; i += 1)
 			{
 				if((frames[i].frame < from || frames[i].frame > to) && !frames[i].blank)
 				{
@@ -1391,7 +1391,7 @@ class TimeLineData
 		from <-> to if from > to;
 
 		var	fidx	= getKeyFrameIndexGE(from);
-		for(var i=fidx; i<frames.count; i++)
+		for (var i = fidx, internal_forloop_count = frames.count; i < internal_forloop_count; i += 1)
 		{
 			if(frames[i].frame > to)
 				break;
@@ -1415,11 +1415,11 @@ class TimeLineData
 		from <-> to if from > to;
 
 		var	fidx	= getKeyFrameIndexGE(from);
-		for(var i=fidx; i<frames.count; i++)
+		for (var i = fidx, internal_forloop_count = frames.count; i < internal_forloop_count; i += 1)
 		{
 			if(frames[i].frame > to)
 				break;
-			for(var j=0; j<keys.count; j++)
+			for (var j = 0, internal_forloop_count = keys.count; j < internal_forloop_count; j += 1)
 				frames[i][keys[j]]	= meansMiddle if ismiddle[keys[j]];
 @if(!SIMPLE_TIMELINEDATA)
 			currentFrame	= void if frames[i].frame === currentFrame;
@@ -1442,7 +1442,7 @@ class TimeLineData
 	{
 		if(s1 instanceof "Array" && s2 instanceof "Array" && s1.count == s2.count)
 		{
-			for( var i = 0; i < s1.count; i++)
+			for (var i = 0, internal_forloop_count = s1.count; i < internal_forloop_count; i += 1)
 			{
 				if(s1[i] instanceof "Array" || s1[i] instanceof "Dictionary")
 				{
@@ -1465,7 +1465,7 @@ class TimeLineData
 			if(key1.count != key2.count)
 				return false;
 			var i;
-			for(var i = 0; i < key1.count; i+= 2)
+			for (var i = 0, internal_forloop_count = key1.count; i < internal_forloop_count; i += 2)
 			{
 				var key = key1[i];
 				if(s1[key] instanceof "Array" || s1[key] instanceof "Dictionary")
@@ -1500,7 +1500,7 @@ class TimeLineData
 			//	挿入位置以降のキーフレームを、挿入されるフレーム数分ずらす
 			var	findex	= searchIndex(from);
 			findex	= -findex if findex < 0;
-			for(var i=findex; i<frames.count; i++)
+			for (var i = findex, internal_forloop_count = frames.count; i < internal_forloop_count; i += 1)
 				frames[i].frame	+= ins;
 			length	+= ins;
 
@@ -1618,7 +1618,7 @@ class TimeLineData
 		}
 
 		//	区間にあるキーフレームを複製
-		for(var i=findex; i<frames.count; i++)
+		for (var i = findex, internal_forloop_count = frames.count; i < internal_forloop_count; i += 1)
 		{
 			if(frames[i].frame > to)
 				break;
@@ -1676,7 +1676,7 @@ class TimeLineData
 
 		//	ペーストされる区間は破棄される
 		var	findex	= getKeyFrameIndexGE(from);
-		for(var i=findex; i<frames.count; i++)
+		for (var i = findex, internal_forloop_count = frames.count; i < internal_forloop_count; i += 1)
 		{
 			if(frames[i].frame > to)	//	to にあるキーフレームまで破棄する
 				break;
@@ -1691,7 +1691,7 @@ class TimeLineData
 		var	changelast	= findex == frames.count;	//	最終キーフレームをペーストした？
 
 		//	挿入する
-		for(var i=2; i<buf.count; i++)
+		for (var i = 2, internal_forloop_count = buf.count; i < internal_forloop_count; i += 1)
 		{
 			var	orgkey	= buf[i];
 //			if(orgkey instanceof "KeyData")
@@ -1701,7 +1701,7 @@ class TimeLineData
 					var	arr	= [];
 					arr.assign(defaultValues);
 					var	val	= %[frame:orgkey.frame];
-					for(var i=0; i<arr.count; i+=2)
+					for (var i = 0, internal_forloop_count = arr.count; i < internal_forloop_count; i += 2)
 					{
 						var	prop	= arr[i];
 //						dm(prop+" = "+orgkey[prop]);
@@ -1749,7 +1749,7 @@ class TimeLineData
 
 		//	ペーストされる区間は破棄される
 		var	findex	= getKeyFrameIndexGE(from);
-		for(var i=findex; i<frames.count; i++)
+		for (var i = findex, internal_forloop_count = frames.count; i < internal_forloop_count; i += 1)
 		{
 			if(frames[i].frame > to)	//	to にあるキーフレームまで破棄する
 				break;
@@ -1759,12 +1759,12 @@ class TimeLineData
 
 		//	挿入する
 		var	srckey	= frames[findex-1];
-		for(var i=1; i<buf.count; i++)
+		for (var i = 1, internal_forloop_count = buf.count; i < internal_forloop_count; i += 1)
 		{
 			if(!(buf[i] instanceof "KeyData"))
 				continue;
 			var	nk	= createKey(buf[i].frame + from, srckey);	//	buf のフレームは相対フレーム番号になっているので
-			for(var j=0; j<ppl.count; j++)
+			for (var j = 0, internal_forloop_count = ppl.count; j < internal_forloop_count; j += 1)
 				nk[ppl[j]]	= buf[i][ppl[j]];	//	コピーするプロパティだけ上書き
 			frames.insert(findex++, nk);
 		}
@@ -1808,7 +1808,7 @@ class TimeLineData
 			temp.add(kf);
 			frames.erase(i);
 		}
-		for(var i=0; i<temp.count; i++)
+		for (var i = 0, internal_forloop_count = temp.count; i < internal_forloop_count; i += 1)
 			frames.insert(sidx+i, temp[i]);
 @if(!SIMPLE_TIMELINEDATA)
 		currentFrame	= void if from <= currentFrame && currentFrame <= to;
@@ -1826,7 +1826,7 @@ class TimeLineData
 
 		//	区間内の最初のキーフレームを取得
 		var	findex	= getKeyFrameIndexGE(from);
-		for(var i=findex; i<frames.count; i++)
+		for (var i = findex, internal_forloop_count = frames.count; i < internal_forloop_count; i += 1)
 		{
 			if(frames[i].frame > to)
 				break;
@@ -1944,7 +1944,7 @@ class TimeLineData
 		st <-> ed if st > ed;
 		ed	= last if ed > last;
 		var	fi	= getKeyFrameIndexGE(st);
-		for(var i=fi; i<frames.count; i++)
+		for (var i = fi, internal_forloop_count = frames.count; i < internal_forloop_count; i += 1)
 		{
 			var	f	= frames[i];
 			if(f.frame > ed)
@@ -1984,7 +1984,7 @@ class TimeLineData
 			frames.erase(0);
 		}
 
-		for(var i=1; i<buf.count; i++)	//	挿入
+		for (var i = 1, internal_forloop_count = buf.count; i < internal_forloop_count; i += 1)	//	挿入
 		{
 			if(buf[i] instanceof "KeyData")
 				frames.add(buf[i]);
@@ -2005,7 +2005,7 @@ class TimeLineData
 		return;	//	原因が判明したので、訂正の必要がなくなった
 @if(0)
 		var	nb	= false;
-		for(var i=0; i<frames.count; i++)
+		for (var i = 0, internal_forloop_count = frames.count; i < internal_forloop_count; i += 1)
 		{
 			if(!frames[i].blank)
 			{
@@ -2025,7 +2025,7 @@ class TimeLineData
 	//		: cvalue	訂正する値
 	function correctUniqueValue(frame, prop, value, cvalue)
 	{
-		for(var i=0; i<frames.count; i++)
+		for (var i = 0, internal_forloop_count = frames.count; i < internal_forloop_count; i += 1)
 		{
 			var	f	= frames[i];
 			if(f.frame != frame && f[prop] === value)
@@ -2051,16 +2051,16 @@ class TimeLineData
 			var	kcnt	= keys.count + 5;
 			.frames	= [];
 			var	last	= [];
-			for(var i=0; i<keys.count; i++)
+			for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 1)
 				last[i+5]	= defaultValues[keys[i]];
 			var	changed	= %[];
-			for(var i=0; i<frames.count; i++)
+			for (var i = 0, internal_forloop_count = frames.count; i < internal_forloop_count; i += 1)
 			{
 				//	直前のキーフレームと同じ値なら、null に置き換え
 				var	frame	= frames[i].store(keys);
 				var	cur		= [];
 				cur.assign(frame);	//	frame が変更されるので、取得した状態を保存しておく
-				for(var i=0; i<frame.count; i++)
+				for (var i = 0, internal_forloop_count = frame.count; i < internal_forloop_count; i += 1)
 				{
 					if(last[i] === frame[i])
 						frame[i]	= null;
@@ -2077,7 +2077,7 @@ class TimeLineData
 				{
 					.keys.erase(i);	//	最後まで初期値から変化がなかったので、キーとフレームデータを保存しない
 					var	idx	= i + 5;
-					for(var i=0; i<.frames.count; i++)
+					for (var i = 0, internal_forloop_count = .frames.count; i < internal_forloop_count; i += 1)
 						.frames[i].erase(idx);
 				}
 			}
@@ -2102,7 +2102,7 @@ class TimeLineData
 				this.keys	= [];
 				this.keys.assign(.keys);
 			}
-			for(var i=0; i<frames.count; i++)
+			for (var i = 0, internal_forloop_count = frames.count; i < internal_forloop_count; i += 1)
 				invalidate frames[i];
 			frames.clear();
 			if(.frames instanceof "Array")
@@ -2111,7 +2111,7 @@ class TimeLineData
 				var	last;
 				if(typeof .frames[0] == "Integer")
 				{//	旧
-					for(var i=0; i<.frames.count; i+=2)
+					for (var i = 0, internal_forloop_count = .frames.count; i < internal_forloop_count; i += 2)
 					{
 						var	frame	= new KeyData(this,,,,, def);
 						.frames[i+1].insert(0, .frames[i]);
@@ -2123,7 +2123,7 @@ class TimeLineData
 				}
 				else
 				{//	新
-					for(var i=0; i<.frames.count; i++)
+					for (var i = 0, internal_forloop_count = .frames.count; i < internal_forloop_count; i += 1)
 					{
 						var	frame	= new KeyData(this,,,,, def);
 						if(frame.restore(.frames[i], savekeys, last !== void ? last : def))	//	保存時のキー順で読み込み
@@ -2140,7 +2140,7 @@ class TimeLineData
 			{
 				var	array	= [];
 				array.assign(.frames);
-				for(var i=0; i<array.count; i+=2)
+				for (var i = 0, internal_forloop_count = array.count; i < internal_forloop_count; i += 2)
 				{
 					frames[+array[i]]	= new KeyData(this,,,,, def);
 					frames[+array[i]].restore(array[i+1], savekeys, def);	//	保存時のキー順で読み込み
@@ -2201,10 +2201,10 @@ class TimeLineData
 	{
 		var	init	= %[];	//	初期値
 		var	cnt	= 0;
-		for(var f=0; f<frames.count; f++)
+		for (var f = 0, internal_forloop_count = frames.count; f < internal_forloop_count; f += 1)
 		{
 			var	frame	= frames[f];
-			for(var i=0; i<keys.count; i++)
+			for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 1)
 			{
 				var	prop	= keys[i];
 				if(typeof frame[prop] != "undefined" && frame[prop] !== void)
@@ -2225,10 +2225,10 @@ class TimeLineData
 	{
 		var	tmp	= [];
 		var	cnt	= 0;
-		for(var f=0; f<frames.count; f++)
+		for (var f = 0, internal_forloop_count = frames.count; f < internal_forloop_count; f += 1)
 		{
 			var	frame	= frames[f];
-			for(var i=0; i<keys.count; i++)
+			for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 1)
 			{
 				var	prop	= keys[i];
 				if(typeof frame[prop] != "undefined" && frame[prop] !== void)
@@ -2256,7 +2256,7 @@ class TimeLineData
 		ed	= this.last if ed === void;
 
 		//	オブジェクトの初期値を直前の値として記録
-		for(var i=0; i<props.count; i++)
+		for (var i = 0, internal_forloop_count = props.count; i < internal_forloop_count; i += 1)
 			last[props[i]]	= initValues[props[i]];
 		last["accel"]		= void;
 		last["interpolate"]	= void;
@@ -2267,7 +2267,7 @@ class TimeLineData
 		var	curframe;
 		var	loop	= void;
 		var	islastvalue;
-		for(var f=firstframeindex; f<frames.count; f++)
+		for (var f = firstframeindex, internal_forloop_count = frames.count; f < internal_forloop_count; f += 1)
 		{
 			islastvalue	= false;
 			var	kf		= frames[f];
@@ -2295,7 +2295,7 @@ class TimeLineData
 			keyframe.add(last.accel !== acc ? acc : void);		last.accel		= acc;
 			keyframe.add(last.interpolate !== itp ? itp : void);last.interpolate= itp;
 
-			for(var i=0; i<props.count; i++)
+			for (var i = 0, internal_forloop_count = props.count; i < internal_forloop_count; i += 1)
 			{
 				var	prop	= props[i];
 				if(islastvalue || kf[prop] == meansCurrent)
@@ -2347,7 +2347,7 @@ class TimeLineData
 
 		//	最初に設定されている storage を取り出す
 		var	firststorage;
-		for(var i=0; i<props.count; i++)
+		for (var i = 0, internal_forloop_count = props.count; i < internal_forloop_count; i += 1)
 		{
 			if(props[i] == "storage")
 			{
@@ -2360,7 +2360,7 @@ class TimeLineData
 			firststorage	= "";
 
 		var	pns		= [];	//	プロパティ名
-		for(var i=0; i<props.count; i++)
+		for (var i = 0, internal_forloop_count = props.count; i < internal_forloop_count; i += 1)
 		{
 			var	prop	= props[i];
 			//	変更されているプロパティのみ含める
@@ -2372,7 +2372,7 @@ class TimeLineData
 			else
 			{
 				//	変更されていないプロパティのデータは破棄する
-				for(var j=0; j<keydata.count; j++)
+				for (var j = 0, internal_forloop_count = keydata.count; j < internal_forloop_count; j += 1)
 					keydata[j].erase(i + diff);
 				diff--;	//	破棄したことにより、ずれが生じるので記録しておく
 			}
@@ -2453,22 +2453,22 @@ class TimeLineData
 		//	データを整形
 		props	= props.split(",");
 		values	= values.split(/\)\(/,, true);	//	途中の")("で分割
-		for(var i=0; i<props.count; i++)
+		for (var i = 0, internal_forloop_count = props.count; i < internal_forloop_count; i += 1)
 			props[i]	= props[i].substr(1) if props[i][0] == "-";
 		values[0]	= values[0].substr(1) if values[0][0] == "(";
 		var	last	= values.count-1;
 		values[last]	= values[last].substr(0, values[last].length-1) if values[last][values[last].length-1] == ")";
 
 		var	ip2name	= %[];
-		for(var i=0; i<interpolateTypes.count; i++)
+		for (var i = 0, internal_forloop_count = interpolateTypes.count; i < internal_forloop_count; i += 1)
 			ip2name[interpolateTypes[i][0]]	= interpolateTypes[i];
 
 		var	elm	= %[];
-		for(var i=0; i<keys.count; i++)
+		for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 1)
 			elm[keys[i]]	= defaultValues[keys[i]];	//	初期値を設定
 		var	numreg	= new RegExp("^[0-9\\-]+$");
 		var	realreg	= new RegExp("^[0-9\\-\\.]+$");
-		for(var i=0; i<values.count; i++)
+		for (var i = 0, internal_forloop_count = values.count; i < internal_forloop_count; i += 1)
 		{
 			var	vs	= values[i].split(",");	// データの中に","が存在しないこと…
 
@@ -2479,7 +2479,7 @@ class TimeLineData
 				elm.tween		= vs[2] != "n";		// トゥイーン
 				elm.interpolate	= ip2name[vs[2]];	// 補間方法
 			}
-			for(var i=0; i<props.count; i++)
+			for (var i = 0, internal_forloop_count = props.count; i < internal_forloop_count; i += 1)
 			{
 				var	value	= vs[3 + i];
 				if(value != "")
@@ -2506,7 +2506,7 @@ class TimeLineData
 	{
 		var	state	= getFrameState(frame);
 		var	tag		= new KAGTagData();
-		for(var i=0; i<keys.count; i++)
+		for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 1)
 		{
 			var	prop	= keys[i];
 			var	value	= state[prop];
@@ -2523,7 +2523,7 @@ class TimeLineData
 	function setFrameStateFromTag(frame, tag, keys, defaultValues)
 	{
 		var	kf	= insertKeyFrame(frame,, false);	//	新しく挿入するか、既にあるもの
-		for(var i=0; i<keys.count; i++)
+		for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 1)
 		{
 			var	prop	= keys[i];
 			var	value	= tag.get(prop);
@@ -2539,7 +2539,7 @@ class TimeLineData
 	function getValueList(prop, list)
 	{
 		list	= [] if list == void;
-		for(var i=0; i<frames.count; i++)
+		for (var i = 0, internal_forloop_count = frames.count; i < internal_forloop_count; i += 1)
 			list.add(frames[i][prop]) if frames[i][prop] != "" && list.find(frames[i][prop]) < 0;
 		return list;
 	}

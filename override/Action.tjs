@@ -211,7 +211,7 @@ class PropActionInfo
 	function release()
 	{
 		invalidate absolute if absolute != void && absolute.free();
-		for(var i=0; i<relative.count; i++)
+		for (var i = 0, internal_forloop_count = relative.count; i < internal_forloop_count; i += 1)
 			invalidate relative[i] if relative[i] != void && relative[i].free();
 		absolute		= void;
 		relative.clear();
@@ -226,7 +226,7 @@ class PropActionInfo
 		setter(v)
 		{
 			absolute.pause	= v if absolute != void;
-			for(var i=0; i<relative.count; i++)
+			for (var i = 0, internal_forloop_count = relative.count; i < internal_forloop_count; i += 1)
 				relative[i].pause	= v;
 			isPause	= +v;
 		}
@@ -239,7 +239,7 @@ class PropActionInfo
 		{
 			if(absolute != void && absolute.isLoop)
 				return true;
-			for(var i=0; i<relative.count; i++)
+			for (var i = 0, internal_forloop_count = relative.count; i < internal_forloop_count; i += 1)
 			{
 				if(relative[i].isLoop)
 					return true;
@@ -262,7 +262,7 @@ class PropActionInfo
 	{
 		var	clone	= new global.PropActionInfo(propName);
 		clone.absolute	= absolute != void ? absolute.reference() : void;
-		for(var i=0; i<relative.count; i++)
+		for (var i = 0, internal_forloop_count = relative.count; i < internal_forloop_count; i += 1)
 			clone.relative.add(relative[i] != void ? relative[i].reference() : void);
 		clone.first		= first;
 //		clone.startTime	= startTime;
@@ -376,7 +376,7 @@ class PropActionInfo
 				absolute.init(target, propName);
 			else
 				initValue	= relativeProperties[propName] ? 0 : target[propName];
-			for(var i=0; i<relative.count; i++)
+			for (var i = 0, internal_forloop_count = relative.count; i < internal_forloop_count; i += 1)
 				relative[i].init(target, propName);
 			first	= false;
 		}
@@ -408,12 +408,13 @@ class PropActionInfo
 			var	relcnt = relative.count;
 			if(relcnt > 0)
 			{
-				for(var i=0; i<relative.count; i++)
+				for (var i = 0, internal_forloop_count = relative.count; i < internal_forloop_count; i += 1)
 				{
 					if(relative[i].action(target, propName, now, stopFlag))
 					{
 						internalRelativeActionCompleted(i, target);
 						i--;
+						internal_forloop_count -= 1;
 					}
 					else
 						done	= false;	//	relative[i] が動作中なので、終了していない
@@ -440,7 +441,7 @@ class PropActionInfo
 		}
 		else if(relative.count > 0)
 		{
-			for(var i=0; i<relative.count; i++)
+			for (var i = 0, internal_forloop_count = relative.count; i < internal_forloop_count; i += 1)
 			{
 				if(relative[i].className == handler)
 				{
@@ -448,6 +449,7 @@ class PropActionInfo
 					relative[i].action(target, propName, now, true);
 					internalRelativeActionCompleted(i, target);
 					i--;
+					internal_forloop_count -= 1;
 				}
 			}
 			target[propName]	= initValue if relative.count == 0;
@@ -470,7 +472,7 @@ class PropActionInfo
 		}
 		else if(relative.count > 0)
 		{
-			for(var i=0; i<relative.count; i++)
+			for (var i = 0, internal_forloop_count = relative.count; i < internal_forloop_count; i += 1)
 			{
 				if(relative[i].acttype == acttype)
 				{
@@ -478,6 +480,7 @@ class PropActionInfo
 					relative[i].action(target, propName, now, true);
 					internalRelativeActionCompleted(i, target);
 					i--;
+					internal_forloop_count -= 1;
 				}
 			}
 			target[propName]	= initValue if relative.count == 0;
@@ -497,7 +500,7 @@ class PropActionInfo
 		else
 		{
 			var num = 0;
-			for(var i=0; i<relative.count; i++)
+			for (var i = 0, internal_forloop_count = relative.count; i < internal_forloop_count; i += 1)
 			{
 				if(relative[i].acttype == acttype)
 					num++;
@@ -512,7 +515,7 @@ class PropActionInfo
 	{
 		if(absolute != void && absolute.className == handler)
 			return absolute;
-		for(var i=0; i<relative.count; i++)
+		for (var i = 0, internal_forloop_count = relative.count; i < internal_forloop_count; i += 1)
 		{
 			if(relative[i].className == handler)
 				return relative[i];
@@ -531,7 +534,7 @@ class PropActionInfo
 			.propName	= propName;
 			.absolute	= absolute != void ? absolute.store() : void;
 			.relative	= [];
-			for(var i=0; i<relative.count; i++)
+			for (var i = 0, internal_forloop_count = relative.count; i < internal_forloop_count; i += 1)
 			{
 				var dat = relative[i].store();
 				.relative.add(dat) if dat !== void;
@@ -559,7 +562,7 @@ class PropActionInfo
 				absolute	= void;
 			while(relative.count > 0)
 				internalRelativeActionCompleted(0, target);
-			for(var i=0; i<.relative.count; i++)
+			for (var i = 0, internal_forloop_count = .relative.count; i < internal_forloop_count; i += 1)
 			{
 				if( .relative[i].elm === void )
 					continue;
@@ -579,7 +582,7 @@ class PropActionInfo
 		getter
 		{
 			var	d	= absolute == void;
-			for(var i=0; i<relative.count; i++)
+			for (var i = 0, internal_forloop_count = relative.count; i < internal_forloop_count; i += 1)
 				d	&= relative[i] == void;
 			return d;
 		}
@@ -591,7 +594,7 @@ class PropActionInfo
 		getter
 		{
 			var	d	= absolute != void && absolute.time < 0x7fffffff;
-			for(var i=0; i<relative.count; i++)
+			for (var i = 0, internal_forloop_count = relative.count; i < internal_forloop_count; i += 1)
 				d	&= relative[i] != void && relative[i].time < 0x7fffffff;
 			return d;
 		}
@@ -645,7 +648,7 @@ class ActionInfo
 	function clone()
 	{
 		var	clone	= new global.ActionInfo();
-		for(var i=0; i<actionList.count; i++)
+		for (var i = 0, internal_forloop_count = actionList.count; i < internal_forloop_count; i += 1)
 		{
 			var	act	= actionList[i].clone();
 			clone.actionList.add(act);
@@ -732,7 +735,7 @@ class ActionInfo
 	{
 		var	common	= [ "time", "delay", "accel", "starttime" ];
 		var	params	= %[];
-		for(var i=0; i<common.count; i++)
+		for (var i = 0, internal_forloop_count = common.count; i < internal_forloop_count; i += 1)
 		{
 			var	cn	= common[i];
 			if(dic[cn] !== void)
@@ -744,7 +747,7 @@ class ActionInfo
 
 		var	keys	= [];
 		keys.assign(dic);
-		for(var i=0; i<keys.count; i+=2)
+		for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 2)
 		{
 			var	prop	= keys[i];
 			var	elm		= keys[i+1];
@@ -758,7 +761,7 @@ class ActionInfo
 				{
 					var	e	= %[];
 					(Dictionary.assign incontextof e)(elm, false);
-					for(var i=0; i<common.count; i++)
+					for (var i = 0, internal_forloop_count = common.count; i < internal_forloop_count; i += 1)
 						e[common[i]]	= params[common[i]] if params[common[i]] !== void && e[common[i]] === void;
 					if(typeof e.handler == "String")
 						addAction(prop, (e.handler)!, e);
@@ -774,7 +777,7 @@ class ActionInfo
 	function getResultValue()
 	{
 		var	ret	= %[];
-		for(var i=0; i<actionList.count; i++)
+		for (var i = 0, internal_forloop_count = actionList.count; i < internal_forloop_count; i += 1)
 		{
 			var	info	= actionList[i];
 			var	result	= info.getResultValue(target);
@@ -807,7 +810,7 @@ class ActionInfo
 //		dm(target.name+".doAction("+actionList.join(", ")+"): now = "+now, "correctTime = "+correctTime);
 
 		var	done	= true;
-		for(var i=0; i<actionList.count; i++)
+		for (var i = 0, internal_forloop_count = actionList.count; i < internal_forloop_count; i += 1)
 		{
 			try
 			{
@@ -815,6 +818,7 @@ class ActionInfo
 				{
 					internalPropActionCompleted(actionList[i]);
 					i--;
+					internal_forloop_count -= 1;
 				}
 				else
 					done	= false;	//	終了しない
@@ -871,7 +875,7 @@ class ActionInfo
 	//	アクションハンドラのタイプ指定停止
 	function stopActionByType( acttype )
 	{
-		for(var i=0; i<actionList.count; i++)
+		for (var i = 0, internal_forloop_count = actionList.count; i < internal_forloop_count; i += 1)
 		{
 			if( actionList[i].isDone ) continue;
 			//dm("ActionInfo.stopActionByType " + this + " target=" + target + "["+target.name+"]");
@@ -885,7 +889,7 @@ class ActionInfo
 	function countActionByType( acttype )
 	{
 		var num = 0;
-		for(var i=0; i<actionList.count; i++)
+		for (var i = 0, internal_forloop_count = actionList.count; i < internal_forloop_count; i += 1)
 		{
 			if( actionList[i].isDone ) continue;
 			num += actionList[i].countActionByType( target, acttype );
@@ -954,7 +958,7 @@ class ActionInfo
 
 		now			= System.getTickCount() if now === void;
 		pauseTime	= now;
-		for(var i=0; i<actionList.count; i++)
+		for (var i = 0, internal_forloop_count = actionList.count; i < internal_forloop_count; i += 1)
 			actionList[i].pause	= true;
 	}
 
@@ -970,7 +974,7 @@ class ActionInfo
 		if(pauseTime != 0 && now > pauseTime)
 			correctTime	+= int(now - pauseTime);
 		pauseTime	= 0;
-		for(var i=0; i<actionList.count; i++)
+		for (var i = 0, internal_forloop_count = actionList.count; i < internal_forloop_count; i += 1)
 			actionList[i].pause	= false;
 	}
 
@@ -978,7 +982,7 @@ class ActionInfo
 	{
 		getter
 		{
-			for(var i=0; i<actionList.count; i++)
+			for (var i = 0, internal_forloop_count = actionList.count; i < internal_forloop_count; i += 1)
 			{
 				if(actionList[i].isLoop)
 					return true;
@@ -992,7 +996,7 @@ class ActionInfo
 		//	nowait なアクション実行中は、next 処理しない
 		if(!nowait)
 		{
-			for(var i=0; i<actionList.count; i++)
+			for (var i = 0, internal_forloop_count = actionList.count; i < internal_forloop_count; i += 1)
 				actionList[i].next(target);
 		}
 	}
@@ -1007,7 +1011,7 @@ class ActionInfo
 			.target	= kag.getLayerFromObject(target);
 			if(.target == void)
 				.target	= target.getActionTargetInfo() if typeof target.getActionTargetInfo != "undefined";
-//			dm("store: "+target.name); var keys = []; keys.assign(.target); for(var i=0; i<keys.count; i+=2) { dm("  "+keys[i]+" = "+keys[i+1]); }
+//			dm("store: "+target.name); var keys = []; keys.assign(.target); for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 2) { dm("  "+keys[i]+" = "+keys[i+1]); }
 
 			.nowait		= nowait if nowait;
 			.canPause	= canPause if canPause;
@@ -1016,7 +1020,7 @@ class ActionInfo
 			.correctTime= correctTime if correctTime;
 
 			.actionList	= [];
-			for(var i=0; i<actionList.count; i++)
+			for (var i = 0, internal_forloop_count = actionList.count; i < internal_forloop_count; i += 1)
 			{
 				var	pact	= actionList[i].store();
 				.actionList.add(pact) if pact != void;
@@ -1063,7 +1067,7 @@ class ActionInfo
 			pauseTime	= .pauseTime if .pauseTime !== void;
 			correctTime	= .correctTime if .correctTime !== void;
 
-			for(var i=0; i<.actionList.count; i++)
+			for (var i = 0, internal_forloop_count = .actionList.count; i < internal_forloop_count; i += 1)
 			{
 				var	info	= new PropActionInfo();
 				info.restore(.actionList[i], target);
@@ -1084,7 +1088,7 @@ class ActionInfo
 		getter
 		{
 			var	d	= true;
-			for(var i=0; i<actionList.count; i++)
+			for (var i = 0, internal_forloop_count = actionList.count; i < internal_forloop_count; i += 1)
 				d	&= actionList[i].isDone;
 			return d;
 		}
@@ -1095,7 +1099,7 @@ class ActionInfo
 		getter
 		{
 			var	d	= false;
-			for(var i=0; i<actionList.count; i++)
+			for (var i = 0, internal_forloop_count = actionList.count; i < internal_forloop_count; i += 1)
 				d	|= actionList[i].isNotOnlyLoop;
 			return d;
 		}

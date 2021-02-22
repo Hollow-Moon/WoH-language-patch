@@ -34,10 +34,10 @@ function openTitleMenu()
 		.stopAllTransitions();
 		.stopAllActions(true);
 		var pages = ["fore","back"];
-		for( var i=0; i<pages.count; i++ )
+		for (var i = 0, internal_forloop_count = pages.count; i < internal_forloop_count; i += 1)
 		{
 			var pg = kag[pages[i]];
-			for( var j=0; j<pg.messages.count; j++ )
+			for (var j = 0, internal_forloop_count = pg.messages.count; j < internal_forloop_count; j += 1)
 				pg.messages[j].clear();
 		}
 		.mainConductor.clear();
@@ -64,7 +64,7 @@ function openTitleMenu()
 		//	セーブデータが存在するかどうか
 		var	found	= false;
 		var	cnt		= kag.pageBookMarks * kag.bookMarkPages;
-		for(var i=0; i<cnt; i++)
+		for (var i = 0, internal_forloop_count = cnt; i < internal_forloop_count; i += 1)
 		{
 			if(kag.bookMarkDates[i] != void)
 			{
@@ -90,11 +90,11 @@ function TTsetProps(creates)
 	//	オールクリア
 	if(isAllCleared)
 	{//	画像変更
-		for(var i=0; i<creates.count; i++)
+		for (var i = 0, internal_forloop_count = creates.count; i < internal_forloop_count; i += 1)
 			addCreateStorageProp(creates[i], "_b");
 	}
 	//	左右のキー移動を無効化
-	for(var i=0; i<creates.count; i++)
+	for (var i = 0, internal_forloop_count = creates.count; i < internal_forloop_count; i += 1)
 	{
 		setCreateProp(creates[i], "leftItems", "");
 		setCreateProp(creates[i], "rightItems", "");
@@ -109,7 +109,7 @@ function TTfreeCursors(carry=false)
 		return;	//	終了時に呼び出されたとき、すでに Menu_object が破棄されている可能性があるため
 	var	list	= Menu_object.getMenuItems();
 	var	cursors	= [];
-	for(var i=0; i<list.count; i++)
+	for (var i = 0, internal_forloop_count = list.count; i < internal_forloop_count; i += 1)
 	{
 		if(list[i] != void && list[i] isvalid && list[i].name == "タイトルカーソル")
 		{
@@ -152,10 +152,10 @@ function clearTitleMenuEvents(tdata)
 	//	クリアしておかないと、消去途中のボタンにマウスが合って表示されることがある
 	//	mouseUp で、もう一度メニューを表示しようとしてしまう
 	var	clearprops	= [ "mouseEnter", "mouseUp" ];
-	for(var i=0; i<tdata[1].count; i++)
+	for (var i = 0, internal_forloop_count = tdata[1].count; i < internal_forloop_count; i += 1)
 	{
 		var	target	= tdata[1][i];
-		for(var i=0; i<clearprops.count; i++)
+		for (var i = 0, internal_forloop_count = clearprops.count; i < internal_forloop_count; i += 1)
 		setCreateProp(target, clearprops[i], "");
 	}
 }
@@ -224,7 +224,7 @@ function goExtra2Next(func)
 
 	//	ボタンが処理を受け付けないようにする
 	var	buttons	= [ "back", "soundmenu", "cgmenu", "archive" ];
-	for(var i=0; i<buttons.count; i++)
+	for (var i = 0, internal_forloop_count = buttons.count; i < internal_forloop_count; i += 1)
 	{
 		var	item	= Menu_object.find("EXTRA"+buttons[i]);
 		item.itemMode	= imParts if item != void;	//	パーツにする
@@ -298,7 +298,7 @@ function TTenterButton(btn)
 
 	//	毎回レイヤーを取得する
 	var	fliplrs	= [ false, true ];
-	for(var i=0; i<fliplrs.count; i++)
+	for (var i = 0, internal_forloop_count = fliplrs.count; i < internal_forloop_count; i += 1)
 	{
 		var	titlecursor	= Menu_object.getLayerFromElm(%[page:"fore", name:"タイトルカーソル", menuitem:-2]);	//	必ず新規に作成(-2で同じ名前のものが存在しても新規に作成する)
 		titlecursor.fliplr	= void;

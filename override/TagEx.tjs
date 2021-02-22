@@ -506,7 +506,7 @@ KAGWindow.getHandlers		= function()
 				{
 					//	前景の削除
 					var	layers	= this[.page].layers;
-					for(var i=0; i<layers.count; i++)
+					for (var i = 0, internal_forloop_count = layers.count; i < internal_forloop_count; i += 1)
 						tagHandlers.freeimage(%[layer:string i,page:.page]);
 
 					//	プラグインにも消させる
@@ -588,7 +588,7 @@ KAGWindow.getHandlers		= function()
 					var ruby_count = 0;
 					cws	= cws[0];
 					rws	= rws[0];
-					for(var i=0; i<.char.length; i++)
+					for (var i = 0, internal_forloop_count = .char.length; i < internal_forloop_count; i += 1)
 					{
 						var	ruby	= "";
 						var	lrp		= rp;
@@ -615,12 +615,12 @@ KAGWindow.getHandlers		= function()
 					{
 						pendings_to_insert.clear();
 						pendings_to_insert.add(%[tagname:"ruby", char:.char.length, text:.text]);
-						for (var i = 0; i < .char.length; i += 1)
+						for (var i = 0, internal_forloop_count = .char.length; i < internal_forloop_count; i += 1)
 						{
 							pendings_to_insert.add(%[tagname:"ch", text:.char[i]]);
 						}
 					}
-					for (var i = 0; i < pendings_to_insert.count; i += 1)
+					for (var i = 0, internal_forloop_count = pendings_to_insert.count; i < internal_forloop_count; i += 1)
 					{
 						conductor.pendings.insert(i, pendings_to_insert[i]);
 					}
@@ -886,9 +886,9 @@ KAGWindow.getHandlers		= function()
 			{
 				var strs = elm.storage.split(",");	//複数指定の場合、候補となるものを全て停止
 				var pages	= elm.page !== void ? [ elm.page ] : ["back","fore"];	//ページ指定されていた場合はそのページのみ対象
-				for( var j=0; j<pages.count; j++ )
+				for (var j = 0, internal_forloop_count = pages.count; j < internal_forloop_count; j += 1)
 				{
-					for( var i=0; i<strs.count; i++ )
+					for (var i = 0, internal_forloop_count = strs.count; i < internal_forloop_count; i += 1)
 					{
 						var	layer	= getLayerFromElm(%[page:pages[j], storage:strs[i]]);
 						if(layer != void)
@@ -952,9 +952,9 @@ KAGWindow.getHandlers		= function()
 			{
 				var strs = elm.storage.split(",");	//複数指定の場合、候補となるものを全て停止
 				var pages	= elm.page !== void ? [ elm.page ] : ["back","fore"];	//ページ指定されていた場合はそのページのみ対象
-				for( var j=0; j<pages.count; j++ )
+				for (var j = 0, internal_forloop_count = pages.count; j < internal_forloop_count; j += 1)
 				{
-					for( var i=0; i<strs.count; i++ )
+					for (var i = 0, internal_forloop_count = strs.count; i < internal_forloop_count; i += 1)
 					{
 						var	layer	= getLayerFromElm(%[page:pages[j], storage:strs[i]]);
 						if(layer != void)
@@ -1259,7 +1259,7 @@ KAGWindow.getHandlers		= function()
 			if(elm.buf === void)
 			{
 				//	空きバッファを探す
-				for(var i=SESTARTIDX; i<ses.count; i++) with(ses[i])
+				for (var i = SESTARTIDX, internal_forloop_count = ses.count; i < internal_forloop_count; i += 1) with(ses[i])
 				{
 					//	再生中でなく、delay中でなく、アクション中でもない
 					if(.playingStorage=="" && !.isDelaying && !isInAction(ses[i]))
@@ -1423,7 +1423,7 @@ KAGWindow.getHandlers		= function()
 			else
 			{
 				//全停止
-				for( var i=SESTARTIDX; i<se.count; i++ )
+				for (var i = SESTARTIDX, internal_forloop_count = se.count; i < internal_forloop_count; i += 1)
 				{
 					if(elm.time > 0)
 					{
@@ -1475,7 +1475,7 @@ KAGWindow.getHandlers		= function()
 		 */
 		.sedelayexec	= function(elm)
 		{
-			for(var i=0; i<kag.se.count; i++)
+			for (var i = 0, internal_forloop_count = kag.se.count; i < internal_forloop_count; i += 1)
 				kag.se[i].onDelayed();
 			return 0;
 		} incontextof this;
@@ -1651,7 +1651,7 @@ KAGWindow.getHandlers		= function()
 			{
 				//現時点で非表示でもこのあと表示されたものまで対象にする
 				var objlayers = this[page].layers;
-				for( var i=0; i<objlayers.count; i++ )
+				for (var i = 0, internal_forloop_count = objlayers.count; i < internal_forloop_count; i += 1)
 					targets.add(objlayers[i]);
 				getLayerAll(%[page:page],, targets);	//	プラグインのレイヤーを追加
 				if( effect != "" || off )
@@ -1661,7 +1661,7 @@ KAGWindow.getHandlers		= function()
 				if(doboth)
 				{
 					var cmplayers = this[comp].layers;
-					for( var i=0; i<cmplayers.count; i++ )
+					for (var i = 0, internal_forloop_count = cmplayers.count; i < internal_forloop_count; i += 1)
 						targets.add(cmplayers[i]);
 					getLayerAll(%[page:comp],, targets);	//	プラグインのレイヤーを追加
 					if( effect != "" || off )
@@ -1677,7 +1677,7 @@ KAGWindow.getHandlers		= function()
 					targets.add(objbase);
 			}
 
-			for( var i=0; i<targets.count; i++ )
+			for (var i = 0, internal_forloop_count = targets.count; i < internal_forloop_count; i += 1)
 			{
 //				dm("targets["+i+"] = "+targets[i]+" / "+effect);
 				//エフェクト効果
@@ -2079,12 +2079,12 @@ KAGWindow.getHandlers		= function()
 			if(elm.both)
 			{
 				var	lc	= layers.count;
-				for(var i=0; i<lc; i++)
+				for (var i = 0, internal_forloop_count = lc; i < internal_forloop_count; i += 1)
 					layers.add(layers[i].comp) if layers[i].comp != void;
 			}
 			var	delay	= +elm.delay;
 //			dm("delay = "+delay);
-			for(var i=0; i<layers.count; i++)
+			for (var i = 0, internal_forloop_count = layers.count; i < internal_forloop_count; i += 1)
 			{
 				var	layer	= layers[i];
 				if(!layer.visible && elm.page != "back")
@@ -2104,7 +2104,7 @@ KAGWindow.getHandlers		= function()
 					layer[tp]	= elm.all ? 1 : 0;
 				}
 				layer[elm.prop]	= false if elm.start;
-				for(var i=0; i<elm.propInfo.count; i++)
+				for (var i = 0, internal_forloop_count = elm.propInfo.count; i < internal_forloop_count; i += 1)
 				{
 					var	pi	= elm.propInfo[i];
 					var	prop= pi[0];
@@ -2208,7 +2208,7 @@ KAGWindow.getHandlers		= function()
 				return 0;
 			}
 			var	actelm	= %[value:0, time:+elm.time];
-			for(var i=0; i<layers.count; i++)
+			for (var i = 0, internal_forloop_count = layers.count; i < internal_forloop_count; i += 1)
 			{
 //				dm("motionstop: "+layers[i]);
 				var	layer	= layers[i];
@@ -2217,7 +2217,7 @@ KAGWindow.getHandlers		= function()
 //				dm("stop."+elm.prop+": "+layer.name+"."+elm.prop+" = "+layer[elm.prop]);
 				if(elm.time > 0)
 				{
-					for(var i=0; i<elm.propInfo.count; i++)
+					for (var i = 0, internal_forloop_count = elm.propInfo.count; i < internal_forloop_count; i += 1)
 					{
 						var	pi	= elm.propInfo[i];
 						if(!pi[3])
@@ -2532,7 +2532,7 @@ KAGWindow.getHandlers		= function()
 				var	layers	= getTargetLayers(elm);
 				if(layers != void)
 				{
-					for(var i=0; i<layers.count; i++)
+					for (var i = 0, internal_forloop_count = layers.count; i < internal_forloop_count; i += 1)
 					{
 						var	layer	= layers[i];
 						if(typeof layer.quakeMode != "undefined")
@@ -2576,7 +2576,7 @@ KAGWindow.getHandlers		= function()
 			//結局はlineNN-MMの形式のファイルを読み込んでくるが旧システムとの互換のため長音に戻す
 			if( mp.len === void ) mp.len = 1;
 			var lines = "";
-			for( var i=0; i<mp.len; i++ ) lines += "―";
+			for (var i = 0, internal_forloop_count = mp.len; i < internal_forloop_count; i += 1) lines += "―";
 			tagHandlers.ch(%["text" => lines]);
 			return 0;
 		} incontextof this;
@@ -2591,9 +2591,9 @@ KAGWindow.getHandlers		= function()
 		{
 			f.frameGraphic	= mp.frame;
 			var messages	= [ fore.messages, back.messages ];
-			for(var i=0; i<messages.count; i++)
+			for (var i = 0, internal_forloop_count = messages.count; i < internal_forloop_count; i += 1)
 			{
-				for(var j=0; j<messages[i].count; j++)
+				for (var j = 0, internal_forloop_count = messages[i].count; j < internal_forloop_count; j += 1)
 				{
 					//	"(通常)"という文字がテキストウィンドウ名に入っていれば、変更可能
 		//			if(messages[i][j].frameGraphic.indexOf("(") >= 0)
@@ -2867,7 +2867,7 @@ KAGWindow.getHandlers		= function()
 					"defaultEdge", "defaultEdgeColor",
 					"lineBreakGlyph", "lineBreakGlyphKey", "pageBreakGlyph", "pageBreakGlyphKey", "glyphFixedPosition", "glyphFixedLeft", "glyphFixedTop"
 				];
-				for(var i=0; i<msgparams.count; i++)
+				for (var i = 0, internal_forloop_count = msgparams.count; i < internal_forloop_count; i += 1)
 					f.inploy[msgparams[i]]	= current[msgparams[i]];
 
 				//	ウィンドウを増やす
@@ -2891,10 +2891,10 @@ KAGWindow.getHandlers		= function()
 					line:"clearglyph",
 					page:"clearglyph",
 				];
-				for(var i=0; i<pages.count; i++)
+				for (var i = 0, internal_forloop_count = pages.count; i < internal_forloop_count; i += 1)
 				{
 					var	msgs	= pages[i];
-					for(var i=0; i<msgs.count; i++) with(msgs[i])
+					for (var i = 0, internal_forloop_count = msgs.count; i < internal_forloop_count; i += 1) with(msgs[i])
 					{
 						.setDefaultFont(fontElm);
 						.setGlyph(glyphElm);
@@ -2926,10 +2926,10 @@ KAGWindow.getHandlers		= function()
 				var	msgs	= [ fore.messages[0], back.messages[0] ];
 				var	keys	= [];
 				keys.assign(f.inploy);
-				for(var i=0; i<msgs.count; i++)
+				for (var i = 0, internal_forloop_count = msgs.count; i < internal_forloop_count; i += 1)
 				{
 					var	msg	= msgs[i];
-					for(var i=0; i<keys.count; i+=2)
+					for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 2)
 						msg[keys[i]]	= keys[i+1];
 					msg.resetFont();
 					msg.resetPosition();

@@ -145,7 +145,7 @@ class CompositionLayer extends Layer
 			{
 				multies	= [];
 @if(COMPOSITION_PARTS==1)
-				for(var i=0; i<.multies.count; i++)
+				for (var i = 0, internal_forloop_count = .multies.count; i < internal_forloop_count; i += 1)
 				{
 					multies[i]	= new global.Layer(window, this);
 					multies[i].assignImages(.multies[i]);
@@ -275,7 +275,7 @@ class CompositionLayer extends Layer
 				if (!using_precomposed_image && typeof(orgTag.monoList) === "String")
 				{
 					monoList	= .monoList.split(__Layer_tagSeparateKey,, true);
-					for(var i=0; i<monoList.count; i++)	monoList[i]	= monoList[i].trim();	//	レイヤー名の末尾に空白がついていることがあり、パーツ名に反映されてしまうため
+					for (var i = 0, internal_forloop_count = monoList.count; i < internal_forloop_count; i += 1)	monoList[i]	= monoList[i].trim();	//	レイヤー名の末尾に空白がついていることがあり、パーツ名に反映されてしまうため
 				}
 				else
 				{
@@ -284,7 +284,7 @@ class CompositionLayer extends Layer
 				if (!using_precomposed_image && typeof(orgTag.multiList) === "String")
 				{
 					multiList	= .multiList.split(__Layer_tagSeparateKey,, true);
-					for(var i=0; i<multiList.count; i++)multiList[i]= multiList[i].trim();
+					for (var i = 0, internal_forloop_count = multiList.count; i < internal_forloop_count; i += 1)multiList[i]= multiList[i].trim();
 				}
 				else
 				{
@@ -310,7 +310,7 @@ class CompositionLayer extends Layer
 		{
 			//	読み込まれているパーツのうち、multi パーツの部分を元に戻す
 			var	layer	= new global.Layer(window, this);
-			for(var i=0; i<multies.count; i++)
+			for (var i = 0, internal_forloop_count = multies.count; i < internal_forloop_count; i += 1)
 			{
 				var	tag	= layer.loadImages(path+__Layer_individualFormat.sprintf(orgstorage, multies[i]));
 				var	w2	= layer.imageWidth \ 2;
@@ -335,7 +335,7 @@ class CompositionLayer extends Layer
 @if(COMPOSITION_PARTS!=1)
 		var	partsLayers	= [];
 @endif
-		for(var i=0; i<partnames.count; i++)
+		for (var i = 0, internal_forloop_count = partnames.count; i < internal_forloop_count; i += 1)
 		{
 			var	pn	= partnames[i];
 //			dm("\t\tdraw part = "+pn);
@@ -421,7 +421,7 @@ class CompositionLayer extends Layer
 			partsLayers.sort(function(a,b){ return a.absolute < b.absolute; }, true);
 
 			//	描画していく
-			for(var i=0; i<partsLayers.count; i++)
+			for (var i = 0, internal_forloop_count = partsLayers.count; i < internal_forloop_count; i += 1)
 			{
 				with(partsLayers[i])
 				{

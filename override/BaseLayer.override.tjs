@@ -54,7 +54,7 @@ class BaseLayer_override extends BaseLayer_original
 			{
 				var partbg_env = [];
 				//	全てのレイヤーから検索
-				for(var i=0; i<children.count; i++)
+				for (var i = 0, internal_forloop_count = children.count; i < internal_forloop_count; i += 1)
 				{
 					if( children[i] === void || ! isvalid children[i] ) continue;
 					if( typeof children[i].childEffect == "undefined") continue;
@@ -62,7 +62,7 @@ class BaseLayer_override extends BaseLayer_original
 
 					var find = false;
 					//重複チェック
-					for( var j=0; j<partbg_env.count; j++ )
+					for (var j = 0, internal_forloop_count = partbg_env.count; j < internal_forloop_count; j += 1)
 					{
 						if( partbg_env[j] == children[i].childEffect )
 						{
@@ -151,7 +151,7 @@ class BaseLayer_override extends BaseLayer_original
 			//	効果が変わっていたら、表示されている前景レイヤーを更新する
 			if(ce !== childEffect)
 			{
-				for(var i=0; i<children.count; i++)
+				for (var i = 0, internal_forloop_count = children.count; i < internal_forloop_count; i += 1)
 					children[i].update() if children[i] instanceof "BasicCharacterLayer";
 				childEffect	= ce;
 			}
@@ -333,7 +333,7 @@ class BaseLayer_override extends BaseLayer_original
 			if(bindChildren)
 			{
 				var	diff	= v - left;
-				for(var i=0; i<children.count; i++)
+				for (var i = 0, internal_forloop_count = children.count; i < internal_forloop_count; i += 1)
 					children[i].left	+= diff if children[i] instanceof "CharacterLayer";
 			}
 			super.left	= v;
@@ -349,7 +349,7 @@ class BaseLayer_override extends BaseLayer_original
 			if(bindChildren)
 			{
 				var	diff	= v - top;
-				for(var i=0; i<children.count; i++)
+				for (var i = 0, internal_forloop_count = children.count; i < internal_forloop_count; i += 1)
 					children[i].top	+= diff if children[i] instanceof "CharacterLayer";
 			}
 			super.top	= v;
@@ -365,7 +365,7 @@ class BaseLayer_override extends BaseLayer_original
 			super._act_x	= v;
 			if(sync)
 			{
-				for(var i=0; i<children.count; i++)
+				for (var i = 0, internal_forloop_count = children.count; i < internal_forloop_count; i += 1)
 					children[i]._act_x	= v;
 			}
 		}
@@ -379,7 +379,7 @@ class BaseLayer_override extends BaseLayer_original
 			super._act_y	= v;
 			if(sync)
 			{
-				for(var i=0; i<children.count; i++)
+				for (var i = 0, internal_forloop_count = children.count; i < internal_forloop_count; i += 1)
 					children[i]._act_y	= v;
 			}
 		}
@@ -391,7 +391,7 @@ class BaseLayer_override extends BaseLayer_original
 		super.updateHorizontalMargin(h);
 		if(sync)
 		{
-			for(var i=0; i<children.count; i++)
+			for (var i = 0, internal_forloop_count = children.count; i < internal_forloop_count; i += 1)
 				children[i].setHorizontalMargin(maxHorizontalMargin) if typeof children[i].setHorizontalMargin != "undefined";
 		}
 	}
@@ -401,7 +401,7 @@ class BaseLayer_override extends BaseLayer_original
 		super.updateVerticalMargin(v);
 		if(sync)
 		{
-			for(var i=0; i<children.count; i++)
+			for (var i = 0, internal_forloop_count = children.count; i < internal_forloop_count; i += 1)
 				children[i].setVerticalMargin(maxVerticalMargin) if typeof children[i].setVerticalMargin != "undefined";
 		}
 	}
@@ -423,7 +423,7 @@ class BaseLayer_override extends BaseLayer_original
 	function setVisibleInfo(v)
 	{
 		var	messages	= this == window.fore.base ? window.fore.messages : window.back.messages;
-		for(var i=0; i<messages.count; i++)
+		for (var i = 0, internal_forloop_count = messages.count; i < internal_forloop_count; i += 1)
 		{
 			layerVisible[messages[i]]	= messages[i].visible;
 			messages[i].visible	= v;
@@ -435,7 +435,7 @@ class BaseLayer_override extends BaseLayer_original
 	function resetVisibleInfo()
 	{
 		var	messages	= this == window.fore.base ? window.fore.messages : window.back.messages;
-		for(var i=0; i<messages.count; i++)
+		for (var i = 0, internal_forloop_count = messages.count; i < internal_forloop_count; i += 1)
 			messages[i].visible	= layerVisible[messages[i]] if layerVisible[messages[i]] !== void;
 		window.historyLayer.visible	= layerVisible[window.historyLayer] if layerVisible[window.historyLayer] !== void;
 	}
@@ -496,7 +496,7 @@ class BaseLayer_override extends BaseLayer_original
 	function cancelUpdate()
 	{
 		//	逆側の子レイヤーの描画予約をキャンセルする(次のトランジション時に強制描画されるので)
-		for(var i=0; i<children.count; i++)
+		for (var i = 0, internal_forloop_count = children.count; i < internal_forloop_count; i += 1)
 			children[i].cancelUpdate() if children[i] instanceof "BasicCharacterLayer";
 	}
 
@@ -504,7 +504,7 @@ class BaseLayer_override extends BaseLayer_original
 	{
 //		dm(name+"["+storage+"].forcePaint()");
 		super.forcePaint(...);
-		for(var i=0; i<children.count; i++)
+		for (var i = 0, internal_forloop_count = children.count; i < internal_forloop_count; i += 1)
 			children[i].forcePaint(...) if children[i] instanceof "BasicCharacterLayer";
 	}
 }

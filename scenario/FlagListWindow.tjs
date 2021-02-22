@@ -94,7 +94,7 @@ class FlagListWindow extends Window
 		//	フラグ名をソートして記録
 		flagnames.clear();
 		flagnames.assign(flags);
-		for(var i=1; i<flagnames.count; i++)
+		for (var i = 1, internal_forloop_count = flagnames.count; i < internal_forloop_count; i += 1)
 			flagnames.erase(i);
 		flagnames.sort("a");
 	}
@@ -113,7 +113,7 @@ class FlagListWindow extends Window
 			.fillRect(.width - valuewidth, 0, borderwidth, .height, bordercolor);
 
 			var	t	= spacing;
-			for(var i=start; i<flagnames.count; i++)
+			for (var i = start, internal_forloop_count = flagnames.count; i < internal_forloop_count; i += 1)
 			{
 				var	fn	= flagnames[i];
 				.drawText(spacing, t, fn, textcolor,, false);

@@ -212,7 +212,7 @@ class GraphicLayer_override extends GraphicLayer_original
 			window.onActionCompleted(trigger);
 			if( typeof this.trigger != "undefined" )
 			{
-				for(var i=0; i<this.trigger.count; i++ )
+				for (var i = 0, internal_forloop_count = this.trigger.count; i < internal_forloop_count; i += 1)
 				{
 					if( this.trigger[i] == trigger )
 					{
@@ -465,10 +465,10 @@ class GraphicLayer_override extends GraphicLayer_original
 			p[6]	= elm.cy!==void ? +elm.cy : (orglayer.imageHeight>>1);
 			var pvc	= p.count;
 			var ind = 0;
-			for(var i=0; i<array.count; i++)
+			for (var i = 0, internal_forloop_count = array.count; i < internal_forloop_count; i += 1)
 			{
 				var param = [].split(",", array[i]);
-				for(var j=0; j<pvc; j++)
+				for (var j = 0, internal_forloop_count = pvc; j < internal_forloop_count; j += 1)
 				{
 					//	設定されていればそれを、無ければ直前の値を入れる
 					p[pvc+ind]	= param[j]!="" ? +param[j] : p[ind];
@@ -497,7 +497,7 @@ class GraphicLayer_override extends GraphicLayer_original
 				[ "top",	top ]
 			];
 			var	key, pos;
-			for(var i=0; i<keys.count; i++)
+			for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 1)
 			{
 				if(key = keys[i])
 				{

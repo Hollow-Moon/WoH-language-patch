@@ -113,7 +113,7 @@ class KAGWindow_override extends KAGWindow_original
 		(global.Layer.getFontList incontextof this.temporaryLayer)();
 @endif
 
-		for(var i=0; i<2; i++)
+		for (var i = 0, internal_forloop_count = 2; i < internal_forloop_count; i += 1)
 		{
 			with(backupBase[i] = new global.Layer(this, primaryLayer))
 			{
@@ -190,7 +190,7 @@ class KAGWindow_override extends KAGWindow_original
 			var array = [];
 			array.assign(kagPlugins); // いったんコピーし、コピーした物に対して実行する
 			var arraycount = array.count;
-			for(var i =0; i<arraycount; i++)
+			for (var i = 0, internal_forloop_count = arraycount; i < internal_forloop_count; i += 1)
 			{
 				var obj = array[i];
 				if( obj === void || ! isvalid obj )
@@ -227,7 +227,7 @@ class KAGWindow_override extends KAGWindow_original
 			var array = [];
 			array.assign(kagPlugins); // いったんコピーし、コピーした物に対して実行する
 			var arraycount = array.count;
-			for(var i =0; i<arraycount; i++)
+			for (var i = 0, internal_forloop_count = arraycount; i < internal_forloop_count; i += 1)
 			{
 				var obj = array[i];
 				if( obj === void || ! isvalid obj )
@@ -263,7 +263,7 @@ class KAGWindow_override extends KAGWindow_original
 			var array = [];
 			array.assign(kagPlugins); // いったんコピーし、コピーした物に対して実行する
 			var arraycount = array.count;
-			for(var i =0; i<arraycount; i++)
+			for (var i = 0, internal_forloop_count = arraycount; i < internal_forloop_count; i += 1)
 			{
 				var obj = array[i];
 				if( obj === void || ! isvalid obj )
@@ -273,7 +273,7 @@ class KAGWindow_override extends KAGWindow_original
 					var tmp = func(obj[method], page);
 					if( tmp !== void )
 					{
-						for( var j=0; j<tmp.count; j++ )
+						for (var j = 0, internal_forloop_count = tmp.count; j < internal_forloop_count; j += 1)
 						{
 							ret.add(tmp[j]);
 							//dm("　forEachGetToPileLayers: add " + tmp[j]);
@@ -301,7 +301,7 @@ class KAGWindow_override extends KAGWindow_original
 			var array = [];
 			array.assign(kagPlugins); // いったんコピーし、コピーした物に対して実行する
 			var arraycount = array.count;
-			for(var i =0; i<arraycount; i++)
+			for (var i = 0, internal_forloop_count = arraycount; i < internal_forloop_count; i += 1)
 			{
 				var obj = array[i];
 				if( obj === void || ! isvalid obj )
@@ -334,7 +334,7 @@ class KAGWindow_override extends KAGWindow_original
 			func	= ("function(elm, layer) { return layer."+prop+" === elm."+prop+" && (elm.visible === void || elm.visible == "+visible+"); }")!;
 		else
 			func	= prop;
-		for(var i=0; i<layers.count; i++)
+		for (var i = 0, internal_forloop_count = layers.count; i < internal_forloop_count; i += 1)
 		{
 			if(func(elm, layers[i]))
 			{
@@ -442,7 +442,7 @@ class KAGWindow_override extends KAGWindow_original
 			{
 				//TimeLineの初期化付きアクションから呼ばれる場合はidが見つからない時、
 				//	まず、idが割り振られていないレイヤーがないか探す
-				for(var i=0; i<layers.count; i++)
+				for (var i = 0, internal_forloop_count = layers.count; i < internal_forloop_count; i += 1)
 				{
 					if(!layers[i].visible && layers[i].layerID === void && !isInAction(layers[i]))
 					{
@@ -597,7 +597,7 @@ class KAGWindow_override extends KAGWindow_original
 
 		//	前景を渡す
 		var	list	= elm.page == "fore" ? fore.layers : back.layers;
-		for(var i=0; i<list.count; i++)
+		for (var i = 0, internal_forloop_count = list.count; i < internal_forloop_count; i += 1)
 			layers.add(list[i]);
 
 		//	プラグインに問い合わせる
@@ -655,7 +655,7 @@ class KAGWindow_override extends KAGWindow_original
 		if(fore.layers.count > num)
 		{
 			// レイヤが減る
-			for(var i = num; i<fore.layers.count; i++)
+			for (var i = num, internal_forloop_count = fore.layers.count; i < internal_forloop_count; i += 1)
 			{
 				invalidate fore.layers[i];
 				invalidate back.layers[i];
@@ -666,7 +666,7 @@ class KAGWindow_override extends KAGWindow_original
 		else if(fore.layers.count < num)
 		{
 			// レイヤが増える
-			for(var i = fore.layers.count; i<num; i++)
+			for (var i = fore.layers.count, internal_forloop_count = num; i < internal_forloop_count; i += 1)
 			{
 				fore.layers[i] = new CharacterLayer(this, fore.base, "表前景レイヤ" + i, i);
 				back.layers[i] = new CharacterLayer(this, back.base, "裏前景レイヤ" + i, i);
@@ -685,7 +685,7 @@ class KAGWindow_override extends KAGWindow_original
 			//	背景のみが表示状態か調べる
 			var	func	= function(children, func)
 			{
-				for(var i=0; i<children.count; i++)
+				for (var i = 0, internal_forloop_count = children.count; i < internal_forloop_count; i += 1)
 				{
 					if(!(children[i] instanceof "AnimationLayer"))
 						continue;
@@ -761,7 +761,7 @@ class KAGWindow_override extends KAGWindow_original
 	function getSESoundBufferFromStorage(strSE)
 	{
 		strSE	= Storages.chopStorageExt(strSE);
-		for(var i=SESTARTIDX; i<se.count; i++) with(se[i])
+		for (var i = SESTARTIDX, internal_forloop_count = se.count; i < internal_forloop_count; i += 1) with(se[i])
 		{
 //			dm(i+": "+.playingStorage, .isDelaying);
 			if((.playingStorage == strSE && !.inFadeAndStop) ||	//	再生中で、フェードアウト中ではないバッファ
@@ -780,7 +780,7 @@ class KAGWindow_override extends KAGWindow_original
 		var v = bgm.volume \ 1000;
 		var v2;
 		dm("BGM    vol="+(v<10?"  ":(v!=100?" ":""))+v+" vol2=--- storage="+bgm.playingStorage);
-		for( var i=0; i<se.count; i++ )
+		for (var i = 0, internal_forloop_count = se.count; i < internal_forloop_count; i += 1)
 		{
 			v = se[i].volume;
 			v2 = se[i].volume2 \ 1000;
@@ -796,12 +796,12 @@ class KAGWindow_override extends KAGWindow_original
 		var pages=["fore","back"];
 		var strs=[];
 		var objs=[];
-		for( var j=0; j<pages.count; j++ )
+		for (var j = 0, internal_forloop_count = pages.count; j < internal_forloop_count; j += 1)
 		{
 			var b = this[pages[j]];
 			strs.add(pages[j]+"[base]");
 			objs.add(b.base);
-			for( var i=0; i<b.layers.count; i++ )
+			for (var i = 0, internal_forloop_count = b.layers.count; i < internal_forloop_count; i += 1)
 			{
 				if( b.layers[i] !== void && isvalid b.layers[i] )
 				{
@@ -811,10 +811,10 @@ class KAGWindow_override extends KAGWindow_original
 			}
 		}
 
-		for( var i=0; i<objs.count; i++ )
+		for (var i = 0, internal_forloop_count = objs.count; i < internal_forloop_count; i += 1)
 		{
 			var param = "";
-			for( var j=0; j<params.count; j++ )
+			for (var j = 0, internal_forloop_count = params.count; j < internal_forloop_count; j += 1)
 			{
 				param += " " + params[j] + "=" + objs[i][params[j]] if typeof objs[i][params[j]]!="undefined";
 			}
@@ -832,7 +832,7 @@ class KAGWindow_override extends KAGWindow_original
 		//	KAGが管理しているレイヤー
 		var	pages	= ["fore", "back"];
 		var	elm	= %[];
-		for(var i=0; i<pages.count; i++)
+		for (var i = 0, internal_forloop_count = pages.count; i < internal_forloop_count; i += 1)
 		{
 			elm.page	= pages[i];
 			var	base	= this[elm.page];
@@ -843,7 +843,7 @@ class KAGWindow_override extends KAGWindow_original
 			}
 
 			var	layers	= base.layers;
-			for(var i=0; i<layers.count; i++)
+			for (var i = 0, internal_forloop_count = layers.count; i < internal_forloop_count; i += 1)
 			{
 				if(layers[i] == layer)
 				{
@@ -855,7 +855,7 @@ class KAGWindow_override extends KAGWindow_original
 			}
 
 			var	messages= base.messages;
-			for(var i=0; i<messages.count; i++)
+			for (var i = 0, internal_forloop_count = messages.count; i < internal_forloop_count; i += 1)
 			{
 				if(messages[i] == layer)
 				{
@@ -895,18 +895,18 @@ class KAGWindow_override extends KAGWindow_original
 
 		//並び順を保ったまま数値のふり直し
 		var pages = ["fore","back"];
-		for( var j=0; j<pages.count; j++ ){
+		for (var j = 0, internal_forloop_count = pages.count; j < internal_forloop_count; j += 1){
 			var base = this[pages[j]];
 			var cpy = [];
 			var idx = [];
 			var tmp;
 			index = 1000;
-			for( var i=0; i<base.layers.count; i++ ){
+			for (var i = 0, internal_forloop_count = base.layers.count; i < internal_forloop_count; i += 1){
 				cpy[i] = (int)base.layers[i].absolute;
 				idx[i] = i;
 			}
 			//現在のabsoluteでソート
-			for( var i=0; i<cpy.count-1; i++ ){
+			for (var i = 0, internal_forloop_count = cpy.count-1; i < internal_forloop_count; i += 1){
 				for( var j=cpy.count-1; j>i; j-- ){
 					if( cpy[j-1] > cpy[j] ){
 						tmp = cpy[j];
@@ -918,7 +918,7 @@ class KAGWindow_override extends KAGWindow_original
 					}
 				}
 			}
-			for( var i=0; i<cpy.count; i++ ){
+			for (var i = 0, internal_forloop_count = cpy.count; i < internal_forloop_count; i += 1){
 				//dm("振り直し前 cpy[" + i + "]=" + cpy[i] + " idx=" + idx[i]);
 				if( base.layers[idx[i]].absolute > 0 ){
 					base.layers[idx[i]].absolute = +index;
@@ -928,14 +928,14 @@ class KAGWindow_override extends KAGWindow_original
 					base.layers[idx[i]].absolute = 0;
 				}
 			}
-			//for( var i=0; i<cpy.count; i++ ){
+			//for (var i = 0, internal_forloop_count = cpy.count; i < internal_forloop_count; i += 1){
 			//	dm("振り直し後 absolute[" + i + "]=" + base.layers[idx[i]].absolute);
 			//}
 		}
 
 
 		index = 10;
-		for(var i = 0; i<fore.messages.count; i++)
+		for (var i = 0, internal_forloop_count = fore.messages.count; i < internal_forloop_count; i += 1)
 		{
 			fore.messages[i].absolute = index;
 			back.messages[i].absolute = index;
@@ -958,7 +958,7 @@ class KAGWindow_override extends KAGWindow_original
 			_singleMessageLayer	= v;
 			if(v)
 			{
-				for(var i=0; i<back.messages.count; i++)
+				for (var i = 0, internal_forloop_count = back.messages.count; i < internal_forloop_count; i += 1)
 				{
 					invalidate back.messages[i];
 					var	msg	= back.messages[i] = fore.messages[i];
@@ -973,7 +973,7 @@ class KAGWindow_override extends KAGWindow_original
 			else
 			{
 				var	ci	= 0;
-				for(var i=0; i<fore.messages.count; i++)
+				for (var i = 0, internal_forloop_count = fore.messages.count; i < internal_forloop_count; i += 1)
 				{
 					ci	= i if fore.messages[i] == current;
 					invalidate fore.messages[i];
@@ -994,7 +994,7 @@ class KAGWindow_override extends KAGWindow_original
 		{
 			if(fore.messages.count > num)
 			{
-				for(var i=num; i<fore.messages.count; i++)
+				for (var i = num, internal_forloop_count = fore.messages.count; i < internal_forloop_count; i += 1)
 				{
 					if(current == fore.messages[i])
 						current = fore.messages[0], currentNum = 0, currentPage = 0;
@@ -1004,7 +1004,7 @@ class KAGWindow_override extends KAGWindow_original
 			}
 			else if(fore.messages.count < num)
 			{
-				for(var i=fore.messages.count; i<num; i++)
+				for (var i = fore.messages.count, internal_forloop_count = num; i < internal_forloop_count; i += 1)
 				{
 					var	msg	= new MessageLayer(this, fore.base.parent, "表メッセージレイヤ" + i, i, true);
 					msg.clear();
@@ -1427,13 +1427,13 @@ class KAGWindow_override extends KAGWindow_original
 		var inf = getActionInfoByIndex(index);
 		if( inf !== void )
 		{
-			for( var j=0; j<inf.actionList.count; j++ )
+			for (var j = 0, internal_forloop_count = inf.actionList.count; j < internal_forloop_count; j += 1)
 			{
 				if( ! inf.actionList[j].absolute.alreadydone )
 				{
 					dm("disp:abs:" + getDebugStringFromElm(inf.actionList[j].absolute.elm));
 				}
-				for( var k=0; k<inf.actionList[j].relative.count; k++ )
+				for (var k = 0, internal_forloop_count = inf.actionList[j].relative.count; k < internal_forloop_count; k += 1)
 				{
 					if( ! inf.actionList[j].relative[k].alreadydone )
 					{
@@ -1451,7 +1451,7 @@ class KAGWindow_override extends KAGWindow_original
 		var	keys	= [];
 		keys.assign(allActions);
 		dm("  actions count = "+keys.count\2);
-		for(var i=0; i<keys.count; i+=2)
+		for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 2)
 		{
 			if( typeof keys[i+1].store != "undefined" )
 				actions[i]	= keys[i+1].store();
@@ -1713,7 +1713,7 @@ class KAGWindow_override extends KAGWindow_original
 		if( clickRepeatTimer.interval == clickRepeatTime )
 		{
 			var en = false;
-			for( var i=0; i<fore.messages.count; i++ )
+			for (var i = 0, internal_forloop_count = fore.messages.count; i < internal_forloop_count; i += 1)
 				en = true if fore.messages[i].visible && fore.messages[i].opacity;
 
 			//メッセージウィンドウ表示中かつエフェクトカット設定の場合のみ動作
@@ -1815,7 +1815,7 @@ class KAGWindow_override extends KAGWindow_original
 @if(DEBUG)
 	function onFileDrop(files)
 	{
-		for(var i=0; i<files.count; i++)
+		for (var i = 0, internal_forloop_count = files.count; i < internal_forloop_count; i += 1)
 		{
 			var	fn	= files[i];
 			var	ext	= Storages.extractStorageExt(fn);
@@ -2094,10 +2094,10 @@ class KAGWindow_override extends KAGWindow_original
 				var	fn	= Storages.extractStorageName(Storages.chopStorageExt(conductor.curStorage))+"_"+conductor.curLabel.substr(1);
 				.saveLayerImage(System.dataPath + fn + "_m.bmp");
 				var	mstate	= [];
-				for(var i=0; i<fore.messages.count; i++)
+				for (var i = 0, internal_forloop_count = fore.messages.count; i < internal_forloop_count; i += 1)
 					fore.messages[i].visible <-> mstate[i];
 				.piledCopy(0, 0, fore.base, 0, 0, primaryLayer.width, primaryLayer.height);
-				for(var i=0; i<fore.messages.count; i++)
+				for (var i = 0, internal_forloop_count = fore.messages.count; i < internal_forloop_count; i += 1)
 					fore.messages[i].visible <-> mstate[i];
 				.saveLayerImage(System.dataPath + fn + "_i.bmp");
 			}
@@ -2131,7 +2131,7 @@ class KAGWindow_override extends KAGWindow_original
 		return;
 @endif	//ENABLE_RAPID_DRAW
 
-		for( var i=0; i<longActs.count; i++ )
+		for (var i = 0, internal_forloop_count = longActs.count; i < internal_forloop_count; i += 1)
 		{
 			var obj = longActs[i].obj;
 			var tgt = longActs[i].tgt;
@@ -2142,7 +2142,7 @@ class KAGWindow_override extends KAGWindow_original
 				obj.rapid = true;
 				if( obj instanceof "_KeyFrameAction" )
 				{
-					for( var j=0; j<obj.keys.count; j++ )
+					for (var j = 0, internal_forloop_count = obj.keys.count; j < internal_forloop_count; j += 1)
 					{
 						if( obj.keys.count != obj.orgtimes.count || obj.keys[j][0] != obj.orgtimes[j] )
 						{
@@ -2178,7 +2178,7 @@ class KAGWindow_override extends KAGWindow_original
 
 		with(actmgr)
 		{
-			for( var i=0; i<.actionList.count; i++ )
+			for (var i = 0, internal_forloop_count = .actionList.count; i < internal_forloop_count; i += 1)
 			{
 				if(.actionList[i]===void || !isvalid .actionList[i])
 					continue;
@@ -2191,7 +2191,7 @@ class KAGWindow_override extends KAGWindow_original
 				if( inf.target instanceof "MessageCharLayer" )
 					continue;
 
-				for( var j=0; j<inf.actionList.count; j++ )
+				for (var j = 0, internal_forloop_count = inf.actionList.count; j < internal_forloop_count; j += 1)
 				{
 					var prop = inf.actionList[j];
 					if( prop === void || ! isvalid prop )
@@ -2207,19 +2207,19 @@ class KAGWindow_override extends KAGWindow_original
 						if( obj !== void && isvalid obj && ! obj.isLoop )
 							objs.add(obj);
 					}
-					for( var k=0; k<prop.relative.count; k++ )
+					for (var k = 0, internal_forloop_count = prop.relative.count; k < internal_forloop_count; k += 1)
 					{
 						var obj = prop.relative[k];
 						if( obj !== void && isvalid obj && ! obj.isLoop )
 							objs.add(obj);
 					}
-					for( var k=0; k<objs.count; k++ )
+					for (var k = 0, internal_forloop_count = objs.count; k < internal_forloop_count; k += 1)
 					{
 						var obj = objs[k];
 						if( obj instanceof "_KeyFrameAction" )
 						{
 							var sm = 0;
-							for( var l=0; l<obj.keys.count; l++ )
+							for (var l = 0, internal_forloop_count = obj.keys.count; l < internal_forloop_count; l += 1)
 								sm += obj.keys[l][0];
 							if( sm > 250 )
 							{
@@ -2424,7 +2424,7 @@ class KAGWindow_override extends KAGWindow_original
 	function setMessageLayerHiddenState(b)
 	{
 		var	layerss	= [ fore.messages, back.messages, fore.layers, back.layers ];
-		for(var i=0; i<layerss.count; i++)
+		for (var i = 0, internal_forloop_count = layerss.count; i < internal_forloop_count; i += 1)
 		{
 			var	layers	= layerss[i];
 			for(var i = layers.count-1; i >= 0; i--) layers[i].setHiddenStateByUser(b);
@@ -2462,7 +2462,7 @@ class KAGWindow_override extends KAGWindow_original
 		stopAllTransitions();
 
 		//一旦前景レイヤーを破棄
-		for(var i=0; i<fore.layers.count; i++){
+		for (var i = 0, internal_forloop_count = fore.layers.count; i < internal_forloop_count; i += 1){
 			invalidate fore.layers[i];
 			invalidate back.layers[i];
 		}
@@ -2470,7 +2470,7 @@ class KAGWindow_override extends KAGWindow_original
 		back.layers.count = 0;
 
 		//一旦メッセージレイヤーを破棄
-		for(var i=0; i<fore.messages.count; i++){
+		for (var i = 0, internal_forloop_count = fore.messages.count; i < internal_forloop_count; i += 1){
 			invalidate fore.messages[i];
 			invalidate back.messages[i];
 		}
@@ -2571,7 +2571,7 @@ class KAGWindow_override extends KAGWindow_original
 			layer.loadImages(ifn);
 
 			//	バックアップレイヤーへコピー
-			for(var i=0; i<f.count; i++)
+			for (var i = 0, internal_forloop_count = f.count; i < internal_forloop_count; i += 1)
 			{
 				backupBase[i].saved	= false;
 				if(f[i] == void)
@@ -2649,7 +2649,7 @@ class KAGWindow_override extends KAGWindow_original
 			snapshotLayer.setImageSize(scWidth, scHeight);
 			snapshotLayer.type	= ltOpaque;
 			var	vis	= [];
-			for(var i=0; i<fore.messages.count; i++) fore.messages[i].visible <-> vis[i];	//	メッセージレイヤーを非表示にしておく
+			for (var i = 0, internal_forloop_count = fore.messages.count; i < internal_forloop_count; i += 1) fore.messages[i].visible <-> vis[i];	//	メッセージレイヤーを非表示にしておく
 			//各プラグインにスクリーンショット保存が実施されることを配信
 			forEachEventHook('onSaveScreenShotStart',
 				function(handler, f) { handler(); } incontextof this,
@@ -2658,7 +2658,7 @@ class KAGWindow_override extends KAGWindow_original
 			//	表示レイヤーを重ね合わせる
 //			snapshotLayer.piledCopy(0, 0, fore.base, 0, 0, scWidth, scHeight);	//	レイヤーパラメータをoverrideしているので、きちんと描画されない
 			var	layers	= [ fore.base ];
-			for(var i=0; i<layers.count; i++) with(layers[i])
+			for (var i = 0, internal_forloop_count = layers.count; i < internal_forloop_count; i += 1) with(layers[i])
 			{
 //				dm(i+": "+.name);//, .storage, .type, .screenSizeLayer);
 				var	layer	= layers[i];
@@ -2673,14 +2673,14 @@ class KAGWindow_override extends KAGWindow_original
 				snapshotLayer.operateRect(l, t, layer,
 					-*(&global.Layer.imageLeft incontextof layer), -*(&global.Layer.imageTop incontextof layer),
 					*(&global.Layer.width incontextof layer), *(&global.Layer.height incontextof layer), .type, .opacity);
-				for(var i=0; i<.children.count; i++)
+				for (var i = 0, internal_forloop_count = .children.count; i < internal_forloop_count; i += 1)
 				{
 					var	child	= .children[i];
 					layers.add(child) if child.visible && child.opacity > 0;
 				}
 			}
 
-			for(var i=0; i<fore.messages.count; i++) fore.messages[i].visible <-> vis[i];
+			for (var i = 0, internal_forloop_count = fore.messages.count; i < internal_forloop_count; i += 1) fore.messages[i].visible <-> vis[i];
 
 			//各プラグインにスクリーンショット保存が実施されたことを配信
 			forEachEventHook('onSaveScreenShotEnd',
@@ -2698,7 +2698,7 @@ class KAGWindow_override extends KAGWindow_original
 		{
 			//	必要な画像サイズを得る
 			var	w = 0, h = 0;
-			for(var i=0; i<backupBase.count; i++)
+			for (var i = 0, internal_forloop_count = backupBase.count; i < internal_forloop_count; i += 1)
 			{
 				with(backupBase[i])
 				{
@@ -2718,7 +2718,7 @@ class KAGWindow_override extends KAGWindow_original
 				var	layer	= new global.Layer(this, primaryLayer);
 				layer.setImageSize(w, h);
 				var	l = 0;
-				for(var i=0; i<backupBase.count; i++)
+				for (var i = 0, internal_forloop_count = backupBase.count; i < internal_forloop_count; i += 1)
 				{
 					with(backupBase[i])
 					{
@@ -2912,7 +2912,7 @@ class KAGWindow_override extends KAGWindow_original
 	function getQuickList()
 	{
 		var	list	= [];
-		for(var i=0; i<quickBookMarks; i++)
+		for (var i = 0, internal_forloop_count = quickBookMarks; i < internal_forloop_count; i += 1)
 			list.add([i, +getQuickDate(i, false)]);
 		list.sort(function(a,b) { return a[1] > b[1]; });	//	降順に並べる(index=0が一番新しい)
 		return list;
@@ -3385,7 +3385,7 @@ class KAGWindow_override extends KAGWindow_original
 
 		//メッセージウィンドウを非表示にしてスクリーンショットを撮る
 		var vs = [];
-		for( var i=0; i<fore.messages.count; i++ )
+		for (var i = 0, internal_forloop_count = fore.messages.count; i < internal_forloop_count; i += 1)
 		{
 			vs[i] = fore.messages[i].visible;
 			fore.messages[i].visible = false;
@@ -3397,7 +3397,7 @@ class KAGWindow_override extends KAGWindow_original
 			caption = Storages.extractStorageName(f.autoexecfile) + " " + SAVE_SS_TITLE + " " + (++SAVE_SS_NUM);
 
 		//メッセージウィンドウの可視状態を戻す
-		for( var i=0; i<fore.messages.count; i++ )
+		for (var i = 0, internal_forloop_count = fore.messages.count; i < internal_forloop_count; i += 1)
 		{
 			fore.messages[i].visible = vs[i];
 		}
@@ -3532,9 +3532,9 @@ class KAGWindow_override extends KAGWindow_original
 			ssLay.getDiffPixel(ldLay, 0xFF000000, 0xFFFF0000);
 
 			var findDiff = false;
-			for( var y=0; y<ssLay.height; y++ )
+			for (var y = 0, internal_forloop_count = ssLay.height; y < internal_forloop_count; y += 1)
 			{
-				for( var x=0; x<ssLay.width; x++ )
+				for (var x = 0, internal_forloop_count = ssLay.width; x < internal_forloop_count; x += 1)
 				{
 					if( ssLay.getMainPixel(x, y) != 0x000000 )
 					{
@@ -3589,9 +3589,9 @@ class KAGWindow_override extends KAGWindow_original
 
 					//濃度をみてもう一度判断
 					findDiff = false;
-					for( var y=0; y<dfLay.height; y++ )
+					for (var y = 0, internal_forloop_count = dfLay.height; y < internal_forloop_count; y += 1)
 					{
-						for( var x=.width-dfLay.width; x<.width; x++ )
+						for (var x = .width-dfLay.width, internal_forloop_count = .width; x < internal_forloop_count; x += 1)
 						{
 							//小さい誤差濃度はブラーや枠の誤差とみなして無視(16以上を差異とする)
 							var pix = .getMainPixel(x, y);
@@ -3658,7 +3658,7 @@ class KAGWindow_override extends KAGWindow_original
 	function listupSaveFilesBySS()
 	{
 		//未処理のレコードが残っているか
-		for( var i=0; i<fnSaveFilesBySS.count; i++ )
+		for (var i = 0, internal_forloop_count = fnSaveFilesBySS.count; i < internal_forloop_count; i += 1)
 		{
 			if( fnSaveFilesBySS[i] !== void && fnSaveFilesBySS[i] != "" )
 			{
@@ -3676,7 +3676,7 @@ class KAGWindow_override extends KAGWindow_original
 			return -2;
 
 		var	files	= Storages.dirlist(dir);
-		for(var i=0; i<files.count; i++)
+		for (var i = 0, internal_forloop_count = files.count; i < internal_forloop_count; i += 1)
 		{
 			if(files[i][0] == ".") continue;
 			var curName = Storages.extractStorageName(Storages.chopStorageExt(files[i]));
@@ -3702,7 +3702,7 @@ class KAGWindow_override extends KAGWindow_original
 
 		fnSaveFilesBySS.sort("+a");
 
-		for( var i=0; i<fnSaveFilesBySS.count; i++)
+		for (var i = 0, internal_forloop_count = fnSaveFilesBySS.count; i < internal_forloop_count; i += 1)
 		{
 			dm("　→　after sort " + fnSaveFilesBySS[i]);
 		}
@@ -3764,7 +3764,7 @@ class KAGWindow_override extends KAGWindow_original
 		keys.assign(allActions);	//	target(Layer) => info(ActionInfo)
 		dm("storeActions: actions count = "+keys.count\2);
 		var idx=0;
-		for(var i=0; i<keys.count; i+=2){
+		for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 2){
 			if( ! isvalid keys[i+1] ) continue;
 			if( typeof keys[i+1].store != "undefined" )
 				f.actions[idx++]	= keys[i+1].store();
@@ -3787,7 +3787,7 @@ class KAGWindow_override extends KAGWindow_original
 
 		var pages = ["fore","back"];
 
-		for( var j=0; j<pages.count; j++ ){
+		for (var j = 0, internal_forloop_count = pages.count; j < internal_forloop_count; j += 1){
 			var p = this[pages[j]];
 			// 背景レイヤ
 			var b = p.base;
@@ -3796,14 +3796,14 @@ class KAGWindow_override extends KAGWindow_original
 			b.clearSuperImg();
 			/*
 			// メッセージレイヤ
-			for(var i = 0; i < p.messages.count; i++)
+			for (var i = 0, internal_forloop_count = p.messages.count; i < internal_forloop_count; i += 1)
 			{
 				p.messages[i].clear();
 				p.messages[i].clear();
 			}
 			*/
 			// 前景レイヤ
-			for(var i = 0; i < p.layers.count; i++)
+			for (var i = 0, internal_forloop_count = p.layers.count; i < internal_forloop_count; i += 1)
 			{
 				var lay = p.layers[i];
 				if( lay !== void ){
@@ -3827,7 +3827,7 @@ class KAGWindow_override extends KAGWindow_original
 		if(f.actions === void)
 			return;
 		dm("restore actions");
-		for(var i=0; i<f.actions.count; i++)
+		for (var i = 0, internal_forloop_count = f.actions.count; i < internal_forloop_count; i += 1)
 		{
 			if( f.actions[i] === void ) continue;
 			if( f.actions[i].target == null ) continue;
@@ -3879,16 +3879,16 @@ class KAGWindow_override extends KAGWindow_original
 		if(!withoutsound)
 		{
 			bgm.stop();
-			for( var i=0; i<se.count; i++ )
+			for (var i = 0, internal_forloop_count = se.count; i < internal_forloop_count; i += 1)
 				se[i].stop();
 		}
 
 		//レイヤー初期化
 		var pages = ["fore","back"];
-		for( var j=0; j<pages.count; j++ )
+		for (var j = 0, internal_forloop_count = pages.count; j < internal_forloop_count; j += 1)
 		{
 			var obj = this[pages[j]];
-			for( var i=0; i<obj.layers.count; i++ )
+			for (var i = 0, internal_forloop_count = obj.layers.count; i < internal_forloop_count; i += 1)
 			{
 				with(obj.layers[i])
 				{
@@ -3973,12 +3973,12 @@ class KAGWindow_override extends KAGWindow_original
 	{
 		if(page != "back")
 		{
-			for(var i=0; i<fore.messages.count; i++)
+			for (var i = 0, internal_forloop_count = fore.messages.count; i < internal_forloop_count; i += 1)
 				fore.messages[i].pauseCharAction();
 		}
 		if(page != "fore")
 		{
-			for(var i=0; i<back.messages.count; i++)
+			for (var i = 0, internal_forloop_count = back.messages.count; i < internal_forloop_count; i += 1)
 				back.messages[i].pauseCharAction();
 		}
 	}
@@ -3990,12 +3990,12 @@ class KAGWindow_override extends KAGWindow_original
 	{
 		if(page != "back")
 		{
-			for(var i=0; i<fore.messages.count; i++)
+			for (var i = 0, internal_forloop_count = fore.messages.count; i < internal_forloop_count; i += 1)
 				fore.messages[i].resumeCharAction();
 		}
 		if(page != "fore")
 		{
-			for(var i=0; i<back.messages.count; i++)
+			for (var i = 0, internal_forloop_count = back.messages.count; i < internal_forloop_count; i += 1)
 				back.messages[i].resumeCharAction();
 		}
 	}
@@ -4150,7 +4150,7 @@ class KAGWindow_override extends KAGWindow_original
 		setter(v) {
 			if(scflags.se === void)
 				scflags.se = [];
-			for(var i = 0; i<numSEBuffers+1; i++) {
+			for (var i = 0, internal_forloop_count = numSEBuffers+1; i < internal_forloop_count; i += 1) {
 				if (scflags.se[i] === void) {
 					scflags.se[i] = %[];
 				}
@@ -4261,7 +4261,7 @@ class KAGWindow_override extends KAGWindow_original
 	{
 @if(PAUSE_TRANSITION)
 		var	layers	= [ primaryLayer ];
-		for(var i=0; i<layers.count; i++) with(layers[i])
+		for (var i = 0, internal_forloop_count = layers.count; i < internal_forloop_count; i += 1) with(layers[i])
 		{
 			.pauseTransition() if typeof .pauseTransition != "undefined";
 			layers.push(.children*);
@@ -4274,7 +4274,7 @@ class KAGWindow_override extends KAGWindow_original
 	{
 @if(PAUSE_TRANSITION)
 		var	layers	= [ primaryLayer ];
-		for(var i=0; i<layers.count; i++) with(layers[i])
+		for (var i = 0, internal_forloop_count = layers.count; i < internal_forloop_count; i += 1) with(layers[i])
 		{
 			.resumeTransition() if typeof .resumeTransition != "undefined";
 			layers.push(.children*);

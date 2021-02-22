@@ -48,7 +48,7 @@ class TLBaseObject
 					children.clear();
 				else
 					children	= [];
-				for(var i=0; i<.children.count; i++)
+				for (var i = 0, internal_forloop_count = .children.count; i < internal_forloop_count; i += 1)
 					children[i]	= func(.children[i], this, func);
 			}
 			uuid	= .uuid;
@@ -69,10 +69,10 @@ class TLBaseObject
 	{
 		var	frames	= timeline.frames;
 		var	storages= %[];
-		for(var i=0; i<frames.count; i++)
+		for (var i = 0, internal_forloop_count = frames.count; i < internal_forloop_count; i += 1)
 		{
 			var	frame	= frames[i];
-			for(var i=0; i<storageProperties.count; i++)
+			for (var i = 0, internal_forloop_count = storageProperties.count; i < internal_forloop_count; i += 1)
 			{
 				var	storage	= frame[storageProperties[i]];
 				if(storage != "" && !storages[storage])
@@ -101,7 +101,7 @@ class TLBaseObject
 		else
 		{
 			var	k;
-			for(var i=0; i<elm.keys.count; i++)
+			for (var i = 0, internal_forloop_count = elm.keys.count; i < internal_forloop_count; i += 1)
 				k	+= "(" + elm.keys[i].join(",") + ")";
 			dm("\tkeys  = "+k);
 		}
@@ -250,7 +250,7 @@ class TLPageObject extends TLBaseObject
 
 		var	page	= pages[stframe.page];	//	最初のページ
 		var	keys	= [];
-		for(var i=sindex+1; i<timeline.count; i++)
+		for (var i = sindex+1, internal_forloop_count = timeline.count; i < internal_forloop_count; i += 1)
 		{
 			//	次のキーフレームを取得
 			var	nxframe	= timeline.get(i);
@@ -873,7 +873,7 @@ class TLObjectData
 		with(dic)
 		{
 			(Dictionary.clear incontextof scenes)();
-			for(var i=0; i<.scenes.count; i+=2)
+			for (var i = 0, internal_forloop_count = .scenes.count; i < internal_forloop_count; i += 2)
 				scenes[.scenes[i]]	= .scenes[i+1];		//	辞書データだけ読み込む
 			cacheType	= .cacheType;
 		}
@@ -884,7 +884,7 @@ class TLObjectData
 	function searchBasicObjects()
 	{
 		page = bg[0] = bg[1] = bgm = void;
-		for(var i=0; i<objects.count; i++)
+		for (var i = 0, internal_forloop_count = objects.count; i < internal_forloop_count; i += 1)
 		{
 			if(objects[i] instanceof "TLPageObject")
 				page	= objects[i];
@@ -906,13 +906,13 @@ class TLObjectData
 //		dm("--- setscene ---: "+currentSceneID+" → "+sid);
 		var	objs	= scenes[sid][0];
 		objects.clear();
-		for(var i=0; i<objs.count; i++)
+		for (var i = 0, internal_forloop_count = objs.count; i < internal_forloop_count; i += 1)
 		{
 			var	obj;
 			objects.add(obj = restoreObject(objs[i], void));
 			if(obj.children != void)
 			{
-				for(var i=0; i<obj.children.count; i++)
+				for (var i = 0, internal_forloop_count = obj.children.count; i < internal_forloop_count; i += 1)
 					objects.add(obj.children[i]);
 			}
 		}
@@ -927,13 +927,13 @@ class TLObjectData
 	{
 		list	= [] if list == void;
 		setSceneID(sid);
-		for(var i=0; i<objects.count; i++)
+		for (var i = 0, internal_forloop_count = objects.count; i < internal_forloop_count; i += 1)
 		{
 			var	obj	= objects[i];
 			obj.addStorageList(list);
 			if(obj.children != void)
 			{
-				for(var i=0; i<obj.children.count; i++)
+				for (var i = 0, internal_forloop_count = obj.children.count; i < internal_forloop_count; i += 1)
 					obj.children[i].addStorageList(list);
 			}
 		}
@@ -952,26 +952,26 @@ class TLObjectData
 		var	pages	= page.getPages();
 		var	elms	= [];
 		var	uuid2elm= %[];
-		for(var i=0; i<objects.count; i++)
+		for (var i = 0, internal_forloop_count = objects.count; i < internal_forloop_count; i += 1)
 			objects[i].createAction(stframe, edframe, end, frameRate, elms, pages, uuid2elm);
 
 		//	uuid を、getLayerFromElm用のオブジェクトを示すパラメータに置換する
 		var	uuidprops	= [ "basis" ];	//	uuidが入っていると思われるパラメータ
-		for(var i=0; i<elms.count; i++)
+		for (var i = 0, internal_forloop_count = elms.count; i < internal_forloop_count; i += 1)
 		{
 			var	props	= elms[i].props;
 			var	keys	= elms[i].keys;
 			if(props == void || keys == void)
 				continue;
 //			dm(i+": "+elms[i].module);
-			for(var i=0; i<uuidprops.count; i++)
+			for (var i = 0, internal_forloop_count = uuidprops.count; i < internal_forloop_count; i += 1)
 			{
 				var	no	= props.find("-"+uuidprops[i]);		//	中間値を持つような内容ではないので、"-"をつける
 //				dm(props.join(",")+": "+uuidprops[i]+" = "+no);
 				if(no < 0)
 					continue;
 				no	+= 3;	//	基本パラメータが3つ(time,accel,interpolate)があるので
-				for(var i=0; i<keys.count; i++)
+				for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 1)
 				{
 //					dm("keys["+i+"]["+no+"] = "+keys[i][no]);
 					keys[i][no]	= uuid2elm[keys[i][no]] if keys[i][no] != void;
@@ -990,7 +990,7 @@ class TLObjectData
 		{
 			if(_length == void)
 			{
-				for(var i=0; i<objects.count; i++)
+				for (var i = 0, internal_forloop_count = objects.count; i < internal_forloop_count; i += 1)
 					_length	= objects[i].length if objects[i].length > _length;
 			}
 			return _length;
@@ -1025,7 +1025,7 @@ class TLObjectData
 		if(kfidx === void)
 		{
 			var	frames	= obj.timeline.frames;
-			for(var i=0; i<frames.count; i++)
+			for (var i = 0, internal_forloop_count = frames.count; i < internal_forloop_count; i += 1)
 			{
 //				dm(objname+"["+i+"]."+prop+" = "+frames[i][prop]+" → "+value+" (frame = "+frames[i].frame+")");
 				frames[i][prop]	= value;
@@ -1044,7 +1044,7 @@ class TLObjectData
 
 	function findObject(name)
 	{
-		for(var i=0; i<objects.count; i++)
+		for (var i = 0, internal_forloop_count = objects.count; i < internal_forloop_count; i += 1)
 		{
 			if(name == objects[i].name)
 				return objects[i];
@@ -1061,7 +1061,7 @@ class TLObjectData
 
 		//	全てのオブジェクトから取得
 		var	list	= [];
-		for(var i=0; i<objects.count; i++)
+		for (var i = 0, internal_forloop_count = objects.count; i < internal_forloop_count; i += 1)
 			objects[i].getStorageList(list, st, ed);
 
 		//	フレーム番号順に並び替える
@@ -1069,12 +1069,13 @@ class TLObjectData
 
 		//	重複している場合は、後の方を削除する(最初に現れるものを優先)
 		var	storages	= %[];
-		for(var i=0; i<list.count; i++)
+		for (var i = 0, internal_forloop_count = list.count; i < internal_forloop_count; i += 1)
 		{
 			if(storages[list[i][1]])
 			{
 				list.erase(i);
 				i--;
+				internal_forloop_count -= 1;
 			}
 			else
 				storages[list[i][1]]	= true;
@@ -1083,7 +1084,7 @@ class TLObjectData
 		//	フレーム番号を破棄するか
 		if(!needFrameNo)
 		{
-			for(var i=0; i<list.count; i++)
+			for (var i = 0, internal_forloop_count = list.count; i < internal_forloop_count; i += 1)
 				list[i]	= list[i][1];
 		}
 

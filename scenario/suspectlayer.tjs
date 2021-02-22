@@ -153,7 +153,7 @@ function SSdisableSuspects()
 {
 	dm("SSdisableSuspects()");
 	tf.focusableSuspect	= kag.focusedLayer;
-	for(var i=0; i<SS_layers.count; i++) with(SS_layers[i])
+	for (var i = 0, internal_forloop_count = SS_layers.count; i < internal_forloop_count; i += 1) with(SS_layers[i])
 	{
 		.focusable		= false;
 		.hitThreshold	= 256;
@@ -164,7 +164,7 @@ function SSdisableSuspects()
 function SSenableSuspects()
 {
 	dm("SSenableSuspects()");
-	for(var i=0; i<SS_layers.count; i++) with(SS_layers[i])
+	for (var i = 0, internal_forloop_count = SS_layers.count; i < internal_forloop_count; i += 1) with(SS_layers[i])
 	{
 		.focusable		= true;
 		.hitThreshold	= 16;
@@ -182,7 +182,7 @@ kag.tagHandlers.createsuspects	= function(elm)
 	//	容疑者レイヤーを用意して並べる
 	var	par	= elm.page == "fore" ? kag.fore.base : kag.back.base;
 	var	margin	= elm.margin !== void ? +elm.margin : 16;
-	for(var i=0; i<SS_suspectsList.count; i++)
+	for (var i = 0, internal_forloop_count = SS_suspectsList.count; i < internal_forloop_count; i += 1)
 	{
 		var	fn	= SS_suspectsList[i][0];
 		var	char= fn.substr(0, fn.indexOf("0"));
@@ -201,7 +201,7 @@ kag.tagHandlers.createsuspects	= function(elm)
 	var	r	= SS_layers[SS_layers.count-1];
 	r		= 1024 - r.width \ 2 + r.centerCorrect - margin;
 	var	step= (r - l) / (SS_layers.count - 1);
-	for(var i=0; i<SS_layers.count; i++) with(SS_layers[i])
+	for (var i = 0, internal_forloop_count = SS_layers.count; i < internal_forloop_count; i += 1) with(SS_layers[i])
 	{
 		.center	= l;
 		.ground	= 400 + SS_suspectsList[i][1];
@@ -218,7 +218,7 @@ kag.tagHandlers.createsuspects	= function(elm)
 kag.tagHandlers.clearsuspects	= function()
 {
 	//	容疑者レイヤーを破棄
-	for(var i=0; i<SS_layers.count; i++)
+	for (var i = 0, internal_forloop_count = SS_layers.count; i < internal_forloop_count; i += 1)
 		invalidate SS_layers[i] if SS_layers[i] != void;
 	SS_layers.clear();
 

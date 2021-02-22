@@ -430,7 +430,7 @@ class ActionManager
 				loopCount++;
 		}
 		//種別を指定したアクションが全て終了していたらトリガ
-		for( var i=0; i<waitStackByType.count; i++ )
+		for (var i = 0, internal_forloop_count = waitStackByType.count; i < internal_forloop_count; i += 1)
 		{
 			var acttype = string(waitStackByType[i]);
 			if( ! countActionByType(acttype) || ! count )
@@ -439,6 +439,7 @@ class ActionManager
 				window.conductor.trigger("action_TYPE_"+acttype);
 				waitStackByType.erase(i);
 				i--;
+				internal_forloop_count -= 1;
 //			}else{
 //				dm("waiting action_TYPE_"+acttype);
 			}
@@ -628,7 +629,7 @@ class ActionManager
 		(Dictionary.clear incontextof actionDict)();
 		with(f)
 		{
-			for(var i=0; i<.actionList.count; i++)
+			for (var i = 0, internal_forloop_count = .actionList.count; i < internal_forloop_count; i += 1)
 			{
 				var	info	= new ActionInfo();
 				info.restore(.actionList[i]);

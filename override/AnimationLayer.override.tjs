@@ -42,7 +42,7 @@ var	Layer_effect_list	= Scripts.evalStorage("envcolor.ksc");
 		[ "green",	  0.0,void, void,   1.0, void, void,   0.0, void, void, true ],
 		[ "blue",	  0.0,void, void,   0.0, void, void,   1.0, void, void, true ]
 	];
-	for(var i=0; i<default_effect_list.count; i++)
+	for (var i = 0, internal_forloop_count = default_effect_list.count; i < internal_forloop_count; i += 1)
 	{
 		if(default_effect_list[i] != void)
 		{
@@ -194,7 +194,7 @@ class AnimationLayer_override extends AnimationLayer_original
 	function clearImages(all=false)
 	{
 		var	st	= all ? 0 : 1;
-		for(var i=st; i<images.count; i++)
+		for (var i = st, internal_forloop_count = images.count; i < internal_forloop_count; i += 1)
 			invalidate images[i] if images[i] != void && images[i] != this;
 		images.count	= st;
 		_image	= _orgimage;
@@ -326,7 +326,7 @@ class AnimationLayer_override extends AnimationLayer_original
 @if(DRAW_DIVIDELAYERS)
 				if(!hasImage)
 				{
-					for(var i=0; i<divideLayers.count; i++) with(divideLayers[i])
+					for (var i = 0, internal_forloop_count = divideLayers.count; i < internal_forloop_count; i += 1) with(divideLayers[i])
 					{
 						.setImageSize(realImageWidth, realImageHeight);
 						.setSize(realWidth, realHeight);
@@ -413,12 +413,12 @@ class AnimationLayer_override extends AnimationLayer_original
 					global.Layer.setImagePos(.imageLeft, .imageTop);
 					global.Layer.type	= .type;
 				}
-				for(var i=0; i<divideLayers.count; i++)
+				for (var i = 0, internal_forloop_count = divideLayers.count; i < internal_forloop_count; i += 1)
 					invalidate divideLayers[i];
 			}
 			divideLayers= [];
 			var	da	= typeof tag.divideArea == "String" ? tag.divideArea.split("/") : tag.divideArea;
-			for(var i=0; i<da.count; i++)
+			for (var i = 0, internal_forloop_count = da.count; i < internal_forloop_count; i += 1)
 			{
 				da[i]	= da[i].split(",") if typeof da[i] == "String";
 				var	layer	= new global.Layer(window, parent);
@@ -445,7 +445,7 @@ class AnimationLayer_override extends AnimationLayer_original
 				global.Layer.setImagePos(.imageLeft, .imageTop);
 				global.Layer.type	= .type;
 			}
-			for(var i=0; i<divideLayers.count; i++)
+			for (var i = 0, internal_forloop_count = divideLayers.count; i < internal_forloop_count; i += 1)
 				invalidate divideLayers[i];
 			divideLayers	= void;
 		}
@@ -459,7 +459,7 @@ class AnimationLayer_override extends AnimationLayer_original
 			if(hasImage)
 				super.type	= v;
 			else
-				for(var i=0; i<divideLayers.count; i++) divideLayers[i].type = v;
+				for (var i = 0, internal_forloop_count = divideLayers.count; i < internal_forloop_count; i += 1) divideLayers[i].type = v;
 		}
 		getter	{ return super.type; }
 	}
@@ -1055,7 +1055,7 @@ class AnimationLayer_override extends AnimationLayer_original
 	{
 		if( children.count )
 		{
-			for( var i=0; i<children.count; i++ )
+			for (var i = 0, internal_forloop_count = children.count; i < internal_forloop_count; i += 1)
 			{
 				if( typeof children[i].updateChildLayers == "undefined" )
 					continue;
@@ -1076,7 +1076,7 @@ class AnimationLayer_override extends AnimationLayer_original
 	{
 		if( children.count )
 		{
-			for( var i=0; i<children.count; i++ )
+			for (var i = 0, internal_forloop_count = children.count; i < internal_forloop_count; i += 1)
 			{
 				if( typeof children[i].resetPhaseChildLayers == "undefined" )
 					continue;
@@ -1101,7 +1101,7 @@ class AnimationLayer_override extends AnimationLayer_original
 		var ret = true;
 		if( children.count )
 		{
-			for( var i=0; i<children.count; i++ )
+			for (var i = 0, internal_forloop_count = children.count; i < internal_forloop_count; i += 1)
 			{
 				if( typeof children[i].checkPhaseChildLayers == "undefined" )
 					continue;
@@ -1120,7 +1120,7 @@ class AnimationLayer_override extends AnimationLayer_original
 	{
 		if( children.count )
 		{
-			for( var i=0; i<children.count; i++ )
+			for (var i = 0, internal_forloop_count = children.count; i < internal_forloop_count; i += 1)
 			{
 				if( typeof children[i].isChildInTransition == "undefined" )
 					continue;
@@ -1264,7 +1264,7 @@ class AnimationLayer_override extends AnimationLayer_original
 				param.ggamma = ef[3]; param.gfloor = ef[4]; param.gceil = ef[5];
 				param.bgamma = ef[6]; param.bfloor = ef[7]; param.bceil = ef[8];
 				param.grayscale	= ef[9];
-				for(var i=10; i<ef.count; i+=5)
+				for (var i = 10, internal_forloop_count = ef.count; i < internal_forloop_count; i += 5)
 				{
 					param.blends	= [] if param.blends == void;
 					param.blends.add([ ef[i], ef[i+1], ef[i+2], ef[i+3], ef[i+4] ]);	//	r g b a layertype
@@ -1317,7 +1317,7 @@ class AnimationLayer_override extends AnimationLayer_original
 			//	カラーブレンド、覆い焼きなど
 			if(param.blends != void)
 			{
-				for(var i=0; i<param.blends.count; i++)
+				for (var i = 0, internal_forloop_count = param.blends.count; i < internal_forloop_count; i += 1)
 				{
 					var	bl	= param.blends[i];
 					if(bl[3] == 0)
@@ -1487,7 +1487,7 @@ class AnimationLayer_override extends AnimationLayer_original
 					var	pos	= calcDrawPos(mx, my);
 					var	da	= _orgimage.orgTag.divideArea;
 					var	rgs	= affineSource._regions;
-					for(var i=0; i<da.count; i++) with(divideLayers[i])
+					for (var i = 0, internal_forloop_count = da.count; i < internal_forloop_count; i += 1) with(divideLayers[i])
 					{
 						affineSource.draw(divideLayers[i], l + +da[i][0], t + +da[i][1], +da[i][0], +da[i][1], +da[i][2], +da[i][3], afx, afy, _rotate, _zoomx, _zoomy, _aorder);
 
@@ -1699,13 +1699,13 @@ class AnimationLayer_override extends AnimationLayer_original
 				global.KAGLayer.assignImages(src);
 				global.KAGLayer.setSizeToImageSize();
 			}
-			for(var i=1; i<src.images.count; i++)
+			for (var i = 1, internal_forloop_count = src.images.count; i < internal_forloop_count; i += 1)
 			{
 				var	layer	= addImage(i);
 				layer.assignImages(src.images[i]);
 				layer.setSizeToImageSize();
 			}
-			for(var i=src.images.count; i<images.count; i++)
+			for (var i = src.images.count, internal_forloop_count = images.count; i < internal_forloop_count; i += 1)
 				invalidate images[i] if images[i] != void;
 			images.count	= src.images.count;
 			_image			= images[images.count-1];
@@ -1802,7 +1802,7 @@ class AnimationLayer_override extends AnimationLayer_original
 	 */
 	function setStatus(elm, init=false)
 	{
-		for(var i=0; i<AnimationLayerStatuses.count; i++)
+		for (var i = 0, internal_forloop_count = AnimationLayerStatuses.count; i < internal_forloop_count; i += 1)
 		{
 			var	prop	= AnimationLayerStatuses[i];
 			if(typeof elm[prop] != "undefined")
@@ -1817,7 +1817,7 @@ class AnimationLayer_override extends AnimationLayer_original
 	 */
 	function initStatus()
 	{
-		for(var i=0; i<AnimationLayerStatuses.count; i++)
+		for (var i = 0, internal_forloop_count = AnimationLayerStatuses.count; i < internal_forloop_count; i += 1)
 			this[AnimationLayerStatuses[i]]	= AnimationLayerStatusInits[i];
 	}
 
@@ -2267,12 +2267,12 @@ class AnimationLayer_override extends AnimationLayer_original
 				_orgimage.assignImages(src._orgimage);
 			else
 				global.KAGLayer.assignImages(src);
-			for(var i=1; i<src.images.count; i++)
+			for (var i = 1, internal_forloop_count = src.images.count; i < internal_forloop_count; i += 1)
 			{
 				var	layer	= addImage(i);
 				layer.assignImages(src.images[i]);
 			}
-			for(var i=src.images.count; i<images.count; i++)
+			for (var i = src.images.count, internal_forloop_count = images.count; i < internal_forloop_count; i += 1)
 				invalidate images[i] if images[i] != void;
 			images.count	= src.images.count;
 			_image			= images[images.count-1];
@@ -2575,50 +2575,50 @@ class AnimationLayer_override extends AnimationLayer_original
 @if(DRAW_DIVIDELAYERS)
 	property realLeft
 	{
-		setter(v)	{ super.left = v; if(!hasImage){for(var i=0; i<divideLayers.count; i++) divideLayers[i].left = v;} }
+		setter(v)	{ super.left = v; if(!hasImage){for (var i = 0, internal_forloop_count = divideLayers.count; i < internal_forloop_count; i += 1) divideLayers[i].left = v;} }
 		getter		{ return super.left; }
 	}
 
 	property realTop
 	{
-		setter(v)	{ super.top = v; if(!hasImage){for(var i=0; i<divideLayers.count; i++) divideLayers[i].top = v;} }
+		setter(v)	{ super.top = v; if(!hasImage){for (var i = 0, internal_forloop_count = divideLayers.count; i < internal_forloop_count; i += 1) divideLayers[i].top = v;} }
 		getter		{ return super.top; }
 	}
 
 	property realWidth
 	{
-		setter(v)	{ super.width = v; if(!hasImage){for(var i=0; i<divideLayers.count; i++) divideLayers[i].width = v;} }
+		setter(v)	{ super.width = v; if(!hasImage){for (var i = 0, internal_forloop_count = divideLayers.count; i < internal_forloop_count; i += 1) divideLayers[i].width = v;} }
 		getter		{ return super.width; }
 	}
 
 	property realHeight
 	{
-		setter(v)	{ super.height = v; if(!hasImage){for(var i=0; i<divideLayers.count; i++) divideLayers[i].height = v;} }
+		setter(v)	{ super.height = v; if(!hasImage){for (var i = 0, internal_forloop_count = divideLayers.count; i < internal_forloop_count; i += 1) divideLayers[i].height = v;} }
 		getter		{ return super.height; }
 	}
 
 	property realImageLeft
 	{
 		getter		{ return hasImage ? global.Layer.imageLeft : divideLayers[0].imageLeft; }
-		setter(v)	{ if(hasImage){global.Layer.imageLeft = v;}else{for(var i=0; i<divideLayers.count; i++) divideLayers[i].imageLeft = v;} }
+		setter(v)	{ if(hasImage){global.Layer.imageLeft = v;}else{for (var i = 0, internal_forloop_count = divideLayers.count; i < internal_forloop_count; i += 1) divideLayers[i].imageLeft = v;} }
 	}
 
 	property realImageTop
 	{
 		getter		{ return hasImage ? global.Layer.imageTop : divideLayers[0].imageTop; }
-		setter(v)	{ if(hasImage){global.Layer.imageTop = v;}else{for(var i=0; i<divideLayers.count; i++) divideLayers[i].imageTop = v;} }
+		setter(v)	{ if(hasImage){global.Layer.imageTop = v;}else{for (var i = 0, internal_forloop_count = divideLayers.count; i < internal_forloop_count; i += 1) divideLayers[i].imageTop = v;} }
 	}
 
 	property realImageWidth
 	{
 		getter		{ return hasImage ? global.Layer.imageWidth : divideLayers[0].imageWidth; }
-		setter(v)	{ if(hasImage){global.Layer.imageWidth = v;}else{for(var i=0; i<divideLayers.count; i++) divideLayers[i].imageWidth = v;} }
+		setter(v)	{ if(hasImage){global.Layer.imageWidth = v;}else{for (var i = 0, internal_forloop_count = divideLayers.count; i < internal_forloop_count; i += 1) divideLayers[i].imageWidth = v;} }
 	}
 
 	property realImageHeight
 	{
 		getter		{ return hasImage ? global.Layer.imageHeight : divideLayers[0].imageHeight; }
-		setter(v)	{ if(hasImage){global.Layer.imageHeight = v;}else{for(var i=0; i<divideLayers.count; i++) divideLayers[i].imageHeight = v;} }
+		setter(v)	{ if(hasImage){global.Layer.imageHeight = v;}else{for (var i = 0, internal_forloop_count = divideLayers.count; i < internal_forloop_count; i += 1) divideLayers[i].imageHeight = v;} }
 	}
 
 	function setRealPos(l, t)
@@ -2627,7 +2627,7 @@ class AnimationLayer_override extends AnimationLayer_original
 
 		if(!hasImage)
 		{
-			for(var i=0; i<divideLayers.count; i++) with(divideLayers[i])
+			for (var i = 0, internal_forloop_count = divideLayers.count; i < internal_forloop_count; i += 1) with(divideLayers[i])
 				.setPos(l, t);
 		}
 	}
@@ -2638,7 +2638,7 @@ class AnimationLayer_override extends AnimationLayer_original
 			super.setImagePos(l, t);
 		else
 		{
-			for(var i=0; i<divideLayers.count; i++) with(divideLayers[i])
+			for (var i = 0, internal_forloop_count = divideLayers.count; i < internal_forloop_count; i += 1) with(divideLayers[i])
 				.setImagePos(l, t);
 		}
 	}
@@ -2986,7 +2986,7 @@ class AnimationLayer_override extends AnimationLayer_original
 
 		var	text	= " [ ";
 		var	sept	= "";
-		for(var i=0; i<array.count; i++)
+		for (var i = 0, internal_forloop_count = array.count; i < internal_forloop_count; i += 1)
 		{
 			if(array[i] instanceof "Array")
 				text	+= sept + array2string(array[i]);
@@ -3545,14 +3545,14 @@ class AnimationLayer_override extends AnimationLayer_original
 		var	ws	= 0;
 		if(hazeWaves != void)
 		{
-			for(var i=0; i<hazeWaves.count; i++)
+			for (var i = 0, internal_forloop_count = hazeWaves.count; i < internal_forloop_count; i += 1)
 				ws	+= Math.abs(hazeWaves[i][2]);
 			ws	*= hazePower;
 		}
 		var	size;
 		if(hazePowers != void)
 		{
-			for(var i=0; i<hazePowers.count; i++)
+			for (var i = 0, internal_forloop_count = hazePowers.count; i < internal_forloop_count; i += 1)
 			{
 				var	sz	= Math.abs(ws * hazePowers[i][1]);
 				size	= sz if sz > size;
@@ -3644,7 +3644,7 @@ class AnimationLayer_override extends AnimationLayer_original
 		this.func = function(array, func)
 		{
 			var	str	= "";
-			for(var i=0; i<array.count; i++)
+			for (var i = 0, internal_forloop_count = array.count; i < internal_forloop_count; i += 1)
 				str	+= (array[i] instanceof "Array" ? func(array[i]) : string(array[i])) + ",";
 			return "["+str+"]";
 		};
@@ -3660,7 +3660,7 @@ class AnimationLayer_override extends AnimationLayer_original
 		var ws = [].split("()", strArg,, true);
 		var out = "[";
 		var dc = 0;
-		for( var i=0; i<ws.count; i++ )
+		for (var i = 0, internal_forloop_count = ws.count; i < internal_forloop_count; i += 1)
 		{
 			if( ws[i] != "" )
 			{

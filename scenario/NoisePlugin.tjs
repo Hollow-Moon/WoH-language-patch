@@ -130,7 +130,7 @@ class NoisePlugin extends AsyncAnimationBasePlugin
 	{
 		var ret = [];
 		var	keys	= getAllItems();
-		for(var i=0; i<keys.count; i+=2)
+		for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 2)
 		{
 			if( keys[i+1].imageLayer !== void && isvalid keys[i+1].imageLayer )
 			{
@@ -143,7 +143,7 @@ class NoisePlugin extends AsyncAnimationBasePlugin
 	function clear()
 	{
 		var	keys	= getAllItems();
-		for(var i=0; i<keys.count; i+=2)
+		for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 2)
 			invalidate keys[i+1].imageLayer if keys[i+1].imageLayer != void;
 		super.clear();
 	}
@@ -206,7 +206,7 @@ class NoisePlugin extends AsyncAnimationBasePlugin
 			else
 				layers.add(noise_object.getLayerFromElm(elm));
 			var	status	= .status;
-			for(var i=0; i<layers.count; i++)
+			for (var i = 0, internal_forloop_count = layers.count; i < internal_forloop_count; i += 1)
 			{
 				.status	= status;
 				.status	= "stop" if layers[i].status == "stop" && (tagname == "pausenoise" || tagname == "resumenoise");
@@ -222,7 +222,7 @@ class NoisePlugin extends AsyncAnimationBasePlugin
 		var	dic	= f[name]	= %[];
 		var	pgs	= [ "fore", "back" ];
 		var str = false;
-		for(var i=0; i<pgs.count; i++)
+		for (var i = 0, internal_forloop_count = pgs.count; i < internal_forloop_count; i += 1)
 		{
 			var	pg	= kag[pgs[i]].base;
 //			dm("NoisePlugin.onStore: "+pgs[i]+" = "+pg+" / "+get(pg));
@@ -245,7 +245,7 @@ class NoisePlugin extends AsyncAnimationBasePlugin
 		var	dic	= f[name];
 		if( dic === void ) return;
 		var	pgs	= [ "fore", "back" ];
-		for(var i=0; i<pgs.count; i++)
+		for (var i = 0, internal_forloop_count = pgs.count; i < internal_forloop_count; i += 1)
 		{
 			if(dic[pgs[i]+"_imageLayer"] != void)
 			{
@@ -260,7 +260,7 @@ class NoisePlugin extends AsyncAnimationBasePlugin
 	{
 		var	layers	= [];
 		var	pgs		= [ "fore", "back" ];
-		for(var i=0; i<pgs.count; i++)
+		for (var i = 0, internal_forloop_count = pgs.count; i < internal_forloop_count; i += 1)
 		{
 			var	layer	= getprop("imageLayer", kag[pgs[i]].base);
 			layers.add(layer) if layer != void;
@@ -272,7 +272,7 @@ class NoisePlugin extends AsyncAnimationBasePlugin
 	function onStopAllActions()
 	{
 		var ret = getLayers();
-		for( var i=0; i<ret.count; i++ )
+		for (var i = 0, internal_forloop_count = ret.count; i < internal_forloop_count; i += 1)
 		{
 			if( ret[i] === void ) continue;
 			ret[i].status = "stop";
@@ -297,7 +297,7 @@ class NoisePlugin extends AsyncAnimationBasePlugin
 	function onPauseAction(target, forceAll)
 	{
 		var ret = getLayers();
-		for( var i=0; i<ret.count; i++ )
+		for (var i = 0, internal_forloop_count = ret.count; i < internal_forloop_count; i += 1)
 		{
 			if( ret[i] === void ) continue;
 			if( target !== void )
@@ -314,7 +314,7 @@ class NoisePlugin extends AsyncAnimationBasePlugin
 	function onResumeAction(target)
 	{
 		var ret = getLayers();
-		for( var i=0; i<ret.count; i++ )
+		for (var i = 0, internal_forloop_count = ret.count; i < internal_forloop_count; i += 1)
 		{
 			if( ret[i] === void ) continue;
 			if( target !== void )
@@ -395,7 +395,7 @@ class NoisePlugin extends AsyncAnimationBasePlugin
 	function getLayerFromObject(object)
 	{
 		var	pgs	= [ "fore", "back" ];
-		for(var i=0; i<pgs.count; i++)
+		for (var i = 0, internal_forloop_count = pgs.count; i < internal_forloop_count; i += 1)
 		{
 			if(getprop("imageLayer", kag[pgs[i]].base) == object)
 				return %[page:pgs[i], plugin:name];
@@ -408,7 +408,7 @@ class NoisePlugin extends AsyncAnimationBasePlugin
 	{
 		//	全てのレイヤーに「使っていない」フラグを立てる
 		var	pgs	= [ "fore", "back" ];
-		for(var i=0; i<pgs.count; i++)
+		for (var i = 0, internal_forloop_count = pgs.count; i < internal_forloop_count; i += 1)
 		{
 			var	pg	= kag[pgs[i]].base;
 			var	il	= getprop("imageLayer", pg);
@@ -422,7 +422,7 @@ class NoisePlugin extends AsyncAnimationBasePlugin
 	{
 		//	「使っていない」フラグが立っているレイヤーは
 		var	pgs	= [ "fore", "back" ];
-		for(var i=0; i<pgs.count; i++)
+		for (var i = 0, internal_forloop_count = pgs.count; i < internal_forloop_count; i += 1)
 		{
 			var	pg	= kag[pgs[i]].base;
 			var	il	= getprop("imageLayer", pg);
@@ -865,10 +865,10 @@ class NoiseLayer extends Layer
 		values.assign(nextelm);
 
 		var lastProps = ["status", "doUpdate"];		//最後に更新をかけるプロパティ名の列挙(後ろに並べたほうが最後に実行される)
-		for(var i=0; i<values.count; i+=2)
+		for (var i = 0, internal_forloop_count = values.count; i < internal_forloop_count; i += 2)
 		{
 			var skip = false;
-			for(var j=0; j<lastProps.count; j++)
+			for (var j = 0, internal_forloop_count = lastProps.count; j < internal_forloop_count; j += 1)
 			{
 				var prop = lastProps[j];
 				if( prop === void ) continue;
@@ -889,7 +889,7 @@ class NoiseLayer extends Layer
 @endif
 			this[values[i]]	= values[i+1];
 		}
-		for(var j=0; j<lastProps.count; j++)
+		for (var j = 0, internal_forloop_count = lastProps.count; j < internal_forloop_count; j += 1)
 		{
 			var prop = lastProps[j];
 			if( prop === void ) continue;
@@ -1248,7 +1248,7 @@ kt.stopnoise	= function(elm)
 		//動作中のものが残っていなければ実体を破棄する
 		var stat = noise_object.getLayersState();
 		var nums = 0;
-		for( var i=0; i<stat.count; i++ )
+		for (var i = 0, internal_forloop_count = stat.count; i < internal_forloop_count; i += 1)
 		{
 			nums++ if( stat[i] == "play" || stat[i] == "pause" );
 		}
@@ -1493,7 +1493,7 @@ class NoiseObject extends PluginObject
 		var	params	= tags[tag.name];
 		if(params == void)
 			return false;
-		for(var i=0; i<params.count; i++)
+		for (var i = 0, internal_forloop_count = params.count; i < internal_forloop_count; i += 1)
 		{
 			if(tag.get(params[i][0]) != params[i][1])
 				return false;

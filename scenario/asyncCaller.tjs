@@ -80,14 +80,14 @@ class AsyncCaller
 
   function callOnce(func, args*) {
     // 同じ内容の呼び出しが存在すれば、登録しない
-    for (var i = 0; i < funcs.count; i++)
+    for (var i = 0, internal_forloop_count = funcs.count; i < internal_forloop_count; i += 1)
       if (funcs[i][0] === func && equalStruct(funcs[i][1], args))
         return;
     call(func, args*);
   }
 
   function cancel(func, args*) {
-    for (var i = 0; i < funcs.count; i++)
+    for (var i = 0, internal_forloop_count = funcs.count; i < internal_forloop_count; i += 1)
       if (funcs[i][0] === func && equalStruct(funcs[i][1], args)) {
         funcs.erase(i);
         return;

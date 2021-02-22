@@ -38,7 +38,7 @@ class NFEChartData
 	{
 		if(pages != void)
 		{
-			for(var i=0; i<pages.count; i++)
+			for (var i = 0, internal_forloop_count = pages.count; i < internal_forloop_count; i += 1)
 				invalidate pages[i] if pages[i] != void;
 			invalidate pages;
 		}
@@ -53,7 +53,7 @@ class NFEChartData
 	function clear()
 	{
 		//	各オブジェクト間の連結を破棄
-		for(var i=0; i<pages.count; i++)
+		for (var i = 0, internal_forloop_count = pages.count; i < internal_forloop_count; i += 1)
 			pages[i].clear();
 		pages.clear();
 		if(categories != void)
@@ -104,7 +104,7 @@ class NFEChartData
 		{
 			.title		= title;
 			.pages	= [];
-			for(var i=0; i<pages.count; i++)
+			for (var i = 0, internal_forloop_count = pages.count; i < internal_forloop_count; i += 1)
 				.pages.add(pages[i].getSaveData());
 			.categories	= categories.getSaveData() if categories != void;
 			.flags		= flags;
@@ -132,7 +132,7 @@ class NFEChartData
 		{
 			title		= .title;
 			pages		= [];
-			for(var i=0; i<.pages.count; i++)
+			for (var i = 0, internal_forloop_count = .pages.count; i < internal_forloop_count; i += 1)
 			{
 				pages[i]	= createPage(this, .pages[i].id);
 				pages[i].setLoadData(.pages[i]);

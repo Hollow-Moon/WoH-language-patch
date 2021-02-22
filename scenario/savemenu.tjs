@@ -79,7 +79,7 @@ function setSaveMenuTimeline(name2pos, creates, pgno, isclose=false)
 		setCreateProp(target, "mute", exist);	//	データが存在すれば効果音を鳴らさない
 	}
 	//	ページ設定を行う
-	for(var i=0; i<kag.bookMarkPages; i++)
+	for (var i = 0, internal_forloop_count = kag.bookMarkPages; i < internal_forloop_count; i += 1)
 	{
 		var	target	= creates[name2pos["Saveページ"+(i+1)]];
 		setCreateProp(target, "mouseUp", isclose ? ";" : "changePageSaveMenu("+i+");release();");
@@ -109,7 +109,7 @@ function openSaveMenu(snapwithmenuitem=false)
 		if(snapwithmenuitem)
 		{//	隠さないけど、アクションは停止する
 			var	list	= Menu_object.getMenuItems(PRIMARY);
-			for(var i=0; i<list.count; i++)
+			for (var i = 0, internal_forloop_count = list.count; i < internal_forloop_count; i += 1)
 				list[i].stopAction() if list[i] != void;
 			kag.lockSnapshot();
 		}
@@ -117,10 +117,10 @@ function openSaveMenu(snapwithmenuitem=false)
 		{//	スナップショットを取るため、表に出ているメニューアイテムを一時的に隠す
 			var	list	= Menu_object.getMenuItems(PRIMARY);
 			var	vis		= [];
-			for(var i=0; i<list.count; i++)
+			for (var i = 0, internal_forloop_count = list.count; i < internal_forloop_count; i += 1)
 				list[i].visible <-> vis[i] if list[i] != void && list[i] isvalid;
 			kag.lockSnapshot();
-			for(var i=0; i<list.count; i++)
+			for (var i = 0, internal_forloop_count = list.count; i < internal_forloop_count; i += 1)
 				list[i].visible <-> vis[i] if list[i] != void && list[i] isvalid;
 		}
 		tf.sv_locksnapshot	= true;
@@ -193,7 +193,7 @@ function openSaveMenu(snapwithmenuitem=false)
 
 	with(Menu_object)
 	{
-		for(var i=0; i<kag.pageBookMarks; i++)
+		for (var i = 0, internal_forloop_count = kag.pageBookMarks; i < internal_forloop_count; i += 1)
 		{
 			var	tmp	= .find("Saveテキスト"+(i+1), PRIMARY);
 			tmp.noNormalMenuItem= true;		//	メソッドを置き換える等、通常の MenuItemLayer としては使えない
@@ -409,7 +409,7 @@ function changePageSaveMenu(pgno, prefix="Save")
 //	dm("changePage: "+sf.last_svld_pageno+" → "+pgno);
 	sf.last_svld_pageno	= +pgno;
 
-	for(var i=0; i<kag.bookMarkPages; i++)
+	for (var i = 0, internal_forloop_count = kag.bookMarkPages; i < internal_forloop_count; i += 1)
 		Menu_object.find(prefix+"ページ"+(i+1), PRIMARY).on	= i == pgno;
 	var	names	= [ "ウィンドウ", "Delete", prefix, "Lock", "テキスト" ];
 	var	delay	= 0;
@@ -436,7 +436,7 @@ function changePageSaveMenu(pgno, prefix="Save")
 			var	item;
 			var	elm	= %[];
 			(Dictionary.assignStruct incontextof elm)(orgelm);
-			for(var	j=0; j<names.count; j++)
+			for (var j = 0, internal_forloop_count = names.count; j < internal_forloop_count; j += 1)
 			{
 				with(item = Menu_object.find(prefix+names[j]+i, PRIMARY))
 				{
@@ -658,7 +658,7 @@ function closeSaveMenu(quick=false)
 	}
 
 	//	テキスト/ウィンドウレイヤーに設定したメソッドを破棄
-	for(var i=0; i<kag.pageBookMarks; i++)
+	for (var i = 0, internal_forloop_count = kag.pageBookMarks; i < internal_forloop_count; i += 1)
 	{
 		var	tmp	= Menu_object.find("Saveテキスト"+(i+1), PRIMARY);
 		if(tmp != void)
@@ -673,7 +673,7 @@ function closeSaveMenu(quick=false)
 			tmp.hitThreshold	= 0;
 			delete tmp.inEditArea;
 			var	events	= [ "onMouseEnter", "onMouseUp", "onMouseDown", "onFocus", "onBlur" ];
-			for(var i=0; i<events.count; i++)
+			for (var i = 0, internal_forloop_count = events.count; i < internal_forloop_count; i += 1)
 				tmp[events[i]]	= MenuItemLayer[events[i]] incontextof tmp;
 		}
 	}

@@ -312,7 +312,7 @@ class PropActionInfo
 
 	function invalidateAction(act)
 	{
-		var	handler	= ("global."+act.className)!;
+		var	handler	= global[act.className];
 		if(actpool[handler] == void)
 			actpool[handler]	= [];
 		actpool[handler].add(act);
@@ -555,7 +555,7 @@ class PropActionInfo
 			internalAbsoluteActionCompleted(target);
 			if(.absolute != void)
 			{
-				absolute	= new (.absolute.className)!(target, propName);
+				absolute	= new global[.absolute.className](target, propName);
 				absolute.restore(.absolute);
 			}
 			else
@@ -566,7 +566,7 @@ class PropActionInfo
 			{
 				if( .relative[i].elm === void )
 					continue;
-				relative[i]	= new (.relative[i].className)!(target, propName, .relative[i].elm);
+				relative[i]	= new global[.relative[i].className](target, propName, .relative[i].elm);
 				relative[i].restore(.relative[i]);
 			}
 			first = isPause = false;

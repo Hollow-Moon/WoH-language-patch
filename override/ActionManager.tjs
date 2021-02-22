@@ -148,12 +148,12 @@ class ActionManager
 
 				else if(typeof action.module == "String")
 				{
-					var	module	= (action.module)!;
+					var	module	= global[action.module];
 					module(info, action) if module != void;
 				}
 				else if(typeof action.moduleName == "String")
 				{
-					var	module	= (action.moduleName)!;
+					var	module	= global[action.moduleName];
 					module(info, action) if module != void;
 				}
 				else

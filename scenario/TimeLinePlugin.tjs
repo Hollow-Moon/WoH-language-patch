@@ -121,7 +121,7 @@ class TimeLinePlugin extends KAGPlugin
 		else
 		{//	キャッシュされていなかったら、データを読み込む
 			d	= new TLObjectData();
-			if(typeof dic == "String")
+			if(typeof dic == "String" && typeof(Scripts.evalJSON) === "Object")
 			{
 				dic	= Scripts.evalJSON(dic) if dic.substr(0,2) == '{"';
 			}

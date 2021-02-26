@@ -33,12 +33,16 @@ class KAGWindow_patch_reload_override extends KAGWindow_patch_reload_original
 		}
 @endif
 @if(GAME_WOHN)
-		if (__menuStack.count !== 0 && __menuStack[__menuStack.count - 1] === "title")
+		if (typeof(this.tflags) === "Object" && this.tflags.tt_opened)
 		{
 			this.isFirstProcess = false;
 			this.has_title_menu = true;
 			closeTitleMenu();
-			process('call.ks','*resetall', false, true, true);
+			this.setConductorToMain();
+			this.conductor.inProcessing = false;
+			this.conductor.interupted = false;
+			this.conductor.sleep();
+			this.conductor.clearCallStack();
 			return;
 		}
 @endif
@@ -100,7 +104,7 @@ class KAGWindow_patch_reload_override extends KAGWindow_patch_reload_original
 		if (this.has_title_menu)
 		{
 			this.has_title_menu = false;
-			process('first.ks','*titlemenu');
+			this.process('call.ks','*rclick2title');
 			return;
 		}
 		tf.load_no = 1000;

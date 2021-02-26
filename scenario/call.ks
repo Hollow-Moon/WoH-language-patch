@@ -79,7 +79,7 @@ with(tracer_object)
 [emb exp='f.av_storage[f.av_no]'][l][r]
 @endif
 @eval exp=f.av_no++
-@jump cond="(f.av_storage.count>f.av_no)&&(System.getArgument('-archiveonlyonescenario')===void)" target=*archive_repeat
+@jump cond="(typeof(f.av_storage)==='Object')&&(f.av_storage.count>f.av_no)&&(System.getArgument('-archiveonlyonescenario')===void)" target=*archive_repeat
 @hidecursor enabled=false
 @call target=*resetall
 @history enabled=false

@@ -122,6 +122,7 @@ function dmt(msg*) { Debug.message(msg.join(", ")+": "+Scripts.getTraceString())
 @set(RELOAD_SCENARIO_ON_FONT_CHANGE=1)
 @set(USE_KRMEMPLUGIN=1)
 @set(ENABLE_WEBP_ON_LOW_QUALITY=0)
+@set(USE_MENU_LAYER=0)
 
 @if(GAME_FATE||GAME_FHAT)
 @set(TEXT_DRAWER=1)
@@ -150,13 +151,13 @@ function dmt(msg*) { Debug.message(msg.join(", ")+": "+Scripts.getTraceString())
 @set(CACHE_CHAR_LAYERS_FROM_TEXT=1)
 @set(CACHE_CHAR_LAYERS_FROM_TEXT_FIRSTLOAD_ONLY=0)
 @set(FREETYPE_FONT=1)
-@set(ENABLE_WEBP_ON_LOW_QUALITY=1)
 @endif
 
 {
 	if (typeof(global.KirikiriSDL2Internal) === "Object")
 	{
 		Scripts.eval("@set(ZOOM_WINDOW=0)");
+		Scripts.eval("@set(USE_MENU_LAYER=1)");
 	}
 }
 

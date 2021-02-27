@@ -109,6 +109,11 @@ function loadMoFile(moFile, domain=defaultDomain) {
 			var text = tmp[0];
 			i += tmp[1];
 
+			if (!text.length)
+			{
+				text = currentId;
+			}
+
 			dict[context + contextDelimiter + currentId] = text;
 			context = defaultContext;
 			currentId = void;

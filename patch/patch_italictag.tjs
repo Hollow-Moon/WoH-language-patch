@@ -1,0 +1,26 @@
+﻿
+global.KAGWindow_patch_italictag_original = KAGWindow;
+class KAGWindow_patch_italictag_override extends KAGWindow_patch_italictag_original
+{
+	function KAGWindow_patch_italictag_override()
+	{
+		super.KAGWindow(...);
+	}
+
+	function KAGWindow()
+	{
+		KAGWindow_patch_italictag_override(...);
+	}
+
+	function getHandlers()
+	{
+		var handlers = super.getHandlers();
+		handlers.italic = function(elm)
+		{
+			elm.italic = "1";
+			return this.tagHandlers.font(elm);
+		} incontextof this;
+		return handlers;
+	}
+}
+global.KAGWindow = KAGWindow_patch_italictag_override;

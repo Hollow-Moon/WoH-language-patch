@@ -927,3 +927,16 @@ function parse_iso8601(str)
 		return new Date(year, month, day, hour, minute, second);
 	}
 }
+
+global.open_savedata_dir = function(kag=global.kag)
+{
+	var dir = kag.saveDataLocation;
+	if (typeof(dir) === "String" && dir !== "")
+	{
+		var localpath = Storages.getLocalName(dir);
+		if (localpath !== "")
+		{
+			System.shellExecute(("\"%s\"").sprintf(localpath));
+		}
+	}
+};

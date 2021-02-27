@@ -584,8 +584,9 @@ class TextDrawer
 	function applyOverrideSettings(settings, settingsOverride) {
 		var originalSettings = %[];
 
-		var keys = Scripts.getObjectKeys(settingsOverride);
-		for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 1) {
+		var keys = [];
+		keys.assign(settingsOverride);
+		for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 2) {
 			var key = keys[i];
 			var subkeys = [].split(".", key);
 			var subsettings = settings;
@@ -596,6 +597,7 @@ class TextDrawer
 			originalSettings[key] = subsettings[subkey];
 			subsettings[subkey] = settingsOverride[key];
 		}
+		invalidate keys;
 
 		return originalSettings;
 	}

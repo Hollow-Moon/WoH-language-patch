@@ -482,8 +482,7 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 						visible = false;
 						trig.maximize = true;
 					}
-					if(typeof(this.menu) === "Object")
-						menu.visible = false;
+					menu.visible = false;
 					borderStyle = bsNone;
 				}
 				else
@@ -493,8 +492,7 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 					resetPrimaryPos();
 					trig = void;
 					if(exEventEnabled)
-						if(typeof(this.menu) === "Object")
-							menu.visible = menuBarEnable && menuBarState;
+						menu.visible = menuBarEnable && menuBarState;
 					super.fullScreen = true;
 					min = -1;
 					// 解像度が変わる場合があるので
@@ -647,8 +645,7 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 		menuBarState = -1 if (menuBarState < 0);
 		menuBarState =  1 if (menuBarState > 0 || (!menuBarHideAutoVisible && menuBarState < 0));
 
-		if(typeof(this.menu) === "Object")
-			menu.visible = (menuBarState > 0) if (!fullScreen);
+		menu.visible = (menuBarState > 0) if (!fullScreen);
 		var list = menuBarHidePopupMenu;
 		if (typeof(list) === "Object")
 		{
@@ -680,8 +677,7 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 	function changeMenuBarState(stat) {
 		if (!menuBarHideModeEnable) return;
 		menuBarState = stat;
-		if(typeof(this.menu) === "Object")
-			menuBarHidePseudoShortcut = makePseudoMenuTable(menu) if (menuBarState <= 0 && menuBarHidePseudoShortcut === void);
+		menuBarHidePseudoShortcut = makePseudoMenuTable(menu) if (menuBarState <= 0 && menuBarHidePseudoShortcut === void);
 		updateMenuBarState();
 		onResize();
 	}
@@ -712,7 +708,7 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 		}
 		exSystemMenu = menuBarHideSysMenu;
 		refreshExSystemMenu();
-		if (menuBarHideButtonVisible && typeof(this.menu) === "Object" && typeof(this.menuBarHideMenuItem) !== "Object") {
+		if (menuBarHideButtonVisible && typeof(this.menuBarHideMenuItem) !== "Object") {
 			menu.add(menuBarHideMenuItem  = new KAGMenuItem(this, "x", 0, toggleMenuBarState, false));
 			/**/     menuBarHideMenuItem.visible = false;
 		}
@@ -847,7 +843,7 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 		return  table !== void && (info = table[key]) !== void && info[+ssAlt] !== void;
 	}
 	function onStartKeyMenu(key) {
-		if (key || ((typeof(this.menu) === "Object") && menu.visible)) return;
+		if (key || (menu.visible)) return;
 		return (trackMenuByKey(true) <= 0);
 	}
 
@@ -873,7 +869,7 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 		if (vis && !bykey && ignoreTrackPseudoMenu) return;
 		var old = trackTempMenuShowing;
 		trackTempMenuShowing = !vis ? 0 : bykey ? -1 : 1;
-		if ((force || !old != !vis) && (typeof(this.menu) === "Object")) {
+		if ((force || !old != !vis)) {
 			if  (vis) menu.visible = true;
 			else {
 				menu.visible = false if (pseudoFullScreened);

@@ -90,8 +90,10 @@ global.movingBgImages = [
 	"c_cs16(03落石)", "cs29アンリマユ崩壊(01落石大)",
 	"csラストep04(雲01)", "csラストep04(雲02)", "csラストep04(雲03)", "csラストep04(雲04)"
 ];
-global.bottomImages = [
-	"cs29アンリマユ崩壊(04手前岩盤・右)" // A bottom aligned image moving from negative to positive top position, in which case it needs a special treatment.
+global.bottomImages = [ // A bottom aligned image moving from negative to positive top position, in which case it needs a special treatment.
+	"rogo_ai",
+	"rogo_bi2",
+	"cs29アンリマユ崩壊(04手前岩盤・右)"
 ];
 
 function round(v)
@@ -1368,7 +1370,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		this.setPos_patch_hd_layer(originalLeft_tmp, originalTop_tmp, originalWidth_tmp, originalHeight_tmp);
 		if (super.hasImage)
 		{
-			this.setImageSize_patch_hd_layer(originalImageWidth_tmp, originalImageHeight_tmp);
+			// this.setImageSize_patch_hd_layer(originalImageWidth_tmp, originalImageHeight_tmp);
 			this.setImagePos_patch_hd_layer(originalImageLeft_tmp, originalImageTop_tmp);
 			this.setClip_patch_hd_layer(originalClipLeft_tmp, originalClipTop_tmp, originalClipWidth_tmp, originalClipHeight_tmp);
 		}

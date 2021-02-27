@@ -1,31 +1,851 @@
 ﻿
 
+global.patch_plugin_menu_textToKeycodeMap = %[
+	"pgdn" => 34,
+	"-" => 189,
+	"f13" => 124,
+	"num +" => 107,
+	"num 9" => 105,
+	"num 2" => 98,
+	"y" => 89,
+	"w" => 87,
+	"l" => 76,
+	"e" => 69,
+	"8" => 56,
+	"6" => 54,
+	"left" => 37,
+	"\x10" => 233,
+	"\\" => 220,
+	"/" => 191,
+	"f15" => 126,
+	"f12" => 123,
+	"f10" => 121,
+	"f8" => 119,
+	"num 7" => 103,
+	"num 5" => 101,
+	"u" => 85,
+	"p" => 80,
+	"n" => 78,
+	"c" => 67,
+	"4" => 52,
+	"1" => 49,
+	"\x03own" => 44,
+	"right" => 39,
+	"backspace" => 8,
+	"alt" => 165,
+	"\x03\x32\x30" => 145,
+	"f19" => 130,
+	"f6" => 117,
+	"f1" => 112,
+	"num 3" => 99,
+	"r" => 82,
+	"k" => 75,
+	"h" => 72,
+	"a" => 65,
+	"insert" => 45,
+	"\x03\x65turn" => 15,
+	"\x03\x61\x62" => 12,
+	"key 0xff" => 255,
+	"]" => 221,
+	"key 0xc1" => 193,
+	"shift" => 161,
+	"=" => 187,
+	"f9" => 120,
+	"f3" => 114,
+	"num -" => 109,
+	"num 0" => 96,
+	"q" => 81,
+	"g" => 71,
+	"b" => 66,
+	"3" => 51,
+	"0" => 48,
+	"\x03\x65lete" => 47,
+	"tab" => 9,
+	"§" => 226,
+	"." => 190,
+	"f14" => 125,
+	"f5" => 116,
+	"f2" => 113,
+	"num del" => 110,
+	"num 6" => 102,
+	"7" => 55,
+	"delete" => 46,
+	"page down" => 34,
+	"pgup" => 33,
+	"\'" => 222,
+	"[" => 219,
+	"," => 188,
+	"f17" => 128,
+	"f7" => 118,
+	"num ," => 108,
+	"num *" => 106,
+	"num 8" => 104,
+	"num 1" => 97,
+	"x" => 88,
+	"v" => 86,
+	"m" => 77,
+	"d" => 68,
+	"9" => 57,
+	"down" => 40,
+	"up" => 38,
+	"\x03sc" => 31,
+	"esc" => 27,
+	"\x03\x61ps lock" => 26,
+	"bksp" => 8,
+	"num clear" => 254,
+	"\x03" => 253,
+	"`" => 192,
+	";" => 186,
+	"f18" => 129,
+	"z" => 90,
+	"s" => 83,
+	"f" => 70,
+	"2" => 50,
+	"home" => 36,
+	"page up" => 33,
+	"space" => 32,
+	"\x03\x65y 0xc1" => 218,
+	"\x03lt" => 185,
+	"ctrl" => 163,
+	"f20" => 131,
+	"f16" => 127,
+	"f11" => 122,
+	"f4" => 115,
+	"num 4" => 100,
+	"t" => 84,
+	"o" => 79,
+	"j" => 74,
+	"i" => 73,
+	"5" => 53,
+	"end" => 35,
+	"caps lock" => 20,
+	"return" => 13
+];
+global.patch_plugin_menu_keycodeToTextList = [
+	void,
+	void,
+	void,
+	void,
+	void,
+	void,
+	void,
+	void,
+	"Backspace",
+	"Tab",
+	"\x03\x61\x62",
+	"\x03\x61\x62",
+	"\x03\x61\x62",
+	"Return",
+	"\x03\x65turn",
+	"\x03\x65turn",
+	"Shift",
+	"Ctrl",
+	"Alt",
+	"\x03lt",
+	"Caps Lock",
+	"\x03\x61ps Lock",
+	"\x03\x61ps Lock",
+	"\x03\x61ps Lock",
+	"\x03\x61ps Lock",
+	"\x03\x61ps Lock",
+	"\x03\x61ps Lock",
+	"Esc",
+	"\x03sc",
+	"\x03sc",
+	"\x03sc",
+	"\x03sc",
+	"Space",
+	"Page Up",
+	"Page Down",
+	"End",
+	"Home",
+	"Left",
+	"Up",
+	"Right",
+	"Down",
+	"\x03own",
+	"\x03own",
+	"\x03own",
+	"\x03own",
+	"Insert",
+	"Delete",
+	"\x03\x65lete",
+	"0",
+	"1",
+	"2",
+	"3",
+	"4",
+	"5",
+	"6",
+	"7",
+	"8",
+	"9",
+	"\x03",
+	"\x03",
+	"\x03",
+	"\x03",
+	"\x03",
+	"\x03",
+	"\x03",
+	"a",
+	"b",
+	"c",
+	"d",
+	"e",
+	"f",
+	"g",
+	"h",
+	"i",
+	"j",
+	"k",
+	"l",
+	"m",
+	"n",
+	"o",
+	"p",
+	"q",
+	"r",
+	"s",
+	"t",
+	"u",
+	"v",
+	"w",
+	"x",
+	"y",
+	"z",
+	"\x03",
+	"\x03",
+	"\x03",
+	"\x03",
+	"\x03",
+	"Num 0",
+	"Num 1",
+	"Num 2",
+	"Num 3",
+	"Num 4",
+	"Num 5",
+	"Num 6",
+	"Num 7",
+	"Num 8",
+	"Num 9",
+	"Num *",
+	"Num +",
+	"Num ,",
+	"Num -",
+	"Num Del",
+	"/",
+	"F1",
+	"F2",
+	"F3",
+	"F4",
+	"F5",
+	"F6",
+	"F7",
+	"F8",
+	"F9",
+	"F10",
+	"F11",
+	"F12",
+	"F13",
+	"F14",
+	"F15",
+	"F16",
+	"F17",
+	"F18",
+	"F19",
+	"F20",
+	"\x03\x32\x30",
+	"\x03\x32\x30",
+	"\x03\x32\x30",
+	"\x03\x32\x30",
+	"\x03\x32\x30",
+	"\x03\x32\x30",
+	"\x03\x32\x30",
+	"\x03\x32\x30",
+	"\x03\x32\x30",
+	"\x03\x32\x30",
+	"\x03\x32\x30",
+	"\x03\x32\x30",
+	"\x03\x32\x30",
+	"\x03\x32\x30",
+	"=",
+	"\x03",
+	"\x03",
+	"\x03",
+	"\x03",
+	"\x03",
+	"\x03",
+	"\x03",
+	"\x03",
+	"\x03",
+	"\x03",
+	"\x03",
+	"\x03",
+	"\x03",
+	"Shift",
+	"Shift",
+	"Ctrl",
+	"Ctrl",
+	"Alt",
+	"Alt",
+	"\x03lt",
+	"\x03lt",
+	"\x03lt",
+	"\x03lt",
+	"\x03lt",
+	"\x03lt",
+	"\x03lt",
+	"\x03lt",
+	"\x03lt",
+	"\x03lt",
+	"\x03lt",
+	"\x03lt",
+	"\x03lt",
+	"\x03lt",
+	"\x03lt",
+	"\x03lt",
+	"\x03lt",
+	"\x03lt",
+	"\x03lt",
+	"\x03lt",
+	";",
+	"=",
+	",",
+	"-",
+	".",
+	"/",
+	"`",
+	"Key 0xc1",
+	"\x03\x65y 0xc1",
+	"\x03\x65y 0xc1",
+	"\x03\x65y 0xc1",
+	"\x03\x65y 0xc1",
+	"\x03\x65y 0xc1",
+	"\x03\x65y 0xc1",
+	"\x03\x65y 0xc1",
+	"\x03\x65y 0xc1",
+	"\x03\x65y 0xc1",
+	"\x03\x65y 0xc1",
+	"\x03\x65y 0xc1",
+	"\x03\x65y 0xc1",
+	"\x03\x65y 0xc1",
+	"\x03\x65y 0xc1",
+	"\x03\x65y 0xc1",
+	"\x03\x65y 0xc1",
+	"\x03\x65y 0xc1",
+	"\x03\x65y 0xc1",
+	"\x03\x65y 0xc1",
+	"\x03\x65y 0xc1",
+	"\x03\x65y 0xc1",
+	"\x03\x65y 0xc1",
+	"\x03\x65y 0xc1",
+	"\x03\x65y 0xc1",
+	"\x03\x65y 0xc1",
+	"[",
+	"\\",
+	"]",
+	"\'",
+	"\x03",
+	"\x03",
+	"\x03",
+	"§",
+	"\x03",
+	"\x03",
+	"\x03",
+	"\x03",
+	"\x03",
+	"\x03",
+	"\x10",
+	"\x03",
+	"\x03",
+	"\x03",
+	"\x03",
+	"\x03",
+	"\x03",
+	"\x03",
+	"\x03",
+	"\x03",
+	"\x03",
+	"\x03",
+	"\x03",
+	"\x03",
+	"\x03",
+	"\x03",
+	"\x03",
+	"\x03",
+	"\x03",
+	"\x03",
+	"\x03",
+	"Num Clear",
+	"Key 0xff"
+];
+
+global.internal_text_to_shortcut = function(text)
+{
+	text = text.toLowerCase();
+	var virt = 0;
+	var text_no_shift = text.replace(/shift\+/, "");
+	if (text !== text_no_shift)
+	{
+		text = text_no_shift;
+		virt |= 4; // FSHIFT
+	}
+	var text_no_ctrl = text.replace(/ctrl\+/, "");
+	if (text !== text_no_ctrl)
+	{
+		text = text_no_ctrl;
+		virt |= 8; // FCONTROL
+	}
+	var text_no_alt = text.replace(/alt\+/, "");
+	if (text !== text_no_alt)
+	{
+		text = text_no_alt;
+		virt |= 16; // FALT
+	}
+	var dict_result = global.patch_plugin_menu_textToKeycodeMap[text];
+	if (dict_result !== void)
+	{
+		virt |= 1; // FVIRTKEY
+		return (virt << 16) | (dict_result & 0xFFFF);
+	}
+	return (virt << 16);
+};
+
+global.internal_shortcut_to_text = function(key)
+{
+	var str = "";
+	var virt = key >> 16;
+	if (virt & 4) // FSHIFT
+	{
+		str += "Shift+";
+	}
+	if (virt & 8) // FCONTROL
+	{
+		str += "Ctrl+";
+	}
+	if (virt & 16) // FALT
+	{
+		str += "Alt+";
+	}
+	key &= 0xFFFF;
+	if (key >= 8 && key <= 255)
+	{
+		var arr_result = key < global.patch_plugin_menu_keycodeToTextList.count ? global.patch_plugin_menu_keycodeToTextList[key] : void;
+		if (arr_result !== void)
+		{
+			str += arr_result;
+		}
+	}
+	return str;
+};
+
 class MenuItem
 {
-	var caption = "";
-	var checked;
-	var enabled;
-	var group;
-	var radio;
-	var shortcut;
-	var visible;
-	var parent;
-	var children;
-	var root;
-	var window;
-	var index;
-	function MenuItem() {
-		children = [];
-		this.caption = "test";
+	var internal_actionowner;
+	var internal_caption = "";
+	property caption
+	{
+		getter
+		{
+			return this.internal_caption;
+		}
+		setter (v)
+		{
+			this.internal_caption = "" + v;
+		}
 	}
-	function finalize() {}
-	function add() {}
-	function insert() {}
-	function remove() {}
-	function popup() {}
-	function onClick() {}
-	function fireClick() {}
+	var internal_checked = false;
+	property checked
+	{
+		getter
+		{
+			return this.internal_checked;
+		}
+		setter (v)
+		{
+			v = !!v;
+			if (this.internal_radio)
+			{
+				if (v)
+				{
+					if (this.internal_parent !== null)
+					{
+						this.internal_parent.internal_check_radio_item(this);
+					}
+					else
+					{
+						this.internal_checked = true;
+					}
+				}
+				else
+				{
+					this.internal_checked = false;
+				}
+			}
+			else
+			{
+				this.internal_checked = v;
+			}
+		}
+	}
+	var internal_enabled = true;
+	property enabled
+	{
+		getter
+		{
+			return this.internal_enabled;
+		}
+		setter (v)
+		{
+			v = !!v;
+			this.internal_enabled = v;
+		}
+	}
+	var internal_group = -1;
+	property group
+	{
+		getter
+		{
+			return this.internal_group;
+		}
+		setter (v)
+		{
+			v |= 0;
+			this.internal_group = v;
+			// If this item has a check and there are also other items that have a check, uncheck this
+			if (this.internal_parent !== null && this.internal_checked && this.internal_radio)
+			{
+				var index = this.internal_parent.internal_get_check_radio_index(v);
+				if (index >= 0)
+				{
+					this.internal_checked = false;
+				}
+			}
+		}
+	}
+	var internal_radio = false;
+	property radio
+	{
+		getter
+		{
+			return this.internal_radio;
+		}
+		setter (v)
+		{
+			v = !!v;
+			if (this.internal_radio === v)
+			{
+				return;
+			}
+			this.internal_radio = v;
+			// If this item has a check and there are also other items that have a check, uncheck this
+			if (v && this.internal_parent !== null && this.internal_checked)
+			{
+				var index = this.internal_parent.internal_get_check_radio_index(this.internal_group);
+				if (index >= 0)
+				{
+					this.internal_checked = false;
+				}
+			}
+		}
+	}
+	var internal_shortcut = 0;
+	property shortcut
+	{
+		getter
+		{
+			return global.internal_shortcut_to_text(this.internal_shortcut);
+		}
+		setter (v)
+		{
+			v += "";
+			this.internal_shortcut = global.internal_text_to_shortcut(v);
+		}
+	}
+	var internal_visible = true;
+	property visible
+	{
+		getter
+		{
+			return this.internal_visible;
+		}
+		setter (v)
+		{
+			this.internal_visible = !!v;
+		}
+	}
+	var internal_parent = null;
+	property parent
+	{
+		getter
+		{
+			return this.internal_parent;
+		}
+		setter (v)
+		{
+		}
+	}
+	var internal_children = [];
+	var internal_childrenarray = void;
+	var internal_childrenarrayvalid = false;
+	property children
+	{
+		getter
+		{
+			if (typeof(this.internal_childrenarray) !== "Object")
+			{
+				this.internal_childrenarray = [];
+			}
+			if (!this.internal_childrenarrayvalid)
+			{
+				this.internal_childrenarray.assign(this.internal_children);
+				this.internal_childrenarrayvalid = true;
+			}
+			return this.internal_childrenarray;
+		}
+		setter (v)
+		{
+		}
+	}
+	property root
+	{
+		getter
+		{
+			var current = this;
+			var parent = this.parent;
+			while (parent !== null)
+			{
+				current = parent;
+				parent = current.internal_parent;
+			}
+			return current;
+		}
+		setter (v)
+		{
+		}
+	}
+	var internal_window = null;
+	property window
+	{
+		getter
+		{
+			return this.internal_window;
+		}
+		setter (v)
+		{
+		}
+	}
+	property index
+	{
+		getter
+		{
+			if (this.internal_parent === null)
+			{
+				return -1;
+			}
+			return this.internal_parent.internal_children.find(this);
+		}
+		setter (v)
+		{
+			v |= 0;
+			if (this.internal_parent !== null)
+			{
+				if (this.internal_parent.internal_children.find(this) !== v)
+				{
+					this.internal_parent.internal_children.remove(this);
+					this.internal_parent.internal_children.insert(v, this);
+				}
+			}
+		}
+	}
+	property HMENU
+	{
+		getter
+		{
+			return null;
+		}
+		setter (v)
+		{
+		}
+	}
+	property textToKeycode
+	{
+		getter
+		{
+			return global.patch_plugin_menu_textToKeycodeMap;
+		}
+		setter (v)
+		{
+		}
+	}
+	property keycodeToText
+	{
+		getter
+		{
+			return global.patch_plugin_menu_keycodeToTextList;
+		}
+		setter (v)
+		{
+		}
+	}
+	function MenuItem(window, caption_or_owner_window="")
+	{
+		if (typeof(caption_or_owner_window) === "Object" && caption_or_owner_window instanceof "Window")
+		{
+			this.internal_window = caption_or_owner_window;
+		}
+		if (typeof(caption_or_owner_window) !== "Object")
+		{
+			this.caption = caption_or_owner_window;
+		}
+	}
+	function finalize()
+	{
+		if (this.internal_parent !== null && isvalid(this.internal_parent))
+		{
+			this.internal_parent.internal_remove(this);
+			this.internal_parent = null;
+		}
+	}
+
+	function internal_check_radio_item(item)
+	{
+		var radio_index = item.internal_group;
+		this.internal_uncheck_radio_item(radio_index);
+		item.internal_checked = true;
+	}
+
+	function internal_uncheck_radio_item(group)
+	{
+		var internal_children = this.internal_children;
+		for (var i = 0, internal_forloop_count = internal_children.count; i < internal_forloop_count; i += 1)
+		{
+			var child = internal_children[i];
+			if (child.internal_group === group && child.internal_radio)
+			{
+				child.internal_checked = false;
+			}
+		}
+	}
+
+	function internal_get_check_radio_index(group)
+	{
+		var internal_children = this.internal_children;
+		for (var i = 0, internal_forloop_count = internal_children.count; i < internal_forloop_count; i += 1)
+		{
+			var child = internal_children[i];
+			if (child.internal_group === group && child.internal_radio && child.internal_checked)
+			{
+				return i;
+			}
+		}
+		return -1;
+	}
+
+	function internal_add(item)
+	{
+		if (item.internal_parent !== null)
+		{
+			item.internal_parent.internal_remove(item);
+		}
+		item.internal_parent = this;
+		this.internal_children.add(item);
+		if (item.internal_checked && item.internal_radio)
+		{
+			this.internal_check_radio_item(item);
+		}
+		this.internal_childrenarrayvalid = false;
+	}
+	function add()
+	{
+		return this.internal_add(...);
+	}
+	function internal_insert(item, index)
+	{
+		if (item.internal_parent !== null)
+		{
+			item.internal_parent.internal_remove(item);
+		}
+		item.internal_parent = this;
+		this.internal_children.insert(index, item);
+		if (item.internal_checked && item.internal_radio)
+		{
+			this.internal_check_radio_item(item);
+		}
+		this.internal_childrenarrayvalid = false;
+	}
+	function insert()
+	{
+		return this.internal_insert(...);
+	}
+	function internal_remove(item)
+	{
+		var index = this.internal_children.find(item);
+		if (index !== -1)
+		{
+			this.internal_children.erase(index);
+			this.internal_childrenarrayvalid = false;
+		}
+	}
+	function remove()
+	{
+		return this.internal_remove(...);
+	}
+	function popup(flags, x, y)
+	{
+		// Possible values for flags:
+		// tpmLeftButton
+		// tpmRightButton
+		// tpmLeftAlign
+		// tpmCenterAlign
+		// tpmRightAlign
+		// tpmTopAlign
+		// tpmVCenterAlign
+		// tpmBottomAlign
+		// tpmHorizontal
+		// tpmVertical
+		// tpmNoNotify
+		// tpmReturnCmd
+		// tpmRecurse
+		// tpmHorPosAnimation
+		// tpmHorNegAnimation
+		// tpmVerPosAnimation
+		// tpmVerNegAnimation
+		// tpmNoAnimation
+
+		// Stubbed for now.
+	}
+	function onClick()
+	{
+		if (typeof(this.internal_actionowner) === "Object" && typeof(this.internal_actionowner.action) === "Object")
+		{
+			var dic = %[];
+			dic.type = "onClick";
+			dic.target = (this incontextof this);
+			this.internal_actionowner.action(dic);
+		}
+	}
+	function fireClick()
+	{
+		// XXX: this should post to the event queue instead of calling onClick directly
+		this.onClick();
+	}
 }
 
-global.Window.menu = new MenuItem();
+global.Window_patch_plugin_menu_original = Window;
+class Window_patch_plugin_menu_override extends Window_patch_plugin_menu_original
+{
+	function Window_patch_plugin_menu_override()
+	{
+		super.Window(...);
+		this.menu = new MenuItem(this, this);
+	}
+
+	function Window()
+	{
+		Window_patch_plugin_menu_override(...);
+	}
+}
+global.Window = Window_patch_plugin_menu_override;
+
 

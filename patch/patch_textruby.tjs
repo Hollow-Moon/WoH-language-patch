@@ -1,0 +1,45 @@
+﻿
+global.KAGWindow_patch_textruby_original = KAGWindow;
+class KAGWindow_patch_textruby_override extends KAGWindow_patch_textruby_original
+{
+	function KAGWindow_patch_textruby_override()
+	{
+		super.KAGWindow(...);
+	}
+
+	function KAGWindow()
+	{
+		KAGWindow_patch_textruby_override(...);
+	}
+
+	function getHandlers()
+	{
+		var handlers = super.getHandlers();
+		handlers.ruby_patch_textruby_original = handlers.ruby;
+		handlers.ruby = function(elm)
+		{
+			with(elm)
+			{
+				if(.char != void && string(+.char) != .char)
+				{
+					var pendings_to_insert = [];
+					{
+						pendings_to_insert.add(%[tagname:"ruby", char:.char.length, text:.text]);
+						for (var i = 0, internal_forloop_count = .char.length; i < internal_forloop_count; i += 1)
+						{
+							pendings_to_insert.add(%[tagname:"ch", text:.char[i]]);
+						}
+					}
+					for (var i = 0, internal_forloop_count = pendings_to_insert.count; i < internal_forloop_count; i += 1)
+					{
+						conductor.pendings.insert(i, pendings_to_insert[i]);
+					}
+					return 0;
+				}
+			}
+			return this.tagHandlers.ruby_patch_textruby_original(elm);
+		} incontextof this;
+		return handlers;
+	}
+}
+global.KAGWindow = KAGWindow_patch_textruby_override;

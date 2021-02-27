@@ -79,9 +79,10 @@ function updateDecensorConfig(kag=global.kag)
 		return;
 	}
 
-	var decensoredImages = Scripts.getObjectKeys(decensor_config);
+	var decensoredImages = [];
+	decensoredImages.assign(decensor_config);
 
-	for (var i = 0, internal_forloop_count = decensoredImages.count; i < internal_forloop_count; i += 1)
+	for (var i = 0, internal_forloop_count = decensoredImages.count; i < internal_forloop_count; i += 2)
 	{
 		var currentDecensorType = decensor_types[+decensor_config[decensoredImages[i]]];
 
@@ -129,4 +130,5 @@ function updateDecensorConfig(kag=global.kag)
 			}
 		}
 	}
+	invalidate decensoredImages;
 }

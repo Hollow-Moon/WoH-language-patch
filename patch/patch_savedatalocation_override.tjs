@@ -1,7 +1,7 @@
 ﻿
 global.test_write_in_directory = function(test_directory)
 {
-@if(KIRIKIROID||KIRIKIRISDL2)
+@if(KIRIKIROID)
 	{
 		return true;
 	}
@@ -14,7 +14,10 @@ global.test_write_in_directory = function(test_directory)
 	}
 	catch {}
 	var test_file_size = Storages.fstat(test_file_path).size;
-	if (Storages.fstat(test_file_path).size === ((test_file_contents[0].length + 3) * 2))
+	// When TJS_TEXT_OUT_CRLF is defined, there will be a carriage return in the last log string.
+	// Use this information to adjust the size calculation
+	var has_carriage_return = (Debug.getLastLog().indexOf("\r") !== -1) ? 1 : 0;
+	if (test_file_size === ((test_file_contents[0].length + 2 + has_carriage_return) * 2))
 	{
 		if (Storages.deleteFile(test_file_path))
 		{

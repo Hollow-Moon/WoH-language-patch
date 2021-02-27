@@ -1,0 +1,238 @@
+﻿
+
+class MenuItemRootLayer extends Layer
+{
+	var menu;
+	var menu_active_height = 20;
+	var menu_active_base_height = 20;
+	var menu_stack = [];
+	var last_list;
+	function MenuItemRootLayer()
+	{
+		super.Layer(...);
+		this.setImageSize(this.window.primaryLayer.width, this.window.primaryLayer.height);
+		this.setSizeToImageSize();
+	}
+
+	function show()
+	{
+		if (this.visible)
+		{
+			return;
+		}
+		this.menu = this.window.menu;
+		var children = this.menu.children;
+		var width = 0;
+		var height = 0;
+		for (var i = 0; i < children.count; i += 1)
+		{
+			if (!children[i].visible)
+			{
+				continue;
+			}
+			var child = new MenuItemChildLayer(this.window, this, this, children[i]);
+			child.left = width;
+			if (child.height > height)
+			{
+				height = child.height;
+			}
+			width = child.left + child.width;
+		}
+		this.menu_active_base_height = height;
+		this.menu_active_height = height;
+		this.fillRect(0, 0, this.imageWidth, height, 0x80000000);
+		this.visible = true;
+		this.bringToFront();
+	}
+
+	function hide()
+	{
+		if (!this.visible)
+		{
+			return;
+		}
+		this.visible = false;
+		var children = this.children;
+		for (var i = 0; i < children.count; i += 1)
+		{
+			invalidate children[i];
+		}
+		this.fillRect(0, 0, this.imageWidth, this.imageHeight, 0x00000000);
+	}
+}
+
+class MenuItemListLayer extends Layer
+{
+	var menu;
+	var last_list;
+	function MenuItemListLayer(win, par, menu)
+	{
+		super.Layer(...);
+		this.menu = menu;
+		var children = menu.children;
+		var width = 0;
+		var height = 0;
+		for (var i = 0; i < children.count; i += 1)
+		{
+			if (!children[i].visible)
+			{
+				continue;
+			}
+			var child = new MenuItemChildLayer(this.window, this, this.parent, children[i]);
+			child.top = height;
+			if (child.width > width)
+			{
+				width = child.width;
+			}
+			height = child.top + child.height;
+		}
+		this.setImageSize(width, height);
+		this.setSizeToImageSize();
+		this.fillRect(0, 0, this.imageWidth, this.imageHeight, 0x80000000);
+		this.parent.menu_stack.add(this);
+		this.visible = true;
+	}
+
+	function setPos()
+	{
+		super.setPos(...);
+		var new_height = this.top + this.height;
+		if (this.parent.menu_active_height < new_height)
+		{
+			this.parent.menu_active_height = new_height;
+		}
+	}
+
+	function finalize()
+	{
+		if (this.last_list !== void && isvalid(this.last_list))
+		{
+			invalidate this.last_list;
+			this.last_list = void;
+		}
+		var menu_stack = this.parent.menu_stack;
+		menu_stack.remove(this);
+		this.parent.menu_active_height = this.parent.menu_active_base_height;
+		{
+			for (var i = menu_stack.count - 1; i >= 0; i -= 1)
+			{
+				var item = menu_stack[i];
+				var size = item.top + item.height;
+				if (size > this.parent.menu_active_height)
+				{
+					this.parent.menu_active_height = size;
+				}
+			}
+		}
+		super.finalize(...);
+	}
+}
+
+class MenuItemChildLayer extends Layer
+{
+	var menu;
+	
+	var root;
+	function MenuItemChildLayer(win, par, root, menu)
+	{
+		super.Layer(...);
+		this.menu = menu;
+		this.root = root;
+		var caption = this.menu.caption;
+		var	w = this.font.getTextWidth(caption), h = this.font.getTextHeight(caption);
+		this.setImageSize(w, h);
+		this.setSizeToImageSize();
+		this.drawState();
+		this.visible = true;
+	}
+
+	function drawState(hovered=false)
+	{
+		this.face = dfOpaque;
+		this.fillRect(0, 0, this.imageWidth, this.imageHeight, 0x00000000 | (hovered ? 0xFF000080 : 0) | ((this.menu.checked && !(this.menu.radio)) ? 0xFF008000 : 0) | ((this.menu.checked && (this.menu.radio)) ? 0xFF800000 : 0));
+		this.face = dfAlpha;
+		var caption = this.menu.caption;
+		this.drawText(0, 0, caption, (this.menu.enabled ? 0xFFFFFF : 0x808080), 255, true);
+	}
+
+	function onMouseEnter()
+	{
+		this.drawState(true);
+		var parent_last_list = this.parent.last_list;
+		if (parent_last_list !== void)
+		{
+			if (isvalid(parent_last_list))
+			{
+				parent_last_list.visible = false;
+				invalidate parent_last_list;
+			}
+			this.parent.last_list = void;
+		}
+		var children = this.menu.children;
+		if (children.count > 0)
+		{
+			this.parent.last_list = new MenuItemListLayer(this.window, this.root, this.menu);
+			if (this.parent.top === 0)
+			{
+				// show below
+				this.parent.last_list.setPos(this.parent.left + this.left, this.parent.menu_active_base_height);
+			}
+			else
+			{
+				// show right
+				this.parent.last_list.setPos(this.parent.left + this.parent.width, this.parent.top + this.top);
+			}
+		}
+	}
+
+	function onMouseLeave()
+	{
+		this.drawState(false);
+	}
+
+	function onClick()
+	{
+		if (!this.menu.enabled)
+		{
+			return;
+		}
+		if (this.menu.children.count === 0)
+		{
+			this.menu.onClick();
+			this.root.hide();
+		}
+	}
+}
+
+global.KAGWindow_patch_menu_layer_original = KAGWindow;
+class KAGWindow_patch_menu_layer_override extends KAGWindow_patch_menu_layer_original
+{
+	var menu_layer;
+	function KAGWindow_patch_menu_layer_override()
+	{
+		super.KAGWindow(...);
+
+		this.menu_layer = new MenuItemRootLayer(this, primaryLayer);
+	}
+
+	function KAGWindow()
+	{
+		KAGWindow_patch_menu_layer_override(...);
+	}
+
+	function onMouseMove(x, y, shift)
+	{
+		if (y <= this.menu_layer.menu_active_height)
+		{
+			this.menu_layer.show();
+		}
+		else
+		{
+			this.menu_layer.hide();
+		}
+		return super.onMouseMove(...);
+	}
+
+}
+global.KAGWindow = KAGWindow_patch_menu_layer_override;
+

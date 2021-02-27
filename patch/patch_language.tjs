@@ -79,10 +79,7 @@ function refreshStringWithLanguage(kag, language) {
 	}
 	if (typeof(kag) === "Object")
 	{
-		if (typeof(kag.menu) === "Object")
-		{
-			refreshMenuString(kag, kag.menu);
-		}
+		refreshMenuString(kag, kag.menu);
 		if (typeof(kag.hintlayer) === "Object")
 		{
 			invalidate kag.hintlayer;
@@ -871,7 +868,7 @@ function initializeLanguage(kag=global.kag) {
 	load_language_patch(kag.sflags.language, kag);
 
 	saveFontWithLanguage(kag);
-	if ((typeof(kag) === "Object") && (typeof(kag.menu) === "Object"))
+	if (typeof(kag) === "Object")
 	{
 		(addLanguageMenu incontextof kag)();
 		kag[languageMenuItemFormat.sprintf(kag.sflags.language)].checked	= true;

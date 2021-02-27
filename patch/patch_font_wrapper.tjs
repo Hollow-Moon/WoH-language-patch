@@ -292,6 +292,10 @@ class FontWrapper
 		{
 			if (v != font.face)
 			{
+				if (typeof(v) !== "String" || v === "")
+				{
+					v = "MS PGothic";
+				}
 				font.face = v;
 				var to_remap_face = this.get_remap_facename(font.face);
 				if (typeof(to_remap_face) === "String")
@@ -536,9 +540,7 @@ class FontWrapper
 	{
 		var fontToSpecialCharacters = languageSettings[language].special_characters;
 		fontToSpecialCharacters = %[] if fontToSpecialCharacters === void;
-@if(!KIRIKIROID)
-		if (fontToSpecialCharacters[font.face] === void)
-@endif
+		if (fontToSpecialCharacters[face] === void)
 		{
 @if(HD_MODE)
 @if(SCALE_USING_FLOATING_POINT)
@@ -552,17 +554,17 @@ class FontWrapper
 			return font.getTextWidth(text);
 @endif
 		}
-		var specialCharacters = fontToSpecialCharacters[font.face][0];
-		var alternativeFontFace = fontToSpecialCharacters[font.face][1];
+		var specialCharacters = fontToSpecialCharacters[face][0];
+		var alternativeFontFace = fontToSpecialCharacters[face][1];
 
 		var width = 0;
 		for (var i = 0, internal_forloop_count = text.length; i < internal_forloop_count; i += 1) {
 			var character = text[i];
 			if (specialCharacters.contains(character)) {
-				var previousFontFace = font.face;
-				font.face = alternativeFontFace;
+				var previousFontFace = face;
+				face = alternativeFontFace;
 				width += font.getTextWidth(character);
-				font.face = previousFontFace;
+				face = previousFontFace;
 			} else {
 				width += font.getTextWidth(character);
 			}

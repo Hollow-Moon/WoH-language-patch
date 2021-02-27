@@ -116,7 +116,15 @@
 	}
 	else
 	{
-		paths_base.add(System.exePath);
+		var basepath = System.getArgument("-basepath");
+		if (basepath !== void)
+		{
+			paths_base.add(basepath);
+		}
+		else
+		{
+			paths_base.add(System.exePath);
+		}
 		in_archive = true;
 	}
 
@@ -130,25 +138,86 @@
 
 	for (var i = 0, internal_forloop_count = paths_base.count; i < internal_forloop_count; i += 1)
 	{
-		paths_base_dirlist[paths_base[i]] = %[];
-		paths_base_dirlist[paths_base[i]]["."] = global.Storages.dirlist(paths_base[i] + "/");
-		for (var j = 0, internal_forloop_count = paths_base_dirlist[paths_base[i]]["."].count; j < internal_forloop_count; j += 1)
+		var path = paths_base[i];
+		var dirlist_base = %[];
+		paths_base_dirlist[path] = dirlist_base;
+		dirlist_base["."] = global.Storages.dirlist(path + "/");
+		for (var j = 0, internal_forloop_count = dirlist_base["."].count; j < internal_forloop_count; j += 1)
 		{
-			paths_base_dirlist[paths_base[i]]["."][j] = paths_base_dirlist[paths_base[i]]["."][j].toLowerCase();
+			dirlist_base["."][j] = dirlist_base["."][j].toLowerCase();
 		}
 		for (var j = 0, internal_forloop_count = paths_search_append.count; j < internal_forloop_count; j += 1)
 		{
-			if (paths_base_dirlist[paths_base[i]]["."].find(paths_search_append[j] + "/") !== -1)
+			if (dirlist_base["."].find(paths_search_append[j] + "/") !== -1)
 			{
-				paths_base_dirlist[paths_base[i]][paths_search_append[j]] = global.Storages.dirlist(paths_base[i] + "/" + paths_search_append[j] + "/");
+				dirlist_base[paths_search_append[j]] = global.Storages.dirlist(path + "/" + paths_search_append[j] + "/");
 			}
 			else
 			{
-				paths_base_dirlist[paths_base[i]][paths_search_append[j]] = [];
+				dirlist_base[paths_search_append[j]] = [];
 			}
-			for (var k = 0, internal_forloop_count = paths_base_dirlist[paths_base[i]][paths_search_append[j]].count; k < internal_forloop_count; k += 1)
+			for (var k = 0, internal_forloop_count = dirlist_base[paths_search_append[j]].count; k < internal_forloop_count; k += 1)
 			{
-				paths_base_dirlist[paths_base[i]][paths_search_append[j]][k] = paths_base_dirlist[paths_base[i]][paths_search_append[j]][k].toLowerCase();
+				dirlist_base[paths_search_append[j]][k] = dirlist_base[paths_search_append[j]][k].toLowerCase();
+			}
+		}
+	}
+
+	if (typeof(global.Storages.dirlistEx) === "Object")
+	{
+		global.paths_base_dirlistex = %[];
+		var paths_base_dirlistex = global.paths_base_dirlistex;
+		for (var i = 0, internal_forloop_count = paths_base.count; i < internal_forloop_count; i += 1)
+		{
+			var path = paths_base[i];
+			var dirlist_base = %[];
+			paths_base_dirlistex[path] = dirlist_base;
+			var arr = global.Storages.dirlistEx(path + "/");
+			dirlist_base["."] = arr;
+			for (var k = 0, internal_forloop_count = arr.count; k < internal_forloop_count; k += 1)
+			{
+				var item = arr[k];
+				if (typeof(item.ctime) === "Object")
+				{
+					item.ctime = item.ctime.getTime();
+				}
+				if (typeof(item.mtime) === "Object")
+				{
+					item.mtime = item.mtime.getTime();
+				}
+				if (typeof(item.atime) === "Object")
+				{
+					item.atime = item.atime.getTime();
+				}
+			}
+			for (var j = 0, internal_forloop_count = paths_search_append.count; j < internal_forloop_count; j += 1)
+			{
+				var arr;
+				if (paths_base_dirlist[path]["."].find(paths_search_append[j] + "/") !== -1)
+				{
+					arr = global.Storages.dirlistEx(path + "/" + paths_search_append[j] + "/");
+				}
+				else
+				{
+					arr = [];
+				}
+				dirlist_base[paths_search_append[j]] = arr;
+				for (var k = 0, internal_forloop_count = arr.count; k < internal_forloop_count; k += 1)
+				{
+					var item = arr[k];
+					if (typeof(item.ctime) === "Object")
+					{
+						item.ctime = item.ctime.getTime();
+					}
+					if (typeof(item.mtime) === "Object")
+					{
+						item.mtime = item.mtime.getTime();
+					}
+					if (typeof(item.atime) === "Object")
+					{
+						item.atime = item.atime.getTime();
+					}
+				}
 			}
 		}
 	}

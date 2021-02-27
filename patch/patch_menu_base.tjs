@@ -503,26 +503,23 @@ function addEnableDisableRestartMenuFunctions()
 	this.setRestartMenuState = function(state)
 	{
 		this.restart_menu_state = state;
-		if (typeof(this.menu) === "Object")
-		{
 @if(HD_MODE)
-			this.qualityMenu.enabled = state;
-			this.wideMenu.enabled = state;
+		this.qualityMenu.enabled = state;
+		this.wideMenu.enabled = state;
 @endif
-			if (typeof(this.titleThemeMenuItem) === "Object")
-			{
-				this.titleThemeMenuItem.enabled = state;
-			}
-			if (typeof(this.routeMenuItem) === "Object")
-			{
-				this.routeMenuItem.enabled = state;
-			}
-			if (typeof(this.languageMenu) === "Object")
-			{
-				this.languageMenu.enabled = state;
-				// The following will cause a rebuild of the menu
-				this.languageMenu.group = this.languageMenu.group;
-			}
+		if (typeof(this.titleThemeMenuItem) === "Object")
+		{
+			this.titleThemeMenuItem.enabled = state;
+		}
+		if (typeof(this.routeMenuItem) === "Object")
+		{
+			this.routeMenuItem.enabled = state;
+		}
+		if (typeof(this.languageMenu) === "Object")
+		{
+			this.languageMenu.enabled = state;
+			// The following will cause a rebuild of the menu
+			this.languageMenu.group = this.languageMenu.group;
 		}
 	};
 
@@ -662,6 +659,8 @@ function addOptionsMenu(patchMenu) {
 	patchMenu.add(this.patchOptionsMenuItem = new KAGMenuItem(this, __t("設定(&O)"), 0, void, false));
 	patchOptionsMenuItem.add(this.historyTitleMenuItem = new KAGFlagMenuItem(this, __t("メッセージ歴史でシーンのタイトルを表示する(&H)"),, historyTitleFlag));
 	patchOptionsMenuItem.add(this.engineConfigurationItem = new KAGMenuItem(this, __t("エンジン構成ダイアログを開く"), 1, function() { global.showEngineConfigureDialog(); },false));
+	patchOptionsMenuItem.add(this.openSavedataDirMenuItem = new KAGMenuItem(this, __t("保存データディレクトリを開く"), 1, function(sender) { global.open_savedata_dir(sender.owner); },false));
+	patchOptionsMenuItem.add(this.saveTroubleshootingDataAndOpenFolderLocationMenuItem = new KAGMenuItem(this, __t("トラブルシューティングデータを保存する"), 1, function() { global.save_troubleshooting_data_and_open_folder_location(); },false));
 	patchOptionsMenuItem.add(this.showLogoMenuItem = new KAGFlagMenuItem(this, __t("起動時にTYPE-MOONロゴを表示"),, showLogoFlag));
 	patchOptionsMenuItem.add(this.savedataRepairMenuItem = new KAGFlagMenuItem(this, __t("修復保存データモードを有効にする"),, savedataRepairFlag));
 
@@ -793,8 +792,9 @@ function addHdMenu(displayMenu) {
 		wideMenu.add(this.wideMenuItem = new KAGMenuItem(this, __t("デスクトップと同じ(&M)"), 1,
 			function(sender) { onWideMenuItemClick(sender,'wide'); }, false));
 
-		var keys = Scripts.getObjectKeys(wideResolutions);
-		for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 1) {
+		var keys = [];
+		keys.assign(wideResolutions);
+		for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 2) {
 			var key = keys[i];
 			var ratio = wideResolutions[key];
 			var wideMenuItemName = "wideRatio"+key.replace(/[:&\() ]/g, "")+"MenuItem";
@@ -804,6 +804,7 @@ function addHdMenu(displayMenu) {
 				this[wideMenuItemName].checked = true;
 			}
 		}
+		invalidate keys;
 
 @if(CROP_MODE)
 		wideMenu.add(this.wideCroppedMenuItem = new KAGMenuItem(this, "Wide (&cropped)", 1,

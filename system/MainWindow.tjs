@@ -381,14 +381,9 @@ class KAGWindow extends Window
 @endif
 
 @if(GAME_FATE||GAME_FHAT||GAME_WOHN)
-		if(ismain && typeof(global.MenuItem) != "undefined") (Menu_visible_config incontextof this)();
+		if(ismain) (Menu_visible_config incontextof this)();
 @if(ZOOM_WINDOW)
-		if(typeof(this.menu) != "undefined") {
-			menuBarEnable = menu.visible; // メニューバー有効フラグはvisible_config後のvisible状態とする
-		}
-		else {
-			menuBarEnable = false;
-		}
+		menuBarEnable = menu.visible; // メニューバー有効フラグはvisible_config後のvisible状態とする
 @endif
 
 		// システム変数の読み込み
@@ -1187,8 +1182,7 @@ class KAGWindow extends Window
 		if(fullScreened)
 		{
 @if(kirikiriz)
-			if(typeof(this.menu) != "undefined")
-				menu.visible = true;
+			menu.visible = true;
 @endif
 			try
 			{
@@ -1368,10 +1362,6 @@ class KAGWindow extends Window
 
 	function internalSetMenuAccessibleAll(menu, state)
 	{
-		if (typeof(this.menu) !== "Object")
-		{
-			return;
-		}
 		// autoEnable が true のすべてのメニュー項目の accessible に値 state を
 		// 設定する
 		if(typeof menu.autoEnable != "undefined" && menu.autoEnable)

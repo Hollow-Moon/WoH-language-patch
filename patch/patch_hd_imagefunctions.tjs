@@ -1,0 +1,716 @@
+﻿
+if (typeof(global.Layer.operateRect) === "Object")
+{
+	global.Layer.operateRect_patch_hd_plugins_original = global.Layer.operateRect;
+	global.Layer.operateRect = function(left, top, src, sleft, stop, swidth, sheight, mode, opacity)
+	{
+@if(!SCALE_USING_FLOATING_POINT)
+		left = ((left < 0 ? -left : left) & 0x7fffffff) * (left < 0 ? -1 : 1);
+		top = ((top < 0 ? -top : top) & 0x7fffffff) * (top < 0 ? -1 : 1);
+		sleft = ((sleft < 0 ? -sleft : sleft) & 0x7fffffff) * (sleft < 0 ? -1 : 1);
+		stop = ((stop < 0 ? -stop : stop) & 0x7fffffff) * (stop < 0 ? -1 : 1);
+		swidth = ((swidth < 0 ? -swidth : swidth) & 0x7fffffff) * (swidth < 0 ? -1 : 1);
+		sheight = ((sheight < 0 ? -sheight : sheight) & 0x7fffffff) * (sheight < 0 ? -1 : 1);
+		if (mode !== void)
+		{
+			mode = ((mode < 0 ? -mode : mode) & 0x7fffffff) * (mode < 0 ? -1 : 1);
+		}
+		if (opacity !== void)
+		{
+			opacity = ((opacity < 0 ? -opacity : opacity) & 0x7fffffff) * (opacity < 0 ? -1 : 1);
+		}
+@endif
+		left = src.transformLeft(left, this);
+		top = src.transformTop(top, this);
+		sleft *= src.widthScale;
+		stop *= src.heightScale;
+		swidth *= src.widthScale;
+		sheight *= src.heightScale;
+		var ie;
+		try
+		{
+			this.absoluteMode += 1;
+			src.absoluteMode += 1;
+			(global.Layer.operateRect_patch_hd_plugins_original incontextof this)(left, top, src, sleft, stop, swidth, sheight, mode, opacity);
+		}
+		catch (e)
+		{
+			ie = e;
+		}
+		this.absoluteMode -= 1;
+		src.absoluteMode -= 1;
+		if (ie !== void)
+		{
+			throw ie;
+		}
+	};
+}
+if (typeof(global.Layer.copyRect) === "Object")
+{
+	global.Layer.copyRect_patch_hd_plugins_original = global.Layer.copyRect;
+	global.Layer.copyRect = function(left, top, src, sleft, stop, swidth, sheight)
+	{
+@if(!SCALE_USING_FLOATING_POINT)
+		left = ((left < 0 ? -left : left) & 0x7fffffff) * (left < 0 ? -1 : 1);
+		top = ((top < 0 ? -top : top) & 0x7fffffff) * (top < 0 ? -1 : 1);
+		sleft = ((sleft < 0 ? -sleft : sleft) & 0x7fffffff) * (sleft < 0 ? -1 : 1);
+		stop = ((stop < 0 ? -stop : stop) & 0x7fffffff) * (stop < 0 ? -1 : 1);
+		swidth = ((swidth < 0 ? -swidth : swidth) & 0x7fffffff) * (swidth < 0 ? -1 : 1);
+		sheight = ((sheight < 0 ? -sheight : sheight) & 0x7fffffff) * (sheight < 0 ? -1 : 1);
+@endif
+		this.updateBgFromSource(src, swidth, sheight);
+		left = src.transformLeft(left, this);
+		top = src.transformTop(top, this);
+		sleft *= src.widthScale;
+		stop *= src.heightScale;
+		swidth *= src.widthScale;
+		sheight *= src.heightScale;
+		var ie;
+		try
+		{
+			this.absoluteMode += 1;
+			src.absoluteMode += 1;
+			(global.Layer.copyRect_patch_hd_plugins_original incontextof this)(left, top, src, sleft, stop, swidth, sheight);
+		}
+		catch (e)
+		{
+			ie = e;
+		}
+		this.absoluteMode -= 1;
+		src.absoluteMode -= 1;
+		if (ie !== void)
+		{
+			throw ie;
+		}
+	};
+}
+if (typeof(global.Layer.copy9Patch) === "Object")
+{
+	global.Layer.copy9Patch_patch_hd_plugins_original = global.Layer.copy9Patch;
+	global.Layer.copy9Patch = function(src)
+	{
+		var ret;
+		var ie;
+		try
+		{
+			this.absoluteMode += 1;
+			src.absoluteMode += 1;
+			ret = (global.Layer.copy9Patch_patch_hd_plugins_original incontextof this)(src);
+		}
+		catch (e)
+		{
+			ie = e;
+		}
+		this.absoluteMode -= 1;
+		src.absoluteMode -= 1;
+		if (ie !== void)
+		{
+			throw ie;
+		}
+		if (ret !== void)
+		{
+			ret.left *= this.widthScale;
+			ret.top *= this.heightScale;
+			ret.right *= this.widthScale;
+			ret.bottom *= this.heightScale;
+		}
+		return ret;
+	};
+}
+if (typeof(global.Layer.flipLR) === "Object")
+{
+	global.Layer.flipLR_patch_hd_plugins_original = global.Layer.flipLR;
+	global.Layer.flipLR = function()
+	{
+		var ie;
+		try
+		{
+			this.absoluteMode += 1;
+			(global.Layer.flipLR_patch_hd_plugins_original incontextof this)(...);
+		}
+		catch (e)
+		{
+			ie = e;
+		}
+		this.absoluteMode -= 1;
+		if (ie !== void)
+		{
+			throw ie;
+		}
+	};
+}
+if (typeof(global.Layer.flipUD) === "Object")
+{
+	global.Layer.flipUD_patch_hd_plugins_original = global.Layer.flipUD;
+	global.Layer.flipUD = function()
+	{
+		var ie;
+		try
+		{
+			this.absoluteMode += 1;
+			(global.Layer.flipUD_patch_hd_plugins_original incontextof this)(...);
+		}
+		catch (e)
+		{
+			ie = e;
+		}
+		this.absoluteMode -= 1;
+		if (ie !== void)
+		{
+			throw ie;
+		}
+	};
+}
+if (typeof(global.Layer.adjustGamma) === "Object")
+{
+	global.Layer.adjustGamma_patch_hd_plugins_original = global.Layer.adjustGamma;
+	global.Layer.adjustGamma = function()
+	{
+		var ie;
+		try
+		{
+			this.absoluteMode += 1;
+			(global.Layer.adjustGamma_patch_hd_plugins_original incontextof this)(...);
+		}
+		catch (e)
+		{
+			ie = e;
+		}
+		this.absoluteMode -= 1;
+		if (ie !== void)
+		{
+			throw ie;
+		}
+	};
+}
+if (typeof(global.Layer.doGrayScale) === "Object")
+{
+	global.Layer.doGrayScale_patch_hd_plugins_original = global.Layer.doGrayScale;
+	global.Layer.doGrayScale = function()
+	{
+		var ie;
+		try
+		{
+			this.absoluteMode += 1;
+			(global.Layer.doGrayScale_patch_hd_plugins_original incontextof this)(...);
+		}
+		catch (e)
+		{
+			ie = e;
+		}
+		this.absoluteMode -= 1;
+		if (ie !== void)
+		{
+			throw ie;
+		}
+	};
+}
+if (typeof(global.Layer.operateStretch) === "Object")
+{
+	global.Layer.operateStretch_patch_hd_plugins_original = global.Layer.operateStretch;
+	global.Layer.operateStretch = function(left, top, width, height, src, sleft, stop, swidth, sheight, mode, opacity, type, option)
+	{
+@if(!SCALE_USING_FLOATING_POINT)
+		left = ((left < 0 ? -left : left) & 0x7fffffff) * (left < 0 ? -1 : 1);
+		top = ((top < 0 ? -top : top) & 0x7fffffff) * (top < 0 ? -1 : 1);
+		width = ((width < 0 ? -width : width) & 0x7fffffff) * (width < 0 ? -1 : 1);
+		height = ((height < 0 ? -height : height) & 0x7fffffff) * (height < 0 ? -1 : 1);
+		var sleft_orig = sleft;
+		var stop_orig = stop;
+		var swidth_orig = swidth;
+		var sheight_orig = sheight;
+		sleft = ((sleft < 0 ? -sleft : sleft) & 0x7fffffff) * (sleft < 0 ? -1 : 1);
+		stop = ((stop < 0 ? -stop : stop) & 0x7fffffff) * (stop < 0 ? -1 : 1);
+		swidth = ((swidth < 0 ? -swidth : swidth) & 0x7fffffff) * (swidth < 0 ? -1 : 1);
+		sheight = ((sheight < 0 ? -sheight : sheight) & 0x7fffffff) * (sheight < 0 ? -1 : 1);
+		if (mode !== void)
+		{
+			mode = ((mode < 0 ? -mode : mode) & 0x7fffffff) * (mode < 0 ? -1 : 1);
+		}
+		if (opacity !== void)
+		{
+			opacity = ((opacity < 0 ? -opacity : opacity) & 0x7fffffff) * (opacity < 0 ? -1 : 1);
+		}
+		if (type !== void)
+		{
+			type = ((type < 0 ? -type : type) & 0x7fffffff) * (type < 0 ? -1 : 1);
+		}
+		if (option !== void)
+		{
+			option *= 1.0;
+		}
+@endif
+		left = src.transformLeft(left, this);
+		top = src.transformTop(top, this);
+		width *= this.widthScale;
+		height *= this.heightScale;
+		sleft *= src.widthScale;
+		stop *= src.heightScale;
+		swidth *= src.widthScale;
+		sheight *= src.heightScale;
+@if(SCALE_USING_FLOATING_POINT)
+		// XXX: workaround for transparent YesNoLayer
+		if (sleft > 0 && sleft < 1)
+		{
+			sleft = 1;
+		}
+		if (stop > 0 && stop < 1)
+		{
+			stop = 1;
+		}
+		if (swidth > 0 && swidth < 1)
+		{
+			swidth = 1;
+		}
+		if (sheight > 0 && sheight < 1)
+		{
+			sheight = 1;
+		}
+@endif
+		var ie;
+		try
+		{
+			this.absoluteMode += 1;
+			src.absoluteMode += 1;
+			(global.Layer.operateStretch_patch_hd_plugins_original incontextof this)(left, top, width, height, src, sleft, stop, swidth, sheight, mode, opacity, type, option);
+		}
+		catch (e)
+		{
+			ie = e;
+		}
+		this.absoluteMode -= 1;
+		src.absoluteMode -= 1;
+		if (ie !== void)
+		{
+			throw ie;
+		}
+	};
+}
+if (typeof(global.Layer.stretchCopy) === "Object")
+{
+	global.Layer.stretchCopy_patch_hd_plugins_original = global.Layer.stretchCopy;
+	global.Layer.stretchCopy = function(left, top, width, height, src, sleft, stop, swidth, sheight, type, option)
+	{
+@if(!SCALE_USING_FLOATING_POINT)
+		left = ((left < 0 ? -left : left) & 0x7fffffff) * (left < 0 ? -1 : 1);
+		top = ((top < 0 ? -top : top) & 0x7fffffff) * (top < 0 ? -1 : 1);
+		width = ((width < 0 ? -width : width) & 0x7fffffff) * (width < 0 ? -1 : 1);
+		height = ((height < 0 ? -height : height) & 0x7fffffff) * (height < 0 ? -1 : 1);
+		sleft = ((sleft < 0 ? -sleft : sleft) & 0x7fffffff) * (sleft < 0 ? -1 : 1);
+		stop = ((stop < 0 ? -stop : stop) & 0x7fffffff) * (stop < 0 ? -1 : 1);
+		swidth = ((swidth < 0 ? -swidth : swidth) & 0x7fffffff) * (swidth < 0 ? -1 : 1);
+		sheight = ((sheight < 0 ? -sheight : sheight) & 0x7fffffff) * (sheight < 0 ? -1 : 1);
+		if (type !== void)
+		{
+			type = ((type < 0 ? -type : type) & 0x7fffffff) * (type < 0 ? -1 : 1);
+		}
+		if (option !== void)
+		{
+			option *= 1.0;
+		}
+@endif
+		left = src.transformLeft(left, this);
+		top = src.transformTop(top, this);
+		width *= this.widthScale;
+		height *= this.heightScale;
+		sleft = this.transformSLeft(src, sleft, swidth);
+		stop *= src.heightScale;
+		swidth *= src.widthScale;
+		sheight *= src.heightScale;
+		var ie;
+		try
+		{
+			this.absoluteMode += 1;
+			src.absoluteMode += 1;
+			(global.Layer.stretchCopy_patch_hd_plugins_original incontextof this)(left, top, width, height, src, sleft, stop, swidth, sheight, type, option);
+		}
+		catch (e)
+		{
+			ie = e;
+		}
+		this.absoluteMode -= 1;
+		src.absoluteMode -= 1;
+		if (ie !== void)
+		{
+			throw ie;
+		}
+	};
+}
+if (typeof(global.Layer.piledCopy) === "Object")
+{
+	global.Layer.piledCopy_patch_hd_plugins_original = global.Layer.piledCopy;
+	global.Layer.piledCopy = function(left, top, src, sleft, stop, swidth, sheight)
+	{
+@if(!SCALE_USING_FLOATING_POINT)
+		left = ((left < 0 ? -left : left) & 0x7fffffff) * (left < 0 ? -1 : 1);
+		top = ((top < 0 ? -top : top) & 0x7fffffff) * (top < 0 ? -1 : 1);
+		sleft = ((sleft < 0 ? -sleft : sleft) & 0x7fffffff) * (sleft < 0 ? -1 : 1);
+		stop = ((stop < 0 ? -stop : stop) & 0x7fffffff) * (stop < 0 ? -1 : 1);
+		swidth = ((swidth < 0 ? -swidth : swidth) & 0x7fffffff) * (swidth < 0 ? -1 : 1);
+		sheight = ((sheight < 0 ? -sheight : sheight) & 0x7fffffff) * (sheight < 0 ? -1 : 1);
+@endif
+		this.updateBgFromSource(src, swidth, sheight);
+		left = src.transformLeft(left, this);
+		top = src.transformTop(top, this);
+		sleft *= src.widthScale;
+		stop *= src.heightScale;
+		swidth *= src.widthScale;
+		sheight *= src.heightScale;
+		var ie;
+		try
+		{
+			this.absoluteMode += 1;
+			src.absoluteMode += 1;
+			(global.Layer.piledCopy_patch_hd_plugins_original incontextof this)(left, top, src, sleft, stop, swidth, sheight);
+		}
+		catch (e)
+		{
+			ie = e;
+		}
+		this.absoluteMode -= 1;
+		src.absoluteMode -= 1;
+		if (ie !== void)
+		{
+			throw ie;
+		}
+	};
+}
+if (typeof(global.Layer.affineCopy) === "Object")
+{
+	global.Layer.affineCopy_patch_hd_plugins_original = global.Layer.affineCopy;
+	global.Layer.affineCopy = function(src, sx, sy, sw, sh, affine, a, b, c, d, tx, ty, type, clear)
+	{
+@if(!SCALE_USING_FLOATING_POINT)
+		sx = ((sx < 0 ? -sx : sx) & 0x7fffffff) * (sx < 0 ? -1 : 1);
+		sy = ((sy < 0 ? -sy : sy) & 0x7fffffff) * (sy < 0 ? -1 : 1);
+		sw = ((sw < 0 ? -sw : sw) & 0x7fffffff) * (sw < 0 ? -1 : 1);
+		sh = ((sh < 0 ? -sh : sh) & 0x7fffffff) * (sh < 0 ? -1 : 1);
+		affine = !!affine;
+		a *= 1.0;
+		b *= 1.0;
+		c *= 1.0;
+		d *= 1.0;
+		tx *= 1.0;
+		ty *= 1.0;
+		if (type !== void)
+		{
+			type = ((type < 0 ? -type : type) & 0x7fffffff) * (type < 0 ? -1 : 1);
+		}
+		if (clear !== void)
+		{
+			clear = ((clear < 0 ? -clear : clear) & 0x7fffffff) * (clear < 0 ? -1 : 1);
+		}
+@endif
+		sx *= src.widthScale;
+		sy *= src.heightScale;
+		sw *= src.widthScale;
+		sh *= src.heightScale;
+		if (!affine)
+		{
+			a *= this.widthScale;
+			b *= this.heightScale;
+			c *= this.widthScale;
+			d *= this.heightScale;
+		}
+		tx *= this.widthScale;
+		ty *= this.heightScale;
+		var ie;
+		try
+		{
+			this.absoluteMode += 1;
+			src.absoluteMode += 1;
+			(global.Layer.affineCopy_patch_hd_plugins_original incontextof this)(src, sx, sy, sw, sh, affine, a, b, c, d, tx, ty, type, clear);
+		}
+		catch (e)
+		{
+			ie = e;
+		}
+		this.absoluteMode -= 1;
+		src.absoluteMode -= 1;
+		if (ie !== void)
+		{
+			throw ie;
+		}
+	};
+}
+if (typeof(global.Layer.operateAffine) === "Object")
+{
+	global.Layer.operateAffine_patch_hd_plugins_original = global.Layer.operateAffine;
+	global.Layer.operateAffine = function(src, sx, sy, sw, sh, affine, a, b, c, d, tx, ty, mode, opa, type)
+	{
+@if(!SCALE_USING_FLOATING_POINT)
+		sx = ((sx < 0 ? -sx : sx) & 0x7fffffff) * (sx < 0 ? -1 : 1);
+		sy = ((sy < 0 ? -sy : sy) & 0x7fffffff) * (sy < 0 ? -1 : 1);
+		sw = ((sw < 0 ? -sw : sw) & 0x7fffffff) * (sw < 0 ? -1 : 1);
+		sh = ((sh < 0 ? -sh : sh) & 0x7fffffff) * (sh < 0 ? -1 : 1);
+		affine = !!affine;
+		a *= 1.0;
+		b *= 1.0;
+		c *= 1.0;
+		d *= 1.0;
+		tx *= 1.0;
+		ty *= 1.0;
+		if (mode !== void)
+		{
+			mode = ((mode < 0 ? -mode : mode) & 0x7fffffff) * (mode < 0 ? -1 : 1);
+		}
+		if (opa !== void)
+		{
+			opa = ((opa < 0 ? -opa : opa) & 0x7fffffff) * (opa < 0 ? -1 : 1);
+		}
+		if (type !== void)
+		{
+			type = ((type < 0 ? -type : type) & 0x7fffffff) * (type < 0 ? -1 : 1);
+		}
+@endif
+		sx *= src.widthScale;
+		sy *= src.heightScale;
+		sw *= src.widthScale;
+		sh *= src.heightScale;
+		if (!affine)
+		{
+			a *= this.widthScale;
+			b *= this.heightScale;
+			c *= this.widthScale;
+			d *= this.heightScale;
+		}
+		tx *= this.widthScale;
+		ty *= this.heightScale;
+		var ie;
+		try
+		{
+			this.absoluteMode += 1;
+			src.absoluteMode += 1;
+			(global.Layer.operateAffine_patch_hd_plugins_original incontextof this)(src, sx, sy, sw, sh, affine, a, b, c, d, tx, ty, mode, opa, type);
+		}
+		catch (e)
+		{
+			ie = e;
+		}
+		this.absoluteMode -= 1;
+		src.absoluteMode -= 1;
+		if (ie !== void)
+		{
+			throw ie;
+		}
+	};
+}
+if (typeof(global.Layer.doBoxBlur) === "Object")
+{
+	global.Layer.doBoxBlur_patch_hd_plugins_original = global.Layer.doBoxBlur;
+	global.Layer.doBoxBlur = function(xblur=1, yblur=1)
+	{
+@if(!SCALE_USING_FLOATING_POINT)
+		xblur = ((xblur < 0 ? -xblur : xblur) & 0x7fffffff) * (xblur < 0 ? -1 : 1);
+		yblur = ((yblur < 0 ? -yblur : yblur) & 0x7fffffff) * (yblur < 0 ? -1 : 1);
+@endif
+@if(GAME_WOHN)
+		// Attempted workaround for overflow
+		if ((xblur + 1) * (yblur + 1) >= 16777216)
+		{
+			return;
+		}
+@endif
+		xblur *= this.widthScale;
+		yblur *= this.heightScale;
+		var ie;
+		try
+		{
+			this.absoluteMode += 1;
+			(global.Layer.doBoxBlur_patch_hd_plugins_original incontextof this)(xblur, yblur);
+		}
+		catch (e)
+		{
+			ie = e;
+		}
+		this.absoluteMode -= 1;
+		if (ie !== void)
+		{
+			throw ie;
+		}
+	};
+}
+if (typeof(global.Layer.fillRect) === "Object")
+{
+	global.Layer.fillRect_patch_hd_plugins_original = global.Layer.fillRect;
+	global.Layer.fillRect = function(left, top, width, height, color)
+	{
+@if(!SCALE_USING_FLOATING_POINT)
+		left = ((left < 0 ? -left : left) & 0x7fffffff) * (left < 0 ? -1 : 1);
+		top = ((top < 0 ? -top : top) & 0x7fffffff) * (top < 0 ? -1 : 1);
+		width = ((width < 0 ? -width : width) & 0x7fffffff) * (width < 0 ? -1 : 1);
+		height = ((height < 0 ? -height : height) & 0x7fffffff) * (height < 0 ? -1 : 1);
+		color &= 0xffffffff;
+@endif
+		left *= this.widthScale;
+		top *= this.heightScale;
+		width *= this.widthScale;
+		height *= this.heightScale;
+		var ie;
+		try
+		{
+			this.absoluteMode += 1;
+			(global.Layer.fillRect_patch_hd_plugins_original incontextof this)(left, top, width, height, color);
+		}
+		catch (e)
+		{
+			ie = e;
+		}
+		this.absoluteMode -= 1;
+		if (ie !== void)
+		{
+			throw ie;
+		}
+	};
+}
+if (typeof(global.Layer.colorRect) === "Object")
+{
+	global.Layer.colorRect_patch_hd_plugins_original = global.Layer.colorRect;
+	global.Layer.colorRect = function(left, top, width, height, color, opacity)
+	{
+@if(!SCALE_USING_FLOATING_POINT)
+		left = ((left < 0 ? -left : left) & 0x7fffffff) * (left < 0 ? -1 : 1);
+		top = ((top < 0 ? -top : top) & 0x7fffffff) * (top < 0 ? -1 : 1);
+		width = ((width < 0 ? -width : width) & 0x7fffffff) * (width < 0 ? -1 : 1);
+		height = ((height < 0 ? -height : height) & 0x7fffffff) * (height < 0 ? -1 : 1);
+		color &= 0xffffffff;
+		if (opacity !== void)
+		{
+			opacity = ((opacity < 0 ? -opacity : opacity) & 0x7fffffff) * (opacity < 0 ? -1 : 1);
+		}
+@endif
+		left *= this.widthScale;
+		top *= this.heightScale;
+		width *= this.widthScale;
+		height *= this.heightScale;
+		var ie;
+		try
+		{
+			this.absoluteMode += 1;
+			(global.Layer.colorRect_patch_hd_plugins_original incontextof this)(left, top, width, height, color, opacity);
+		}
+		catch (e)
+		{
+			ie = e;
+		}
+		this.absoluteMode -= 1;
+		if (ie !== void)
+		{
+			throw ie;
+		}
+	};
+}
+if (typeof(global.Layer.drawText) === "Object")
+{
+	global.Layer.drawText_patch_hd_plugins_original = global.Layer.drawText;
+	global.Layer.drawText = function(left, top, text, color, opacity, aa, slevel, scolor, swidth, sofsx, sofsy)
+	{
+@if(!SCALE_USING_FLOATING_POINT)
+		left = ((left < 0 ? -left : left) & 0x7fffffff) * (left < 0 ? -1 : 1);
+		top = ((top < 0 ? -top : top) & 0x7fffffff) * (top < 0 ? -1 : 1);
+		color &= 0xffffffff;
+		if (opacity !== void)
+		{
+			opacity = ((opacity < 0 ? -opacity : opacity) & 0x7fffffff) * (opacity < 0 ? -1 : 1);
+		}
+		if (aa !== void)
+		{
+			aa = !!aa;
+		}
+		if (slevel !== void)
+		{
+			slevel = ((slevel < 0 ? -slevel : slevel) & 0x7fffffff) * (slevel < 0 ? -1 : 1);
+		}
+		if (scolor !== void)
+		{
+			scolor &= 0xffffffff;
+		}
+		if (swidth !== void)
+		{
+			swidth = ((swidth < 0 ? -swidth : swidth) & 0x7fffffff) * (swidth < 0 ? -1 : 1);
+		}
+		if (sofsx !== void)
+		{
+			sofsx = ((sofsx < 0 ? -sofsx : sofsx) & 0x7fffffff) * (sofsx < 0 ? -1 : 1);
+		}
+		if (sofsy !== void)
+		{
+			sofsy = ((sofsy < 0 ? -sofsy : sofsy) & 0x7fffffff) * (sofsy < 0 ? -1 : 1);
+		}
+@endif
+		left *= this.widthScale;
+		top *= this.heightScale;
+		var ie;
+		try
+		{
+			this.absoluteMode += 1;
+			(global.Layer.drawText_patch_hd_plugins_original incontextof this)(left, top, text, color, opacity, aa, slevel, scolor, swidth, sofsx, sofsy);
+		}
+		catch (e)
+		{
+			ie = e;
+		}
+		this.absoluteMode -= 1;
+		if (ie !== void)
+		{
+			throw ie;
+		}
+	};
+}
+if (typeof(global.Layer.drawGlyph) === "Object")
+{
+	global.Layer.drawGlyph_patch_hd_plugins_original = global.Layer.drawGlyph;
+	global.Layer.drawGlyph = function(left, top, glyph, color, opacity, aa, slevel, scolor, swidth, sofsx, sofsy)
+	{
+@if(!SCALE_USING_FLOATING_POINT)
+		left = ((left < 0 ? -left : left) & 0x7fffffff) * (left < 0 ? -1 : 1);
+		top = ((top < 0 ? -top : top) & 0x7fffffff) * (top < 0 ? -1 : 1);
+		color &= 0xffffffff;
+		if (opacity !== void)
+		{
+			opacity = ((opacity < 0 ? -opacity : opacity) & 0x7fffffff) * (opacity < 0 ? -1 : 1);
+		}
+		if (aa !== void)
+		{
+			aa = !!aa;
+		}
+		if (slevel !== void)
+		{
+			slevel = ((slevel < 0 ? -slevel : slevel) & 0x7fffffff) * (slevel < 0 ? -1 : 1);
+		}
+		if (scolor !== void)
+		{
+			scolor &= 0xffffffff;
+		}
+		if (swidth !== void)
+		{
+			swidth = ((swidth < 0 ? -swidth : swidth) & 0x7fffffff) * (swidth < 0 ? -1 : 1);
+		}
+		if (sofsx !== void)
+		{
+			sofsx = ((sofsx < 0 ? -sofsx : sofsx) & 0x7fffffff) * (sofsx < 0 ? -1 : 1);
+		}
+		if (sofsy !== void)
+		{
+			sofsy = ((sofsy < 0 ? -sofsy : sofsy) & 0x7fffffff) * (sofsy < 0 ? -1 : 1);
+		}
+@endif
+		left *= this.widthScale;
+		top *= this.heightScale;
+		var ie;
+		try
+		{
+			this.absoluteMode += 1;
+			(global.Layer.drawGlyph_patch_hd_plugins_original incontextof this)(left, top, glyph, color, opacity, aa, slevel, scolor, swidth, sofsx, sofsy);
+		}
+		catch (e)
+		{
+			ie = e;
+		}
+		this.absoluteMode -= 1;
+		if (ie !== void)
+		{
+			throw ie;
+		}
+	};
+}

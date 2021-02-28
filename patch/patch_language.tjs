@@ -690,26 +690,34 @@ function loadLanguagesList() {
 	var patches_arr = [];
 	var	files = global.paths_base_dirlist[global.paths_base[0]]["."];
 	var loadedLanguages = [japaneseLanguage];
+	var languageRegex = new RegExp("patch_%s(.*)\\.xp3".sprintf(language_patch_prefix));
+	var langugeFolderRegex = new RegExp("%s(.*)[\\/]".sprintf(language_patch_prefix));
 	for (var i = 0, internal_forloop_count = files.count; i < internal_forloop_count; i += 1) {
 		var	fn	= files[i].toLowerCase();
-		var languageRegex = new RegExp("patch_%s(.*)\.xp3".sprintf(language_patch_prefix));
-		var langugeFolderRegex = new RegExp("%s(.*)\/".sprintf(language_patch_prefix));
-		if (languageRegex.test(fn)) {
-			// The following check is because in FHA exe the "matches" member is void.
-			var languageName = languageRegex.matches !== void? languageRegex.matches[1] : languageRegex.match(fn)[1];
+
+		var language_regex_match = languageRegex.match(fn);
+
+		if (language_regex_match.count !== 0)
+		{
+			var languageName = language_regex_match[1];
 			patches_arr.add([language_patch_prefix + languageName]);
 
 			if (!loadedLanguages.contains(languageName)) {
 				loadedLanguages.add(languageName); // In case there is a folder and an xp3 file, don't add twice.
 			}
-		} else if (devMode2 && langugeFolderRegex.test(fn)) {
-			// The following check is because in FHA exe the "matches" member is void.
-			var languageName = langugeFolderRegex.matches !== void? langugeFolderRegex.matches[1] : langugeFolderRegex.match(fn)[1];
+		}
+		else
+		{
+			var language_folder_regex_match = langugeFolderRegex.match(fn);
+			if (devMode2 && language_folder_regex_match.count !== 0) {
+				var languageName = language_folder_regex_match[1];
 
-			if (!loadedLanguages.contains(languageName)) {
-				loadedLanguages.add(languageName); // In case there is a folder and an xp3 file, don't add twice.
+				if (!loadedLanguages.contains(languageName)) {
+					loadedLanguages.add(languageName); // In case there is a folder and an xp3 file, don't add twice.
+				}
 			}
 		}
+
 	}
 	//dm("Loaded languages: " + loadedLanguages.join(", "));
 	unload_patches(patches_arr);

@@ -363,7 +363,6 @@ class MessageLayer extends KAGLayer
 @if(GAME_WOHN)
 	var tmpCharLayer = void;
 	var charLayers = []; // 文字を表示するレイヤー : [line][column]
-	var knownCharLayersByFont = %[]; // Character layer cache.
 	var	charPool = [];	//	使っていない文字レイヤーを格納
 	var	maxCharPoolCount	= 200; // 使ってない文字レイヤーを保存しておく最大数
 	var	lastCharLayerInfos = []; // 固定化する前のレイヤー状態 : [line][column]
@@ -719,27 +718,7 @@ class MessageLayer extends KAGLayer
 @endif
 @if(GAME_WOHN)
 		stopCharAction();
-@if(1)
-		var knownCharLayersArr = [];
-		knownCharLayersArr.assign(this.knownCharLayersByFont);
-		(global.Dictionary.clear incontextof this.knownCharLayersByFont)();
-		for (var i = 0, internal_forloop_count = knownCharLayersArr.count; i < internal_forloop_count; i += 2)
-		{
-			if (knownCharLayersArr[i + 1] !== void)
-			{
-				var knownCharLayersArr2 = [];
-				knownCharLayersArr2.assign(knownCharLayersArr[i + 1]);
-				(global.Dictionary.clear incontextof knownCharLayersArr[i + 1])();
-				for (var j = 0, internal_forloop_count = knownCharLayersArr2.count; j < internal_forloop_count; j += 2)
-				{
-					if (knownCharLayersArr2[j + 1] !== void)
-					{
-						invalidate knownCharLayersArr2[j + 1];
-					}
-				}
-			}
-		}
-@endif
+
 		if (this.tmpCharLayer !== void)
 		{
 			invalidate this.tmpCharLayer;
@@ -2252,24 +2231,11 @@ class MessageLayer extends KAGLayer
 @endif
 
 		var	cw;
-		with(getCharLayer(currentLine, currentColumn))
+		var this_charlayer;
+		with(this_charlayer = getCharLayer(currentLine, currentColumn))
 		{
 			.name	= "[%2d][%2d]: %s(%s)".sprintf(currentLine, currentColumn, ch, .group);
-			if (ch !== "" && ch !== void)
-			{
-				var fontParamsAsString = this.getFontParamsAsString(false, false, fontItalic, false, 0);
-				var knownCharLayers = this.knownCharLayersByFont[fontParamsAsString];
-				if (knownCharLayers === void)
-				{
-					this.knownCharLayersByFont[fontParamsAsString] = %[];
-					knownCharLayers = this.knownCharLayersByFont[fontParamsAsString];
-				}
-				if (knownCharLayers[ch] === void)
-				{
-					this.cacheCharLayerFromCh(ch, false, false, fontItalic);
-				}
-				.assignImages(knownCharLayers[ch]);
-			}
+			this.cacheCharLayerFromCh(this_charlayer, ch, false, false, fontItalic);
 
 			cw	= .textWidth;
 
@@ -2447,7 +2413,8 @@ class MessageLayer extends KAGLayer
 
 	function drawRuby(line = currentLine, stcol, edcol, text, offset, align)
 	{
-		with(getRubyLayer(line, edcol))
+		var this_rubylayer;
+		with(this_rubylayer = getRubyLayer(line, edcol))
 		{
 			.name		= "[%2d][%2d]: ルビ = %s(%s)".sprintf(currentLine, currentColumn, text, .group);
 			var	max, min;
@@ -2460,21 +2427,7 @@ class MessageLayer extends KAGLayer
 				min = int(max * 0.50);
 				max = int(max * 2.00);
 			}
-			if (text !== "" && text !== void)
-			{
-				var fontParamsAsString = this.getFontParamsAsString(true, false, fontItalic, false, 0, max, min);
-				var knownCharLayers = this.knownCharLayersByFont[fontParamsAsString];
-				if (knownCharLayers === void)
-				{
-					this.knownCharLayersByFont[fontParamsAsString] = %[];
-					knownCharLayers = this.knownCharLayersByFont[fontParamsAsString];
-				}
-				if (knownCharLayers[text] === void)
-				{
-					this.cacheCharLayerFromCh(text, true, false, fontItalic, false, 0, max, min);
-				}
-				.assignImages(knownCharLayers[text]);
-			}
+			this.cacheCharLayerFromCh(this_rubylayer, text, true, false, fontItalic, false, 0, max, min);
 			var	pos	= getRubyPos(line, stcol, edcol, rubyLayers[line][edcol], offset, align);
 			.charcnt	= edcol - stcol;
 			.setPos(pos[0], pos[1]);

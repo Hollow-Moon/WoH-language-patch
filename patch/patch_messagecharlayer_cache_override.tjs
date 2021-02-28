@@ -40,6 +40,36 @@ class MessageLayer_patch_messagecharlayer_cache_override_override extends Messag
 		MessageLayer_patch_messagecharlayer_cache_override_override(...);
 	}
 
+	var knownCharLayersByFont = %[]; // Character layer cache.
+	var knownCharLayers = void;
+
+	function finalize()
+	{
+@if(1)
+		stopCharAction();
+		var knownCharLayersArr = [];
+		knownCharLayersArr.assign(this.knownCharLayersByFont);
+		(global.Dictionary.clear incontextof this.knownCharLayersByFont)();
+		for (var i = 0, internal_forloop_count = knownCharLayersArr.count; i < internal_forloop_count; i += 2)
+		{
+			if (knownCharLayersArr[i + 1] !== void)
+			{
+				var knownCharLayersArr2 = [];
+				knownCharLayersArr2.assign(knownCharLayersArr[i + 1]);
+				(global.Dictionary.clear incontextof knownCharLayersArr[i + 1])();
+				for (var j = 0, internal_forloop_count = knownCharLayersArr2.count; j < internal_forloop_count; j += 2)
+				{
+					if (knownCharLayersArr2[j + 1] !== void)
+					{
+						invalidate knownCharLayersArr2[j + 1];
+					}
+				}
+			}
+		}
+@endif
+		super.finalize();
+	}
+
 	var fontParams = [];
 	var fontParamsStr = "";
 
@@ -52,8 +82,11 @@ class MessageLayer_patch_messagecharlayer_cache_override_override extends Messag
 		}
 		setter (v)
 		{
-			this.mcrc_fontFace = v;
-			this.fontParamsStr = "";
+			if (this.mcrc_fontFace !== v)
+			{
+				this.fontParamsStr = "";
+				this.mcrc_fontFace = v;
+			}
 		}
 	}
 	var mcrc_fontAngle;
@@ -65,8 +98,11 @@ class MessageLayer_patch_messagecharlayer_cache_override_override extends Messag
 		}
 		setter (v)
 		{
-			this.mcrc_fontAngle = v;
-			this.fontParamsStr = "";
+			if (this.mcrc_fontAngle !== v)
+			{
+				this.fontParamsStr = "";
+				this.mcrc_fontAngle = v;
+			}
 		}
 	}
 	var mcrc_bold;
@@ -78,8 +114,11 @@ class MessageLayer_patch_messagecharlayer_cache_override_override extends Messag
 		}
 		setter (v)
 		{
-			this.mcrc_bold = v;
-			this.fontParamsStr = "";
+			if (this.mcrc_bold !== v)
+			{
+				this.fontParamsStr = "";
+				this.mcrc_bold = v;
+			}
 		}
 	}
 	var mcrc_fontItalic;
@@ -91,8 +130,11 @@ class MessageLayer_patch_messagecharlayer_cache_override_override extends Messag
 		}
 		setter (v)
 		{
-			this.mcrc_fontItalic = v;
-			this.fontParamsStr = "";
+			if (this.mcrc_fontItalic !== v)
+			{
+				this.fontParamsStr = "";
+				this.mcrc_fontItalic = v;
+			}
 		}
 	}
 	var mcrc_fontSize;
@@ -104,8 +146,11 @@ class MessageLayer_patch_messagecharlayer_cache_override_override extends Messag
 		}
 		setter (v)
 		{
-			this.mcrc_fontSize = v;
-			this.fontParamsStr = "";
+			if (this.mcrc_fontSize !== v)
+			{
+				this.fontParamsStr = "";
+				this.mcrc_fontSize = v;
+			}
 		}
 	}
 	var mcrc_antialiased;
@@ -117,8 +162,11 @@ class MessageLayer_patch_messagecharlayer_cache_override_override extends Messag
 		}
 		setter (v)
 		{
-			this.mcrc_antialiased = v;
-			this.fontParamsStr = "";
+			if (this.mcrc_antialiased !== v)
+			{
+				this.fontParamsStr = "";
+				this.mcrc_antialiased = v;
+			}
 		}
 	}
 	var mcrc_chColor;
@@ -130,8 +178,11 @@ class MessageLayer_patch_messagecharlayer_cache_override_override extends Messag
 		}
 		setter (v)
 		{
-			this.mcrc_chColor = v;
-			this.fontParamsStr = "";
+			if (this.mcrc_chColor !== v)
+			{
+				this.fontParamsStr = "";
+				this.mcrc_chColor = v;
+			}
 		}
 	}
 	var mcrc_edgeColor;
@@ -143,8 +194,11 @@ class MessageLayer_patch_messagecharlayer_cache_override_override extends Messag
 		}
 		setter (v)
 		{
-			this.mcrc_edgeColor = v;
-			this.fontParamsStr = "";
+			if (this.mcrc_edgeColor !== v)
+			{
+				this.fontParamsStr = "";
+				this.mcrc_edgeColor = v;
+			}
 		}
 	}
 	var mcrc_shadowColor;
@@ -156,8 +210,11 @@ class MessageLayer_patch_messagecharlayer_cache_override_override extends Messag
 		}
 		setter (v)
 		{
-			this.mcrc_shadowColor = v;
-			this.fontParamsStr = "";
+			if (this.mcrc_shadowColor !== v)
+			{
+				this.fontParamsStr = "";
+				this.mcrc_shadowColor = v;
+			}
 		}
 	}
 	var mcrc_edgeEmphasis;
@@ -169,8 +226,11 @@ class MessageLayer_patch_messagecharlayer_cache_override_override extends Messag
 		}
 		setter (v)
 		{
-			this.mcrc_edgeEmphasis = v;
-			this.fontParamsStr = "";
+			if (this.mcrc_edgeEmphasis !== v)
+			{
+				this.fontParamsStr = "";
+				this.mcrc_edgeEmphasis = v;
+			}
 		}
 	}
 	var mcrc_edgeExtent;
@@ -182,8 +242,11 @@ class MessageLayer_patch_messagecharlayer_cache_override_override extends Messag
 		}
 		setter (v)
 		{
-			this.mcrc_edgeExtent = v;
-			this.fontParamsStr = "";
+			if (this.mcrc_edgeExtent !== v)
+			{
+				this.fontParamsStr = "";
+				this.mcrc_edgeExtent = v;
+			}
 		}
 	}
 	var mcrc_shadowOffsetX;
@@ -195,8 +258,11 @@ class MessageLayer_patch_messagecharlayer_cache_override_override extends Messag
 		}
 		setter (v)
 		{
-			this.mcrc_shadowOffsetX = v;
-			this.fontParamsStr = "";
+			if (this.mcrc_shadowOffsetX !== v)
+			{
+				this.fontParamsStr = "";
+				this.mcrc_shadowOffsetX = v;
+			}
 		}
 	}
 	var mcrc_shadowOffsetY;
@@ -208,8 +274,11 @@ class MessageLayer_patch_messagecharlayer_cache_override_override extends Messag
 		}
 		setter (v)
 		{
-			this.mcrc_shadowOffsetY = v;
-			this.fontParamsStr = "";
+			if (this.mcrc_shadowOffsetY !== v)
+			{
+				this.fontParamsStr = "";
+				this.mcrc_shadowOffsetY = v;
+			}
 		}
 	}
 	var mcrc_vertical;
@@ -221,22 +290,21 @@ class MessageLayer_patch_messagecharlayer_cache_override_override extends Messag
 		}
 		setter (v)
 		{
+			if (v !== this.mcrc_vertical)
+			{
+				this.fontParamsStr = "";
+			}
 			this.mcrc_vertical = v;
-			this.fontParamsStr = "";
 		}
 	}
 
 	function getFontParamsAsString(ruby=false, graph=false, italic, ischar=false, key, max, min)
 	{
 		var font_params_valid = true;
-		if (italic !== void)
+		if (italic !== this.fontItalic)
 		{
 			font_params_valid = false;
 			// invalidate cache
-		}
-		else
-		{
-			italic = fontItalic;
 		}
 		if (ruby || graph)
 		{
@@ -270,18 +338,49 @@ class MessageLayer_patch_messagecharlayer_cache_override_override extends Messag
 		}
 		return joined_font_params;
 	}
-
-	function cacheCharLayerFromCh(ch, ruby=false, graph=false, italic=false, ischar=false, key, max, min, cache=true)
+	function getKnownCharLayers(ruby=false, graph=false, italic, ischar=false, key, max, min)
 	{
-		var fontParamsAsString = this.getFontParamsAsString(ruby, graph, italic, ischar, key, max, min);
-		var knownCharLayers = this.knownCharLayersByFont[fontParamsAsString];
-		if (knownCharLayers === void)
+		var font_params_valid = true;
+		if (italic !== this.fontItalic)
 		{
-			this.knownCharLayersByFont[fontParamsAsString] = %[];
-			knownCharLayers = this.knownCharLayersByFont[fontParamsAsString];
+			font_params_valid = false;
+			// invalidate cache
 		}
+		if (ruby || graph)
+		{
+			font_params_valid = false;
+		}
+		if (font_params_valid && this.fontParamsStr !== "" && this.knownCharLayers !== void)
+		{
+			return this.knownCharLayers;
+		}
+		var fontParamsAsString = this.getFontParamsAsString(ruby, graph, italic, ischar, key, max, min);
+		var known_char_layers = this.knownCharLayersByFont[fontParamsAsString];
+		if (known_char_layers === void)
+		{
+			known_char_layers = %[];
+			this.knownCharLayersByFont[fontParamsAsString] = known_char_layers;
+		}
+		if (font_params_valid)
+		{
+			this.knownCharLayers = known_char_layers;
+		}
+		return known_char_layers;
+	}
+
+	function cacheCharLayerFromCh(layer, ch, ruby=false, graph=false, italic, ischar=false, key, max, min, cache=true)
+	{
+		if (ch === "" || ch === void)
+		{
+			return;
+		}
+		var knownCharLayers = this.getKnownCharLayers(ruby, graph, italic, ischar, key, max, min);
 		if (knownCharLayers[ch] !== void)
 		{
+			if (layer !== void)
+			{
+				layer.assignImages(knownCharLayers[ch]);
+			}
 			return;
 		}
 		with (this.tmpCharLayer)
@@ -333,6 +432,10 @@ class MessageLayer_patch_messagecharlayer_cache_override_override extends Messag
 		{
 			knownCharLayers[ch] = charlayer;
 		}
+		if (layer !== void)
+		{
+			layer.assignImages(charlayer);
+		}
 		return charlayer;
 	}
 
@@ -341,8 +444,8 @@ class MessageLayer_patch_messagecharlayer_cache_override_override extends Messag
 		for (var i = 0, internal_forloop_count = text.length; i < internal_forloop_count; i += 1)
 		{
 			var ch = text[i];
-			this.cacheCharLayerFromCh(ch, false, false, false);
-			this.cacheCharLayerFromCh(ch, false, false, true);
+			this.cacheCharLayerFromCh(void, ch, false, false, false);
+			this.cacheCharLayerFromCh(void, ch, false, false, true);
 		}
 	}
 }

@@ -940,3 +940,63 @@ global.open_savedata_dir = function(kag=global.kag)
 		}
 	}
 };
+
+global.struct_is_equal = function(s1, s2)
+{
+	if (s1 === s2)
+	{
+		return true;
+	}
+	else if (s1 instanceof "Array" && s2 instanceof "Array" && s1.count == s2.count)
+	{
+		for (var i = 0, internal_forloop_count = s1.count; i < internal_forloop_count; i += 1)
+		{
+			var s1item = s1[i];
+			var s2item = s2[i];
+			if(s1item instanceof "Array" || s1item instanceof "Dictionary")
+			{
+				if (!global.struct_is_equal(s1item, s2item))
+				{
+					return false;
+				}
+			}
+			else if (s1item !== s2item)
+			{
+				return false;
+			}
+		}
+	}
+	else if (s1 instanceof "Dictionary" && s2 instanceof "Dictionary")
+	{
+		var key1 = [];
+		var key2 = [];
+		key1.assign(s1);
+		key2.assign(s2);
+		if (key1.count !== key2.count)
+		{
+			return false;
+		}
+		for (var i = 0, internal_forloop_count = key1.count; i < internal_forloop_count; i += 2)
+		{
+			var key = key1[i];
+			var s1item = s1[key];
+			var s2item = s2[key];
+			if (s1item instanceof "Array" || s1item instanceof "Dictionary")
+			{
+				if (!global.struct_is_equal(s1item, s2item))
+				{
+					return false;
+				}
+			}
+			else if (s1item !== s2item)
+			{
+				return false;
+			}
+		}
+	}
+	else
+	{
+		return false;
+	}
+	return true;
+};

@@ -150,7 +150,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 
 	var numberOfImages = 1;
 
-	var absoluteMode = false;
+	var absoluteMode = 0;
 
 	function onClick_patch_hd_layer_override(x, y)
 	{
@@ -1485,7 +1485,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 			}
 		}
 
-		var taginfo = super.loadImages(imageStorage+chosenExt, key);
+		var taginfo = (global.Layer_patch_hd_layer_original.loadImages incontextof this)(imageStorage+chosenExt, key);
 
 @if(!GAME_WOHN)
 		// Mainly used for 藤02a腕b(中) and 藤02g腕b(中) since the HD version's width is larger than expected because of redundant transparent padding, but there might be other cases so the condition is generic.
@@ -1495,11 +1495,11 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 			var leftDiff = (super.imageWidth - w) \ 2;
 			if (leftDiff > 0) {
 				var tmp = new global.Layer(window, this);
-				(Layer_patch_hd_layer_original.loadImages incontextof tmp)(imageStorage+chosenExt, key);
+				(global.Layer_patch_hd_layer_original.loadImages incontextof tmp)(imageStorage+chosenExt, key);
 
-				super.fillRect(0, 0, w, h, 0x00000000);
-				(Layer_patch_hd_layer_original.operateRect)(0, 0, tmp, leftDiff, 0, w, h);
-				(Layer_patch_hd_layer_original.setImageSize)(w, h);
+				(global.Layer_patch_hd_layer_original.fillRect incontextof this)(0, 0, w, h, 0x00000000);
+				(global.Layer_patch_hd_layer_original.operateRect incontextof this)(0, 0, tmp, leftDiff, 0, w, h);
+				(global.Layer_patch_hd_layer_original.setImageSize incontextof this)(w, h);
 
 				invalidate tmp;
 			}
@@ -1578,9 +1578,9 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		x = ((x < 0 ? -x : x) & 0x7fffffff) * (x < 0 ? -1 : 1);
 		y = ((y < 0 ? -y : y) & 0x7fffffff) * (y < 0 ? -1 : 1);
 @endif
-		x *= widthScale;
-		y *= heightScale;
-		return super.getMainPixel(x, y);
+		x *= this.widthScale;
+		y *= this.heightScale;
+		return (global.Layer_patch_hd_layer_original.getMainPixel incontextof this)(x, y);
 	}
 
 	function setMainPixel(x, y, color)
@@ -1590,9 +1590,9 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		y = ((y < 0 ? -y : y) & 0x7fffffff) * (y < 0 ? -1 : 1);
 		color &= 0xffffffff;
 @endif
-		x *= widthScale;
-		y *= heightScale;
-		super.setMainPixel(x, y, color);
+		x *= this.widthScale;
+		y *= this.heightScale;
+		(global.Layer_patch_hd_layer_original.setMainPixel incontextof this)(x, y, color);
 	}
 
 	function getMaskPixel(x, y)
@@ -1601,9 +1601,9 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		x = ((x < 0 ? -x : x) & 0x7fffffff) * (x < 0 ? -1 : 1);
 		y = ((y < 0 ? -y : y) & 0x7fffffff) * (y < 0 ? -1 : 1);
 @endif
-		x *= widthScale;
-		y *= heightScale;
-		return super.getMaskPixel(x, y);
+		x *= this.widthScale;
+		y *= this.heightScale;
+		return (global.Layer_patch_hd_layer_original.getMaskPixel incontextof this)(x, y);
 	}
 
 	function setMaskPixel(x, y, value)
@@ -1613,9 +1613,9 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		y = ((y < 0 ? -y : y) & 0x7fffffff) * (y < 0 ? -1 : 1);
 		value &= 0xffffffff;
 @endif
-		x *= widthScale;
-		y *= heightScale;
-		super.setMaskPixel(x, y, value);
+		x *= this.widthScale;
+		y *= this.heightScale;
+		(global.Layer_patch_hd_layer_original.setMaskPixel incontextof this)(x, y, value);
 	}
 
 	function getProvincePixel(x, y)
@@ -1624,9 +1624,9 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		x = ((x < 0 ? -x : x) & 0x7fffffff) * (x < 0 ? -1 : 1);
 		y = ((y < 0 ? -y : y) & 0x7fffffff) * (y < 0 ? -1 : 1);
 @endif
-		x *= widthScale;
-		y *= heightScale;
-		return super.getProvincePixel(x, y);
+		x *= this.widthScale;
+		y *= this.heightScale;
+		return (global.Layer_patch_hd_layer_original.getProvincePixel incontextof this)(x, y);
 	}
 
 	function setProvincePixel(x, y, value)
@@ -1636,9 +1636,9 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		y = ((y < 0 ? -y : y) & 0x7fffffff) * (y < 0 ? -1 : 1);
 		value &= 0xffffffff;
 @endif
-		x *= widthScale;
-		y *= heightScale;
-		super.setProvincePixel(x, y, value);
+		x *= this.widthScale;
+		y *= this.heightScale;
+		(global.Layer_patch_hd_layer_original.setProvincePixel incontextof this)(x, y, value);
 	}
 
 	function getLayerAt(x, y, exclude_self, get_disabled)
@@ -1647,9 +1647,9 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		x = ((x < 0 ? -x : x) & 0x7fffffff) * (x < 0 ? -1 : 1);
 		y = ((y < 0 ? -y : y) & 0x7fffffff) * (y < 0 ? -1 : 1);
 @endif
-		x *= widthScale;
-		y *= heightScale;
-		return super.getLayerAt(x, y, exclude_self, get_disabled);
+		x *= this.widthScale;
+		y *= this.heightScale;
+		return (global.Layer_patch_hd_layer_original.getLayerAt incontextof this)(x, y, exclude_self, get_disabled);
 	}
 
 	function setSize_patch_hd_layer(width, height, fromloadImages=false)
@@ -1658,13 +1658,15 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		width = ((width < 0 ? -width : width) & 0x7fffffff) * (width < 0 ? -1 : 1);
 		height = ((height < 0 ? -height : height) & 0x7fffffff) * (height < 0 ? -1 : 1);
 @endif
+		width *= this.widthScale;
+		height *= this.heightScale;
 
 		updateBg(width, height, fromloadImages);
 
 		originalWidth = transformDiscrete(width, widthScale);
 		originalHeight = transformDiscrete(height, heightScale);
 
-		super.setSize(width * widthScale, height * heightScale);
+		(global.Layer_patch_hd_layer_original.setSize incontextof this)(width, height);
 
 		updateImageSize();
 	}
@@ -1687,7 +1689,10 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		originalImageHeight = transformDiscrete(imageHeight, heightScale);
 		internalSetImageSize(originalImageWidth, originalImageHeight);
 
-		super.setImageSize(imageWidth * widthScale, imageHeight * heightScale);
+		imageWidth *= this.widthScale;
+		imageHeight *= this.heightScale;
+
+		(global.Layer_patch_hd_layer_original.setImageSize incontextof this)(imageWidth, imageHeight);
 	}
 
 	function setImageSize()
@@ -1770,14 +1775,14 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 			(global.Layer_patch_hd_layer_original.stretchCopy incontextof tmp)(roundedUpscaledSingleWidth*i, 0, roundedUpscaledSingleWidth, scaleHeight, this, singleWidth*i, 0, singleWidth, super.imageHeight, scaleAlgorithm);
 		}
 
-		super.setImageSize(scaleWidth, scaleHeight);
+		(global.Layer_patch_hd_layer_original.setImageSize incontextof this)(scaleWidth, scaleHeight);
 
-		super.fillRect(0, 0, super.imageWidth, super.imageHeight, 0x00000000);
+		(global.Layer_patch_hd_layer_original.fillRect incontextof this)(0, 0, super.imageWidth, super.imageHeight, 0x00000000);
 
 		if (face == dfProvince) {
-			super.operateRect(0, 0, tmp, 0, 0, scaleWidth, scaleHeight, face);
+			(global.Layer_patch_hd_layer_original.operateRect incontextof this)(0, 0, tmp, 0, 0, scaleWidth, scaleHeight, face);
 		} else {
-			super.operateRect(0, 0, tmp, 0, 0, scaleWidth, scaleHeight);
+			(global.Layer_patch_hd_layer_original.operateRect incontextof this)(0, 0, tmp, 0, 0, scaleWidth, scaleHeight);
 		}
 
 		invalidate tmp;
@@ -1791,6 +1796,8 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 @endif
 		originalLeft = left;
 		originalTop = top;
+		left = transformLeft(left);
+		top = transformTop(top);
 
 		if (width !== void)
 		{
@@ -1809,7 +1816,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 			height = height * heightScale;
 		}
 
-		super.setPos(transformLeft(left), transformTop(top), width, height);
+		(global.Layer_patch_hd_layer_original.setPos incontextof this)(left, top, width, height);
 
 		if (width !== void || height !== void)
 		{
@@ -1830,7 +1837,9 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 @endif
 		originalImageLeft = left;
 		originalImageTop = top;
-		super.setImagePos(left*widthScale, top*heightScale);
+		left *= this.widthScale;
+		top *= this.heightScale;
+		(global.Layer_patch_hd_layer_original.setImagePos incontextof this)(left, top);
 	}
 
 	function setImagePos()
@@ -1846,7 +1855,9 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 @endif
 		var originalCursorX = transformDiscrete(cursorX, cursorXScale);
 		var originalCursorY = transformDiscrete(cursorY, cursorYScale);
-		super.setCursorPos(transformCursorX(originalCursorX), transformCursorY(originalCursorY));
+		cursorX = transformCursorX(originalCursorX);
+		cursorY = transformCursorY(originalCursorY);
+		(global.Layer_patch_hd_layer_original.setCursorPos incontextof this)(cursorX, cursorY);
 	}
 
 	function updateBgFromSource(src, swidth, sheight)
@@ -1864,104 +1875,6 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		}
 	}
 
-	function operateRect(left, top, src, sleft, stop, swidth, sheight, mode, opacity)
-	{
-@if(!SCALE_USING_FLOATING_POINT)
-		left = ((left < 0 ? -left : left) & 0x7fffffff) * (left < 0 ? -1 : 1);
-		top = ((top < 0 ? -top : top) & 0x7fffffff) * (top < 0 ? -1 : 1);
-		sleft = ((sleft < 0 ? -sleft : sleft) & 0x7fffffff) * (sleft < 0 ? -1 : 1);
-		stop = ((stop < 0 ? -stop : stop) & 0x7fffffff) * (stop < 0 ? -1 : 1);
-		swidth = ((swidth < 0 ? -swidth : swidth) & 0x7fffffff) * (swidth < 0 ? -1 : 1);
-		sheight = ((sheight < 0 ? -sheight : sheight) & 0x7fffffff) * (sheight < 0 ? -1 : 1);
-		if (mode !== void)
-		{
-			mode = ((mode < 0 ? -mode : mode) & 0x7fffffff) * (mode < 0 ? -1 : 1);
-		}
-		if (opacity !== void)
-		{
-			opacity = ((opacity < 0 ? -opacity : opacity) & 0x7fffffff) * (opacity < 0 ? -1 : 1);
-		}
-@endif
-		super.operateRect(src.transformLeft(left, this), src.transformTop(top, this), src, sleft*src.widthScale, stop*src.heightScale, swidth*src.widthScale, sheight*src.heightScale, mode, opacity);
-	}
-
-	function copyRect(left, top, src, sleft, stop, swidth, sheight)
-	{
-@if(!SCALE_USING_FLOATING_POINT)
-		left = ((left < 0 ? -left : left) & 0x7fffffff) * (left < 0 ? -1 : 1);
-		top = ((top < 0 ? -top : top) & 0x7fffffff) * (top < 0 ? -1 : 1);
-		sleft = ((sleft < 0 ? -sleft : sleft) & 0x7fffffff) * (sleft < 0 ? -1 : 1);
-		stop = ((stop < 0 ? -stop : stop) & 0x7fffffff) * (stop < 0 ? -1 : 1);
-		swidth = ((swidth < 0 ? -swidth : swidth) & 0x7fffffff) * (swidth < 0 ? -1 : 1);
-		sheight = ((sheight < 0 ? -sheight : sheight) & 0x7fffffff) * (sheight < 0 ? -1 : 1);
-@endif
-		updateBgFromSource(src, swidth, sheight);
-		super.copyRect(src.transformLeft(left, this), src.transformTop(top, this), src, sleft*src.widthScale, stop*src.heightScale, swidth*src.widthScale, sheight*src.heightScale);
-	}
-
-	function copy9Patch(src)
-	{
-		throw new Exception("copy9Patch is not implemented");
-	}
-
-	function operateStretch(left, top, width, height, src, sleft, stop, swidth, sheight, mode, opacity, type, option)
-	{
-@if(!SCALE_USING_FLOATING_POINT)
-		left = ((left < 0 ? -left : left) & 0x7fffffff) * (left < 0 ? -1 : 1);
-		top = ((top < 0 ? -top : top) & 0x7fffffff) * (top < 0 ? -1 : 1);
-		width = ((width < 0 ? -width : width) & 0x7fffffff) * (width < 0 ? -1 : 1);
-		height = ((height < 0 ? -height : height) & 0x7fffffff) * (height < 0 ? -1 : 1);
-		var sleft_orig = sleft;
-		var stop_orig = stop;
-		var swidth_orig = swidth;
-		var sheight_orig = sheight;
-		sleft = ((sleft < 0 ? -sleft : sleft) & 0x7fffffff) * (sleft < 0 ? -1 : 1);
-		stop = ((stop < 0 ? -stop : stop) & 0x7fffffff) * (stop < 0 ? -1 : 1);
-		swidth = ((swidth < 0 ? -swidth : swidth) & 0x7fffffff) * (swidth < 0 ? -1 : 1);
-		sheight = ((sheight < 0 ? -sheight : sheight) & 0x7fffffff) * (sheight < 0 ? -1 : 1);
-		if (mode !== void)
-		{
-			mode = ((mode < 0 ? -mode : mode) & 0x7fffffff) * (mode < 0 ? -1 : 1);
-		}
-		if (opacity !== void)
-		{
-			opacity = ((opacity < 0 ? -opacity : opacity) & 0x7fffffff) * (opacity < 0 ? -1 : 1);
-		}
-		if (type !== void)
-		{
-			type = ((type < 0 ? -type : type) & 0x7fffffff) * (type < 0 ? -1 : 1);
-		}
-		if (option !== void)
-		{
-			option *= 1.0;
-		}
-@endif
-	sleft *= src.widthScale;
-	stop *= src.heightScale;
-	swidth *= src.widthScale;
-	sheight *= src.heightScale;
-@if(SCALE_USING_FLOATING_POINT)
-	// XXX: workaround for transparent YesNoLayer
-	if (sleft > 0 && sleft < 1)
-	{
-		sleft = 1;
-	}
-	if (stop > 0 && stop < 1)
-	{
-		stop = 1;
-	}
-	if (swidth > 0 && swidth < 1)
-	{
-		swidth = 1;
-	}
-	if (sheight > 0 && sheight < 1)
-	{
-		sheight = 1;
-	}
-@endif
-		super.operateStretch(src.transformLeft(left, this), src.transformTop(top, this), width*widthScale, height*heightScale, src, sleft, stop, swidth, sheight, mode, opacity, type, option);
-	}
-
 	function transformSLeft(src, sleft, swidth)
 	{
 		if (src.numberOfImages > 1) {
@@ -1976,189 +1889,11 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		return sleft*src.widthScale;
 	}
 
-	function stretchCopy(left, top, width, height, src, sleft, stop, swidth, sheight, type, option)
-	{
-@if(!SCALE_USING_FLOATING_POINT)
-		left = ((left < 0 ? -left : left) & 0x7fffffff) * (left < 0 ? -1 : 1);
-		top = ((top < 0 ? -top : top) & 0x7fffffff) * (top < 0 ? -1 : 1);
-		width = ((width < 0 ? -width : width) & 0x7fffffff) * (width < 0 ? -1 : 1);
-		height = ((height < 0 ? -height : height) & 0x7fffffff) * (height < 0 ? -1 : 1);
-		sleft = ((sleft < 0 ? -sleft : sleft) & 0x7fffffff) * (sleft < 0 ? -1 : 1);
-		stop = ((stop < 0 ? -stop : stop) & 0x7fffffff) * (stop < 0 ? -1 : 1);
-		swidth = ((swidth < 0 ? -swidth : swidth) & 0x7fffffff) * (swidth < 0 ? -1 : 1);
-		sheight = ((sheight < 0 ? -sheight : sheight) & 0x7fffffff) * (sheight < 0 ? -1 : 1);
-		if (type !== void)
-		{
-			type = ((type < 0 ? -type : type) & 0x7fffffff) * (type < 0 ? -1 : 1);
-		}
-		if (option !== void)
-		{
-			option *= 1.0;
-		}
-@endif
-		sleft = transformSLeft(src, sleft, swidth);
-
-		super.stretchCopy(src.transformLeft(left, this), src.transformTop(top, this), width*widthScale, height*heightScale, src, sleft, stop*src.heightScale, swidth*src.widthScale, sheight*src.heightScale, type, option);
-	}
-
-	function stretchCopyAA(left, top, width, height, src, sleft, stop, swidth, sheight, type)
-	{
-		sleft = transformSLeft(src, sleft, swidth);
-
-		super.stretchCopyAA(src.transformLeft(left, this), src.transformTop(top, this), width*widthScale, height*heightScale, src, sleft, stop*src.heightScale, swidth*src.widthScale, sheight*src.heightScale, type);
-	}
-
-	function shrinkCopy(left, top, width, height, src, sleft, stop, swidth, sheight)
-	{
-		left = src.transformLeft(left, this);
-		top = src.transformTop(top, this);
-		width = width*widthScale;
-		height = height*heightScale;
-		sleft = sleft*src.widthScale;
-		stop = stop*src.heightScale;
-		swidth = swidth*src.widthScale;
-		sheight = sheight*src.heightScale;
-
-		absoluteMode = true;
-		src.absoluteMode = true;
-		super.shrinkCopy(left, top, width, height, src, sleft, stop, swidth, sheight);
-		absoluteMode = false;
-		src.absoluteMode = false;
-	}
-
-	function piledCopy(left, top, src, sleft, stop, swidth, sheight)
-	{
-@if(!SCALE_USING_FLOATING_POINT)
-		left = ((left < 0 ? -left : left) & 0x7fffffff) * (left < 0 ? -1 : 1);
-		top = ((top < 0 ? -top : top) & 0x7fffffff) * (top < 0 ? -1 : 1);
-		sleft = ((sleft < 0 ? -sleft : sleft) & 0x7fffffff) * (sleft < 0 ? -1 : 1);
-		stop = ((stop < 0 ? -stop : stop) & 0x7fffffff) * (stop < 0 ? -1 : 1);
-		swidth = ((swidth < 0 ? -swidth : swidth) & 0x7fffffff) * (swidth < 0 ? -1 : 1);
-		sheight = ((sheight < 0 ? -sheight : sheight) & 0x7fffffff) * (sheight < 0 ? -1 : 1);
-@endif
-		updateBgFromSource(src, swidth, sheight);
-		super.piledCopy(src.transformLeft(left, this), src.transformTop(top, this), src, sleft*src.widthScale, stop*src.heightScale, swidth*src.widthScale, sheight*src.heightScale);
-	}
-
-	function affineCopy(src, sx, sy, sw, sh, affine, a, b, c, d, tx, ty, type, clear)
-	{
-@if(!SCALE_USING_FLOATING_POINT)
-		sx = ((sx < 0 ? -sx : sx) & 0x7fffffff) * (sx < 0 ? -1 : 1);
-		sy = ((sy < 0 ? -sy : sy) & 0x7fffffff) * (sy < 0 ? -1 : 1);
-		sw = ((sw < 0 ? -sw : sw) & 0x7fffffff) * (sw < 0 ? -1 : 1);
-		sh = ((sh < 0 ? -sh : sh) & 0x7fffffff) * (sh < 0 ? -1 : 1);
-		affine = !!affine;
-		a *= 1.0;
-		b *= 1.0;
-		c *= 1.0;
-		d *= 1.0;
-		tx *= 1.0;
-		ty *= 1.0;
-		if (type !== void)
-		{
-			type = ((type < 0 ? -type : type) & 0x7fffffff) * (type < 0 ? -1 : 1);
-		}
-		if (clear !== void)
-		{
-			clear = ((clear < 0 ? -clear : clear) & 0x7fffffff) * (clear < 0 ? -1 : 1);
-		}
-@endif
-		if (!affine)
-		{
-			a *= widthScale;
-			b *= heightScale;
-			c *= widthScale;
-			d *= heightScale;
-		}
-		super.affineCopy(src, sx*src.widthScale, sy*src.heightScale, sw*src.widthScale, sh*src.heightScale, affine, a, b, c, d, tx*widthScale, ty*heightScale, type, clear);
-	}
-
-	function operateAffine(src, sx, sy, sw, sh, affine, a, b, c, d, tx, ty, mode, opa, type)
-	{
-@if(!SCALE_USING_FLOATING_POINT)
-		sx = ((sx < 0 ? -sx : sx) & 0x7fffffff) * (sx < 0 ? -1 : 1);
-		sy = ((sy < 0 ? -sy : sy) & 0x7fffffff) * (sy < 0 ? -1 : 1);
-		sw = ((sw < 0 ? -sw : sw) & 0x7fffffff) * (sw < 0 ? -1 : 1);
-		sh = ((sh < 0 ? -sh : sh) & 0x7fffffff) * (sh < 0 ? -1 : 1);
-		affine = !!affine;
-		a *= 1.0;
-		b *= 1.0;
-		c *= 1.0;
-		d *= 1.0;
-		tx *= 1.0;
-		ty *= 1.0;
-		if (mode !== void)
-		{
-			mode = ((mode < 0 ? -mode : mode) & 0x7fffffff) * (mode < 0 ? -1 : 1);
-		}
-		if (opa !== void)
-		{
-			opa = ((opa < 0 ? -opa : opa) & 0x7fffffff) * (opa < 0 ? -1 : 1);
-		}
-		if (type !== void)
-		{
-			type = ((type < 0 ? -type : type) & 0x7fffffff) * (type < 0 ? -1 : 1);
-		}
-@endif
-		if (!affine)
-		{
-			a *= widthScale;
-			b *= heightScale;
-			c *= widthScale;
-			d *= heightScale;
-		}
-		super.operateAffine(src, sx*src.widthScale, sy*src.heightScale, sw*src.widthScale, sh*src.heightScale, affine, a, b, c, d, tx*widthScale, ty*heightScale, mode, opa, type);
-	}
-
-	function doBoxBlur(xblur=1, yblur=1)
-	{
-@if(!SCALE_USING_FLOATING_POINT)
-		xblur = ((xblur < 0 ? -xblur : xblur) & 0x7fffffff) * (xblur < 0 ? -1 : 1);
-		yblur = ((yblur < 0 ? -yblur : yblur) & 0x7fffffff) * (yblur < 0 ? -1 : 1);
-@endif
-@if(GAME_WOHN)
-		// Attempted workaround for overflow
-		if ((xblur + 1) * (yblur + 1) >= 16777216)
-		{
-			return;
-		}
-@endif
-		super.doBoxBlur(xblur*widthScale, yblur*heightScale);
-	}
-
-	function fillRect(left, top, width, height, color)
-	{
-@if(!SCALE_USING_FLOATING_POINT)
-		left = ((left < 0 ? -left : left) & 0x7fffffff) * (left < 0 ? -1 : 1);
-		top = ((top < 0 ? -top : top) & 0x7fffffff) * (top < 0 ? -1 : 1);
-		width = ((width < 0 ? -width : width) & 0x7fffffff) * (width < 0 ? -1 : 1);
-		height = ((height < 0 ? -height : height) & 0x7fffffff) * (height < 0 ? -1 : 1);
-		color &= 0xffffffff;
-@endif
-		super.fillRect(left*widthScale, top*heightScale, width*widthScale, height*heightScale, color);
-	}
-
-	function colorRect(left, top, width, height, color, opacity)
-	{
-@if(!SCALE_USING_FLOATING_POINT)
-		left = ((left < 0 ? -left : left) & 0x7fffffff) * (left < 0 ? -1 : 1);
-		top = ((top < 0 ? -top : top) & 0x7fffffff) * (top < 0 ? -1 : 1);
-		width = ((width < 0 ? -width : width) & 0x7fffffff) * (width < 0 ? -1 : 1);
-		height = ((height < 0 ? -height : height) & 0x7fffffff) * (height < 0 ? -1 : 1);
-		color &= 0xffffffff;
-		if (opacity !== void)
-		{
-			opacity = ((opacity < 0 ? -opacity : opacity) & 0x7fffffff) * (opacity < 0 ? -1 : 1);
-		}
-@endif
-		super.colorRect(left*widthScale, top*heightScale, width*widthScale, height*heightScale, color, opacity);
-	}
-
 	function setClip_patch_hd_layer(args*)
 	{
 		if (args.count === 0)
 		{
-			super.setClip(0, 0, super.imageWidth, super.imageHeight);
+			(global.Layer_patch_hd_layer_original.setClip incontextof this)(0, 0, super.imageWidth, super.imageHeight);
 			resetClip();
 			return;
 		}
@@ -2191,7 +1926,11 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		originalClipWidth = transformDiscrete(clipWidth, widthScale);
 		originalClipHeight = transformDiscrete(clipHeight, heightScale);
 
-		super.setClip(clipLeft*widthScale, clipTop*heightScale, clipWidth*widthScale, clipHeight*heightScale);
+		clipLeft *= this.widthScale;
+		clipTop *= this.heightScale;
+		clipWidth *= this.widthScale;
+		clipHeight *= this.heightScale;
+		(global.Layer_patch_hd_layer_original.setClip incontextof this)(clipLeft, clipTop, clipWidth, clipHeight);
 	}
 
 	function setClip()
@@ -2207,7 +1946,9 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 @endif
 		originalAttentionLeft = transformDiscrete(left, widthScale);
 		originalAttentionTop = transformDiscrete(top, heightScale);
-		super.setAttentionPos(left*widthScale, top*heightScale);
+		left *= this.widthScale;
+		top *= this.heightScale;
+		(global.Layer_patch_hd_layer_original.setAttentionPos incontextof this)(left, top);
 	}
 
 	function setAttentionPos()
@@ -2217,88 +1958,12 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 
 	function assignImages(src)
 	{
-		super.assignImages(src);
+		(global.Layer_patch_hd_layer_original.assignImages incontextof this)(src);
 		originalImageWidth = src.originalImageWidth;
 		originalImageHeight = src.originalImageHeight;
 		imageStorage = src.imageStorage;
 		isbg = src.isbg;
 		internalSetImageSize(originalImageWidth, originalImageHeight);
-	}
-
-	function drawText(left, top, text, color, opacity, aa, slevel, scolor, swidth, sofsx, sofsy)
-	{
-@if(!SCALE_USING_FLOATING_POINT)
-		left = ((left < 0 ? -left : left) & 0x7fffffff) * (left < 0 ? -1 : 1);
-		top = ((top < 0 ? -top : top) & 0x7fffffff) * (top < 0 ? -1 : 1);
-		color &= 0xffffffff;
-		if (opacity !== void)
-		{
-			opacity = ((opacity < 0 ? -opacity : opacity) & 0x7fffffff) * (opacity < 0 ? -1 : 1);
-		}
-		if (aa !== void)
-		{
-			aa = !!aa;
-		}
-		if (slevel !== void)
-		{
-			slevel = ((slevel < 0 ? -slevel : slevel) & 0x7fffffff) * (slevel < 0 ? -1 : 1);
-		}
-		if (scolor !== void)
-		{
-			scolor &= 0xffffffff;
-		}
-		if (swidth !== void)
-		{
-			swidth = ((swidth < 0 ? -swidth : swidth) & 0x7fffffff) * (swidth < 0 ? -1 : 1);
-		}
-		if (sofsx !== void)
-		{
-			sofsx = ((sofsx < 0 ? -sofsx : sofsx) & 0x7fffffff) * (sofsx < 0 ? -1 : 1);
-		}
-		if (sofsy !== void)
-		{
-			sofsy = ((sofsy < 0 ? -sofsy : sofsy) & 0x7fffffff) * (sofsy < 0 ? -1 : 1);
-		}
-@endif
-		super.drawText(left*widthScale, top*heightScale, text, color, opacity, aa, slevel, scolor, swidth, sofsx, sofsy);
-	}
-
-	function drawGlyph(left, top, glyph, color, opacity, aa, slevel, scolor, swidth, sofsx, sofsy)
-	{
-@if(!SCALE_USING_FLOATING_POINT)
-		left = ((left < 0 ? -left : left) & 0x7fffffff) * (left < 0 ? -1 : 1);
-		top = ((top < 0 ? -top : top) & 0x7fffffff) * (top < 0 ? -1 : 1);
-		color &= 0xffffffff;
-		if (opacity !== void)
-		{
-			opacity = ((opacity < 0 ? -opacity : opacity) & 0x7fffffff) * (opacity < 0 ? -1 : 1);
-		}
-		if (aa !== void)
-		{
-			aa = !!aa;
-		}
-		if (slevel !== void)
-		{
-			slevel = ((slevel < 0 ? -slevel : slevel) & 0x7fffffff) * (slevel < 0 ? -1 : 1);
-		}
-		if (scolor !== void)
-		{
-			scolor &= 0xffffffff;
-		}
-		if (swidth !== void)
-		{
-			swidth = ((swidth < 0 ? -swidth : swidth) & 0x7fffffff) * (swidth < 0 ? -1 : 1);
-		}
-		if (sofsx !== void)
-		{
-			sofsx = ((sofsx < 0 ? -sofsx : sofsx) & 0x7fffffff) * (sofsx < 0 ? -1 : 1);
-		}
-		if (sofsy !== void)
-		{
-			sofsy = ((sofsy < 0 ? -sofsy : sofsy) & 0x7fffffff) * (sofsy < 0 ? -1 : 1);
-		}
-@endif
-		super.drawGlyph(left*widthScale, top*heightScale, glyph, color, opacity, aa, slevel, scolor, swidth, sofsx, sofsy);
 	}
 
 	function beginTransition(name, withchildren=true, transsrc, options=%[])
@@ -2351,7 +2016,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		}
 		try
 		{
-			return super.beginTransition(...);
+			return (global.Layer_patch_hd_layer_original.beginTransition incontextof this)(...);
 		}
 		catch (e)
 		{
@@ -2474,7 +2139,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 	{
 		if (args.count < 1)
 		{
-			super.update();
+			(global.Layer_patch_hd_layer_original.update incontextof this)();
 			return;
 		}
 		if (args.count < 4)
@@ -2491,7 +2156,11 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		width = ((width < 0 ? -width : width) & 0x7fffffff) * (width < 0 ? -1 : 1);
 		height = ((height < 0 ? -height : height) & 0x7fffffff) * (height < 0 ? -1 : 1);
 @endif
-		super.update(left*widthScale, top*heightScale, width*widthScale, height*heightScale);
+		left *= this.widthScale;
+		top *= this.heightScale;
+		width *= this.widthScale;
+		height *= this.heightScale;
+		(global.Layer_patch_hd_layer_original.update incontextof this)(left, top, width, height);
 	}
 
 	/*

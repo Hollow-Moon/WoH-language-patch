@@ -112,9 +112,7 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 			left		= .left;
 			top			= .top;
 			opacity		= .opacity;
-			lastParams.clear();
 			lastParams.assign(.lastParams);
-			lastFontParams.clear();
 			lastFontParams.assign(.lastFontParams);
 			redraw();
 		}
@@ -136,10 +134,9 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 			this.setSizeToImageSize();
 			this.setPos(.left, .top);
 			opacity		= .opacity;
-			lastParams.clear();
 			lastParams.assign(.lastParams);
-			lastFontParams.clear();
 			lastFontParams.assign(.lastFontParams);
+			curFontParams.assign(.curFontParams);
 		}
 	}
 
@@ -449,11 +446,7 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 			superDrawText(vert, ch, color, aa);
 		drawed	= 1;
 		lastParams.assign(lastParamsTmp);
-		lastFontParams.clear();
-		with (font)
-		{
-			lastFontParams.push(.face, .angle, .bold, .italic, .height, ea);
-		}
+		lastFontParams.assign(this.curFontParams);
 	}
 
 	function drawTextWithShadow(ch, color, aa, shadowcolor, shadowoffsetx, shadowoffsety, vert, max, min)
@@ -484,11 +477,7 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 			superDrawText(vert, ch, color, aa, 255, shadowcolor, 0, shadowoffsetx, shadowoffsety);
 		drawed	= 2;
 		lastParams.assign(lastParamsTmp);
-		lastFontParams.clear();
-		with (font)
-		{
-			lastFontParams.push(.face, .angle, .bold, .italic, .height, ea);
-		}
+		lastFontParams.assign(this.curFontParams);
 	}
 
 	function drawTextWithEdge(ch, color, aa, edgeemphasis, edgecolor, edgeextent, vert, max, min)
@@ -519,11 +508,7 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 			superDrawText(vert, ch, color, aa, edgeemphasis, edgecolor, edgeextent, 0, 0);
 		drawed	= 3;
 		lastParams.assign(lastParamsTmp);
-		lastFontParams.clear();
-		with (font)
-		{
-			lastFontParams.push(.face, .angle, .bold, .italic, .height, ea);
-		}
+		lastFontParams.assign(this.curFontParams);
 	}
 
 	function getGraph(storage, key)

@@ -12,12 +12,9 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 
 	var	drawed = 0;		//	描画されたか/描画内容
 	var	lastParams = [];//	描画時のパラメータ(drawTextのみ)
-	var	lastParamsStr = "";
 	var	lastParamsTmp = [];
 	var lastFontParams = [];
-	var lastFontParamsStr = "";
 	var curFontParams = [];
-	var curFontParamsStr = "";
 
 	var	pitch;		//	前の文字との字間
 
@@ -94,10 +91,8 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 			.opacity	= opacity;
 			.lastParams	= [];
 			.lastParams.assign(lastParams);
-			.lastParamsStr = lastParamsStr;
 			.lastFontParams = [];
 			.lastFontParams.assign(lastFontParams);
-			.lastFontParamsStr = lastFontParamsStr;
 		}
 		return dic;
 	}
@@ -119,10 +114,8 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 			opacity		= .opacity;
 			lastParams.clear();
 			lastParams.assign(.lastParams);
-			lastParamsStr = .lastParamsStr;
 			lastFontParams.clear();
 			lastFontParams.assign(.lastFontParams);
-			lastFontParamsStr = .lastFontParamsStr;
 			redraw();
 		}
 	}
@@ -145,10 +138,8 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 			opacity		= .opacity;
 			lastParams.clear();
 			lastParams.assign(.lastParams);
-			lastParamsStr = .lastParamsStr;
 			lastFontParams.clear();
 			lastFontParams.assign(.lastFontParams);
-			lastFontParamsStr = .lastFontParamsStr;
 		}
 	}
 
@@ -180,14 +171,13 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 			{
 				this.curFontParams.clear();
 				this.curFontParams.push(.face, .angle, .bold, .italic, .height, ea);
-				this.curFontParamsStr = this.curFontParams.join("|");
 			}
 		}
 	}
 
 	function hasFontChanged()
 	{
-		return this.lastFontParamsStr !== this.curFontParamsStr;
+		return !global.struct_is_equal(this.lastFontParams, this.curFontParams);
 	}
 @if(0)
 	property left
@@ -272,9 +262,7 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 @endif
 		drawed	= 0;
 		this.lastParams.clear();
-		this.lastParamsStr = "";
 		this.lastFontParams.clear();
-		this.lastFontParamsStr = "";
 	}
 
 	function resizeByText(ch, vert, max, min)
@@ -436,13 +424,12 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 	function drawText(ch, color, aa, vert, max, min)
 	{
 		var lastParams = this.lastParams;
-		var lastParamsStr = this.lastParamsStr;
 		var lastParamsTmp = this.lastParamsTmp;
+		lastParamsTmp.clear();
+		lastParamsTmp.push(...);
 		if (this.drawed === 1 && lastParams.count === 6)
 		{
-			lastParamsTmp.clear();
-			lastParamsTmp.push(...);
-			if (!hasFontChanged() && lastParamsStr === lastParamsTmp.join("|"))
+			if (!hasFontChanged() && global.struct_is_equal(lastParams, lastParamsTmp))
 			{
 				return;
 			}
@@ -461,27 +448,23 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 		else
 			superDrawText(vert, ch, color, aa);
 		drawed	= 1;
-		lastParams.clear();
-		lastParams.push(...);
-		lastParamsStr = lastParams.join("|");
+		lastParams.assign(lastParamsTmp);
 		lastFontParams.clear();
 		with (font)
 		{
 			lastFontParams.push(.face, .angle, .bold, .italic, .height, ea);
 		}
-		lastFontParamsStr = lastFontParams.join("|");
 	}
 
 	function drawTextWithShadow(ch, color, aa, shadowcolor, shadowoffsetx, shadowoffsety, vert, max, min)
 	{
 		var lastParams = this.lastParams;
-		var lastParamsStr = this.lastParamsStr;
 		var lastParamsTmp = this.lastParamsTmp;
+		lastParamsTmp.clear();
+		lastParamsTmp.push(...);
 		if (this.drawed === 2 && lastParams.count === 9)
 		{
-			lastParamsTmp.clear();
-			lastParamsTmp.push(...);
-			if (!hasFontChanged() && lastParamsStr === lastParamsTmp.join("|"))
+			if (!hasFontChanged() && global.struct_is_equal(lastParams, lastParamsTmp))
 			{
 				return;
 			}
@@ -500,27 +483,23 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 		else
 			superDrawText(vert, ch, color, aa, 255, shadowcolor, 0, shadowoffsetx, shadowoffsety);
 		drawed	= 2;
-		lastParams.clear();
-		lastParams.push(...);
-		lastParamsStr = lastParams.join("|");
+		lastParams.assign(lastParamsTmp);
 		lastFontParams.clear();
 		with (font)
 		{
 			lastFontParams.push(.face, .angle, .bold, .italic, .height, ea);
 		}
-		lastFontParamsStr = lastFontParams.join("|");
 	}
 
 	function drawTextWithEdge(ch, color, aa, edgeemphasis, edgecolor, edgeextent, vert, max, min)
 	{
 		var lastParams = this.lastParams;
-		var lastParamsStr = this.lastParamsStr;
 		var lastParamsTmp = this.lastParamsTmp;
+		lastParamsTmp.clear();
+		lastParamsTmp.push(...);
 		if (this.drawed === 3 && lastParams.count === 9)
 		{
-			lastParamsTmp.clear();
-			lastParamsTmp.push(...);
-			if (lastParamsStr === lastParamsTmp.join("|") && !hasFontChanged())
+			if (!hasFontChanged() && global.struct_is_equal(lastParams, lastParamsTmp))
 			{
 				return;
 			}
@@ -539,15 +518,12 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 		else
 			superDrawText(vert, ch, color, aa, edgeemphasis, edgecolor, edgeextent, 0, 0);
 		drawed	= 3;
-		lastParams.clear();
-		lastParams.push(...);
-		lastParamsStr = lastParams.join("|");
+		lastParams.assign(lastParamsTmp);
 		lastFontParams.clear();
 		with (font)
 		{
 			lastFontParams.push(.face, .angle, .bold, .italic, .height, ea);
 		}
-		lastFontParamsStr = lastFontParams.join("|");
 	}
 
 	function getGraph(storage, key)
@@ -564,13 +540,12 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 	function drawGraph(storage, key, color=void, withresize=true)
 	{
 		var lastParams = this.lastParams;
-		var lastParamsStr = this.lastParamsStr;
 		var lastParamsTmp = this.lastParamsTmp;
+		lastParamsTmp.clear();
+		lastParamsTmp.push(storage, key, color, withresize);
 		if (this.drawed === 4 && lastParams.count === 4)
 		{
-			lastParamsTmp.clear();
-			lastParamsTmp.push(storage, key, color, withresize);
-			if (lastParamsStr === lastParamsTmp.join("|"))
+			if (global.struct_is_equal(lastParams, lastParamsTmp))
 			{
 				return;
 			}
@@ -598,23 +573,19 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 		}
 		operateRect(ea, ea, layer, 0, 0, iw, ih);
 		drawed	= 4;
-		lastParams.clear();
-		lastParams.push(storage, key, color, withresize);
-		lastParamsStr = lastParams.join("|");
+		lastParams.assign(lastParamsTmp);
 		lastFontParams.clear();
-		lastFontParamsStr = "";
 	}
 
 	function drawGraphWithShadow(storage, key, color, shadowcolor, shadowoffsetx, shadowoffsety)
 	{
 		var lastParams = this.lastParams;
-		var lastParamsStr = this.lastParamsStr;
 		var lastParamsTmp = this.lastParamsTmp;
+		lastParamsTmp.clear();
+		lastParamsTmp.push(storage, key, color, shadowcolor, shadowoffsetx, shadowoffsety);
 		if (this.drawed === 5 && lastParams.count === 6)
 		{
-			lastParamsTmp.clear();
-			lastParamsTmp.push(storage, key, color, shadowcolor, shadowoffsetx, shadowoffsety);
-			if (lastParamsStr === lastParamsTmp.join("|"))
+			if (global.struct_is_equal(lastParams, lastParamsTmp))
 			{
 				return;
 			}
@@ -635,23 +606,19 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 
 		drawGraph(layer, false);
 		drawed	= 5;
-		lastParams.clear();
-		lastParams.push(storage, key, color, shadowcolor, shadowoffsetx, shadowoffsety);
-		lastParamsStr = lastParams.join("|");
+		lastParams.assign(lastParamsTmp);
 		lastFontParams.clear();
-		lastFontParamsStr = "";
 	}
 
 	function drawGraphWithEdge(storage, key, color, edgeemphasis, edgecolor, edgeextent)
 	{
 		var lastParams = this.lastParams;
-		var lastParamsStr = this.lastParamsStr;
 		var lastParamsTmp = this.lastParamsTmp;
+		lastParamsTmp.clear();
+		lastParamsTmp.push(...);
 		if (this.drawed === 6 && lastParams.count === 6)
 		{
-			lastParamsTmp.clear();
-			lastParamsTmp.push(...);
-			if (lastParamsStr === lastParamsTmp.join("|"))
+			if (global.struct_is_equal(lastParams, lastParamsTmp))
 			{
 				return;
 			}
@@ -683,11 +650,8 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 
 		drawGraph(storage, key, color, false);
 		drawed	= 6;
-		lastParams.clear();
-		lastParams.push(...);
-		lastParamsStr = lastParams.join("|");
+		lastParams.assign(lastParamsTmp);
 		lastFontParams.clear();
-		lastFontParamsStr = "";
 	}
 
 	//	直前と同じ内容で描画

@@ -22,8 +22,8 @@ class BaseConductor_patch_conductor_override extends BaseConductor_patch_conduct
 }
 global.BaseConductor = BaseConductor_patch_conductor_override;
 
-global.patch_conductor_regex_1 = /\[line(?: len=)?([0-9]*?)]/g;
-global.patch_conductor_regex_2 = /\[block(?: len=)?([0-9]*?)]/g;
+global.patch_conductor_regex_1 = /\[line(?: len=)?([0-9]*?)\]/g;
+global.patch_conductor_regex_2 = /\[block(?: len=)?([0-9]*?)\]/g;
 global.patch_conductor_regex_3 = /(?:\[ruby char="(.*?)" text="(?:.*?)"]|\[ruby char=(.*?) text="(?:.*?)"]|\[ruby char="(.*?)" text=(?:.*?)]|\[ruby char=(.*?) text=(?:.*?)]|\[ruby text="(?:.*?)" char="(.*?)"]|\[ruby text="(?:.*?)" char=(.*?)]|\[ruby text=(?:.*?) char="(.*?)"]|\[ruby text=(?:.*?) char=(.*?)])/g;
 global.patch_conductor_regex_4 = /(?:\["[a-zA-Z0-9_-]*"]|\['[a-zA-Z0-9_-]*']|\[[0-9]*]|\[\+?\w+\.\w+]|\[[^]]*])/g;
 
@@ -50,17 +50,9 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 	var lines = [];
 	var cleaned_lines = [];
 
-	// Blech. TJS2 "String" class is /supposed/ to have a .repeat() method.
-	var dash_arrtmp = [];
-	function dashrepeat(count, character)
-	{
-		dash_arrtmp.count = count + 1;
-		return dash_arrtmp.join(character);
-	}
-
 	function replaceLine(text, reg, character=dash_character)
 	{
-		var results = reg.exec(text);
+		var results = reg.match(text);
 		while(results.count == 2) {
 			var count;
 			if (results[1] == "") {
@@ -68,8 +60,8 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 			} else {
 				count = results[1];
 			}
-			text = text.replace(reg, dashrepeat(count, character));
-			results = reg.exec(text);
+			text = text.replace(reg, character.repeat(count));
+			results = reg.match(text);
 		}
 		return text;
 	}

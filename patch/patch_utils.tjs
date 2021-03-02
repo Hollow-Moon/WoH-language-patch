@@ -1000,3 +1000,253 @@ global.struct_is_equal = function(s1, s2)
 	}
 	return true;
 };
+
+// Splits a string (without any delimiters)
+function split_string(s)
+{
+	var split_func = function(matcharr)
+	{
+		this.add(matcharr[0]);
+	};
+	var arr = [];
+	s.replace(/(?s)./g, (split_func incontextof arr));
+	return arr;
+}
+
+// Equivalent to JS Array.prototype.slice
+function slice_array(in_arr, begin, end)
+{
+	var arr = [];
+	for (var i = begin; i < end; i += 1)
+	{
+		arr.add(in_arr[i]);
+	}
+	return arr;
+}
+
+
+function from_codepoint_array(arr)
+{
+	for (var i = 0; i < arr.count; i += 1)
+	{
+		arr[i] = $arr[i];
+	}
+}
+
+function to_codepoint_array(arr)
+{
+	for (var i = 0; i < arr.count; i += 1)
+	{
+		arr[i] = #arr[i];
+	}
+}
+
+// Largely based on the following: http://www.arabic-keyboard.org/photoshop-arabic/
+global.LINK_MAP = ['\xFE80', '\xFE81', '\xFE83', '\xFE85', '\xFE87', '\xFE89', '\xFE8D', '\xFE8F', '\xFE93', '\xFE95', '\xFE99', '\xFE9D', '\xFEA1', '\xFEA5', '\xFEA9', '\xFEAB', '\xFEAD', '\xFEAF', '\xFEB1', '\xFEB5', '\xFEB9', '\xFEBD', '\xFEC1', '\xFEC5', '\xFEC9', '\xFECD', '\x063B', '\x063C', '\x063D', '\x063E', '\x063F', '\x0640', '\xFED1', '\xFED5', '\xFED9', '\xFEDD', '\xFEE1', '\xFEE5', '\xFEE9', '\xFEED', '\xFEEF', '\xFEF1'];
+global.UNLINK_MAP = ['\x0621', '\x0622', '\x0622', '\x0623', '\x0623', '\x0624', '\x0624', '\x0625', '\x0625', '\x0626', '\x0626', '\x0626', '\x0626', '\x0627', '\x0627', '\x0628', '\x0628', '\x0628', '\x0628', '\x0629', '\x0629', '\x062A', '\x062A', '\x062A', '\x062A', '\x062B', '\x062B', '\x062B', '\x062B', '\x062C', '\x062C', '\x062C', '\x062C', '\x062D', '\x062D', '\x062D', '\x062D', '\x062E', '\x062E', '\x062E', '\x062E', '\x062F', '\x062F', '\x0630', '\x0630', '\x0631', '\x0631', '\x0632', '\x0632', '\x0633', '\x0633', '\x0633', '\x0633', '\x0634', '\x0634', '\x0634', '\x0634', '\x0635', '\x0635', '\x0635', '\x0635', '\x0636', '\x0636', '\x0636', '\x0636', '\x0637', '\x0637', '\x0637', '\x0637', '\x0638', '\x0638', '\x0638', '\x0638', '\x0639', '\x0639', '\x0639', '\x0639', '\x063A', '\x063A', '\x063A', '\x063A', '\x0641', '\x0641', '\x0641', '\x0641', '\x0642', '\x0642', '\x0642', '\x0642', '\x0643', '\x0643', '\x0643', '\x0643', '\x0644', '\x0644', '\x0644', '\x0644', '\x0645', '\x0645', '\x0645', '\x0645', '\x0646', '\x0646', '\x0646', '\x0646', '\x0647', '\x0647', '\x0647', '\x0647', '\x0648', '\x0648', '\x0649', '\x0649', '\x064A', '\x064A', '\x064A', '\x064A'];
+global.LAMALEF_LINK_MAP = ['\xFEF5', '\xFEF7', '\x0624', '\xFEF9', '\x0626', '\xFEFB'];
+global.LAMALEF_UNLINK_MAP = ['\x0622', '\x0622', '\x0623', '\x0623', '\x0625', '\x0625', '\x0627', '\x0627'];
+global.ALEF_CHARS = ['\x0622', '\x0623', '\x0625', '\x0627'];
+global.CHAR_LINK_TYPE = [0 /* NONE */, 1 /* BEFORE */, 1 /* BEFORE */, 1 /* BEFORE */, 1 /* BEFORE */, 2 /* DUAL */, 1 /* BEFORE */, 2 /* DUAL */, 1 /* BEFORE */, 2 /* DUAL */, 2 /* DUAL */, 2 /* DUAL */, 2 /* DUAL */, 2 /* DUAL */, 1 /* BEFORE */, 1 /* BEFORE */, 1 /* BEFORE */, 1 /* BEFORE */, 2 /* DUAL */, 2 /* DUAL */, 2 /* DUAL */, 2 /* DUAL */, 2 /* DUAL */, 2 /* DUAL */, 2 /* DUAL */, 2 /* DUAL */, 0 /* NONE */, 0 /* NONE */, 0 /* NONE */, 0 /* NONE */, 0 /* NONE */, 3 /* CAUSING */, 2 /* DUAL */, 2 /* DUAL */, 2 /* DUAL */, 2 /* DUAL */, 2 /* DUAL */, 2 /* DUAL */, 2 /* DUAL */, 1 /* BEFORE */, 2 /* DUAL */, 2 /* DUAL */];
+
+{
+	// Convert the arrays unicode to codepoint.
+	to_codepoint_array(LINK_MAP);
+	to_codepoint_array(UNLINK_MAP);
+	to_codepoint_array(LAMALEF_LINK_MAP);
+	to_codepoint_array(LAMALEF_UNLINK_MAP);
+	to_codepoint_array(ALEF_CHARS);
+}
+
+function shape_arabic_is_alef_char(c)
+{
+	return ALEF_CHARS.find(c) !== -1;
+}
+
+function shape_arabic_is_lam_char(c)
+{
+	return c == #'\x0644' /* LAM_CHAR */;
+}
+
+function shape_arabic_is_lam_alef_char(c)
+{
+	return c >= #'\xFEF5' && c <= #'\xFEFC';
+}
+
+function shape_arabic_is_transparent_char(c)
+{
+	return c >= #'\x064B' && c <= #'\x065E';
+}
+
+function shape_arabic_in_link_range(c)
+{
+	return c >= #'\x0621' /* LINK_MAP_RANGE[0] */ && c <= #'\x064A' /* LINK_MAP_RANGE[1] */;
+}
+
+function shape_arabic_in_unlink_range(c)
+{
+	return c >= #'\xFE80' /* UNLINK_MAP_RANGE[0] */ && c <= #'\xFEF4' /* UNLINK_MAP_RANGE[1] */ || shape_arabic_is_lam_alef_char(c);
+}
+
+function shape_arabic_is_linkable_before(c)
+{
+	if (!shape_arabic_in_link_range(c))
+	{
+		return false;
+	}
+	var placement = CHAR_LINK_TYPE[c - #'\x0621' /* LINK_MAP_RANGE[0] */];
+	return placement == 1 /* BEFORE */ || placement == 2 /* DUAL */ || placement == 3 /* CAUSING */;
+}
+
+function shape_arabic_is_linkable_after(c)
+{
+	if (!shape_arabic_in_link_range(c))
+	{
+		return false;
+	}
+	var placement = CHAR_LINK_TYPE[c - #'\x0621' /* LINK_MAP_RANGE[0] */];
+	return placement == 2 /* DUAL */ || placement == 3 /* CAUSING */;
+}
+
+function shape_arabic_get_char_link_type(c)
+{
+	if (!shape_arabic_in_link_range(c))
+	{
+		return 0 /* NONE */;
+	}
+	return CHAR_LINK_TYPE[c - #'\x0621' /* LINK_MAP_RANGE[0] */];
+}
+
+function shape_arabic_link_char(c, type)
+{
+	if (!shape_arabic_in_link_range(c))
+	{
+		return c;
+	}
+	var indexLookupKey = c - #'\x0621' /* LINK_MAP_RANGE[0] */;
+	switch(CHAR_LINK_TYPE[indexLookupKey])
+	{
+		case 1: /* BEFORE */
+			return LINK_MAP[indexLookupKey] + type % 2;
+		case 2: /* DUAL */
+			return LINK_MAP[indexLookupKey] + type;
+		case 0: /* NONE */
+			return LINK_MAP[indexLookupKey];
+		case 3: /* CAUSING */
+		default:
+			return c;
+	}
+}
+
+function shape_arabic_link_lam_alef(c, type)
+{
+	if (!shape_arabic_is_alef_char(c))
+	{
+		return c;
+	}
+	return LAMALEF_LINK_MAP[c - #'\x0622' /* LAMALEF_LINK_MAP_RANGE[0] */] + type % 2;
+}
+
+function shape_arabic_unlink_char(c)
+{
+	if (!shape_arabic_in_unlink_range(c))
+	{
+		return c;
+	}
+	return UNLINK_MAP[c - #'\xFE80' /* UNLINK_MAP_RANGE[0] */];
+}
+
+function shape_arabic_unlink_lam_alef(c)
+{
+	if (!shape_arabic_is_lam_alef_char(c))
+	{
+		return c;
+	}
+	return LAMALEF_UNLINK_MAP[c - #'\xFEF5' /* LAMALEF_UNLINK_MAP_RANGE[0] */];
+}
+
+function internal_shape_arabic(in_split_text)
+{
+	var type1;
+	var type2 = 0 /* ISOLATED */;
+	var pos = 0;
+	for (var i = 0; i < in_split_text.length; i++)
+	{
+		var c = in_split_text[i];
+		if (shape_arabic_get_char_link_type(c) == 3 /* CAUSING */)
+		{
+			in_split_text[i - pos] = c;
+			type2 = 3 /* MEDIAL */;
+			continue;
+		}
+		var j = i + 1;
+		for (; j < in_split_text.length - 1 && shape_arabic_is_transparent_char(in_split_text[j]);)
+		{
+			j++;
+		}
+		type1 = type2 == 2 /* INITIAL */ || type2 == 3 /* MEDIAL */ ? 1 /* FINAL */ : 0 /* ISOLATED */;
+		if (j < in_split_text.length)
+		{
+			if (shape_arabic_is_lam_char(c) && shape_arabic_is_alef_char(in_split_text[j]))
+			{
+				in_split_text[i - pos] = shape_arabic_link_lam_alef(in_split_text[j], type1);
+				type2 = type1;
+				pos += (j - i);
+				i = j;
+				continue;
+			}
+			if (shape_arabic_is_linkable_after(c) && shape_arabic_is_linkable_before(in_split_text[j]))
+			{
+				type1 |= 2 /* INITIAL */;
+			}
+		}
+		in_split_text[i - pos] = shape_arabic_link_char(c, type1);
+		type2 = type1;
+	}
+	return pos;
+}
+
+function shape_arabic(text)
+{
+	text += "";
+	if (text.length == 0)
+	{
+		return text;
+	}
+	var in_split_text = split_string(text);
+	to_codepoint_array(in_split_text);
+	var pos = internal_shape_arabic(in_split_text);
+	from_codepoint_array(in_split_text);
+	return slice_array(in_split_text, 0, in_split_text.length - pos).join("");
+}
+
+function internal_unshape_arabic(in_split_text, out_split_text)
+{
+	for (var i = 0; i < in_split_text.length; i++)
+	{
+		var isBground = in_split_text[i];
+		if (shape_arabic_is_lam_alef_char(isBground))
+		{
+			out_split_text.add(#'\x0644' /* LAM_CHAR */);
+			out_split_text.add(shape_arabic_unlink_lam_alef(isBground));
+		}
+		else
+		{
+			out_split_text.add(shape_arabic_unlink_char(isBground));
+		}
+	}
+}
+
+function unshape_arabic(text)
+{
+	text += "";
+	if (text.length == 0)
+	{
+		return text;
+	}
+	var in_split_text = text.toCharArray();
+	var out_split_text = [];
+	var end_pos = internal_unshape_arabic(in_split_text, out_split_text);
+	return out_split_text.join("");
+}
+

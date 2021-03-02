@@ -1578,8 +1578,8 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		x = ((x < 0 ? -x : x) & 0x7fffffff) * (x < 0 ? -1 : 1);
 		y = ((y < 0 ? -y : y) & 0x7fffffff) * (y < 0 ? -1 : 1);
 @endif
-		x *= this.widthScale;
-		y *= this.heightScale;
+		x *= widthScale;
+		y *= heightScale;
 		return (global.Layer_patch_hd_layer_original.getMainPixel incontextof this)(x, y);
 	}
 
@@ -1590,8 +1590,8 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		y = ((y < 0 ? -y : y) & 0x7fffffff) * (y < 0 ? -1 : 1);
 		color &= 0xffffffff;
 @endif
-		x *= this.widthScale;
-		y *= this.heightScale;
+		x *= widthScale;
+		y *= heightScale;
 		(global.Layer_patch_hd_layer_original.setMainPixel incontextof this)(x, y, color);
 	}
 
@@ -1601,8 +1601,8 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		x = ((x < 0 ? -x : x) & 0x7fffffff) * (x < 0 ? -1 : 1);
 		y = ((y < 0 ? -y : y) & 0x7fffffff) * (y < 0 ? -1 : 1);
 @endif
-		x *= this.widthScale;
-		y *= this.heightScale;
+		x *= widthScale;
+		y *= heightScale;
 		return (global.Layer_patch_hd_layer_original.getMaskPixel incontextof this)(x, y);
 	}
 
@@ -1613,8 +1613,8 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		y = ((y < 0 ? -y : y) & 0x7fffffff) * (y < 0 ? -1 : 1);
 		value &= 0xffffffff;
 @endif
-		x *= this.widthScale;
-		y *= this.heightScale;
+		x *= widthScale;
+		y *= heightScale;
 		(global.Layer_patch_hd_layer_original.setMaskPixel incontextof this)(x, y, value);
 	}
 
@@ -1624,8 +1624,8 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		x = ((x < 0 ? -x : x) & 0x7fffffff) * (x < 0 ? -1 : 1);
 		y = ((y < 0 ? -y : y) & 0x7fffffff) * (y < 0 ? -1 : 1);
 @endif
-		x *= this.widthScale;
-		y *= this.heightScale;
+		x *= widthScale;
+		y *= heightScale;
 		return (global.Layer_patch_hd_layer_original.getProvincePixel incontextof this)(x, y);
 	}
 
@@ -1636,8 +1636,8 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		y = ((y < 0 ? -y : y) & 0x7fffffff) * (y < 0 ? -1 : 1);
 		value &= 0xffffffff;
 @endif
-		x *= this.widthScale;
-		y *= this.heightScale;
+		x *= widthScale;
+		y *= heightScale;
 		(global.Layer_patch_hd_layer_original.setProvincePixel incontextof this)(x, y, value);
 	}
 
@@ -1647,8 +1647,8 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		x = ((x < 0 ? -x : x) & 0x7fffffff) * (x < 0 ? -1 : 1);
 		y = ((y < 0 ? -y : y) & 0x7fffffff) * (y < 0 ? -1 : 1);
 @endif
-		x *= this.widthScale;
-		y *= this.heightScale;
+		x *= widthScale;
+		y *= heightScale;
 		return (global.Layer_patch_hd_layer_original.getLayerAt incontextof this)(x, y, exclude_self, get_disabled);
 	}
 
@@ -1658,15 +1658,13 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		width = ((width < 0 ? -width : width) & 0x7fffffff) * (width < 0 ? -1 : 1);
 		height = ((height < 0 ? -height : height) & 0x7fffffff) * (height < 0 ? -1 : 1);
 @endif
-		width *= this.widthScale;
-		height *= this.heightScale;
 
 		updateBg(width, height, fromloadImages);
 
 		originalWidth = transformDiscrete(width, widthScale);
 		originalHeight = transformDiscrete(height, heightScale);
 
-		(global.Layer_patch_hd_layer_original.setSize incontextof this)(width, height);
+		(global.Layer_patch_hd_layer_original.setSize incontextof this)(width * widthScale, height * heightScale);
 
 		updateImageSize();
 	}
@@ -1689,10 +1687,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		originalImageHeight = transformDiscrete(imageHeight, heightScale);
 		internalSetImageSize(originalImageWidth, originalImageHeight);
 
-		imageWidth *= this.widthScale;
-		imageHeight *= this.heightScale;
-
-		(global.Layer_patch_hd_layer_original.setImageSize incontextof this)(imageWidth, imageHeight);
+		(global.Layer_patch_hd_layer_original.setImageSize incontextof this)(imageWidth * widthScale, imageHeight * heightScale);
 	}
 
 	function setImageSize()
@@ -1796,8 +1791,6 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 @endif
 		originalLeft = left;
 		originalTop = top;
-		left = transformLeft(left);
-		top = transformTop(top);
 
 		if (width !== void)
 		{
@@ -1816,7 +1809,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 			height = height * heightScale;
 		}
 
-		(global.Layer_patch_hd_layer_original.setPos incontextof this)(left, top, width, height);
+		(global.Layer_patch_hd_layer_original.setPos incontextof this)(transformLeft(left), transformTop(top), width, height);
 
 		if (width !== void || height !== void)
 		{
@@ -1837,9 +1830,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 @endif
 		originalImageLeft = left;
 		originalImageTop = top;
-		left *= this.widthScale;
-		top *= this.heightScale;
-		(global.Layer_patch_hd_layer_original.setImagePos incontextof this)(left, top);
+		(global.Layer_patch_hd_layer_original.setImagePos incontextof this)(left*widthScale, top*heightScale);
 	}
 
 	function setImagePos()
@@ -1855,9 +1846,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 @endif
 		var originalCursorX = transformDiscrete(cursorX, cursorXScale);
 		var originalCursorY = transformDiscrete(cursorY, cursorYScale);
-		cursorX = transformCursorX(originalCursorX);
-		cursorY = transformCursorY(originalCursorY);
-		(global.Layer_patch_hd_layer_original.setCursorPos incontextof this)(cursorX, cursorY);
+		(global.Layer_patch_hd_layer_original.setCursorPos incontextof this)(transformCursorX(originalCursorX), transformCursorY(originalCursorY));
 	}
 
 	function updateBgFromSource(src, swidth, sheight)
@@ -1926,11 +1915,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		originalClipWidth = transformDiscrete(clipWidth, widthScale);
 		originalClipHeight = transformDiscrete(clipHeight, heightScale);
 
-		clipLeft *= this.widthScale;
-		clipTop *= this.heightScale;
-		clipWidth *= this.widthScale;
-		clipHeight *= this.heightScale;
-		(global.Layer_patch_hd_layer_original.setClip incontextof this)(clipLeft, clipTop, clipWidth, clipHeight);
+		(global.Layer_patch_hd_layer_original.setClip incontextof this)(clipLeft*widthScale, clipTop*heightScale, clipWidth*widthScale, clipHeight*heightScale);
 	}
 
 	function setClip()
@@ -1946,9 +1931,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 @endif
 		originalAttentionLeft = transformDiscrete(left, widthScale);
 		originalAttentionTop = transformDiscrete(top, heightScale);
-		left *= this.widthScale;
-		top *= this.heightScale;
-		(global.Layer_patch_hd_layer_original.setAttentionPos incontextof this)(left, top);
+		(global.Layer_patch_hd_layer_original.setAttentionPos incontextof this)(left*widthScale, top*heightScale);
 	}
 
 	function setAttentionPos()
@@ -2156,11 +2139,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		width = ((width < 0 ? -width : width) & 0x7fffffff) * (width < 0 ? -1 : 1);
 		height = ((height < 0 ? -height : height) & 0x7fffffff) * (height < 0 ? -1 : 1);
 @endif
-		left *= this.widthScale;
-		top *= this.heightScale;
-		width *= this.widthScale;
-		height *= this.heightScale;
-		(global.Layer_patch_hd_layer_original.update incontextof this)(left, top, width, height);
+		(global.Layer_patch_hd_layer_original.update incontextof this)(left*widthScale, top*heightScale, width*widthScale, height*heightScale);
 	}
 
 	/*
@@ -2168,6 +2147,655 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 	{
 		super.redraw(left*widthScale, top*heightScale);
 	}*/
+
+	// Image functions.
+	function operateRect(left, top, src, sleft, stop, swidth, sheight, mode, opacity)
+	{
+@if(!SCALE_USING_FLOATING_POINT)
+		left = ((left < 0 ? -left : left) & 0x7fffffff) * (left < 0 ? -1 : 1);
+		top = ((top < 0 ? -top : top) & 0x7fffffff) * (top < 0 ? -1 : 1);
+		sleft = ((sleft < 0 ? -sleft : sleft) & 0x7fffffff) * (sleft < 0 ? -1 : 1);
+		stop = ((stop < 0 ? -stop : stop) & 0x7fffffff) * (stop < 0 ? -1 : 1);
+		swidth = ((swidth < 0 ? -swidth : swidth) & 0x7fffffff) * (swidth < 0 ? -1 : 1);
+		sheight = ((sheight < 0 ? -sheight : sheight) & 0x7fffffff) * (sheight < 0 ? -1 : 1);
+		if (mode !== void)
+		{
+			mode = ((mode < 0 ? -mode : mode) & 0x7fffffff) * (mode < 0 ? -1 : 1);
+		}
+		if (opacity !== void)
+		{
+			opacity = ((opacity < 0 ? -opacity : opacity) & 0x7fffffff) * (opacity < 0 ? -1 : 1);
+		}
+@endif
+		left = src.transformLeft(left, this);
+		top = src.transformTop(top, this);
+		sleft *= src.widthScale;
+		stop *= src.heightScale;
+		swidth *= src.widthScale;
+		sheight *= src.heightScale;
+		var ie;
+		try
+		{
+			this.absoluteMode += 1;
+			src.absoluteMode += 1;
+			(global.Layer_patch_hd_layer_original.operateRect incontextof this)(left, top, src, sleft, stop, swidth, sheight, mode, opacity);
+		}
+		catch (e)
+		{
+			ie = e;
+		}
+		this.absoluteMode -= 1;
+		src.absoluteMode -= 1;
+		if (ie !== void)
+		{
+			throw ie;
+		}
+	}
+	function copyRect(left, top, src, sleft, stop, swidth, sheight)
+	{
+@if(!SCALE_USING_FLOATING_POINT)
+		left = ((left < 0 ? -left : left) & 0x7fffffff) * (left < 0 ? -1 : 1);
+		top = ((top < 0 ? -top : top) & 0x7fffffff) * (top < 0 ? -1 : 1);
+		sleft = ((sleft < 0 ? -sleft : sleft) & 0x7fffffff) * (sleft < 0 ? -1 : 1);
+		stop = ((stop < 0 ? -stop : stop) & 0x7fffffff) * (stop < 0 ? -1 : 1);
+		swidth = ((swidth < 0 ? -swidth : swidth) & 0x7fffffff) * (swidth < 0 ? -1 : 1);
+		sheight = ((sheight < 0 ? -sheight : sheight) & 0x7fffffff) * (sheight < 0 ? -1 : 1);
+@endif
+		this.updateBgFromSource(src, swidth, sheight);
+		left = src.transformLeft(left, this);
+		top = src.transformTop(top, this);
+		sleft *= src.widthScale;
+		stop *= src.heightScale;
+		swidth *= src.widthScale;
+		sheight *= src.heightScale;
+		var ie;
+		try
+		{
+			this.absoluteMode += 1;
+			src.absoluteMode += 1;
+			(global.Layer_patch_hd_layer_original.copyRect incontextof this)(left, top, src, sleft, stop, swidth, sheight);
+		}
+		catch (e)
+		{
+			ie = e;
+		}
+		this.absoluteMode -= 1;
+		src.absoluteMode -= 1;
+		if (ie !== void)
+		{
+			throw ie;
+		}
+	}
+	function copy9Patch(src)
+	{
+		var ret;
+		var ie;
+		try
+		{
+			this.absoluteMode += 1;
+			src.absoluteMode += 1;
+			ret = (global.Layer_patch_hd_layer_original.copy9Patch incontextof this)(src);
+		}
+		catch (e)
+		{
+			ie = e;
+		}
+		this.absoluteMode -= 1;
+		src.absoluteMode -= 1;
+		if (ie !== void)
+		{
+			throw ie;
+		}
+		if (ret !== void)
+		{
+			ret.left *= this.widthScale;
+			ret.top *= this.heightScale;
+			ret.right *= this.widthScale;
+			ret.bottom *= this.heightScale;
+		}
+		return ret;
+	}
+	function flipLR()
+	{
+		var ie;
+		try
+		{
+			this.absoluteMode += 1;
+			(global.Layer_patch_hd_layer_original.flipLR incontextof this)(...);
+		}
+		catch (e)
+		{
+			ie = e;
+		}
+		this.absoluteMode -= 1;
+		if (ie !== void)
+		{
+			throw ie;
+		}
+	}
+	function flipUD()
+	{
+		var ie;
+		try
+		{
+			this.absoluteMode += 1;
+			(global.Layer_patch_hd_layer_original.flipUD incontextof this)(...);
+		}
+		catch (e)
+		{
+			ie = e;
+		}
+		this.absoluteMode -= 1;
+		if (ie !== void)
+		{
+			throw ie;
+		}
+	}
+	function adjustGamma()
+	{
+		var ie;
+		try
+		{
+			this.absoluteMode += 1;
+			(global.Layer_patch_hd_layer_original.adjustGamma incontextof this)(...);
+		}
+		catch (e)
+		{
+			ie = e;
+		}
+		this.absoluteMode -= 1;
+		if (ie !== void)
+		{
+			throw ie;
+		}
+	}
+	function doGrayScale()
+	{
+		var ie;
+		try
+		{
+			this.absoluteMode += 1;
+			(global.Layer_patch_hd_layer_original.doGrayScale incontextof this)(...);
+		}
+		catch (e)
+		{
+			ie = e;
+		}
+		this.absoluteMode -= 1;
+		if (ie !== void)
+		{
+			throw ie;
+		}
+	}
+	function operateStretch(left, top, width, height, src, sleft, stop, swidth, sheight, mode, opacity, type, option)
+	{
+@if(!SCALE_USING_FLOATING_POINT)
+		left = ((left < 0 ? -left : left) & 0x7fffffff) * (left < 0 ? -1 : 1);
+		top = ((top < 0 ? -top : top) & 0x7fffffff) * (top < 0 ? -1 : 1);
+		width = ((width < 0 ? -width : width) & 0x7fffffff) * (width < 0 ? -1 : 1);
+		height = ((height < 0 ? -height : height) & 0x7fffffff) * (height < 0 ? -1 : 1);
+		var sleft_orig = sleft;
+		var stop_orig = stop;
+		var swidth_orig = swidth;
+		var sheight_orig = sheight;
+		sleft = ((sleft < 0 ? -sleft : sleft) & 0x7fffffff) * (sleft < 0 ? -1 : 1);
+		stop = ((stop < 0 ? -stop : stop) & 0x7fffffff) * (stop < 0 ? -1 : 1);
+		swidth = ((swidth < 0 ? -swidth : swidth) & 0x7fffffff) * (swidth < 0 ? -1 : 1);
+		sheight = ((sheight < 0 ? -sheight : sheight) & 0x7fffffff) * (sheight < 0 ? -1 : 1);
+		if (mode !== void)
+		{
+			mode = ((mode < 0 ? -mode : mode) & 0x7fffffff) * (mode < 0 ? -1 : 1);
+		}
+		if (opacity !== void)
+		{
+			opacity = ((opacity < 0 ? -opacity : opacity) & 0x7fffffff) * (opacity < 0 ? -1 : 1);
+		}
+		if (type !== void)
+		{
+			type = ((type < 0 ? -type : type) & 0x7fffffff) * (type < 0 ? -1 : 1);
+		}
+		if (option !== void)
+		{
+			option *= 1.0;
+		}
+@endif
+		left = src.transformLeft(left, this);
+		top = src.transformTop(top, this);
+		width *= this.widthScale;
+		height *= this.heightScale;
+		sleft *= src.widthScale;
+		stop *= src.heightScale;
+		swidth *= src.widthScale;
+		sheight *= src.heightScale;
+@if(SCALE_USING_FLOATING_POINT)
+		// XXX: workaround for transparent YesNoLayer
+		if (sleft > 0 && sleft < 1)
+		{
+			sleft = 1;
+		}
+		if (stop > 0 && stop < 1)
+		{
+			stop = 1;
+		}
+		if (swidth > 0 && swidth < 1)
+		{
+			swidth = 1;
+		}
+		if (sheight > 0 && sheight < 1)
+		{
+			sheight = 1;
+		}
+@endif
+		var ie;
+		try
+		{
+			this.absoluteMode += 1;
+			src.absoluteMode += 1;
+			(global.Layer_patch_hd_layer_original.operateStretch incontextof this)(left, top, width, height, src, sleft, stop, swidth, sheight, mode, opacity, type, option);
+		}
+		catch (e)
+		{
+			ie = e;
+		}
+		this.absoluteMode -= 1;
+		src.absoluteMode -= 1;
+		if (ie !== void)
+		{
+			throw ie;
+		}
+	}
+	function stretchCopy(left, top, width, height, src, sleft, stop, swidth, sheight, type, option)
+	{
+@if(!SCALE_USING_FLOATING_POINT)
+		left = ((left < 0 ? -left : left) & 0x7fffffff) * (left < 0 ? -1 : 1);
+		top = ((top < 0 ? -top : top) & 0x7fffffff) * (top < 0 ? -1 : 1);
+		width = ((width < 0 ? -width : width) & 0x7fffffff) * (width < 0 ? -1 : 1);
+		height = ((height < 0 ? -height : height) & 0x7fffffff) * (height < 0 ? -1 : 1);
+		sleft = ((sleft < 0 ? -sleft : sleft) & 0x7fffffff) * (sleft < 0 ? -1 : 1);
+		stop = ((stop < 0 ? -stop : stop) & 0x7fffffff) * (stop < 0 ? -1 : 1);
+		swidth = ((swidth < 0 ? -swidth : swidth) & 0x7fffffff) * (swidth < 0 ? -1 : 1);
+		sheight = ((sheight < 0 ? -sheight : sheight) & 0x7fffffff) * (sheight < 0 ? -1 : 1);
+		if (type !== void)
+		{
+			type = ((type < 0 ? -type : type) & 0x7fffffff) * (type < 0 ? -1 : 1);
+		}
+		if (option !== void)
+		{
+			option *= 1.0;
+		}
+@endif
+		left = src.transformLeft(left, this);
+		top = src.transformTop(top, this);
+		width *= this.widthScale;
+		height *= this.heightScale;
+		sleft = this.transformSLeft(src, sleft, swidth);
+		stop *= src.heightScale;
+		swidth *= src.widthScale;
+		sheight *= src.heightScale;
+		var ie;
+		try
+		{
+			this.absoluteMode += 1;
+			src.absoluteMode += 1;
+			(global.Layer_patch_hd_layer_original.stretchCopy incontextof this)(left, top, width, height, src, sleft, stop, swidth, sheight, type, option);
+		}
+		catch (e)
+		{
+			ie = e;
+		}
+		this.absoluteMode -= 1;
+		src.absoluteMode -= 1;
+		if (ie !== void)
+		{
+			throw ie;
+		}
+	}
+	function piledCopy(left, top, src, sleft, stop, swidth, sheight)
+	{
+@if(!SCALE_USING_FLOATING_POINT)
+		left = ((left < 0 ? -left : left) & 0x7fffffff) * (left < 0 ? -1 : 1);
+		top = ((top < 0 ? -top : top) & 0x7fffffff) * (top < 0 ? -1 : 1);
+		sleft = ((sleft < 0 ? -sleft : sleft) & 0x7fffffff) * (sleft < 0 ? -1 : 1);
+		stop = ((stop < 0 ? -stop : stop) & 0x7fffffff) * (stop < 0 ? -1 : 1);
+		swidth = ((swidth < 0 ? -swidth : swidth) & 0x7fffffff) * (swidth < 0 ? -1 : 1);
+		sheight = ((sheight < 0 ? -sheight : sheight) & 0x7fffffff) * (sheight < 0 ? -1 : 1);
+@endif
+		this.updateBgFromSource(src, swidth, sheight);
+		left = src.transformLeft(left, this);
+		top = src.transformTop(top, this);
+		sleft *= src.widthScale;
+		stop *= src.heightScale;
+		swidth *= src.widthScale;
+		sheight *= src.heightScale;
+		var ie;
+		try
+		{
+			this.absoluteMode += 1;
+			src.absoluteMode += 1;
+			(global.Layer_patch_hd_layer_original.piledCopy incontextof this)(left, top, src, sleft, stop, swidth, sheight);
+		}
+		catch (e)
+		{
+			ie = e;
+		}
+		this.absoluteMode -= 1;
+		src.absoluteMode -= 1;
+		if (ie !== void)
+		{
+			throw ie;
+		}
+	}
+	function affineCopy(src, sx, sy, sw, sh, affine, a, b, c, d, tx, ty, type, clear)
+	{
+@if(!SCALE_USING_FLOATING_POINT)
+		sx = ((sx < 0 ? -sx : sx) & 0x7fffffff) * (sx < 0 ? -1 : 1);
+		sy = ((sy < 0 ? -sy : sy) & 0x7fffffff) * (sy < 0 ? -1 : 1);
+		sw = ((sw < 0 ? -sw : sw) & 0x7fffffff) * (sw < 0 ? -1 : 1);
+		sh = ((sh < 0 ? -sh : sh) & 0x7fffffff) * (sh < 0 ? -1 : 1);
+		affine = !!affine;
+		a *= 1.0;
+		b *= 1.0;
+		c *= 1.0;
+		d *= 1.0;
+		tx *= 1.0;
+		ty *= 1.0;
+		if (type !== void)
+		{
+			type = ((type < 0 ? -type : type) & 0x7fffffff) * (type < 0 ? -1 : 1);
+		}
+		if (clear !== void)
+		{
+			clear = ((clear < 0 ? -clear : clear) & 0x7fffffff) * (clear < 0 ? -1 : 1);
+		}
+@endif
+		sx *= src.widthScale;
+		sy *= src.heightScale;
+		sw *= src.widthScale;
+		sh *= src.heightScale;
+		if (!affine)
+		{
+			a *= this.widthScale;
+			b *= this.heightScale;
+			c *= this.widthScale;
+			d *= this.heightScale;
+		}
+		tx *= this.widthScale;
+		ty *= this.heightScale;
+		var ie;
+		try
+		{
+			this.absoluteMode += 1;
+			src.absoluteMode += 1;
+			(global.Layer_patch_hd_layer_original.affineCopy incontextof this)(src, sx, sy, sw, sh, affine, a, b, c, d, tx, ty, type, clear);
+		}
+		catch (e)
+		{
+			ie = e;
+		}
+		this.absoluteMode -= 1;
+		src.absoluteMode -= 1;
+		if (ie !== void)
+		{
+			throw ie;
+		}
+	}
+	function operateAffine(src, sx, sy, sw, sh, affine, a, b, c, d, tx, ty, mode, opa, type)
+	{
+@if(!SCALE_USING_FLOATING_POINT)
+		sx = ((sx < 0 ? -sx : sx) & 0x7fffffff) * (sx < 0 ? -1 : 1);
+		sy = ((sy < 0 ? -sy : sy) & 0x7fffffff) * (sy < 0 ? -1 : 1);
+		sw = ((sw < 0 ? -sw : sw) & 0x7fffffff) * (sw < 0 ? -1 : 1);
+		sh = ((sh < 0 ? -sh : sh) & 0x7fffffff) * (sh < 0 ? -1 : 1);
+		affine = !!affine;
+		a *= 1.0;
+		b *= 1.0;
+		c *= 1.0;
+		d *= 1.0;
+		tx *= 1.0;
+		ty *= 1.0;
+		if (mode !== void)
+		{
+			mode = ((mode < 0 ? -mode : mode) & 0x7fffffff) * (mode < 0 ? -1 : 1);
+		}
+		if (opa !== void)
+		{
+			opa = ((opa < 0 ? -opa : opa) & 0x7fffffff) * (opa < 0 ? -1 : 1);
+		}
+		if (type !== void)
+		{
+			type = ((type < 0 ? -type : type) & 0x7fffffff) * (type < 0 ? -1 : 1);
+		}
+@endif
+		sx *= src.widthScale;
+		sy *= src.heightScale;
+		sw *= src.widthScale;
+		sh *= src.heightScale;
+		if (!affine)
+		{
+			a *= this.widthScale;
+			b *= this.heightScale;
+			c *= this.widthScale;
+			d *= this.heightScale;
+		}
+		tx *= this.widthScale;
+		ty *= this.heightScale;
+		var ie;
+		try
+		{
+			this.absoluteMode += 1;
+			src.absoluteMode += 1;
+			(global.Layer_patch_hd_layer_original.operateAffine incontextof this)(src, sx, sy, sw, sh, affine, a, b, c, d, tx, ty, mode, opa, type);
+		}
+		catch (e)
+		{
+			ie = e;
+		}
+		this.absoluteMode -= 1;
+		src.absoluteMode -= 1;
+		if (ie !== void)
+		{
+			throw ie;
+		}
+	}
+	function doBoxBlur(xblur=1, yblur=1)
+	{
+@if(!SCALE_USING_FLOATING_POINT)
+		xblur = ((xblur < 0 ? -xblur : xblur) & 0x7fffffff) * (xblur < 0 ? -1 : 1);
+		yblur = ((yblur < 0 ? -yblur : yblur) & 0x7fffffff) * (yblur < 0 ? -1 : 1);
+@endif
+@if(GAME_WOHN)
+		// Attempted workaround for overflow
+		if ((xblur + 1) * (yblur + 1) >= 16777216)
+		{
+			return;
+		}
+@endif
+		xblur *= this.widthScale;
+		yblur *= this.heightScale;
+		var ie;
+		try
+		{
+			this.absoluteMode += 1;
+			(global.Layer_patch_hd_layer_original.doBoxBlur incontextof this)(xblur, yblur);
+		}
+		catch (e)
+		{
+			ie = e;
+		}
+		this.absoluteMode -= 1;
+		if (ie !== void)
+		{
+			throw ie;
+		}
+	}
+	function fillRect(left, top, width, height, color)
+	{
+@if(!SCALE_USING_FLOATING_POINT)
+		left = ((left < 0 ? -left : left) & 0x7fffffff) * (left < 0 ? -1 : 1);
+		top = ((top < 0 ? -top : top) & 0x7fffffff) * (top < 0 ? -1 : 1);
+		width = ((width < 0 ? -width : width) & 0x7fffffff) * (width < 0 ? -1 : 1);
+		height = ((height < 0 ? -height : height) & 0x7fffffff) * (height < 0 ? -1 : 1);
+		color &= 0xffffffff;
+@endif
+		left *= this.widthScale;
+		top *= this.heightScale;
+		width *= this.widthScale;
+		height *= this.heightScale;
+		var ie;
+		try
+		{
+			this.absoluteMode += 1;
+			(global.Layer_patch_hd_layer_original.fillRect incontextof this)(left, top, width, height, color);
+		}
+		catch (e)
+		{
+			ie = e;
+		}
+		this.absoluteMode -= 1;
+		if (ie !== void)
+		{
+			throw ie;
+		}
+	}
+	function colorRect(left, top, width, height, color, opacity)
+	{
+@if(!SCALE_USING_FLOATING_POINT)
+		left = ((left < 0 ? -left : left) & 0x7fffffff) * (left < 0 ? -1 : 1);
+		top = ((top < 0 ? -top : top) & 0x7fffffff) * (top < 0 ? -1 : 1);
+		width = ((width < 0 ? -width : width) & 0x7fffffff) * (width < 0 ? -1 : 1);
+		height = ((height < 0 ? -height : height) & 0x7fffffff) * (height < 0 ? -1 : 1);
+		color &= 0xffffffff;
+		if (opacity !== void)
+		{
+			opacity = ((opacity < 0 ? -opacity : opacity) & 0x7fffffff) * (opacity < 0 ? -1 : 1);
+		}
+@endif
+		left *= this.widthScale;
+		top *= this.heightScale;
+		width *= this.widthScale;
+		height *= this.heightScale;
+		var ie;
+		try
+		{
+			this.absoluteMode += 1;
+			(global.Layer_patch_hd_layer_original.colorRect incontextof this)(left, top, width, height, color, opacity);
+		}
+		catch (e)
+		{
+			ie = e;
+		}
+		this.absoluteMode -= 1;
+		if (ie !== void)
+		{
+			throw ie;
+		}
+	}
+	function drawText(left, top, text, color, opacity, aa, slevel, scolor, swidth, sofsx, sofsy)
+	{
+@if(!SCALE_USING_FLOATING_POINT)
+		left = ((left < 0 ? -left : left) & 0x7fffffff) * (left < 0 ? -1 : 1);
+		top = ((top < 0 ? -top : top) & 0x7fffffff) * (top < 0 ? -1 : 1);
+		color &= 0xffffffff;
+		if (opacity !== void)
+		{
+			opacity = ((opacity < 0 ? -opacity : opacity) & 0x7fffffff) * (opacity < 0 ? -1 : 1);
+		}
+		if (aa !== void)
+		{
+			aa = !!aa;
+		}
+		if (slevel !== void)
+		{
+			slevel = ((slevel < 0 ? -slevel : slevel) & 0x7fffffff) * (slevel < 0 ? -1 : 1);
+		}
+		if (scolor !== void)
+		{
+			scolor &= 0xffffffff;
+		}
+		if (swidth !== void)
+		{
+			swidth = ((swidth < 0 ? -swidth : swidth) & 0x7fffffff) * (swidth < 0 ? -1 : 1);
+		}
+		if (sofsx !== void)
+		{
+			sofsx = ((sofsx < 0 ? -sofsx : sofsx) & 0x7fffffff) * (sofsx < 0 ? -1 : 1);
+		}
+		if (sofsy !== void)
+		{
+			sofsy = ((sofsy < 0 ? -sofsy : sofsy) & 0x7fffffff) * (sofsy < 0 ? -1 : 1);
+		}
+@endif
+		left *= this.widthScale;
+		top *= this.heightScale;
+		var ie;
+		try
+		{
+			this.absoluteMode += 1;
+			(global.Layer_patch_hd_layer_original.drawText incontextof this)(left, top, text, color, opacity, aa, slevel, scolor, swidth, sofsx, sofsy);
+		}
+		catch (e)
+		{
+			ie = e;
+		}
+		this.absoluteMode -= 1;
+		if (ie !== void)
+		{
+			throw ie;
+		}
+	}
+	function drawGlyph(left, top, glyph, color, opacity, aa, slevel, scolor, swidth, sofsx, sofsy)
+	{
+@if(!SCALE_USING_FLOATING_POINT)
+		left = ((left < 0 ? -left : left) & 0x7fffffff) * (left < 0 ? -1 : 1);
+		top = ((top < 0 ? -top : top) & 0x7fffffff) * (top < 0 ? -1 : 1);
+		color &= 0xffffffff;
+		if (opacity !== void)
+		{
+			opacity = ((opacity < 0 ? -opacity : opacity) & 0x7fffffff) * (opacity < 0 ? -1 : 1);
+		}
+		if (aa !== void)
+		{
+			aa = !!aa;
+		}
+		if (slevel !== void)
+		{
+			slevel = ((slevel < 0 ? -slevel : slevel) & 0x7fffffff) * (slevel < 0 ? -1 : 1);
+		}
+		if (scolor !== void)
+		{
+			scolor &= 0xffffffff;
+		}
+		if (swidth !== void)
+		{
+			swidth = ((swidth < 0 ? -swidth : swidth) & 0x7fffffff) * (swidth < 0 ? -1 : 1);
+		}
+		if (sofsx !== void)
+		{
+			sofsx = ((sofsx < 0 ? -sofsx : sofsx) & 0x7fffffff) * (sofsx < 0 ? -1 : 1);
+		}
+		if (sofsy !== void)
+		{
+			sofsy = ((sofsy < 0 ? -sofsy : sofsy) & 0x7fffffff) * (sofsy < 0 ? -1 : 1);
+		}
+@endif
+		left *= this.widthScale;
+		top *= this.heightScale;
+		var ie;
+		try
+		{
+			this.absoluteMode += 1;
+			(global.Layer_patch_hd_layer_original.drawGlyph incontextof this)(left, top, glyph, color, opacity, aa, slevel, scolor, swidth, sofsx, sofsy);
+		}
+		catch (e)
+		{
+			ie = e;
+		}
+		this.absoluteMode -= 1;
+		if (ie !== void)
+		{
+			throw ie;
+		}
+	}
 }
 global.Layer = Layer_patch_hd_layer_override;
 

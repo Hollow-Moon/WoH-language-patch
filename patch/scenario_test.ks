@@ -509,7 +509,7 @@
 @wonpb
 *end|
 　Testing file end![wonnl]
-@eval exp=kag.shutdown()
+@eval exp=kag.onCloseQuery(true)
 @pg
 @r
 @return

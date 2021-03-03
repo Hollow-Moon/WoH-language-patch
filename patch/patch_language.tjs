@@ -1031,12 +1031,12 @@ class Window_PatchLanguage_override extends Window_PatchLanguage_original
 
 		if (
 			!global.get_replace_jp_whitespace_disabled(this) &&
-			#(obj.text) === 12288 					// Japanese whitespace "　"
+			#(obj.text) === 12288 					// Japanese whitespace "　" aka IDEOGRAPHIC SPACE
 			&& this.sflags.language == englishLanguage
 			&& !startsWith("花札", conductor.curStorage) // Not hanafuda
 			)
 		{
-			obj.text = " ";
+			obj.text = __s(" ", "replace_ideographic_space");
 		}
 	}
 }

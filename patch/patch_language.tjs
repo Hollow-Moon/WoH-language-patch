@@ -1022,22 +1022,25 @@ class Window_PatchLanguage_override extends Window_PatchLanguage_original
 		}
 	}
 
-	function replaceCharacters(obj)
+	var replace_character_regex1 = /~/g;
+	var replace_character_regex2 = /　/g;
+	function replace_characters_regex(text)
 	{
-		if (#(obj.text) === 126) // "~"
-		{
-			obj.text = "〜";
-		}
-
+		text = text.replace(this.replace_character_regex1, "〜");
 		if (
-			!global.get_replace_jp_whitespace_disabled(this) &&
-			#(obj.text) === 12288 					// Japanese whitespace "　" aka IDEOGRAPHIC SPACE
+			!global.get_replace_jp_whitespace_disabled(this)
 			&& this.sflags.language == englishLanguage
 			&& !startsWith("花札", conductor.curStorage) // Not hanafuda
 			)
 		{
-			obj.text = __s(" ", "replace_ideographic_space");
+			text = text.replace(this.replace_character_regex2, __s(" ", "replace_ideographic_space"));
 		}
+		return text;
+	}
+
+	function replaceCharacters(obj)
+	{
+		obj.text = this.replace_characters_regex(obj.text);
 	}
 }
 global.Window = Window_PatchLanguage_override;

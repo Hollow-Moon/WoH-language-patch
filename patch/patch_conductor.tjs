@@ -200,9 +200,9 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 		this.lines.load(name);
 		var joined_lines = this.lines.join("\n");
 		var joined_cleaned_lines = this.cleanMultiLine(joined_lines);
-		if (typeof(this.owner.sflags) === "Object" && isvalid(this.owner.sflags) && this.owner.sflags.language == englishLanguage && !startsWith("花札", this.curStorage))
+		if (typeof(this.owner.replace_characters_regex) === "Object")
 		{
-			joined_cleaned_lines = joined_cleaned_lines.replace(/　/g, " ");
+			joined_cleaned_lines = this.owner.replace_characters_regex(joined_cleaned_lines);
 		}
 		this.cleaned_lines = joined_cleaned_lines.split("\n");
 		if (typeof(this.owner.onConductorScenarioPreLoad) === "Object")

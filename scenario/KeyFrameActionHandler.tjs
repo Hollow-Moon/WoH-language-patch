@@ -448,7 +448,8 @@ class LoopKeyFrameAction extends KeyFrameAction
 
 //	キーフレームの解析
 //		"(...)(...)(...)" となっているところの"..."(要素)のみを取り出す
-global.parseKeyFrame_regex = /\(([^()]*?)\)/g;
+// XXX: This regex implementation of parseKeyFrame only supports nested 2 levels deep of parentheses
+global.parseKeyFrame_regex = /\(((?:[^)(]+|\((?:[^)(]+|\([^)(]*\))*\))*)\)/g;
 function parseKeyFrame(keyframe)
 {
 	//	解析する必要がなければ、そのまま返す

@@ -1,0 +1,24 @@
+﻿{
+	if (typeof(global.System.stayOnTop) !== "undefined")
+	{
+		var msg_components = [];
+		msg_components.add("The wrong executable is being used.");
+		msg_components.add("This issue may be caused by not following the installation instructions on the project webpage.");
+		msg_components.add("Please follow the proper installation instructions on the project webpage.");
+		msg_components.add(("Support forum thread: %s").sprintf(global.PatchInfoURL));
+		var msg = msg_components.join("\n");
+		System.inform(msg);
+
+@if(!KIRIKIROID)
+		if ((typeof(global.devMode) === "Integer" ? !global.devMode : true) && (typeof(global.devMode2) === "Integer" ? !global.devMode2 : true))
+		{
+			if (System.getArgument('-openpatchinfourlonerror') !== "no" && typeof(global.PatchInfoURL) === "String")
+			{
+				System.shellExecute(global.PatchInfoURL);
+			}
+		}
+
+		System.exit(127);
+@endif
+	}
+}

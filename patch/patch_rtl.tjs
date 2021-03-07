@@ -1,0 +1,62 @@
+﻿
+// Right to left text support.
+// Vertical text is currently not supported.
+// ActingMessageLayer is currently not supported.
+
+global.Layer_patch_rtl_original = Layer;
+class Layer_patch_rtl_override extends Layer_patch_rtl_original
+{
+	var rtl_enabled = false;
+	function Layer_patch_rtl_override()
+	{
+		super.Layer(...);
+	}
+
+	function Layer()
+	{
+		Layer_patch_rtl_override(...);
+	}
+
+	function operateRect(left, top, src, sleft, stop, swidth, sheight, mode, opacity)
+	{
+		if (this.rtl_enabled && this.name === "行描画用浮遊メッセージレイヤ")
+		{
+			left = parent.relinexpos - left;
+			left -= src.imageWidth;
+			return (global.Layer_patch_rtl_original.operateRect incontextof this)(left, top, src, sleft, stop, swidth, sheight, mode, opacity);
+		}
+		return (global.Layer_patch_rtl_original.operateRect incontextof this)(...);
+	}
+
+	function setPos(left, top, width, height)
+	{
+		if (this.rtl_enabled && (this instanceof "ClickGlyphLayer"))
+		{
+			left = parent.relinexpos - (parent.lineLayerPos);
+			left += this.imageWidth;
+			return (global.Layer_patch_rtl_original.setPos incontextof this)(left, top, width, height);
+		}
+		return (global.Layer_patch_rtl_original.setPos incontextof this)(...);
+	}
+
+	function drawText(left, top, text, color, opacity, aa, slevel, scolor, swidth, sofsx, sofsy)
+	{
+		if (!this.rtl_enabled)
+		{
+			return (global.Layer_patch_rtl_original.drawText incontextof this)(...);
+		}
+		text = text.reverse();
+		
+		if (this.name === "行描画用浮遊メッセージレイヤ")
+		{
+			left = parent.relinexpos - left;
+		}
+		else
+		{
+			left = this.width - left;
+		}
+		left -= this.font.getTextWidth(text);
+		return (global.Layer_patch_rtl_original.drawText incontextof this)(left, top, text, color, opacity, aa, slevel, scolor, swidth, sofsx, sofsy);
+	}
+}
+global.Layer = Layer_patch_rtl_override;

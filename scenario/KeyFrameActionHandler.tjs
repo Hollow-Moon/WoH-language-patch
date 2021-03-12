@@ -461,7 +461,14 @@ function parseKeyFrame(keyframe)
 	var split_func = function(matcharr)
 	{
 		var split = matcharr[1].split(",");
-		split[0] = +split[0];
+		for (var i = split.count - 1; i >= 0; i -= 1)
+		{
+			var item = split[i];
+			if (global.isNumber(item))
+			{
+				split[i] = +item;
+			}
+		}
 		this.add(split);
 		return "";
 	};

@@ -52,10 +52,12 @@ global.async_image_load = function(storage, key, async, source_layer)
 	var touched_async_images = global.touched_async_images;
 	for (var i = touched_async_images.count - 1; i >= 0; i -= 1)
 	{
+@if(!NO_ASYNC_CACHE_IMAGE)
 		if (global.async_bitmap_cache_value_of_graphicCacheLimit >= global.total_size_async_images)
 		{
 			break;
 		}
+@endif
 		global.async_image_unload(touched_async_images[i]);
 	}
 	var bitmap_obj = new Bitmap();
@@ -140,6 +142,9 @@ class Layer_async_image_load_override extends Layer_async_image_load_original
 				(global.Dictionary.assign incontextof meta)(async_image.meta);
 			}
 			this.copyFromBitmapToMainImage(async_image);
+@if(NO_ASYNC_CACHE_IMAGE)
+			global.async_image_unload(async_image);
+@endif
 			return meta;
 		}
 		return super.loadImages(...);
@@ -179,6 +184,7 @@ global.async_image_garbage_collection_hook = function(level)
 	}
 }
 
+@if(!NO_ASYNC_CACHE_IMAGE)
 global.last_set_value_of_graphicCacheLimit = 0;
 class internal_for_patch_async_image_load
 {
@@ -223,6 +229,7 @@ class internal_for_patch_async_image_load
 }
 
 // Bitmap.bufferPitch * Bitmap.height
+@endif
 
 global.System.touchImages_async_image_load_original = global.System.touchImages;
 global.System.touchImages = function(storage, limitbytes=0, timeout=0)

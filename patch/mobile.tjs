@@ -164,6 +164,18 @@ property layersToFix
 				layers2.add(yesnolayer.reverse);
 			}
 		}
+		if (typeof(global.titlemenu_object) === "Object" && isvalid(global.titlemenu_object)
+			&& typeof(global.titlemenu_object.menulayer) === "Object" && isvalid(global.titlemenu_object.menulayer)
+			&& typeof(global.titlemenu_object.menulayer.innermenus) === "Object" && isvalid(global.titlemenu_object.menulayer.innermenus)
+			&& global.titlemenu_object.menulayer.innermenus.count > 0) {
+			var innerMenu = global.titlemenu_object.menulayer.innermenus[0];
+			if (typeof(innerMenu) === "Object" && isvalid(innerMenu) && innerMenu instanceof "GalleryMenuLayer"
+				&& typeof(innerMenu.thumbnailLayer) === "Object" && isvalid(innerMenu.thumbnailLayer)
+				&& typeof(innerMenu.thumbnailLayer.image) === "Object" && isvalid(innerMenu.thumbnailLayer.image)
+				&& typeof(innerMenu.thumbnailLayer.image.maskLayer) === "Object" && isvalid(innerMenu.thumbnailLayer.image.maskLayer)) {
+					layers2.add(innerMenu.thumbnailLayer.image.maskLayer);
+			}
+		}
 		layers.add(layers2);
 		return layers;
 	}

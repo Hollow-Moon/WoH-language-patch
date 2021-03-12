@@ -159,9 +159,38 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 		return false;
 	}
 
+	var patch_conductor_temp_array = [];
+	var patch_conductor_temp_array2 = [];
 	function getNextTag()
 	{
 		var ret = super.getNextTag(...);
+		if (this.processSpecialTags)
+		{
+			var temp_text = this.patch_conductor_temp_array2;
+			temp_text.clear();
+			var save_curStorage = this.curStorage;
+			var save_curLine = this.curLine;
+			while (ret !== void && ret.tagname === "ch")
+			{
+				patch_conductor_temp_array.assign(ret);
+				if (patch_conductor_temp_array.count === 4)
+				{
+					temp_text.add(ret.text);
+					ret = super.getNextTag(...);
+					continue;
+				}
+				break;
+			}
+			if (temp_text.count > 0)
+			{
+				var ret2 = %[];
+				ret2.__patch_conductor_storage = save_curStorage;
+				ret2.__patch_conductor_line = save_curLine;
+				ret2.tagname = "ch_patch_conductor_split";
+				ret2.text = temp_text.join("");
+				this.pendings.insert(0, ret2);
+			}
+		}
 		if (typeof(ret) === "Object")
 		{
 			ret.__patch_conductor_storage = this.curStorage;
@@ -172,6 +201,33 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 
 	function onTag(elm)
 	{
+		if (elm.tagname === "ch_patch_conductor_split")
+		{
+			var text = elm.text;
+			if (typeof(this.owner.onConductorPreprocessCh) === "Object")
+			{
+				text = this.owner.onConductorPreprocessCh(text, this);
+			}
+			var text_sz = 0;
+			if (typeof(text) === "Object")
+			{
+				text_sz = text.count;
+			}
+			else
+			{
+				text_sz = text.length;
+			}
+			for (var i = text_sz - 1; i >= 0; i -= 1)
+			{
+				var ret2 = %[];
+				ret2.__patch_conductor_storage = elm.__patch_conductor_storage;
+				ret2.__patch_conductor_line = elm.__patch_conductor_line;
+				ret2.tagname = "ch";
+				ret2.text = text[i];
+				this.pendings.insert(0, ret2);
+			}
+			return 0;
+		}
 		if (elm.tagname === "ch" && elm.__patch_conductor_storage !== void && elm.__patch_conductor_line !== void)
 		{
 			if (elm.__patch_conductor_storage != conductorPrevStorage || elm.__patch_conductor_line != conductorPrevLine || (isInQuiz() && lastQuizdataQuestion != quizdata.question))

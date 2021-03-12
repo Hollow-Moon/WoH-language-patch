@@ -1,3 +1,153 @@
-﻿function initSlideOpen(obj) {}
-function drawSlideOpen() {}
-function finishSlideOpen() {}
+﻿
+global.patch_plugin_slideopen_object = void;
+
+function initSlideOpen(obj)
+{
+	global.finishSlideOpen();
+	obj.open |= 0;
+	global.patch_plugin_slideopen_object = obj;
+	var blank_layer = new Layer(obj.dest.window, obj.dest.window.primaryLayer);
+	blank_layer.visible = false;
+	blank_layer.type = ltOpaque;
+	blank_layer.face = dfMain;
+	blank_layer.fillRect(0, 0, blank_layer.imageWidth, blank_layer.imageHeight, 0x00000000);
+	obj.slideopen_layer_0 = new Layer(obj.dest.window, obj.dest);
+	obj.slideopen_layer_0.assignImages(obj.open ? obj.src : obj.dest);
+	obj.slideopen_layer_0.setSizeToImageSize();
+	obj.slideopen_layer_0.setPos(0, 0);
+	obj.slideopen_layer_0.face = dfOpaque;
+	obj.slideopen_layer_0.type = ltAlpha;
+	obj.slideopen_layer_0.holdAlpha = false;
+	obj.slideopen_layer_0.bringToBack();
+	obj.slideopen_layer_0.visible = true;
+	obj.slideopen_layer_1 = new Layer(obj.dest.window, obj.slideopen_layer_0);
+	obj.slideopen_layer_1.assignImages(obj.open ? obj.dest : obj.src);
+	obj.slideopen_layer_1.setSizeToImageSize();
+	obj.slideopen_layer_1.setPos(0, 0);
+	obj.slideopen_layer_1.face = dfOpaque;
+	obj.slideopen_layer_1.type = ltAlpha;
+	obj.slideopen_layer_1.holdAlpha = false;
+	obj.slideopen_layer_1.bringToBack();
+	obj.slideopen_layer_2 = new Layer(obj.dest.window, obj.slideopen_layer_0);
+	obj.slideopen_layer_2.assignImages(obj.open ? obj.dest : obj.src);
+	obj.slideopen_layer_2.setSizeToImageSize();
+	obj.slideopen_layer_2.setPos(0, 0);
+	obj.slideopen_layer_2.face = dfOpaque;
+	obj.slideopen_layer_2.type = ltAlpha;
+	obj.slideopen_layer_2.holdAlpha = false;
+	obj.slideopen_layer_2.bringToBack();
+
+	obj.type |= 0;
+	if (obj.type === -1)
+	{
+		obj.type = 0;
+	}
+	// type 0: left, right
+	if (obj.type === 0)
+	{
+		// keep left
+		obj.slideopen_layer_1.stretchCopy(obj.slideopen_layer_1.imageWidth \ 2, 0, obj.slideopen_layer_1.imageWidth \ 2, obj.slideopen_layer_1.imageHeight, blank_layer, 0, 0, 1, 1);
+		// keep right
+		obj.slideopen_layer_2.stretchCopy(0, 0, obj.slideopen_layer_2.imageWidth \ 2, obj.slideopen_layer_2.imageHeight, blank_layer, 0, 0, 1, 1);
+	}
+	// type 1: top, bottom
+	if (obj.type === 1)
+	{
+		// keep top
+		obj.slideopen_layer_1.stretchCopy(0, obj.slideopen_layer_1.imageHeight \ 2, obj.slideopen_layer_1.imageWidth, obj.slideopen_layer_1.imageHeight \ 2, blank_layer, 0, 0, 1, 1);
+		// keep bottom
+		obj.slideopen_layer_2.stretchCopy(0, 0, obj.slideopen_layer_2.imageWidth, obj.slideopen_layer_2.imageHeight \ 2, blank_layer, 0, 0, 1, 1);
+	}
+	// type 2: top left,  bottom right
+	if (obj.type === 2)
+	{
+		// keep top left
+		obj.slideopen_layer_1.affineCopy(blank_layer, 0, 0, 1, 1, false, 0, obj.slideopen_layer_1.imageHeight, obj.slideopen_layer_1.imageWidth, 0, obj.slideopen_layer_1.imageWidth, obj.slideopen_layer_1.imageHeight);
+		// keep bottom right
+		obj.slideopen_layer_2.affineCopy(blank_layer, 0, 0, 1, 1, false, 0, obj.slideopen_layer_2.imageHeight, obj.slideopen_layer_2.imageWidth, 0, 0, 0);
+	}
+	// type 3: top right, bottom left
+	if (obj.type === 3)
+	{
+		// keep top right
+		obj.slideopen_layer_1.affineCopy(blank_layer, 0, 0, 1, 1, false, 0, 0, obj.slideopen_layer_1.imageWidth, obj.slideopen_layer_1.imageHeight, 0, obj.slideopen_layer_1.imageHeight);
+		// keep bottom left
+		obj.slideopen_layer_2.affineCopy(blank_layer, 0, 0, 1, 1, false, 0, 0, obj.slideopen_layer_2.imageWidth, obj.slideopen_layer_2.imageHeight, obj.slideopen_layer_2.imageWidth, 0);
+	}
+	invalidate blank_layer;
+}
+// pos from 0.0 to 1.0
+function drawSlideOpen(pos)
+{
+	var obj = global.patch_plugin_slideopen_object;
+	if (obj === void)
+	{
+		return;
+	}
+	if (!obj.open)
+	{
+		pos = 1.0 - pos;
+	}
+	var movementBaseX = (obj.src.imageWidth \ 2);
+	var movementBaseY = (obj.src.imageHeight \ 2);
+	var movementX = (movementBaseX * pos) | 0;
+	var movementY = (movementBaseY * pos) | 0;
+	// type 0: left, right
+	if (obj.type === 0)
+	{
+		// keep left
+		obj.slideopen_layer_1.left = -movementX;
+		// keep right
+		obj.slideopen_layer_2.left = movementX;
+	}
+	// type 1: top, bottom
+	if (obj.type === 1)
+	{
+		// keep top
+		obj.slideopen_layer_1.top = -movementY;
+		// keep bottom
+		obj.slideopen_layer_2.top = movementY;
+	}
+	// type 2: top left,  bottom right
+	if (obj.type === 2)
+	{
+		// keep top left
+		obj.slideopen_layer_1.setPos(-movementX, -movementY);
+		// keep bottom right
+		obj.slideopen_layer_2.setPos(movementX, movementY);
+	}
+	// type 3: top right, bottom left
+	if (obj.type === 3)
+	{
+		// keep top right
+		obj.slideopen_layer_1.setPos(movementX, -movementY);
+		// keep bottom left
+		obj.slideopen_layer_2.setPos(-movementX, movementY);
+	}
+	obj.slideopen_layer_1.visible = true;
+	obj.slideopen_layer_2.visible = true;
+}
+function finishSlideOpen()
+{
+	var obj = global.patch_plugin_slideopen_object;
+	if (obj === void)
+	{
+		return;
+	}
+	global.patch_plugin_slideopen_object = void;
+	obj.slideopen_layer_1.visible = false;
+	obj.slideopen_layer_1.enabled = false;
+	invalidate obj.slideopen_layer_1;
+	obj.slideopen_layer_1 = void;
+	obj.slideopen_layer_2.visible = false;
+	obj.slideopen_layer_2.enabled = false;
+	invalidate obj.slideopen_layer_2;
+	obj.slideopen_layer_2 = void;
+	obj.slideopen_layer_0.visible = false;
+	obj.slideopen_layer_0.enabled = false;
+	invalidate obj.slideopen_layer_0;
+	obj.slideopen_layer_0 = void;
+	var output_layer = obj.dest;
+	var input_layer = obj.src;
+	output_layer.stretchCopy(0, 0, output_layer.imageWidth, output_layer.imageHeight, input_layer, 0, 0, input_layer.imageWidth, input_layer.imageHeight);
+}

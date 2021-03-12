@@ -1165,78 +1165,103 @@ function shape_arabic_unlink_lam_alef(c)
 	return LAMALEF_UNLINK_MAP[c - #'\xFEF5' /* LAMALEF_UNLINK_MAP_RANGE[0] */];
 }
 
-function internal_shape_arabic(in_split_text)
+global.internal_shape_arabic_linkage_temp = [];
+function internal_shape_arabic(in_split_text, out_split_text, should_split_by_linkage=false)
 {
 	var type1;
 	var type2 = 0 /* ISOLATED */;
-	var pos = 0;
-	for (var i = 0; i < in_split_text.length; i++)
+	var res = out_split_text;
+	if (should_split_by_linkage)
 	{
-		var c = in_split_text[i];
-		if (shape_arabic_get_char_link_type(c) == 3 /* CAUSING */)
+		res = global.internal_shape_arabic_linkage_temp;
+		res.clear();
+	}
+	for (var i = 0; i < in_split_text.length; i += 1)
+	{
+		var c = #(in_split_text[i]);
+		if (shape_arabic_get_char_link_type(c) === 3 /* CAUSING */)
 		{
-			in_split_text[i - pos] = c;
+			res.add($(c));
 			type2 = 3 /* MEDIAL */;
 			continue;
 		}
 		var j = i + 1;
-		for (; j < in_split_text.length - 1 && shape_arabic_is_transparent_char(in_split_text[j]);)
+		var cj = #(in_split_text[j]);
+		for (; j < in_split_text.length - 1 && shape_arabic_is_transparent_char(cj); j += 1)
 		{
-			j++;
+			cj = #(in_split_text[j]);
 		}
-		type1 = type2 == 2 /* INITIAL */ || type2 == 3 /* MEDIAL */ ? 1 /* FINAL */ : 0 /* ISOLATED */;
+		type1 = type2 === 2 /* INITIAL */ || type2 === 3 /* MEDIAL */ ? 1 /* FINAL */ : 0 /* ISOLATED */;
 		if (j < in_split_text.length)
 		{
-			if (shape_arabic_is_lam_char(c) && shape_arabic_is_alef_char(in_split_text[j]))
+			if (shape_arabic_is_lam_char(c) && shape_arabic_is_alef_char(cj))
 			{
-				in_split_text[i - pos] = shape_arabic_link_lam_alef(in_split_text[j], type1);
+				res.add($(shape_arabic_link_lam_alef(cj, type1)));
 				type2 = type1;
-				pos += (j - i);
 				i = j;
 				continue;
 			}
-			if (shape_arabic_is_linkable_after(c) && shape_arabic_is_linkable_before(in_split_text[j]))
+			if (shape_arabic_is_linkable_after(c) && shape_arabic_is_linkable_before(cj))
 			{
 				type1 |= 2 /* INITIAL */;
 			}
 		}
-		in_split_text[i - pos] = shape_arabic_link_char(c, type1);
-		type2 = type1;
+		{
+			res.add($(shape_arabic_link_char(c, type1)));
+			if (should_split_by_linkage && (type1 === 1 /* FINAL */ || type1 === 0 /* ISOLATED */))
+			{
+				out_split_text.add(res.join(""));
+				res.clear();
+			}
+			type2 = type1;
+		}
 	}
-	return pos;
+	if (should_split_by_linkage && res.count > 0)
+	{
+		out_split_text.add(res.join(""));
+		res.clear();
+	}
 }
 
-function shape_arabic(text)
+global.shape_arabic_array_temp = [];
+function shape_arabic(text, should_split_by_linkage=false)
 {
 	text += "";
 	if (text.length == 0)
 	{
 		return text;
 	}
-	var in_split_text = split_string(text);
-	to_codepoint_array(in_split_text);
-	var pos = internal_shape_arabic(in_split_text);
-	from_codepoint_array(in_split_text);
-	return slice_array(in_split_text, 0, in_split_text.length - pos).join("");
+	var out_split_text = global.shape_arabic_array_temp;
+	out_split_text.clear();
+	internal_shape_arabic(text, out_split_text, should_split_by_linkage);
+	if (should_split_by_linkage)
+	{
+		return out_split_text;
+	}
+	else
+	{
+		return out_split_text.join("");
+	}
 }
 
 function internal_unshape_arabic(in_split_text, out_split_text)
 {
 	for (var i = 0; i < in_split_text.length; i++)
 	{
-		var isBground = in_split_text[i];
+		var isBground = #(in_split_text[i]);
 		if (shape_arabic_is_lam_alef_char(isBground))
 		{
-			out_split_text.add(#'\x0644' /* LAM_CHAR */);
-			out_split_text.add(shape_arabic_unlink_lam_alef(isBground));
+			out_split_text.add('\x0644' /* LAM_CHAR */);
+			out_split_text.add($(shape_arabic_unlink_lam_alef(isBground)));
 		}
 		else
 		{
-			out_split_text.add(shape_arabic_unlink_char(isBground));
+			out_split_text.add($(shape_arabic_unlink_char(isBground)));
 		}
 	}
 }
 
+global.unshape_arabic_array_temp = [];
 function unshape_arabic(text)
 {
 	text += "";
@@ -1244,9 +1269,9 @@ function unshape_arabic(text)
 	{
 		return text;
 	}
-	var in_split_text = text.toCharArray();
-	var out_split_text = [];
-	var end_pos = internal_unshape_arabic(in_split_text, out_split_text);
+	var out_split_text = global.unshape_arabic_array_temp;
+	out_split_text.clear();
+	var end_pos = internal_unshape_arabic(text, out_split_text);
 	return out_split_text.join("");
 }
 

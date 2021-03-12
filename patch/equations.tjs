@@ -1,230 +1,253 @@
 ﻿
+// Based upon https://github.com/Michaelangel007/easing
+// with more optimizations
 class Equations
 {
-	var abs = global.Math.abs;
-	var acos = global.Math.acos;
-	var asin = global.Math.asin;
-	var atan = global.Math.atan;
-	var atan2 = global.Math.atan2;
-	var ceil = global.Math.ceil;
-	var floor = global.Math.floor;
-	var exp = global.Math.exp;
-	var log = global.Math.log;
-	var max = global.Math.max;
-	var min = global.Math.min;
-	var random = global.Math.random;
 	var pow = global.Math.pow;
-	var round = global.Math.round;
 	var sin = global.Math.sin;
 	var cos = global.Math.cos;
-	var tan = global.Math.tan;
 	var sqrt = global.Math.sqrt;
+	var exp = global.Math.exp;
 
-	function easeNone(t, b, c, d)
-	{
-		return t * c / d + b;
-	}
-	function easeInQuad(t, b, c, d)
-	{
-		return c*(t/=d)*t + b;
-	}
-	function easeOutQuad(t, b, c, d)
-	{
-		return -c *(t/=d)*(t-2) + b;
-	}
-	function easeInOutQuad(t, b, c, d)
-	{
-		if ((t/=d/2) < 1) return c/2*t*t + b;
-		return -c/2 * ((--t)*(t-2) - 1) + b;
-	}
-	function easeInCubic(t, b, c, d)
-	{
-		return c*(t/=d)*t*t + b;
-	}
-	function easeOutCubic(t, b, c, d)
-	{
-		return c*((t=t/d-1)*t*t + 1) + b;
-	}
-	function easeInOutCubic(t, b, c, d)
-	{
-		if ((t/=d/2) < 1) return c/2*t*t*t + b;
-		return c/2*((t-=2)*t*t + 2) + b;
-	}
-	function easeInQuart(t, b, c, d)
-	{
-		return c*(t/=d)*t*t*t + b;
-	}
-	function easeOutQuart(t, b, c, d)
-	{
-		return -c * ((t=t/d-1)*t*t*t - 1) + b;
-	}
-	function easeInOutQuart(t, b, c, d)
-	{
-		if ((t/=d/2) < 1) return c/2*t*t*t*t + b;
-		return -c/2 * ((t-=2)*t*t*t - 2) + b;
-	}
-	function easeInQuint(t, b, c, d)
-	{
-		return c*(t/=d)*t*t*t*t + b;
-	}
-	function easeOutQuint(t, b, c, d)
-	{
-		return c*((t=t/d-1)*t*t*t*t + 1) + b;
-	}
-	function easeInOutQuint(t, b, c, d)
-	{
-		if ((t/=d/2) < 1) return c/2*t*t*t*t*t + b;
-		return c/2*((t-=2)*t*t*t*t + 2) + b;
-	}
-	function easeInSine(t, b, c, d)
-	{
-		return -c * Math.cos(t/d * (Math.PI/2)) + c + b;
-	}
-	function easeOutSine(t, b, c, d)
-	{
-		return c * Math.sin(t/d * (Math.PI/2)) + b;
-	}
-	function easeInOutSine(t, b, c, d)
-	{
-		return -c/2 * (Math.cos(Math.PI*t/d) - 1) + b;
-	}
-	function easeInCirc(t, b, c, d)
-	{
-		return -c * (Math.sqrt(1 - (t/=d)*t) - 1) + b;
-	}
-	function easeOutCirc(t, b, c, d)
-	{
-		return c * Math.sqrt(1 - (t=t/d-1)*t) + b;
-	}
-	function easeInOutCirc(t, b, c, d)
-	{
-		if ((t/=d/2) < 1) return -c/2 * (Math.sqrt(1 - t*t) - 1) + b;
-		return c/2 * (Math.sqrt(1 - (t-=2)*t) + 1) + b;
-	}
-	function easeInExpo(t, b, c, d)
-	{
-		return (t==0) ? b : c * Math.pow(2, 10 * (t/d - 1)) + b;
-	}
-	function easeOutExpo(t, b, c, d)
-	{
-		return (t==d) ? b+c : c * (-Math.pow(2, -10 * t/d) + 1) + b;
-	}
-	function easeInOutExpo(t, b, c, d)
-	{
-		if (t==0) return b;
-		if (t==d) return b+c;
-		if ((t/=d/2) < 1) return c/2 * Math.pow(2, 10 * (t - 1)) + b;
-		return c/2 * (-Math.pow(2, -10 * --t) + 2) + b;
-	}
-	function easeInElastic(t, b, c, d)
-	{
-		var s=1.70158;var p=0;var a=c;
-		if (t==0) return b;  if ((t/=d)==1) return b+c;  if (!p) p=d*.3;
-		if (a < Math.abs(c)) { a=c; var s=p/4; }
-		else var s = p/(2*Math.PI) * Math.asin (c/a);
-		return -(a*Math.pow(2,10*(t-=1)) * Math.sin( (t*d-s)*(2*Math.PI)/p )) + b;
-	}
-	function easeOutElastic(t, b, c, d)
-	{
-		var s=1.70158;var p=0;var a=c;
-		if (t==0) return b;  if ((t/=d)==1) return b+c;  if (!p) p=d*.3;
-		if (a < Math.abs(c)) { a=c; var s=p/4; }
-		else var s = p/(2*Math.PI) * Math.asin (c/a);
-		return a*Math.pow(2,-10*t) * Math.sin( (t*d-s)*(2*Math.PI)/p ) + c + b;
-	}
-	function easeInOutElastic(t, b, c, d)
-	{
-		var s=1.70158;var p=0;var a=c;
-		if (t==0) return b;  if ((t/=d/2)==2) return b+c;  if (!p) p=d*(.3*1.5);
-		if (a < Math.abs(c)) { a=c; var s=p/4; }
-		else var s = p/(2*Math.PI) * Math.asin (c/a);
-		if (t < 1) return -.5*(a*Math.pow(2,10*(t-=1)) * Math.sin( (t*d-s)*(2*Math.PI)/p )) + b;
-		return a*Math.pow(2,-10*(t-=1)) * Math.sin( (t*d-s)*(2*Math.PI)/p )*.5 + c + b;
-	}
-	function easeInBack(t, b, c, d)
-	{
-		var s = 1.70158;
-		return c*(t/=d)*t*((s+1)*t - s) + b;
-	}
-	function easeOutBack(t, b, c, d)
-	{
-		var s = 1.70158;
-		return c*((t=t/d-1)*t*((s+1)*t + s) + 1) + b;
-	}
-	function easeInOutBack(t, b, c, d)
-	{
-		var s = 1.70158; 
-		if ((t/=d/2) < 1) return c/2*(t*t*(((s*=(1.525))+1)*t - s)) + b;
-		return c/2*((t-=2)*t*(((s*=(1.525))+1)*t + s) + 2) + b;
-	}
-	function easeInBounce(t, b, c, d)
-	{
-		return c - easeOutBounce (d-t, 0, c, d) + b;
-	}
-	function easeOutBounce(t, b, c, d)
-	{
-		if ((t/=d) < (1/2.75)) {
-			return c*(7.5625*t*t) + b;
-		} else if (t < (2/2.75)) {
-			return c*(7.5625*(t-=(1.5/2.75))*t + .75) + b;
-		} else if (t < (2.5/2.75)) {
-			return c*(7.5625*(t-=(2.25/2.75))*t + .9375) + b;
-		} else {
-			return c*(7.5625*(t-=(2.625/2.75))*t + .984375) + b;
-		}
-	}
-	function easeInOutBounce(t, b, c, d)
-	{
-		if (t < d/2) return easeInBounce (t*2, 0, c, d) * .5 + b;
-		return easeOutBounce (t*2-d, 0, c, d) * .5 + c*.5 + b;
-	}
-	function calc(n, a1, a2, a3, a4)
+// Power -- grouped by In,Out,InOut
+	function None           (p) {                               return 1.0;        } // p^0 Placeholder for no active animation
+	function Linear         (p) {                               return p;          } // p^1 Note: In = Out = InOut
+	function InQuadratic    (p) {                               return p*p;        } // p^2 = Math.pow(p,2)
+	function InCubic        (p) {                               return p*p*p;      } // p^3 = Math.pow(p,3)
+	function InQuartic      (p) { var p2 = p*p;                 return p2*p2;      } // p^4 = Math.pow(p,4)
+	function InQuintic      (p) { var p2 = p*p;                 return p2*p2*p;    } // p^5 = Math.pow(p,5)
+	function InSextic       (p) { var p2 = p*p;                 return p2*p2*p2;   } // p^6 = Math.pow(p,6)
+	function InSeptic       (p) { var p2 = p*p;                 return p2*p2*p2*p; } // p^7 = Math.pow(p,7)
+	function InOctic        (p) { var p2 = p*p; var p4 = p2*p2; return p4*p4;      } // p^8 = Math.pow(p,8)
+
+	function OutQuadratic   (p) { var m=p-1.0;                               return 1.0-m*m;             }
+	function OutCubic       (p) { var m=p-1.0;                               return 1.0+m*m*m;           }
+	function OutQuartic     (p) { var m=p-1.0; var m2 = m*m;                 return 1.0-m2*m2;         }
+	function OutQuintic     (p) { var m=p-1.0; var m2 = m*m;                 return 1.0+m2*m2*m;       }
+	function OutSextic      (p) { var m=p-1.0; var m2 = m*m;                 return 1.0-m2*m2*m2;     }
+	function OutSeptic      (p) { var m=p-1.0; var m2 = m*m;                 return 1.0+m2*m2*m2*m;   }
+	function OutOctic       (p) { var m=p-1.0; var m2 = m*m; var m4 = m2*m2; return 1.0-m4*m4; }
+
+	function InOutQuadratic (p) { var t=p*2.0; if (t < 1.0) {               return p*t;          } { var m=p-1.0;                               return 1.0-m*m            *  2.0; }}
+	function InOutCubic     (p) { var t=p*2.0; if (t < 1.0) {               return p*t*t;        } { var m=p-1.0;                               return 1.0+m*m*m          *  4.0; }}
+	function InOutQuartic   (p) { var t=p*2.0; if (t < 1.0) {               return p*t*t*t;      } { var m=p-1.0; var m2 = m*m;                 return 1.0-m2*m2          *  8.0; }}
+	function InOutQuintic   (p) { var t=p*2.0; if (t < 1.0) { var t2 = t*t; return p*t2*t2;      } { var m=p-1.0; var m2 = m*m;                 return 1.0+m2*m2*m        * 16.0; }}
+	function InOutSextic    (p) { var t=p*2.0; if (t < 1.0) { var t2 = t*t; return p*t2*t2*t;    } { var m=p-1.0; var m2 = m*m;                 return 1.0-m2*m2*m2       * 32.0; }}
+	function InOutSeptic    (p) { var t=p*2.0; if (t < 1.0) { var t2 = t*t; return p*t2*t2*t2;   } { var m=p-1.0; var m2 = m*m;                 return 1.0+m2*m2*m2*m     * 64.0; }}
+	function InOutOctic     (p) { var t=p*2.0; if (t < 1.0) { var t2 = t*t; return p*t2*t2*t2*t; } { var m=p-1.0; var m2 = m*m; var m4 = m2*m2; return 1.0-m4*m4          *128.0; }}
+
+// Standard -- grouped by Type
+	function InBack         (p) { return (2.70158 * p - 1.70158) * (p * p); }
+	function InOutBack      (p) {
+									if (p >= 0.5)
+									{
+										var m = p - 1.0; var m2 = m * m;
+										return (m2 + m2) * (7.189819 * m + 2.5949095) + 1.0;
+									}
+									else
+									{
+										var m = p + p;
+										return (3.5949095 * m - 2.5949095) * (p * m);
+									}
+								}
+	function OutBack        (p) { var m = p - 1.0; return (2.70158 * (m) + 1.70158) * (m * m) + 1.0; }
+
+	function InBounce       (p) {
+									if ( p > 0.6363636363636364 )
+									{
+										var m = 1.0 - p;
+										return 1.0 - (m * m * 7.5625);
+									}
+									if ( p > 0.2727272727272727 )
+									{
+										var m = 0.4545454545454546 - p;
+										return 1.0 - (m * m * 7.5625 + 0.75);
+									}
+									if ( p <= 0.09090909090909083 )
+									{
+										var m = 0.04545454545454541 - p;
+										return 1.0 - (m * m * 7.5625 + 0.984375);
+									}
+									{
+										var m = 0.1818181818181818 - p;
+										return 1.0 - (m * m * 7.5625 + 0.9375);
+									}
+								}
+	function InOutBounce    (p) {
+									var v1 = p + p;
+									if ( p < 0.5 )
+									{
+										var v2;
+										if ( p > 0.3181818181818182 )
+										{
+											var m = 1.0 - v1;
+											v2 = m * m * 7.5625;
+										}
+										else if ( p > 0.1363636363636364 )
+										{
+											var m = 0.4545454545454546 - v1;
+											v2 = m * m * 7.5625 + 0.75;
+										}
+										else if ( p <= 0.04545454545454541 )
+										{
+											var m = 0.04545454545454541 - v1;
+											v2 = m * m * 7.5625 + 0.984375;
+										}
+										else
+										{
+											var m = 0.1818181818181818 - v1;
+											v2 = m * m * 7.5625 + 0.9375;
+										}
+										return (1.0 - v2) * 0.5;
+									}
+									else
+									{
+										if ( p < 0.6818181818181819 )
+										{
+											var m = v1 - 1.0;
+											v2 = m * m * 7.5625;
+										}
+										else if ( p < 0.8636363636363636 )
+										{
+											var m = v1 - 1.545454545454545;
+											v2 = m * m * 7.5625 + 0.75;
+										}
+										else if ( p >= 0.9545454545454546 )
+										{
+											var m = v1 - 1.954545454545455;
+											v2 = m * m * 7.5625 + 0.984375;
+										}
+										else
+										{
+											var m = v1 - 1.818181818181818;
+											v2 = m * m * 7.5625 + 0.9375;
+										}
+										return (1.0 + v2) * 0.5;
+									}
+								}
+	function OutBounce      (p) {
+									if ( p < 0.3636363636363636 )
+									{
+										return p * p * 7.5625;
+									}
+									if ( p < 0.7272727272727273 )
+									{
+										var m = p - 0.5454545454545454;
+										return m * m * 7.5625 + 0.75;
+									}
+									if ( p >= 0.9090909090909092 )
+									{
+										var m = p - 0.9545454545454546;
+										return m * m * 7.5625 + 0.984375;
+									}
+									{
+										var m = p - 0.8181818181818182;
+										return m * m * 7.5625 + 0.9375;
+									}
+								}
+
+	function InCircle       (p) { return 1.0 - this.sqrt(1.0 - p * p); }
+	function InOutCircle    (p) {
+									if (p >= 0.5)
+									{
+										var m = p - 1.0;
+										return (this.sqrt(1.0 - m * m * 4.0) + 1.0) * 0.5;
+									}
+									else
+									{
+										var m = p + p;
+										return (1.0 - this.sqrt(1.0 - m * m)) * 0.5;
+									}
+								}
+	function OutCircle      (p) { var m = p - 1.0; return this.sqrt(1.0 - m * m); }
+
+	function InElastic      (p) { var m = p - 1.0; return -this.sin((m * 40.0 - 3.0) * 0.5235987755982988) * this.exp(m * 6.931471805599453); }
+	function InOutElastic   (p) {
+									var s = p + p - 1.0;
+									var k = this.sin((s * 80.0 - 9.0) * 0.1745329251994329);
+									if (p >= 0.5)
+										return  0.5 * k * this.exp(s * -6.931471805599453) + 1.0;
+									else
+										return -0.5 * k * this.exp(s * 6.931471805599453);
+								}
+	function OutElastic     (p) { return this.sin((-p * 40.0 - 3.0) * 0.5235987755982988) * this.exp(-p * 6.931471805599453) + 1.0;}
+
+	// NOTE: 'Exponent2' needs clamping for 0 and 1 respectively
+	function InExponent2    (p) { return p <= 0.0 ? 0.0 : this.exp((p - 1.0) * 6.931471805599453); }
+	function InOutExponent2 (p) {
+									if ( p <= 0.0 )
+										return 0.0;
+									if ( p >= 1.0 )
+										return 1.0;
+									return p >= 0.5 ? 1.0 - this.exp(((p + p - 1.0) * -10.0 - 1.0) * 0.6931471805599453) : this.exp(((p + p - 1.0) * 10.0 - 1.0) * 0.6931471805599453);
+								}
+	function OutExponent2   (p)  { return p < 1.0 ? 1.0 - this.exp(p * -6.931471805599453) : 1.0; }
+
+	function InSine         (p) { return 1.0 - this.cos(1.570796326794897 * p);  }
+	function InOutSine      (p) { return (1.0 - this.cos(3.141592653589793 * p)) * 0.5; }
+	function OutSine        (p) { return this.sin(1.570796326794897 * p);  }
+
+	function calc(n, t, b, c, d)
 	{
 		if(n < 0 || n >= _Funcs.count) n = 0;
-		return _Funcs[n](a1, a2, a3, a4);
+		// Linear equation: t * c / d + b
+		// t = elapsed time
+		// b = begin
+		// c = change == ending - beginning
+		// d = duration (total time)
+		var p;
+		if (t < d)
+		{
+			p = this._Funcs[n](t / d);
+		}
+		else
+		{
+			p = 1.0;
+		}
+		return b + (c * p);
 	}
 	var _Funcs = [
-		easeNone,
-		easeNone,
-		easeInQuad,
-		easeOutQuad,
-		easeInOutQuad,
-		easeNone,
-		easeInCubic,
-		easeOutCubic,
-		easeInOutCubic,
-		easeNone,
-		easeInQuart,
-		easeOutQuart,
-		easeInOutQuart,
-		easeNone,
-		easeInQuint,
-		easeOutQuint,
-		easeInOutQuint,
-		easeNone,
-		easeInSine,
-		easeOutSine,
-		easeInOutSine,
-		easeNone,
-		easeInCirc,
-		easeOutCirc,
-		easeInOutCirc,
-		easeNone,
-		easeInExpo,
-		easeOutExpo,
-		easeInOutExpo,
-		easeNone,
-		easeInElastic,
-		easeOutElastic,
-		easeInOutElastic,
-		easeNone,
-		easeInBack,
-		easeOutBack,
-		easeInOutBack,
-		easeNone,
-		easeInBounce,
-		easeOutBounce,
-		easeInOutBounce,
-		easeNone
+		Linear,
+		Linear,
+		InQuadratic,
+		OutQuadratic,
+		InOutQuadratic,
+		Linear,
+		InCubic,
+		OutCubic,
+		InOutCubic,
+		Linear,
+		InQuartic,
+		OutQuartic,
+		InOutQuartic,
+		Linear,
+		InQuintic,
+		OutQuintic,
+		InOutQuintic,
+		Linear,
+		InSine,
+		OutSine,
+		InOutSine,
+		Linear,
+		InCircle,
+		OutCircle,
+		InOutCircle,
+		Linear,
+		InExponent2,
+		OutExponent2,
+		InOutExponent2,
+		Linear,
+		InElastic,
+		OutElastic,
+		InOutElastic,
+		Linear,
+		InBack,
+		OutBack,
+		InOutBack,
+		Linear,
+		InBounce,
+		OutBounce,
+		InOutBounce,
+		Linear
 	];
 };

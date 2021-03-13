@@ -3,38 +3,28 @@
 // with more optimizations
 class Equations
 {
-	var pow = global.Math.pow;
 	var sin = global.Math.sin;
 	var cos = global.Math.cos;
 	var sqrt = global.Math.sqrt;
 	var exp = global.Math.exp;
 
 // Power -- grouped by In,Out,InOut
-	function None           (p) {                               return 1.0;        } // p^0 Placeholder for no active animation
-	function Linear         (p) {                               return p;          } // p^1 Note: In = Out = InOut
-	function InQuadratic    (p) {                               return p*p;        } // p^2 = Math.pow(p,2)
-	function InCubic        (p) {                               return p*p*p;      } // p^3 = Math.pow(p,3)
-	function InQuartic      (p) { var p2 = p*p;                 return p2*p2;      } // p^4 = Math.pow(p,4)
-	function InQuintic      (p) { var p2 = p*p;                 return p2*p2*p;    } // p^5 = Math.pow(p,5)
-	function InSextic       (p) { var p2 = p*p;                 return p2*p2*p2;   } // p^6 = Math.pow(p,6)
-	function InSeptic       (p) { var p2 = p*p;                 return p2*p2*p2*p; } // p^7 = Math.pow(p,7)
-	function InOctic        (p) { var p2 = p*p; var p4 = p2*p2; return p4*p4;      } // p^8 = Math.pow(p,8)
+	function None           (p) {                 return 1.0;         } // p^0 Placeholder for no active animation
+	function Linear         (p) {                 return p;           } // p^1 Note: In = Out = InOut
+	function InQuadratic    (p) {                 return p * p;       } // p^2 = Math.pow(p,2)
+	function InCubic        (p) {                 return p * p * p;   } // p^3 = Math.pow(p,3)
+	function InQuartic      (p) { var p2 = p * p; return p2 * p2;     } // p^4 = Math.pow(p,4)
+	function InQuintic      (p) { var p2 = p * p; return p2 * p2 * p; } // p^5 = Math.pow(p,5)
 
-	function OutQuadratic   (p) { var m=p-1.0;                               return 1.0-m*m;             }
-	function OutCubic       (p) { var m=p-1.0;                               return 1.0+m*m*m;           }
-	function OutQuartic     (p) { var m=p-1.0; var m2 = m*m;                 return 1.0-m2*m2;         }
-	function OutQuintic     (p) { var m=p-1.0; var m2 = m*m;                 return 1.0+m2*m2*m;       }
-	function OutSextic      (p) { var m=p-1.0; var m2 = m*m;                 return 1.0-m2*m2*m2;     }
-	function OutSeptic      (p) { var m=p-1.0; var m2 = m*m;                 return 1.0+m2*m2*m2*m;   }
-	function OutOctic       (p) { var m=p-1.0; var m2 = m*m; var m4 = m2*m2; return 1.0-m4*m4; }
+	function OutQuadratic   (p) { var m = p - 1.0;                 return 1.0 - m * m;       }
+	function OutCubic       (p) { var m = p - 1.0;                 return 1.0 + m * m * m;   }
+	function OutQuartic     (p) { var m = p - 1.0; var m2 = m * m; return 1.0 - m2 * m2;     }
+	function OutQuintic     (p) { var m = p - 1.0; var m2 = m * m; return 1.0 + m2 * m2 * m; }
 
-	function InOutQuadratic (p) { var t=p*2.0; if (t < 1.0) {               return p*t;          } { var m=p-1.0;                               return 1.0-m*m            *  2.0; }}
-	function InOutCubic     (p) { var t=p*2.0; if (t < 1.0) {               return p*t*t;        } { var m=p-1.0;                               return 1.0+m*m*m          *  4.0; }}
-	function InOutQuartic   (p) { var t=p*2.0; if (t < 1.0) {               return p*t*t*t;      } { var m=p-1.0; var m2 = m*m;                 return 1.0-m2*m2          *  8.0; }}
-	function InOutQuintic   (p) { var t=p*2.0; if (t < 1.0) { var t2 = t*t; return p*t2*t2;      } { var m=p-1.0; var m2 = m*m;                 return 1.0+m2*m2*m        * 16.0; }}
-	function InOutSextic    (p) { var t=p*2.0; if (t < 1.0) { var t2 = t*t; return p*t2*t2*t;    } { var m=p-1.0; var m2 = m*m;                 return 1.0-m2*m2*m2       * 32.0; }}
-	function InOutSeptic    (p) { var t=p*2.0; if (t < 1.0) { var t2 = t*t; return p*t2*t2*t2;   } { var m=p-1.0; var m2 = m*m;                 return 1.0+m2*m2*m2*m     * 64.0; }}
-	function InOutOctic     (p) { var t=p*2.0; if (t < 1.0) { var t2 = t*t; return p*t2*t2*t2*t; } { var m=p-1.0; var m2 = m*m; var m4 = m2*m2; return 1.0-m4*m4          *128.0; }}
+	function InOutQuadratic (p) { if (p < 0.5) { var p2 = p * p;                return p2 + p2;       } else { var m = p - 1.0; var m2 = m * m; return 1.0 - (m2 + m2)           ; } }
+	function InOutCubic     (p) { if (p < 0.5) { var m = p + p;                 return m * m * p;     } else { var m = p - 1.0; var m2 = m * m; return 1.0 +  m2 * m       *  4.0; } }
+	function InOutQuartic   (p) { if (p < 0.5) { var m = p + p;                 return m * m * m * p; } else { var m = p - 1.0; var m2 = m * m; return 1.0 -  m2 * m2      *  8.0; } }
+	function InOutQuintic   (p) { if (p < 0.5) { var m = p + p; var m2 = m * m; return m2 * m2 * p;   } else { var m = p - 1.0; var m2 = m * m; return 1.0 +  m2 * m2  * m * 16.0; } }
 
 // Standard -- grouped by Type
 	function InBack         (p) { return (2.70158 * p - 1.70158) * (p * p); }
@@ -50,24 +40,25 @@ class Equations
 										return (3.5949095 * m - 2.5949095) * (p * m);
 									}
 								}
-	function OutBack        (p) { var m = p - 1.0; return (2.70158 * (m) + 1.70158) * (m * m) + 1.0; }
+	function OutBack        (p) { var m = p - 1.0; return (2.70158 * m + 1.70158) * m * m + 1.0; }
 
 	function InBounce       (p) {
-									if ( p > 0.6363636363636364 )
+									if (p > 0.6363636363636364)
 									{
 										var m = 1.0 - p;
 										return 1.0 - (m * m * 7.5625);
 									}
-									if ( p > 0.2727272727272727 )
+									else if (p > 0.2727272727272727)
 									{
 										var m = 0.4545454545454546 - p;
 										return 1.0 - (m * m * 7.5625 + 0.75);
 									}
-									if ( p <= 0.09090909090909083 )
+									else if (p <= 0.09090909090909083)
 									{
 										var m = 0.04545454545454541 - p;
 										return 1.0 - (m * m * 7.5625 + 0.984375);
 									}
+									else
 									{
 										var m = 0.1818181818181818 - p;
 										return 1.0 - (m * m * 7.5625 + 0.9375);
@@ -78,17 +69,17 @@ class Equations
 									if ( p < 0.5 )
 									{
 										var v2;
-										if ( p > 0.3181818181818182 )
+										if (p > 0.3181818181818182)
 										{
 											var m = 1.0 - v1;
 											v2 = m * m * 7.5625;
 										}
-										else if ( p > 0.1363636363636364 )
+										else if (p > 0.1363636363636364)
 										{
 											var m = 0.4545454545454546 - v1;
 											v2 = m * m * 7.5625 + 0.75;
 										}
-										else if ( p <= 0.04545454545454541 )
+										else if (p <= 0.04545454545454541)
 										{
 											var m = 0.04545454545454541 - v1;
 											v2 = m * m * 7.5625 + 0.984375;
@@ -102,17 +93,18 @@ class Equations
 									}
 									else
 									{
-										if ( p < 0.6818181818181819 )
+										var v2;
+										if (p < 0.6818181818181819)
 										{
 											var m = v1 - 1.0;
 											v2 = m * m * 7.5625;
 										}
-										else if ( p < 0.8636363636363636 )
+										else if (p < 0.8636363636363636)
 										{
 											var m = v1 - 1.545454545454545;
 											v2 = m * m * 7.5625 + 0.75;
 										}
-										else if ( p >= 0.9545454545454546 )
+										else if (p >= 0.9545454545454546)
 										{
 											var m = v1 - 1.954545454545455;
 											v2 = m * m * 7.5625 + 0.984375;
@@ -126,20 +118,21 @@ class Equations
 									}
 								}
 	function OutBounce      (p) {
-									if ( p < 0.3636363636363636 )
+									if (p < 0.3636363636363636)
 									{
 										return p * p * 7.5625;
 									}
-									if ( p < 0.7272727272727273 )
+									else if (p < 0.7272727272727273)
 									{
 										var m = p - 0.5454545454545454;
 										return m * m * 7.5625 + 0.75;
 									}
-									if ( p >= 0.9090909090909092 )
+									else if (p >= 0.9090909090909092)
 									{
 										var m = p - 0.9545454545454546;
 										return m * m * 7.5625 + 0.984375;
 									}
+									else
 									{
 										var m = p - 0.8181818181818182;
 										return m * m * 7.5625 + 0.9375;
@@ -166,22 +159,30 @@ class Equations
 									var s = p + p - 1.0;
 									var k = this.sin((s * 80.0 - 9.0) * 0.1745329251994329);
 									if (p >= 0.5)
+									{
 										return  0.5 * k * this.exp(s * -6.931471805599453) + 1.0;
+									}
 									else
+									{
 										return -0.5 * k * this.exp(s * 6.931471805599453);
+									}
 								}
-	function OutElastic     (p) { return this.sin((-p * 40.0 - 3.0) * 0.5235987755982988) * this.exp(-p * 6.931471805599453) + 1.0;}
+	function OutElastic     (p) { return this.sin((p * -40.0 - 3.0) * 0.5235987755982988) * this.exp(p * -6.931471805599453) + 1.0;}
 
 	// NOTE: 'Exponent2' needs clamping for 0 and 1 respectively
 	function InExponent2    (p) { return p <= 0.0 ? 0.0 : this.exp((p - 1.0) * 6.931471805599453); }
 	function InOutExponent2 (p) {
-									if ( p <= 0.0 )
+									if (p <= 0.0)
+									{
 										return 0.0;
-									if ( p >= 1.0 )
+									}
+									if (p >= 1.0)
+									{
 										return 1.0;
+									}
 									return p >= 0.5 ? 1.0 - this.exp(((p + p - 1.0) * -10.0 - 1.0) * 0.6931471805599453) : this.exp(((p + p - 1.0) * 10.0 - 1.0) * 0.6931471805599453);
 								}
-	function OutExponent2   (p)  { return p < 1.0 ? 1.0 - this.exp(p * -6.931471805599453) : 1.0; }
+	function OutExponent2   (p) { return p >= 1.0 ? 1.0 : 1.0 - this.exp(p * -6.931471805599453); }
 
 	function InSine         (p) { return 1.0 - this.cos(1.570796326794897 * p);  }
 	function InOutSine      (p) { return (1.0 - this.cos(3.141592653589793 * p)) * 0.5; }

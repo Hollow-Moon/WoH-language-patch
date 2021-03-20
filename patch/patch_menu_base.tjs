@@ -570,6 +570,7 @@ function addDevelopmentMenu() {
 	(addDevelopmentMenuItems incontextof this)(devMenuItem);
 	devMenuItem.add(this.throwExceptionItem = new KAGMenuItem(this, "Throw Exception", 1, function(sender) { throw new Exception("This is a test Exception."); }, false));
 	devMenuItem.add(this.throwConductorExceptionItem = new KAGMenuItem(this, "Throw ConductorException", 1, function(sender) { throw new ConductorException("This is a test ConductorException."); }, false));
+	devMenuItem.add(this.accessNullPointerItem = new KAGMenuItem(this, "Access null pointer", 1, function(sender) { global.System.nullpo(); }, false));
 	global.git_base_path = Storages.getFullPath(".");
 	if (global.git_base_path.indexOf(">") === -1)
 	{
@@ -646,9 +647,7 @@ function addMovieMenu(patchMenu) {
 	movieMenuItem.add(this.subbedVideosMenuItem = new KAGFlagFolderMenuItem(this, __t("ムービー再生中に字幕を表示する(&S)"),, subbedVideosFlag,,videosFolderName));
 	movieMenuItem.add(this.skipMoviesMenuItem = new KAGFlagMenuItem(this, __t("ゲーム中にムービーをスキップする(&K)"),,skipMoviesFlag));
 	movieMenuItem.add(this.forceMpvPlaybackMenuItem = new KAGFlagMenuItem(this, __t("mpvを使用して強制的に動画を再生する"),,forceMpvPlaybackFlag));
-	if(typeof(global.playVideoMPV) === "Object") {
-		this.forceMpvPlaybackMenuItem.enabled = false;
-	}
+	this.forceMpvPlaybackMenuItem.enabled = (typeof(global.playVideoMPV) === "Object");
 }
 
 function addOptionsMenu(patchMenu) {

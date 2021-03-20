@@ -1381,6 +1381,22 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		}
 	}
 
+	function get_all_image_list(arr)
+	{
+		if (!this.visible)
+		{
+			return;
+		}
+		if ((typeof(this.imageStorage) === "String") && (arr.find(this.imageStorage) === -1))
+		{
+			arr.add(this.imageStorage);
+		}
+		for (var i = 0, internal_forloop_count = this.children.count; i < internal_forloop_count; i += 1)
+		{
+			this.children[i].get_all_image_list(arr);
+		}
+	}
+
 	function loadImages(storage, key)
 	{
 		storage = storage.toLowerCase();

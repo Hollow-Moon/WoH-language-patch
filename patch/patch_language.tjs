@@ -624,13 +624,13 @@ function unload_language_patch(language, kag) {
 	invalidate patches_arr;
 	delete patches_arr;
 
-	if (typeof(languageFileCache[language] !== "Object"))
+	if (typeof(languageFileCache[language]) === "Object")
 	{
 		invalidate languageFileCache[language];
 		delete languageFileCache[language];
 	}
 
-	if (typeof(languageFilePathCache[language] !== "Object"))
+	if (typeof(languageFilePathCache[language]) === "Object")
 	{
 		invalidate languageFilePathCache[language];
 		delete languageFilePathCache[language];
@@ -779,6 +779,7 @@ function get_fsncleaner_rescript_enabled(kag=global.kag) { { return !!(get_curre
 function get_replace_jp_whitespace_disabled(kag=global.kag) { { return !!(get_currentLanguageSettings(kag).replace_jp_whitespace_disabled); } }
 function get_rtl_enabled(kag=global.kag) { { return !!(get_currentLanguageSettings(kag).rtl_enabled); } }
 function get_arabic_shaping_enabled(kag=global.kag) { { return !!(get_currentLanguageSettings(kag).arabic_shaping_enabled); } }
+function get_half_height_offset_hack(kag=global.kag) { { return !!(get_currentLanguageSettings(kag).half_height_offset_hack); } }
 
 
 function get_default_font()

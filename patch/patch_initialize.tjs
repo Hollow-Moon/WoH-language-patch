@@ -15,6 +15,16 @@ global.System.createAppLock = function()
 global.Storages.addAutoPath_old = global.Storages.addAutoPath;
 global.Storages.addAutoPath = function(){};
 
+global.System.getArgument_old = global.System.getArgument;
+global.System.getArgument = function(arg)
+{
+	if (arg === "-ovr")
+	{
+		return void;
+	}
+	return global.System.getArgument_old(...);
+};
+
 delete global.KAGLoadScript;
 global.KAGLoadScript = function(name)
 {
@@ -78,6 +88,13 @@ class KAGWindow
 	}
 }
 
+{
+	if (typeof(global.kag) === "Object")
+	{
+		delete global.kag;
+	}
+}
+
 if (typeof(global.initialize_patch) === "Object")
 {
 	Debug.message("global.initialize_patch already exists; not setting it.");
@@ -98,6 +115,7 @@ global.initialize_patch = function()
 	global.dm = global.dm_old;
 	global.System.createAppLock = global.System.createAppLock_old;
 	global.Storages.addAutoPath = global.Storages.addAutoPath_old;
+	global.System.getArgument = global.System.getArgument_old;
 
 	if (typeof(global.initialize_patch_override) === "Object")
 	{
@@ -264,6 +282,18 @@ global.initialize_patch = function()
 			}
 		}
 
+	}
+
+	/*
+		コマンドラインパラメータとして -ovr が指定されていれば
+		そのパラメータを TJS 式として実行
+	*/
+	{
+		var ovr = System.getArgument("-ovr");
+		if (ovr !== void && ovr !== "yes")
+		{
+			Scripts.eval(ovr);
+		}
 	}
 
 	if (System.getArgument('-testexecuteonly') === "true")

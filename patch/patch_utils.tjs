@@ -1210,7 +1210,14 @@ function internal_shape_arabic(in_split_text, out_split_text, should_split_by_li
 			res.add($(shape_arabic_link_char(c, type1)));
 			if (should_split_by_linkage && (type1 === 1 /* FINAL */ || type1 === 0 /* ISOLATED */))
 			{
-				out_split_text.add(res.join(""));
+				if (res.count === 1 && shape_arabic_is_transparent_char(#(res[0])) && out_split_text.count - 1 >= 0)
+				{
+					out_split_text[out_split_text.count - 1] += res[0];
+				}
+				else
+				{
+					out_split_text.add(res.join(""));
+				}
 				res.clear();
 			}
 			type2 = type1;
@@ -1218,7 +1225,14 @@ function internal_shape_arabic(in_split_text, out_split_text, should_split_by_li
 	}
 	if (should_split_by_linkage && res.count > 0)
 	{
-		out_split_text.add(res.join(""));
+		if (res.count === 1 && shape_arabic_is_transparent_char(#(res[0])) && out_split_text.count - 1 >= 0)
+		{
+			out_split_text[out_split_text.count - 1] += res[0];
+		}
+		else
+		{
+			out_split_text.add(res.join(""));
+		}
 		res.clear();
 	}
 }
@@ -1273,5 +1287,197 @@ function unshape_arabic(text)
 	out_split_text.clear();
 	var end_pos = internal_unshape_arabic(text, out_split_text);
 	return out_split_text.join("");
+}
+
+function dmt(args*)
+{
+	Debug.message(args.join(", ")+": "+Scripts.getTraceString());
+}
+@if(DEBUG==1)
+var	_dm	= Debug.message;
+@endif
+@if(DEBUG!=1)
+var	_dm	= function(){};
+@endif
+
+//	krkr 2.25 beta 8 より前のexeには"imageTagLayerType"が存在しないので、仮に定義する
+if (typeof global.imageTagLayerType == "undefined")
+{
+	global.imageTagLayerType	= %[
+		opaque:		%[type:ltOpaque],
+		rect:		%[type:ltOpaque],
+		addalpha:	%[type:ltAddAlpha],
+		add:		%[type:ltAdditive],
+		sub:		%[type:ltSubtractive],
+		mul:		%[type:ltMultiplicative],
+		dodge:		%[type:ltDodge],
+		darken:		%[type:ltDarken],
+		lighten:	%[type:ltLighten],
+		screen:		%[type:ltScreen],
+	];
+}
+
+@if(DEBUG==1)
+//開発時トレース用
+function getDebugStringFromElm( elm, str="", maxdepth=3, depth=0 )
+{
+	var tmp = [];
+	var ret = "";
+
+	if( elm instanceof "Dictionary" ){
+		ret = str + "%[";
+		tmp.assign(elm);
+		for(var i=0; i<tmp.count; i+=2 ){
+			ret += (string)tmp[i] + "=>";
+			if( maxdepth == depth || typeof tmp[i+1] != "Object" ){
+				ret += (string)tmp[i+1] + ",";
+			}else{
+				ret += getDebugStringFromElm(tmp[i+1], "", maxdepth, depth+1) + ",";
+			}
+		}
+		ret += "]";
+	}else if( elm instanceof "Array" ){
+		ret = str;
+		for(var i=0; i<elm.count; i++){
+			if( maxdepth == depth || typeof elm[i] != "Object" ){
+				ret += (string)i + ":" + (string)elm[i] + ",";
+			}else{
+				ret += getDebugStringFromElm(elm[i], "(array["+i+"])", maxdepth, depth+1) + ",";
+			}
+//		//再帰処理で長々と出しても仕方ないので２次元配列まで
+//			if( elm[i] instanceof "Array" ){
+//				for(var j=0; j<elm[i].count; j++){
+//					ret += "[" + (string)i + "][" + (string)j + "]=" + (string)elm[i][j] + ",";
+//				}
+//			}else{
+//				ret += (string)i + ":" + (string)elm[i] + ",";
+//			}
+		}
+	}
+
+	return ret;
+}
+@endif
+@if(DEBUG==0)
+function getDebugStringFromElm(){ return ""; }
+@endif
+
+@if(0)
+/*
+	実行オプションのチェック
+*/
+if(typeof global.Plugins.cxdec != "undefined" && typeof global.Plugins.cxdec.embedOptions != "undefined")
+{
+	var emb = global.Plugins.cxdec.embedOptions.split("\n");
+	var opt, ep, tag, val, now;
+	for(var i=0; i<emb.count; i++)
+	{
+		if((opt = emb[i]) == "" || (ep=opt.indexOf("=")) < 0) continue;
+		tag = opt.substr(0,ep);
+		val = opt.substr(ep+1);
+		now = System.getArgument("-"+tag);
+		if(now != (val!))
+		{
+			System.inform(@"不正なオプションです: ${tag}");
+			System.exit();
+		}
+	}
+}
+@endif
+
+/*
+	ClassName の獲得関数
+*/
+//※あとで適切な場所に移動(krkrirc 2008/04/22 log よりHALO氏の情報)
+function getClassName( obj )
+{
+	var tmp = [];
+	var ret = [];
+	if( typeof obj == "Object" ){
+		ret = Scripts.getClassNames(obj);
+		if( ret instanceof "Array" ){
+			tmp.assign( ret );
+
+			//for( var i=0; i<tmp.count; i++ )	dm("class: [" + i + "] = " + tmp[i]);
+			if( tmp.count > 0 )
+				return tmp[0];
+		}
+	}
+	return "is not class object";
+}
+
+function getLayerInfo()
+{
+	var	func	= function(children, indent, func)
+	{
+		var	text;
+		for(var i=0; i<children.count; i++)
+		{
+			with(children[i])
+			{
+				if(.parent == kag.primaryLayer && .name == "Menuitem[pool]")
+					continue;
+				if(children[i] instanceof "MessageCharLayer")
+					continue;
+				text	+= indent + (.visible ? "■" : "□")+" "+.name+(typeof .layerID != "undefined" ? "/"+.layerID : "")+
+					(typeof .storage != "undefined" ? " <"+Storages.extractStorageName(.storage)+">" : "")+
+					"["+.type+"]"+
+//					"["+(isbase ? ._effect +"/in:"+.childEffect : (typeof ._effect != "undefined" ? (._effect != "" ? ._effect : (typeof .parent.childEffect != "undefined" ? .parent.childEffect : "")): ""))+"]"+
+					" ("+.left+", "+.top+(typeof .realLeft != "undefined" ? "/"+.realLeft+","+.realTop+"/"+.realImageLeft+","+.realImageTop : "")+")-"+
+					(typeof .center != "undefined" ? ("(C:"+.center+", "+.vcenter+")-") : "")+
+					"("+.width+", "+.height+") opac="+.opacity+
+					(typeof .zoomx != "undefined" ? " zoom="+(.zoomx == .zoomy ? "%4.2f".sprintf(.zoomx) : "(%4.2f, %4.2f)".sprintf(.zoomx, .zoomy)) : "")+
+					(typeof .rotate != "undefined" ? " rot=%4.2f".sprintf(.rotate) : "")+
+					(typeof .afx != "undefined" ? " af=(%d, %d)".sprintf(.afx, .afy) : "")+
+					(typeof .srcleft != "undefined" ? " (%4.2f, %4.2f)[%4.2f/%4.2f](%d, %d)".sprintf(.srcleft, .srctop, .srczoomx, .srcrotate, .srcafx, .srcafy): "")+
+					(typeof .notuse != "undefined" ? " use=%d".sprintf(!.notuse) : "")+"\r\n";
+				text	+= func(.children, indent + "  ", func);
+			}
+		}
+		return text;
+	};
+	return func(kag.primaryLayer.children, "", func);
+}
+var	sharelogdir		= "file://192.168.101.232/exchange/WoHエラーログ/";
+function saveLogToExchange()
+{
+	if(Storages.isExistentStorage(System.exePath+"savedata/NoSendExchange.txt"))
+	{
+		dm("saveLogToExchange処理は savedata/NoSendExchange.txt が存在するため中断しました。");
+		return;
+	}
+
+	var	logfn	= "krkr.console.log";
+	var	date	= new Date();
+	var	datestr;
+	with(date)
+		datestr	= "%02d%02d%02d-%02d%02d%02d".sprintf(.getYear() % 100, .getMonth()+1, .getDate(), .getHours(), .getMinutes(), .getSeconds());
+	var	linfo	= getLayerInfo();
+	dm(linfo);	//	レイヤー構成をログ
+	var	savefn	= datestr+".bmp";
+	var	savedir	= System.dataPath + "excpdata/";
+	Storages.createDirectory(savedir) if !Storages.isExistentDirectory(savedir);
+	kag.saveBookMarkToFile(savedir+savefn);	//	セーブ可能ならデータを保存する
+	var	copied	= false;
+	if(Storages.isExistentDirectory(sharelogdir))
+	{
+		Storages.exportFile(System.dataPath+logfn, sharelogdir+datestr+"."+logfn);
+		Storages.exportFile(savedir+savefn, sharelogdir+savefn);
+		copied	= true;
+	}
+
+	//	クリップボードに参照情報を書き込み、念のためテキストにも出力
+	var	text;
+	with(date)
+		text	+= "error date: %d年%d月%d日 %02d:%02d:%02d\r\n".sprintf(.getYear(), .getMonth()+1, .getDate(), .getHours(), .getMinutes(), .getSeconds());
+	text	+= "error log : "+datestr+"."+logfn+"\r\n";
+	text	+= "save data : "+savefn+"\r\n";
+	text	+= "layer info: \r\n" + linfo;
+	Clipboard.asText	= text;
+	var	lines	= [ text ];
+	lines.save(System.dataPath+"lasterrorinfo.txt");
+	var	msg	= "現在の情報をクリップボードへコピーしました。\n問題の発生を伝えるときに、この情報も渡してください。\n(念の為 savedata/lasterrorinfo.txt にも同じ情報を記録しています)";
+	msg	+= "(対応するエラーログ・セーブデータも提出してください)" if !copied;
+	System.inform(msg);
 }
 

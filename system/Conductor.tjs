@@ -448,14 +448,15 @@ class Conductor extends BaseConductor
 		// それを引数としてハンドラに渡す
 		// waitUntil はクリアされる
 		if(status != mWait) return false;
-@if(!GAME_WOHN)
-		//	引かれたトリガと待っているものを表示する
-		var	keys	= [];
-		keys.assign(waitUntil);
-		for(var i=0; i<keys.count; i++)
-			keys.erase(i+1);
-		dm("trigger("+name+"): "+keys.join(", "));
-@endif
+		if (this.debugLevel >= tkdlVerbose)
+		{
+			//	引かれたトリガと待っているものを表示する
+			var	keys	= [];
+			keys.assign(waitUntil);
+			for(var i=0; i<keys.count; i++)
+				keys.erase(i+1);
+			dm("trigger("+name+"): "+keys.join(", "));
+		}
 		var func = waitUntil[name];
 		if(func !== void)
 		{

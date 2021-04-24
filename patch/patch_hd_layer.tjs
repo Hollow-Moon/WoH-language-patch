@@ -95,6 +95,7 @@ global.bottomImages = [ // A bottom aligned image moving from negative to positi
 	"rogo_bi2",
 	"cs29アンリマユ崩壊(04手前岩盤・右)"
 ];
+global.ps2BgImages = ["c_cs03", "csラストep07b", "csラストep08b"];
 
 function round(v)
 {
@@ -1301,7 +1302,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 
 	function updateBg(width, height, fromloadImages=false)
 	{
-@if(!GAME_WOHN)
+@if(GAME_FATE||GAME_FHAT)
 		if (this.isBaseLayer) {
 			// Used for dialogs.
 			this.isbg = !this.shouldStretch;
@@ -1409,7 +1410,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 			this.imageStorage = originalToHdName[this.imageStorage] if originalToHdName[this.imageStorage] !== void;
 		}
 
-@if(!GAME_WOHN)
+@if(GAME_FATE||GAME_FHAT)
 		if (messageLayerImages.contains(this.imageStorage) && typeof(this.window.sflags) === "Object" && !this.window.sflags.mobileWindow) {
 			storageExt = ".png";
 		} else if (messageBreakImages.contains(this.imageStorage) && typeof(this.window.sflags) === "Object" && !this.window.sflags.mobileBreakGlyphs) {
@@ -1448,7 +1449,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 					continue;
 				}
 
-@if(!GAME_WOHN)
+@if(GAME_FATE||GAME_FHAT)
 				if (!this.isBaseLayer && !this.isMessageLayer && !this.isMask) {
 					this.isbg = currentPath.indexOf("bgimage") !== -1; // TODO only works in dev mode
 				}
@@ -1466,7 +1467,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 					this.originalImageHeight = tmp.imageHeightOriginal;
 					invalidate tmp;
 
-@if(!GAME_WOHN)
+@if(GAME_FATE||GAME_FHAT)
 					if (this.imageStorage == "pagebreak_a")
 					{
 						// low resolution image has 21 images, but HD has 16.
@@ -1503,7 +1504,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 
 		var taginfo = (global.Layer_patch_hd_layer_original.loadImages incontextof this)(this.imageStorage+chosenExt, key);
 
-@if(!GAME_WOHN)
+@if(GAME_FATE||GAME_FHAT)
 		// Mainly used for 藤02a腕b(中) and 藤02g腕b(中) since the HD version's width is larger than expected because of redundant transparent padding, but there might be other cases so the condition is generic.
 		if (this.isHd && this.isCharacterLayer && !this.isbg) {
 			var w = this.originalImageWidth*this.widthScale;
@@ -1536,17 +1537,16 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		{
 			this.originalImageWidth = super.imageWidth;
 			this.originalImageHeight = super.imageHeight;
-
-@if(!GAME_WOHN)
-			if (this.imageStorage == "csラストep08b") {
-				this.isbg = true;
-			}
-@endif
 		}
+@if(GAME_FATE||GAME_FHAT)
+		if (global.ps2BgImages.find(this.imageStorage) !== -1) {
+			this.isbg = true;
+		}
+@endif
 
 		this.updateBg(this.originalImageWidth, this.originalImageHeight, true);
 
-@if(!GAME_WOHN)
+@if(GAME_FATE||GAME_FHAT)
 		if (this.isExButtonLayer)
 		{
 			this.numberOfImages = septByMode[mode];
@@ -1558,7 +1558,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		else
 @endif
 		{
-@if(!GAME_WOHN)
+@if(GAME_FATE||GAME_FHAT)
 			if (imageNameToNumberOfImages[this.imageStorage] !== void)
 			{
 				this.numberOfImages = imageNameToNumberOfImages[this.imageStorage];
@@ -3237,6 +3237,32 @@ class VideoOverlay_patch_hd_layer_override extends VideoOverlay_patch_hd_layer_o
 	function VideoOverlay()
 	{
 		VideoOverlay_patch_hd_layer_override(...);
+	}
+
+	property width
+	{
+		getter
+		{
+@if(SCALE_USING_FLOATING_POINT)
+			return super.width / wideScaleFactor;
+@endif
+@if(!SCALE_USING_FLOATING_POINT)
+			return super.width \ wideScaleFactor;
+@endif
+		}
+	}
+
+	property height
+	{
+		getter
+		{
+@if(SCALE_USING_FLOATING_POINT)
+			return super.height / scaleFactor;
+@endif
+@if(!SCALE_USING_FLOATING_POINT)
+			return super.height \ scaleFactor;
+@endif
+		}
 	}
 
 	property originalWidth

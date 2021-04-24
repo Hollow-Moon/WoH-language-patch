@@ -87,33 +87,83 @@ function refreshStringWithLanguage(kag, language) {
 		}
 	}
 }
-@if(FREETYPE_FONT)
-if(typeof(global.frFreeType) === "Integer" && typeof(global.Font.rasterizer) === "Integer")
+
+global.orig_font_rasterizer = 0;
+if (typeof(global.Font) === "Object" && typeof(global.Font.rasterizer) === "Integer")
 {
-	global.Font.rasterizer = frFreeType;
+	global.orig_font_rasterizer = global.Font.rasterizer;
 }
-@endif
 global.loaded_language_fonts = [];
-function load_fonts(language) {
-	if (loaded_language_fonts.contains(language)) {
+function load_fonts(language)
+{
+@if(!FREETYPE_FONT)
+	var raster_to_use = global.orig_font_rasterizer;
+	if (typeof(global.Font) === "Object" && typeof(global.Font.rasterizer) === "Integer")
+	{
+		if (!!(global.languageSettings[language].use_freetype))
+		{
+			if (typeof(global.frFreeType) === "Integer")
+			{
+				raster_to_use = global.frFreeType;
+			}
+		}
+		else
+		{
+			global.Font.rasterizer = global.orig_font_rasterizer;
+		}
+	}
+@endif
+@if(!FREETYPE_FONT)
+	if (typeof(global.Font) === "Object" && typeof(global.Font.rasterizer) === "Integer")
+	{
+		global.Font.rasterizer = raster_to_use;
+	}
+@endif
+	if (loaded_language_fonts.contains(language))
+	{
 		return;
 	}
-
+@if(!FREETYPE_FONT)
+	var orig_rasterizer = 0;
+	var rasterizers = [];
+	if (typeof(global.frFreeType) === "Integer" && typeof(global.Font.rasterizer) === "Integer")
+	{
+		rasterizers.add(global.frFreeType);
+		rasterizers.add(global.frGDI);
+		global.Font.rasterizer = global.frFreeType;
+	}
+	else
+	{
+		rasterizers.add(0);
+	}
+@endif
 	var fontFiles = getFontFiles(language);
-	for (var i = 0, internal_forloop_count = fontFiles.count; i < internal_forloop_count; i += 1) {
+	for (var i = 0, internal_forloop_count = fontFiles.count; i < internal_forloop_count; i += 1)
+	{
 		var font_file_path = find_file_in_language_paths(fontFiles[i], language);
 		if (typeof(font_file_path) === "String")
 		{
 			if (typeof(global.Font) === "Object" && typeof(global.Font.addFont) === "Object")
 			{
-				var result = global.Font.addFont(font_file_path);
-				if (typeof(result) === "Object" && result.count > 0)
+@if(!FREETYPE_FONT)
+				for (var j = 0, internal_forloop_count = rasterizers.count; j < internal_forloop_count; j += 1)
+@endif
 				{
-					Debug.message(("Successfully added font \"%s\"").sprintf(result[0]));
-				}
-				else
-				{
-					Debug.message(("Failed to add font file \"%s\"").sprintf(fontFiles[i]));
+@if(!FREETYPE_FONT)
+					if (typeof(global.Font.rasterizer) === "Integer")
+					{
+						global.Font.rasterizer = rasterizers[j];
+					}
+@endif
+					var result = global.Font.addFont(font_file_path);
+					if (typeof(result) === "Object" && result.count > 0)
+					{
+						Debug.message(("Successfully added font \"%s\"").sprintf(result[0]));
+					}
+					else
+					{
+						Debug.message(("Failed to add font file \"%s\"").sprintf(fontFiles[i]));
+					}
 				}
 			}
 			if (typeof(System.addFont) === "Object")
@@ -134,6 +184,12 @@ function load_fonts(language) {
 			dm(("warning: font %s does not exist").sprintf(fontFiles[i]));
 		}
 	}
+@if(!FREETYPE_FONT)
+	if (typeof(global.Font) === "Object" && typeof(global.Font.rasterizer) === "Integer")
+	{
+		global.Font.rasterizer = raster_to_use;
+	}
+@endif
 
 	loaded_language_fonts.add(language);
 }
@@ -545,8 +601,8 @@ function load_language_patch(language, kag) {
 		@if(HD_MODE)
 					patches_arr.add([languagePatchName, imagesFolderName + hdFolderSuffix]) if kag.isHd;
 		@endif
-					patches_arr.add([languagePatchName, censoredHFolderName]) if kag.sflags[hCensoredFlagName];
-					patches_arr.add([languagePatchName, censoredMatureFolderName]) if !kag.sflags[matureFlagName];
+					patches_arr.add([languagePatchName, get_isHCensored(kag)? censoredHFolderName : uncensoredHFolderName]);
+					patches_arr.add([languagePatchName, get_isMatureCensored(kag)? censoredMatureFolderName: uncensoredMatureFolderName]);
 					patches_arr.add([languagePatchName, fullyCensoredFolderName]) if get_fullyCensored(kag);
 					patches_arr.add([languagePatchName, videosFolderName]) if kag.sflags[subbedVideosFlagName];
 				}
@@ -603,8 +659,8 @@ function unload_language_patch(language, kag) {
 		patches_arr.add([languagePatchName, imagesFolderName]);
 		if (typeof(kag) === "Object")
 		{
-			patches_arr.add([languagePatchName, censoredHFolderName]) if kag.sflags[hCensoredFlagName];
-			patches_arr.add([languagePatchName, censoredMatureFolderName]) if !kag.sflags[matureFlagName];
+			patches_arr.add([languagePatchName, get_isHCensored(kag)? censoredHFolderName : uncensoredHFolderName]);
+			patches_arr.add([languagePatchName, get_isMatureCensored(kag)? censoredMatureFolderName: uncensoredMatureFolderName]);
 			patches_arr.add([languagePatchName, fullyCensoredFolderName]) if get_fullyCensored(kag);
 			patches_arr.add([languagePatchName, videosFolderName]) if kag.sflags[subbedVideosFlagName];
 		}
@@ -623,6 +679,11 @@ function unload_language_patch(language, kag) {
 	unload_patches(patches_arr);
 	invalidate patches_arr;
 	delete patches_arr;
+
+	if (typeof(languagePatchPaths[language]) === "Object")
+	{
+		delete languagePatchPaths[language];
+	}
 
 	if (typeof(languageFileCache[language]) === "Object")
 	{

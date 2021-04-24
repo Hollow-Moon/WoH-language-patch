@@ -241,7 +241,10 @@ global.System.touchImages = function(storage, limitbytes=0, timeout=0)
 	{
 		if (storage[i].indexOf(":") === -1)
 		{
+			continue;
+@if(0)
 			throw new Exception("Image path passed in " + storage[i] + " is not absolute path.");
+@endif
 		}
 		if (cached_async_images[storage[i]] !== void)
 		{

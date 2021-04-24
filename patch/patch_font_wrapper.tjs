@@ -166,33 +166,72 @@ global.font_file_add_list = [
 
 global.font_remap_cache = %[];
 
+@if(FREETYPE_FONT)
+if(typeof(global.frFreeType) === "Integer" && typeof(global.Font.rasterizer) === "Integer")
+{
+	global.Font.rasterizer = frFreeType;
+}
+@endif
+
 {
 	if (typeof(global.Font) === "Object" && typeof(global.Font.addFont) === "Object")
 	{
-		for (var i = 0, internal_forloop_count = global.font_file_add_list.count; i < internal_forloop_count; i += 1)
+@if(!FREETYPE_FONT)
+		var orig_rasterizer = 0;
+		var rasterizers = [];
+		if (typeof(global.frFreeType) === "Integer" && typeof(global.Font.rasterizer) === "Integer")
 		{
-			var item = global.font_file_add_list[i];
-			if (Storages.isExistentStorage(item))
+			rasterizers.add(global.frFreeType);
+			rasterizers.add(global.frGDI);
+			orig_rasterizer = global.Font.rasterizer;
+			global.Font.rasterizer = frFreeType;
+		}
+		else
+		{
+			rasterizers.add(0);
+		}
+@endif
+@if(!FREETYPE_FONT)
+		for (var k = 0, internal_forloop_count = rasterizers.count; k < internal_forloop_count; k += 1)
+@endif
+		{
+@if(!FREETYPE_FONT)
+			if (typeof(global.Font.rasterizer) === "Integer")
 			{
-				var res = global.Font.addFont(item);
-				if (res !== void && res.count > 0)
+				global.Font.rasterizer = rasterizers[k];
+			}
+@endif
+			for (var i = 0, internal_forloop_count = global.font_file_add_list.count; i < internal_forloop_count; i += 1)
+			{
+				var item = global.font_file_add_list[i];
+				if (Storages.isExistentStorage(item))
 				{
-					for (var j = 0, internal_forloop_count = res.count; j < internal_forloop_count; j += 1)
+					var res = global.Font.addFont(item);
+					if (res !== void && res.count > 0)
 					{
-						if (res[j] === "MS PGothic")
+						for (var j = 0, internal_forloop_count = res.count; j < internal_forloop_count; j += 1)
 						{
-							System.setArgument("-deffont", res[j]);
-							break;
+							if (res[j] === "MS PGothic")
+							{
+								System.setArgument("-deffont", res[j]);
+								break;
+							}
 						}
+						Debug.message(("Successfully added font \"%s\"").sprintf(res[0]));
 					}
-					Debug.message(("Successfully added font \"%s\"").sprintf(res[0]));
-				}
-				else
-				{
-					Debug.message(("Failed to add font file \"%s\"").sprintf(item));
+					else
+					{
+						Debug.message(("Failed to add font file \"%s\"").sprintf(item));
+					}
 				}
 			}
 		}
+@if(!FREETYPE_FONT)
+		if (typeof(global.Font.rasterizer) === "Integer")
+		{
+			global.Font.rasterizer = orig_rasterizer;
+		}
+@endif
 	}
 	else if (typeof(global.System.addFont) === "Object")
 	{

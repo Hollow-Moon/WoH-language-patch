@@ -93,6 +93,8 @@ global.play_movie_resize = function(video, kag=global.kag, window=global.kag)
 
 		// 调整窗口大小
 @if(ZOOM_WINDOW)
+		kag.pxWidth = videoSize[0];
+		kag.pxHeight = videoSize[1];
 		window.setZoom(1, 1);
 @endif
 		window.setInnerSize(videoSize[0], videoSize[1]);
@@ -130,7 +132,10 @@ global.stop_movie_resize = function(video, kag=global.kag, window=global.kag)
 		window.setInnerSize(800, 600);
 @endif
 @if(ZOOM_WINDOW)
+		kag.pxWidth = 800;
+		kag.pxHeight = 600;
 		window.setInnerSize(kag._lastInnerSize[0], kag._lastInnerSize[1]);
+		kag.setZoom(kag.innerWidth, kag.pxWidth);
 		kag._lastInnerSize = void;
 @endif
 	}

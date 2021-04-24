@@ -1,7 +1,7 @@
 ﻿global.opPatchName = "op";
 function get_opPatchExists() { { return patchExists(opPatchName); } }
-function get_movieMenuPatch(kag=global.kag) { { return get_opPatchExists() && kag.sflags.movieMenuPatch; } }
-function get_playVitaOp(kag=global.kag) { { return get_opPatchExists() && kag.sflags.playVitaOp; } }
+function get_movieMenuPatch(kag=global.kag) { { return get_opPatchExists() && typeof(kag) === "Object" && typeof(kag.sflags) === "Object" && typeof(kag.sflags.movieMenuPatch) === "Integer" && kag.sflags.movieMenuPatch; } }
+function get_playVitaOp(kag=global.kag) { { return get_opPatchExists() && typeof(kag) === "Object" && typeof(kag.sflags) === "Object" && typeof(kag.sflags.playVitaOp) === "Integer" && kag.sflags.playVitaOp; } }
 
 global.patchMenuIndex = -1;
 function getPatchMenuIndex(kag)
@@ -372,7 +372,7 @@ class KAGCensorMenuItem extends KAGMenuItem
 @if(GAME_FHAT)
 		decensoredPatchName, decensoredFolderName));
 @endif
-@if(GAME_WOHN)
+@if(!GAME_FATE&&!GAME_FHAT)
 		[], []));
 @endif
 		this.hDecensoredMenuItem.beforeCallback = this.beforeCallback;

@@ -962,10 +962,18 @@ class MessageLayer extends KAGLayer
 @if(!GAME_WOHN)
 		imageModified = true; // 強制的にメッセージレイヤをクリアするために
 @endif
+@if(GAME_FATE||GAME_FHAT)
 		marginL = __si(+elm.marginl, "marginl_%s".sprintf(elm.context)) if elm.marginl !== void;
 		marginT = __si(+elm.margint, "margint_%s".sprintf(elm.context)) if elm.margint !== void;
 		marginR = __si(+elm.marginr, "marginr_%s".sprintf(elm.context)) if elm.marginr !== void;
 		marginB = __si(+elm.marginb, "marginb_%s".sprintf(elm.context)) if elm.marginb !== void;
+@endif
+@if(!GAME_FATE&&!GAME_FHAT)
+		marginL = +elm.marginl if elm.marginl !== void;
+		marginT = +elm.margint if elm.margint !== void;
+		marginR = +elm.marginr if elm.marginr !== void;
+		marginB = +elm.marginb if elm.marginb !== void;
+@endif
 		vertical = +elm.vertical if elm.vertical !== void;
 		draggable = +elm.draggable if elm.draggable !== void;
 		visible = +elm.visible if elm.visible !== void;
@@ -1321,12 +1329,27 @@ class MessageLayer extends KAGLayer
 	function setDefaultFont(elm)
 	{
 		// デフォルトフォントの設定
+@if(GAME_FATE||GAME_FHAT)
 		defaultFace = __s(elm.face, "%s_face".sprintf(elm.context)) if elm.face !== void;
+@endif
+@if(!GAME_FATE&&!GAME_FHAT)
+		defaultFace = elm.face if elm.face !== void;
+@endif
 		defaultAntialiased = +elm.antialiased if elm.antialiased !== void;
 		defaultBold = +elm.bold if elm.bold !== void;
+@if(GAME_FATE||GAME_FHAT)
+		defaultFontSize = __si(elm.size, "fontsize_%s".sprintf(elm.sizecontext !== void ? elm.sizecontext : elm.context)) if elm.size !== void;
+@endif
+@if(!GAME_FATE&&!GAME_FHAT)
 		defaultFontSize = +elm.size if elm.size !== void;
+@endif
 		defaultChColor = +elm.color if elm.color !== void;
+@if(GAME_FATE||GAME_FHAT)
+		defaultRubySize = __si(elm.rubysize, "defaultrubysize_%s".sprintf(elm.sizecontext !== void ? elm.sizecontext : elm.context)) if elm.rubysize !== void;
+@endif
+@if(!GAME_FATE&&!GAME_FHAT)
 		defaultRubySize = +elm.rubysize if elm.rubysize !== void;
+@endif
 		defaultRubyOffset = +elm.rubyoffset if elm.rubyoffset !== void;
 @if(GAME_WOHN)
 		defaultRubyBold = +elm.rubybold if elm.rubybold !== void;
@@ -1412,7 +1435,12 @@ class MessageLayer extends KAGLayer
 	function setDefaultStyle(elm)
 	{
 		// デフォルトのスタイルの設定
+@if(GAME_FATE||GAME_FHAT)
 		defaultLineSpacing = __si(+elm.linespacing, "linespacing_%s".sprintf(elm.context)) if elm.linespacing !== void;
+@endif
+@if(!GAME_FATE&&!GAME_FHAT)
+		defaultLineSpacing = +elm.linespacing if elm.linespacing !== void;
+@endif
 		defaultPitch = +elm.pitch if elm.pitch !== void;
 		defaultLineSize = +elm.linesize if elm.linesize !== void;
 		defaultAutoReturn = +elm.autoreturn if elm.autoreturn !== void;

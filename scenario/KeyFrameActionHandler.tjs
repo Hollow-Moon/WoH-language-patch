@@ -7,8 +7,6 @@
 
 dm("load: KeyFrameActionHandler.tjs");
 
-KAGLoadScript("stringUtil.tjs");	//	isNumber, parseKeyFrame, initSpline
-
 //	キーフレームアクションについて詳細を出力する
 @set(KEYFRAMEACTION_VERVOSE=0)
 
@@ -29,7 +27,6 @@ function dmv{return;}
 @set(USE_EQUATIONS=1)
 
 @if(USE_EQUATIONS)
-KAGLoadScript("equations.tjs");
 var	equations	= new Equations();
 @endif
 
@@ -444,39 +441,6 @@ class LoopKeyFrameAction extends KeyFrameAction
 		}
 		return super.getValue(now);
 	}
-}
-
-//	キーフレームの解析
-//		"(...)(...)(...)" となっているところの"..."(要素)のみを取り出す
-// XXX: This regex implementation of parseKeyFrame only supports nested 2 levels deep of parentheses
-global.parseKeyFrame_regex = /\(((?:[^)(]+|\((?:[^)(]+|\([^)(]*\))*\))*)\)/g;
-function parseKeyFrame(keyframe)
-{
-	//	解析する必要がなければ、そのまま返す
-	if (typeof(keyframe) === "Object" && keyframe instanceof "Array")
-	{
-		return keyframe;
-	}
-
-	var split_func = function(matcharr)
-	{
-		var split = matcharr[1].split(",");
-		for (var i = split.count - 1; i >= 0; i -= 1)
-		{
-			var item = split[i];
-			if (global.isNumber(item))
-			{
-				split[i] = +item;
-			}
-		}
-		this.add(split);
-		return "";
-	};
-
-	var keys = [];
-	keyframe.replace(global.parseKeyFrame_regex, (split_func incontextof keys));
-
-	return keys;
 }
 
 /**

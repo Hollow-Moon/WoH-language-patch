@@ -555,6 +555,9 @@ function addPatchMenu() {
 @endif
 @if(HD_MODE)
 	(addHdMenu incontextof this)(this.displayMenu);
+@endif
+	(addGraphicUsageMenu incontextof this)(this.displayMenu);
+@if(HD_MODE)
 	(addMessageWindowMenu incontextof this)(patchMenu);
 @endif
 
@@ -824,7 +827,9 @@ function addHdMenu(displayMenu) {
 	} else {
 		this.notWideMenuItem.checked = true;
 	}
+}
 
+function addGraphicUsageMenu(displayMenu) {
 	var fpsLimitDefault = "60";
 	var multiThreadDefault = 0;
 
@@ -848,6 +853,8 @@ function addHdMenu(displayMenu) {
 			global.System.setArgument("-contfreq", sender.flag.value);
 		}
 	};
+
+	displayMenu.add(new MenuItem(this, "-"));
 
 	displayMenu.add(this.fpsLimitMenuItem = new KAGMenuItem(this, __t("最大フレームレート(&M)"), 0, void, false));
 	this.fpsLimitMenuItem.add(this.fpsLimitVsyncMenuItem = new KAGFlagMenuItem(this, __t("垂直同期待ち(&V)"), 1, fpsLimitFlag, "-1"));

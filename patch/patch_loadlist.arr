@@ -86,7 +86,7 @@
 	"patch_layer.tjs",
 	["patch_movie.tjs", ,,, "GAME_FATE||GAME_FHAT"],
 	["patch_hd_layer.tjs", ,,, "HD_MODE"],
-	["patch_hd.tjs", ,,, "HD_MODE"],
+	"patch_hd.tjs",
 	["patch_hd_plugins.tjs", ,,, "HD_MODE"],
 	"patch_censor.tjs",
 	["patch_rtl.tjs", ,,, "GAME_FATE||GAME_FHAT"],

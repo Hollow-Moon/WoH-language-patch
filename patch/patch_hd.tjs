@@ -320,7 +320,9 @@ function updateResolution(mp)
 }
 
 
-function initializeHDPatch() {
+function initializeHDPatch()
+{
+@if(HD_MODE)
 	if (System.getArgument("-hdscalefactor") !== void)
 	{
 		hdScaleFactor = +System.getArgument("-hdscalefactor");
@@ -335,4 +337,8 @@ function initializeHDPatch() {
 		(initializeWide incontextof this)(wideRatio, true);
 	}
 	changeResolution(this);
+@endif
+@if(!HD_MODE)
+	unloadHdPatch(this);
+@endif
 }

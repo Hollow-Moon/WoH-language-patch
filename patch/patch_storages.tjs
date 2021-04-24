@@ -15,6 +15,7 @@
 		return global.Storages.addAutoPath_patch_storages_original(...);
 	};
 @endif
+	global.string_trim_regex = /(\s+$|^\s+)/g;
 	global.Storages.isExistentStorage_patch_storages_original = global.Storages.isExistentStorage;
 	global.Storages.isExistentStorage = function(storage)
 	{
@@ -22,12 +23,10 @@
 		{
 			return false;
 		}
-@if(kirikiriz)
-		if (storage.trim() === "")
+		if (global.string_trim_regex.replace(storage, "") === "")
 		{
 			return false;
 		}
-@endif
 
 		return global.Storages.isExistentStorage_patch_storages_original(storage);
 	};

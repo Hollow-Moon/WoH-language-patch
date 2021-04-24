@@ -158,6 +158,7 @@
 	"patch_fix_savedata_by_jump.tjs",
 	"patch_align.tjs",
 	"patch_skip.tjs",
+	"patch_waittrigger_supports_timeout.tjs",
 	"patch_kagparser_ignore_call_stack_underflow.tjs",
 	"patch_savedatalocation_override.tjs",
 	"patch_reload_override.tjs",

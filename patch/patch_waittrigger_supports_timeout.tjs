@@ -1,0 +1,70 @@
+﻿
+global.KAGWindow_patch_waittrigger_supports_timeout_original = KAGWindow;
+class KAGWindow_patch_waittrigger_supports_timeout_override extends KAGWindow_patch_waittrigger_supports_timeout_original
+{
+	function KAGWindow_patch_waittrigger_supports_timeout_override()
+	{
+		super.KAGWindow(...);
+	}
+
+	function KAGWindow()
+	{
+		KAGWindow_patch_waittrigger_supports_timeout_override(...);
+	}
+
+	function waitTrigger(elm)
+	{
+		// elm.name で示されたトリガを待つ
+		var time = void;
+		if (elm.time !== void)
+		{
+			time = +elm.time;
+		}
+		if((elm.canskip !== void && +elm.canskip) && clickSkipEnabled)
+		{
+			// スキップできる場合
+			if(skipMode)
+			{
+				// スキップ動作中
+				if(elm.onskip !== void) Scripts.eval(elm.onskip);
+				return 0; // すぐに返る
+			}
+			var waitdict = %[
+				click : function(arg)
+				{
+					if(arg !== void) Scripts.eval(arg);
+				} incontextof this,
+				click_arg : elm.onskip,
+				elm.name => function
+				{
+				} incontextof this
+			];
+			if (time !== void)
+			{
+				conductor.waitWithTimeOut(waitdict, time);
+			}
+			else
+			{
+				conductor.wait(waitdict);
+			}
+		}
+		else
+		{
+			var waitdict = %[
+				elm.name => function
+				{
+				} incontextof this
+			];
+			if (time !== void)
+			{
+				conductor.waitWithTimeOut(waitdict, time);
+			}
+			else
+			{
+				conductor.wait(waitdict);
+			}
+		}
+		return -2;
+	}
+}
+global.KAGWindow = KAGWindow_patch_waittrigger_supports_timeout_override;

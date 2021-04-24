@@ -1,4 +1,6 @@
 ﻿
+@set(USE_INTERPOLATED_EQUATIONS=0)
+
 // Based upon https://github.com/Michaelangel007/easing
 // with more optimizations
 class Equations
@@ -188,6 +190,26 @@ class Equations
 	function InOutSine      (p) { return (1.0 - this.cos(3.141592653589793 * p)) * 0.5; }
 	function OutSine        (p) { return this.sin(1.570796326794897 * p);  }
 
+@if(USE_INTERPOLATED_EQUATIONS)
+	var interpolation_table = [];
+	var interpolation_precision = 16384;
+	function Equations()
+	{
+		var interpolation_precision = this.interpolation_precision;
+		var interpolation_table = this.interpolation_table;
+		var _Funcs = this._Funcs;
+		for (var i = 0; i < _Funcs.count; i += 1)
+		{
+			var arr = [];
+			for (var j = 0; j <= interpolation_precision; j += 1)
+			{
+				arr.add(this._Funcs[i](j / interpolation_precision));
+			}
+			interpolation_table.add(arr);
+		}
+	}
+@endif
+
 	function calc(n, t, b, c, d)
 	{
 		if(n < 0 || n >= _Funcs.count) n = 0;
@@ -199,7 +221,14 @@ class Equations
 		var p;
 		if (t < d)
 		{
+@if(USE_INTERPOLATED_EQUATIONS)
+			var interpolation_precision = this.interpolation_precision;
+			var interpolation_table = this.interpolation_table;
+			p = interpolation_table[n][((t / d) * interpolation_precision) | 0];
+@endif
+@if(!USE_INTERPOLATED_EQUATIONS)
 			p = this._Funcs[n](t / d);
+@endif
 		}
 		else
 		{

@@ -3,6 +3,18 @@
 ;
 
 *resetall
+@iscript
+{
+	with(kag.fore.base)
+	{
+		.fillRect(0, 0, .width, .height, 0xFF000000);
+	}
+	with(kag.back.base)
+	{
+		.fillRect(0, 0, .width, .height, 0xFF000000);
+	}
+}
+@endscript
 @playstop time=300
 @sestop time=300
 @stopaction
@@ -23,7 +35,22 @@
 @lockquickmenu
 @textoff
 @fadeoutbgm time=400
-@bg storage=black time=400
+@iscript
+{
+	var	msg = "Now Loading...";
+	with(kag.back.base)
+	{
+		.fillRect(0, 0, .width, .height, 0xFF000000);
+		var lastfontheight	= .font.height;
+		.font.height	= 32;
+		var l = .width - .font.getTextWidth(msg) - 64;
+		var t = .height - .font.getTextHeight(msg) - 64;
+		.drawText(l, t, msg, 0xFFFF00, 255, true, 1024, 0x000000, 2, 0, 0);
+		.font.height	= lastfontheight;
+	}
+}
+@endscript
+@trans time=400
 @call target=*resetall
 ;archive からロードしたときは archive には戻らないので、記憶していた戻り道を破棄する
 @eval exp=Menu_object.clearStoredClick()
@@ -33,7 +60,23 @@
 
 ;アーカイブメニューからの呼び出し
 *archive
-@bg storage=black time=500
+@iscript
+{
+	var	msg = "Now Loading...";
+	with(kag.back.base)
+	{
+		.fillRect(0, 0, .width, .height, 0xFF000000);
+		var lastfontheight	= .font.height;
+		.font.height	= 32;
+		var l = .width - .font.getTextWidth(msg) - 64;
+		var t = .height - .font.getTextHeight(msg) - 64;
+		.drawText(l, t, msg, 0xFFFF00, 255, true, 1024, 0x000000, 2, 0, 0);
+		.font.height	= lastfontheight;
+	}
+}
+@endscript
+@trans time=500
+@call target=*resetall
 ;↓のclearMenuItems で確認ウィンドウが消されてしまうので、開いていたら一時停止する
 @waittrig name=closeaskyesno cond=tf.do_askyesno
 ;メッセージが消えていないことがあるので
@@ -115,7 +158,23 @@ with(tracer_object)
 ;タイトルメニューからゲーム開始
 *title2start
 @fadeoutbgm time=1200
-@bg storage=black time=1200
+@iscript
+{
+	var	msg = "Now Loading...";
+	with(kag.back.base)
+	{
+		.fillRect(0, 0, .width, .height, 0xFF000000);
+		var lastfontheight	= .font.height;
+		.font.height	= 32;
+		var l = .width - .font.getTextWidth(msg) - 64;
+		var t = .height - .font.getTextHeight(msg) - 64;
+		.drawText(l, t, msg, 0xFFFF00, 255, true, 1024, 0x000000, 2, 0, 0);
+		.font.height	= lastfontheight;
+	}
+}
+@endscript
+@trans time=1200
+@call target=*resetall
 @waittrig name=closeaskyesno cond=&tf.do_askyesno
 @jump storage=first.ks target=*startgame
 

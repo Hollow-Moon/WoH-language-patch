@@ -89,44 +89,41 @@ function updateDecensorConfig(kag=global.kag)
 		for (var j = 1, internal_forloop_count = decensor_types.count; j < internal_forloop_count; j += 1)
 		{
 			var decensor_type = decensor_types[j];
-			var decensor_version_path = decensoredFolderName + "/" + decensoredImages[i] + "/" + decensor_type;
-@if(HD_MODE)
-			var decensor_version_path_hd = decensoredFolderName + hdFolderSuffix + "/" + decensoredImages[i] + "/" + decensor_type;
-@endif
+			var decensorInnerPath = "/" + decensoredImages[i] + "/" + decensor_type;
+			var decensorFullPath = decensoredFolderName + decensorInnerPath;
+
 			if(decensor_type == currentDecensorType)
 			{
 				if(get_isDecensored(kag))
 				{
-					load_patches([
-						[decensoredPatchName, decensor_version_path],
+					var patches_arr = [[decensoredPatchName, decensorFullPath]];
 @if(HD_MODE)
-						kag.isHd ? [decensoredPatchName, decensor_version_path_hd] : void,
+					addHdPaths(patches_arr, decensoredPatchName, decensoredFolderName, decensorInnerPath) if kag.isHd;
 @endif
-					]);
-					unload_patches([
+					load_patches(patches_arr);
+
+					patches_arr = [];
 @if(HD_MODE)
-						(!kag.isHd) ? [decensoredPatchName, decensor_version_path_hd] : void,
+					addHdPaths(patches_arr, decensoredPatchName, decensoredFolderName, decensorInnerPath) if !kag.isHd;
 @endif
-					]);
+					unload_patches(patches_arr);
 				}
 				else
 				{
-					unload_patches([
-						[decensoredPatchName, decensor_version_path],
+					var patches_arr = [[decensoredPatchName, decensorFullPath]];
 @if(HD_MODE)
-						kag.isHd ? [decensoredPatchName, decensor_version_path_hd] : void,
+					addHdPaths(patches_arr, decensoredPatchName, decensoredFolderName, decensorInnerPath) if kag.isHd;
 @endif
-					]);
+					unload_patches(patches_arr);
 				}
 			}
 			else
 			{
-				unload_patches([
-					[decensoredPatchName, decensor_version_path],
+				var patches_arr = [[decensoredPatchName, decensorFullPath]];
 @if(HD_MODE)
-					kag.isHd ? [decensoredPatchName, decensor_version_path_hd] : void,
+				addHdPaths(patches_arr, decensoredPatchName, decensoredFolderName, decensorInnerPath) if kag.isHd;
 @endif
-				]);
+				unload_patches(patches_arr);
 			}
 		}
 	}

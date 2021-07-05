@@ -8,7 +8,9 @@ global.upscaledFactor = 2;
 @endif
 
 global.originalToHdName = %[
-	"01空・雨(夜)" => "01空・雨（夜）", // Different parentheses
+@if(GAME_FATE)
+	"01空・雨(夜)" => "01空・雨（夜）", // Different parentheses (only in RN - in HA ht eparentheses are ascii)
+@endif
 	"fate" => "fate2",
 	"el_タイガー0段階" => "30_tiger_00a",
 	"el_タイガー1段階" => "30_tiger_01a",
@@ -120,7 +122,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 	var imageStorage = void;
 	var isHd = false;
 
-	var originalLeft = 0;
+	var _originalLeft = 0;
 	var originalTop = 0;
 	var originalImageLeft = 0;
 	var originalImageTop = 0;
@@ -616,15 +618,15 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 	{
 		getter
 		{
-			return this.originalLeft;
+			return this._originalLeft;
 		}
 		setter(v)
 		{
 @if(!SCALE_USING_FLOATING_POINT)
 			v = ((v < 0 ? -v : v) & 0x7fffffff) * (v < 0 ? -1 : 1);
 @endif
-			this.originalLeft = transformDiscrete(v, this.leftScale());
-			super.left = this.transformLeft(this.originalLeft);
+			this._originalLeft = transformDiscrete(v, this.leftScale());
+			super.left = this.transformLeft(this._originalLeft);
 		}
 	}
 
@@ -1330,7 +1332,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 			}
 		}
 		// background settings affect position.
-		(global.Layer.setPos incontextof this)(this.originalLeft, this.originalTop);
+		(global.Layer.setPos incontextof this)(this._originalLeft, this.originalTop);
 @endif
 	}
 
@@ -1348,7 +1350,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 
 	function update_bounds_hd_layer()
 	{
-		var originalLeft_tmp = this.originalLeft;
+		var _originalLeft_tmp = this._originalLeft;
 		var originalTop_tmp = this.originalTop;
 		var originalWidth_tmp = this.originalWidth;
 		var originalHeight_tmp = this.originalHeight;
@@ -1368,7 +1370,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 			super.fillRect(0, 0, super.imageWidth, super.imageHeight, 0x000000);
 		}
 @endif
-		this.setPos_patch_hd_layer(originalLeft_tmp, originalTop_tmp, originalWidth_tmp, originalHeight_tmp);
+		this.setPos_patch_hd_layer(_originalLeft_tmp, originalTop_tmp, originalWidth_tmp, originalHeight_tmp);
 		if (super.hasImage)
 		{
 			// this.setImageSize_patch_hd_layer(originalImageWidth_tmp, originalImageHeight_tmp);
@@ -1805,7 +1807,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		left = ((left < 0 ? -left : left) & 0x7fffffff) * (left < 0 ? -1 : 1);
 		top = ((top < 0 ? -top : top) & 0x7fffffff) * (top < 0 ? -1 : 1);
 @endif
-		this.originalLeft = left;
+		this._originalLeft = left;
 		this.originalTop = top;
 
 		if (width !== void)
@@ -2908,7 +2910,7 @@ global.Layer = Layer_patch_hd_layer_override;
 global.Window_patch_hd_layer_original = Window;
 class Window_patch_hd_layer_override extends Window_patch_hd_layer_original
 {
-	var originalLeft;
+	var _originalLeft;
 	var originalTop;
 	var originalWidth;
 	var originalHeight;
@@ -2947,19 +2949,18 @@ class Window_patch_hd_layer_override extends Window_patch_hd_layer_original
 	{
 		getter
 		{
-			if (!hdPatchExists) {
-				return 1;
-			}
 			if (!this.isMainWindow) {
 				return mainWindow.scflags[hdScaleFactorFlagName];
 			}
 			if (this.scflags[hdScaleFactorFlagName] === void) {
-				if (System.desktopWidth >= veryHighResWidth && System.desktopHeight >= veryHighResHeight) {
-					this.scflags[hdScaleFactorFlagName] = defaultHighScaleFactor;
+				for (var i=global.scaleFactors.count-1; i>=0; i--) {
+					if (patchExists(global.hdPatchesNames[i]) &&
+						System.desktopWidth >= originalResWidth * global.scaleFactors[i] && System.desktopHeight >= originalResHeight * global.scaleFactors[i]) {
+						this.scflags[hdScaleFactorFlagName] = global.scaleFactors[i];
+						break;
+					}
 				}
-				else if (System.desktopWidth >= highResWidth && System.desktopHeight >= highResHeight) {
-					this.scflags[hdScaleFactorFlagName] = defaultScaleFactor;
-				} else {
+				if (this.scflags[hdScaleFactorFlagName] === void) {
 					this.scflags[hdScaleFactorFlagName] = 1;
 				}
 			}
@@ -2983,9 +2984,6 @@ class Window_patch_hd_layer_override extends Window_patch_hd_layer_original
 	{
 		getter
 		{
-			if (!hdPatchExists) {
-				return false;
-			}
 			if (!this.isMainWindow) {
 				// return mainWindow.scflags[wideScreenFlagName];
 				return false;
@@ -3044,7 +3042,7 @@ class Window_patch_hd_layer_override extends Window_patch_hd_layer_original
 			if (this.isMainWindow) {
 				return super.left;
 			} else {
-				return this.originalLeft;
+				return this._originalLeft;
 			}
 		}
 		setter(v)
@@ -3055,7 +3053,7 @@ class Window_patch_hd_layer_override extends Window_patch_hd_layer_original
 			if (this.isMainWindow) {
 				super.left = v;
 			} else {
-				this.originalLeft = v;
+				this._originalLeft = v;
 				super.left = (v-mainWindow.left) * this.widthScale + mainWindow.left;
 			}
 		}
@@ -3152,7 +3150,7 @@ class Window_patch_hd_layer_override extends Window_patch_hd_layer_original
 	function Window_patch_hd_layer_override()
 	{
 		super.Window(...);
-		this.originalLeft = super.left;
+		this._originalLeft = super.left;
 		this.originalTop = super.top;
 		this.originalWidth = super.width;
 		this.originalHeight = super.height;
@@ -3174,7 +3172,7 @@ class Window_patch_hd_layer_override extends Window_patch_hd_layer_original
 		if (this.isMainWindow) {
 			super.setPos(left, top);
 		} else {
-			this.originalLeft = left;
+			this._originalLeft = left;
 			this.originalTop = top;
 			super.setPos((left-mainWindow.left) * this.widthScale + mainWindow.left, (top-mainWindow.top) * this.heightScale + mainWindow.top);
 		}

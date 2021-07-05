@@ -52,8 +52,11 @@ function loadMOs(language)
 
 function refreshMenuString(kag, menu)
 {
-	if(typeof(menu.originalCaption) === "String") {
+	if (typeof(menu.originalCaption) === "String") {
 		menu.caption = __(menu.originalCaption);
+	}
+	if (typeof(menu.captionArg) !== "undefined") {
+		menu.caption = menu.caption.sprintf(menu.captionArg);
 	}
 
 	var children = menu.children;
@@ -598,9 +601,9 @@ function load_language_patch(language, kag) {
 				patches_arr.add([languagePatchName, imagesFolderName]);
 				if (typeof(kag) === "Object")
 				{
-		@if(HD_MODE)
-					patches_arr.add([languagePatchName, imagesFolderName + hdFolderSuffix]) if kag.isHd;
-		@endif
+@if(HD_MODE)
+					addHdPaths(patches_arr, languagePatchName, imagesFolderName) if kag.isHd;
+@endif
 					patches_arr.add([languagePatchName, get_isHCensored(kag)? censoredHFolderName : uncensoredHFolderName]);
 					patches_arr.add([languagePatchName, get_isMatureCensored(kag)? censoredMatureFolderName: uncensoredMatureFolderName]);
 					patches_arr.add([languagePatchName, fullyCensoredFolderName]) if get_fullyCensored(kag);
@@ -653,7 +656,7 @@ function unload_language_patch(language, kag) {
 @if(HD_MODE)
 		if (typeof(kag) === "Object")
 		{
-			patches_arr.add([languagePatchName, imagesFolderName + hdFolderSuffix]) if kag.isHd;
+			addHdPaths(patches_arr, languagePatchName, imagesFolderName) if kag.isHd;
 		}
 @endif
 		patches_arr.add([languagePatchName, imagesFolderName]);
@@ -964,7 +967,15 @@ function loadLanguageDict(language) {
 		var language_dic_path = find_file_in_language_paths("language.dic", language);
 		if (typeof(language_dic_path) === "String")
 		{
-			languageSettings[language] = Scripts.evalStorage(language_dic_path);
+			try
+			{
+				languageSettings[language] = Scripts.evalStorage(language_dic_path);
+			}
+			catch (e)
+			{
+				Debug.message("The syntax error is located in language.dic for " + language);
+				throw e;
+			}
 		}
 		else
 		{

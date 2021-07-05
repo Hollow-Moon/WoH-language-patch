@@ -73,7 +73,7 @@ global.async_image_load = function(storage, key, async, source_layer)
 	}
 	else
 	{
-		if (async)
+		if (async && key === void)
 		{
 			bitmap_obj.loadAsync(storage);
 		}
@@ -136,24 +136,27 @@ class Layer_async_image_load_override extends Layer_async_image_load_original
 
 	function loadImages(storage, key)
 	{
-		var async_image = global.get_async_image(storage);
-		if (async_image === void)
+		if (key === void)
 		{
-			async_image = global.async_image_load(storage, key, false);
-			async_image.retrieve_count += 1;
-		}
-		if (async_image !== void)
-		{
-			var meta = %[];
-			if (typeof(async_image.meta) === "Object" && async_image.meta !== null && meta instanceof "Dictionary")
+			var async_image = global.get_async_image(storage);
+			if (async_image === void)
 			{
-				(global.Dictionary.assign incontextof meta)(async_image.meta);
+				async_image = global.async_image_load(storage, key, false);
+				async_image.retrieve_count += 1;
 			}
-			this.copyFromBitmapToMainImage(async_image);
+			if (async_image !== void)
+			{
+				var meta = %[];
+				if (typeof(async_image.meta) === "Object" && async_image.meta !== null && meta instanceof "Dictionary")
+				{
+					(global.Dictionary.assign incontextof meta)(async_image.meta);
+				}
+				this.copyFromBitmapToMainImage(async_image);
 @if(NO_ASYNC_CACHE_IMAGE)
-			global.async_image_unload(async_image);
+				global.async_image_unload(async_image);
 @endif
-			return meta;
+				return meta;
+			}
 		}
 		return super.loadImages(...);
 	}

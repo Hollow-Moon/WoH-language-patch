@@ -376,37 +376,6 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 	}
 
 @if(ZOOM_WINDOW)
-	var hookMap = %[ keyDown:this.keyDownHook, leftClick:this.leftClickHook, rightClick:this.rightClickHook ];
-	function callHook(tag, *)
-	{
-		// 文字列を渡されたときはテーブルから参照
-		var array = (typeof tag == "String" && tag != "") ? hookMap[tag] : tag;
-		if (typeof array != "Object" || array.count <= 0) return false;
-
-		// 順番に呼び出し
-		var ret = false, tmp = [];
-		tmp.assign(array);
-		for (var i = 0, cnt = tmp.count; i < cnt; i += 1) {
-			var func = tmp[i];
-			ret |= func(*) if (typeof func == "Object");
-		}
-		return !!ret;
-	}
-	function addHook(tag, func) {
-		var array = tag;
-		if (typeof tag == "String" && tag != "") {
-			array = hookMap[tag];
-			array = hookMap[tag] = [] if (array === void);
-		}
-		array.add(func) if (typeof array == "Object");
-	}
-	function removeHook(tag, func) {
-		var array = (typeof tag == "String" && tag != "") ? hookMap[tag] : tag;
-		array.remove(func, true) if (typeof array == "Object");
-	}
-@endif
-
-@if(ZOOM_WINDOW)
 	//------------------------------------------ フルスクリーン・ズーム処理 --
 
 	property fullScreenMode { getter {

@@ -283,7 +283,7 @@ class KAGFlagFolderMenuItem extends KAGFlagMenuItem
 				//dm("loading: " + patchNames[i] + ">" + folderNames[i]);
 				patches_arr.add([patchNames[i], folderNames[i]]);
 @if(HD_MODE)
-				patches_arr.add([patchNames[i], folderNames[i]+hdFolderSuffix]) if owner.isHd;
+				addHdPaths(patches_arr, patchNames[i], folderNames[i]) if owner.isHd;
 @endif
 			}
 			if (languageSpecific) {
@@ -307,7 +307,7 @@ class KAGFlagFolderMenuItem extends KAGFlagMenuItem
 			if (patchNames[i] !== void) {
 				//dm("unloading: " + patchNames[i] + ">" + folderNames[i]);
 @if(HD_MODE)
-				patches_arr.add([patchNames[i], folderNames[i]+hdFolderSuffix]) if owner.isHd;
+				addHdPaths(patches_arr, patchNames[i], folderNames[i]) if owner.isHd;
 @endif
 				patches_arr.add([patchNames[i], folderNames[i]]);
 			}
@@ -773,26 +773,31 @@ function addHdMenu(displayMenu) {
 	this.qualityMenu.enabled = false;
 
 		qualityMenu.add(this.lqMenuItem = new KAGMenuItem(this, __t("低い(&L)"), 1,
-			function(sender) { onQualityMenuItemClick(sender,'low'); }, false));
-
-		qualityMenu.add(this.hqMenuItem = new KAGMenuItem(this, __t("高い(&H)"), 1,
-			function(sender) { onQualityMenuItemClick(sender,'high'); }, false));
-		this.hqMenuItem.enabled = hdPatchExists;
-
-		qualityMenu.add(this.fhdMenuItem = new KAGMenuItem(this, __t("高い2(&H)"), 1,  // TODO find better name...
-			function(sender) { onQualityMenuItemClick(sender,'veryHigh'); }, false));
-		this.fhdMenuItem.visible = fhdPatchExists;
-		this.fhdMenuItem.enabled = fhdPatchExists;
-
+			function(sender) { onQualityMenuItemClick(sender); }, false));
+		this.lqMenuItem.checked = true if hdScaleFactor === 1;
+		this.lqMenuItem.scaleFactor = 1;
+		this.lqMenuItem.captionArg = this.lqMenuItem.scaleFactor;
+		
+		for (var i=0; i<global.scaleFactors.count; i++) {
+			var hqMenuItemName = "hq%.1fMenuItem".sprintf(global.scaleFactors[i]).replace(/\./g, "_");
+			qualityMenu.add(this[hqMenuItemName] = new KAGMenuItem(this, __t("高いx%.1f(&H)"), 1,
+				function(sender) { onQualityMenuItemClick(sender); }, false));
+			this[hqMenuItemName].scaleFactor = global.scaleFactors[i];
+			this[hqMenuItemName].captionArg = this[hqMenuItemName].scaleFactor;
+			this[hqMenuItemName].enabled = patchExists(hdPatchesNames[i]);
+			this[hqMenuItemName].checked = true if hdScaleFactor === global.scaleFactors[i];
+		}
 
 	displayMenu.add(this.wideMenu = new KAGMenuItem(this, __t("アスペクト比(&A)"), 0, void, false));
 	this.wideMenu.enabled = false;
 
 		wideMenu.add(this.notWideMenuItem = new KAGMenuItem(this, __t("基準(4:3)(&S)"), 1,
 			function(sender) { onWideMenuItemClick(sender,'standard'); }, false));
+		this.notWideMenuItem.checked = true if !wideScreen;
 
 		wideMenu.add(this.wideMenuItem = new KAGMenuItem(this, __t("デスクトップと同じ(&M)"), 1,
 			function(sender) { onWideMenuItemClick(sender,'wide'); }, false));
+		this.wideMenuItem.checked = true if wideScreen && this.isAutoWide;
 
 		var keys = [];
 		keys.assign(wideResolutions);
@@ -812,21 +817,6 @@ function addHdMenu(displayMenu) {
 		wideMenu.add(this.wideCroppedMenuItem = new KAGMenuItem(this, "Wide (&cropped)", 1,
 			function(sender) { onWideMenuItemClick(sender,'standard',true); }, false));
 @endif
-
-	if (hdScaleFactor === 1) {
-		this.lqMenuItem.checked = true;
-	} else if (hdScaleFactor === defaultScaleFactor) {
-		this.hqMenuItem.checked = true;
-	} else if (hdScaleFactor === defaultHighScaleFactor) {
-		this.fhdMenuItem.checked = true;
-	}
-	if (wideScreen) {
-		if (this.isAutoWide) {
-			this.wideMenuItem.checked = true;
-		}
-	} else {
-		this.notWideMenuItem.checked = true;
-	}
 }
 
 function addGraphicUsageMenu(displayMenu) {

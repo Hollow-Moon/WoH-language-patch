@@ -3002,7 +3002,8 @@ class MenuItemLayer extends BasicCharacterLayer
 	{
 		if(text == "")
 			return;
-		text	= text.split(/\[r\]|\n/);	//	行で分ける
+		var rregex = /\[r\]|\n/;
+		text	= rregex.split(text);	//	行で分ける
 
 		if(typeof this.drawTextInfos == "undefined")
 			this.drawTextInfos	= [];

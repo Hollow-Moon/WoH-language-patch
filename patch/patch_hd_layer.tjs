@@ -99,17 +99,17 @@ global.bottomImages = [ // A bottom aligned image moving from negative to positi
 ];
 global.ps2BgImages = ["c_cs03", "csラストep07b", "csラストep08b"];
 
-function round(v)
-{
-	return (v + (v<0 ? -0.5 : 0.5)) | 0;
-}
-
 function transformDiscrete(v, scale)
 {
 @if(SCALE_USING_FLOATING_POINT)
 	// To avoids rounding errors when summing, rounding should occur only after scaling.
 	// Using "round" is probably better than "int" but it causes tearing in the yes/no button when you hover over it.
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+	return global.Math.round(v * scale) / scale;
+@endif
+@if(!SCALE_ROUND_TOWARDS_NEAREST)
 	return ((v * scale) | 0) / scale;
+@endif
 @endif
 @if(!SCALE_USING_FLOATING_POINT)
 	return v | 0;
@@ -155,6 +155,40 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 
 	var absoluteMode = 0;
 
+	function transformDiscreteLeft(v) {
+@if(SCALE_USING_FLOATING_POINT)
+		var scale = this.leftScale();
+		// To avoids rounding errors when summing, rounding should occur only after scaling.
+		// Using "round" is probably better than "int" but it causes tearing in the yes/no button when you hover over it.
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+		return global.Math.round(v * scale) / scale;
+@endif
+@if(!SCALE_ROUND_TOWARDS_NEAREST)
+		return ((v * scale) | 0) / scale;
+@endif
+@endif
+@if(!SCALE_USING_FLOATING_POINT)
+		return v | 0;
+@endif
+	}
+
+	function transformDiscreteTop(v) {
+@if(SCALE_USING_FLOATING_POINT)
+		var scale = this.topScale();
+		// To avoids rounding errors when summing, rounding should occur only after scaling.
+		// Using "round" is probably better than "int" but it causes tearing in the yes/no button when you hover over it.
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+		return global.Math.round(v * scale) / scale;
+@endif
+@if(!SCALE_ROUND_TOWARDS_NEAREST)
+		return ((v * scale) | 0) / scale;
+@endif
+@endif
+@if(!SCALE_USING_FLOATING_POINT)
+		return v | 0;
+@endif
+	}
+
 	function onClick_patch_hd_layer_override(x, y)
 	{
 @if(SCALE_USING_FLOATING_POINT)
@@ -190,6 +224,10 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		x \= wideScaleFactor;
 		y \= scaleFactor;
 @endif
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+		x = global.Math.round(x) | 0;
+		y = global.Math.round(y) | 0;
+@endif
 		this.onDoubleClick_patch_hd_layer_original(x, y);
 	}
 
@@ -214,6 +252,10 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 @if(!SCALE_USING_FLOATING_POINT)
 		x \= wideScaleFactor;
 		y \= scaleFactor;
+@endif
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+		x = global.Math.round(x) | 0;
+		y = global.Math.round(y) | 0;
 @endif
 		this.onMouseDown_patch_hd_layer_original(x, y, button, shift);
 	}
@@ -240,6 +282,10 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		x \= wideScaleFactor;
 		y \= scaleFactor;
 @endif
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+		x = global.Math.round(x) | 0;
+		y = global.Math.round(y) | 0;
+@endif
 		this.onMouseUp_patch_hd_layer_original(x, y, button, shift);
 	}
 
@@ -264,6 +310,10 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 @if(!SCALE_USING_FLOATING_POINT)
 		x \= wideScaleFactor;
 		y \= scaleFactor;
+@endif
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+		x = global.Math.round(x) | 0;
+		y = global.Math.round(y) | 0;
 @endif
 		this.onMouseMove_patch_hd_layer_original(x, y, shift);
 	}
@@ -290,6 +340,10 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		x \= wideScaleFactor;
 		y \= scaleFactor;
 @endif
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+		x = global.Math.round(x) | 0;
+		y = global.Math.round(y) | 0;
+@endif
 		this.onMouseWheel_patch_hd_layer_original(shift, delta, x, y);
 	}
 
@@ -314,6 +368,10 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 @if(!SCALE_USING_FLOATING_POINT)
 		x \= wideScaleFactor;
 		y \= scaleFactor;
+@endif
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+		x = global.Math.round(x) | 0;
+		y = global.Math.round(y) | 0;
 @endif
 		this.onHitTest_patch_hd_layer_original(x, y, hit);
 	}
@@ -344,6 +402,12 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		cx \= wideScaleFactor;
 		cy \= scaleFactor;
 @endif
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+		x = global.Math.round(x) | 0;
+		y = global.Math.round(y) | 0;
+		cx = global.Math.round(cx) | 0;
+		cy = global.Math.round(cy) | 0;
+@endif
 		this.onTouchDown_patch_hd_layer_original(x, y, cx, cy, id);
 	}
 
@@ -372,6 +436,12 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		y \= scaleFactor;
 		cx \= wideScaleFactor;
 		cy \= scaleFactor;
+@endif
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+		x = global.Math.round(x) | 0;
+		y = global.Math.round(y) | 0;
+		cx = global.Math.round(cx) | 0;
+		cy = global.Math.round(cy) | 0;
 @endif
 		this.onTouchUp_patch_hd_layer_original(x, y, cx, cy, id);
 	}
@@ -402,6 +472,12 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		cx \= wideScaleFactor;
 		cy \= scaleFactor;
 @endif
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+		x = global.Math.round(x) | 0;
+		y = global.Math.round(y) | 0;
+		cx = global.Math.round(cx) | 0;
+		cy = global.Math.round(cy) | 0;
+@endif
 		this.onTouchMove_patch_hd_layer_original(x, y, cx, cy, id);
 	}
 
@@ -428,6 +504,10 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		cx \= wideScaleFactor;
 		cy \= scaleFactor;
 @endif
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+		cx = global.Math.round(cx) | 0;
+		cy = global.Math.round(cy) | 0;
+@endif
 		this.onTouchScaling_patch_hd_layer_original(startdistance, currentdistance, cx, cy, flag);
 	}
 
@@ -453,6 +533,10 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 @if(!SCALE_USING_FLOATING_POINT)
 		cx \= wideScaleFactor;
 		cy \= scaleFactor;
+@endif
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+		cx = global.Math.round(cx) | 0;
+		cy = global.Math.round(cy) | 0;
 @endif
 		this.onTouchRotate_patch_hd_layer_original(startangle, currentangle, distance, cx, cy, flag);
 	}
@@ -618,6 +702,9 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 	{
 		getter
 		{
+			if (this.absoluteMode) {
+				return super.left;
+			}
 			return this._originalLeft;
 		}
 		setter(v)
@@ -625,7 +712,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 @if(!SCALE_USING_FLOATING_POINT)
 			v = ((v < 0 ? -v : v) & 0x7fffffff) * (v < 0 ? -1 : 1);
 @endif
-			this._originalLeft = transformDiscrete(v, this.leftScale());
+			this._originalLeft = transformDiscreteLeft(v);
 			super.left = this.transformLeft(this._originalLeft);
 		}
 	}
@@ -634,6 +721,9 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 	{
 		getter
 		{
+			if (this.absoluteMode) {
+				return super.top;
+			}
 			return this.originalTop;
 		}
 		setter(v)
@@ -641,7 +731,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 @if(!SCALE_USING_FLOATING_POINT)
 			v = ((v < 0 ? -v : v) & 0x7fffffff) * (v < 0 ? -1 : 1);
 @endif
-			this.originalTop = transformDiscrete(v, this.topScale());
+			this.originalTop = transformDiscreteTop(v);
 			super.top = this.transformTop(this.originalTop);
 		}
 	}
@@ -650,6 +740,9 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 	{
 		getter
 		{
+			if (this.absoluteMode) {
+				return super.imageLeft;
+			}
 			return this.originalImageLeft;
 		}
 		setter(v)
@@ -658,7 +751,11 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 			v = ((v < 0 ? -v : v) & 0x7fffffff) * (v < 0 ? -1 : 1);
 @endif
 			this.originalImageLeft = transformDiscrete(v, this.widthScale);
-			super.imageLeft = v*this.widthScale;
+			var val = v*this.widthScale;
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+			val = global.Math.round(val) | 0;
+@endif
+			super.imageLeft = val;
 		}
 	}
 
@@ -666,6 +763,9 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 	{
 		getter
 		{
+			if (this.absoluteMode) {
+				return super.imageTop;
+			}
 			return this.originalImageTop;
 		}
 		setter(v)
@@ -674,7 +774,11 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 			v = ((v < 0 ? -v : v) & 0x7fffffff) * (v < 0 ? -1 : 1);
 @endif
 			this.originalImageTop = transformDiscrete(v, this.heightScale);
-			super.imageTop = v*this.heightScale;
+			var val = v*this.heightScale;
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+			val = global.Math.round(val) | 0;
+@endif
+			super.imageTop = val;
 		}
 	}
 
@@ -682,6 +786,9 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 	{
 		getter
 		{
+			if (this.absoluteMode) {
+				return super.clipLeft;
+			}
 			return this.originalClipLeft;
 		}
 		setter(v)
@@ -697,6 +804,9 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 	{
 		getter
 		{
+			if (this.absoluteMode) {
+				return super.clipTop;
+			}
 			return this.originalClipTop;
 		}
 		setter(v)
@@ -713,6 +823,9 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 	{
 		getter
 		{
+			if (this.absoluteMode) {
+				return super.clipWidth;
+			}
 			return this.originalClipWidth;
 		}
 		setter(v)
@@ -728,6 +841,9 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 	{
 		getter
 		{
+			if (this.absoluteMode) {
+				return super.clipHeight;
+			}
 			return this.originalClipHeight;
 		}
 		setter(v)
@@ -743,12 +859,19 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 	{
 		getter
 		{
+			if (this.absoluteMode) {
+				return super.attentionLeft;
+			}
 			return this.originalAttentionLeft;
 		}
 		setter(v)
 		{
 			this.originalAttentionLeft = transformDiscrete(v, this.widthScale);
-			super.attentionLeft = v*this.widthScale;
+			var val = v*this.widthScale;
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+			val = global.Math.round(val) | 0;
+@endif
+			super.attentionLeft = val;
 		}
 	}
 
@@ -756,12 +879,19 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 	{
 		getter
 		{
+			if (this.absoluteMode) {
+				return super.attentionTop;
+			}
 			return this.originalAttentionTop;
 		}
 		setter(v)
 		{
 			this.originalAttentionTop = transformDiscrete(v, this.heightScale);
-			super.attentionTop = v*this.heightScale;
+			var val = v*this.heightScale;
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+			val = global.Math.round(val) | 0;
+@endif
+			super.attentionTop = val;
 		}
 	}
 
@@ -769,12 +899,19 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 	{
 		getter
 		{
+			if (this.absoluteMode) {
+				return super.cursorX;
+			}
 @if(SCALE_USING_FLOATING_POINT)
-			return super.cursorX / this.cursorXScale;
+			var val = super.cursorX / this.cursorXScale;
 @endif
 @if(!SCALE_USING_FLOATING_POINT)
-			return super.cursorX \ this.cursorXScale;
+			var val = super.cursorX \ this.cursorXScale;
 @endif
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+			val = global.Math.round(val) | 0;
+@endif
+			return val;
 		}
 		setter(v)
 		{
@@ -787,12 +924,19 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 	{
 		getter
 		{
+			if (this.absoluteMode) {
+				return super.cursorY;
+			}
 @if(SCALE_USING_FLOATING_POINT)
-			return (super.cursorY - this.cursorYOffset() * wideScaleFactor) / this.cursorYScale;
+			var val = (super.cursorY - this.cursorYOffset() * wideScaleFactor) / this.cursorYScale;
 @endif
 @if(!SCALE_USING_FLOATING_POINT)
-			return (super.cursorY - this.cursorYOffset() * wideScaleFactor) \ this.cursorYScale;
+			var val = (super.cursorY - this.cursorYOffset() * wideScaleFactor) \ this.cursorYScale;
 @endif
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+			val = global.Math.round(val) | 0;
+@endif
+			return val;
 		}
 		setter(v)
 		{
@@ -820,7 +964,11 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 			v &= 0xffffffff;
 @endif
 			this.originalWidth = transformDiscrete(v, this.widthScale);
-			super.width = v * this.widthScale;
+			var val = v * this.widthScale;
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+			val = global.Math.round(val) | 0;
+@endif
+			super.width = val;
 			this.updateImageSize();
 		}
 	}
@@ -844,7 +992,11 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 			v &= 0xffffffff;
 @endif
 			this.originalHeight = transformDiscrete(v, this.heightScale);
-			super.height = v * this.heightScale;
+			var val = v * this.heightScale;
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+			val = global.Math.round(val) | 0;
+@endif
+			super.height = val;
 			this.updateImageSize();
 		}
 	}
@@ -887,7 +1039,11 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 				this.originalImageLeft = this.originalWidth - this.originalImageWidth;
 			}
 			this.resetClip();
-			super.imageWidth = v * this.widthScale;
+			var val = v * this.widthScale;
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+			val = global.Math.round(val) | 0;
+@endif
+			super.imageWidth = val;
 		}
 	}
 
@@ -929,7 +1085,11 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 				this.originalImageTop = this.originalHeight - this.originalImageHeight;
 			}
 			this.resetClip();
-			super.imageHeight = v * this.heightScale;
+			var val = v * this.heightScale;
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+			val = global.Math.round(val) | 0;
+@endif
+			super.imageHeight = val;
 		}
 	}
 
@@ -1284,22 +1444,38 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 
 	function transformLeft(left, parent=this.parent)
 	{
-		return (left + this.leftOffset + this.leftPivot(parent))*this.leftScale(parent);
+		var val = (left + this.leftOffset + this.leftPivot(parent))*this.leftScale(parent);
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+		val = global.Math.round(val) | 0;
+@endif
+		return val;
 	}
 
 	function transformTop(top, parent=this.parent)
 	{
-		return (top + this.topPivot(top))*this.topScale(parent) + this.topOffset(parent)*wideScaleFactor;
+		var val = (top + this.topPivot(top))*this.topScale(parent) + this.topOffset(parent)*wideScaleFactor;
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+		val = global.Math.round(val) | 0;
+@endif
+		return val;
 	}
 
 	function transformCursorX(cursorX, parent=this.parent)
 	{
-		return cursorX * this.cursorXScale;
+		var val = cursorX * this.cursorXScale;
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+		val = global.Math.round(val) | 0;
+@endif
+		return val;
 	}
 
 	function transformCursorY(cursorY, parent=this.parent)
 	{
-		return cursorY * this.cursorYScale + this.cursorYOffset(parent) * wideScaleFactor;
+		var val = cursorY * this.cursorYScale + this.cursorYOffset(parent) * wideScaleFactor;
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+		val = global.Math.round(val) | 0;
+@endif
+		return val;
 	}
 
 	function updateBg(width, height, fromloadImages=false)
@@ -1373,7 +1549,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		this.setPos_patch_hd_layer(_originalLeft_tmp, originalTop_tmp, originalWidth_tmp, originalHeight_tmp);
 		if (super.hasImage)
 		{
-			// this.setImageSize_patch_hd_layer(originalImageWidth_tmp, originalImageHeight_tmp);
+			this.setImageSize_patch_hd_layer(originalImageWidth_tmp, originalImageHeight_tmp);
 			this.setImagePos_patch_hd_layer(originalImageLeft_tmp, originalImageTop_tmp);
 			this.setClip_patch_hd_layer(originalClipLeft_tmp, originalClipTop_tmp, originalClipWidth_tmp, originalClipHeight_tmp);
 		}
@@ -1598,6 +1774,10 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 @endif
 		x *= this.widthScale;
 		y *= this.heightScale;
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+		x = global.Math.round(x) | 0;
+		y = global.Math.round(y) | 0;
+@endif
 		return (global.Layer_patch_hd_layer_original.getMainPixel incontextof this)(x, y);
 	}
 
@@ -1610,6 +1790,10 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 @endif
 		x *= this.widthScale;
 		y *= this.heightScale;
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+		x = global.Math.round(x) | 0;
+		y = global.Math.round(y) | 0;
+@endif
 		(global.Layer_patch_hd_layer_original.setMainPixel incontextof this)(x, y, color);
 	}
 
@@ -1621,6 +1805,10 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 @endif
 		x *= this.widthScale;
 		y *= this.heightScale;
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+		x = global.Math.round(x) | 0;
+		y = global.Math.round(y) | 0;
+@endif
 		return (global.Layer_patch_hd_layer_original.getMaskPixel incontextof this)(x, y);
 	}
 
@@ -1633,6 +1821,10 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 @endif
 		x *= this.widthScale;
 		y *= this.heightScale;
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+		x = global.Math.round(x) | 0;
+		y = global.Math.round(y) | 0;
+@endif
 		(global.Layer_patch_hd_layer_original.setMaskPixel incontextof this)(x, y, value);
 	}
 
@@ -1644,6 +1836,10 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 @endif
 		x *= this.widthScale;
 		y *= this.heightScale;
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+		x = global.Math.round(x) | 0;
+		y = global.Math.round(y) | 0;
+@endif
 		return (global.Layer_patch_hd_layer_original.getProvincePixel incontextof this)(x, y);
 	}
 
@@ -1656,6 +1852,10 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 @endif
 		x *= this.widthScale;
 		y *= this.heightScale;
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+		x = global.Math.round(x) | 0;
+		y = global.Math.round(y) | 0;
+@endif
 		(global.Layer_patch_hd_layer_original.setProvincePixel incontextof this)(x, y, value);
 	}
 
@@ -1667,6 +1867,10 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 @endif
 		x *= this.widthScale;
 		y *= this.heightScale;
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+		x = global.Math.round(x) | 0;
+		y = global.Math.round(y) | 0;
+@endif
 		return (global.Layer_patch_hd_layer_original.getLayerAt incontextof this)(x, y, exclude_self, get_disabled);
 	}
 
@@ -1682,7 +1886,15 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		this.originalWidth = transformDiscrete(width, this.widthScale);
 		this.originalHeight = transformDiscrete(height, this.heightScale);
 
-		(global.Layer_patch_hd_layer_original.setSize incontextof this)(width * this.widthScale, height * this.heightScale);
+		width *= this.widthScale;
+		height *= this.heightScale;
+
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+		width = global.Math.round(width) | 0;
+		height = global.Math.round(height) | 0;
+@endif
+
+		(global.Layer_patch_hd_layer_original.setSize incontextof this)(width, height);
 
 		this.updateImageSize();
 	}
@@ -1705,7 +1917,15 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		this.originalImageHeight = transformDiscrete(imageHeight, this.heightScale);
 		this.internalSetImageSize(this.originalImageWidth, this.originalImageHeight);
 
-		(global.Layer_patch_hd_layer_original.setImageSize incontextof this)(imageWidth * this.widthScale, imageHeight * this.heightScale);
+		imageWidth *= this.widthScale;
+		imageHeight *= this.heightScale;
+
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+		imageWidth = global.Math.round(imageWidth) | 0;
+		imageHeight = global.Math.round(imageHeight) | 0;
+@endif
+
+		(global.Layer_patch_hd_layer_original.setImageSize incontextof this)(imageWidth, imageHeight);
 	}
 
 	function setImageSize()
@@ -1781,6 +2001,13 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		var roundedUpscaledSingleWidth = (singleWidth * scale) | 0;
 		scaleWidth = roundedUpscaledSingleWidth * this.numberOfImages;
 
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+		scaleWidth = global.Math.round(scaleWidth) | 0;
+		scaleHeight = global.Math.round(scaleHeight) | 0;
+		singleWidth = global.Math.round(singleWidth) | 0;
+		roundedUpscaledSingleWidth = global.Math.round(roundedUpscaledSingleWidth) | 0;
+@endif
+
 		var tmp = new global.Layer(this.window, this);
 		(global.Layer_patch_hd_layer_original.setImageSize incontextof tmp)(scaleWidth, scaleHeight);
 
@@ -1816,7 +2043,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 			width = ((width < 0 ? -width : width) & 0x7fffffff) * (width < 0 ? -1 : 1);
 @endif
 			this.originalWidth = width;
-			width = width * this.widthScale;
+			width *= this.widthScale;
 		}
 		if (height !== void)
 		{
@@ -1824,10 +2051,20 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 			height = ((height < 0 ? -height : height) & 0x7fffffff) * (height < 0 ? -1 : 1);
 @endif
 			this.originalHeight = height;
-			height = height * this.heightScale;
+			height *= this.heightScale;
 		}
 
-		(global.Layer_patch_hd_layer_original.setPos incontextof this)(this.transformLeft(left), this.transformTop(top), width, height);
+		left = this.transformLeft(left);
+		top = this.transformTop(top);
+
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+		left = global.Math.round(left) | 0;
+		top = global.Math.round(top) | 0;
+		width = global.Math.round(width) | 0;
+		height = global.Math.round(height) | 0;
+@endif
+
+		(global.Layer_patch_hd_layer_original.setPos incontextof this)(left, top, width, height);
 
 		if (width !== void || height !== void)
 		{
@@ -1848,7 +2085,16 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 @endif
 		this.originalImageLeft = left;
 		this.originalImageTop = top;
-		(global.Layer_patch_hd_layer_original.setImagePos incontextof this)(left*this.widthScale, top*this.heightScale);
+
+		left *= this.widthScale;
+		top *= this.heightScale;
+
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+		left = global.Math.round(left) | 0;
+		top = global.Math.round(top) | 0;
+@endif
+
+		(global.Layer_patch_hd_layer_original.setImagePos incontextof this)(left, top);
 	}
 
 	function setImagePos()
@@ -1864,7 +2110,16 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 @endif
 		var originalCursorX = transformDiscrete(cursorX, this.cursorXScale);
 		var originalCursorY = transformDiscrete(cursorY, this.cursorYScale);
-		(global.Layer_patch_hd_layer_original.setCursorPos incontextof this)(this.transformCursorX(originalCursorX), this.transformCursorY(originalCursorY));
+
+		cursorX = this.transformCursorX(originalCursorX);
+		cursorY = this.transformCursorY(originalCursorY);
+
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+		cursorX = global.Math.round(cursorX) | 0;
+		cursorY = global.Math.round(cursorY) | 0;
+@endif
+
+		(global.Layer_patch_hd_layer_original.setCursorPos incontextof this)(cursorX, cursorY);
 	}
 
 	function updateBgFromSource(src, swidth, sheight)
@@ -1933,7 +2188,19 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		this.originalClipWidth = transformDiscrete(clipWidth, this.widthScale);
 		this.originalClipHeight = transformDiscrete(clipHeight, this.heightScale);
 
-		(global.Layer_patch_hd_layer_original.setClip incontextof this)(clipLeft*this.widthScale, clipTop*this.heightScale, clipWidth*this.widthScale, clipHeight*this.heightScale);
+		clipLeft *= this.widthScale;
+		clipTop *= this.heightScale;
+		clipWidth *= this.widthScale;
+		clipHeight *= this.heightScale;
+
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+		clipLeft = global.Math.round(clipLeft) | 0;
+		clipTop = global.Math.round(clipTop) | 0;
+		clipWidth = global.Math.round(clipWidth) | 0;
+		clipHeight = global.Math.round(clipHeight) | 0;
+@endif
+
+		(global.Layer_patch_hd_layer_original.setClip incontextof this)(clipLeft, clipTop, clipWidth, clipHeight);
 	}
 
 	function setClip()
@@ -1949,7 +2216,16 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 @endif
 		this.originalAttentionLeft = transformDiscrete(left, this.widthScale);
 		this.originalAttentionTop = transformDiscrete(top, this.heightScale);
-		(global.Layer_patch_hd_layer_original.setAttentionPos incontextof this)(left*this.widthScale, top*this.heightScale);
+
+		left *= this.widthScale;
+		top *= this.heightScale;
+
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+		left = global.Math.round(left) | 0;
+		top = global.Math.round(top) | 0;
+@endif
+
+		(global.Layer_patch_hd_layer_original.setAttentionPos incontextof this)(left, top);
 	}
 
 	function setAttentionPos()
@@ -1969,11 +2245,13 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 
 	function beginTransition(name, withchildren=true, transsrc, options=%[])
 	{
+@if(0)
 		this.update_bounds_hd_layer();
 		if (typeof(transsrc) === "Object" && transsrc !== null && isvalid(transsrc) && transsrc instanceof "Layer")
 		{
 			transsrc.update_bounds_hd_layer();
 		}
+@endif
 		var srcwidth = void;
 		var srcheight = void;
 		var destwidth = void;
@@ -2151,6 +2429,11 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		{
 			throw new Exception("expected 4 args");
 		}
+		// Optimization for 1x size.
+		if (this.widthScale + this.heightScale == 2)
+		{
+			return (global.Layer_patch_hd_layer_original.update incontextof this)(...);
+		}
 		var left = args[0];
 		var top = args[1];
 		var width = args[2];
@@ -2161,7 +2444,20 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		width = ((width < 0 ? -width : width) & 0x7fffffff) * (width < 0 ? -1 : 1);
 		height = ((height < 0 ? -height : height) & 0x7fffffff) * (height < 0 ? -1 : 1);
 @endif
-		(global.Layer_patch_hd_layer_original.update incontextof this)(left*this.widthScale, top*this.heightScale, width*this.widthScale, height*this.heightScale);
+
+		left *= this.widthScale;
+		top *= this.heightScale;
+		width *= this.widthScale;
+		height *= this.heightScale;
+
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+		left = global.Math.round(left) | 0;
+		top = global.Math.round(top) | 0;
+		width = global.Math.round(width) | 0;
+		height = global.Math.round(height) | 0;
+@endif
+
+		(global.Layer_patch_hd_layer_original.update incontextof this)(left, top, width, height);
 	}
 
 	/*
@@ -2200,6 +2496,16 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		stop *= src.heightScale;
 		swidth *= src.widthScale;
 		sheight *= src.heightScale;
+
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+		left = global.Math.round(left) | 0;
+		top = global.Math.round(top) | 0;
+		sleft = global.Math.round(sleft) | 0;
+		stop = global.Math.round(stop) | 0;
+		swidth = global.Math.round(swidth) | 0;
+		sheight = global.Math.round(sheight) | 0;
+@endif
+
 		var ie;
 		try
 		{
@@ -2240,6 +2546,16 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		stop *= src.heightScale;
 		swidth *= src.widthScale;
 		sheight *= src.heightScale;
+
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+		left = global.Math.round(left) | 0;
+		top = global.Math.round(top) | 0;
+		sleft = global.Math.round(sleft) | 0;
+		stop = global.Math.round(stop) | 0;
+		swidth = global.Math.round(swidth) | 0;
+		sheight = global.Math.round(sheight) | 0;
+@endif
+
 		var ie;
 		try
 		{
@@ -2429,6 +2745,18 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		stop *= src.heightScale;
 		swidth *= src.widthScale;
 		sheight *= src.heightScale;
+
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+		left = global.Math.round(left) | 0;
+		top = global.Math.round(top) | 0;
+		width = global.Math.round(width) | 0;
+		height = global.Math.round(height) | 0;
+		sleft = global.Math.round(sleft) | 0;
+		stop = global.Math.round(stop) | 0;
+		swidth = global.Math.round(swidth) | 0;
+		sheight = global.Math.round(sheight) | 0;
+@endif
+
 @if(SCALE_USING_FLOATING_POINT)
 		// XXX: workaround for transparent YesNoLayer
 		if (sleft > 0 && sleft < 1)
@@ -2499,6 +2827,18 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		stop *= src.heightScale;
 		swidth *= src.widthScale;
 		sheight *= src.heightScale;
+
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+		left = global.Math.round(left) | 0;
+		top = global.Math.round(top) | 0;
+		width = global.Math.round(width) | 0;
+		height = global.Math.round(height) | 0;
+		sleft = global.Math.round(sleft) | 0;
+		stop = global.Math.round(stop) | 0;
+		swidth = global.Math.round(swidth) | 0;
+		sheight = global.Math.round(sheight) | 0;
+@endif
+
 		var ie;
 		try
 		{
@@ -2539,6 +2879,16 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		stop *= src.heightScale;
 		swidth *= src.widthScale;
 		sheight *= src.heightScale;
+
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+		left = global.Math.round(left) | 0;
+		top = global.Math.round(top) | 0;
+		sleft = global.Math.round(sleft) | 0;
+		stop = global.Math.round(stop) | 0;
+		swidth = global.Math.round(swidth) | 0;
+		sheight = global.Math.round(sheight) | 0;
+@endif
+
 		var ie;
 		try
 		{
@@ -2598,6 +2948,20 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		}
 		tx *= this.widthScale;
 		ty *= this.heightScale;
+
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+		sx = global.Math.round(sx) | 0;
+		sy = global.Math.round(sy) | 0;
+		sw = global.Math.round(sw) | 0;
+		sh = global.Math.round(sh) | 0;
+		a = global.Math.round(a) | 0;
+		b = global.Math.round(b) | 0;
+		c = global.Math.round(c) | 0;
+		d = global.Math.round(d) | 0;
+		tx = global.Math.round(tx) | 0;
+		ty = global.Math.round(ty) | 0;
+@endif
+
 		var ie;
 		try
 		{
@@ -2661,6 +3025,20 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		}
 		tx *= this.widthScale;
 		ty *= this.heightScale;
+
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+		sx = global.Math.round(sx) | 0;
+		sy = global.Math.round(sy) | 0;
+		sw = global.Math.round(sw) | 0;
+		sh = global.Math.round(sh) | 0;
+		a = global.Math.round(a) | 0;
+		b = global.Math.round(b) | 0;
+		c = global.Math.round(c) | 0;
+		d = global.Math.round(d) | 0;
+		tx = global.Math.round(tx) | 0;
+		ty = global.Math.round(ty) | 0;
+@endif
+
 		var ie;
 		try
 		{
@@ -2699,6 +3077,12 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 @endif
 		xblur *= this.widthScale;
 		yblur *= this.heightScale;
+
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+		xblur = global.Math.round(xblur) | 0;
+		yblur = global.Math.round(yblur) | 0;
+@endif
+
 		var ie;
 		try
 		{
@@ -2733,6 +3117,14 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		top *= this.heightScale;
 		width *= this.widthScale;
 		height *= this.heightScale;
+
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+		left = global.Math.round(left) | 0;
+		top = global.Math.round(top) | 0;
+		width = global.Math.round(width) | 0;
+		height = global.Math.round(height) | 0;
+@endif
+
 		var ie;
 		try
 		{
@@ -2771,6 +3163,14 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		top *= this.heightScale;
 		width *= this.widthScale;
 		height *= this.heightScale;
+
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+		left = global.Math.round(left) | 0;
+		top = global.Math.round(top) | 0;
+		width = global.Math.round(width) | 0;
+		height = global.Math.round(height) | 0;
+@endif
+
 		var ie;
 		try
 		{
@@ -2829,6 +3229,18 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 @endif
 		left *= this.widthScale;
 		top *= this.heightScale;
+		swidth *= (this.heightScale < this.widthScale) ? this.heightScale : this.widthScale;
+		sofsx *= this.widthScale;
+		sofsy *= this.heightScale;
+
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+		left = global.Math.round(left) | 0;
+		top = global.Math.round(top) | 0;
+		swidth = global.Math.round(swidth) | 0;
+		sofsx = global.Math.round(sofsx) | 0;
+		sofsy = global.Math.round(sofsy) | 0;
+@endif
+
 		var ie;
 		try
 		{
@@ -2887,6 +3299,18 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 @endif
 		left *= this.widthScale;
 		top *= this.heightScale;
+		swidth *= (this.heightScale < this.widthScale) ? this.heightScale : this.widthScale;
+		sofsx *= this.widthScale;
+		sofsy *= this.heightScale;
+
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+		left = global.Math.round(left) | 0;
+		top = global.Math.round(top) | 0;
+		swidth = global.Math.round(swidth) | 0;
+		sofsx = global.Math.round(sofsx) | 0;
+		sofsy = global.Math.round(sofsy) | 0;
+@endif
+
 		var ie;
 		try
 		{

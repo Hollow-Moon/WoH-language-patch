@@ -132,9 +132,11 @@ function dmt(msg*) { Debug.message(msg.join(", ")+": "+Scripts.getTraceString())
 @set(HD_COMPATIBLE_SAVES=1)
 // history buttons are unused anyway...
 @set(HISTORY_BUTTONS=0)
+@set(SCALE_ROUND_TOWARDS_NEAREST=0)
 
 @if(GAME_FATE||GAME_FHAT)
 @set(TEXT_DRAWER=1)
+@set(PROCESS_WORD_WRAPPING_IN_CHUNKS=1)
 @endif
 
 @if(__SELECT_TEXTWINDOW__!=2)
@@ -208,6 +210,22 @@ function dmt(msg*) { Debug.message(msg.join(", ")+": "+Scripts.getTraceString())
 	global.devMode = ((("" + System.getArgument('-devmode')).indexOf("1") !== -1) || Storages.isExistentStorage(basepath + "dev.txt"));
 	global.devMode2 = ((("" + System.getArgument('-devmode')).indexOf("2") !== -1) || Storages.isExistentStorage(basepath + "dev2.txt"));
 	global.forceLog = ((System.getArgument('-forcelog') !== void) || Storages.isExistentStorage(basepath + "forceLog.txt"));
+
+	var version_info_path = "patch_versioninfo.tjs";
+	try
+	{
+		if (Storages.isExistentStorage(version_info_path))
+		{
+			var verinfo = Scripts.execStorage(version_info_path);
+			// Ensure patch info gets put in the log
+			Debug.notice(("Patch Commit: %s").sprintf(verinfo.hexsha));
+			Debug.notice(("Patch Creation Time: %i").sprintf(verinfo.archive_created_time));
+		}
+	}
+	catch (e)
+	{
+		// pass
+	}
 
 	// Override settings
 	var settingsPath = basepath + "settings.tjs";

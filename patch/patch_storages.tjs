@@ -57,6 +57,106 @@
 }
 
 {
+	global.archive_path_mapping = %[];
+	global.mount_archive = function(arc_path)
+	{
+		var archive_path_mapping = global.archive_path_mapping;
+		var arc_fullpath = Storages.getFullPath(arc_path);
+		if (arc_fullpath.length === 0)
+		{
+			// not valid path
+			return "";
+		}
+		if (typeof(archive_path_mapping[arc_fullpath]) === "String")
+		{
+			// already mounted
+			return "";
+		}
+		var squashfs_res = "";
+		if (typeof(global.Storages.mountSquashFs) === "Object")
+		{
+			squashfs_res = global.Storages.mountSquashFs(arc_fullpath);
+		}
+		if (squashfs_res.length !== 0)
+		{
+			archive_path_mapping[arc_fullpath] = squashfs_res;
+			return squashfs_res;
+		}
+		var xp3_res = "";
+		if (typeof(global.Storages.mountXP3) === "Object")
+		{
+			xp3_res = global.Storages.mountXP3(arc_fullpath);
+		}
+		if (xp3_res.length !== 0)
+		{
+			archive_path_mapping[arc_fullpath] = xp3_res;
+			return xp3_res;
+		}
+		return "";
+	};
+	global.unmount_archive = function(arc_path)
+	{
+		var archive_path_mapping = global.archive_path_mapping;
+		var arc_fullpath = Storages.getFullPath(arc_path);
+		if (arc_fullpath.length === 0)
+		{
+			// not valid path
+			return false;
+		}
+		if (typeof(archive_path_mapping[arc_fullpath]) !== "String")
+		{
+			// not mounted
+			return false;
+		}
+		if (archive_path_mapping[arc_fullpath].substring(0, 6) === "squash" && typeof(global.Storages.unmountSquashFs) === "Object")
+		{
+			var squashfs_res = global.Storages.unmountSquashFs(archive_path_mapping[arc_fullpath]);
+			if (squashfs_res)
+			{
+				delete archive_path_mapping[arc_fullpath];
+				return squashfs_res;
+			}
+		}
+		if (archive_path_mapping[arc_fullpath].substring(0, 3) === "xp3" && typeof(global.Storages.unmountXP3) === "Object")
+		{
+			var xp3_res = global.Storages.unmountXP3(archive_path_mapping[arc_fullpath]);
+			if (xp3_res)
+			{
+				delete archive_path_mapping[arc_fullpath];
+				return xp3_res;
+			}
+		}
+		return false;
+	};
+	global.translate_archive_path = function(path)
+	{
+		var archive_path_mapping = global.archive_path_mapping;
+		var arcdelim = System.getArgument("-arcdelim");
+		if (!arcdelim)
+		{
+			arcdelim = ">";
+		}
+		var arcdelim_index = path.indexOf(arcdelim);
+		if (arcdelim_index === -1)
+		{
+			return path;
+		}
+		var arc_path = path.substring(0, spos);
+		var arc_fullpath = Storages.getFullPath(arc_path);
+		var arc_mappedpath = archive_path_mapping[arc_fullpath];
+		if (typeof(arc_mappedpath) !== "String")
+		{
+			return path;
+@if(0)
+			throw new Exception("Lazy mounting not implemented");
+@endif
+		}
+		var inarc_path = path.substring(spos + 1);
+		return arc_mappedpath + "://./" + inarc_path;
+	};
+}
+
+{
 	// TODO: clean out the auto path table
 	global.paths_base = [];
 	var paths_base = global.paths_base;

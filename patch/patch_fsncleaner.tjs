@@ -49,6 +49,7 @@
 			}
 		};
 		var is_technical_nocomment_regex = /^[\@\*]/g;
+		var is_comment_regex = /^[\;]/g;
 		var is_lr_regex = /\[[lr]\]$/g;
 		var dest_notechnical = [];
 		dest_notechnical.assign(dest);
@@ -71,14 +72,25 @@
 				}
 				continue;
 			}
-			var line1 = translated_lines[i + 1];
-			if (is_technical_nocomment_regex.match(line1).count === 0)
+			for (var j = i + 1, internal_forloop_count = translated_lines.count; j < internal_forloop_count; j += 1)
 			{
-				if (is_lr_regex.match(line).count === 0)
+				var line1 = translated_lines[j];
+				if (is_comment_regex.match(line1).count !== 0)
 				{
-					translated_lines[i] += "[l][r]";
+					continue;
 				}
-				continue;
+				else if (is_technical_nocomment_regex.match(line1).count === 0)
+				{
+					if (is_lr_regex.match(line).count === 0)
+					{
+						translated_lines[i] += "[l][r]";
+					}
+					break;
+				}
+				else
+				{
+					break;
+				}
 			}
 		}
 		clean_technical(translated_lines);

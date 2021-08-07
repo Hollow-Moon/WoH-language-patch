@@ -199,6 +199,16 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 		return ret;
 	}
 
+	function requeueText(text, elm)
+	{
+		var ret2 = %[];
+		ret2.__patch_conductor_storage = elm.__patch_conductor_storage;
+		ret2.__patch_conductor_line = elm.__patch_conductor_line;
+		ret2.tagname = "ch_patch_conductor_split";
+		ret2.text = text;
+		this.pendings.insert(0, ret2);
+	}
+
 	function onTag(elm)
 	{
 		if (elm.tagname === "ch_patch_conductor_split")
@@ -206,7 +216,7 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 			var text = elm.text;
 			if (typeof(this.owner.onConductorPreprocessCh) === "Object")
 			{
-				text = this.owner.onConductorPreprocessCh(text, this);
+				text = this.owner.onConductorPreprocessCh(text, this, elm);
 			}
 			var text_sz = 0;
 			if (typeof(text) === "Object")
@@ -222,8 +232,15 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 				var ret2 = %[];
 				ret2.__patch_conductor_storage = elm.__patch_conductor_storage;
 				ret2.__patch_conductor_line = elm.__patch_conductor_line;
-				ret2.tagname = "ch";
-				ret2.text = text[i];
+				if (text[i] == "\n")
+				{
+					ret2.tagname = "r";
+				}
+				else
+				{
+					ret2.tagname = "ch";
+					ret2.text = text[i];
+				}
 				this.pendings.insert(0, ret2);
 			}
 			return 0;

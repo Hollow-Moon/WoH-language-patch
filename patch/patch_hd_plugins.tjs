@@ -133,11 +133,24 @@ function drawLine_patch_hd_plugins_override(layer, x0, y0, cx, cy, lc)
 {
 	var widthScale = layer.widthScale;
 	var heightScale = layer.heightScale;
+
+	x0 *= widthScale;
+	y0 *= heightScale;
+	cx *= widthScale;
+	cy *= heightScale;
+
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+	x0 = global.Math.round(x0) | 0;
+	y0 = global.Math.round(y0) | 0;
+	cx = global.Math.round(cx) | 0;
+	cy = global.Math.round(cy) | 0;
+@endif
+
 	var ie;
 	try
 	{
 		layer.absoluteMode += 1;
-		global.drawLine_patch_hd_plugins_original(layer, x0*widthScale, y0*heightScale, cx*widthScale, cy*heightScale, lc);
+		global.drawLine_patch_hd_plugins_original(layer, x0, y0, cx, cy, lc);
 	}
 	catch (e)
 	{
@@ -160,11 +173,24 @@ function drawAALine_patch_hd_plugins_override(layer, x0, y0, cx, cy, lc)
 {
 	var widthScale = layer.widthScale;
 	var heightScale = layer.heightScale;
+
+	x0 *= widthScale;
+	y0 *= heightScale;
+	cx *= widthScale;
+	cy *= heightScale;
+
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+	x0 = global.Math.round(x0) | 0;
+	y0 = global.Math.round(y0) | 0;
+	cx = global.Math.round(cx) | 0;
+	cy = global.Math.round(cy) | 0;
+@endif
+
 	var ie;
 	try
 	{
 		layer.absoluteMode += 1;
-		global.drawAALine_patch_hd_plugins_original(layer, x0*widthScale, y0*heightScale, cx*widthScale, cy*heightScale, lc);
+		global.drawAALine_patch_hd_plugins_original(layer, x0, y0, cx, cy, lc);
 	}
 	catch (e)
 	{
@@ -190,8 +216,16 @@ if (typeof(global.Layer.drawNoise) === "Object")
 	{
 		l = this.transformLeft(l);
 		t = this.transformTop(t);
-		w = w * this.widthScale;
-		h = h * this.heightScale;
+		w *= this.widthScale;
+		h *= this.heightScale;
+
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+		l = global.Math.round(l) | 0;
+		t = global.Math.round(t) | 0;
+		w = global.Math.round(w) | 0;
+		h = global.Math.round(h) | 0;
+@endif
+
 		var ret;
 		var ie;
 		try
@@ -290,12 +324,24 @@ if (typeof(global.Layer.hazeCopy) === "Object")
 	{
 		sl = srcLayer.transformLeft(sl);
 		st = srcLayer.transformTop(st);
-		sw = sw * srcLayer.widthScale;
-		sh = sh * srcLayer.heightScale;
+		sw *= srcLayer.widthScale;
+		sh *= srcLayer.heightScale;
 		dl = this.transformLeft(dl);
 		dt = this.transformTop(dt);
-		dw = dw * this.widthScale;
-		dh = dh * this.heightScale;
+		dw *= this.widthScale;
+		dh *= this.heightScale;
+
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+		sl = global.Math.round(sl) | 0;
+		st = global.Math.round(st) | 0;
+		sw = global.Math.round(sw) | 0;
+		sh = global.Math.round(sh) | 0;
+		dl = global.Math.round(dl) | 0;
+		dt = global.Math.round(dt) | 0;
+		dw = global.Math.round(dw) | 0;
+		dh = global.Math.round(dh) | 0;
+@endif
+
 		var ret;
 		var ie;
 		try
@@ -324,8 +370,16 @@ if (typeof(global.Layer.initVectorParticle) === "Object")
 	{
 		l = this.transformLeft(l);
 		t = this.transformTop(t);
-		w = w * this.widthScale;
-		h = h * this.heightScale;
+		w *= this.widthScale;
+		h *= this.heightScale;
+
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+		l = global.Math.round(l) | 0;
+		t = global.Math.round(t) | 0;
+		w = global.Math.round(w) | 0;
+		h = global.Math.round(h) | 0;
+@endif
+
 		var ret;
 		var ie;
 		try
@@ -360,6 +414,12 @@ if (typeof(global.Layer.initRotateParticle) === "Object")
 	{
 		cx = this.transformLeft(cx);
 		cy = this.transformTop(cy);
+
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+		cx = global.Math.round(cx) | 0;
+		cy = global.Math.round(cy) | 0;
+@endif
+
 		var ret;
 		var ie;
 		if (this.initializedParticle && typeof(this.particleImage) === "Object")
@@ -428,8 +488,16 @@ if (typeof(global.Layer.initBlinkParticle) === "Object")
 	{
 		l = this.transformLeft(l);
 		t = this.transformTop(t);
-		w = w * this.widthScale;
-		h = h * this.heightScale;
+		w *= this.widthScale;
+		h *= this.heightScale;
+
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+		l = global.Math.round(l) | 0;
+		t = global.Math.round(t) | 0;
+		w = global.Math.round(w) | 0;
+		h = global.Math.round(h) | 0;
+@endif
+
 		var ret;
 		var ie;
 		if (this.initializedParticle && typeof(this.particleImage) === "Object")
@@ -562,10 +630,16 @@ if (typeof(global.Layer.drawFocusLines) === "Object")
 	global.Layer.drawFocusLines_patch_hd_plugins_original = global.Layer.drawFocusLines;
 	global.Layer.drawFocusLines = function(cx, cy, cmin, cmax, lmin, lmax, emin, emax, color)
 	{
-		var ret;
-		var ie;
 		cx = this.transformLeft(cx);
 		cy = this.transformTop(cy);
+
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+		cx = global.Math.round(cx) | 0;
+		cy = global.Math.round(cy) | 0;
+@endif
+
+		var ret;
+		var ie;
 		try
 		{
 			this.absoluteMode += 1;
@@ -745,6 +819,18 @@ if (typeof(global.Layer.stretchCopyAA) === "Object")
 		stop *= src.heightScale;
 		swidth *= src.widthScale;
 		sheight *= src.heightScale;
+
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+		left = global.Math.round(left) | 0;
+		top = global.Math.round(top) | 0;
+		width = global.Math.round(width) | 0;
+		height = global.Math.round(height) | 0;
+		sleft = global.Math.round(sleft) | 0;
+		stop = global.Math.round(stop) | 0;
+		swidth = global.Math.round(swidth) | 0;
+		sheight = global.Math.round(sheight) | 0;
+@endif
+
 		var ie;
 		try
 		{
@@ -779,6 +865,17 @@ if (typeof(global.Layer.shrinkCopy) === "Object")
 		stop *= src.heightScale;
 		swidth *= src.widthScale;
 		sheight *= src.heightScale;
+
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+		left = global.Math.round(left) | 0;
+		top = global.Math.round(top) | 0;
+		width = global.Math.round(width) | 0;
+		height = global.Math.round(height) | 0;
+		sleft = global.Math.round(sleft) | 0;
+		stop = global.Math.round(stop) | 0;
+		swidth = global.Math.round(swidth) | 0;
+		sheight = global.Math.round(sheight) | 0;
+@endif
 
 		var ie;
 		try

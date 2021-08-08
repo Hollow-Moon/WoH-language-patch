@@ -21,10 +21,10 @@
 
 	global.fsncleaner_rescript = function(dest, src)
 	{
-		var is_technical_regex = /^[\@\;\*]/g;
+		var is_technical_regex = /^\t*?[\@\;\*]/g;
 		var clean_technical = function(arr)
 		{
-			var is_technical_regex = /^[\@\;\*]/g;
+			var is_technical_regex = /^\t*?[\@\;\*]/g;
 			for (var i = arr.count - 1; i >= 0; i -= 1)
 			{
 				if (arr[i] === "*tladata")
@@ -48,8 +48,8 @@
 				arr.erase(arr.count - 1);
 			}
 		};
-		var is_technical_nocomment_regex = /^[\@\*]/g;
-		var is_comment_regex = /^[\;]/g;
+		var is_technical_nocomment_regex = /^\t*?[\@\*]/g;
+		var is_comment_regex = /^\t*?[\;]/g;
 		var is_lr_regex = /\[[lr]\]$/g;
 		var dest_notechnical = [];
 		dest_notechnical.assign(dest);

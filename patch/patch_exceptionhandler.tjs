@@ -271,7 +271,7 @@ global.get_exception_files = function()
 			}
 @endif
 			var lastdataname = global.kag.dataName;
-			global.kag.dataName = dir_unarchived.substring(saveDataLocation.length, dir_unarchived.length - saveDataLocation.length) + lastdataname;
+			global.kag.dataName = dir_unarchived.substring(saveDataLocation.length, dir_unarchived.length - saveDataLocation.length) + "excepteddata";
 			try
 			{
 				var ticketfile;
@@ -283,7 +283,10 @@ global.get_exception_files = function()
 				{
 					var ticket_file = dir_unarchived + ticketfile;
 					global.makeTicketFile(ticket_file);
-					exception_files.add(ticket_file);
+					if (Storages.isExistentStorage(ticket_file))
+					{
+						exception_files.add(ticket_file);
+					}
 				}
 			}
 			catch (e)
@@ -296,7 +299,10 @@ global.get_exception_files = function()
 				{
 					var save_file = dir_unarchived + "data.kdt";
 					global.kag.saveBookMarkToFile(save_file);
-					exception_files.add(save_file);
+					if (Storages.isExistentStorage(save_file))
+					{
+						exception_files.add(save_file);
+					}
 				}
 			}
 			catch (e)
@@ -306,8 +312,16 @@ global.get_exception_files = function()
 			try
 			{
 				global.kag.saveSystemVariables();
-				exception_files.add(dir_unarchived + lastdataname + "sc.ksd");
-				exception_files.add(dir_unarchived + lastdataname + "su.ksd");
+				var excepted_data_sc = dir_unarchived + "excepteddata" + "sc.ksd";
+				if (Storages.isExistentStorage(excepted_data_sc))
+				{
+					exception_files.add(excepted_data_sc);
+				}
+				var excepted_data_su = dir_unarchived + "excepteddata" + "su.ksd";
+				if (Storages.isExistentStorage(excepted_data_su))
+				{
+					exception_files.add(excepted_data_su);
+				}
 			}
 			catch (e)
 			{

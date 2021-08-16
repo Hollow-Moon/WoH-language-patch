@@ -237,45 +237,51 @@ function setFontWithLanguage(language, kag=global.kag)
 	/// Main ///
 	if (kag.sflags.userFont[language] === void)
 	{
-		kag.sflags.userFont[language] = global.get_default_userfont_settings();
+		kag.sflags.userFont[language] = global.get_default_userfont_settings(kag);
 	}
 
 	with(kag)
 	{
 		var uf = .sflags.userFont[language];
 		.chDefaultFace				= uf.fontface;
-		if (typeof(tf.chDefaultFace) === "String")
+		if (typeof(kag.tflags) === "Object" && typeof(kag.tflags.chDefaultFace) === "String")
 		{
-			tf.chDefaultFace = uf.fontface;
+			kag.tflags.chDefaultFace = uf.fontface;
 		}
 		if (typeof(.chDefaultBold) === "Integer")
 		{
 			.chDefaultBold				= uf.bold;
 		}
-		if (typeof(tf.chDefaultBold) === "Integer")
+		if (typeof(kag.tflags) === "Object" && typeof(kag.tflags.chDefaultBold) === "Integer")
 		{
-			tf.chDefaultBold = uf.bold;
+			kag.tflags.chDefaultBold = uf.bold;
 		}
 		if (typeof(.chDefaultRubyBold) === "Integer")
 		{
 			.chDefaultRubyBold				= uf.rubybold;
 		}
-		if (typeof(tf.chDefaultRubyBold) === "Integer")
+		if (typeof(kag.tflags) === "Object" && typeof(kag.tflags.chDefaultRubyBold) === "Integer")
 		{
-			tf.chDefaultRubyBold = uf.rubybold;
+			kag.tflags.chDefaultRubyBold = uf.rubybold;
 		}
-		.current.defaultBold		= uf.bold;
-		.current.defaultRubyBold	= uf.rubybold;
-		.setMessageLayerUserFont();
+		if (typeof(.current) === "Object")
+		{
+			.current.defaultBold		= uf.bold;
+			.current.defaultRubyBold	= uf.rubybold;
+			.setMessageLayerUserFont();
+		}
 	}
 
 	/// History ///
 	var hf = kag.chDefaultFace !== void && get_historyFont(kag)[kag.chDefaultFace] !== void ? get_historyFont(kag)[kag.chDefaultFace] : get_historyFontDefault(kag);
 
-	with(kag.historyLayer.font)
+	if (typeof(kag.historyLayer) === "Object")
 	{
-		.face = kag.sflags.historyFont		= hf[0];
-		.bold = kag.sflags.historyFontBold	= hf[1];
+		with(kag.historyLayer.font)
+		{
+			.face = kag.sflags.historyFont		= hf[0];
+			.bold = kag.sflags.historyFontBold	= hf[1];
+		}
 	}
 }
 
@@ -863,7 +869,7 @@ function get_default_font()
 	return dic.userFace;
 }
 
-function get_default_userfont_settings()
+function get_default_userfont_settings(kag=global.kag)
 {
 	var dic = %[];
 	dic.missing = function(set, name, prop)
@@ -878,8 +884,8 @@ function get_default_userfont_settings()
 	global.Scripts.setCallMissing(dic);
 @if(GAME_WOHN)
 	dic.window = %[];
-	dic.window.scWidth = global.kag.scWidth;
-	dic.window.scHeight = global.kag.scHeight;
+	dic.window.scWidth = kag.scWidth;
+	dic.window.scHeight = kag.scHeight;
 @endif
 	(global.MessageLayer_config incontextof dic)();
 
@@ -942,7 +948,10 @@ function initializeLanguage(kag=global.kag) {
 	// Load/Reload language after kag is defined:
 	unload_language_patch(default_language, kag);
 	load_language_patch(kag.sflags.language, kag);
-
+	if (typeof(kag) === "Object")
+	{
+		setFontWithLanguage(kag.sflags.language, kag);
+	}
 	saveFontWithLanguage(kag);
 	if (typeof(kag) === "Object")
 	{

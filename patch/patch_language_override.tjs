@@ -1,0 +1,20 @@
+
+global.KAGWindow_patch_language_override_original = KAGWindow;
+class KAGWindow_patch_language_override_override extends KAGWindow_patch_language_override_original
+{
+	function KAGWindow_patch_language_override_override()
+	{
+		super.KAGWindow(...);
+
+		if (this instanceof "KAGWindow" && this.isMain)
+		{
+			setFontWithLanguage(this.sflags.language, this);
+		}
+	}
+
+	function KAGWindow()
+	{
+		KAGWindow_patch_language_override_override(...);
+	}
+}
+global.KAGWindow = KAGWindow_patch_language_override_override;

@@ -148,7 +148,7 @@
 	["KAGWindow.override.tjs", ,,, "GAME_WOHN"],
 	["HistoryLayer.override.tjs", ,,, "GAME_WOHN"],
 	["patch_textruby.tjs", ,,, "GAME_FATE||GAME_FHAT"],
-	["patch_italictag.tjs", ,,, "GAME_FATE||GAME_FHAT"],
+	"patch_italictag.tjs",
 	["TagEx.tjs", ,,, "GAME_WOHN"],
 	["patch_language_configvalues.tjs", ,,, "GAME_WOHN"],
 	"patch_conductor.tjs",

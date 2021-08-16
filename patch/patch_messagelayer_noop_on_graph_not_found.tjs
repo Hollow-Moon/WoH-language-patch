@@ -16,6 +16,10 @@ class MessageLayer_patch_noop_on_graph_not_found_override extends MessageLayer_p
 	{
 		if (!global.Storages.isExistentImage(storage))
 		{
+			if (typeof(this.lastCh) === "String")
+			{
+				this.lastCh = void;
+			}
 			return false;
 		}
 		return super.putGraph(...);

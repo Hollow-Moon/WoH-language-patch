@@ -152,10 +152,10 @@ class MessageLayer_patch_wordwrap_override extends MessageLayer_patch_wordwrap_o
 		if (typeof(elm) === "Object")
 		{
 @if(!WORDWRAP_BOLDITALIC_MODIFIER)
-			var currentWordWidth = elm.mllength;
+			currentWordWidth = elm.mllength;
 @endif
 @if(WORDWRAP_BOLDITALIC_MODIFIER)
-			var currentWordWidth = 0, bold = false, italic = false;
+			var bold = false, italic = false;
 			if (typeof(this.lineLayer) === "Object")
 			{
 				bold = this.lineLayer.font.bold;
@@ -192,7 +192,7 @@ class MessageLayer_patch_wordwrap_override extends MessageLayer_patch_wordwrap_o
 			}
 			else if (typeof(this.getChWidth) === "Object")
 			{
-				currentWordWidth = this.getChWidth(elm);
+				currentWordWidth = this.getChWidth(elm)[1];
 			}
 		}
 
@@ -491,6 +491,17 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 			}
 			word_lines_space[i] = arr;
 		}
+		{
+			var word = " ";
+			if (word_length_cache[word] === void)
+			{
+				word_length_cache[word] = %[
+					tagname: nextWordTagName,
+					text: word,
+				];
+				word_lines_needed.add(word_length_cache[word]);
+			}
+		}
 		if (isChinese())
 		{
 			for (var i = 0, internal_forloop_count = cleaned_lines.count; i < internal_forloop_count; i += 1)
@@ -618,11 +629,11 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 		return invalidate_wordcache;
 	}
 
-	function generate_word_wrapping_list(conductor)
+	function generate_word_wrapping_list(conductor, should_invalidate=true)
 	{
 		var hlf = this.get_hlf();
 		var mlf = this.get_mlf();
-		var invalidate_wordcache = this.check_word_length_cache(hlf, mlf, true);
+		var invalidate_wordcache = should_invalidate ? this.check_word_length_cache(hlf, mlf, true) : false;
 
 		if (invalidate_wordcache)
 		{
@@ -713,7 +724,10 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 @endif
 		word_lines_needed.clear();
 		// Garbage collection.
-		global.System.doCompact(global.clIdle);
+		if (should_invalidate)
+		{
+			global.System.doCompact(global.clIdle);
+		}
 	}
 
 	function onNewLineWordWrapSpace(linenum)
@@ -963,7 +977,20 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 			Debug.message("ww x " + wcacheentry.mllength + " " + ll_len);
 		}
 @endif	
-		if (this.current.needsReline(ttext))
+		var word_length_cache = this.word_length_cache;
+		var word_lines_needed = this.word_lines_needed;
+		var wcacheentry = word_length_cache[ttext];
+		if (typeof(wcacheentry) !== "Object")
+		{
+			word_length_cache[ttext] = %[
+				tagname: nextWordTagName,
+				text: ttext,
+			];
+			word_lines_needed.add(word_length_cache[ttext]);
+			this.generate_word_wrapping_list(this.conductor, false);
+			wcacheentry = word_length_cache[ttext];
+		}
+		if (this.current.needsReline(wcacheentry))
 		{
 			ttext = "\n" + ttext;
 		}

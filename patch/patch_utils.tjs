@@ -97,8 +97,9 @@ function load_patches(patch_array, should_add_to_auto_path=true)
 	{
 		if (should_add_to_auto_path)
 		{
-			Storages.removeAutoPath(patches_to_add[i]);
-			Storages.addAutoPath(patches_to_add[i]);
+			global.Storages.removeAutoPath(patches_to_add[i]);
+			global.Storages.removeAutoPath(global.translate_archive_path(patches_to_add[i]));
+			global.Storages.addAutoPath(global.translate_archive_path(patches_to_add[i]));
 		}
 	}
 	return patches_to_add;

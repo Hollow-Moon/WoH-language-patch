@@ -579,20 +579,6 @@ function load_language_patch(language, kag) {
 	var languagePatchName = languagePatchName(language);
 	if (typeof(languagePatchPaths[language]) !== "Object")
 	{
-		if (!devMode && typeof(global.Storages.mountSquashFs) === "Object")
-		{
-			var basePath = global.paths_base[0];
-			var squashfs_basename = "patch_lang_" + language + ".xp3";
-			if (global.paths_base_dirlist[basePath]["."].find(squashfs_basepath) !== -1)
-			{
-				var squashfs_path = basePath + "/" + squashfs_basename;
-				var squashfs_storage = global.Storages.mountSquashFs(squashfs_path);
-				if (squashfs_storage !== "")
-				{
-					languagePatchPaths[language] = [squashfs_storage + "://./"];
-				}
-			}
-		}
 		if (typeof(languagePatchPaths[language]) !== "Object")
 		{
 			var patches_arr = [];

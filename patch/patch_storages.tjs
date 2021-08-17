@@ -141,17 +141,22 @@
 		{
 			return path;
 		}
-		var arc_path = path.substring(0, spos);
+		var arc_path = path.substring(0, arcdelim_index);
 		var arc_fullpath = Storages.getFullPath(arc_path);
 		var arc_mappedpath = archive_path_mapping[arc_fullpath];
 		if (typeof(arc_mappedpath) !== "String")
 		{
-			return path;
+			var res = global.mount_archive(arc_fullpath);
+			if (res === "")
+			{
+				return path;
+			}
+			arc_mappedpath = archive_path_mapping[arc_fullpath];
 @if(0)
 			throw new Exception("Lazy mounting not implemented");
 @endif
 		}
-		var inarc_path = path.substring(spos + 1);
+		var inarc_path = path.substring(arcdelim_index + 1);
 		return arc_mappedpath + "://./" + inarc_path;
 	};
 }
@@ -200,6 +205,42 @@
 		for (var i = 0, internal_forloop_count = fstat_paths.count; i < internal_forloop_count; i += 1)
 		{
 			var path = "" + fstat_paths[i];
+			if (path !== "" && Storages.isExistentStorage(path))
+			{
+				Plugins.link(path);
+				break;
+			}
+		}
+	}
+	if ((typeof(Storages.mountXP3) !== "Object"))
+	{
+		var krxp3file_paths = [
+			"krxp3file.dll",
+@if(GAME_WOHN)
+			System.exePath + "content-data/patch/krxp3file.dll",
+@endif
+		];
+		for (var i = 0, internal_forloop_count = krxp3file_paths.count; i < internal_forloop_count; i += 1)
+		{
+			var path = "" + krxp3file_paths[i];
+			if (path !== "" && Storages.isExistentStorage(path))
+			{
+				Plugins.link(path);
+				break;
+			}
+		}
+	}
+	if ((typeof(Storages.mountSquashFs) !== "Object"))
+	{
+		var krsquashfs_paths = [
+			"krsquashfs.dll",
+@if(GAME_WOHN)
+			System.exePath + "content-data/patch/krsquashfs.dll",
+@endif
+		];
+		for (var i = 0, internal_forloop_count = krsquashfs_paths.count; i < internal_forloop_count; i += 1)
+		{
+			var path = "" + krsquashfs_paths[i];
 			if (path !== "" && Storages.isExistentStorage(path))
 			{
 				Plugins.link(path);
@@ -562,10 +603,11 @@
 	for (var i = 0, internal_forloop_count = paths_to_remove.count; i < internal_forloop_count; i += 1)
 	{
 		global.Storages.removeAutoPath(paths_to_remove[i]);
+		global.Storages.removeAutoPath(global.translate_archive_path(paths_to_remove[i]));
 	}
 
 	for (var i = 0, internal_forloop_count = paths_to_add.count; i < internal_forloop_count; i += 1)
 	{
-		global.Storages.addAutoPath(paths_to_add[i]);
+		global.Storages.addAutoPath(global.translate_archive_path(paths_to_add[i]));
 	}
 }

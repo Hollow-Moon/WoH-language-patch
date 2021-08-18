@@ -575,6 +575,13 @@ function languagePatchExists(language) {
 	return patchExists(languagePatchName(language));
 }
 
+function language_paths_translate(paths) {
+	for (var i = 0, internal_forloop_count = paths.count; i < internal_forloop_count; i += 1)
+	{
+		paths[i] = global.translate_archive_path(paths[i]);
+	}
+}
+
 function load_language_patch(language, kag) {
 	var languagePatchName = languagePatchName(language);
 	if (typeof(languagePatchPaths[language]) !== "Object")
@@ -604,6 +611,7 @@ function load_language_patch(language, kag) {
 			}
 
 			languagePatchPaths[language] = load_patches(patches_arr, false);
+			global.language_paths_translate(languagePatchPaths[language]);
 
 			var language_search_path = find_file_in_language_paths(languageSearchPathFile, language);
 			languageSearchPath = (typeof(language_search_path) === "String") ? Scripts.evalStorage(language_search_path) : [];
@@ -623,6 +631,7 @@ function load_language_patch(language, kag) {
 			else
 			{
 				languagePatchPaths[language] = load_patches(patches_arr, false);
+				global.language_paths_translate(languagePatchPaths[language]);
 			}
 			invalidate patches_arr;
 			delete patches_arr;

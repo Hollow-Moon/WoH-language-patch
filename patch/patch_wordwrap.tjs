@@ -53,6 +53,47 @@ class HistoryLayer_patch_wordwrap_override extends HistoryLayer_patch_wordwrap_o
 		}
 		return false;
 	}
+
+	function needsReline(elm)
+	{
+		var currentWordWidth = 0;
+		if (typeof(elm) === "Object")
+		{
+@if(!WORDWRAP_BOLDITALIC_MODIFIER)
+			currentWordWidth = elm.hllength;
+@endif
+@if(WORDWRAP_BOLDITALIC_MODIFIER)
+			var bold = this.font.bold;
+			var italic = this.font.italic;
+			if (bold && italic)
+			{
+				currentWordWidth = elm.hllengthbi;
+			}
+			else if (bold)
+			{
+				currentWordWidth = elm.hllengthb;
+			}
+			else if (italic)
+			{
+				currentWordWidth = elm.hllengthi;
+			}
+			else
+			{
+				currentWordWidth = elm.hllength;
+			}
+@endif
+		}
+		else
+		{
+			currentWordWidth = this.font.getTextWidth(elm);
+		}
+
+		if ((getCurrentLineWidth() + currentWordWidth) >= relinePos && currentWordWidth < relinePos)
+		{
+			return true;
+		}
+		return false;
+	}
 }
 global.HistoryLayer = HistoryLayer_patch_wordwrap_override;
 
@@ -987,12 +1028,90 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 				text: ttext,
 			];
 			word_lines_needed.add(word_length_cache[ttext]);
-			this.generate_word_wrapping_list(this.conductor, false);
+			this.generate_word_wrapping_list(conductor, false);
 			wcacheentry = word_length_cache[ttext];
 		}
-		if (this.current.needsReline(wcacheentry))
+		var ml_needsreline = this.current.needsReline(wcacheentry);
+		var hl_needsreline = this.historyLayer.needsReline(wcacheentry);
+		if (ml_needsreline && hl_needsreline)
 		{
 			ttext = "\n" + ttext;
+		}
+		else if (hl_needsreline && !ml_needsreline)
+		{
+			for (var i = text_sz - 1; i >= 0; i -= 1)
+			{
+				var ret2 = %[];
+				ret2.__patch_conductor_storage = elm.__patch_conductor_storage;
+				ret2.__patch_conductor_line = elm.__patch_conductor_line;
+				if (text[i] == "\n")
+				{
+					ret2.tagname = "r";
+				}
+				else
+				{
+					ret2.tagname = "ch";
+					ret2.text = text[i];
+				}
+				conductor.pendings.insert(0, ret2);
+			}
+			var ret2 = %[];
+			ret2.__patch_conductor_storage = elm.__patch_conductor_storage;
+			ret2.__patch_conductor_line = elm.__patch_conductor_line;
+			ret2.tagname = "hr";
+			conductor.pendings.insert(0, ret2);
+			return "";
+		}
+		else if (ml_needsreline && !hl_needsreline)
+		{
+			for (var i = text_sz - 1; i >= 0; i -= 1)
+			{
+				var ret2 = %[];
+				ret2.__patch_conductor_storage = elm.__patch_conductor_storage;
+				ret2.__patch_conductor_line = elm.__patch_conductor_line;
+				if (text[i] == "\n")
+				{
+					ret2.tagname = "r";
+				}
+				else
+				{
+					ret2.tagname = "ch";
+					ret2.text = text[i];
+				}
+				conductor.pendings.insert(0, ret2);
+			}
+			var old_historyWriteEnabled = this.historyWriteEnabled;
+			{
+				if (old_historyWriteEnabled)
+				{
+					// re-enable history output
+					var ret2 = %[];
+					ret2.__patch_conductor_storage = elm.__patch_conductor_storage;
+					ret2.__patch_conductor_line = elm.__patch_conductor_line;
+					ret2.tagname = "history";
+					ret2.output = "1";
+					conductor.pendings.insert(0, ret2);
+				}
+				{
+					// reline (on message layer only)
+					var ret2 = %[];
+					ret2.__patch_conductor_storage = elm.__patch_conductor_storage;
+					ret2.__patch_conductor_line = elm.__patch_conductor_line;
+					ret2.tagname = "r";
+					conductor.pendings.insert(0, ret2);
+				}
+				if (old_historyWriteEnabled)
+				{
+					// disable history output
+					var ret2 = %[];
+					ret2.__patch_conductor_storage = elm.__patch_conductor_storage;
+					ret2.__patch_conductor_line = elm.__patch_conductor_line;
+					ret2.tagname = "history";
+					ret2.output = "0";
+					conductor.pendings.insert(0, ret2);
+				}
+			}
+			return "";
 		}
 		
 		return ttext;

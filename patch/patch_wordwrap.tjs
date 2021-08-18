@@ -847,10 +847,10 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 		return false;
 	}
 
-@if(!PROCESS_WORD_WRAPPING_IN_CHUNKS)
 	function getHandlers()
 	{
 		var handlers = super.getHandlers();
+@if(!PROCESS_WORD_WRAPPING_IN_CHUNKS)
 		handlers[nextWordTagName] = function(elm)
 		{
 			if (processNextWord(elm))
@@ -909,9 +909,67 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 			}
 			return acs;
 		} incontextof this;
+@endif
+@if(PROCESS_WORD_WRAPPING_IN_CHUNKS)
+		handlers.ruby_patch_wordwrap_original = handlers.ruby;
+		handlers.ruby = function(elm)
+		{
+			with(elm)
+			{
+				if(.char != void && string(+.char) != .char)
+				{
+					// We'll treat this ruby entry as one whole word.
+					var ttext = .char;
+					var word_length_cache = this.word_length_cache;
+					var word_lines_needed = this.word_lines_needed;
+					var wcacheentry = word_length_cache[ttext];
+					if (typeof(wcacheentry) !== "Object")
+					{
+						word_length_cache[ttext] = %[
+							tagname: nextWordTagName,
+							text: ttext,
+						];
+						word_lines_needed.add(word_length_cache[ttext]);
+						this.generate_word_wrapping_list(this.conductor, false);
+						wcacheentry = word_length_cache[ttext];
+					}
+					var ml_needsreline = this.current.needsReline(wcacheentry);
+					var hl_needsreline = this.historyLayer.needsReline(wcacheentry);
+					if (ml_needsreline && hl_needsreline)
+					{
+						this.tagHandlers.r(%[tagname : "r"]);
+					}
+					else if (hl_needsreline && !ml_needsreline)
+					{
+						this.tagHandlers.hr(%[tagname : "hr"]);
+					}
+					else if (ml_needsreline && !hl_needsreline)
+					{
+						var old_historyWriteEnabled = this.historyWriteEnabled;
+						{
+							if (old_historyWriteEnabled)
+							{
+								// disable history output
+								this.tagHandlers.history(%[tagname : "history", output : "0"]);
+							}
+							{
+								// reline (on message layer only)
+								this.tagHandlers.r(%[tagname : "r"]);
+							}
+							if (old_historyWriteEnabled)
+							{
+								// re-enable history output
+								this.tagHandlers.history(%[tagname : "history", output : "1"]);
+							}
+						}
+					}
+				}
+			}
+			return this.tagHandlers.ruby_patch_wordwrap_original(elm);
+		} incontextof this;
+@endif
 		return handlers;
 	}
-@endif
 
 	function processWordWrappingChinese(elm)
 	{
@@ -1039,6 +1097,7 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 		}
 		else if (hl_needsreline && !ml_needsreline)
 		{
+			var text_sz = ttext.length;
 			for (var i = text_sz - 1; i >= 0; i -= 1)
 			{
 				var ret2 = %[];
@@ -1064,6 +1123,7 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 		}
 		else if (ml_needsreline && !hl_needsreline)
 		{
+			var text_sz = ttext.length;
 			for (var i = text_sz - 1; i >= 0; i -= 1)
 			{
 				var ret2 = %[];

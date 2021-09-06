@@ -98,7 +98,7 @@ function load_patches(patch_array, should_add_to_auto_path=true)
 		if (should_add_to_auto_path)
 		{
 			global.Storages.removeAutoPath(patches_to_add[i]);
-			global.Storages.removeAutoPath(global.translate_archive_path(patches_to_add[i]));
+			global.Storages.removeAutoPath(global.translate_archive_path(patches_to_add[i], false));
 			global.Storages.addAutoPath(global.translate_archive_path(patches_to_add[i]));
 		}
 	}
@@ -136,6 +136,7 @@ function unload_patches(patch_array)
 	for (var i = 0, internal_forloop_count = patches_to_remove.count; i < internal_forloop_count; i += 1)
 	{
 		Storages.removeAutoPath(patches_to_remove[i]);
+		Storages.removeAutoPath(global.translate_archive_path(patches_to_remove[i], false));
 	}
 }
 

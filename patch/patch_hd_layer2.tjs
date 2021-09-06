@@ -1,0 +1,596 @@
+global.Layer_patch_hd_layer_original = Layer;
+class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
+{
+    var absoluteMode; // required for dll plugins that don't support HD
+    
+    var _left;
+    var _top;
+    var _imageLeft;
+    var _imageTop;
+    var _clipLeft;
+    var _clipTop;
+    var _attentionLeft;
+    var _attentionTop;
+    var _cursorX;
+    var _cursorY;
+
+    var _width;
+    var _height;
+    var _imageWidth;
+    var _imageHeight;
+    var _clipWidth;
+    var _clipHeight;
+
+	var isbg;
+
+	property actualWidth { getter { return super.width; } }
+	property actualHeight { getter { return super.height; } }
+	property numberOfImages { getter { return this._imageWidth \ this._width; } }
+
+	function Layer_patch_hd_layer_override()
+	{
+		super.Layer(...);
+		this.resetClip();
+		this.patch_hd_layer_setup_event_shims();
+	}
+
+    function scaleLeft(x)
+    {
+        return scalePosition(x, _width, super.width, parent.width, parent.actualWidth);
+    }
+
+    function scaleTop(y)
+    {
+        return scalePosition(y, _height, super.height, parent.height, parent.actualHeight);
+    }
+
+    function scaleCursorLeft(x)
+    {
+        return this.window.unscaleWidth(x);
+    }
+
+    function scaleCursorTop(y)
+    {
+        return this.window.unscaleHeight(y);
+    }
+
+    function scaleWidth(w)
+    {
+		return this.scaleImageWidth(w);
+    }
+
+    function scaleHeight(h)
+    {
+        return this.window.scaleHeight(h);
+    }
+
+	function scaleImageWidth(w)
+	{
+		if (this.isbg) {
+			return this.window.scaleWidth(w);
+		}
+		return this.window.scaleHeight(w); // height on purpose
+	}
+
+	function scaleImageHeight(h)
+	{
+		if (this.isbg) {
+			return this.window.scaleWidth(w); // width on purpose
+		}
+		return this.window.scaleHeight(h);
+	}
+
+    property left
+	{
+		getter { return this.absoluteMode? super.left : this._left; }
+		setter(v) { this._left = v; super.left = scaleLeft(v); }
+	}
+
+    property top
+    {
+        getter { return this.absoluteMode? super.top : this._top; }
+        setter(v) { this._top = v; super.top = scaleTop(v); }
+    }
+
+    property imageLeft
+	{
+		getter { return this.absoluteMode? super.imageLeft : this._imageLeft; }
+		setter(v) { this._imageLeft = v; super.imageLeft = scaleImageWidth(v); }
+	}
+
+    property imageTop
+    {
+        getter { return this.absoluteMode? super.imageTop : this._imageTop; }
+        setter(v) { this._imageTop = v; super.imageTop = scaleImageHeight(v); }
+    }
+
+    property clipLeft
+	{
+		getter { return this.absoluteMode? super.clipLeft : this._clipLeft; }
+		setter(v) { this._clipLeft = v; super.clipLeft = scaleImageWidth(v); updateClipSize(); }
+	}
+
+    property clipTop
+    {
+        getter { return this.absoluteMode? super.clipTop : this._clipTop; }
+        setter(v) { this._clipTop = v; super.clipTop = scaleImageHeight(v); updateClipSize(); }
+    }
+
+    property attentionLeft
+	{
+		getter { return this.absoluteMode? super.attentionLeft : this._attentionLeft; }
+		setter(v) { this._attentionLeft = v; super.attentionLeft = scaleImageWidth(v); }
+	}
+
+    property attentionTop
+    {
+        getter { return this.absoluteMode? super.attentionTop : this._attentionTop; }
+        setter(v) { this._attentionTop = v; super.attentionTop = scaleImageHeight(v); }
+    }
+
+    property cursorX
+	{
+		getter { return this.absoluteMode? super.cursorX : this._cursorX; }
+		setter(v) { this._cursorX = v; super.cursorX = scaleCursorLeft(v); }
+	}
+
+    property cursorY
+    {
+        getter { return this.absoluteMode? super.cursorY : this._cursorY; }
+        setter(v) { this._cursorY = v; super.cursorY = scaleCursorTop(v); }
+    }
+
+	property width
+	{
+		getter { return this.absoluteMode? super.width : this._width; }
+		setter(v) { this._width = v; super.width = scaleWidth(v); updateImageSize(); }
+	}
+
+	property height
+	{
+		getter { return this.absoluteMode? super.height : this._height; }
+		setter(v) { this._height = v; super.height = scaleHeight(v); updateImageSize(); }
+	}
+	
+	property imageWidth
+	{
+		getter { return this.absoluteMode? super.imageWidth : this._imageWidth; }
+		setter(v) { this._imageWidth = v; super.imageWidth = scaleImageWidth(v); updateSize(); }
+	}
+
+	property imageHeight
+	{
+		getter { return this.absoluteMode? super.imageHeight : this._imageHeight; }
+		setter(v) { this._imageHeight = v; super.imageHeight = scaleImageHeight(v); updateSize(); }
+	}
+
+	property clipWidth
+	{
+		getter { return this.absoluteMode? super.clipWidth : this._clipWidth; }
+		setter(v) { this._clipWidth = v; super.clipWidth = scaleImageWidth(v); }
+	}
+
+	property clipHeight
+	{
+		getter { return this.absoluteMode? super.clipHeight : this._clipHeight; }
+		setter(v) { this._clipHeight = v; super.clipHeight = scaleImageHeight(v); }
+	}
+
+	function setPos(left, top)
+	{
+		this._left = left;
+		this._top = top;
+		super.setPos(scaleLeft(left), scaleTop(top));
+	}
+
+	function setImagePos(imageLeft, imageTop)
+	{
+		this._imageLeft = imageLeft;
+		this._imageTop = imageTop;
+		super.setImagePos(scaleImageWidth(imageLeft), scaleImageHeight(imageTop));
+	}
+
+	function setAttentionPos(attentionLeft, attentionTop)
+	{
+		this._attentionLeft = attentionLeft;
+		this._attentionTop = attentionTop;
+		super.setAttentionPos(scaleImageWidth(attentionLeft), scaleImageHeight(attentionTop));
+	}
+
+	function setImageSize(imageWidth, imageHeight)
+	{
+		this._imageWidth = imageWidth;
+		this._imageHeight = imageHeight;
+		this.updateSize();
+		super.setImageSize(scaleImageWidth(imageWidth), scaleImageHeight(imageHeight));
+	}
+
+	function setClip(clipLeft, clipTop, clipWidth, clipHeight)
+	{
+		this._clipLeft = clipLeft;
+		this._clipTop = clipTop;
+		this._clipWidth = clipWidth;
+		this._clipHeight = clipHeight;
+		this.updateClipSize();
+		super.setClip(scaleImageWidth(clipLeft), scaleImageHeight(clipTop), scaleImageWidth(clipWidth), scaleImageHeight(clipHeight));
+	}
+	
+	function setSize(width, height)
+	{
+		this._width = width;
+		this._height = height;
+		this.updateImageSize();
+		super.setSize(scaleWidth(width), scaleHeight(height));
+	}
+
+	function setSizeToImageSize()
+	{
+		this.setSize(this._imageWidth, this._imageHeight);
+	}
+
+	function resetClip()
+	{
+		this._clipLeft = 0;
+		this._clipTop = 0;
+		this._clipWidth = this._imageWidth;
+		this._clipHeight = this._imageHeight;
+	}
+
+	function updateClipSize()
+	{
+		if (this._clipLeft < 0) {
+			this._clipLeft = 0;
+		}
+		if (this._clipTop < 0) {
+			this._clipTop = 0;
+		}
+	}
+
+	function updateImageSize()
+	{
+		if (this.hasImage) {
+			if (this._imageWidth < this._width) {
+				this._imageWidth = this._width;
+			}
+			if (this._imageWidth + this._imageLeft < this._width) {
+				this._imageLeft = this._width - this._imageWidth;
+			}
+			if (this._imageHeight < this._height) {
+				this._imageHeight = this._height;
+			}
+			if (this._imageHeight + this._imageTop < this._height) {
+				this._imageTop = this._height - this._imageHeight;
+			}
+			this.resetClip();
+		}
+	}
+
+	function updateSize()
+	{
+		if (this._imageWidth < this._width)
+		{
+			this._imageLeft = 0;
+			this._width = this._imageWidth;
+		}
+		if (this._imageWidth + this._imageLeft < this._width)
+		{
+			this._imageLeft = this._width - this._imageWidth;
+		}
+
+		if (this._imageHeight < this._height)
+		{
+			this._imageTop = 0;
+			this._height = this._imageHeight;
+		}
+		if (this._imageHeight + this._imageTop < this._height)
+		{
+			this._imageTop = this._height - this._imageHeight;
+		}
+
+		if (this.hasImage)
+		{
+			this.resetClip();
+		}
+	}
+
+	function loadImages(storage, key)
+	{
+		var hdStorage = (originalToHdName[storage] !== void && Storages.isExistentStorage(storage)) ? originalToHdName[storage] : storage;
+
+		// TODO
+		//isbg = ...
+
+		var taginfo = super.loadImages(hdStorage, key);
+
+		// this._imageWidth = this.window.unscaleWidth(super.imageWidth);
+		// this._imageHeight = this.window.unscaleHeight(super.imageHeight);
+
+		upscale();
+		updateSize();
+
+		reteurn taginfo;	
+	}
+
+	function upscale()
+	{
+		var scaledImageWidth = scaleImageWidth(this._imageWidth);
+		var scaledImageHeight = scaleImageHeight(this._imageHeight);
+		if (super.imageWidth == scaledImageWidth && super.imageHeight == scaledImageHeight) return;
+
+		var scale = scaledImageWidth / super.imageWidth;
+
+		var singleImageWidth = super.imageWidth \ this.numberOfImages;
+		var scaledSingleImageWidth = (singleImageWidth * scale) | 0;
+		scaledImageWidth = scaledSingleImageWidth * this.numberOfImages;
+
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+		scaledImageWidth = global.Math.round(scaledImageWidth) | 0;
+		scaledImageHeight = global.Math.round(scaledImageHeight) | 0;
+		singleImageWidth = global.Math.round(singleImageWidth) | 0;
+		scaledSingleImageWidth = global.Math.round(scaledSingleImageWidth) | 0;
+@endif
+
+		var tmp = new global.Layer_patch_hd_layer_original(this.window, this);
+		tmp.setImageSize(scaledImageWidth, scaledImageHeight);
+		for (var i = 0; i < this.numberOfImages; i++) {
+			tmp.stretchCopy(scaledSingleImageWidth*i, 0, scaledSingleImageWidth, scaledImageHeight, this, singleImageWidth*i, 0, singleImageWidth, super.imageHeight, this.scaleAlgorithm);
+		}
+
+		(global.Layer_patch_hd_layer_original.setImageSize incontextof this)(scaledImageWidth, scaledImageHeight);
+		(global.Layer_patch_hd_layer_original.fillRect incontextof this)(0, 0, super.imageWidth, super.imageHeight, 0x00000000);
+
+		if (face == dfProvince) {
+			(global.Layer_patch_hd_layer_original.operateRect incontextof this)(0, 0, tmp, 0, 0, scaledImageWidth, scaledImageHeight, face);
+		} else {
+			(global.Layer_patch_hd_layer_original.operateRect incontextof this)(0, 0, tmp, 0, 0, scaledImageWidth, scaledImageHeight);
+		}
+
+		invalidate tmp;
+	}
+
+    function onClick_patch_hd_layer_override(x, y)
+	{
+		this.onClick_patch_hd_layer_original(scaleCursorLeft(x), scaleCursorTop(y));
+	}
+
+    function onDoubleClick_patch_hd_layer_override(x, y)
+	{
+		this.onDoubleClick_patch_hd_layer_original(scaleCursorLeft(x), scaleCursorTop(y));
+	}
+
+    function onMouseDown_patch_hd_layer_override(x, y, button, shift)
+	{
+		this.onMouseDown_patch_hd_layer_original(scaleCursorLeft(x), scaleCursorTop(y), button, shift);
+	}
+
+    function onMouseUp_patch_hd_layer_override(x, y, button, shift)
+	{
+		this.onMouseUp_patch_hd_layer_original(scaleCursorLeft(x), scaleCursorTop(y), button, shift);
+	}
+   
+	function onMouseMove_patch_hd_layer_override(x, y, shift)
+	{
+		this.onMouseMove_patch_hd_layer_original(scaleCursorLeft(x), scaleCursorTop(y), shift);
+	}
+
+    function onMouseWheel_patch_hd_layer_override(shift, delta, x, y)
+	{
+		this.onMouseWheel_patch_hd_layer_original(shift, delta, scaleCursorLeft(x), scaleCursorTop(y));
+	}
+
+    function onHitTest_patch_hd_layer_override(x, y, hit)
+	{
+		this.onHitTest_patch_hd_layer_original(scaleCursorLeft(x), scaleCursorTop(y), hit);
+	}
+
+    function onTouchDown_patch_hd_layer_override(x, y, cx, cy, id)
+	{
+		this.onTouchDown_patch_hd_layer_original(scaleCursorLeft(x), scaleCursorTop(y), scaleCursorLeft(cx), scaleCursorTop(cy), id);
+	}
+
+	function onTouchUp_patch_hd_layer_override(x, y, cx, cy, id)
+	{
+		this.onTouchUp_patch_hd_layer_original(scaleCursorLeft(x), scaleCursorTop(y), scaleCursorLeft(cx), scaleCursorTop(cy), id);
+	}
+
+	function onTouchMove_patch_hd_layer_override(x, y, cx, cy, id)
+	{
+		this.onTouchMove_patch_hd_layer_original(scaleCursorLeft(x), scaleCursorTop(y), scaleCursorLeft(cx), scaleCursorTop(cy), id);
+	}
+
+    function onTouchScaling_patch_hd_layer_override(startdistance, currentdistance, cx, cy, flag)
+	{
+		// XXX: startdistance and currentdistance need to be interpolated
+		this.onTouchScaling_patch_hd_layer_original(startdistance, currentdistance, scaleCursorLeft(cx), scaleCursorTop(cy), flag);
+	}
+
+	function onTouchRotate_patch_hd_layer_override(startangle, currentangle, distance, cx, cy, flag)
+	{
+		// XXX: distance need to be interpolated
+		this.onTouchRotate_patch_hd_layer_original(startangle, currentangle, distance, scaleCursorLeft(cx), scaleCursorTop(cy), flag);
+	}
+
+	property onClick_patch_hd_layer_property_shim
+	{
+		getter { return this.onClick_patch_hd_layer_override; }
+		setter(v) { this.onClick_patch_hd_layer_original = v; }
+	}
+
+    property onDoubleClick_patch_hd_layer_property_shim
+	{
+		getter { return this.onDoubleClick_patch_hd_layer_override; }
+		setter(v) { this.onDoubleClick_patch_hd_layer_original = v; }
+	}
+
+	property onMouseDown_patch_hd_layer_property_shim
+	{
+		getter { return this.onMouseDown_patch_hd_layer_override; }
+		setter(v) { this.onMouseDown_patch_hd_layer_original = v; }
+	}
+
+	property onMouseUp_patch_hd_layer_property_shim
+	{
+		getter { return this.onMouseUp_patch_hd_layer_override; }
+		setter(v) { this.onMouseUp_patch_hd_layer_original = v; }
+	}
+
+	property onMouseMove_patch_hd_layer_property_shim
+	{
+		getter { return this.onMouseMove_patch_hd_layer_override; }
+		setter(v) { this.onMouseMove_patch_hd_layer_original = v; }
+	}
+
+	property onMouseWheel_patch_hd_layer_property_shim
+	{
+		getter { return this.onMouseWheel_patch_hd_layer_override; }
+		setter(v) { this.onMouseWheel_patch_hd_layer_original = v; }
+	}
+
+	property onHitTest_patch_hd_layer_property_shim
+	{
+		getter { return this.onHitTest_patch_hd_layer_override; }
+		setter(v) { this.onHitTest_patch_hd_layer_original = v; }
+	}
+
+	property onTouchDown_patch_hd_layer_property_shim
+	{
+		getter { return this.onTouchDown_patch_hd_layer_override; }
+		setter(v) { this.onTouchDown_patch_hd_layer_original = v; }
+	}
+
+	property onTouchUp_patch_hd_layer_property_shim
+	{
+		getter { return this.onTouchUp_patch_hd_layer_override; }
+		setter(v) { this.onTouchUp_patch_hd_layer_original = v; }
+	}
+
+	property onTouchMove_patch_hd_layer_property_shim
+	{
+		getter { return this.onTouchMove_patch_hd_layer_override; }
+		setter(v) { this.onTouchMove_patch_hd_layer_original = v; }
+	}
+
+	property onTouchScaling_patch_hd_layer_property_shim
+	{
+		getter { return this.onTouchScaling_patch_hd_layer_override; }
+		setter(v) { this.onTouchScaling_patch_hd_layer_original = v; }
+	}
+
+	property onTouchRotate_patch_hd_layer_property_shim
+	{
+		getter { return this.onTouchRotate_patch_hd_layer_override; }
+		setter(v) { this.onTouchRotate_patch_hd_layer_original = v; }
+	}
+
+    function patch_hd_layer_setup_event_shims()
+	{
+		if (typeof(this.onClick) === "Object")
+		{
+			this.onClick_patch_hd_layer_original = this.onClick;
+		}
+		else
+		{
+			this.onClick_patch_hd_layer_original = function() {};
+		}
+		if (typeof(this.onDoubleClick) === "Object")
+		{
+			this.onDoubleClick_patch_hd_layer_original = this.onDoubleClick;
+		}
+		else
+		{
+			this.onDoubleClick_patch_hd_layer_original = function() {};
+		}
+		if (typeof(this.onMouseDown) === "Object")
+		{
+			this.onMouseDown_patch_hd_layer_original = this.onMouseDown;
+		}
+		else
+		{
+			this.onMouseDown_patch_hd_layer_original = function() {};
+		}
+		if (typeof(this.onMouseUp) === "Object")
+		{
+			this.onMouseUp_patch_hd_layer_original = this.onMouseUp;
+		}
+		else
+		{
+			this.onMouseUp_patch_hd_layer_original = function() {};
+		}
+		if (typeof(this.onMouseMove) === "Object")
+		{
+			this.onMouseMove_patch_hd_layer_original = this.onMouseMove;
+		}
+		else
+		{
+			this.onMouseMove_patch_hd_layer_original = function() {};
+		}
+		if (typeof(this.onMouseWheel) === "Object")
+		{
+			this.onMouseWheel_patch_hd_layer_original = this.onMouseWheel;
+		}
+		else
+		{
+			this.onMouseWheel_patch_hd_layer_original = function() {};
+		}
+		if (typeof(this.onHitTest) === "Object")
+		{
+			this.onHitTest_patch_hd_layer_original = this.onHitTest;
+		}
+		else
+		{
+			this.onHitTest_patch_hd_layer_original = function() {};
+		}
+		if (typeof(this.onTouchDown) === "Object")
+		{
+			this.onTouchDown_patch_hd_layer_original = this.onTouchDown;
+		}
+		else
+		{
+			this.onTouchDown_patch_hd_layer_original = function() {};
+		}
+		if (typeof(this.onTouchUp) === "Object")
+		{
+			this.onTouchUp_patch_hd_layer_original = this.onTouchUp;
+		}
+		else
+		{
+			this.onTouchUp_patch_hd_layer_original = function() {};
+		}
+		if (typeof(this.onTouchMove) === "Object")
+		{
+			this.onTouchMove_patch_hd_layer_original = this.onTouchMove;
+		}
+		else
+		{
+			this.onTouchMove_patch_hd_layer_original = function() {};
+		}
+		if (typeof(this.onTouchScaling) === "Object")
+		{
+			this.onTouchScaling_patch_hd_layer_original = this.onTouchScaling;
+		}
+		else
+		{
+			this.onTouchScaling_patch_hd_layer_original = function() {};
+		}
+		if (typeof(this.onTouchRotate) === "Object")
+		{
+			this.onTouchRotate_patch_hd_layer_original = this.onTouchRotate;
+		}
+		else
+		{
+			this.onTouchRotate_patch_hd_layer_original = function() {};
+		}
+		&this.onClick = &this.onClick_patch_hd_layer_property_shim;
+		&this.onDoubleClick = &this.onDoubleClick_patch_hd_layer_property_shim;
+		&this.onMouseDown = &this.onMouseDown_patch_hd_layer_property_shim;
+		&this.onMouseUp = &this.onMouseUp_patch_hd_layer_property_shim;
+		&this.onMouseMove = &this.onMouseMove_patch_hd_layer_property_shim;
+		&this.onMouseWheel = &this.onMouseWheel_patch_hd_layer_property_shim;
+		&this.onHitTest = &this.onHitTest_patch_hd_layer_property_shim;
+		&this.onTouchDown = &this.onTouchDown_patch_hd_layer_property_shim;
+		&this.onTouchUp = &this.onTouchUp_patch_hd_layer_property_shim;
+		&this.onTouchMove = &this.onTouchMove_patch_hd_layer_property_shim;
+		&this.onTouchScaling = &this.onTouchScaling_patch_hd_layer_property_shim;
+		&this.onTouchRotate = &this.onTouchRotate_patch_hd_layer_property_shim;
+	}
+}

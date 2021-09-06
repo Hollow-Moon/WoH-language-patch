@@ -1,0 +1,136 @@
+global.Window_patch_hd_layer_original = Window;
+class Window_patch_hd_layer_override extends Window_patch_hd_layer_original
+{
+	var _left;
+	var _top;
+	var _width;
+	var _height;
+	var _innerWidth;
+	var _innerHeight;
+
+	var scaleFactor;
+	var wideFactor;
+
+	property actualWidth { getter { return super.width; } }
+	property actualHeight { getter { return super.height; } }
+	
+    property isMainWindow { getter { return this === global.Window.mainWindow; } }
+	property body { getter() { return fore; } }
+	
+	property wideScaleFactor { getter { return scaleFactor * wideFactor; } }
+
+    function Window_patch_hd_layer_override()
+	{
+		super.Window(...);
+		this._left = super.left;
+		this._top = super.top;
+		this._width = super.width;
+		this._height = super.height;
+		this._innerWidth = super.innerWidth;
+		this._innerHeight = super.innerHeight;
+	}
+
+	function Window()
+	{
+		Window_patch_hd_layer_override(...);
+	}
+	
+    function scaleLeft(left)
+    {
+        if (this.isMainWindow) {
+            return left;
+        }
+        return mainWindow.left + scalePosition(left-mainWindow.left, _width, super.width, mainWindow.width, mainWindow.actualWidth);
+    }
+
+	function scaleTop(top)
+	{
+		if (this.isMainWindow) {
+			return top;
+		}
+		return mainWindow.top + scalePosition(top-mainWindow.top, _height, super.height, mainWindow.height, mainWindow.actualHeight);
+	}
+
+	function scaleWidth(w)
+	{
+		return scaleSize(w, wideScaleFactor);
+	}
+
+	function unscaleWidth(w)
+	{
+		return unscaleSize(w, wideScaleFactor);
+	}
+
+	function scaleHeight(h)
+	{
+		return scaleSize(h, scaleFactor);
+	}
+
+	function unscaleHeight(h)
+	{
+		return unscaleSize(h, scaleFactor);
+	}
+
+    property left
+	{
+		getter { return this.isMainWindow? super.left : this._left; }
+		setter(v) { this._left = v; super.left = scaleLeft(v); }
+	}
+
+	property top
+	{
+		getter { return this.isMainWindow? super.top : this._top; }
+		setter(v) { this._top = v; super.top = scaleTop(v); }
+	}
+
+	property width
+	{
+		getter { return this._width; }
+		setter(v) { this._width = v; super.width = scaleWidth(v); }
+	}
+
+	property height
+	{
+		getter { return this._height; }
+		setter(v) { this._height = v; super.height = scaleHeight(v); }
+	}
+
+	property innerWidth
+	{
+		getter { return this._innerWidth; }
+		setter(v) { this._innerWidth = v; super.innerWidth = scaleWidth(v); }
+	}
+
+	property innerHeight
+	{
+		getter { return this._innerHeight; }
+		setter(v) { this._innerHeight = v; super.innerHeight = scaleHeight(v); }
+	}
+
+	function setPos(left, top)
+	{
+		if (this.isMainWindow) {
+			super.setPos(left, top);
+		} else {
+			this._left = left;
+			this._top = top;
+			super.setPos(scaleLeft(left), scaleTop(top));
+		}
+	}
+
+	function setSize(width, height)
+	{
+		this._width = width;
+		this._height = height;
+		super.setSize(scaleWidth(width), scaleHeight(height));
+	}
+
+	function setInnerSize(innerWidth, innerHeight)
+	{
+		this._innerWidth = innerWidth;
+		this._innerHeight = innerHeight;
+		super.setInnerSize(scaleWidth(innerWidth), scaleHeight(innerHeight));
+	}
+}
+global.Window = Window_patch_hd_layer_override;
+

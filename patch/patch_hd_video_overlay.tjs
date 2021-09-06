@@ -1,0 +1,72 @@
+
+global.VideoOverlay_patch_hd_layer_original = VideoOverlay;
+class VideoOverlay_patch_hd_layer_override extends VideoOverlay_patch_hd_layer_original
+{
+	function VideoOverlay_patch_hd_layer_override()
+	{
+		super.VideoOverlay(...);
+	}
+
+	function VideoOverlay()
+	{
+		VideoOverlay_patch_hd_layer_override(...);
+	}
+
+	property width
+	{
+		getter
+		{
+@if(SCALE_USING_FLOATING_POINT)
+			return super.width / wideScaleFactor;
+@endif
+@if(!SCALE_USING_FLOATING_POINT)
+			return super.width \ wideScaleFactor;
+@endif
+		}
+	}
+
+	property height
+	{
+		getter
+		{
+@if(SCALE_USING_FLOATING_POINT)
+			return super.height / scaleFactor;
+@endif
+@if(!SCALE_USING_FLOATING_POINT)
+			return super.height \ scaleFactor;
+@endif
+		}
+	}
+
+	property originalWidth
+	{
+		getter
+		{
+@if(SCALE_USING_FLOATING_POINT)
+			return super.originalWidth / wideScaleFactor;
+@endif
+@if(!SCALE_USING_FLOATING_POINT)
+			return super.originalWidth \ wideScaleFactor;
+@endif
+		}
+	}
+
+	property originalHeight
+	{
+		getter
+		{
+@if(SCALE_USING_FLOATING_POINT)
+			return super.originalHeight / scaleFactor;
+@endif
+@if(!SCALE_USING_FLOATING_POINT)
+			return super.originalHeight \ scaleFactor;
+@endif
+		}
+	}
+
+	function setBounds(left, top, width, height)
+	{
+		return super.setBounds(left*wideScaleFactor, top*scaleFactor, width*wideScaleFactor, height*scaleFactor);
+	}
+}
+global.VideoOverlay = VideoOverlay_patch_hd_layer_override;

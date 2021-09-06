@@ -57,7 +57,9 @@
 }
 
 {
+	global.cxdec_encryption_list = %[];
 	global.archive_path_mapping = %[];
+	global.archive_path_to_fullpath = %[];
 	global.mount_archive = function(arc_path)
 	{
 		var archive_path_mapping = global.archive_path_mapping;
@@ -90,6 +92,23 @@
 		if (xp3_res.length !== 0)
 		{
 			archive_path_mapping[arc_fullpath] = xp3_res;
+			if (typeof(global.Storages.setEncryptionXP3) === "Object")
+			{
+				var encryption_to_set = void;
+@if(GAME_FHAT)
+				encryption_to_set = global.cxdec_encryption_list["fha"];
+@endif
+@if(0)
+@if(GAME_WOHN)
+				encryption_to_set = global.cxdec_encryption_list["mahoyo"];
+@endif
+@endif
+				if (encryption_to_set === void)
+				{
+					encryption_to_set = "";
+				}
+				var enc_set_res = global.Storages.setEncryptionXP3(xp3_res, encryption_to_set);
+			}
 			return xp3_res;
 		}
 		return "";
@@ -128,7 +147,7 @@
 		}
 		return false;
 	};
-	global.translate_archive_path = function(path)
+	global.translate_archive_path = function(path, check_presence=true)
 	{
 		var archive_path_mapping = global.archive_path_mapping;
 		var arcdelim = System.getArgument("-arcdelim");
@@ -142,16 +161,24 @@
 			return path;
 		}
 		var arc_path = path.substring(0, arcdelim_index);
-		var arc_fullpath = Storages.getFullPath(arc_path);
-		var arc_mappedpath = archive_path_mapping[arc_fullpath];
+		var archive_path_to_fullpath = global.archive_path_to_fullpath;
+		if (archive_path_to_fullpath[arc_path] === void && check_presence === false)
+		{
+			return path;
+		}
+		if (archive_path_to_fullpath[arc_path] === void)
+		{
+			archive_path_to_fullpath[arc_path] = Storages.getFullPath(arc_path);
+		}
+		var arc_mappedpath = archive_path_mapping[archive_path_to_fullpath[arc_path]];
 		if (typeof(arc_mappedpath) !== "String")
 		{
-			var res = global.mount_archive(arc_fullpath);
+			var res = global.mount_archive(archive_path_to_fullpath[arc_path]);
 			if (res === "")
 			{
 				return path;
 			}
-			arc_mappedpath = archive_path_mapping[arc_fullpath];
+			arc_mappedpath = archive_path_mapping[archive_path_to_fullpath[arc_path]];
 @if(0)
 			throw new Exception("Lazy mounting not implemented");
 @endif
@@ -199,7 +226,7 @@
 		var fstat_paths = [
 			"fstat.dll",
 @if(GAME_WOHN)
-			System.exePath + "content-data/patch/fstat.dll",
+			System.exePath + "content-data/plugin/fstat.dll",
 @endif
 		];
 		for (var i = 0, internal_forloop_count = fstat_paths.count; i < internal_forloop_count; i += 1)
@@ -217,7 +244,7 @@
 		var krxp3file_paths = [
 			"krxp3file.dll",
 @if(GAME_WOHN)
-			System.exePath + "content-data/patch/krxp3file.dll",
+			System.exePath + "content-data/plugin/krxp3file.dll",
 @endif
 		];
 		for (var i = 0, internal_forloop_count = krxp3file_paths.count; i < internal_forloop_count; i += 1)
@@ -235,7 +262,7 @@
 		var krsquashfs_paths = [
 			"krsquashfs.dll",
 @if(GAME_WOHN)
-			System.exePath + "content-data/patch/krsquashfs.dll",
+			System.exePath + "content-data/plugin/krsquashfs.dll",
 @endif
 		];
 		for (var i = 0, internal_forloop_count = krsquashfs_paths.count; i < internal_forloop_count; i += 1)
@@ -245,6 +272,30 @@
 			{
 				Plugins.link(path);
 				break;
+			}
+		}
+	}
+	{
+		if (typeof(global.Storages.loadEncryptionMethodCxdec) === "Object")
+		{
+			var cxdec_information_path = "patch_cxdec_information.dic";
+			try
+			{
+				if (global.Storages.isExistentStorage(cxdec_information_path))
+				{
+					var cxdec_encryption_list = global.cxdec_encryption_list;
+					var cxdec_information_dic = global.Scripts.evalStorage(cxdec_information_path);
+					var ar = [];
+					ar.assign(cxdec_information_dic);
+					for (var i = 0; i < ar.count; i += 2)
+					{
+						cxdec_encryption_list[ar[i]] = global.Storages.loadEncryptionMethodCxdec(ar[i+1]);
+					}
+				}
+			}
+			catch (e)
+			{
+				// pass
 			}
 		}
 	}
@@ -603,7 +654,6 @@
 	for (var i = 0, internal_forloop_count = paths_to_remove.count; i < internal_forloop_count; i += 1)
 	{
 		global.Storages.removeAutoPath(paths_to_remove[i]);
-		global.Storages.removeAutoPath(global.translate_archive_path(paths_to_remove[i]));
 	}
 
 	for (var i = 0, internal_forloop_count = paths_to_add.count; i < internal_forloop_count; i += 1)

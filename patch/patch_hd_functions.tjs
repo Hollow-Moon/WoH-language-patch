@@ -1,0 +1,27 @@
+function scalePosition(v, size, scaledSize, parentSize, parentScaledSize)
+{
+    v *= scaledSize / size;
+    v *= (parentScaledSize - scaledSize) / (parentSize - size);
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+    v = global.Math.round(v) | 0;
+@endif
+    return v; 
+}
+
+function scaleSize(v, scale)
+{
+    v *= scale;
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+    v = global.Math.round(v) | 0;
+@endif
+    return v;
+}
+
+function unscaleSize(v, scale)
+{
+    v /= scale;
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+    v = global.Math.round(v) | 0;
+@endif
+    return v;
+}

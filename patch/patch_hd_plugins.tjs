@@ -897,4 +897,55 @@ if (typeof(global.Layer.shrinkCopy) === "Object")
 	};
 }
 
+// krass.dll
+
+if (typeof(global.Layer.ass_set_frame_size_to_image_size) === "Object")
+{
+	global.Layer.ass_set_frame_size_to_image_size_patch_hd_plugins_original = global.Layer.ass_set_frame_size_to_image_size;
+	global.Layer.ass_set_frame_size_to_image_size = function()
+	{
+		var ret;
+		var ie;
+		try
+		{
+			this.absoluteMode += 1;
+			ret = (global.Layer.ass_set_frame_size_to_image_size_patch_hd_plugins_original incontextof this)(...);
+		}
+		catch (e)
+		{
+			ie = e;
+		}
+		this.absoluteMode -= 1;
+		if (ie !== void)
+		{
+			throw ie;
+		}
+		return ret;
+	};
+}
+
+if (typeof(global.Layer.ass_set_frame_size_to_image_size) === "Object")
+{
+	global.Layer.ass_set_frame_size_to_image_size_patch_hd_plugins_original = global.Layer.ass_set_frame_size_to_image_size;
+	global.Layer.ass_set_frame_size_to_image_size = function()
+	{
+		var ret;
+		var ie;
+		try
+		{
+			this.absoluteMode += 1;
+			ret = (global.Layer.ass_set_frame_size_to_image_size_patch_hd_plugins_original incontextof this)(...);
+		}
+		catch (e)
+		{
+			ie = e;
+		}
+		this.absoluteMode -= 1;
+		if (ie !== void)
+		{
+			throw ie;
+		}
+		return ret;
+	};
+}
 @endif

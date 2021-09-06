@@ -1,0 +1,147 @@
+
+class SubtitleDisplayLayer extends Layer
+{
+	function SubtitleDisplayLayer()
+	{
+		super.Layer(...);
+		this.setImageSize(this.window.primaryLayer.width, this.window.primaryLayer.height);
+		this.setSizeToImageSize();
+	}
+
+	function show()
+	{
+		if (this.visible)
+		{
+			return;
+		}
+		this.visible = true;
+		this.bringToFront();
+	}
+
+	function hide()
+	{
+		if (!this.visible)
+		{
+			return;
+		}
+		this.visible = false;
+	}
+}
+
+global.KAGWindow_patch_wavesoundbuffer_assdisplay_original = KAGWindow;
+class KAGWindow_patch_wavesoundbuffer_assdisplay_override extends KAGWindow_patch_wavesoundbuffer_assdisplay_original
+{
+	var subtitle_display_layer;
+	function KAGWindow_patch_wavesoundbuffer_assdisplay_override()
+	{
+		super.KAGWindow(...);
+		this.subtitle_display_layer = new SubtitleDisplayLayer(this, primaryLayer);
+	}
+
+	function KAGWindow()
+	{
+		KAGWindow_patch_wavesoundbuffer_assdisplay_override(...);
+	}
+
+}
+global.KAGWindow = KAGWindow_patch_wavesoundbuffer_assdisplay_override;
+
+global.KAGWaveSoundBuffer_patch_wavesoundbuffer_assdisplay_original = KAGWaveSoundBuffer;
+class KAGWaveSoundBuffer_patch_wavesoundbuffer_assdisplay_override extends KAGWaveSoundBuffer_patch_wavesoundbuffer_assdisplay_original
+{
+	var has_subtitle = false;
+	function KAGWaveSoundBuffer_patch_wavesoundbuffer_assdisplay_override()
+	{
+		super.KAGWaveSoundBuffer(...);
+	}
+
+	function KAGWaveSoundBuffer()
+	{
+		KAGWaveSoundBuffer_patch_wavesoundbuffer_assdisplay_override(...);
+	}
+
+	function open(storage)
+	{
+		var subtitle_display_layer = this.owner.owner.subtitle_display_layer;
+		if (this.has_subtitle)
+		{
+			this.has_subtitle = false;
+			subtitle_display_layer.hide();
+			System.removeContinuousHandler(this.subtitle_display_continuous_handler);
+		}
+		if (subtitle_display_layer.visible === false)
+		{
+			var ass_storage = Storages.chopStorageExt(Storages.extractStorageName(storage)) + ".ass";
+			if (Storages.isExistentStorage(ass_storage))
+			{
+				if (subtitle_display_layer.load_ass_track(Storages.getPlacedPath(ass_storage)))
+				{
+					this.has_subtitle = true;
+					subtitle_display_layer.ass_set_frame_size_to_image_size();
+					subtitle_display_layer.render_ass(0, false);
+					subtitle_display_layer.hide();
+				}
+			}
+		}
+		return super.open(...);
+	}
+
+	function stop()
+	{
+		if (this.has_subtitle)
+		{
+			var subtitle_display_layer = this.owner.owner.subtitle_display_layer;
+			subtitle_display_layer.hide();
+			System.removeContinuousHandler(this.subtitle_display_continuous_handler);
+		}
+		return super.stop(...);
+	}
+
+	function play()
+	{
+		if (this.has_subtitle)
+		{
+			var subtitle_display_layer = this.owner.owner.subtitle_display_layer;
+			subtitle_display_layer.render_ass(this.position, true);
+			subtitle_display_layer.show();
+			System.addContinuousHandler(this.subtitle_display_continuous_handler);
+		}
+		return super.play(...);
+	}
+
+	function subtitle_display_continuous_handler()
+	{
+		if (isvalid(this) && this.has_subtitle)
+		{
+			var subtitle_display_layer = this.owner.owner.subtitle_display_layer;
+			subtitle_display_layer.render_ass(this.position, false);
+		}
+	}
+
+	function onStatusChanged(status)
+	{
+@if(0)
+		if (this.has_subtitle)
+		{
+			var subtitle_display_layer = this.owner.owner.subtitle_display_layer;
+			if (status === "play")
+			{
+				subtitle_display_layer.render_ass(this.position, true);
+				subtitle_display_layer.show();
+				System.addContinuousHandler(this.subtitle_display_continuous_handler);
+			}
+			else
+			{
+				subtitle_display_layer.hide();
+				System.removeContinuousHandler(this.subtitle_display_continuous_handler);
+				if (status === "unload")
+				{
+					this.has_subtitle = false;
+				}
+			}
+		}
+@endif
+		return super.onStatusChanged(...);
+	}
+}
+global.KAGWaveSoundBuffer = KAGWaveSoundBuffer_patch_wavesoundbuffer_assdisplay_override;

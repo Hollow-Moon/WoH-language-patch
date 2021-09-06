@@ -70,6 +70,11 @@ class TextHolder
 			.sol	= sol;
 			.sot	= sot;
 			.vertical= vert;
+			if (__sb("1", "enable_staffroll_display") === 0)
+			{
+				.opacity = 0;
+				.level = 0;
+			}
 		}
 	}
 
@@ -485,7 +490,11 @@ class StaffRollPlugin extends KAGPlugin
 		var back = new Layer(kag, kag.back.base);
 		fore.absolute = 2000000-5;
 		back.absolute = fore.absolute;
-
+		if (__sb("1", "enable_staffroll_display") === 0)
+		{
+			fore.opacity = 0;
+			fore.lopacity = 0;
+		}
 		if(Storages.isExistentImage(opt.storage))
 			fore.loadImages(opt.storage);
 		else
@@ -564,6 +573,11 @@ class StaffRollPlugin extends KAGPlugin
 			.len	= .disappearposition - .appearposition;	//	全ての処理を行う区間の長さ
 //			.type	= ltAdditive;
 //			.visible= false;
+			if (__sb("1", "enable_staffroll_display") === 0)
+			{
+				.opacity = 0;
+				.lopacity = 0;
+			}
 		}
 		with(back)
 		{

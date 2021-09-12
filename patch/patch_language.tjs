@@ -841,6 +841,7 @@ function get_default_history_bold(kag=global.kag)
 function get_historyFontDefault(kag=global.kag) { { return [ get_default_history_font(kag), get_default_history_bold(kag) ]; } }
 function get_historyFont(kag=global.kag) { { return get_currentLanguageSettings(kag).history !== void? get_currentLanguageSettings(kag).history : %[]; } }
 function get_fsncleaner_rescript_enabled(kag=global.kag) { { return !!(get_currentLanguageSettings(kag).fsncleaner_rescript_enabled); } }
+function get_replace_jp_tilde_disabled(kag=global.kag) { { return !!(get_currentLanguageSettings(kag).replace_jp_tilde_disabled); } }
 function get_replace_jp_whitespace_disabled(kag=global.kag) { { return !!(get_currentLanguageSettings(kag).replace_jp_whitespace_disabled); } }
 function get_rtl_enabled(kag=global.kag) { { return !!(get_currentLanguageSettings(kag).rtl_enabled); } }
 function get_arabic_shaping_enabled(kag=global.kag) { { return !!(get_currentLanguageSettings(kag).arabic_shaping_enabled); } }
@@ -1105,7 +1106,12 @@ class Window_PatchLanguage_override extends Window_PatchLanguage_original
 	var replace_character_regex2 = /　/g;
 	function replace_characters_regex(text)
 	{
-		text = text.replace(this.replace_character_regex1, "〜");
+		if (
+			!global.get_replace_jp_tilde_disabled((typeof(global.kag) === "Object") ? global.kag : this)
+			)
+		{
+			text = text.replace(this.replace_character_regex1, "〜");
+		}
 		if (
 			!global.get_replace_jp_whitespace_disabled((typeof(global.kag) === "Object") ? global.kag : this)
 			&& this.sflags.language == englishLanguage

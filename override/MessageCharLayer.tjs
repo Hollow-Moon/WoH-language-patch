@@ -81,11 +81,6 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 			.textWidth	= textWidth;
 			.textHeight	= textHeight;
 			.group		= group;
-			.fontFace	= font.face;
-			.fontHeight	= font.height;
-			.fontItalic	= font.italic;
-			.fontAngle	= font.angle;
-			.fontBold	= font.bold;
 			.left		= left;
 			.top		= top;
 			.opacity	= opacity;
@@ -93,12 +88,15 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 			.lastParams.assign(lastParams);
 			.lastFontParams = [];
 			.lastFontParams.assign(lastFontParams);
+			.curFontParams = [];
+			.curFontParams.assign(curFontParams);
 		}
 		return dic;
 	}
 
 	function restore(dic)
 	{
+		this.clear();
 		with(dic)
 		{
 			name		= .name;
@@ -108,13 +106,14 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 			textWidth	= .textWidth;
 			textHeight	= .textHeight;
 			group		= .group;
-			setFont(.fontFace, .fontAngle, .fontBold, .fontItalic, .fontHeight);
-			left		= .left;
-			top			= .top;
 			opacity		= .opacity;
 			lastParams.assign(.lastParams);
 			lastFontParams.assign(.lastFontParams);
+			curFontParams.clear();
+			setFont(.curFontParams[0], .curFontParams[1], .curFontParams[2], .curFontParams[3], .curFontParams[4]);
 			redraw();
+			// Place the setPos call here because the redraw call sets position to (0,0)
+			this.setPos(.left, .top);
 		}
 	}
 

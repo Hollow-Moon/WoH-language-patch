@@ -140,7 +140,7 @@
 	"patch_historylayer.tjs",
 	"patch_language_override.tjs",
 	["patch_conductor_woh_override.tjs", ,,, "GAME_WOHN"],
-	["patch_messagecharlayer_cache_override.tjs", ,,, "GAME_WOHN"],
+	["patch_messagecharlayer_cache_override.tjs", ,,, "MESSAGELAYER_USECHARLAYER"],
 	["patch_async_image_load_override.tjs", , [["Bitmap", , "==="], ["Bitmap.loadAsync", , "==="]],, "ASYNC_IMAGE_LOAD"],
 	["Override.tjs", ,,, "GAME_FATE||GAME_FHAT"],
 	["Action.tjs", ,,, "GAME_WOHN"],

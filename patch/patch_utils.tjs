@@ -1483,3 +1483,41 @@ function saveLogToExchange()
 	System.inform(msg);
 }
 
+Layer.setFontFace	= function(face, height=font.height, italic=font.italic)
+{
+@if(0)
+	if (typeof(global.load_prerendered_fonts) === "Object")
+	{
+		global.load_prerendered_fonts(sf.language);
+	}
+@endif
+	var	fh	= Math.abs(font.height);
+	var	nh	= Math.abs(height);
+	fh |= 0;
+	nh |= 0;
+//	dm(name+": "+font.face+" !== "+face+" || "+fh+" !== "+nh+" || "+font.italic+" !== "+italic);
+	if(font.face != face || fh != nh || font.italic != italic)
+	{
+@if(0)
+		global.Layer.getFontList();
+@endif
+		font.height	= height;
+		font.italic	= italic;
+		//dm(" font.face = " + font.face + " / face = " + face);
+		font.face = face if face !== void && face != "";
+@if(0)
+		var	loaded	= loadedBitmapFonts[font.face], st;
+		if(loaded !== void && (st = loaded[nh]) !== void)
+		{
+			st	+= fontItalicSuffix if italic;
+			st	+= fontFileExt;
+			if(Storages.isExistentStorage(st))
+				font.mapPrerenderedFont(st);
+//			else
+//				dm(name+".setFontFace: "+st+" is not found.");
+		}
+@endif
+		return true;
+	}
+	return false;
+};

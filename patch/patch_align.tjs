@@ -56,10 +56,10 @@ class MessageLayer_patch_align_override extends MessageLayer_patch_align_origina
 		} else if (("" + (+anchor)) == anchor) {
 			anchorValue = +anchor;
 		}
-@if(!GAME_WOHN)
+@if(!MESSAGELAYER_USECHARLAYER)
 		x = (right - lineLayer.font.getTextWidth(text)) * anchorValue + lineLayer.font.getTextWidth(offsetText)*offsetTextDirection;
 @endif
-@if(GAME_WOHN)
+@if(MESSAGELAYER_USECHARLAYER)
 		x = (right - getChWidth(text)[1]) * anchorValue + getChWidth(offsetText)[1]*offsetTextDirection;
 @endif
 		locate(x, void);

@@ -58,6 +58,7 @@ class LastMessageEffectPlugin extends KAGPlugin
 
 	function messageEffect(delay=0, target)
 	{
+@if(MESSAGELAYER_ACTIONMANAGER)
 		//	メッセージ表示が再開されたら、現在表示されている文字は半透明にする
 		var	elm	= %[
 			opacity:%[
@@ -96,6 +97,7 @@ class LastMessageEffectPlugin extends KAGPlugin
 			for (var i = 0, internal_forloop_count = groups.count; i < internal_forloop_count; i += 1)
 				layer.executeCharGroup(groups[i], func incontextof layer, elm, time);
 		}
+@endif
 	}
 
 	function onStore(f, elm)

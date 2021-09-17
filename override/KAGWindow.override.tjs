@@ -3971,6 +3971,7 @@ class KAGWindow_override extends KAGWindow_original
 	 */
 	function pauseMessageAction(page="all")
 	{
+@if(MESSAGELAYER_ACTIONMANAGER)
 		if(page != "back")
 		{
 			for (var i = 0, internal_forloop_count = fore.messages.count; i < internal_forloop_count; i += 1)
@@ -3981,6 +3982,7 @@ class KAGWindow_override extends KAGWindow_original
 			for (var i = 0, internal_forloop_count = back.messages.count; i < internal_forloop_count; i += 1)
 				back.messages[i].pauseCharAction();
 		}
+@endif
 	}
 
 	/**
@@ -3988,6 +3990,7 @@ class KAGWindow_override extends KAGWindow_original
 	 */
 	function resumeMessageAction(page="all")
 	{
+@if(MESSAGELAYER_ACTIONMANAGER)
 		if(page != "back")
 		{
 			for (var i = 0, internal_forloop_count = fore.messages.count; i < internal_forloop_count; i += 1)
@@ -3998,6 +4001,7 @@ class KAGWindow_override extends KAGWindow_original
 			for (var i = 0, internal_forloop_count = back.messages.count; i < internal_forloop_count; i += 1)
 				back.messages[i].resumeCharAction();
 		}
+@endif
 	}
 
 	function stopAllTransitions()

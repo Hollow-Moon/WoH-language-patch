@@ -2726,7 +2726,9 @@ KAGWindow.getHandlers		= function()
 		 */
 		.startmessageaction	= function(elm)
 		{
+@if(MESSAGELAYER_ACTIONMANAGER)
 			getMessageLayerObjectFromElm(elm).startContinuousActionToSelection(elm.type);
+@endif
 			return 0;
 		} incontextof this;
 
@@ -2739,7 +2741,9 @@ KAGWindow.getHandlers		= function()
 		 */
 		.stopmessageaction	= function(elm)
 		{
+@if(MESSAGELAYER_ACTIONMANAGER)
 			getMessageLayerObjectFromElm(elm).stopCharAction();
+@endif
 			return 0;
 		} incontextof this;
 

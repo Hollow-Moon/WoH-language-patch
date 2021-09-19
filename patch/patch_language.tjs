@@ -234,44 +234,42 @@ function setFontWithLanguage(language, kag=global.kag)
 {
 	load_fonts(language);
 
-	/// Main ///
-	if (kag.sflags.userFont[language] === void)
+	with (kag)
 	{
-		kag.sflags.userFont[language] = global.get_default_userfont_settings(kag);
-	}
+		/// Main ///
+		if (.sflags.userFont[language] === void)
+		{
+			.sflags.userFont[language] = global.get_default_userfont_settings(kag);
+		}
 
-	with(kag)
-	{
 		var uf = .sflags.userFont[language];
 		if (typeof(uf.fontface) !== "String" || uf.fontface === "" || typeof(uf.bold) !== "Integer" || typeof(uf.rubybold) !== "Integer")
 		{
 			uf = global.get_default_userfont_settings(kag);
 		}
 		.chDefaultFace				= uf.fontface;
-		if (typeof(kag.tflags) === "Object" && typeof(kag.tflags.chDefaultFace) === "String")
+		if (typeof(.tflags) === "Object")
 		{
-			kag.tflags.chDefaultFace = uf.fontface;
+			.tflags.chDefaultFace = uf.fontface;
 		}
-		if (typeof(.chDefaultBold) === "Integer")
 		{
-			.chDefaultBold				= uf.bold;
+			.chDefaultBold				= !!uf.bold;
 		}
-		if (typeof(kag.tflags) === "Object" && typeof(kag.tflags.chDefaultBold) === "Integer")
+		if (typeof(.tflags) === "Object")
 		{
-			kag.tflags.chDefaultBold = uf.bold;
+			.tflags.chDefaultBold = !!uf.bold;
 		}
-		if (typeof(.chDefaultRubyBold) === "Integer")
 		{
-			.chDefaultRubyBold				= uf.rubybold;
+			.chDefaultRubyBold				= !!uf.rubybold;
 		}
-		if (typeof(kag.tflags) === "Object" && typeof(kag.tflags.chDefaultRubyBold) === "Integer")
+		if (typeof(.tflags) === "Object")
 		{
-			kag.tflags.chDefaultRubyBold = uf.rubybold;
+			.tflags.chDefaultRubyBold = !!uf.rubybold;
 		}
 		if (typeof(.current) === "Object")
 		{
-			.current.defaultBold		= uf.bold;
-			.current.defaultRubyBold	= uf.rubybold;
+			.current.defaultBold		= !!uf.bold;
+			.current.defaultRubyBold	= !!uf.rubybold;
 			.setMessageLayerUserFont();
 		}
 	}
@@ -298,10 +296,19 @@ function set_default_history_settings(curlangset)
 
 function saveFontWithLanguage(kag=global.kag)
 {
+	var defaultface = void;
 	var bold = false;
 	var rubybold = false;
 	with(kag)
 	{
+		if (typeof(.chDefaultFace) === "String" && .chDefaultFace !== "")
+		{
+			defaultface = .chDefaultFace;
+		}
+		else if (typeof(.scflags) === "Object" && typeof(.scflags.chDefaultFace) === "String" && .scflags.chDefaultFace !== "")
+		{
+			defaultface = .scflags.chDefaultFace;
+		}
 		if (typeof(.chDefaultBold) === "Integer")
 		{
 			bold = .chDefaultBold;
@@ -309,6 +316,10 @@ function saveFontWithLanguage(kag=global.kag)
 		else if (typeof(.current) === "Object")
 		{
 			bold = .current.defaultBold;
+		}
+		else if (typeof(.scflags) === "Object" && typeof(.scflags.chDefaultBold) === "Integer")
+		{
+			bold = .scflags.chDefaultBold;
 		}
 		if (typeof(.chDefaultRubyBold) === "Integer")
 		{
@@ -318,16 +329,23 @@ function saveFontWithLanguage(kag=global.kag)
 		{
 			rubybold = .current.defaultRubyBold;
 		}
+		else if (typeof(.scflags) === "Object" && typeof(.scflags.chDefaultRubyBold) === "Integer")
+		{
+			rubybold = .scflags.chDefaultRubyBold;
+		}
 		var uf = %[
-			fontface:.chDefaultFace,
-			bold:bold,
-			rubybold:rubybold
+			fontface:defaultface,
+			bold:bold | 0,
+			rubybold:rubybold | 0,
 		];
 		if (typeof(uf.fontface) !== "String" || uf.fontface === "" || typeof(uf.bold) !== "Integer" || typeof(uf.rubybold) !== "Integer")
 		{
-			uf = global.get_default_userfont_settings(kag);
+			// don't save it
 		}
-		.sflags.userFont[.sflags.language] = uf;
+		else
+		{
+			.sflags.userFont[.sflags.language] = uf;
+		}
 	}
 }
 
@@ -945,11 +963,6 @@ function initializeLanguage(kag=global.kag) {
 	// Load/Reload language after kag is defined:
 	unload_language_patch(default_language, kag);
 	load_language_patch(kag.sflags.language, kag);
-	if (typeof(kag) === "Object")
-	{
-		setFontWithLanguage(kag.sflags.language, kag);
-	}
-	saveFontWithLanguage(kag);
 	if (typeof(kag) === "Object")
 	{
 		(addLanguageMenu incontextof kag)();

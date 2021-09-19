@@ -154,6 +154,7 @@
 	["patch_language_configvalues.tjs", ,,, "GAME_WOHN"],
 	"patch_conductor.tjs",
 	"patch_wordwrap.tjs",
+	["patch_messagelayer_prelayout.tjs", ,,, "MESSAGELAYER_USECHARLAYER"],
 	["patch_ost.tjs", ,,, "GAME_FATE"],
 	"patch_kirikiroid_override.tjs",
 	["patch_hd_override.tjs", ,,, "HD_MODE"],

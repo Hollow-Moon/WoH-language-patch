@@ -166,29 +166,132 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 		var ret = super.getNextTag(...);
 		if (this.processSpecialTags)
 		{
-			var temp_text = this.patch_conductor_temp_array2;
-			temp_text.clear();
-			var save_curStorage = this.curStorage;
-			var save_curLine = this.curLine;
-			while (ret !== void && ret.tagname === "ch")
+			var conductor_split_tags = [];
+			while (ret !== void)
 			{
-				patch_conductor_temp_array.assign(ret);
-				if (patch_conductor_temp_array.count === 4)
+				var temp_text = this.patch_conductor_temp_array2;
+				temp_text.clear();
+				var save_curStorage = this.curStorage;
+				var save_curLine = this.curLine;
+				var has_l = false;
+				var has_p = false;
+				var has_cm = false;
+				var has_r = 0;
+				while (ret !== void)
 				{
-					temp_text.add(ret.text);
-					ret = super.getNextTag(...);
+					patch_conductor_temp_array.assign(ret);
+					if (!has_l && !has_p && !has_cm)
+					{
+						if (ret.tagname === "ch")
+						{
+							if (patch_conductor_temp_array.count === 4)
+							{
+								temp_text.add(ret.text);
+								ret = super.getNextTag(...);
+								continue;
+							}
+						}
+						else if (ret.tagname === "r")
+						{
+							// tagname only
+							if (patch_conductor_temp_array.count === 2)
+							{
+								temp_text.add("\n");
+								ret = super.getNextTag(...);
+								continue;
+							}
+						}
+						else if (ret.tagname === "l")
+						{
+							// tagname only
+							if (patch_conductor_temp_array.count === 2)
+							{
+								has_l = true;
+								ret = super.getNextTag(...);
+								continue;
+							}
+						}
+						else if (ret.tagname === "lr")
+						{
+							// tagname only
+							if (patch_conductor_temp_array.count === 2)
+							{
+								has_l = true;
+								has_r += 1;
+								ret = super.getNextTag(...);
+								continue;
+							}
+						}
+						else if (ret.tagname === "p")
+						{
+							// tagname only
+							if (patch_conductor_temp_array.count === 2)
+							{
+								has_p = true;
+								ret = super.getNextTag(...);
+								continue;
+							}
+						}
+						else if (ret.tagname === "pg")
+						{
+							// tagname only
+							if (patch_conductor_temp_array.count === 2)
+							{
+								has_p = true;
+								has_cm = true;
+								ret = super.getNextTag(...);
+								continue;
+							}
+						}
+						else if (ret.tagname === "cm")
+						{
+							// tagname only
+							if (patch_conductor_temp_array.count === 2)
+							{
+								has_cm = true;
+								ret = super.getNextTag(...);
+								continue;
+							}
+						}
+					}
+					else
+					{
+						if (ret.tagname === "r")
+						{
+							// tagname only
+							// additional 'r' after 'l'
+							if (patch_conductor_temp_array.count === 2)
+							{
+								has_r += 1;
+								ret = super.getNextTag(...);
+								continue;
+							}
+						}
+					}
+					break;
+				}
+				if (temp_text.count > 0 || has_l || has_p || has_cm || has_r)
+				{
+					var ret2 = %[];
+					ret2.__patch_conductor_storage = save_curStorage;
+					ret2.__patch_conductor_line = save_curLine;
+					ret2.tagname = "ch_patch_conductor_split";
+					ret2.text = temp_text.join("");
+					ret2.lcount = has_l;
+					ret2.pcount = has_p;
+					ret2.cmcount = has_cm;
+					ret2.rcount = has_r;
+					conductor_split_tags.add(ret2);
 					continue;
 				}
 				break;
 			}
-			if (temp_text.count > 0)
+			if (conductor_split_tags.count > 0)
 			{
-				var ret2 = %[];
-				ret2.__patch_conductor_storage = save_curStorage;
-				ret2.__patch_conductor_line = save_curLine;
-				ret2.tagname = "ch_patch_conductor_split";
-				ret2.text = temp_text.join("");
-				this.pendings.insert(0, ret2);
+				for (var i = conductor_split_tags.count - 1; i >= 0; i -= 1)
+				{
+					this.pendings.insert(0, conductor_split_tags[i]);
+				}
 			}
 		}
 		if (typeof(ret) === "Object")
@@ -204,9 +307,146 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 		var ret2 = %[];
 		ret2.__patch_conductor_storage = elm.__patch_conductor_storage;
 		ret2.__patch_conductor_line = elm.__patch_conductor_line;
+		ret2.lcount = elm.lcount;
+		ret2.pcount = elm.pcount;
+		ret2.cmcount = elm.cmcount;
+		ret2.rcount = elm.rcount;
 		ret2.tagname = "ch_patch_conductor_split";
 		ret2.text = text;
 		this.pendings.insert(0, ret2);
+	}
+
+	function queueText(text, elm)
+	{
+		var text_sz = 0;
+		if (typeof(text) === "Object")
+		{
+			text_sz = text.count;
+		}
+		else
+		{
+			text_sz = text.length;
+		}
+		for (var i = text_sz - 1; i >= 0; i -= 1)
+		{
+			var ret2 = %[];
+			ret2.__patch_conductor_storage = elm.__patch_conductor_storage;
+			ret2.__patch_conductor_line = elm.__patch_conductor_line;
+			if (text[i] == "\n")
+			{
+				ret2.tagname = "r";
+			}
+			else
+			{
+				ret2.tagname = "ch";
+				ret2.text = text[i];
+			}
+			this.pendings.insert(0, ret2);
+		}
+	}
+
+	function queueReline(elm, reline_ml=true, reline_hl=true)
+	{
+		if (reline_ml && reline_hl)
+		{
+			var ret2 = %[];
+			ret2.__patch_conductor_storage = elm.__patch_conductor_storage;
+			ret2.__patch_conductor_line = elm.__patch_conductor_line;
+			ret2.tagname = "r";
+			this.pendings.insert(0, ret2);
+		}
+		else if (reline_hl && !reline_ml)
+		{
+			var ret2 = %[];
+			ret2.__patch_conductor_storage = elm.__patch_conductor_storage;
+			ret2.__patch_conductor_line = elm.__patch_conductor_line;
+			ret2.tagname = "hr";
+			this.pendings.insert(0, ret2);
+		}
+		else if (reline_ml && !reline_hl)
+		{
+			var old_historyWriteEnabled = this.owner.historyWriteEnabled;
+			{
+				if (old_historyWriteEnabled)
+				{
+					// re-enable history output
+					var ret2 = %[];
+					ret2.__patch_conductor_storage = elm.__patch_conductor_storage;
+					ret2.__patch_conductor_line = elm.__patch_conductor_line;
+					ret2.tagname = "history";
+					ret2.output = "1";
+					this.pendings.insert(0, ret2);
+				}
+				{
+					// reline (on message layer only)
+					var ret2 = %[];
+					ret2.__patch_conductor_storage = elm.__patch_conductor_storage;
+					ret2.__patch_conductor_line = elm.__patch_conductor_line;
+					ret2.tagname = "r";
+					this.pendings.insert(0, ret2);
+				}
+				if (old_historyWriteEnabled)
+				{
+					// disable history output
+					var ret2 = %[];
+					ret2.__patch_conductor_storage = elm.__patch_conductor_storage;
+					ret2.__patch_conductor_line = elm.__patch_conductor_line;
+					ret2.tagname = "history";
+					ret2.output = "0";
+					this.pendings.insert(0, ret2);
+				}
+			}
+		}
+	}
+
+	function queueClearMessageLayer(elm)
+	{
+		var ret2 = %[];
+		ret2.__patch_conductor_storage = elm.__patch_conductor_storage;
+		ret2.__patch_conductor_line = elm.__patch_conductor_line;
+		ret2.tagname = "cm";
+		this.pendings.insert(0, ret2);
+	}
+
+	function queueLineBreak(elm)
+	{
+		var ret2 = %[];
+		ret2.__patch_conductor_storage = elm.__patch_conductor_storage;
+		ret2.__patch_conductor_line = elm.__patch_conductor_line;
+		ret2.tagname = "l";
+		this.pendings.insert(0, ret2);
+	}
+
+	function queuePageBreak(elm)
+	{
+		var ret2 = %[];
+		ret2.__patch_conductor_storage = elm.__patch_conductor_storage;
+		ret2.__patch_conductor_line = elm.__patch_conductor_line;
+		ret2.tagname = "p";
+		this.pendings.insert(0, ret2);
+	}
+
+	function queueFormattingBreakTags(elm)
+	{
+		if (elm.cmcount)
+		{
+			this.queueClearMessageLayer(elm);
+		}
+		if (elm.rcount)
+		{
+			for (var i = 0; i < elm.rcount; i += 1)
+			{
+				this.queueReline(elm, true, true);
+			}
+		}
+		if (elm.lcount)
+		{
+			this.queueLineBreak(elm);
+		}
+		if (elm.pcount)
+		{
+			this.queuePageBreak(elm);
+		}
 	}
 
 	function onTag(elm)
@@ -214,34 +454,19 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 		if (elm.tagname === "ch_patch_conductor_split")
 		{
 			var text = elm.text;
-			if (typeof(this.owner.onConductorPreprocessCh) === "Object")
+			elm.requeue = true;
+			if (typeof(this.owner.onConductorPreprocessCh) === "Object" && text !== "")
 			{
 				text = this.owner.onConductorPreprocessCh(text, this, elm);
 			}
-			var text_sz = 0;
-			if (typeof(text) === "Object")
+			if (elm.requeue)
 			{
-				text_sz = text.count;
+				this.queueFormattingBreakTags(elm);
+				this.queueText(text, elm);
 			}
-			else
+			if (typeof(this.owner.onConductorPreprocessChCompletion) === "Object")
 			{
-				text_sz = text.length;
-			}
-			for (var i = text_sz - 1; i >= 0; i -= 1)
-			{
-				var ret2 = %[];
-				ret2.__patch_conductor_storage = elm.__patch_conductor_storage;
-				ret2.__patch_conductor_line = elm.__patch_conductor_line;
-				if (text[i] == "\n")
-				{
-					ret2.tagname = "r";
-				}
-				else
-				{
-					ret2.tagname = "ch";
-					ret2.text = text[i];
-				}
-				this.pendings.insert(0, ret2);
+				this.owner.onConductorPreprocessChCompletion(this, elm);
 			}
 			return 0;
 		}

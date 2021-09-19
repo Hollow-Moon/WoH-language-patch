@@ -1059,12 +1059,14 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 	{
 		var word_wrap_break_position = this.getWordWrapBreakPosition(text);
 		var ttext = text;
+		var should_append_break_tags = true;
 		if (word_wrap_break_position > 0)
 		{
 			var cut_text = text.substr(word_wrap_break_position);
 			if (cut_text.length > 0)
 			{
 				conductor.requeueText(cut_text, elm);
+				should_append_break_tags = false;
 			}
 			ttext = text.substr(0, word_wrap_break_position);
 		}
@@ -1097,83 +1099,34 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 		}
 		else if (hl_needsreline && !ml_needsreline)
 		{
-			var text_sz = ttext.length;
-			for (var i = text_sz - 1; i >= 0; i -= 1)
+			elm.requeue = false;
+			if (should_append_break_tags)
 			{
-				var ret2 = %[];
-				ret2.__patch_conductor_storage = elm.__patch_conductor_storage;
-				ret2.__patch_conductor_line = elm.__patch_conductor_line;
-				if (text[i] == "\n")
-				{
-					ret2.tagname = "r";
-				}
-				else
-				{
-					ret2.tagname = "ch";
-					ret2.text = text[i];
-				}
-				conductor.pendings.insert(0, ret2);
+				conductor.queueFormattingBreakTags(elm);
 			}
-			var ret2 = %[];
-			ret2.__patch_conductor_storage = elm.__patch_conductor_storage;
-			ret2.__patch_conductor_line = elm.__patch_conductor_line;
-			ret2.tagname = "hr";
-			conductor.pendings.insert(0, ret2);
+			conductor.queueText(ttext, elm);
+			conductor.queueReline(elm, false, true);
 			return "";
 		}
 		else if (ml_needsreline && !hl_needsreline)
 		{
-			var text_sz = ttext.length;
-			for (var i = text_sz - 1; i >= 0; i -= 1)
+			elm.requeue = false;
+			if (should_append_break_tags)
 			{
-				var ret2 = %[];
-				ret2.__patch_conductor_storage = elm.__patch_conductor_storage;
-				ret2.__patch_conductor_line = elm.__patch_conductor_line;
-				if (text[i] == "\n")
-				{
-					ret2.tagname = "r";
-				}
-				else
-				{
-					ret2.tagname = "ch";
-					ret2.text = text[i];
-				}
-				conductor.pendings.insert(0, ret2);
+				conductor.queueFormattingBreakTags(elm);
 			}
-			var old_historyWriteEnabled = this.historyWriteEnabled;
-			{
-				if (old_historyWriteEnabled)
-				{
-					// re-enable history output
-					var ret2 = %[];
-					ret2.__patch_conductor_storage = elm.__patch_conductor_storage;
-					ret2.__patch_conductor_line = elm.__patch_conductor_line;
-					ret2.tagname = "history";
-					ret2.output = "1";
-					conductor.pendings.insert(0, ret2);
-				}
-				{
-					// reline (on message layer only)
-					var ret2 = %[];
-					ret2.__patch_conductor_storage = elm.__patch_conductor_storage;
-					ret2.__patch_conductor_line = elm.__patch_conductor_line;
-					ret2.tagname = "r";
-					conductor.pendings.insert(0, ret2);
-				}
-				if (old_historyWriteEnabled)
-				{
-					// disable history output
-					var ret2 = %[];
-					ret2.__patch_conductor_storage = elm.__patch_conductor_storage;
-					ret2.__patch_conductor_line = elm.__patch_conductor_line;
-					ret2.tagname = "history";
-					ret2.output = "0";
-					conductor.pendings.insert(0, ret2);
-				}
-			}
+			conductor.queueText(ttext, elm);
+			conductor.queueReline(elm, true, false);
 			return "";
 		}
-		
+
+		if (!should_append_break_tags)
+		{
+			elm.requeue = false;
+			conductor.queueText(ttext, elm);
+			return "";
+		}
+
 		return ttext;
 	}
 @endif

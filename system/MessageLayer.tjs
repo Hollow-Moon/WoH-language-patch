@@ -2270,8 +2270,10 @@ class MessageLayer extends KAGLayer
 		var this_charlayer;
 		with(this_charlayer = getCharLayer(currentLine, currentColumn))
 		{
-			.name	= "[%2d][%2d]: %s(%s)".sprintf(currentLine, currentColumn, ch, .group);
 			this.cacheCharLayerFromCh(this_charlayer, ch, false, false, fontItalic);
+			.name	= "[%2d][%2d]: %s(%s)".sprintf(currentLine, currentColumn, ch, .group);
+			this_charlayer.currentLine = currentLine;
+			this_charlayer.currentColumn = currentColumn;
 
 			cw	= .textWidth;
 
@@ -2299,6 +2301,7 @@ class MessageLayer extends KAGLayer
 			.linkno	= inLink;
 			.opacity= 255;
 			.visible= true;
+			this.prelayoutPrepareCharLayer(this_charlayer);
 		}
 
 		rubyCharCount++;
@@ -2327,21 +2330,7 @@ class MessageLayer extends KAGLayer
 @endif
 @if(MESSAGELAYER_ACTIONMANAGER)
 		{
-			//	出現時のみのアクション
-			var	aa;
-			if(enabledCharAppearAction && appearType != void && (aa = appearActions[appearType]) != void)
-			{
-				//	初期化
-				var	init	= appearActions[appearType+"_init"];
-				(init incontextof this)() if init != void;
-
-				//	実行
-				actionLastChar((aa incontextof this)(), appearTimeRate != void ? appearTimeRate : 1);
-			}
-
-			//	継続的に行うアクション(プロパティが競合しないなら、出現時のアクションと同時に実行可能)
-			if(continuousType != void && continuousActions[continuousType] != void)
-				beginContinuousAction(lastCharLayer, continuousType);
+			this.prelayoutHandleAppearAction(this_charlayer);
 		}
 @endif
 @endif
@@ -2367,6 +2356,11 @@ class MessageLayer extends KAGLayer
 		cw += pitch;
 
 		if(vert) y += cw; else x += cw;
+
+@if(MESSAGELAYER_USECHARLAYER)
+		this_charlayer.x_after = x | 0;
+		this_charlayer.y_after = y | 0;
+@endif
 
 @if(!MESSAGELAYER_USECHARLAYER)
 		lineLayerPos += cw;
@@ -2456,7 +2450,6 @@ class MessageLayer extends KAGLayer
 		var this_rubylayer;
 		with(this_rubylayer = getRubyLayer(line, edcol))
 		{
-			.name		= "[%2d][%2d]: ルビ = %s(%s)".sprintf(currentLine, currentColumn, text, .group);
 			var	max, min;
 			if(align == "c")
 			{
@@ -2468,6 +2461,7 @@ class MessageLayer extends KAGLayer
 				max = int(max * 2.00);
 			}
 			this.cacheCharLayerFromCh(this_rubylayer, text, true, false, fontItalic, false, 0, max, min);
+			.name		= "[%2d][%2d]: ルビ = %s(%s)".sprintf(currentLine, currentColumn, text, .group);
 			var	pos	= getRubyPos(line, stcol, edcol, rubyLayers[line][edcol], offset, align);
 			.charcnt	= edcol - stcol;
 			.setPos(pos[0], pos[1]);
@@ -2478,20 +2472,10 @@ class MessageLayer extends KAGLayer
 			.align		= align;
 			.opacity	= 255;
 			.visible	= true;
+			this.prelayoutPrepareCharLayer(this_rubylayer);
 
 @if(MESSAGELAYER_ACTIONMANAGER)
-			//	出現時アクション
-			var	aa;
-			if(enabledCharAppearAction && appearType != void && (aa = appearActions[appearType]) != void)
-			{
-				//	初期化
-				var	init	= appearActions[appearType+"_init"];
-				(init incontextof this)() if init != void;
-
-				//	実行
-				var	charcnt	= Math.abs(edcol - stcol) + 1;
-				actionLastChar((aa incontextof this)(), appearTimeRate != void ? appearTimeRate * charcnt : charcnt);
-			}
+			this.prelayoutHandleAppearAction(this_rubylayer, Math.abs(edcol - stcol) + 1, false);
 @endif
 		}
 	}
@@ -2609,7 +2593,8 @@ class MessageLayer extends KAGLayer
 		if(repage) return true; // 文字は描画しない
 
 		var cw;
-		with(getCharLayer(currentLine, currentColumn))
+		var this_charlayer;
+		with(this_charlayer = getCharLayer(currentLine, currentColumn))
 		{
 			if(ischar)
 			{
@@ -2638,6 +2623,8 @@ class MessageLayer extends KAGLayer
 			.opacity	= 255;
 			.visible	= true;
 			.name		= "[%2d][%2d]: graph(%s)".sprintf(currentLine, currentColumn, .group);
+			this_charlayer.currentLine = currentLine;
+			this_charlayer.currentColumn = currentColumn;
 
 			var lw, lh;
 			lw = .imageWidth;
@@ -2653,6 +2640,7 @@ class MessageLayer extends KAGLayer
 				if(lh > lineSize) lineSize = lh; // 拡張
 				cw = lw;
 			}
+			this.prelayoutPrepareCharLayer(this_charlayer);
 		}
 
 		rubyCharCount++;
@@ -2700,6 +2688,11 @@ class MessageLayer extends KAGLayer
 @endif
 
 		if(vertical) y+=cw; else x+=cw;
+
+@if(MESSAGELAYER_USECHARLAYER)
+		this_charlayer.x_after = x | 0;
+		this_charlayer.y_after = y | 0;
+@endif
 
 @if(!MESSAGELAYER_USECHARLAYER)
 		lineLayerPos += cw;

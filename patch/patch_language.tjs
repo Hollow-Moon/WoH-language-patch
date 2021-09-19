@@ -243,6 +243,10 @@ function setFontWithLanguage(language, kag=global.kag)
 	with(kag)
 	{
 		var uf = .sflags.userFont[language];
+		if (typeof(uf.fontface) !== "String" || uf.fontface === "" || typeof(uf.bold) !== "Integer" || typeof(uf.rubybold) !== "Integer")
+		{
+			uf = global.get_default_userfont_settings(kag);
+		}
 		.chDefaultFace				= uf.fontface;
 		if (typeof(kag.tflags) === "Object" && typeof(kag.tflags.chDefaultFace) === "String")
 		{
@@ -302,11 +306,7 @@ function saveFontWithLanguage(kag=global.kag)
 		{
 			bold = .chDefaultBold;
 		}
-		else if (typeof(.current) !== "Object")
-		{
-			return;
-		}
-		else
+		else if (typeof(.current) === "Object")
 		{
 			bold = .current.defaultBold;
 		}
@@ -314,19 +314,20 @@ function saveFontWithLanguage(kag=global.kag)
 		{
 			rubybold = .chDefaultRubyBold;
 		}
-		else if (typeof(.current) !== "Object")
-		{
-			return;
-		}
-		else
+		else if (typeof(.current) === "Object")
 		{
 			rubybold = .current.defaultRubyBold;
 		}
-		.sflags.userFont[.sflags.language] = %[
+		var uf = %[
 			fontface:.chDefaultFace,
 			bold:bold,
 			rubybold:rubybold
 		];
+		if (typeof(uf.fontface) !== "String" || uf.fontface === "" || typeof(uf.bold) !== "Integer" || typeof(uf.rubybold) !== "Integer")
+		{
+			uf = global.get_default_userfont_settings(kag);
+		}
+		.sflags.userFont[.sflags.language] = uf;
 	}
 }
 

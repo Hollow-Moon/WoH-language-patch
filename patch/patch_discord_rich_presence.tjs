@@ -1,0 +1,90 @@
+﻿
+global.KAGWindow_patch_discord_rich_presence_original = KAGWindow;
+class KAGWindow_patch_discord_rich_presence_override extends KAGWindow_patch_discord_rich_presence_original
+{
+	function KAGWindow_patch_discord_rich_presence_override()
+	{
+		super.KAGWindow(...);
+
+		if (this.isMain)
+		{
+			var application_id = "##applicationid TODO##";
+			global.DiscordRPC.Initialize(application_id, void, false, "");
+		}
+	}
+
+	function KAGWindow()
+	{
+		KAGWindow_patch_discord_rich_presence_override(...);
+	}
+
+	function finalize()
+	{
+		if (this.isMain)
+		{
+			global.DiscordRPC.Shutdown();
+		}
+		return super.finalize(...);
+	}
+
+	var last_discord_updated_text = "";
+
+	function onConductorLabel(label, page)
+	{
+		var ret = super.onConductorLabel(...);
+		if (this.isMain)
+		{
+			var new_page_name = currentPageName;
+@if(GAME_FATE||GAME_FHAT)
+			var on_title_menu = false;
+			if (typeof(global.titlemenu_object) === "Object" && typeof(global.titlemenu_object.menulayer) === "Object" && global.titlemenu_object.menulayer.visible)
+			{
+				on_title_menu = true;
+			}
+			else if (typeof(global.titlemenu) === "Object")
+			{
+				on_title_menu = true;
+			}
+			else if (typeof(global.ticket_menu) === "Object")
+			{
+				on_title_menu = true;
+			}
+@endif
+@if(GAME_WOHN)
+			if (typeof(this.tflags) === "Object" && this.tflags.tt_opened)
+			{
+				on_title_menu = true;
+			}
+@endif
+			if (typeof(currentLabel) === "String" && currentLabel === "*title")
+			{
+				on_title_menu = true;
+			}
+			if (on_title_menu)
+			{
+				new_page_name = "Title menu";
+			}
+			else
+			{
+				if (typeof(currentLabel) === "String" && currentLabel.substr(0, 5) === "*page")
+				{
+					new_page_name += " (Page " + currentLabel.substr(5) + ")";
+				}
+			}
+			if (this.last_discord_updated_text !== new_page_name)
+			{
+				var dic = %[];
+				dic.largeImageKey = "game_logo"; // TODO
+				dic.largeImageText = "Hoge hoge hoge hoge hoge"; // TODO
+				dic.details = new_page_name;
+				// need seconds here
+				dic.startTimestamp = (new Date()).getTime() \ 1000;
+				global.DiscordRPC.UpdatePresence(dic);
+				this.last_discord_updated_text = new_page_name;
+			}
+		}
+		return ret;
+	}
+}
+global.KAGWindow = KAGWindow_patch_discord_rich_presence_override;
+

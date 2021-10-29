@@ -213,6 +213,7 @@ function dmt(msg*) { Debug.message(msg.join(", ")+": "+Scripts.getTraceString())
 	global.devMode = ((("" + System.getArgument('-devmode')).indexOf("1") !== -1) || Storages.isExistentStorage(basepath + "dev.txt"));
 	global.devMode2 = ((("" + System.getArgument('-devmode')).indexOf("2") !== -1) || Storages.isExistentStorage(basepath + "dev2.txt"));
 	global.forceLog = ((System.getArgument('-forcelog') !== void) || Storages.isExistentStorage(basepath + "forceLog.txt"));
+	global.useUnencryptedXP3Archive = ((System.getArgument('-useunencryptedxp3archive') !== void) || Storages.isExistentStorage(basepath + "useunencryptedxp3archive.txt"));
 
 	var version_info_path = "patch_versioninfo.tjs";
 	try

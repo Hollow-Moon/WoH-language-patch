@@ -95,14 +95,15 @@
 			if (typeof(global.Storages.setEncryptionXP3) === "Object")
 			{
 				var encryption_to_set = void;
+				if (typeof(global.useUnencryptedXP3Archive) !== "Integer" || global.useUnencryptedXP3Archive === false)
+				{
 @if(GAME_FHAT)
-				encryption_to_set = global.cxdec_encryption_list["fha"];
+					encryption_to_set = global.cxdec_encryption_list["fha"];
 @endif
-@if(0)
 @if(GAME_WOHN)
-				encryption_to_set = global.cxdec_encryption_list["mahoyo"];
+					encryption_to_set = global.cxdec_encryption_list["mahoyo"];
 @endif
-@endif
+				}
 				if (encryption_to_set === void)
 				{
 					encryption_to_set = "";

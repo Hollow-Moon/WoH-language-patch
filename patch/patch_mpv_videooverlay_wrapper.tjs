@@ -1,0 +1,834 @@
+﻿/**
+ * @description The VideoOverlay class is a class that creates a display area for displaying MPEG I, WMV, H.264, theora, etc.
+ * You can also display on the layer of Kirikiri.
+ * You will need krdstheora.dll to play theora.
+ * With overlay playback, except for layer playback, the display area of the VideoOverlay class is visible in front of all layers and cannot be transparent.
+ * Playback on layers tends to be more processor-intensive during playback than playback on overlays.
+ * On Android, it is limited to the mode equivalent to the overlay that is always displayed in the foreground.
+ * The playable format also depends on the model.
+ * It seems that there are many terminals that can play H.264.
+ * On Android, video files are stored in assets.
+ */
+class VideoOverlay
+{
+	var mp = null;
+	/**
+	 * Constructing a VideoOverlay object
+	 *
+	 * @param window Specifies the window (an object of the Window class) that will own this layer.
+	 * @description Build an object of the VideoOverlay class.
+	 */
+	function VideoOverlay(window)
+	{
+		this.mp = new KrMpv();
+		this.mp.set_property("wid", window.HWND);
+	}
+
+	/**
+	 * Status changed
+	 *
+	 * @param status Represents a status string. One of the following:
+	 *
+	 * + "unload"   : Media is not open
+	 * + "ready"    :   Media is ready
+	 * + "play"     :   Media is playing
+	 * + "stop"     :   Media is down
+	 * + "pause"    :   Media is paused
+	 * + "idle"     :   [Android +] The media is idle.
+	 * + "buffering" :   [Android +] Media is buffering.
+	 * + "load error" :   [Android +] Media loading error.
+	 * + "player error" :   [Android +] Media player error.
+	 *
+	 * @description Occurs when the status of this object changes.
+	 * ready only occurs in vomMFEVR mode / Android.
+	 */
+	function onStatusChanged(status) /* event */
+	{
+
+	}
+
+	/**
+	 * [Windows *] Period event has occurred
+	 *
+	 * @param type Period Represents the type of event.
+	 * One of the following:
+	 *
+	 * + perLoop    :   Reached the end of the (normal) loop
+	 * + perSegLoop :   Reached the end of the segment loop
+	 * + perPeriod  :   The frame specified by the setPeriodEvent method has been reached
+	 * + perPrepare :   Ready to play with the prepare method
+	 *
+	 * @description This method is called at the end of the loop, when the frame specified by setPeriodEvent is reached, or when the prepare method is ready to play.
+	 * At the end of the loop or when this event is called when the frame specified by setPeriodEvent is reached, the playback position may have already exceeded the specified position, depending on the playback status.
+	 * See the frame property to get the current actual playback position.
+	 * It does not occur on Android.
+	 * @see VideoOverlay.setPeriodEvent
+	 * @see VideoOverlay.prepare
+	 * @see VideoOverlay.frame
+	 */
+	function onPeriod(type) /* event */
+	{
+
+	}
+
+@if(0)
+	/**
+	 * [Windows *] Video frame updated
+	 *
+	 * @param frame Video frame number
+	 * @description This method is called after the video frame has been updated.
+	 * The argument frame does not always exactly match the currently displayed video frame.
+	 * Only available in layer drawing mode and mixer mode.
+	 * It does not occur on Android.
+	 */
+	function onFrameUpdate(frame) /* event */
+	{
+
+	}
+@endif
+
+	/**
+	 * Open media
+	 *
+	 * @param storage Opens the specified media.
+	 * @description Opens the specified media.
+	 */
+	function open(storage)
+	{
+		this.mp.commandv("loadfile", "krmpv://" + Storages.getFullPath(storage));
+	}
+
+	/**
+	 * Start playing
+	 *
+	 * @description Start playing the media.
+	 */
+	function play()
+	{
+		this.mp.set_property("pause", false);
+	}
+
+	/**
+	 * Stop playing
+	 *
+	 * @description Stops playing the media.
+	 */
+	function stop()
+	{
+		this.mp.set_property("pause", true);
+		this.mp.commandv("seek", 0, absolute);
+	}
+
+	/**
+	 * pause
+	 *
+	 * @description Pauses media playback.
+	 */
+	function pause()
+	{
+		this.mp.set_property("pause", true);
+	}
+
+	/**
+	 * Rewind
+	 *
+	 * @description Moves the playback position of the media to the beginning.
+	 */
+	function rewind()
+	{
+		this.mp.commandv("seek", 0, absolute);
+	}
+
+	/**
+	 * [Windows *] Ready to play
+	 *
+	 * @description Draws the first frame of the media on the specified layer and raises the onPeriod event at the end of drawing.
+	 * Wait for the onPeriod event before playing after calling the prepare method.
+	 * @see VideoOverlay.onPeriod
+	 */
+	function prepare()
+	{
+
+	}
+
+	/**
+	 * [Windows *] Inter-frame loop settings
+	 *
+	 * @param comeFrame Loop destination frame (loop start frame).
+	 * When playback reaches goFrame, the playhead moves to this frame.
+	 * @param goFrame Loop end frame (loop end frame).
+	 * When the display of the frame immediately before this frame is finished, the playhead moves to comeFrame.
+	 * @description Loops between the specified frames.
+	 * At the end of the loop (goFrame), the onPeriod event is fired.
+	 * It is necessary to set a key frame in the movie file for the frame of comeFrame.
+	 * If not set, the playback position will move to the keyframe closest to the specified frame when moving from the loop end point to the start point.
+	 * @see VideoOverlay.cancelSegmentLoop
+	 * @see VideoOverlay.onPeriod
+	 * @see VideoOverlay.segmentLoopStartFrame
+	 * @see VideoOverlay.segmentLoopEndFrame
+	 */
+	function setSegmentLoop(comeFrame, goFrame)
+	{
+
+	}
+
+	/**
+	 * [Windows *] Breaking the inter-frame loop
+	 *
+	 * @description Breaks the intersegment loop specified by the setSegmentLoop method.
+	 * @see VideoOverlay.setSegmentLoop
+	 */
+	function cancelSegmentLoop()
+	{
+
+	}
+
+	/**
+	 * Close media
+	 *
+	 * @description Close the media.
+	 * It also frees all resources reserved for playing media.
+	 * @see VideoOverlay.setSegmentLoop
+	 */
+	function close()
+	{
+		this.mp.commandv("stop");
+	}
+
+	/**
+	 * [Windows *] Specifying the occurrence of an event at a specified frame
+	 *
+	 * @param eventFrame Specifies the frame that raises the onPeriod event.
+	 * @description Raises the onPeriod event at the specified frame.
+	 * The onPeriod event is cleared once it occurs.
+	 * If you want to generate it again, set it again with this method.
+	 * @see VideoOverlay.cancelPeriodEvent
+	 * @see VideoOverlay.onPeriod
+	 */
+	function setPeriodEvent(eventFrame)
+	{
+
+	}
+
+	/**
+	 * [Windows *] Cancel event occurrence at specified frame
+	 *
+	 * @description Cancels the event occurrence set by the setPeriodEvent method.
+	 * @see VideoOverlay.setPeriodEvent
+	 */
+	function cancelPeriodEvent()
+	{
+
+	}
+
+	/**
+	 * [Windows *] Specify the upper left position of the playback rectangle
+	 *
+	 * @param left Specifies the left edge position of the rectangular area for playing media.
+	 * @param top Specifies the top position of the rectangular area for playing media.
+	 * @description Specifies the upper left position of the rectangular area for playing media.
+	 * Coordinates are the coordinates within the window's client (the area where the layer can be displayed) and are specified in pixels.
+	 */
+	function setPos(left, top)
+	{
+
+	}
+
+	/**
+	 * [Windows *] Specify the size of the playback rectangle
+	 *
+	 * @param width Specifies the width of the rectangular area for playing media.
+	 * @param height Specifies the vertical width of the rectangular area for playing media.
+	 * @description Specifies the size of the rectangular area for playing media in pixels.
+	 * In the current version, this method cannot be used during layer playback.
+	 */
+	function setSize(width, height)
+	{
+
+	}
+
+	/**
+	 * [Windows *] Specify the position and size of the playback rectangle
+	 *
+	 * @param left Specifies the left edge position of the rectangular area for playing media.
+	 * @param top Specifies the top position of the rectangular area for playing media.
+	 * @param width Specifies the width of the rectangular area for playing media.
+	 * @param height Specifies the vertical width of the rectangular area for playing media.
+	 * @description Specifies the position and size of the rectangular area for playing media.
+	 * Coordinates are the coordinates within the window's client (the area where the layer can be displayed) and are specified in pixels.
+	 * In the current version, this method can only specify the position during layer playback, ignoring the size.
+	 */
+	function setBounds(left, top, width, height)
+	{
+
+	}
+
+	/**
+	 * [Windows *] Audio stream selection
+	 *
+	 * @param streamNumber Specify the audio stream number.
+	 * @description Enables the specified audio stream number.
+	 * Not available for videos that do not contain multiple audio streams.
+	 * On Android it always returns 0 and there is no point in setting it.
+	 * .
+	 * @see VideoOverlay.numberOfAudioStream
+	 * @see VideoOverlay.enabledAudioStream
+	 */
+	function selectAudioStream(streamNumber)
+	{
+		this.mp.set_property("aid", streamNumber);
+	}
+
+@if(0)
+	/**
+	 * [Windows +] Mixing target layer settings
+	 *
+	 * @param layer layer
+	 * @description Mixes the specified layer and video.
+	 * Mixing is done with the layer image when this method is called.
+	 * You must call this method again for the layer image update to take effect.
+	 * If you use VideOverlay.OnFrameUpdate to check that the layer image has been updated and call this method, the update will be reflected automatically.
+	 * Calling this method every frame with onFrameUpdate can be quite expensive and should be avoided.
+	 * Only available in mixer mode.
+	 */
+	function setMixingLayer(layer)
+	{
+
+	}
+
+	/**
+	 * [Windows +] Unsetting the layer to be mixed
+	 *
+	 * @description Unmix the video and layers.
+	 * Only available in mixer mode.
+	 */
+	function resetMixingLayer()
+	{
+
+	}
+@endif
+
+	/**
+	 * Playback position
+	 *
+	 * @description Represents the playback position of the media in ms.
+	 * You can also set the value.
+	 * @see VideoOverlay.frame
+	 * @see VideoOverlay.totalTime
+	 */
+	property position
+	{
+		getter()
+		{
+			return (this.mp.get_property("time-pos") * 1000) | 0;
+		}
+		setter(value)
+		{
+			this.mp.set_property("time-pos", value / 1000);
+		}
+	}
+	/**
+	 * [Windows] Current frame
+	 *
+	 * @description Represents the playback position of the media in frame units.
+	 * You can also set the value.
+	 * On Android it always returns 0 and there is no point in setting it.
+	 * @see VideoOverlay.position
+	 * @see VideoOverlay.numberOfFrame
+	 */
+	property frame {
+		getter() { return value; }
+		setter( value ) {}
+	}
+	/**
+	 * [Windows *] Whether to play in a loop
+	 *
+	 * @description Indicates whether loop playback is enabled or disabled.
+	 * You can also set the value.
+	 * If true, it is a loop, if false, it is a non-loop.
+	 * Android always returns false and it doesn't make sense to set it.
+	 */
+	property loop {
+		getter() { return value; }
+		setter( value ) {}
+	}
+	/**
+	 * [Windows *] Width of playback rectangle
+	 *
+	 * @description Represents the width of the playback rectangle.
+	 * You can also set the value.
+	 * This property is not available during layer playback in the current version (the size will always be the same as the size of the video).
+	 * On Android it always returns 0 and there is no point in setting it.
+	 * @see VideoOverlay.height
+	 * @see VideoOverlay.setSize
+	 */
+	property width {
+		getter() { return value; }
+		setter( value ) {}
+	}
+	/**
+	 * [Windows *] Vertical width of playback rectangle
+	 *
+	 * @description Represents the vertical width of the playback rectangle.
+	 * You can also set the value.
+	 * This property is not available during layer playback in the current version (the size will always be the same as the size of the video).
+	 * On Android it always returns 0 and there is no point in setting it.
+	 * @see VideoOverlay.width
+	 * @see VideoOverlay.setSize
+	 */
+	property height {
+		getter() { return value; }
+		setter( value ) {}
+	}
+	/**
+	 * [Windows *] Left edge position of playback rectangle
+	 *
+	 * @description Represents the left edge position of the playback rectangle.
+	 * You can also set the value.
+	 * On Android it always returns 0 and there is no point in setting it.
+	 * @see VideoOverlay.top
+	 * @see VideoOverlay.setPos
+	 */
+	property left {
+		getter() { return value; }
+		setter( value ) {}
+	}
+	/**
+	 * [Windows *] Top position of playback rectangle
+	 *
+	 * @description Represents the top position of the playback rectangle.
+	 * You can also set the value.
+	 * On Android it always returns 0 and there is no point in setting it.
+	 * @see VideoOverlay.left
+	 * @see VideoOverlay.setPos
+	 */
+	property top {
+		getter() { return value; }
+		setter( value ) {}
+	}
+	/**
+	 * Whether it is visible
+	 *
+	 * @description Specifies whether the playback area is visible.
+	 * You can also set the value. If true, it is visible, if false, it is invisible.
+	 * Only read on Android.
+	 */
+	property visible {
+		getter() { return value; }
+		setter( value ) {}
+	}
+	/**
+	 * [Windows *] Frame rate
+	 *
+	 * @description Represents the frame rate (frames / second).
+	 * Android always returns 0.
+	 */
+	property fps {
+		getter() { return value; }
+	}
+	/**
+	 * [Windows *] Total number of frames
+	 *
+	 * @description Represents the total number of frames.
+	 * Android always returns 0.
+	 */
+	property numberOfFrame {
+		getter() { return value; }
+	}
+	/**
+	 * total time
+	 *
+	 * @description The total time is expressed in ms.
+	 */
+	property totalTime
+	{
+		getter()
+		{
+			return (this.mp.get_property("duration") * 1000) | 0;
+		}
+	}
+@if(0)
+	/**
+	 * [Windows *] Drawing layer specification 1
+	 *
+	 * @description Layer Indicates the layer to be drawn in the drawing mode.
+	 * You can also set the value.
+	 * By setting the layer1 property and layer2 property to different layers, you can display the same video on two layers at the same time.
+	 */
+	property layer1 {
+		getter() { return value; }
+		setter( value ) {}
+	}
+	/**
+	 * [Windows *] Drawing layer specification 2
+	 *
+	 * @description Layer Indicates the layer to be drawn in the drawing mode.
+	 * You can also set the value.
+	 */
+	property layer2 {
+		getter() { return value; }
+		setter( value ) {}
+	}
+@endif
+	/**
+	 * [Windows *] Specify overlay or layer drawing
+	 *
+	 * @description Indicates whether it is in overlay mode, layer drawing mode, or mixer mode.
+	 * You can also set the value.
+	 * VomOverlay for overlay mode, vomLayer for layer drawing mode, vomMixer for mixer mode, and vomMFEVR for Media Foundation mode.
+	 * There is no playback mode on Android.
+	 */
+	property mode {
+		getter() { return value; }
+		setter( value ) {}
+	}
+	/**
+	 * [Windows *] Playback speed
+	 *
+	 * @description Set the playback speed of the media.
+	 * Specify 1.0 for normal playback speed, 0.5 for half playback speed, and 2 for double playback speed.
+	 * The configurable value is determined by the DirectShow filter.
+	 * Reference: For MPEG files with audio, values larger than 0.0 to 2.0 can be set.
+	 * For MPEG files without audio, it can be set within the range of double (probably) from a value greater than 0.0, but the actual playback speed is limited by the processing speed.
+	 * Android always returns 0. Nothing happens when I set it.
+	 */
+	property playRate
+	{
+		getter()
+		{
+			return this.mp.get_property("speed");
+		}
+		setter(value)
+		{
+			this.mp.set_property("speed", value)
+		}
+	}
+	/**
+	 * [Windows *] Start frame of segment loop
+	 *
+	 * @description The starting frame of the segment loop.
+	 * Nothing happens on Android.
+	 * @see VideoOverlay.setSegmentLoop
+	 * @see VideoOverlay.cancelSegmentLoop
+	 */
+	property segmentLoopStartFrame {
+		getter() { return value; }
+	}
+	/**
+	 * [Windows *] Start frame of segment loop
+	 *
+	 * @description The starting frame of the segment loop.
+	 * Nothing happens on Android.
+	 * @see VideoOverlay.setSegmentLoop
+	 */
+	property segmentLoopEndFrame {
+		getter() { return value; }
+	}
+	/**
+	 * [Windows *] Period event frame
+	 *
+	 * @description period The frame that raises the event.
+	 * If it is not set, it will be a negative value.
+	 * Nothing happens on Android.
+	 */
+	property periodEventFrame {
+		getter() { return value; }
+		setter( value ) {}
+	}
+	/**
+	 * [Windows *] Voice balance (panning)
+	 *
+	 * @description Represents pan (sound image position).
+	 * You can also set the value.
+	 * You can specify the left and right positions where you can hear the sound.
+	 * Specify a number from -100000 to 0 to 100000, where -100000 is completely left, 0 is center, and 100000 is completely right.
+	 * When playing a stereo source, panning is achieved by attenuating either the left or right channel (0 specifies both channels, -100000 outputs only the left channel).
+	 * Always returns 0 on Android. There is no point in setting it.
+	 */
+	property audioBalance {
+		getter() { return value; }
+		setter( value ) {}
+	}
+	/**
+	 * Audio volume
+	 *
+	 * @description Represents the volume to play.
+	 * You can also set the value. Specify a number from 0 to 100000, 0 for full mute and 100000 for 100% volume.
+	 */
+	property audioVolume {
+		getter()
+		{
+			return (this.mp.get_property("volume")) * 1000 | 0;
+		}
+		setter(value)
+		{
+			this.mp.set_property("volume", value / 1000);
+		}
+	}
+	/**
+	 * [Windows *] Number of audio streams
+	 *
+	 * @description Only available in MPEG files.
+	 * You can get the number of audio streams.
+	 * Always returns 0 on Android.
+	 * @see VideoOverlay.selectAudioStream
+	 * @see VideoOverlay.enabledAudioStream
+	 */
+	property numberOfAudioStream {
+		getter() { return value; }
+	}
+	/**
+	 * [Windows *] Audio stream number to be played
+	 *
+	 * @description Only available in MPEG files.
+	 * You can get the audio stream number to play.
+	 * Returns -1 if the audio stream is not found.
+	 * Always returns 0 on Android.
+	 * @see VideoOverlay.selectAudioStream
+	 * @see VideoOverlay.numberOfAudioStream
+	 */
+	property enabledAudioStream
+	{
+		getter()
+		{
+			return this.mp.get_property("aid");
+		}
+	}
+@if(0)
+	/**
+	 * [Windows +] Video transparency
+	 *
+	 * @description Represents video transparency in the range 0.0 (fully transparent) to 1.0 (fully opaque).
+	 * Only available in mixer mode.
+	 * .
+	 */
+	property mixingMovieAlpha {
+		getter() { return value; }
+		setter( value ) {}
+	}
+	/**
+	 * [Windows +] Video background color
+	 *
+	 * @description Represents the background color of the video.
+	 * Only available in mixer mode.
+	 */
+	property mixingMovieBGColor {
+		getter() { return value; }
+		setter( value ) {}
+	}
+	/**
+	 * [Windows +] Minimum video contrast range
+	 *
+	 * @description Represents the minimum contrast width.
+	 * Only available in mixer mode.
+	 */
+	property contrastRangeMin {
+		getter() { return value; }
+	}
+	/**
+	 * [Windows +] Maximum video contrast range
+	 *
+	 * @description Represents the maximum contrast width.
+	 * Only available in mixer mode.
+	 */
+	property contrastRangeMax {
+		getter() { return value; }
+	}
+	/**
+	 * [Windows +] Video contrast default value
+	 *
+	 * @description Represents the default contrast value.
+	 * Only available in mixer mode.
+	 */
+	property contrastDefaultValue {
+		getter() { return value; }
+	}
+	/**
+	 * [Windows +] Video contrast increase / decrease step value
+	 *
+	 * @description Represents a valid increment from contrastRangeMin to contrastRangeMax.
+	 * You can change the contrast in units of this value.
+	 * Only available in mixer mode.
+	 */
+	property contrastStepSize {
+		getter() { return value; }
+	}
+	/**
+	 * [Windows +] Video contrast
+	 *
+	 * @description Represents the contrast of the video.
+	 * Only available in mixer mode.
+	 */
+	property contrast {
+		getter() { return value; }
+		setter( value ) {}
+	}
+	/**
+	 * [Windows +] Minimum video brightness range
+	 *
+	 * @description Represents the minimum brightness width.
+	 * Only available in mixer mode.
+	 */
+	property brightnessRangeMin {
+		getter() { return value; }
+	}
+	/**
+	 * [Windows +] Maximum brightness range of video
+	 *
+	 * @description Represents the maximum brightness width.
+	 * Only available in mixer mode.
+	 */
+	property brightnessRangeMax {
+		getter() { return value; }
+	}
+	/**
+	 * [Windows +] Video brightness default
+	 *
+	 * @description Represents the default brightness.
+	 * Only available in mixer mode.
+	 */
+	property brightnessDefaultValue {
+		getter() { return value; }
+	}
+	/**
+	 * [Windows +] Video brightness increase / decrease step value
+	 *
+	 * @description Represents a valid increment from brightnessRangeMin to brightnessRangeMax.
+	 * You can change the brightness in units of this value.
+	 * Only available in mixer mode.
+	 */
+	property brightnessStepSize {
+		getter() { return value; }
+	}
+	/**
+	 * [Windows +] Video brightness
+	 *
+	 * @description Represents the brightness of the video.
+	 * Only available in mixer mode.
+	 */
+	property brightness {
+		getter() { return value; }
+		setter( value ) {}
+	}
+	/**
+	 * [Windows +] Minimum video hue range
+	 *
+	 * @description Represents the minimum hue width.
+	 * Only available in mixer mode.
+	 */
+	property hueRangeMin {
+		getter() { return value; }
+	}
+	/**
+	 * [Windows +] Maximum hue range of video
+	 *
+	 * @description Represents the maximum hue width.
+	 * Only available in mixer mode.
+	 */
+	property hueRangeMax {
+		getter() { return value; }
+	}
+	/**
+	 * [Windows +] Video hue default
+	 *
+	 * @description Represents the default hue.
+	 * Only available in mixer mode.
+	 */
+	property hueDefaultValue {
+		getter() { return value; }
+	}
+	/**
+	 * [Windows +] Video hue increase / decrease step value
+	 *
+	 * @description Represents a valid increment from hueRangeMin to hueRangeMax.
+	 * You can change the hue in units of this value.
+	 * Only available in mixer mode.
+	 */
+	property hueStepSize {
+		getter() { return value; }
+	}
+	/**
+	 * [Windows +] Video Hue
+	 *
+	 * @description Represents the hue of the video.
+	 * Only available in mixer mode.
+	 */
+	property hue {
+		getter() { return value; }
+		setter( value ) {}
+	}
+	/**
+	 * [Windows +] Minimum video saturation range
+	 *
+	 * @description Represents the minimum saturation width.
+	 * Only available in mixer mode.
+	 */
+	property saturationRangeMin {
+		getter() { return value; }
+	}
+	/**
+	 * [Windows +] Maximum video saturation range
+	 *
+	 * @description Represents the maximum saturation width.
+	 * Only available in mixer mode.
+	 */
+	property saturationRangeMax {
+		getter() { return value; }
+	}
+	/**
+	 * [Windows +] Video Saturation Default
+	 *
+	 * @description Represents the default saturation value.
+	 * Only available in mixer mode.
+	 */
+	property saturationDefaultValue {
+		getter() { return value; }
+	}
+	/**
+	 * [Windows +] Video saturation increase / decrease step value
+	 *
+	 * @description Represents a valid increment from saturationRangeMin to saturationRangeMax.
+	 * You can change the saturation in units of this value.
+	 * Only available in mixer mode.
+	 */
+	property saturationStepSize {
+		getter() { return value; }
+	}
+	/**
+	 * [Windows +] Video Saturation
+	 *
+	 * @description Represents the saturation of the video.
+	 * Only available in mixer mode.
+	 */
+	property saturation {
+		getter() { return value; }
+		setter( value ) {}
+	}
+@endif
+	/**
+	 * [Windows *] Actual width of video
+	 *
+	 * @description The width of the stored video.
+	 * Always 0 on Android.
+	 */
+	property originalWidth
+	{
+		getter()
+		{
+		 	return this.mp.get_property("width");
+		}
+	}
+	/**
+	 * [Windows *] Actual height of the video
+	 *
+	 * @description The height of the stored video.
+	 * Always 0 on Android.
+	 */
+	property originalHeight
+	{
+		getter()
+		{
+			return this.mp.get_property("height");
+		}
+	}
+};

@@ -139,7 +139,8 @@ function readEntry(header, lines, i) {
 		index += 1;
 		nextLine = lines[i+index];
 	}
-	text = text.replace(/\\n/g, "\n").replace(/\\t/g, "\t");
+	// TODO: handle \x00 and \000 sequences
+	text = text.replace(/\\n/g, "\n").replace(/\\t/g, "\t").replace(/\\b/g, "\b").replace(/\\r/g, "\r").replace(/\\f/g, "\f").replace(/\\v/g, "\v").replace(/\\a/g, "\a").replace(/\\\\/g, "\\").replace(/\\"/g, "\"");
 	return [text, index-1];
 }
 

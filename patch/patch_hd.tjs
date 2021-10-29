@@ -83,6 +83,9 @@ function addHdPaths(patches_arr, patchName, folder="", innerPath="") {
 		}
 	}
 	var patchNameHd = patchName === mainPatchName? hdPatchName : (patchName + hdPatchSuffix);
+	if (folder != "") {
+		patches_arr.add([patchNameHd, folder + innerPath]);
+	}
 	for (var i = 0; i < hdNames.count; i++) {
 		patches_arr.add([patchNameHd, folder + separator + hdNames[i] + innerPath]);
 		if (hdNames[i] == hdFolderName) {

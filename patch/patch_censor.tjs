@@ -96,7 +96,11 @@ function updateDecensorConfig(kag=global.kag)
 			{
 				if(get_isDecensored(kag))
 				{
-					var patches_arr = [[decensoredPatchName, decensorFullPath]];
+					var patches_arr = [[hPatchName, decensorFullPath]];
+@if(HD_MODE)
+					addHdPaths(patches_arr, hPatchName, decensoredFolderName, decensorInnerPath) if kag.isHd;
+@endif
+					patches_arr.add([decensoredPatchName, decensorFullPath]);
 @if(HD_MODE)
 					addHdPaths(patches_arr, decensoredPatchName, decensoredFolderName, decensorInnerPath) if kag.isHd;
 @endif
@@ -105,6 +109,7 @@ function updateDecensorConfig(kag=global.kag)
 					patches_arr = [];
 @if(HD_MODE)
 					addHdPaths(patches_arr, decensoredPatchName, decensoredFolderName, decensorInnerPath) if !kag.isHd;
+					addHdPaths(patches_arr, hPatchName, decensoredFolderName, decensorInnerPath) if !kag.isHd;
 @endif
 					unload_patches(patches_arr);
 				}
@@ -114,6 +119,10 @@ function updateDecensorConfig(kag=global.kag)
 @if(HD_MODE)
 					addHdPaths(patches_arr, decensoredPatchName, decensoredFolderName, decensorInnerPath) if kag.isHd;
 @endif
+					patches_arr.add([hPatchName, decensorFullPath]);
+@if(HD_MODE)
+					addHdPaths(patches_arr, hPatchName, decensoredFolderName, decensorInnerPath) if kag.isHd;
+@endif
 					unload_patches(patches_arr);
 				}
 			}
@@ -122,6 +131,10 @@ function updateDecensorConfig(kag=global.kag)
 				var patches_arr = [[decensoredPatchName, decensorFullPath]];
 @if(HD_MODE)
 				addHdPaths(patches_arr, decensoredPatchName, decensoredFolderName, decensorInnerPath) if kag.isHd;
+@endif
+				patches_arr.add([hPatchName, decensorFullPath]);
+@if(HD_MODE)
+				addHdPaths(patches_arr, hPatchName, decensoredFolderName, decensorInnerPath) if kag.isHd;
 @endif
 				unload_patches(patches_arr);
 			}

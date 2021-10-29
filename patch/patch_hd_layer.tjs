@@ -2717,6 +2717,11 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 	// Image functions.
 	function operateRect_patch_hd_layer(left, top, src, sleft, stop, swidth, sheight, mode, opacity)
 	{
+		if (!swidth || !sheight)
+		{
+			// Nothing to do.
+			return;
+		}
 		// Optimization for 1x size.
 		if (this.widthScale + this.heightScale + src.widthScale + src.heightScale == 4)
 		{
@@ -2780,6 +2785,11 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 
 	function copyRect_patch_hd_layer(left, top, src, sleft, stop, swidth, sheight)
 	{
+		if (!swidth || !sheight)
+		{
+			// Nothing to do.
+			return;
+		}
 		// Optimization for 1x size.
 		if (this.widthScale + this.heightScale + src.widthScale + src.heightScale == 4)
 		{
@@ -2992,6 +3002,46 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 
 	function operateStretch_patch_hd_layer(left, top, width, height, src, sleft, stop, swidth, sheight, mode, opacity, type, option)
 	{
+		if (!width || !height || !swidth || !sheight)
+		{
+			// Nothing to do.
+			return;
+		}
+		// Pass through to operateRect if width/height are same
+		if (width == swidth && height == sheight)
+		{
+			return this.operateRect_patch_hd_layer(left, top, src, sleft, stop, swidth, sheight, mode, opacity);
+		}
+		// Pass through to operateAffine for stNearest and stFastLinear
+		if (type < stLinear)
+		{
+			var right = left + width;
+			var bottom = top + height;
+			if (right < left)
+			{
+				var tmp = right;
+				right = left;
+				left = right;
+			}
+			if (bottom < top)
+			{
+				var tmp = bottom;
+				bottom = top;
+				top = bottom;
+			}
+			var width_offset = 0.5;
+			var height_offset = 0.5;
+			// Width and height .5 offset should be divided to the scale, since they will be multiplied out again
+			// e.g. .5 (width_offset) / 2 (this.widthScale) = .25
+			// .25 * 2 (this.widthScale) = .5
+			width_offset /= this.widthScale;
+			height_offset /= this.heightScale;
+			var left_offset = left - width_offset;
+			var top_offset = top - height_offset;
+			var right_offset = right - width_offset;
+			var bottom_offset = bottom - height_offset;
+			return this.operateAffine_patch_hd_layer(src, sleft, stop, swidth, sheight, false, left_offset, top_offset, right_offset, top_offset, left_offset, bottom_offset, mode, opacity, type);
+		}
 		// Optimization for 1x size.
 		if (this.widthScale + this.heightScale + src.widthScale + src.heightScale == 4)
 		{
@@ -3092,6 +3142,46 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 
 	function stretchCopy_patch_hd_layer(left, top, width, height, src, sleft, stop, swidth, sheight, type, option)
 	{
+		if (!width || !height || !swidth || !sheight)
+		{
+			// Nothing to do.
+			return;
+		}
+		// Pass through to copyRect if width/height are same
+		if (width == swidth && height == sheight)
+		{
+			return this.copyRect_patch_hd_layer(left, top, src, sleft, stop, swidth, sheight);
+		}
+		// Pass through to affineCopy for stNearest and stFastLinear
+		if (type < stLinear)
+		{
+			var right = left + width;
+			var bottom = top + height;
+			if (right < left)
+			{
+				var tmp = right;
+				right = left;
+				left = right;
+			}
+			if (bottom < top)
+			{
+				var tmp = bottom;
+				bottom = top;
+				top = bottom;
+			}
+			var width_offset = 0.5;
+			var height_offset = 0.5;
+			// Width and height .5 offset should be divided to the scale, since they will be multiplied out again
+			// e.g. .5 (width_offset) / 2 (this.widthScale) = .25
+			// .25 * 2 (this.widthScale) = .5
+			width_offset /= this.widthScale;
+			height_offset /= this.heightScale;
+			var left_offset = left - width_offset;
+			var top_offset = top - height_offset;
+			var right_offset = right - width_offset;
+			var bottom_offset = bottom - height_offset;
+			return this.affineCopy_patch_hd_layer(src, sleft, stop, swidth, sheight, false, left_offset, top_offset, right_offset, top_offset, left_offset, bottom_offset, type, false);
+		}
 		// Optimization for 1x size.
 		if (this.widthScale + this.heightScale + src.widthScale + src.heightScale == 4)
 		{
@@ -3161,6 +3251,11 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 
 	function piledCopy_patch_hd_layer(left, top, src, sleft, stop, swidth, sheight)
 	{
+		if (!swidth || !sheight)
+		{
+			// Nothing to do.
+			return;
+		}
 		// Optimization for 1x size.
 		if (this.widthScale + this.heightScale + src.widthScale + src.heightScale == 4)
 		{
@@ -3475,6 +3570,11 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 
 	function colorRect_patch_hd_layer(left, top, width, height, color, opacity)
 	{
+		if (!width || !height)
+		{
+			// Nothing to do.
+			return;
+		}
 		// Optimization for 1x size.
 		if (this.widthScale + this.heightScale == 2)
 		{
@@ -3678,393 +3778,3 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 	}
 }
 global.Layer = Layer_patch_hd_layer_override;
-
-
-global.Window_patch_hd_layer_original = Window;
-class Window_patch_hd_layer_override extends Window_patch_hd_layer_original
-{
-	var _originalLeft;
-	var originalTop;
-	var originalWidth;
-	var originalHeight;
-	var originalInnerWidth;
-	var originalInnerHeight;
-
-	var scrollXOffset = 0;
-	var scrollYOffset = 0;
-	var originalscrollXOffset = void;
-	var originalscrollYOffset = void;
-	var scrollYOffsetSpeed = 5;
-	var scrollYOffsetMin = 0;
-	var scrollYOffsetMax = 150;
-
-	property transformedScrollXOffset { getter { return scrollXOffset; } }
-
-	// Under normal conditions result=-scrollYOffset, but this transformation considers different scale/wide factors.
-	property transformedScrollYOffset { getter {
-		var scale = scrollYOffset / 150; // 0: image unchanged, 150: image scrolled all the way to the bottom.
-		var factor = this.wideScreen? wideFactor : cropFactor;
-@if(SCALE_USING_FLOATING_POINT)
-		var result = originalResHeight * (Math.abs(1 - factor)    ) * scale / wideFactor;
-@endif
-@if(!SCALE_USING_FLOATING_POINT)
-		var result = originalResHeight * (Math.abs(1 - factor) | 0) * scale \ wideFactor;
-@endif
-		return result;
-	} }
-
-	property widthScale { getter { return wideScaleFactor; } }
-	property heightScale { getter { return scaleFactor * (this.isMainWindow? cropFactor : 1); } }
-	property isMainWindow { getter { return this === global.Window.mainWindow; } }
-	property body { getter() { return fore; } }
-
-	property hdScaleFactor
-	{
-		getter
-		{
-			if (!this.isMainWindow) {
-				return mainWindow.scflags[hdScaleFactorFlagName];
-			}
-			if (this.scflags[hdScaleFactorFlagName] === void) {
-				for (var i=global.scaleFactors.count-1; i>=0; i--) {
-					if (patchExists(global.hdPatchesNames[i]) &&
-						System.desktopWidth >= originalResWidth * global.scaleFactors[i] && System.desktopHeight >= originalResHeight * global.scaleFactors[i]) {
-						this.scflags[hdScaleFactorFlagName] = global.scaleFactors[i];
-						break;
-					}
-				}
-				if (this.scflags[hdScaleFactorFlagName] === void) {
-					this.scflags[hdScaleFactorFlagName] = 1;
-				}
-			}
-			return this.scflags[hdScaleFactorFlagName];
-		}
-		setter(v)
-		{
-			this.scflags[hdScaleFactorFlagName] = v;
-		}
-	}
-
-	property isHd
-	{
-		getter
-		{
-			return this.hdScaleFactor > 1;
-		}
-	}
-
-	property wideScreen
-	{
-		getter
-		{
-			if (!this.isMainWindow) {
-				// return mainWindow.scflags[wideScreenFlagName];
-				return false;
-			}
-			if (this.scflags[wideScreenFlagName] === void) {
-				this.scflags[wideScreenFlagName] = false;
-			}
-			return this.scflags[wideScreenFlagName];
-		}
-		setter(v)
-		{
-			this.scflags[wideScreenFlagName] = v;
-		}
-	}
-
-	property wideRatio
-	{
-		getter
-		{
-			var retvalue;
-			if (!this.wideScreen) {
-				retvalue = cubicRatio;
-			} else if (this.scflags[autoWideRatioFlagName]) {
-				retvalue = systemRatio;
-			} else {
-				retvalue = this.scflags[wideRatioFlagName] != void? this.scflags[wideRatioFlagName] : systemRatio;
-			}
-@if(!SCALE_USING_FLOATING_POINT)
-			retvalue |= 0;
-@endif
-			return retvalue;
-		}
-		setter(v)
-		{
-			if (!this.wideScreen) {
-				this.scflags[autoWideRatioFlagName] = false;
-				this.scflags[wideRatioFlagName] = cubicRatio;
-			}
-			this.scflags[autoWideRatioFlagName] = floatEquals(v, systemRatio);
-			this.scflags[wideRatioFlagName] = v;
-		}
-	}
-
-	property isAutoWide
-	{
-		getter
-		{
-			return this.scflags[autoWideRatioFlagName];
-		}
-	}
-
-	property left
-	{
-		getter
-		{
-			if (this.isMainWindow) {
-				return super.left;
-			} else {
-				return this._originalLeft;
-			}
-		}
-		setter(v)
-		{
-@if(!SCALE_USING_FLOATING_POINT)
-			v = ((v < 0 ? -v : v) & 0x7fffffff) * (v < 0 ? -1 : 1);
-@endif
-			if (this.isMainWindow) {
-				super.left = v;
-			} else {
-				this._originalLeft = v;
-				super.left = (v-mainWindow.left) * this.widthScale + mainWindow.left;
-			}
-		}
-	}
-
-	property top
-	{
-		getter
-		{
-			if (this.isMainWindow) {
-				return super.top;
-			} else {
-				return this.originalTop;
-			}
-		}
-		setter(v)
-		{
-@if(!SCALE_USING_FLOATING_POINT)
-			v = ((v < 0 ? -v : v) & 0x7fffffff) * (v < 0 ? -1 : 1);
-@endif
-			if (this.isMainWindow) {
-				super.top = v;
-			} else {
-				this.originalTop = v;
-				super.top = (v-mainWindow.top) * this.heightScale + mainWindow.top;
-			}
-		}
-	}
-
-	property width
-	{
-		getter
-		{
-			return this.originalWidth;
-		}
-		setter(v)
-		{
-@if(!SCALE_USING_FLOATING_POINT)
-			v = ((v < 0 ? -v : v) & 0x7fffffff) * (v < 0 ? -1 : 1);
-@endif
-			this.originalWidth = v;
-			super.width = v * this.widthScale;
-		}
-	}
-
-	property height
-	{
-		getter
-		{
-			return this.originalHeight;
-		}
-		setter(v)
-		{
-@if(!SCALE_USING_FLOATING_POINT)
-			v = ((v < 0 ? -v : v) & 0x7fffffff) * (v < 0 ? -1 : 1);
-@endif
-			this.originalHeight = v;
-			super.height = v * this.heightScale;
-		}
-	}
-
-	property innerWidth
-	{
-		getter
-		{
-			return this.originalInnerWidth;
-		}
-		setter(v)
-		{
-@if(!SCALE_USING_FLOATING_POINT)
-			v = ((v < 0 ? -v : v) & 0x7fffffff) * (v < 0 ? -1 : 1);
-@endif
-			this.originalInnerWidth = v;
-			super.innerWidth = v * this.widthScale;
-		}
-	}
-
-	property innerHeight
-	{
-		getter
-		{
-			return this.originalInnerHeight;
-		}
-		setter(v)
-		{
-@if(!SCALE_USING_FLOATING_POINT)
-			v = ((v < 0 ? -v : v) & 0x7fffffff) * (v < 0 ? -1 : 1);
-@endif
-			this.originalInnerHeight = v;
-			super.innerHeight = v * this.heightScale;
-		}
-	}
-
-	function Window_patch_hd_layer_override()
-	{
-		super.Window(...);
-		this._originalLeft = super.left;
-		this.originalTop = super.top;
-		this.originalWidth = super.width;
-		this.originalHeight = super.height;
-		this.originalInnerWidth = super.innerWidth;
-		this.originalInnerHeight = super.innerHeight;
-	}
-
-	function Window()
-	{
-		Window_patch_hd_layer_override(...);
-	}
-
-	function setPos(left, top)
-	{
-@if(!SCALE_USING_FLOATING_POINT)
-		left = ((left < 0 ? -left : left) & 0x7fffffff) * (left < 0 ? -1 : 1);
-		top = ((top < 0 ? -top : top) & 0x7fffffff) * (top < 0 ? -1 : 1);
-@endif
-		if (this.isMainWindow) {
-			super.setPos(left, top);
-		} else {
-			this._originalLeft = left;
-			this.originalTop = top;
-			super.setPos((left-mainWindow.left) * this.widthScale + mainWindow.left, (top-mainWindow.top) * this.heightScale + mainWindow.top);
-		}
-	}
-
-	function setInnerSize(innerWidth, innerHeight)
-	{
-@if(!SCALE_USING_FLOATING_POINT)
-		innerWidth = ((innerWidth < 0 ? -innerWidth : innerWidth) & 0x7fffffff) * (innerWidth < 0 ? -1 : 1);
-		innerHeight = ((innerHeight < 0 ? -innerHeight : innerHeight) & 0x7fffffff) * (innerHeight < 0 ? -1 : 1);
-@endif
-		this.originalInnerWidth = innerWidth;
-		this.originalInnerHeight = innerHeight;
-		super.setInnerSize(innerWidth * this.widthScale, innerHeight * this.heightScale);
-
-@if(!ZOOM_WINDOW)
-@if(SCALE_USING_FLOATING_POINT)
-		this.originalWidth = super.width / this.widthScale;
-		this.originalHeight = super.height / this.heightScale;
-@endif
-@if(!SCALE_USING_FLOATING_POINT)
-		this.originalWidth = super.width \ this.widthScale;
-		this.originalHeight = super.height \ this.heightScale;
-@endif
-@endif
-	}
-
-	function setSize(width, height)
-	{
-@if(!SCALE_USING_FLOATING_POINT)
-		width = ((width < 0 ? -width : width) & 0x7fffffff) * (width < 0 ? -1 : 1);
-		height = ((height < 0 ? -height : height) & 0x7fffffff) * (height < 0 ? -1 : 1);
-@endif
-		this.originalWidth = width;
-		this.originalHeight = height;
-		super.setSize(width * this.widthScale, height * this.heightScale);
-
-@if(!ZOOM_WINDOW)
-@if(SCALE_USING_FLOATING_POINT)
-		this.originalInnerWidth = super.innerWidth / this.widthScale;
-		this.originalInnerHeight = super.innerHeight / this.heightScale;
-@endif
-@if(!SCALE_USING_FLOATING_POINT)
-		this.originalInnerWidth = super.innerWidth \ this.widthScale;
-		this.originalInnerHeight = super.innerHeight \ this.heightScale;
-@endif
-@endif
-	}
-}
-global.Window = Window_patch_hd_layer_override;
-
-global.VideoOverlay_patch_hd_layer_original = VideoOverlay;
-class VideoOverlay_patch_hd_layer_override extends VideoOverlay_patch_hd_layer_original
-{
-	function VideoOverlay_patch_hd_layer_override()
-	{
-		super.VideoOverlay(...);
-	}
-
-	function VideoOverlay()
-	{
-		VideoOverlay_patch_hd_layer_override(...);
-	}
-
-	property width
-	{
-		getter
-		{
-@if(SCALE_USING_FLOATING_POINT)
-			return super.width / wideScaleFactor;
-@endif
-@if(!SCALE_USING_FLOATING_POINT)
-			return super.width \ wideScaleFactor;
-@endif
-		}
-	}
-
-	property height
-	{
-		getter
-		{
-@if(SCALE_USING_FLOATING_POINT)
-			return super.height / scaleFactor;
-@endif
-@if(!SCALE_USING_FLOATING_POINT)
-			return super.height \ scaleFactor;
-@endif
-		}
-	}
-
-	property originalWidth
-	{
-		getter
-		{
-@if(SCALE_USING_FLOATING_POINT)
-			return super.originalWidth / wideScaleFactor;
-@endif
-@if(!SCALE_USING_FLOATING_POINT)
-			return super.originalWidth \ wideScaleFactor;
-@endif
-		}
-	}
-
-	property originalHeight
-	{
-		getter
-		{
-@if(SCALE_USING_FLOATING_POINT)
-			return super.originalHeight / scaleFactor;
-@endif
-@if(!SCALE_USING_FLOATING_POINT)
-			return super.originalHeight \ scaleFactor;
-@endif
-		}
-	}
-
-	function setBounds(left, top, width, height)
-	{
-		return super.setBounds(left*wideScaleFactor, top*scaleFactor, width*wideScaleFactor, height*scaleFactor);
-	}
-}
-global.VideoOverlay = VideoOverlay_patch_hd_layer_override;

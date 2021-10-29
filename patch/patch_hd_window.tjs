@@ -8,70 +8,125 @@ class Window_patch_hd_layer_override extends Window_patch_hd_layer_original
 	var _innerWidth;
 	var _innerHeight;
 
-	var scaleFactor;
-	var wideFactor;
+	var scrollXOffset = 0;
+	var scrollYOffset = 0;
+	var originalscrollXOffset = void;
+	var originalscrollYOffset = void;
+	var scrollYOffsetSpeed = 5;
+	var scrollYOffsetMin = 0;
+	var scrollYOffsetMax = 150;
 
-	property actualWidth { getter { return super.width; } }
-	property actualHeight { getter { return super.height; } }
-	
-    property isMainWindow { getter { return this === global.Window.mainWindow; } }
+	property transformedScrollXOffset { getter { return scrollXOffset; } }
+
+	// Under normal conditions result=-scrollYOffset, but this transformation considers different scale/wide factors.
+	property transformedScrollYOffset { getter {
+		var scale = scrollYOffset / 150; // 0: image unchanged, 150: image scrolled all the way to the bottom.
+		var factor = this.wideScreen? wideFactor : cropFactor;
+@if(SCALE_USING_FLOATING_POINT)
+		var result = originalResHeight * (Math.abs(1 - factor)    ) * scale / wideFactor;
+@endif
+@if(!SCALE_USING_FLOATING_POINT)
+		var result = originalResHeight * (Math.abs(1 - factor) | 0) * scale \ wideFactor;
+@endif
+		return result;
+	} }
+
+	property widthScale { getter { return wideScaleFactor; } }
+	property heightScale { getter { return scaleFactor * (this.isMainWindow? cropFactor : 1); } }
+	property isMainWindow { getter { return this === global.Window.mainWindow; } }
 	property body { getter() { return fore; } }
-	
-	property wideScaleFactor { getter { return scaleFactor * wideFactor; } }
 
-    function Window_patch_hd_layer_override()
+	property hdScaleFactor
 	{
-		super.Window(...);
-		this._left = super.left;
-		this._top = super.top;
-		this._width = super.width;
-		this._height = super.height;
-		this._innerWidth = super.innerWidth;
-		this._innerHeight = super.innerHeight;
-	}
-
-	function Window()
-	{
-		Window_patch_hd_layer_override(...);
-	}
-	
-    function scaleLeft(left)
-    {
-        if (this.isMainWindow) {
-            return left;
-        }
-        return mainWindow.left + scalePosition(left-mainWindow.left, _width, super.width, mainWindow.width, mainWindow.actualWidth);
-    }
-
-	function scaleTop(top)
-	{
-		if (this.isMainWindow) {
-			return top;
+		getter
+		{
+			if (!this.isMainWindow) {
+				return mainWindow.scflags[hdScaleFactorFlagName];
+			}
+			if (this.scflags[hdScaleFactorFlagName] === void) {
+				for (var i=global.scaleFactors.count-1; i>=0; i--) {
+					if (patchExists(global.hdPatchesNames[i]) &&
+						System.desktopWidth >= originalResWidth * global.scaleFactors[i] && System.desktopHeight >= originalResHeight * global.scaleFactors[i]) {
+						this.scflags[hdScaleFactorFlagName] = global.scaleFactors[i];
+						break;
+					}
+				}
+				if (this.scflags[hdScaleFactorFlagName] === void) {
+					this.scflags[hdScaleFactorFlagName] = 1;
+				}
+			}
+			return this.scflags[hdScaleFactorFlagName];
 		}
-		return mainWindow.top + scalePosition(top-mainWindow.top, _height, super.height, mainWindow.height, mainWindow.actualHeight);
+		setter(v)
+		{
+			this.scflags[hdScaleFactorFlagName] = v;
+		}
 	}
 
-	function scaleWidth(w)
+	property isHd
 	{
-		return scaleSize(w, wideScaleFactor);
+		getter
+		{
+			return this.hdScaleFactor > 1;
+		}
 	}
 
-	function unscaleWidth(w)
+	property wideScreen
 	{
-		return unscaleSize(w, wideScaleFactor);
+		getter
+		{
+			if (!this.isMainWindow) {
+				// return mainWindow.scflags[wideScreenFlagName];
+				return false;
+			}
+			if (this.scflags[wideScreenFlagName] === void) {
+				this.scflags[wideScreenFlagName] = false;
+			}
+			return this.scflags[wideScreenFlagName];
+		}
+		setter(v)
+		{
+			this.scflags[wideScreenFlagName] = v;
+		}
 	}
 
-	function scaleHeight(h)
+	property wideRatio
 	{
-		return scaleSize(h, scaleFactor);
+		getter
+		{
+			var retvalue;
+			if (!this.wideScreen) {
+				retvalue = cubicRatio;
+			} else if (this.scflags[autoWideRatioFlagName]) {
+				retvalue = systemRatio;
+			} else {
+				retvalue = this.scflags[wideRatioFlagName] != void? this.scflags[wideRatioFlagName] : systemRatio;
+			}
+@if(!SCALE_USING_FLOATING_POINT)
+			retvalue |= 0;
+@endif
+			return retvalue;
+		}
+		setter(v)
+		{
+			if (!this.wideScreen) {
+				this.scflags[autoWideRatioFlagName] = false;
+				this.scflags[wideRatioFlagName] = cubicRatio;
+			}
+			this.scflags[autoWideRatioFlagName] = floatEquals(v, systemRatio);
+			this.scflags[wideRatioFlagName] = v;
+		}
 	}
 
-	function unscaleHeight(h)
+	property isAutoWide
 	{
-		return unscaleSize(h, scaleFactor);
+		getter
+		{
+			return this.scflags[autoWideRatioFlagName];
+		}
 	}
 
-    property left
+	property left
 	{
 		getter { return this.isMainWindow? super.left : this._left; }
 		setter(v) { this._left = v; super.left = scaleLeft(v); }
@@ -107,6 +162,58 @@ class Window_patch_hd_layer_override extends Window_patch_hd_layer_original
 		setter(v) { this._innerHeight = v; super.innerHeight = scaleHeight(v); }
 	}
 
+	function Window_patch_hd_layer_override()
+	{
+		super.Window(...);
+		this._left = super.left;
+		this._top = super.top;
+		this._width = super.width;
+		this._height = super.height;
+		this._innerWidth = super.innerWidth;
+		this._innerHeight = super.innerHeight;
+	}
+
+	function Window()
+	{
+		Window_patch_hd_layer_override(...);
+	}
+
+	function scaleLeft(left)
+    {
+        if (this.isMainWindow) {
+            return left;
+        }
+        return mainWindow.left + scalePosition(left-mainWindow.left, _width, super.width, mainWindow.width, mainWindow.actualWidth);
+    }
+
+	function scaleTop(top)
+	{
+		if (this.isMainWindow) {
+			return top;
+		}
+		return mainWindow.top + scalePosition(top-mainWindow.top, _height, super.height, mainWindow.height, mainWindow.actualHeight);
+	}
+
+	function scaleWidth(w)
+	{
+		return scaleSize(w, wideScaleFactor);
+	}
+
+	function unscaleWidth(w)
+	{
+		return unscaleSize(w, wideScaleFactor);
+	}
+
+	function scaleHeight(h)
+	{
+		return scaleSize(h, scaleFactor);
+	}
+
+	function unscaleHeight(h)
+	{
+		return unscaleSize(h, scaleFactor);
+	}
+
 	function setPos(left, top)
 	{
 		if (this.isMainWindow) {
@@ -123,6 +230,9 @@ class Window_patch_hd_layer_override extends Window_patch_hd_layer_original
 		this._width = width;
 		this._height = height;
 		super.setSize(scaleWidth(width), scaleHeight(height));
+
+		this._innerWidth = unscaleWidth(super.innerWidth);
+		this._innerHeight = unscaleHeight(super.innerHeight);
 	}
 
 	function setInnerSize(innerWidth, innerHeight)
@@ -130,7 +240,9 @@ class Window_patch_hd_layer_override extends Window_patch_hd_layer_original
 		this._innerWidth = innerWidth;
 		this._innerHeight = innerHeight;
 		super.setInnerSize(scaleWidth(innerWidth), scaleHeight(innerHeight));
+
+		this._width = unscaleWidth(super.width);
+		this._height = unscaleHeight(super.height);
 	}
 }
 global.Window = Window_patch_hd_layer_override;
-

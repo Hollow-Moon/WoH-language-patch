@@ -96,6 +96,18 @@
 		clean_technical(translated_lines);
 		if (dest_notechnical.count !== translated_lines.count)
 		{
+@if(DEBUG_FSNCLEANER)
+			Debug.message("Dest:");
+			for (var i = 0; i < dest_notechnical.count; i += 1)
+			{
+				Debug.message(dest_notechnical[i]);
+			}
+			Debug.message("Src:");
+			for (var i = 0; i < translated_lines.count; i += 1)
+			{
+				Debug.message(translated_lines[i]);
+			}
+@endif
 			throw new Exception("Line count doesn't match while attempting to clean!");
 		}
 		// ReplaceText

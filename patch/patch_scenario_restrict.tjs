@@ -1,0 +1,97 @@
+﻿
+global.Conductor_patch_scenario_restrict_original = Conductor;
+class Conductor_patch_scenario_restrict_override extends Conductor_patch_scenario_restrict_original
+{
+	var return_on_next_label = false;
+	var scenario_restrict_storage = "";
+	var scenario_restrict_labelend = "";
+	function Conductor_patch_scenario_restrict_override()
+	{
+		super.Conductor(...);
+	}
+
+	function Conductor()
+	{
+		Conductor_patch_scenario_restrict_override(...);
+	}
+
+	function reset_scenario_restrict()
+	{
+		this.return_on_next_label = false;
+		this.scenario_restrict_storage = "";
+		this.scenario_restrict_labelend = "";
+	}
+
+	function onLabel(labelname)
+	{
+		// Don't do anything on read-ahead
+		if (this.processSpecialTags)
+		{
+			if (this.curStorage === this.scenario_restrict_storage)
+			{
+				if (this.return_on_next_label)
+				{
+@if(SCENARIO_RESTRICT_DEBUG)
+					Debug.message("Now returning!");
+@endif
+					// use *tladata as a gadget for returning, since KAGParser doesn't expose call stack pop
+					this.goToLabel("*tladata");
+					this.reset_scenario_restrict();
+				}
+				else if (this.scenario_restrict_labelend === labelname)
+				{
+@if(SCENARIO_RESTRICT_DEBUG)
+					Debug.message("Hit specified end label; return on next label enabled!");
+@endif
+					this.return_on_next_label = true;
+				}
+			}
+			else
+			{
+				if (this.scenario_restrict_storage !== "")
+				{
+@if(SCENARIO_RESTRICT_DEBUG)
+					Debug.message("Wrong storage " + this.curStorage + "; resetting scenario restrict");
+@endif
+					this.reset_scenario_restrict();
+				}
+			}
+		}
+		return super.onLabel(...);
+	}
+}
+global.Conductor = Conductor_patch_scenario_restrict_override;
+
+global.KAGWindow_patch_scenario_restrict_original = KAGWindow;
+class KAGWindow_patch_scenario_restrict_override extends KAGWindow_patch_scenario_restrict_original
+{
+	function KAGWindow_patch_scenario_restrict_override()
+	{
+		super.KAGWindow(...);
+	}
+
+	function KAGWindow()
+	{
+		KAGWindow_patch_scenario_restrict_override(...);
+	}
+
+	function getHandlers()
+	{
+		var handlers = super.getHandlers();
+		handlers.restrict_scenario = function(elm)
+		{
+			if (elm.storage !== void && elm.end !== void)
+			{
+				this.conductor.scenario_restrict_storage = elm.storage;
+				this.conductor.scenario_restrict_labelend = elm.end;
+			}
+			else
+			{
+				this.conductor.reset_scenario_restrict();
+			}
+			return 0;
+		} incontextof this;
+		return handlers;
+	}
+}
+global.KAGWindow = KAGWindow_patch_scenario_restrict_override;

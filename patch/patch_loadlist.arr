@@ -155,6 +155,7 @@
 	["HistoryLayer.override.tjs", ,,, "GAME_WOHN"],
 	["patch_textruby.tjs", ,,, "GAME_FATE||GAME_FHAT"],
 	"patch_italictag.tjs",
+	["patch_scenario_restrict.tjs", ,,, "GAME_WOHN"],
 	["TagEx.tjs", ,,, "GAME_WOHN"],
 	["patch_language_configvalues.tjs", ,,, "GAME_WOHN"],
 	"patch_conductor.tjs",

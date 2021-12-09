@@ -251,12 +251,30 @@ class MpvNamedPipeClientIPC
 			ret = this.commandnpc.read();
 			if ((typeof(ret) === "Octet"))
 			{
+@if(VIDEOMPV2_USENEWLINE)
+				var ssplit = ret.unpack("a" + ret.length)[0].split("\n");
+				for (var i = 0; i < ssplit.count; i += 1)
+				{
+					var txt = ssplit[i];
+					if (txt.length > 0)
+					{
+						var ret3 = Scripts.evalJSON(txt);
+						this.requests.add(ret3);
+						if (ret3.request_id === want_request_id)
+						{
+							has_request = true;
+						}
+					}
+				}
+@endif
+@if(!VIDEOMPV2_USENEWLINE)
 				var ret3 = Scripts.evalJSON(ret.unpack("a" + ret.length)[0]);
 				this.requests.add(ret3);
 				if (ret3.request_id === want_request_id)
 				{
 					has_request = true;
 				}
+@endif
 			}
 			if (System.getTickCount() > timeoutend)
 			{

@@ -9,9 +9,27 @@
  * It seems that there are many terminals that can play H.264.
  * On Android, video files are stored in assets.
  */
+
+class VideoOverlayOwnerWindow extends Window
+{
+	var parent;
+	function VideoOverlayOwnerWindow(parent)
+	{
+		super.Window(parent);
+
+		// このウィンドウではもっとも基本的なdrawerを用いる
+		// drawDevice.preferredDrawer = global.Window.PassThroughDrawDevice.dtDrawDib;
+
+		borderStyle = bsNone;
+		innerSunken = false;
+		showScrollBars = false;
+	}
+}
+
 class VideoOverlay
 {
 	var mp = null;
+	var window;
 	/**
 	 * Constructing a VideoOverlay object
 	 *
@@ -20,8 +38,129 @@ class VideoOverlay
 	 */
 	function VideoOverlay(window)
 	{
-		this.mp = new KrMpv();
-		this.mp.set_property("wid", window.HWND);
+		this.window = new VideoOverlayOwnerWindow(window);
+		var mp = new KrMpv();
+		this.mp = mp;
+		mp.set_property("wid", window.HWND);
+		mp.set_property("pause", "yes");
+		mp.set_property("input-default-bindings", "no");
+		mp.set_property("config", "no");
+		mp.set_property("idle", "yes");
+		mp.set_property("osc", "no");
+		mp.set_property("osd-level", "0");
+		mp.set_wakeup_callback(this.patch_mpv_videooverlay_wrapper_wakeup, window);
+		mp.initialize();
+		mp.commandv("observe_property", "0", "pause");
+		mp.commandv("observe_property", "0", "seek");
+		mp.commandv("keybind", "CLOSE_WIN", "stop");
+		mp.commandv("keybind", "MBTN_LEFT", "stop");
+		mp.commandv("keybind", "ctrl", "stop");
+	}
+
+	function handle_event(e)
+	{
+		switch(e.event)
+		{
+			case "start-file":
+			{
+				break;
+			}
+			case "end-file":
+			{
+				this.onStatusChanged("unload");
+				break;
+			}
+			case "file-loaded":
+			{
+				this.onStatusChanged(this.mp.get_property("pause") ? "ready" : "play");
+				break;
+			}
+			case "seek":
+			{
+				break;
+			}
+			case "playback-restart":
+			{
+				this.onStatusChanged("play");
+				break;
+			}
+			case "shutdown":
+			{
+				break;
+			}
+			case "log-message":
+			{
+				Debug.message("krmpv: " + e.prefix + " " + e.text.replace(/\n$/, ""));
+				break;
+			}
+			case "hook":
+			{
+				break;
+			}
+			case "get-property-reply":
+			{
+				break;
+			}
+			case "set-property-reply":
+			{
+				break;
+			}
+			case "command-reply":
+			{
+				break;
+			}
+			case "client-message":
+			{
+				break;
+			}
+			case "video-reconfig":
+			{
+				break;
+			}
+			case "audio-reconfig":
+			{
+				break;
+			}
+			case "property-change":
+			{
+				if (e.name === "pause")
+				{
+					this.onStatusChanged(e.data == 0 ? "play" : "pause");
+				}
+				else if (e.name === "seek")
+				{
+					if (e.data == 0)
+					{
+						this.onStatusChanged(this.mp.get_property("pause") ? "stop" : "play");
+					}
+				}
+				break;
+			}
+			default:
+			{
+				break;
+			}
+		}
+	}
+
+	function handle_events()
+	{
+		// list of events: https://mpv.io/manual/master/#list-of-events
+		var mp = this.mp;
+		while (true)
+		{
+			var e = mp.wait_event(0);
+			if (e === void || typeof(e.event) !== "String" || e.event === "none")
+			{
+				break;
+			}
+			this.handle_event(e);
+		}
+	}
+
+	function patch_mpv_videooverlay_wrapper_wakeup()
+	{
+		this.handle_events();
 	}
 
 	/**
@@ -231,7 +370,7 @@ class VideoOverlay
 	 */
 	function setPos(left, top)
 	{
-
+		this.window.setPos(this.window.parent.left + left, this.window.parent.top + top);
 	}
 
 	/**
@@ -244,7 +383,7 @@ class VideoOverlay
 	 */
 	function setSize(width, height)
 	{
-
+		this.window.setSize(width, height);
 	}
 
 	/**
@@ -260,7 +399,8 @@ class VideoOverlay
 	 */
 	function setBounds(left, top, width, height)
 	{
-
+		this.window.setPos(this.window.parent.left + left, this.window.parent.top + top);
+		this.window.setSize(width, height);
 	}
 
 	/**
@@ -336,9 +476,17 @@ class VideoOverlay
 	 * @see VideoOverlay.position
 	 * @see VideoOverlay.numberOfFrame
 	 */
-	property frame {
-		getter() { return value; }
-		setter( value ) {}
+	property frame
+	{
+		getter()
+		{
+			return this.mp.get_property("estimated-frame-number");
+		}
+		setter( value )
+		{
+			var fps = this.mp.get_property("track-list/" + this.mp.get_property("vid") + "/demux-fps");
+			this.mp.set_property("estimated-frame-number", value / fps);
+		}
 	}
 	/**
 	 * [Windows *] Whether to play in a loop
@@ -348,9 +496,16 @@ class VideoOverlay
 	 * If true, it is a loop, if false, it is a non-loop.
 	 * Android always returns false and it doesn't make sense to set it.
 	 */
-	property loop {
-		getter() { return value; }
-		setter( value ) {}
+	property loop
+	{
+		getter()
+		{
+			return this.mp.get_property("loop") === "inf";
+		}
+		setter( value )
+		{
+			this.mp.set_property("loop", value ? "inf" : no);
+		}
 	}
 	/**
 	 * [Windows *] Width of playback rectangle
@@ -362,9 +517,16 @@ class VideoOverlay
 	 * @see VideoOverlay.height
 	 * @see VideoOverlay.setSize
 	 */
-	property width {
-		getter() { return value; }
-		setter( value ) {}
+	property width
+	{
+		getter()
+		{
+			return this.geometry_width;
+		}
+		setter( value )
+		{
+			this.setSize(value, this.geometry_height);
+		}
 	}
 	/**
 	 * [Windows *] Vertical width of playback rectangle
@@ -376,9 +538,16 @@ class VideoOverlay
 	 * @see VideoOverlay.width
 	 * @see VideoOverlay.setSize
 	 */
-	property height {
-		getter() { return value; }
-		setter( value ) {}
+	property height
+	{
+		getter()
+		{
+			return this.geometry_height;
+		}
+		setter( value )
+		{
+			this.setSize(this.geometry_width, value);
+		}
 	}
 	/**
 	 * [Windows *] Left edge position of playback rectangle
@@ -389,9 +558,16 @@ class VideoOverlay
 	 * @see VideoOverlay.top
 	 * @see VideoOverlay.setPos
 	 */
-	property left {
-		getter() { return value; }
-		setter( value ) {}
+	property left
+	{
+		getter()
+		{
+			return this.window.left - this.window.parent.left;
+		}
+		setter( value )
+		{
+			this.setPos(value, this.top);
+		}
 	}
 	/**
 	 * [Windows *] Top position of playback rectangle
@@ -402,9 +578,16 @@ class VideoOverlay
 	 * @see VideoOverlay.left
 	 * @see VideoOverlay.setPos
 	 */
-	property top {
-		getter() { return value; }
-		setter( value ) {}
+	property top
+	{
+		getter()
+		{
+			return this.window.top - this.window.parent.top;
+		}
+		setter( value )
+		{
+			this.setPos(this.left, value);
+		}
 	}
 	/**
 	 * Whether it is visible
@@ -413,9 +596,16 @@ class VideoOverlay
 	 * You can also set the value. If true, it is visible, if false, it is invisible.
 	 * Only read on Android.
 	 */
-	property visible {
-		getter() { return value; }
-		setter( value ) {}
+	property visible
+	{
+		getter()
+		{
+			return this.window.visible;
+		}
+		setter( value )
+		{
+			this.window.visible = !!value;
+		}
 	}
 	/**
 	 * [Windows *] Frame rate
@@ -423,8 +613,12 @@ class VideoOverlay
 	 * @description Represents the frame rate (frames / second).
 	 * Android always returns 0.
 	 */
-	property fps {
-		getter() { return value; }
+	property fps
+	{
+		getter()
+		{
+			return this.mp.get_property("track-list/" + this.mp.get_property("vid") + "/demux-fps");
+		}
 	}
 	/**
 	 * [Windows *] Total number of frames
@@ -432,8 +626,12 @@ class VideoOverlay
 	 * @description Represents the total number of frames.
 	 * Android always returns 0.
 	 */
-	property numberOfFrame {
-		getter() { return value; }
+	property numberOfFrame
+	{
+		getter()
+		{
+			return this.mp.get_property("estimated-frame-count");
+		}
 	}
 	/**
 	 * total time
@@ -478,9 +676,16 @@ class VideoOverlay
 	 * VomOverlay for overlay mode, vomLayer for layer drawing mode, vomMixer for mixer mode, and vomMFEVR for Media Foundation mode.
 	 * There is no playback mode on Android.
 	 */
-	property mode {
-		getter() { return value; }
-		setter( value ) {}
+	property mode
+	{
+		getter()
+		{
+			return vomMixer;
+		}
+		setter( value )
+		{
+			// Stubbed.
+		}
 	}
 	/**
 	 * [Windows *] Playback speed
@@ -500,7 +705,7 @@ class VideoOverlay
 		}
 		setter(value)
 		{
-			this.mp.set_property("speed", value)
+			this.mp.set_property("speed", value);
 		}
 	}
 	/**
@@ -511,18 +716,26 @@ class VideoOverlay
 	 * @see VideoOverlay.setSegmentLoop
 	 * @see VideoOverlay.cancelSegmentLoop
 	 */
-	property segmentLoopStartFrame {
-		getter() { return value; }
+	property segmentLoopStartFrame
+	{
+		getter()
+		{
+			return 0;
+		}
 	}
 	/**
-	 * [Windows *] Start frame of segment loop
+	 * [Windows *] End frame of segment loop
 	 *
-	 * @description The starting frame of the segment loop.
+	 * @description The ending frame of the segment loop.
 	 * Nothing happens on Android.
 	 * @see VideoOverlay.setSegmentLoop
 	 */
-	property segmentLoopEndFrame {
-		getter() { return value; }
+	property segmentLoopEndFrame
+	{
+		getter()
+		{
+			return 0;
+		}
 	}
 	/**
 	 * [Windows *] Period event frame
@@ -531,9 +744,16 @@ class VideoOverlay
 	 * If it is not set, it will be a negative value.
 	 * Nothing happens on Android.
 	 */
-	property periodEventFrame {
-		getter() { return value; }
-		setter( value ) {}
+	property periodEventFrame
+	{
+		getter()
+		{
+			return -1;
+		}
+		setter( value )
+		{
+
+		}
 	}
 	/**
 	 * [Windows *] Voice balance (panning)
@@ -545,9 +765,16 @@ class VideoOverlay
 	 * When playing a stereo source, panning is achieved by attenuating either the left or right channel (0 specifies both channels, -100000 outputs only the left channel).
 	 * Always returns 0 on Android. There is no point in setting it.
 	 */
-	property audioBalance {
-		getter() { return value; }
-		setter( value ) {}
+	property audioBalance
+	{
+		getter()
+		{
+			return 0;
+		}
+		setter( value )
+		{
+
+		}
 	}
 	/**
 	 * Audio volume
@@ -555,7 +782,8 @@ class VideoOverlay
 	 * @description Represents the volume to play.
 	 * You can also set the value. Specify a number from 0 to 100000, 0 for full mute and 100000 for 100% volume.
 	 */
-	property audioVolume {
+	property audioVolume
+	{
 		getter()
 		{
 			return (this.mp.get_property("volume")) * 1000 | 0;
@@ -574,8 +802,21 @@ class VideoOverlay
 	 * @see VideoOverlay.selectAudioStream
 	 * @see VideoOverlay.enabledAudioStream
 	 */
-	property numberOfAudioStream {
-		getter() { return value; }
+	property numberOfAudioStream
+	{
+		getter()
+		{
+			var sum = 0;
+			var track_num = this.mp.get_property("track-list/count");
+			for (var i = 0; i < track_num; i += 1)
+			{
+				if (this.mp.get_property("track-list/" + i + "/type") === "audio")
+				{
+					sum += 1;
+				}
+			}
+			return sum;
+		}
 	}
 	/**
 	 * [Windows *] Audio stream number to be played
@@ -616,14 +857,19 @@ class VideoOverlay
 		getter() { return value; }
 		setter( value ) {}
 	}
+@endif
 	/**
 	 * [Windows +] Minimum video contrast range
 	 *
 	 * @description Represents the minimum contrast width.
 	 * Only available in mixer mode.
 	 */
-	property contrastRangeMin {
-		getter() { return value; }
+	property contrastRangeMin
+	{
+		getter()
+		{
+			return -100;
+		}
 	}
 	/**
 	 * [Windows +] Maximum video contrast range
@@ -631,8 +877,12 @@ class VideoOverlay
 	 * @description Represents the maximum contrast width.
 	 * Only available in mixer mode.
 	 */
-	property contrastRangeMax {
-		getter() { return value; }
+	property contrastRangeMax
+	{
+		getter()
+		{
+			return 100;
+		}
 	}
 	/**
 	 * [Windows +] Video contrast default value
@@ -640,8 +890,12 @@ class VideoOverlay
 	 * @description Represents the default contrast value.
 	 * Only available in mixer mode.
 	 */
-	property contrastDefaultValue {
-		getter() { return value; }
+	property contrastDefaultValue
+	{
+		getter()
+		{
+			return 0;
+		}
 	}
 	/**
 	 * [Windows +] Video contrast increase / decrease step value
@@ -650,8 +904,12 @@ class VideoOverlay
 	 * You can change the contrast in units of this value.
 	 * Only available in mixer mode.
 	 */
-	property contrastStepSize {
-		getter() { return value; }
+	property contrastStepSize
+	{
+		getter()
+		{
+			return 1;
+		}
 	}
 	/**
 	 * [Windows +] Video contrast
@@ -659,9 +917,16 @@ class VideoOverlay
 	 * @description Represents the contrast of the video.
 	 * Only available in mixer mode.
 	 */
-	property contrast {
-		getter() { return value; }
-		setter( value ) {}
+	property contrast
+	{
+		getter()
+		{
+			return this.mp.get_property("contrast");
+		}
+		setter( value )
+		{
+			this.mp.set_property("contrast", value);
+		}
 	}
 	/**
 	 * [Windows +] Minimum video brightness range
@@ -669,8 +934,12 @@ class VideoOverlay
 	 * @description Represents the minimum brightness width.
 	 * Only available in mixer mode.
 	 */
-	property brightnessRangeMin {
-		getter() { return value; }
+	property brightnessRangeMin
+	{
+		getter()
+		{
+			return -100;
+		}
 	}
 	/**
 	 * [Windows +] Maximum brightness range of video
@@ -678,8 +947,12 @@ class VideoOverlay
 	 * @description Represents the maximum brightness width.
 	 * Only available in mixer mode.
 	 */
-	property brightnessRangeMax {
-		getter() { return value; }
+	property brightnessRangeMax
+	{
+		getter()
+		{
+			return 100;
+		}
 	}
 	/**
 	 * [Windows +] Video brightness default
@@ -687,8 +960,12 @@ class VideoOverlay
 	 * @description Represents the default brightness.
 	 * Only available in mixer mode.
 	 */
-	property brightnessDefaultValue {
-		getter() { return value; }
+	property brightnessDefaultValue
+	{
+		getter()
+		{
+			return 0;
+		}
 	}
 	/**
 	 * [Windows +] Video brightness increase / decrease step value
@@ -697,8 +974,12 @@ class VideoOverlay
 	 * You can change the brightness in units of this value.
 	 * Only available in mixer mode.
 	 */
-	property brightnessStepSize {
-		getter() { return value; }
+	property brightnessStepSize
+	{
+		getter()
+		{
+			return 1;
+		}
 	}
 	/**
 	 * [Windows +] Video brightness
@@ -706,9 +987,16 @@ class VideoOverlay
 	 * @description Represents the brightness of the video.
 	 * Only available in mixer mode.
 	 */
-	property brightness {
-		getter() { return value; }
-		setter( value ) {}
+	property brightness
+	{
+		getter()
+		{
+			return this.mp.get_property("brightness");
+		}
+		setter( value )
+		{
+			this.mp.set_property("brightness", value);
+		}
 	}
 	/**
 	 * [Windows +] Minimum video hue range
@@ -716,8 +1004,12 @@ class VideoOverlay
 	 * @description Represents the minimum hue width.
 	 * Only available in mixer mode.
 	 */
-	property hueRangeMin {
-		getter() { return value; }
+	property hueRangeMin
+	{
+		getter()
+		{
+			return -100;
+		}
 	}
 	/**
 	 * [Windows +] Maximum hue range of video
@@ -725,8 +1017,12 @@ class VideoOverlay
 	 * @description Represents the maximum hue width.
 	 * Only available in mixer mode.
 	 */
-	property hueRangeMax {
-		getter() { return value; }
+	property hueRangeMax
+	{
+		getter()
+		{
+			return 100;
+		}
 	}
 	/**
 	 * [Windows +] Video hue default
@@ -734,8 +1030,12 @@ class VideoOverlay
 	 * @description Represents the default hue.
 	 * Only available in mixer mode.
 	 */
-	property hueDefaultValue {
-		getter() { return value; }
+	property hueDefaultValue
+	{
+		getter()
+		{
+			return 0;
+		}
 	}
 	/**
 	 * [Windows +] Video hue increase / decrease step value
@@ -744,8 +1044,12 @@ class VideoOverlay
 	 * You can change the hue in units of this value.
 	 * Only available in mixer mode.
 	 */
-	property hueStepSize {
-		getter() { return value; }
+	property hueStepSize
+	{
+		getter()
+		{
+			return 1;
+		}
 	}
 	/**
 	 * [Windows +] Video Hue
@@ -753,9 +1057,16 @@ class VideoOverlay
 	 * @description Represents the hue of the video.
 	 * Only available in mixer mode.
 	 */
-	property hue {
-		getter() { return value; }
-		setter( value ) {}
+	property hue
+	{
+		getter()
+		{
+			return this.mp.get_property("hue");
+		}
+		setter( value )
+		{
+			this.mp.set_property("hue", value);
+		}
 	}
 	/**
 	 * [Windows +] Minimum video saturation range
@@ -763,8 +1074,12 @@ class VideoOverlay
 	 * @description Represents the minimum saturation width.
 	 * Only available in mixer mode.
 	 */
-	property saturationRangeMin {
-		getter() { return value; }
+	property saturationRangeMin
+	{
+		getter()
+		{
+			return -100;
+		}
 	}
 	/**
 	 * [Windows +] Maximum video saturation range
@@ -772,8 +1087,12 @@ class VideoOverlay
 	 * @description Represents the maximum saturation width.
 	 * Only available in mixer mode.
 	 */
-	property saturationRangeMax {
-		getter() { return value; }
+	property saturationRangeMax
+	{
+		getter()
+		{
+			return 100;
+		}
 	}
 	/**
 	 * [Windows +] Video Saturation Default
@@ -781,8 +1100,12 @@ class VideoOverlay
 	 * @description Represents the default saturation value.
 	 * Only available in mixer mode.
 	 */
-	property saturationDefaultValue {
-		getter() { return value; }
+	property saturationDefaultValue
+	{
+		getter()
+		{
+			return 0;
+		}
 	}
 	/**
 	 * [Windows +] Video saturation increase / decrease step value
@@ -791,8 +1114,12 @@ class VideoOverlay
 	 * You can change the saturation in units of this value.
 	 * Only available in mixer mode.
 	 */
-	property saturationStepSize {
-		getter() { return value; }
+	property saturationStepSize
+	{
+		getter()
+		{
+			return 1;
+		}
 	}
 	/**
 	 * [Windows +] Video Saturation
@@ -800,11 +1127,17 @@ class VideoOverlay
 	 * @description Represents the saturation of the video.
 	 * Only available in mixer mode.
 	 */
-	property saturation {
-		getter() { return value; }
-		setter( value ) {}
+	property saturation
+	{
+		getter()
+		{
+			return this.mp.get_property("saturation");
+		}
+		setter( value )
+		{
+			this.mp.set_property("saturation", value);
+		}
 	}
-@endif
 	/**
 	 * [Windows *] Actual width of video
 	 *

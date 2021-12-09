@@ -49,6 +49,52 @@ if (typeof(global.Contrast) === "Object")
 	global.Contrast = Contrast_patch_hd_plugins_override;
 }
 
+function initHaze_patch_hd_plugins_override(elm)
+{
+	var originalUpper = elm.upper;
+	var originalCenter = elm.center;
+	var originalLower = elm.lower;
+	var originalCycle = elm.cycle;
+	elm.upper = elm.upper * scaleFactor if elm.upper > 0;
+	elm.center = elm.center * wideScaleFactor if elm.center > 0;
+	elm.lower = elm.lower * scaleFactor if elm.lower > 0;
+	elm.cycle = elm.cycle / scaleFactor;
+	for (var i=0; i < elm.waves.count; i++) {
+		elm.waves[i][2] *= scaleFactor;
+	}
+	for (var i=0; i < elm.lwaves.count; i++) {
+		elm.lwaves[i][2] *= scaleFactor;
+	}
+	var ie;
+	try
+	{
+		global.initHaze_patch_hd_plugins_original(elm);
+	}
+	catch (e)
+	{
+		ie = e;
+	}
+	elm.upper = originalUpper;
+	elm.center = originalCenter;
+	elm.lower = originalLower;
+	elm.cycle = originalCycle;
+	for (var i=0; i < elm.waves.count; i++) {
+		elm.waves[i][2] /= scaleFactor;
+	}
+	for (var i=0; i < elm.lwaves.count; i++) {
+		elm.lwaves[i][2] /= scaleFactor;
+	}
+	if (ie !== void)
+	{
+		throw ie;
+	}
+}
+if (typeof(global.initHaze) === "Object")
+{
+	global.initHaze_patch_hd_plugins_original = initHaze;
+	global.initHaze = initHaze_patch_hd_plugins_override;
+}
+
 function doHaze_patch_hd_plugins_override(elm)
 {
 	var ie;

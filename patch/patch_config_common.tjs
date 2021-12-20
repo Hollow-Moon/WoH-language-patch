@@ -135,6 +135,8 @@ function dmt(msg*) { Debug.message(msg.join(", ")+": "+Scripts.getTraceString())
 @set(SCALE_ROUND_TOWARDS_NEAREST=0)
 @set(PROCESS_WORD_WRAPPING_IN_CHUNKS=1)
 @set(MESSAGELAYER_USECHARLAYER=0)
+@set(USE_LAYER_IMAGEFUNCTION_REPLACEMENTS=1)
+@set(USE_TVPGL_FUNCTION_REPLACEMENTS=1)
 
 @if(GAME_FATE||GAME_FHAT)
 @set(TEXT_DRAWER=1)
@@ -155,6 +157,11 @@ function dmt(msg*) { Debug.message(msg.join(", ")+": "+Scripts.getTraceString())
 @if(kirikiriz||GAME_WOHN)
 @set(ZOOM_WINDOW=1)
 @set(ZOOM_WINDOW_ENABLE_ONRESIZE=1)
+@endif
+
+@if(!kirikiriz)
+@set(USE_LAYER_IMAGEFUNCTION_REPLACEMENTS=0)
+@set(USE_TVPGL_FUNCTION_REPLACEMENTS=0)
 @endif
 
 @if(GAME_WOHN)

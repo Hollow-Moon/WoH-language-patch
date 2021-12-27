@@ -46,7 +46,7 @@
 	["patch_plugin_menu.tjs", , [["MenuItem"]]],
 	["patch_windowex_stubs.tjs", ,,, "kirikiriz"],
 	["windowEx.dll", , [["Window.registerExEvent"]]],
-	["kr_various_plugins.dll", ,, true, "(GAME_FATE||GAME_FHAT)&&(USE_KR_VARIOUS_PLUGINS)"],
+	["krkr_various_plugins.dll", ,, true, "(GAME_FATE||GAME_FHAT)&&(USE_KR_VARIOUS_PLUGINS)"],
 	["util.dll", , [["enumFont"]], true, "GAME_FATE||GAME_FHAT"],
 	["patch_plugin_util.tjs", , [["enumFont"]], , "GAME_FATE||GAME_FHAT"],
 	["filter.dll", , [["Contrast"]], true, "GAME_FATE||GAME_FHAT"],

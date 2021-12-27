@@ -1,0 +1,99 @@
+
+// Polyfill for Dictionary methods added in Kirikiri Z
+// Not entirely compatible as it only works with Dictionary objects instead of any object that implements EnumMembers
+
+{
+	if (typeof(global.Dictionary.getCount) !== "Object")
+	{
+		global.Dictionary.getCount = function(src_dic)
+		{
+			var	src_arr = [];
+			src_arr.assign(src_dic);
+			return src_arr.count \ 2;
+		};
+	}
+
+	if (typeof(global.Dictionary.keys) !== "Object")
+	{
+		global.Dictionary.keys = function(src_dic)
+		{
+			var	src_arr = [];
+			src_arr.assign(src_dic);
+			var	items = [];
+			for (var i = 0; i < src_arr.count; i += 2)
+			{
+				items.add(src_arr[i]);
+			}
+			return items;
+		};
+	}
+
+	if (typeof(global.Dictionary.values) !== "Object")
+	{
+		global.Dictionary.values = function(src_dic)
+		{
+			var	src_arr = [];
+			src_arr.assign(src_dic);
+			var	items = [];
+			for (var i = 0; i < src_arr.count; i += 2)
+			{
+				items.add(src_arr[i + 1]);
+			}
+			return items;
+		};
+	}
+
+	if (typeof(global.Dictionary.contains) !== "Object")
+	{
+		global.Dictionary.contains = function(arg1, arg2)
+		{
+			var target = void;
+			var key = void;
+			if (this !== (this incontextof null))
+			{
+				// called from incontextof
+				target = this;
+				key = arg1;
+			}
+			else
+			{
+				// static call Dictionary.contains( object, name );
+				target = arg1;
+				key = arg2;
+			}
+			var keys = global.Dictionary.keys(target);
+			return keys.find(key) !== -1;
+		};
+	}
+
+	if (typeof(global.Dictionary.forEach) !== "Object")
+	{
+		global.Dictionary.forEach = function(target, func, *)
+		{
+			if (typeof(func) === "String")
+			{
+				func = target[func];
+			}
+			if (typeof(func) !== "Object")
+			{
+				throw new Exception("function not found");
+			}
+			if (func === (func incontextof null))
+			{
+				func = (func incontextof target);
+			}
+
+			var	src_arr = [];
+			src_arr.assign(target);
+			var	items = [];
+			for (var i = 0; i < src_arr.count; i += 2)
+			{
+				var ret = func(src_arr[i], src_arr[i + 1], *);
+				if (ret !== void)
+				{
+					return ret;
+				}
+			}
+		};
+	}
+}

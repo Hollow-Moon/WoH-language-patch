@@ -2,13 +2,17 @@
 global.KAGWindow_patch_discord_rich_presence_original = KAGWindow;
 class KAGWindow_patch_discord_rich_presence_override extends KAGWindow_patch_discord_rich_presence_original
 {
+	var discord_start_timestamp = 0;
+	var discord_inited = false;
 	function KAGWindow_patch_discord_rich_presence_override()
 	{
 		super.KAGWindow(...);
 
-		if (this.isMain)
+		if (this.isMain && !this.discord_inited)
 		{
-			var application_id = "##applicationid TODO##";
+			// need seconds here
+			this.discord_start_timestamp = (new Date()).getTime() \ 1000;
+			var application_id = "";
 @if(GAME_FATE)
 			application_id = "918174971111542834";
 @endif
@@ -18,7 +22,16 @@ class KAGWindow_patch_discord_rich_presence_override extends KAGWindow_patch_dis
 @if(GAME_WOHN)
 			application_id = "918175639801065494";
 @endif
-			global.DiscordRPC.Initialize(application_id, void, false, "");
+			if (application_id !== "")
+			{
+				global.DiscordRPC.Initialize(application_id, void, false, "");
+				var dic = %[];
+				dic.largeImageKey = "icon";
+				dic.state = "Just initialized";
+				dic.startTimestamp = this.discord_start_timestamp;
+				global.DiscordRPC.UpdatePresence(dic);
+				this.discord_inited = true;
+			}
 		}
 	}
 
@@ -29,23 +42,27 @@ class KAGWindow_patch_discord_rich_presence_override extends KAGWindow_patch_dis
 
 	function finalize()
 	{
-		if (this.isMain)
+		if (this.isMain && this.discord_inited)
 		{
+			global.DiscordRPC.ClearPresence();
 			global.DiscordRPC.Shutdown();
+			this.discord_inited = false;
 		}
 		return super.finalize(...);
 	}
 
 	var last_discord_updated_text = "";
+	var last_discord_updated_label = "";
 
 	function onConductorLabel(label, page)
 	{
 		var ret = super.onConductorLabel(...);
-		if (this.isMain)
+		if (this.isMain && this.discord_inited)
 		{
 			var new_page_name = currentPageName;
-@if(GAME_FATE||GAME_FHAT)
+			var new_label_text = "";
 			var on_title_menu = false;
+@if(GAME_FATE||GAME_FHAT)
 			if (typeof(global.titlemenu_object) === "Object" && typeof(global.titlemenu_object.menulayer) === "Object" && global.titlemenu_object.menulayer.visible)
 			{
 				on_title_menu = true;
@@ -71,29 +88,28 @@ class KAGWindow_patch_discord_rich_presence_override extends KAGWindow_patch_dis
 			}
 			if (on_title_menu)
 			{
-				new_page_name = "Title menu";
+				new_page_name = "Title Menu";
 			}
-			else
+			if (!on_title_menu && typeof(currentLabel) === "String" && currentLabel.substr(0, 5) === "*page")
 			{
-				if (typeof(currentLabel) === "String" && currentLabel.substr(0, 5) === "*page")
-				{
-					new_page_name += " (Page " + currentLabel.substr(5) + ")";
-				}
+				new_label_text = "Page " + currentLabel.substr(5);
 			}
-			if (this.last_discord_updated_text !== new_page_name)
+			if (this.last_discord_updated_text !== new_page_name || this.last_discord_updated_label !== new_label_text)
 			{
 				var dic = %[];
-				dic.largeImageKey = "game_logo"; // TODO
-				dic.largeImageText = "Hoge hoge hoge hoge hoge"; // TODO
-				dic.details = new_page_name;
-				// need seconds here
-				dic.startTimestamp = (new Date()).getTime() \ 1000;
+				dic.largeImageKey = "icon";
+				dic.state = __(new_page_name);
+				if (new_label_text !== "")
+				{
+					dic.details = new_label_text;
+				}
+				dic.startTimestamp = this.discord_start_timestamp;
 				global.DiscordRPC.UpdatePresence(dic);
 				this.last_discord_updated_text = new_page_name;
+				this.last_discord_updated_label = new_label_text;
 			}
 		}
 		return ret;
 	}
 }
 global.KAGWindow = KAGWindow_patch_discord_rich_presence_override;
-

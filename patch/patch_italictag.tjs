@@ -5,28 +5,18 @@ class KAGWindow_patch_italictag_override extends KAGWindow_patch_italictag_origi
 	function KAGWindow_patch_italictag_override()
 	{
 		super.KAGWindow(...);
+
+		{
+			var macros = this.mainConductor.macros;
+			macros["italic"] = "[font italic][macropop]";
+			macros["i"] = "[font italic][macropop]";
+			macros["/i"] = "[font italic=0][macropop]";
+		}
 	}
 
 	function KAGWindow()
 	{
 		KAGWindow_patch_italictag_override(...);
-	}
-
-	function getHandlers()
-	{
-		var handlers = super.getHandlers();
-		handlers.italic = function(elm)
-		{
-			elm.italic = "1";
-			return this.tagHandlers.font(elm);
-		} incontextof this;
-		handlers.i = handlers.italic;
-		handlers["/i"] = function(elm)
-		{
-			elm.italic = "0";
-			return this.tagHandlers.font(elm);
-		} incontextof this;
-		return handlers;
 	}
 }
 global.KAGWindow = KAGWindow_patch_italictag_override;

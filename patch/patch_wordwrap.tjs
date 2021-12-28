@@ -1060,6 +1060,14 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 		var word_wrap_break_position = this.getWordWrapBreakPosition(text);
 		var ttext = text;
 		var should_append_break_tags = true;
+		if (elm.prepend.count > 0)
+		{
+			elm.requeue = false;
+			conductor.requeueText(ttext, elm);
+			conductor.queuePrependMessageLayerRelatedTags(elm);
+			elm.prepend.clear();
+			return "";
+		}
 		if (word_wrap_break_position > 0)
 		{
 			var cut_text = text.substr(word_wrap_break_position);
@@ -1102,7 +1110,7 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 			elm.requeue = false;
 			if (should_append_break_tags)
 			{
-				conductor.queueFormattingBreakTags(elm);
+				conductor.queueAppendMessageLayerRelatedTags(elm);
 			}
 			conductor.queueText(ttext, elm);
 			conductor.queueReline(elm, false, true);
@@ -1113,7 +1121,7 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 			elm.requeue = false;
 			if (should_append_break_tags)
 			{
-				conductor.queueFormattingBreakTags(elm);
+				conductor.queueAppendMessageLayerRelatedTags(elm);
 			}
 			conductor.queueText(ttext, elm);
 			conductor.queueReline(elm, true, false);

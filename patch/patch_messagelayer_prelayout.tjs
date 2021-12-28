@@ -20,66 +20,78 @@ class KAGWindow_patch_messagelayer_prelayout_override extends KAGWindow_patch_me
 		this.current.visible = true;
 		this.current.opacity = 255;
 		this.updateBeforeCh = false;
-		var strelm = conductor.pendings_prelayout;
-		var ret2 = %[];
-		var has_break_tag = false;
-		for (var ii = 0; ii < strelm.count; ii += 1)
+		while (conductor.pendings_prelayout.count > 0)
 		{
-			if (typeof(strelm[ii]) === "String")
+			var strelm = [];
+			strelm.assign(conductor.pendings_prelayout);
+			conductor.pendings_prelayout.clear();
+			var ret2 = %[];
+			var has_break_tag = false;
+			for (var ii = 0; ii < strelm.count; ii += 1)
 			{
-				var text = strelm[ii];
-				var text_sz = text.length;
-				for (var i = 0; i < text_sz; i += 1)
+				if (typeof(strelm[ii]) === "String")
 				{
-					ret2.__patch_conductor_storage = elm.__patch_conductor_storage;
-					ret2.__patch_conductor_line = elm.__patch_conductor_line;
-					if (text[i] == "\n")
+					var text = strelm[ii];
+					var text_sz = text.length;
+					for (var i = 0; i < text_sz; i += 1)
 					{
-						ret2.tagname = "r";
-						if (typeof(ret2.text) === "String")
+						ret2.__patch_conductor_storage = elm.__patch_conductor_storage;
+						ret2.__patch_conductor_line = elm.__patch_conductor_line;
+						if (text[i] == "\n")
 						{
-							delete ret2.text;
+							ret2.tagname = "r";
+							if (typeof(ret2.text) === "String")
+							{
+								delete ret2.text;
+							}
+						}
+						else
+						{
+							ret2.tagname = "ch";
+							ret2.text = text[i];
+						}
+						conductor.lastTagName = ret2.tagname;
+						var rettime = conductor.handlers[ret2.tagname](ret2);
+						rettime |= 0;
+						if (ret2.tagname === "ch" && this.current.prelayout_charlayers.count > 0)
+						{
+							var charlayer = this.current.prelayout_charlayers[this.current.prelayout_charlayers.count-1];
+							charlayer.queued_wait_time = rettime;
 						}
 					}
-					else
-					{
-						ret2.tagname = "ch";
-						ret2.text = text[i];
-					}
-					conductor.lastTagName = ret2.tagname;
-					var rettime = conductor.handlers[ret2.tagname](ret2);
-					rettime |= 0;
-					if (ret2.tagname === "ch" && this.current.prelayout_charlayers.count > 0)
-					{
-						var charlayer = this.current.prelayout_charlayers[this.current.prelayout_charlayers.count-1];
-						charlayer.queued_wait_time = rettime;
-					}
-				}
-			}
-			else
-			{
-				var tag = strelm[ii];
-				if (tag.tagname === "r" || tag.tagname === "hr" || tag.tagname === "history")
-				{
-					// reline now
-					conductor.lastTagName = tag.tagname;
-					conductor.handlers[tag.tagname](tag);
 				}
 				else
 				{
-					if (tag.tagname === "p" || tag.tagname === "l" || tag.tagname === "cm")
+					var tag = strelm[ii];
+					if (tag.tagname === "r" || tag.tagname === "hr" || tag.tagname === "history" || tag.tagname === "font" || tag.tagname === "resetfont" || tag.tagname === "deffont")
 					{
-						has_break_tag = true;
+						// reline now
+						conductor.lastTagName = tag.tagname;
+						conductor.handlers[tag.tagname](tag);
 					}
-					this.current.prelayout_charlayers.add(strelm[ii]);
+					else if (tag.tagname === "ch_patch_conductor_split")
+					{
+						conductor.handleConductorSplit(tag);
+					}
+					else if (tag.tagname === "ch_patch_conductor_messagelayer_tag")
+					{
+						conductor.handleConductorMessageLayerTag(tag);
+					}
+					else
+					{
+						if (tag.tagname === "p" || tag.tagname === "l" || tag.tagname === "cm")
+						{
+							has_break_tag = true;
+						}
+						this.current.prelayout_charlayers.add(strelm[ii]);
+					}
 				}
 			}
 		}
-		strelm.clear();
 		this.current.visible = last_visible;
 		this.current.opacity = last_opacity;
 		this.current.in_prelayout_mode = false;
-		if ((conductor.pendings.length == 0) || (conductor.pendings.length > 0 && conductor.pendings[0].tagname !== "ch_patch_conductor_split") || (conductor.pendings.length > 0 && conductor.pendings[0].tagname === "ch_patch_conductor_split" && (conductor.pendings[0].has_cm || conductor.pendings[0].has_l || conductor.pendings[0].has_p)) || has_break_tag)
+		if ((conductor.pendings.length == 0) || (conductor.pendings.length > 0 && conductor.pendings[0].tagname !== "ch_patch_conductor_split" && conductor.pendings[0].tagname !== "ch_patch_conductor_messagelayer_tag") || (conductor.pendings.length > 0 && (conductor.pendings[0].tagname === "ch_patch_conductor_split" || conductor.pendings[0].tagname === "ch_patch_conductor_messagelayer_tag")) || has_break_tag)
 		{
 			var ret2 = %[];
 			ret2.__patch_conductor_storage = elm.__patch_conductor_storage;
@@ -105,6 +117,18 @@ class Conductor_patch_messagelayer_prelayout_override extends Conductor_patch_me
 	}
 
 	var pendings_prelayout = [];
+
+	function requeueText(text, elm)
+	{
+		var ret2 = %[];
+		ret2.__patch_conductor_storage = elm.__patch_conductor_storage;
+		ret2.__patch_conductor_line = elm.__patch_conductor_line;
+		ret2.tagname = "ch_patch_conductor_split";
+		ret2.text = text;
+		ret2.append = elm.append;
+		ret2.prepend = elm.prepend;
+		this.pendings_prelayout.insert(0, ret2);
+	}
 
 	function queueText(text, elm)
 	{
@@ -172,31 +196,32 @@ class Conductor_patch_messagelayer_prelayout_override extends Conductor_patch_me
 		}
 	}
 
-	function queueClearMessageLayer(elm)
+	function queuePrependMessageLayerRelatedTags(elm)
 	{
-		var ret2 = %[];
-		ret2.__patch_messagelayer_prelayout_storage = elm.__patch_messagelayer_prelayout_storage;
-		ret2.__patch_messagelayer_prelayout_line = elm.__patch_messagelayer_prelayout_line;
-		ret2.tagname = "cm";
-		this.pendings_prelayout.insert(0, ret2);
+		var prepend = [];
+		prepend.assignStruct(elm.prepend);
+		for (var i = prepend.count - 1; i >= 0; i -= 1)
+		{
+			var ret2 = %[];
+			(Dictionary.assignStruct incontextof ret2)(prepend[i]);
+			ret2.__patch_conductor_storage = elm.__patch_conductor_storage;
+			ret2.__patch_conductor_line = elm.__patch_conductor_line;
+			this.pendings_prelayout.insert(0, ret2);
+		}
 	}
 
-	function queueLineBreak(elm)
+	function queueAppendMessageLayerRelatedTags(elm)
 	{
-		var ret2 = %[];
-		ret2.__patch_messagelayer_prelayout_storage = elm.__patch_messagelayer_prelayout_storage;
-		ret2.__patch_messagelayer_prelayout_line = elm.__patch_messagelayer_prelayout_line;
-		ret2.tagname = "l";
-		this.pendings_prelayout.insert(0, ret2);
-	}
-
-	function queuePageBreak(elm)
-	{
-		var ret2 = %[];
-		ret2.__patch_messagelayer_prelayout_storage = elm.__patch_messagelayer_prelayout_storage;
-		ret2.__patch_messagelayer_prelayout_line = elm.__patch_messagelayer_prelayout_line;
-		ret2.tagname = "p";
-		this.pendings_prelayout.insert(0, ret2);
+		var append = [];
+		append.assignStruct(elm.append);
+		for (var i = append.count - 1; i >= 0; i -= 1)
+		{
+			var ret2 = %[];
+			(Dictionary.assignStruct incontextof ret2)(append[i]);
+			ret2.__patch_conductor_storage = elm.__patch_conductor_storage;
+			ret2.__patch_conductor_line = elm.__patch_conductor_line;
+			this.pendings_prelayout.insert(0, ret2);
+		}
 	}
 
 	function onTag(elm)

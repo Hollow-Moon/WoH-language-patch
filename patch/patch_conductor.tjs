@@ -161,9 +161,57 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 
 	var patch_conductor_temp_array = [];
 	var patch_conductor_temp_array2 = [];
+	var patch_conductor_messagelayer_tags = [
+		"font",
+		"deffont",
+		"resetfont",
+		"italic",
+		"i",
+		"/i",
+		"rf",
+		"l",
+		"lr",
+		"r",
+@if(0)
+		"p",
+		"pg",
+		"cm",
+@endif
+@if(0)
+		"graph",
+		"hch",
+		"ruby",
+		"style",
+		"defstyle",
+		"resetstyle",
+		"link",
+		"endlink",
+		"button",
+		"edit",
+		"checkbox",
+		"commit",
+		"timeout",
+		"ctimeout",
+		"wheel",
+		"cwheel",
+		"click",
+		"cclick",
+		"current",
+		"ct",
+		"er",
+		"indent",
+		"endindent",
+		"locate",
+		"glyph",
+		"s",
+		"laycount",
+		"mappfont",
+@endif
+	];
 	function getNextTag()
 	{
 		var ret = super.getNextTag(...);
+		var patch_conductor_messagelayer_tags = this.patch_conductor_messagelayer_tags;
 		if (this.processSpecialTags)
 		{
 			var conductor_split_tags = [];
@@ -173,14 +221,30 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 				temp_text.clear();
 				var save_curStorage = this.curStorage;
 				var save_curLine = this.curLine;
-				var has_l = false;
-				var has_p = false;
-				var has_cm = false;
-				var has_r = 0;
+				var messagelayer_tag_prepend = [];
+				var messagelayer_tag_append = [];
 				while (ret !== void)
 				{
 					patch_conductor_temp_array.assign(ret);
-					if (!has_l && !has_p && !has_cm)
+					if (patch_conductor_messagelayer_tags.find(ret.tagname) !== -1)
+					{
+						{
+							var messagelayer_tag_container = %[];
+							(Dictionary.assignStruct incontextof messagelayer_tag_container)(ret);
+							ret = super.getNextTag(...);
+							messagelayer_tag_prepend.add(messagelayer_tag_container);
+							continue;
+						}
+					}
+					break;
+				}
+				while (ret !== void)
+				{
+					patch_conductor_temp_array.assign(ret);
+					if (patch_conductor_messagelayer_tags.find(ret.tagname) !== -1)
+					{
+						break;
+					}
 					{
 						if (ret.tagname === "ch")
 						{
@@ -201,102 +265,102 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 								continue;
 							}
 						}
-						else if (ret.tagname === "l")
-						{
-							// tagname only
-							if (patch_conductor_temp_array.count === 2)
-							{
-								has_l = true;
-								ret = super.getNextTag(...);
-								continue;
-							}
-						}
-						else if (ret.tagname === "lr")
-						{
-							// tagname only
-							if (patch_conductor_temp_array.count === 2)
-							{
-								has_l = true;
-								has_r += 1;
-								ret = super.getNextTag(...);
-								continue;
-							}
-						}
-						else if (ret.tagname === "p")
-						{
-							// tagname only
-							if (patch_conductor_temp_array.count === 2)
-							{
-@if(0)
-								has_p = true;
-								ret = super.getNextTag(...);
-								continue;
-@endif
-								break;
-							}
-						}
-						else if (ret.tagname === "pg")
-						{
-							// tagname only
-							if (patch_conductor_temp_array.count === 2)
-							{
-@if(0)
-								has_p = true;
-								has_cm = true;
-								ret = super.getNextTag(...);
-								continue;
-@endif
-								break;
-							}
-						}
-						else if (ret.tagname === "cm")
-						{
-							// tagname only
-							if (patch_conductor_temp_array.count === 2)
-							{
-@if(0)
-								has_cm = true;
-								ret = super.getNextTag(...);
-								continue;
-@endif
-								break;
-							}
-						}
 					}
-					else
+					break;
+				}
+				// continue to search for appended MessageLayer related tags
+				while (ret !== void)
+				{
+					patch_conductor_temp_array.assign(ret);
+					if (patch_conductor_messagelayer_tags.find(ret.tagname) !== -1)
 					{
-						if (ret.tagname === "r")
 						{
-							// tagname only
-							// additional 'r' after 'l'
-							if (patch_conductor_temp_array.count === 2)
-							{
-								has_r += 1;
-								ret = super.getNextTag(...);
-								continue;
-							}
+							var messagelayer_tag_container = %[];
+							(Dictionary.assignStruct incontextof messagelayer_tag_container)(ret);
+							ret = super.getNextTag(...);
+							messagelayer_tag_append.add(messagelayer_tag_container);
+							continue;
 						}
 					}
 					break;
 				}
-				if (temp_text.count > 0 || has_l || has_p || has_cm || has_r)
+				if (temp_text.count > 0)
 				{
 					var ret2 = %[];
 					ret2.__patch_conductor_storage = save_curStorage;
 					ret2.__patch_conductor_line = save_curLine;
 					ret2.tagname = "ch_patch_conductor_split";
 					ret2.text = temp_text.join("");
-					ret2.lcount = has_l;
-					ret2.pcount = has_p;
-					ret2.cmcount = has_cm;
-					ret2.rcount = has_r;
+@if(0)
+					Debug.message("Submitting text " + ret2.text);
+@endif
+					ret2.append = messagelayer_tag_append;
+@if(0)
+					if (messagelayer_tag_append.count > 0)
+					{
+						var tag_ls = [];
+						for (var i = 0; i < messagelayer_tag_append.count; i += 1)
+						{
+							tag_ls.add(messagelayer_tag_append[i].tagname);
+						}
+						Debug.message("and append tags " + tag_ls.join(","));
+					}
+@endif
+					ret2.prepend = messagelayer_tag_prepend;
+@if(0)
+					if (messagelayer_tag_prepend.count > 0)
+					{
+						var tag_ls = [];
+						for (var i = 0; i < messagelayer_tag_prepend.count; i += 1)
+						{
+							tag_ls.add(messagelayer_tag_prepend[i].tagname);
+						}
+						Debug.message("and prepend tags " + tag_ls.join(","));
+					}
+@endif
 					conductor_split_tags.add(ret2);
+				}
+				else if (messagelayer_tag_append.count > 0)
+				{
+					var ret2 = %[];
+					ret2.__patch_conductor_storage = save_curStorage;
+					ret2.__patch_conductor_line = save_curLine;
+					ret2.tagname = "ch_patch_conductor_messagelayer_tag";
+					{
+						ret2.append = messagelayer_tag_append;
+@if(0)
+						var tag_ls = [];
+						for (var i = 0; i < messagelayer_tag_append.count; i += 1)
+						{
+							tag_ls.add(messagelayer_tag_append[i].tagname);
+						}
+						Debug.message("Submitting tags " + tag_ls.join(","));
+@endif
+					}
+					{
+						ret2.prepend = messagelayer_tag_prepend;
+@if(0)
+						var tag_ls = [];
+						for (var i = 0; i < messagelayer_tag_prepend.count; i += 1)
+						{
+							tag_ls.add(messagelayer_tag_prepend[i].tagname);
+						}
+						Debug.message("and prepend tags " + tag_ls.join(","));
+@endif
+					}
+					conductor_split_tags.add(ret2);
+				}
+				if (temp_text.count > 0 || messagelayer_tag_append.count > 0 || messagelayer_tag_prepend.count > 0)
+				{
 					continue;
 				}
 				break;
 			}
 			if (conductor_split_tags.count > 0)
 			{
+@if(0)
+				Debug.message("End of submission");
+@endif
 				for (var i = conductor_split_tags.count - 1; i >= 0; i -= 1)
 				{
 					this.pendings.insert(0, conductor_split_tags[i]);
@@ -316,12 +380,10 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 		var ret2 = %[];
 		ret2.__patch_conductor_storage = elm.__patch_conductor_storage;
 		ret2.__patch_conductor_line = elm.__patch_conductor_line;
-		ret2.lcount = elm.lcount;
-		ret2.pcount = elm.pcount;
-		ret2.cmcount = elm.cmcount;
-		ret2.rcount = elm.rcount;
 		ret2.tagname = "ch_patch_conductor_split";
 		ret2.text = text;
+		ret2.append = elm.append;
+		ret2.prepend = elm.prepend;
 		this.pendings.insert(0, ret2);
 	}
 
@@ -408,76 +470,79 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 		}
 	}
 
-	function queueClearMessageLayer(elm)
+	function queuePrependMessageLayerRelatedTags(elm)
 	{
-		var ret2 = %[];
-		ret2.__patch_conductor_storage = elm.__patch_conductor_storage;
-		ret2.__patch_conductor_line = elm.__patch_conductor_line;
-		ret2.tagname = "cm";
-		this.pendings.insert(0, ret2);
-	}
-
-	function queueLineBreak(elm)
-	{
-		var ret2 = %[];
-		ret2.__patch_conductor_storage = elm.__patch_conductor_storage;
-		ret2.__patch_conductor_line = elm.__patch_conductor_line;
-		ret2.tagname = "l";
-		this.pendings.insert(0, ret2);
-	}
-
-	function queuePageBreak(elm)
-	{
-		var ret2 = %[];
-		ret2.__patch_conductor_storage = elm.__patch_conductor_storage;
-		ret2.__patch_conductor_line = elm.__patch_conductor_line;
-		ret2.tagname = "p";
-		this.pendings.insert(0, ret2);
-	}
-
-	function queueFormattingBreakTags(elm)
-	{
-		if (elm.cmcount)
+		var prepend = [];
+		prepend.assignStruct(elm.prepend);
+		for (var i = prepend.count - 1; i >= 0; i -= 1)
 		{
-			this.queueClearMessageLayer(elm);
+			var ret2 = %[];
+			(Dictionary.assignStruct incontextof ret2)(prepend[i]);
+			ret2.__patch_conductor_storage = elm.__patch_conductor_storage;
+			ret2.__patch_conductor_line = elm.__patch_conductor_line;
+			this.pendings.insert(0, ret2);
 		}
-		if (elm.rcount)
+	}
+
+	function queueAppendMessageLayerRelatedTags(elm)
+	{
+		var append = [];
+		append.assignStruct(elm.append);
+		for (var i = append.count - 1; i >= 0; i -= 1)
 		{
-			for (var i = 0; i < elm.rcount; i += 1)
+			var ret2 = %[];
+			(Dictionary.assignStruct incontextof ret2)(append[i]);
+			ret2.__patch_conductor_storage = elm.__patch_conductor_storage;
+			ret2.__patch_conductor_line = elm.__patch_conductor_line;
+			this.pendings.insert(0, ret2);
+		}
+	}
+
+	function handleConductorSplit(elm)
+	{
+		var text = elm.text;
+		elm.requeue = true;
+		if (typeof(this.owner.onConductorPreprocessCh) === "Object" && text !== "")
+		{
+			text = this.owner.onConductorPreprocessCh(text, this, elm);
+		}
+		if (elm.requeue)
+		{
+			if (elm.append !== void)
 			{
-				this.queueReline(elm, true, true);
+				this.queueAppendMessageLayerRelatedTags(elm);
+			}
+			this.queueText(text, elm);
+			if (elm.prepend !== void)
+			{
+				this.queuePrependMessageLayerRelatedTags(elm);
 			}
 		}
-		if (elm.lcount)
+		if (typeof(this.owner.onConductorPreprocessChCompletion) === "Object")
 		{
-			this.queueLineBreak(elm);
+			this.owner.onConductorPreprocessChCompletion(this, elm);
 		}
-		if (elm.pcount)
+		return 0;
+	}
+
+	function handleConductorMessageLayerTag(elm)
+	{
 		{
-			this.queuePageBreak(elm);
+			this.queueAppendMessageLayerRelatedTags(elm);
+			this.queuePrependMessageLayerRelatedTags(elm);
 		}
+		return 0;
 	}
 
 	function onTag(elm)
 	{
 		if (elm.tagname === "ch_patch_conductor_split")
 		{
-			var text = elm.text;
-			elm.requeue = true;
-			if (typeof(this.owner.onConductorPreprocessCh) === "Object" && text !== "")
-			{
-				text = this.owner.onConductorPreprocessCh(text, this, elm);
-			}
-			if (elm.requeue)
-			{
-				this.queueFormattingBreakTags(elm);
-				this.queueText(text, elm);
-			}
-			if (typeof(this.owner.onConductorPreprocessChCompletion) === "Object")
-			{
-				this.owner.onConductorPreprocessChCompletion(this, elm);
-			}
-			return 0;
+			return this.handleConductorSplit(elm);
+		}
+		if (elm.tagname === "ch_patch_conductor_messagelayer_tag")
+		{
+			return this.handleConductorMessageLayerTag(elm);
 		}
 		if (elm.tagname === "ch" && elm.__patch_conductor_storage !== void && elm.__patch_conductor_line !== void)
 		{

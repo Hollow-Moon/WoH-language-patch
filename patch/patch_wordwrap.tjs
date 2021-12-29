@@ -5,6 +5,9 @@
 @set(USE_GET_GLYPH_DRAW_RECT=1)
 @endif
 
+@set(DO_WORDWRAP_BENCHMARK=0)
+@set(USE_GET_INDIVIDUAL_CHARS=1)
+
 global.HistoryLayer_patch_wordwrap_original = HistoryLayer;
 class HistoryLayer_patch_wordwrap_override extends HistoryLayer_patch_wordwrap_original
 {
@@ -339,6 +342,10 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 	var char2glyph_cache = %[];
 @endif
 
+@if(USE_GET_INDIVIDUAL_CHARS)
+	var individual_chars_cache = %[];
+@endif
+
 	function gtw_func(font, str, use_char2graph=false)
 	{
 		var res = 0;
@@ -363,6 +370,38 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 			}
 		}
 @endif
+@if(USE_GET_INDIVIDUAL_CHARS)
+		var individual_chars_cache = this.individual_chars_cache;
+		var font_values = [font.face, font.angle, font.bold, font.italic, font.height].join("|");
+		for (var i = 0; i < str.length; i += 1)
+		{
+			var str_char = str[i];
+			var str_key = str_char + "|" + font_values;
+			var str_value = individual_chars_cache[str_key];
+			if (str_value !== void)
+			{
+				res += str_value;
+				continue;
+			}
+@if(USE_GET_GLYPH_DRAW_RECT)
+			var rect = font.getGlyphDrawRect(str_char);
+			if (typeof(rect) === "Object")
+			{
+				str_value = rect.right;
+			}
+			else
+			{
+				str_value = 0;
+			}
+@endif
+@if(!USE_GET_GLYPH_DRAW_RECT)
+			str_value = font.getTextWidth(str_char);
+@endif
+			res += str_value;
+			individual_chars_cache[str_key] = str_value;
+		}
+@endif
+@if(!USE_GET_INDIVIDUAL_CHARS)
 @if(USE_GET_GLYPH_DRAW_RECT)
 		var rect = font.getGlyphDrawRect(str);
 		if (typeof(rect) === "Object")
@@ -372,6 +411,7 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 @endif
 @if(!USE_GET_GLYPH_DRAW_RECT)
 		res += font.getTextWidth(str);
+@endif
 @endif
 		return res;
 	}
@@ -672,6 +712,9 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 
 	function generate_word_wrapping_list(conductor, should_invalidate=true)
 	{
+@if(DO_WORDWRAP_BENCHMARK)
+		var start = System.getTickCount();
+@endif
 		var hlf = this.get_hlf();
 		var mlf = this.get_mlf();
 		var invalidate_wordcache = should_invalidate ? this.check_word_length_cache(hlf, mlf, true) : false;
@@ -769,6 +812,10 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 		{
 			global.System.doCompact(global.clIdle);
 		}
+@if(DO_WORDWRAP_BENCHMARK)
+		var end = System.getTickCount();
+		Debug.message("Wordwrap was calculated in " + (end - start) + "ms");
+@endif
 	}
 
 	function onNewLineWordWrapSpace(linenum)

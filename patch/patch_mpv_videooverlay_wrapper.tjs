@@ -308,7 +308,9 @@ class VideoOverlay
 	 */
 	function setSegmentLoop(comeFrame, goFrame)
 	{
-
+		var fps = this.mp.get_property("track-list/" + this.mp.get_property("vid") + "/demux-fps");
+		this.mp.set_property("ab-loop-a", comeFrame / fps);
+		this.mp.set_property("ab-loop-b", goFrame / fps);
 	}
 
 	/**
@@ -319,7 +321,8 @@ class VideoOverlay
 	 */
 	function cancelSegmentLoop()
 	{
-
+		this.mp.set_property("ab-loop-a", "no");
+		this.mp.set_property("ab-loop-b", "no");
 	}
 
 	/**

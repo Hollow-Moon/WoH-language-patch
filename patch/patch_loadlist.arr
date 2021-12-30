@@ -1,5 +1,6 @@
 ﻿[
-	["System.setArgument('-graphicsystem', 'drawdevice');", , [["System.setArgument", , "==="]]],
+	["System.setArgument('-graphicsystem', 'drawdevice');", , [["System.setArgument", , "==="], ["Canvas", , "==="]],, "!USE_GPU_LAYER"],
+	["System.setArgument('-graphicsystem', 'canvas');", , [["System.setArgument", , "==="], ["Canvas", , "==="]],, "USE_GPU_LAYER"],
 	"patch_kirikiroid.tjs",
 	"patch_kirikirisdl2.tjs",
 	["patch_using_kirikiri2_diagnostic.tjs", ,,, "GAME_FATE"],
@@ -89,6 +90,7 @@
 	"patch_dictionary_polyfill.tjs",
 	["patch_prerendered_font.tjs", ,,, "PRERENDERED_FONTS"],
 	["patch_async_image_load.tjs", , [["Bitmap", , "==="], ["Bitmap.loadAsync", , "==="]],, "ASYNC_IMAGE_LOAD"],
+	["patch_gpu_layer.tjs", , [["BitmapLayerTreeOwner", , "==="], ["Canvas", , "==="]],, "USE_GPU_LAYER"],
 	"patch_font_wrapper.tjs",
 	"patch_layer.tjs",
 	["patch_movie.tjs", ,,, "GAME_FATE||GAME_FHAT"],

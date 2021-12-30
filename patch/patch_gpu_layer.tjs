@@ -1,0 +1,320 @@
+﻿
+class WindowShimBitmapLayerTreeOwner extends BitmapLayerTreeOwner
+{
+	var window = void;
+	var texture = void;
+	function WindowShimBitmapLayerTreeOwner(window)
+	{
+		this.window = window;
+		super.BitmapLayerTreeOwner();
+	}
+
+	function get_texture()
+	{
+		var primaryLayer = this.primaryLayer;
+		if (typeof(primaryLayer) === "Object" && primaryLayer !== null)
+		{
+
+		}
+		else
+		{
+			Debug.message("no primary layer");
+			return;
+		}
+		if (texture === void)
+		{
+			texture = new Offscreen(this.width, this.height);
+			texture.copyRect(0, 0, this.bitmap, 0, 0, this.width, this.height);
+			this.clearDirtyRect();
+		}
+		else
+		{
+			if (texture.width != this.width || texture.height != this.height)
+			{
+				invalidate texture;
+				texture = new Offscreen(this.width, this.height);
+				texture.copyRect(0, 0, this.bitmap, 0, 0, this.width, this.height);
+				this.clearDirtyRect();
+			}
+			else
+			{
+				if (this.isUpdated)
+				{
+					texture.copyRect(0, 0, this.bitmap, 0, 0, this.width, this.height);
+					//var rect = this.dirtyRect;
+					//texture.copyRect(rect.left, rect.top, this.bitmap, rect);
+					//this.clearDirtyRect();
+				}
+			}
+		}
+		return texture;
+	}
+
+	function draw()
+	{
+		var canvas = this.window.canvas;
+		//canvas.clearColor = 0xff000000;
+		canvas.renderTarget = void;
+		canvas.enableClipRect = false;
+		//canvas.fill(300, 300, 0xff000000);
+		canvas.clearColor = 0xffFFFFFF;
+		canvas.clear();
+		canvas.blendMode = bmOpaque;
+		canvas.a_opacity = 1.0;
+
+		canvas.save();
+		canvas.matrix.reset();
+		var texture = this.get_texture();
+		if (texture !== void)
+		{
+			canvas.drawTexture(texture);
+		}
+		canvas.restore();
+		//canvas.fill(300, 300, 0xff000000);
+		canvas.flush();
+	}
+
+	var last_cursor_x = 0;
+	var last_cursor_y = 0;
+	function onGetCursorPos(x, y)
+	{
+		// Bad API design. You can't write to pointer / pass by reference in TJS.
+	}
+
+	function onSetCursorPos(x, y)
+	{
+		this.last_cursor_x = x;
+		this.last_cursor_y = y;
+	}
+
+	function onChangeLayerImage()
+	{
+		// stub
+	}
+
+	function onDisableAttentionPoint()
+	{
+		// stub
+	}
+
+	function onReleaseMouseCapture()
+	{
+		// stub
+	}
+
+	function onResetImeMode()
+	{
+		// stub
+	}
+
+	function onResizeLayer(w, h)
+	{
+		// stub
+	}
+
+	function onSetAttentionPoint(layer, x, y)
+	{
+		// stub
+	}
+
+	function onSetHintText(sender, hint)
+	{
+		// stub
+	}
+
+	function onSetImeMode(mode)
+	{
+		// stub
+	}
+
+	function onSetMouseCursor(cursor)
+	{
+		// stub
+	}
+}
+
+global.Window_patch_gpu_layer_original = Window;
+class Window_patch_gpu_layer_override extends Window_patch_gpu_layer_original
+{
+	var bitmap_layer_tree_owner = void;
+	function Window_patch_gpu_layer_override()
+	{
+		{
+			bitmap_layer_tree_owner = new WindowShimBitmapLayerTreeOwner(this);
+		}
+		super.Window(...);
+	}
+
+	property primaryLayer
+	{
+		getter
+		{
+			if (typeof(this.canvas) === "Object" && this.canvas !== null && typeof(this.bitmap_layer_tree_owner) === "Object")
+			{
+				return this.bitmap_layer_tree_owner.primaryLayer;
+			}
+			return super.primaryLayer;
+		}
+	}
+
+	property focusedLayer
+	{
+		getter
+		{
+			if (typeof(this.canvas) === "Object" && this.canvas !== null && typeof(this.bitmap_layer_tree_owner) === "Object")
+			{
+				return this.bitmap_layer_tree_owner.focusedLayer;
+			}
+			return super.focusedLayer;
+		}
+	}
+
+	function Window()
+	{
+		Window_patch_gpu_layer_override(...);
+	}
+
+	function onDraw()
+	{
+		if (typeof(this.canvas) === "Object" && this.canvas !== null && typeof(this.bitmap_layer_tree_owner) === "Object")
+		{
+			this.bitmap_layer_tree_owner.draw();
+		}
+@if(0)
+		return super.onDraw(...);
+@endif
+	}
+
+	function onMouseDown(x, y, button, shift)
+	{
+		if (typeof(this.canvas) === "Object" && this.canvas !== null && typeof(this.bitmap_layer_tree_owner) === "Object")
+		{
+			bitmap_layer_tree_owner.fireMouseDown(x, y, button, shift);
+		}
+		return super.onMouseDown(...);
+	}
+
+	function onMouseUp(x, y, button, shift)
+	{
+		if (typeof(this.canvas) === "Object" && this.canvas !== null && typeof(this.bitmap_layer_tree_owner) === "Object")
+		{
+			bitmap_layer_tree_owner.fireMouseUp(x, y, button, shift);
+		}
+		return super.onMouseUp(...);
+	}
+
+	function onMouseMove(x, y, shift)
+	{
+		if (typeof(this.canvas) === "Object" && this.canvas !== null && typeof(this.bitmap_layer_tree_owner) === "Object")
+		{
+			bitmap_layer_tree_owner.onSetCursorPos(x, y);
+		}
+		return super.onMouseMove(...);
+	}
+
+	function onMouseWheel(shift, delta, x, y)
+	{
+		if (typeof(this.canvas) === "Object" && this.canvas !== null && typeof(this.bitmap_layer_tree_owner) === "Object")
+		{
+			bitmap_layer_tree_owner.fireMouseWheel(shift, delta, x, y);
+		}
+		return super.onMouseWheel(...);
+	}
+
+	function onMouseLeave()
+	{
+		if (typeof(this.canvas) === "Object" && this.canvas !== null && typeof(this.bitmap_layer_tree_owner) === "Object")
+		{
+			bitmap_layer_tree_owner.fireMouseOutOfWindow();
+		}
+		return super.onMouseLeave(...);
+	}
+
+	function onKeyDown(key, shift)
+	{
+		if (typeof(this.canvas) === "Object" && this.canvas !== null && typeof(this.bitmap_layer_tree_owner) === "Object")
+		{
+			bitmap_layer_tree_owner.fireKeyDown(key, shift);
+		}
+		return super.onKeyDown(...);
+	}
+
+	function onKeyPress(key)
+	{
+		if (typeof(this.canvas) === "Object" && this.canvas !== null && typeof(this.bitmap_layer_tree_owner) === "Object")
+		{
+			bitmap_layer_tree_owner.fireKeyPress(key);
+		}
+		return super.onKeyPress(...);	
+	}
+
+	function onKeyUp(key, shift)
+	{
+		if (typeof(this.canvas) === "Object" && this.canvas !== null && typeof(this.bitmap_layer_tree_owner) === "Object")
+		{
+			bitmap_layer_tree_owner.fireKeyUp(key, shift);
+		}
+		return super.onKeyUp(...);
+	}
+}
+global.Window = Window_patch_gpu_layer_override;
+
+global.Layer_patch_gpu_layer_original = Layer;
+class Layer_patch_gpu_layer_override extends Layer_patch_gpu_layer_original
+{
+	var orig_window = void;
+	property window
+	{
+		getter
+		{
+			return this.orig_window;
+		}
+	}
+
+	var orig_call_on_paint = false;
+	property callOnPaint
+	{
+		getter
+		{
+			return this.orig_call_on_paint;
+		}
+		setter(v)
+		{
+			this.orig_call_on_paint = !!v;
+		}
+	}
+
+	function Layer_patch_gpu_layer_override(window, parent)
+	{
+		this.orig_window = window;
+		if (typeof(window.bitmap_layer_tree_owner) === "Object" && window.bitmap_layer_tree_owner !== null)
+		{
+			super.Layer(window.bitmap_layer_tree_owner, parent);
+		}
+		else
+		{
+			super.Layer(window, parent);
+		}	
+	}
+
+	function Layer()
+	{
+		Layer_patch_gpu_layer_override(...);
+	}
+
+	function update()
+	{
+@if(0)
+		var ret = super.update(...);
+@endif
+		if (super.callOnPaint)
+		{
+			orig_call_on_paint = true;
+			super.callOnPaint = false;
+		}
+@if(0)
+		return ret;
+@endif
+	}
+}
+global.Layer = Layer_patch_gpu_layer_override;

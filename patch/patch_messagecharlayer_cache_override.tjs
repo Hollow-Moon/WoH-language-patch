@@ -441,13 +441,12 @@ class MessageLayer_patch_messagecharlayer_cache_override_override extends Messag
 		return charlayer;
 	}
 
-	function cacheCharLayerFromText(text)
+	function cacheCharLayerFromText(text, italic=false)
 	{
 		for (var i = 0, internal_forloop_count = text.length; i < internal_forloop_count; i += 1)
 		{
 			var ch = text[i];
-			this.cacheCharLayerFromCh(void, ch, false, false, false);
-			this.cacheCharLayerFromCh(void, ch, false, false, true);
+			this.cacheCharLayerFromCh(void, ch, false, false, italic);
 		}
 	}
 }

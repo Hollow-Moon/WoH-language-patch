@@ -801,7 +801,12 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 				for (var i = 0, internal_forloop_count = word_lines_needed.count; i < internal_forloop_count; i += 1)
 				{
 					var word_tag = word_lines_needed[i];
-					cclft(word_tag.text, 1);
+					cclft(word_tag.text, false);
+				}
+				for (var i = 0, internal_forloop_count = word_lines_needed.count; i < internal_forloop_count; i += 1)
+				{
+					var word_tag = word_lines_needed[i];
+					cclft(word_tag.text, true);
 				}
 			}
 		}

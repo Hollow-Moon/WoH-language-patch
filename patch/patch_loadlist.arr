@@ -4,6 +4,7 @@
 	"patch_kirikiroid.tjs",
 	"patch_kirikirisdl2.tjs",
 	["patch_using_kirikiri2_diagnostic.tjs", ,,, "GAME_FATE"],
+	["try {Plugins.unlink('dirlist.dll');} catch {};", , [["getDirList", , "==="]]],
 	["krmemplugin.dll", , "typeof(global.Plugins.krmemplugin_is_ready)!=='Integer'", true, "USE_KRMEMPLUGIN"],
 	["global.Plugins.prepare_krmemplugin();", , "typeof(global.Plugins.krmemplugin_is_ready)==='Integer'&&!global.Plugins.krmemplugin_is_ready"],
 	"patch_storages.tjs",

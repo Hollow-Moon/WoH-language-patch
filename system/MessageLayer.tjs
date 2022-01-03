@@ -2596,17 +2596,9 @@ class MessageLayer extends KAGLayer
 		var this_charlayer;
 		with(this_charlayer = getCharLayer(currentLine, currentColumn))
 		{
-			if(ischar)
-			{
-				if(edge)
-					.drawGraphWithEdge(storage, key, chColor, edgeEmphasis, edgeColor, edgeExtent);
-				else if(shadow)
-					.drawGraphWithShadow(storage, key, chColor, shadowColor, shadowOffsetX, shadowOffsetY);
-				else
-					.drawGraph(storage, key, chColor);
-			}
-			else
-				.drawGraph(storage, key);
+			this.cacheCharLayerFromCh(this_charlayer, storage, false, true, false, ischar, key);
+			this_charlayer.currentLine = currentLine;
+			this_charlayer.currentColumn = currentColumn;
 
 			if(vertical)
 @if(!SCALE_USING_FLOATING_POINT)

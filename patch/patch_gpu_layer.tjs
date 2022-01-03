@@ -1,4 +1,15 @@
 ﻿
+
+function TVP_RGB2COLOR(r, g, b)
+{
+    return ((((r)<<16) + ((g)<<8) + (b)) | 0xff000000);
+}
+
+function TVP_RGBA2COLOR(r, g, b, a)
+{
+    return (((a)<<24) + (((r)<<16) + ((g)<<8) + (b)));
+}
+
 class WindowShimBitmapLayerTreeOwner extends BitmapLayerTreeOwner
 {
 	var window = void;
@@ -54,16 +65,16 @@ class WindowShimBitmapLayerTreeOwner extends BitmapLayerTreeOwner
 	{
 		var canvas = this.window.canvas;
 		//canvas.clearColor = 0xff000000;
+		canvas.matrix.reset();
 		canvas.renderTarget = void;
 		canvas.enableClipRect = false;
-		//canvas.fill(300, 300, 0xff000000);
-		canvas.clearColor = 0xffFFFFFF;
+		canvas.fill(canvas.width, canvas.height, 0xffFFFFFF);
+		//canvas.clearColor = 0xffFFFFFF;
 		canvas.clear();
 		canvas.blendMode = bmOpaque;
 		canvas.a_opacity = 1.0;
 
 		canvas.save();
-		canvas.matrix.reset();
 		var texture = this.get_texture();
 		if (texture !== void)
 		{
@@ -167,6 +178,15 @@ class Window_patch_gpu_layer_override extends Window_patch_gpu_layer_original
 			}
 			return super.focusedLayer;
 		}
+		setter(v)
+		{
+			if (typeof(this.canvas) === "Object" && this.canvas !== null && typeof(this.bitmap_layer_tree_owner) === "Object")
+			{
+				this.bitmap_layer_tree_owner.focusedLayer = v;
+				return;
+			}
+			super.focusedLayer = v;
+		}
 	}
 
 	function Window()
@@ -207,7 +227,10 @@ class Window_patch_gpu_layer_override extends Window_patch_gpu_layer_original
 	{
 		if (typeof(this.canvas) === "Object" && this.canvas !== null && typeof(this.bitmap_layer_tree_owner) === "Object")
 		{
-			bitmap_layer_tree_owner.onSetCursorPos(x, y);
+			// XXX: this causes segmentation fault!
+@if(0)
+			bitmap_layer_tree_owner.fireMouseMove(x, y, shift);
+@endif
 		}
 		return super.onMouseMove(...);
 	}
@@ -300,6 +323,332 @@ class Layer_patch_gpu_layer_override extends Layer_patch_gpu_layer_original
 	function Layer()
 	{
 		Layer_patch_gpu_layer_override(...);
+	}
+
+@if(0)
+	function GetTypeNameString()
+	{
+		switch(this.type)
+		{
+			case ltBinder:			return "ltBinder";
+			case ltOpaque:			return "ltOpaque";
+			case ltAlpha:			return "ltAlpha";
+			case ltAdditive:		return "ltAdditive";
+			case ltSubtractive:		return "ltSubtractive";
+			case ltMultiplicative:	return "ltMultiplicative";
+			case ltDodge:			return "ltDodge";
+			case ltDarken:			return "ltDarken";
+			case ltLighten:			return "ltLighten";
+			case ltScreen:			return "ltScreen";
+			case ltAddAlpha:		return "ltAddAlpha";
+			case ltPsNormal:		return "PsNormal";
+			case ltPsAdditive:		return "PsAdditive";
+			case ltPsSubtractive:	return "PsSubtractive";
+			case ltPsMultiplicative:return "PsMultiplicative";
+			case ltPsScreen:		return "PsScreen";
+			case ltPsOverlay:		return "PsOverlay";
+			case ltPsHardLight:		return "PsHardLight";
+			case ltPsSoftLight:		return "PsSoftLight";
+			case ltPsColorDodge:	return "PsColorDodge";
+			case ltPsColorDodge5:	return "PsColorDodge5";
+			case ltPsColorBurn:		return "PsColorBurn";
+			case ltPsLighten:		return "PsLighten";
+			case ltPsDarken:		return "PsDarken";
+			case ltPsDifference:	return "PsDifference";
+			case ltPsDifference5:	return "PsDifference5";
+			case ltPsExclusion:		return "PsExclusion";
+
+			default:				return "unknown";
+		}
+	}
+
+	function DumpStructure(level = 0)
+	{
+		var indent = "";
+		for (var i = 0; i < level; i += 1)
+		{
+			indent += "  ";
+		}
+		var name = this.name;
+		if (name == "")
+		{
+			name = "<noname>";
+		}
+
+		var ptr = " " + this;
+		var ptr2 = " (native NOTIMPL)";
+
+		Debug.message(indent + name +
+			ptr + ptr2 +
+			"( " + this.left + "," +
+			this.top + ")-(" + this.right +
+			"," + this.bottom + ") (" +
+			this.width + "x" + this.height +
+			")" + " " +
+			(this.visible ? "visible" : "invisible") +
+			" index=" + this.absolute +
+			(this.provinceImageBuffer ? " p" : "") +
+			" " + this.GetTypeNameString()
+			);
+		level += 1;
+		for (var i = 0, internal_forloop_count = this.children.count; i < internal_forloop_count; i += 1)
+		{
+			this.children[i].DumpStructure(level);
+		}
+	}
+
+	function dump_reimpl()
+	{
+		this.DumpStructure(0);
+	}
+
+
+	property type
+	{
+		getter
+		{
+			return this.typeOriginal;
+		}
+		setter(v)
+		{
+			if (this.typeOriginal != v)
+			{
+				switch (this.typeOriginal)
+				{
+					case ltOpaque:
+					case ltAlpha:
+					case ltAdditive:
+					case ltSubtractive:
+					case ltMultiplicative:
+					case ltDodge:
+					case ltDarken:
+					case ltLighten:
+					case ltScreen:
+					case ltAddAlpha:
+					case ltPsNormal:
+					case ltPsAdditive:
+					case ltPsSubtractive:
+					case ltPsMultiplicative:
+					case ltPsScreen:
+					case ltPsOverlay:
+					case ltPsHardLight:
+					case ltPsSoftLight:
+					case ltPsColorDodge:
+					case ltPsColorDodge5:
+					case ltPsColorBurn:
+					case ltPsLighten:
+					case ltPsDarken:
+					case ltPsDifference:
+					case ltPsDifference5:
+					case ltPsExclusion:
+						this.setInitialImageProperties();
+						break;
+					default:
+						break;
+				}
+				switch (this.typeOriginal)
+				{
+					case ltBinder:
+					case ltOpaque:
+					case ltAlpha:
+					case ltSubtractive:
+					case ltMultiplicative:
+					case ltDarken:
+					case ltPsSubtractive:
+					case ltPsMultiplicative:
+					case ltPsColorBurn:
+					case ltPsDarken:
+						this._neutralColor = this._transparentColor = TVP_RGBA2COLOR(255, 255, 255, 0);
+						break;
+					case ltAdditive:
+					case ltDodge:
+					case ltLighten:
+					case ltScreen:
+					case ltAddAlpha:
+					case ltPsNormal:
+					case ltPsAdditive:
+					case ltPsScreen:
+					case ltPsColorDodge:
+					case ltPsColorDodge5:
+					case ltPsLighten:
+					case ltPsDifference:
+					case ltPsDifference5:
+					case ltPsExclusion:
+						this._neutralColor = this._transparentColor = TVP_RGBA2COLOR(0, 0, 0, 0);
+						break;
+					case ltPsOverlay:
+					case ltPsHardLight:
+					case ltPsSoftLight:
+						this._neutralColor = this._transparentColor = TVP_RGBA2COLOR(128, 128, 128, 0);
+						break;
+					default:
+						break;
+				}
+				switch (this.typeOriginal)
+				{
+					case ltBinder:
+						this._canHaveImage = false;
+						break;
+					case ltOpaque:
+					case ltAlpha:
+					case ltAdditive:
+					case ltSubtractive:
+					case ltMultiplicative:
+					case ltDodge:
+					case ltDarken:
+					case ltLighten:
+					case ltScreen:
+					case ltAddAlpha:
+					case ltPsNormal:
+					case ltPsAdditive:
+					case ltPsSubtractive:
+					case ltPsMultiplicative:
+					case ltPsScreen:
+					case ltPsOverlay:
+					case ltPsHardLight:
+					case ltPsSoftLight:
+					case ltPsColorDodge:
+					case ltPsColorDodge5:
+					case ltPsColorBurn:
+					case ltPsLighten:
+					case ltPsDarken:
+					case ltPsDifference:
+					case ltPsDifference5:
+					case ltPsExclusion:
+						this._canHaveImage = true;
+						break;
+					default:
+						break;
+				}
+			}
+			this.typeOriginal = v;
+		}
+	}
+
+@endif
+
+	var texture = void;
+	function get_texture()
+	{
+		var bitmap = new Bitmap();
+		this.copyToBitmapFromMainImage(this.bitmap);
+		if (texture === void)
+		{
+			texture = new Offscreen(super.width, super.height);
+			texture.copyRect(0, 0, bitmap, 0, 0, super.width, super.height);
+		}
+		else
+		{
+			if (texture.width != super.width || texture.height != super.height)
+			{
+				invalidate texture;
+				texture = new Offscreen(super.width, super.height);
+				texture.copyRect(0, 0, bitmap, 0, 0, super.width, super.height);
+			}
+			else
+			{
+				texture.copyRect(0, 0, bitmap, 0, 0, super.width, super.height);
+			}
+		}
+		invalidate bitmap;
+		return texture;
+	}
+
+	var _inCompletion = false;
+	function BeforeCompletion()
+	{
+		if (this._inCompletion)
+		{
+			return;
+		}
+
+@if(0)
+		if (this.callOnPaint)
+		{
+			this.callOnPaint = false;
+			if (typeof(this.onPaint) === "Object")
+			{
+				this.onPaint();
+			}
+		}
+@endif
+
+		// TODO: transition handling
+
+		for (var i = 0, internal_forloop_count = this.children.count; i < internal_forloop_count; i += 1)
+		{
+			this.children[i].BeforeCompletion();
+		}
+	}
+
+	function AfterCompletion()
+	{
+		if (this._inCompletion)
+		{
+			return;
+		}
+
+		// TODO: transition handling
+
+		for (var i = 0, internal_forloop_count = this.children.count; i < internal_forloop_count; i += 1)
+		{
+			this.children[i].AfterCompletion();
+		}
+	}
+
+	function Draw()
+	{
+		var canvas = this.window.canvas;
+		canvas.save();
+		canvas.matrix.translate(super.left, super.top);
+		var current_cliprect = new Rect(super.clipLeft, super.clipTop, super.clipLeft + super.clipWidth, super.clipTop + super.clipHeight);
+		canvas.clipRect.clip(current_cliprect);
+
+		// draw self
+		canvas.save();
+		canvas.matrix.translate(super.imageLeft, super.imageTop);
+		var texture = this.get_texture();
+		if (texture !== void)
+		{
+			canvas.drawTexture(texture);
+		}
+		canvas.restore();
+
+		// draw children
+		for (var i = 0, internal_forloop_count = this.children.count; i < internal_forloop_count; i += 1)
+		{
+			this.children[i].Draw();
+		}
+
+		// TODO: send completion message
+		canvas.restore();
+	}
+
+	function piledCopy_to_canvas()
+	{
+@if(0)
+		var any_visible = false;
+		for (var i = 0, internal_forloop_count = src.children.count; i < internal_forloop_count; i += 1)
+		{
+			if (src.children[i].visible)
+			{
+				any_visible = true;
+				break;
+			}
+		}
+		if (any_visible == false && this.imageLeft == 0 && this.imageTop == 0 && this.width == src.width && this.height == src.height)
+		{
+			this.assignImages(src);
+			return;
+		}
+@endif
+
+		this.BeforeCompletion();
+		// ...
+		this._inCompletion = true;
+		this.Draw();
+		this._inCompletion = false;
+		this.AfterCompletion();
 	}
 
 	function update()

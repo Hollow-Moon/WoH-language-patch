@@ -1,7 +1,7 @@
 ﻿@call target=*tladata
 *page0|
 ;Ｇ－１
-@bg rule=crossfade time=0 storage=bg01久遠寺邸03居間-(夜隣明)奥扉開 left=-48 top=-48
+@bg left=-48 rule=crossfade storage=bg01久遠寺邸03居間-(夜隣明)奥扉開 time=0 top=-48
 @r
 　わたしは、大雑把に言うとパンだ、と思った。
 ;Ｇ－ａに合流
@@ -12,7 +12,7 @@
 @return
 
 @return
-*tladata
+*tladata:14
 @iscript
 global.__tmp_tla = Scripts.eval('(const) %[
  "baseHeight" => 576,
@@ -27,6 +27,7 @@ global.__tmp_tla = Scripts.eval('(const) %[
  "version" => 1
 ]');
 global.__tla_name = "wik_g-1";
+
 @endscript
 @eval exp=timeline_object.loadByData(global.__tmp_tla,global.__tla_name)
 @return

@@ -23,7 +23,7 @@
 
 ;誤字指摘マクロ
 @macro name=誤?
-@font color=0xFFFF00 italic=true
+@font color=0xFFFF00 italic
 @endmacro
 
 @macro name=?誤
@@ -35,24 +35,24 @@
 @macro name=startdoublemessage
 @laycount messages=2
 @current layer=message1
-@layopt page=%page|fore layer=message0 visible=false
-@layopt page=%page|fore layer=message1 visible=true
-@image page=back layer=base storage=%storage cond='mp.page=="back"&&mp.storage!=""&&mp.time!=""'
-@trans time=%time noback=1 texton=1 cond='mp.page=="back"&&mp.storage!=""&&mp.time!=""'
+@layopt layer=message0 page=%page|fore visible=false
+@layopt layer=message1 page=%page|fore visible
+@image cond=mp.page=="back"&&mp.storage!=""&&mp.time!="" layer=base page=back storage=%storage
+@trans cond=mp.page=="back"&&mp.storage!=""&&mp.time!="" noback=1 texton=1 time=%time
 @endmacro
 
 @macro name=enddoublemessage
 @current layer=message0
-@layopt page=%page|fore layer=message0 visible=true
-@layopt page=%page|fore layer=message1 visible=false
-@trans time=%time noback=1 texton=1 cond='mp.page=="back"&&mp.time!=""'
+@layopt layer=message0 page=%page|fore visible
+@layopt layer=message1 page=%page|fore visible=false
+@trans cond=mp.page=="back"&&mp.time!="" noback=1 texton=1 time=%time
 @laycount messages=1
-@layopt page=back layer=message0 visible=true cond='mp.page=="back"&&mp.time!=""'
+@layopt cond=mp.page=="back"&&mp.time!="" layer=message0 page=back visible
 @endmacro
 
 ;文字をイタリックに
 @macro name=italic
-@font italic=true
+@font italic
 @endmacro
 
 ;元に戻す

@@ -13,9 +13,9 @@
 ;　尚、このシーン上に表示されていない特殊コントロール(スライダーや表示のプレビューのコントロール)については configmenu.tjs 上にコードにて実装しています。初期バージョンでは各シーンのoutに倣ってＹ軸下方向に７ドットだけ動かす演出になっていますので以降変更があった場合はシーンに合わせて別途対応しますので指示下さい(AZ)
 @clall
 ;//コマドリ台詞ON/OFFの設定項目自体を表示するかどうかのフラグ設定(0 or 1)
-@eval exp='cf.visibileRobinSerifButton = 1'
+@eval exp="cf.visibileRobinSerifButton = 1"
 ;@eval exp='Scripts.execStorage("config_system_sub.tjs")'
-@eval exp='startConfig()'
+@eval exp=startConfig()
 ;@call target=*start_config storage=config_system_sub.ks
 ;@call target=*system_load storage=config_system_sub.ks
 @s
@@ -23,88 +23,88 @@
 @pg
 *page1|
 　システム画面です[l][r]
-@playtimeline scene=1 next=0 noclear=1
+@playtimeline next=0 noclear=1 scene=1
 ;出現
 @l
 @r
-@playtimeline scene=2 next=0 noclear=1
+@playtimeline next=0 noclear=1 scene=2
 ;消滅
 @r
 @pg
 *page2|
 　システム画面コンフィグ間遷移[l][r]
-@playtimeline scene=11 next=0 noclear=1
+@playtimeline next=0 noclear=1 scene=11
 ;出現
 @l
 @r
-@playtimeline scene=12 next=0 noclear=1
+@playtimeline next=0 noclear=1 scene=12
 ;消滅
 @r
 @pg
 *page3|
 　メッセージ画面です[l][r]
-@playtimeline scene=3 next=0 noclear=1
+@playtimeline next=0 noclear=1 scene=3
 ;出現
 @l
 @r
-@playtimeline scene=4 next=0 noclear=1
+@playtimeline next=0 noclear=1 scene=4
 ;消滅
 @pg
 *page4|
 　メッセージ画面コンフィグ間遷移[l][r]
-@playtimeline scene=13 next=0 noclear=1
+@playtimeline next=0 noclear=1 scene=13
 ;出現
 @l
 @r
-@playtimeline scene=14 next=0 noclear=1
+@playtimeline next=0 noclear=1 scene=14
 ;消滅
 @pg
 *page5|
 　サウンドエフェクト画面です[l][r]
-@playtimeline scene=7 next=0 noclear=1
+@playtimeline next=0 noclear=1 scene=7
 ;出現
 @l
 @r
-@playtimeline scene=8 next=0 noclear=1
+@playtimeline next=0 noclear=1 scene=8
 ;消滅
 @pg
 *page6|
 　サウンドエフェクト画面コンフィグ間遷移す[l][r]
-@playtimeline scene=17 next=0 noclear=1
+@playtimeline next=0 noclear=1 scene=17
 ;出現
 @l
 @r
-@playtimeline scene=18 next=0 noclear=1
+@playtimeline next=0 noclear=1 scene=18
 ;消滅
 @pg
 *page7|
 　ショートカット画面です[l][r]
-@playtimeline scene=9 next=0 noclear=1
+@playtimeline next=0 noclear=1 scene=9
 ;出現
 @l
 @r
-@playtimeline scene=10 next=0 noclear=1
+@playtimeline next=0 noclear=1 scene=10
 ;消滅
 @pg
 *page8|
 　ショートカット画面コンフィグ間遷移す[l][r]
-@playtimeline scene=19 next=0 noclear=1
+@playtimeline next=0 noclear=1 scene=19
 ;出現
 @l
 @r
-@playtimeline scene=20 next=0 noclear=1
+@playtimeline next=0 noclear=1 scene=20
 ;消滅
 @pg
 *page9|
 　フォント変更ウィンドウです[l][r]
-@playtimeline scene=5 next=0 noclear=1
+@playtimeline next=0 noclear=1 scene=5
 ;出現
 @l
 @r
-@playtimeline scene=6 next=0 noclear=1
+@playtimeline next=0 noclear=1 scene=6
 ;消滅
 　コンフィグ終了画面[l]
-@playtimeline scene=21 next=0 noclear=1
+@playtimeline next=0 noclear=1 scene=21
 ;消滅
 @pg
 *page10|
@@ -42666,6 +42666,7 @@ global.__tmp_tla = Scripts.eval('(const) %[
  "version" => 1
 ]');
 global.__tla_name = "config_system";
+
 @endscript
 @eval exp=timeline_object.loadByData(global.__tmp_tla,global.__tla_name)
 @return

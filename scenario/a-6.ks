@@ -1,20 +1,20 @@
 ﻿@call target=*tladata
 *page0|
-@bg time=100 rule=crossfade storage=black
-@se storage=se01008 volume=100 loop=1
+@bg rule=crossfade storage=black time=100
+@se loop=1 storage=se01008 volume=100
 　電話が鳴った。[l][r]
-@bg textoff=0 rule=crossfade time=200 storage=bg01l久遠寺邸02ロビー-(深夜) left=-481 top=-205 noclear=0
+@bg left=-481 noclear=0 rule=crossfade storage=bg01l久遠寺邸02ロビー-(深夜) textoff=0 time=200 top=-205
 　草十郎にとって二回目にあたる電話の音は、深夜のロビーに寒々しく響き渡った。[l][r]
 　有珠の電話から、まだ数分と経っていない。[l][r]
 　彼女の用件はなんだったのか。[l][r]
-@bg textoff=0 rule=crossfade time=600 storage=bg01l久遠寺邸02ロビー-(深夜) left=-481 top=-692 noclear=0
+@bg left=-481 noclear=0 rule=crossfade storage=bg01l久遠寺邸02ロビー-(深夜) textoff=0 time=600 top=-692
 　ひとり考えこむ草十郎の目を覚ますように、コール音は鳴り響く。
 @pg
 *page1|
-@sestop storage=se01008 time=200 nowait=1
+@sestop nowait=1 storage=se01008 time=200
 @se storage=se10015 volume=100
-@se storage=se01042 volume=40 time=5000 loop=1
-@partbg rule=crossfade time=600 storage=im03黒電話b(深夜) srcleft=52 srctop=94 index=1000 width=384 height=576 center=729 noclear=0 id=pb1
+@se loop=1 storage=se01042 time=5000 volume=40
+@partbg center=729 height=576 id=pb1 index=1000 noclear=0 rule=crossfade srcleft=52 srctop=94 storage=im03黒電話b(深夜) time=600 width=384
 「はい、久遠寺ですが」[l][r]
 「あら、その声は草十郎くん？」[l][r]
 @r
@@ -23,8 +23,8 @@
 @pg
 *page2|
 @clall
-@fadese storage=se01042 volume=60 time=2000
-@dispclock textoff=0 h=11 m=54 left=-1000 top=-350 time=600 effect=屋外深夜
+@fadese storage=se01042 time=2000 volume=60
+@dispclock effect=屋外深夜 h=11 left=-1000 m=54 textoff=0 time=600 top=-350
 「そうですけど。橙子さん、暇なんですか？」[l][r]
 @r
 　たしかもうじき午前零時になるな、と草十郎は時計を確認する。[l][r]
@@ -41,10 +41,10 @@
 「偶然ですね。蒼崎もそんな事を言ってました」
 @pg
 *page5|
-@se storage=se01041 volume=60 delay=200
-@tickclock textoff=0 h=11 m=55
+@se delay=200 storage=se01041 volume=60
+@tickclock h=11 m=55 textoff=0
 「やっぱり？　そうね、こういう時は本当に姉妹だなって思うわ。昔からエンジンかけるタイミングだけは一緒だったから、あの子とは。[l][r]
-　……ところで、蒼崎はやめてって言ったでしょ。私も蒼崎だから、[ruby text=くすぐ char=1]擽ったいのよね、そう言われるの」
+　……ところで、蒼崎はやめてって言ったでしょ。私も蒼崎だから、[ruby char=1 text=くすぐ]擽ったいのよね、そう言われるの」
 @pg
 *page6|
 　言われて、ああ、と草十郎は納得した。[l][r]
@@ -72,8 +72,8 @@
 *page10|
 　嘘のない、親しみのこもった忠告。[l][r]
 　草十郎はそうですか、とだけ答えた。[l][r]
-@se storage=se01041 volume=60 delay=200
-@tickclock textoff=0 h=11 m=56
+@se delay=200 storage=se01041 volume=60
+@tickclock h=11 m=56 textoff=0
 　やっぱり彼女も無関係である事を望んでいる。[l][r]
 　それが彼女たちなりの誠意である事は、草十郎にも理解できる。[l][r]
 @r
@@ -86,7 +86,7 @@
 @pg
 *page12|
 　くす、と橙子は笑う。[l][r]
-　それは、はじめから[ruby text=・・ o2o=1]それを伝える事だけが目的だと示す笑みだった。
+　それは、はじめから[ruby o2o=1 text=・・]それを伝える事だけが目的だと示す笑みだった。
 @pg
 *page13|
 「さっき久遠寺さんに会ってきたの。[l][r]
@@ -107,8 +107,8 @@
 　だが、草十郎はすべて現実だと受け入れた。[l][r]
 　橙子の言葉に嘘はない。[l][r]
 　都会の犬が人を襲うなんて話は聞かないけれど、先ほどの有珠の電話にあった違和感―――騒がしかった雑音の正体に、草十郎はようやく思い至った。[l][r]
-@se storage=se01041 volume=60 delay=200
-@tickclock textoff=0 h=11 m=57
+@se delay=200 storage=se01041 volume=60
+@tickclock h=11 m=57 textoff=0
 　あれは間違いなく、群れをなして獲物を囲む、犬たちの唸り声だったのだ。
 @pg
 *page16|
@@ -141,8 +141,8 @@
 @pg
 *page20|
 「それで、場所は？」[l][r]
-@se storage=se01041 volume=60 delay=200
-@tickclock textoff=0 h=11 m=58
+@se delay=200 storage=se01041 volume=60
+@tickclock h=11 m=58 textoff=0
 @r
 　橙子の問いには答えず、草十郎はそれだけを聞き返した。[l][r]
 　覚悟なんて一生できないし、後悔だって尽きる事はない。[l][r]
@@ -171,24 +171,24 @@
 ;SE電話の切れる音
 　電話はそこで切れた。[l][r]
 　橙子が切ったのではなく、草十郎が切ったのだ。[l][r]
-@se storage=se10083 volume=100 pan=-30
-@sestop storage=se10083 time=4000 nowait=1
+@se pan=-30 storage=se10083 volume=100
+@sestop nowait=1 storage=se10083 time=4000
 　地図を頭にいれて走りだす。[l][r]
-@se storage=se10084 volume=100 pan=-50
+@se pan=-50 storage=se10084 volume=100
 　上着を取りにいく時間も惜しい。草十郎は着の身着のままで、まだ雪の残る冬の夜へと駆け出していく。
 @pg
 *page25|
 　ホールには放り出されたままの地図だけが残っていた。[l][r]
 　開かれたページには三咲市の地図がある。[l][r]
 　この洋館から森林公園まで、距離にして約１５キロ。[l][r]
-@se storage=se01041 volume=60 delay=200
-@tickclock textoff=0 h=11 m=59
-@sestop storage=se01042 time=3000 nowait=1
+@se delay=200 storage=se01041 volume=60
+@tickclock h=11 m=59 textoff=0
+@sestop nowait=1 storage=se01042 time=3000
 　直線で結べばその三分の一もないというのに、都会の道は本当に不便だ。[l][r]
-　[ruby text=ここ char=2]都市では十センチもない紙上の距離が何倍にもなってしまう事を、草十郎ははじめて呪いたくなった。
+　[ruby char=2 text=ここ]都市では十センチもない紙上の距離が何倍にもなってしまう事を、草十郎ははじめて呪いたくなった。
 @pg
 *page26|
-@bg time=1500 rule=crossfade storage=black
+@bg rule=crossfade storage=black time=1500
 @wait canskip=0 time=1500
 @return
 *tladata
@@ -206,6 +206,7 @@ global.__tmp_tla = Scripts.eval('(const) %[
  "version" => 1
 ]');
 global.__tla_name = "a-6";
+
 @endscript
 @eval exp=timeline_object.loadByData(global.__tmp_tla,global.__tla_name)
 @return

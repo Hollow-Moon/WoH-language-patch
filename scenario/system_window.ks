@@ -4,7 +4,7 @@
 ;ゲームを終了しますか？やタイトルへ戻りますか？などに使用[l]
 ;上「出現」　下「消滅」
 @pauseaction
-@playtimeline scene=7 nopgbg=1 next=0 texton=1 noclear=1
+@playtimeline next=0 noclear=1 nopgbg=1 scene=7 texton=1
 @s
 @l
 @r
@@ -16,8 +16,8 @@
 @jump target=*close
 @r
 *close
-@playtimeline scene=6 nopgbg=1 noclear=1 next=0 texton=1
-@eval exp="tf.do_askyesno=0"
+@playtimeline next=0 noclear=1 nopgbg=1 scene=6 texton=1
+@eval exp=tf.do_askyesno=0
 @resumeaction
 @return
 *tladata
@@ -762,6 +762,7 @@ global.__tmp_tla = Scripts.eval('(const) %[
  "version" => 1
 ]');
 global.__tla_name = "system_window";
+
 @endscript
 @eval exp=timeline_object.loadByData(global.__tmp_tla,global.__tla_name)
 @return

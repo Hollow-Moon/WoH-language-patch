@@ -1,9 +1,9 @@
 ﻿@call target=*tladata
 *page0|
-@bg time=100 rule=crossfade storage=black
+@bg rule=crossfade storage=black time=100
 @stopaction
 @invisibleframe
-@partbg rule=crossfade time=800 storage=im02空(曇り) srcleft=542 index=1000 width=522 height=576 center=748 id=pb1 bgstorage=black
+@partbg bgstorage=black center=748 height=576 id=pb1 index=1000 rule=crossfade srcleft=542 storage=im02空(曇り) time=800 width=522
 @r
 @r
 @r
@@ -12,32 +12,32 @@
 　彼女がはじめて命に[ruby text=ふ]触れた、[ruby char=1 text=しず]厳かな朝の出来事だ。
 @pg
 *page1|
-@play delay=1000 storage=m19 volume=100 time=0
-@bg time=1200 rule=crossfade storage=white
+@play delay=1000 storage=m19 time=0 volume=100
+@bg rule=crossfade storage=white time=1200
 @stopaction
 @wait canskip=0 time=2000
 @clall
-@bg page=back storage=im空絵a noclear=0
-@fgact textoff=0 page=back props=-storage,center,vcenter,opacity,-visible keys=(0,0,n,im空絵b,512,288,0,1)(450,,l,,,,,)(600,,n,,,,255,)(1050,,l,,,,,)(1200,,n,,,,0,)(1800,,,,,,,) loop=1 storage=im空絵b
-@fgact textoff=0 page=back props=-storage,center,vcenter,absolute,opacity,-visible keys=(0,0,n,im空絵c,512,288,1100,0,1)(1050,,l,,,,,,)(1200,,n,,,,,255,)(1650,,l,,,,,,)(1800,,n,,,,,0,) loop=1 storage=im空絵c
-@trans textoff=0 rule=crossfade time=1200 nowait=0
+@bg noclear=0 page=back storage=im空絵a
+@fgact keys=(0,0,n,im空絵b,512,288,0,1)(450,,l,,,,,)(600,,n,,,,255,)(1050,,l,,,,,)(1200,,n,,,,0,)(1800,,,,,,,) loop=1 page=back props=-storage,center,vcenter,opacity,-visible storage=im空絵b textoff=0
+@fgact keys=(0,0,n,im空絵c,512,288,1100,0,1)(1050,,l,,,,,,)(1200,,n,,,,,255,)(1650,,l,,,,,,)(1800,,n,,,,,0,) loop=1 page=back props=-storage,center,vcenter,absolute,opacity,-visible storage=im空絵c textoff=0
+@trans nowait=0 rule=crossfade textoff=0 time=1200
 　彼女の家は山の[ruby char=2 text=ちゅうふく]中腹にあった。[l][r]
 @r
 　まわりは何もない荒れ地。[l][r]
 　おとなりに住む[ruby char=3 text=おさななじ]幼馴染みなんて望むべくもなく、学校に通うのも、遊びに出かけるのも不便なコトこの上ない。[l][r]
-@bg page=back storage=im森絵a noclear=0
-@fgact textoff=0 page=back props=-storage,center,vcenter,opacity,-visible keys=(0,0,n,im森絵b,512,288,0,1)(450,,l,,,,,)(600,,n,,,,255,)(1050,,l,,,,,)(1200,,n,,,,0,)(1800,,,,,,,) loop=1 storage=im森絵b
-@fgact textoff=0 page=back props=-storage,center,vcenter,absolute,opacity,-visible keys=(0,0,n,im森絵c,512,288,1100,0,1)(1050,,l,,,,,,)(1200,,n,,,,,255,)(1650,,l,,,,,,)(1800,,n,,,,,0,) loop=1 storage=im森絵c
-@trans textoff=0 rule=crossfade time=1200 nowait=1
+@bg noclear=0 page=back storage=im森絵a
+@fgact keys=(0,0,n,im森絵b,512,288,0,1)(450,,l,,,,,)(600,,n,,,,255,)(1050,,l,,,,,)(1200,,n,,,,0,)(1800,,,,,,,) loop=1 page=back props=-storage,center,vcenter,opacity,-visible storage=im森絵b textoff=0
+@fgact keys=(0,0,n,im森絵c,512,288,1100,0,1)(1050,,l,,,,,,)(1200,,n,,,,,255,)(1650,,l,,,,,,)(1800,,n,,,,,0,) loop=1 page=back props=-storage,center,vcenter,absolute,opacity,-visible storage=im森絵c textoff=0
+@trans nowait=1 rule=crossfade textoff=0 time=1200
 　けれど水も星も綺麗な、ちょっとの不満と大きな安らぎのある、思い出の家だった。
 @pg
 *page2|
 　もっとも、それは夏だけの話。[l][r]
 @wt canskip=0
-@bg page=back storage=im木絵a noclear=0
-@fgact textoff=0 page=back props=-storage,center,vcenter,opacity,-visible keys=(0,0,n,im木絵b,512,288,0,1)(450,,l,,,,,)(600,,n,,,,255,)(1050,,l,,,,,)(1200,,n,,,,0,)(1800,,,,,,,) loop=1 storage=im木絵b
-@fgact textoff=0 page=back props=-storage,center,vcenter,absolute,opacity,-visible keys=(0,0,n,im木絵c,512,288,1100,0,1)(1050,,l,,,,,,)(1200,,n,,,,,255,)(1650,,l,,,,,,)(1800,,n,,,,,0,) loop=1 storage=im木絵c
-@trans textoff=0 rule=crossfade time=2000 nowait=1
+@bg noclear=0 page=back storage=im木絵a
+@fgact keys=(0,0,n,im木絵b,512,288,0,1)(450,,l,,,,,)(600,,n,,,,255,)(1050,,l,,,,,)(1200,,n,,,,0,)(1800,,,,,,,) loop=1 page=back props=-storage,center,vcenter,opacity,-visible storage=im木絵b textoff=0
+@fgact keys=(0,0,n,im木絵c,512,288,1100,0,1)(1050,,l,,,,,,)(1200,,n,,,,,255,)(1650,,l,,,,,,)(1800,,n,,,,,0,) loop=1 page=back props=-storage,center,vcenter,absolute,opacity,-visible storage=im木絵c textoff=0
+@trans nowait=1 rule=crossfade textoff=0 time=2000
 　山中の冬は寒すぎて、朝はいつも辛かった。[l][r]
 　お父さんは自動車で駅まで送ってくれるけれど、[r]
 　車の窓はびっしり[ruby text=しも]霜だらけで、出かける何十分か前にエンジンをかけないと走りだせない。
@@ -46,10 +46,10 @@
 @textoff
 @visibleframe
 @wt canskip=0
-@bg page=back storage=im家絵a noclear=0
-@fgact textoff=0 page=back props=-storage,center,vcenter,opacity,-visible keys=(0,0,n,im家絵b,512,288,0,1)(450,,l,,,,,)(600,,n,,,,255,)(1050,,l,,,,,)(1200,,n,,,,0,)(1800,,,,,,,) loop=1 storage=im家絵b
-@fgact textoff=0 page=back props=-storage,center,vcenter,absolute,opacity,-visible keys=(0,0,n,im家絵c,512,288,1100,0,1)(1050,,l,,,,,,)(1200,,n,,,,,255,)(1650,,l,,,,,,)(1800,,n,,,,,0,) loop=1 storage=im家絵c
-@trans textoff=0 rule=crossfade time=2000 nowait=1
+@bg noclear=0 page=back storage=im家絵a
+@fgact keys=(0,0,n,im家絵b,512,288,0,1)(450,,l,,,,,)(600,,n,,,,255,)(1050,,l,,,,,)(1200,,n,,,,0,)(1800,,,,,,,) loop=1 page=back props=-storage,center,vcenter,opacity,-visible storage=im家絵b textoff=0
+@fgact keys=(0,0,n,im家絵c,512,288,1100,0,1)(1050,,l,,,,,,)(1200,,n,,,,,255,)(1650,,l,,,,,,)(1800,,n,,,,,0,) loop=1 page=back props=-storage,center,vcenter,absolute,opacity,-visible storage=im家絵c textoff=0
+@trans nowait=1 rule=crossfade textoff=0 time=2000
 「　　、キーを回してきてくれるかい？」[l][r]
 @r
 　お父さんが食後のコーヒーを楽しんでいる時、外に出て車のエンジンをかけるのが彼女の日課だった。
@@ -71,12 +71,12 @@
 　数分後。[l]お父さんが車のボンネットを開けると、そこにはひとつの命があった。[l][r]
 @stoptrans
 @clall
-@bg page=back storage=im12猫の親子 noclear=0
-@fg opacity=0 storage=red center=512 vcenter=288 index=2000
-@fg opacity=0 storage=white center=512 vcenter=288 index=3000
-@fgact textoff=0 page=back props=-storage,center,vcenter,opacity,-visible keys=(0,0,n,im12猫の親子b,512,288,0,1)(450,,l,,,,,)(600,,n,,,,255,)(1050,,l,,,,,)(1200,,n,,,,0,)(1800,,,,,,,) loop=1 storage=im12猫の親子b
-@fgact textoff=0 page=back props=-storage,center,vcenter,absolute,opacity,-visible keys=(0,0,n,im12猫の親子c,512,288,1100,0,1)(1050,,l,,,,,,)(1200,,n,,,,,255,)(1650,,l,,,,,,)(1800,,n,,,,,0,) loop=1 storage=im12猫の親子c
-@trans textoff=0 rule=crossfade time=5000 nowait=1
+@bg noclear=0 page=back storage=im12猫の親子
+@fg center=512 index=2000 opacity=0 storage=red vcenter=288
+@fg center=512 index=3000 opacity=0 storage=white vcenter=288
+@fgact keys=(0,0,n,im12猫の親子b,512,288,0,1)(450,,l,,,,,)(600,,n,,,,255,)(1050,,l,,,,,)(1200,,n,,,,0,)(1800,,,,,,,) loop=1 page=back props=-storage,center,vcenter,opacity,-visible storage=im12猫の親子b textoff=0
+@fgact keys=(0,0,n,im12猫の親子c,512,288,1100,0,1)(1050,,l,,,,,,)(1200,,n,,,,,255,)(1650,,l,,,,,,)(1800,,n,,,,,0,) loop=1 page=back props=-storage,center,vcenter,absolute,opacity,-visible storage=im12猫の親子c textoff=0
+@trans nowait=1 rule=crossfade textoff=0 time=5000
 @r
 　ギチギチしたベルトとか、[l][r]
 　怪物みたいなエンジンが、[l][r]
@@ -97,7 +97,7 @@
 @pg
 *page9|
 @stoptrans
-@movefg textoff=0 storage=red time=3000 accel=0 center=512 vcenter=288 opacity=80
+@movefg accel=0 center=512 opacity=80 storage=red textoff=0 time=3000 vcenter=288
 「かわいそうに―――」[l][r]
 @r
 　[ruby text=いた]悼むようなお父さんの声。
@@ -112,7 +112,7 @@
 @pg
 *page11|
 @wact canskip=0
-@movefg textoff=0 storage=red time=2000 accel=0 center=512 vcenter=288 opacity=160
+@movefg accel=0 center=512 opacity=160 storage=red textoff=0 time=2000 vcenter=288
 「―――いいんだ。　　が悪いんじゃないんだよ」[l][r]
 @r
 　お父さんの声が遠い。
@@ -123,8 +123,8 @@
 @r
 　　　　―――ああ、丸い頭蓋骨が見えている―――[l][r]
 @wact canskip=0
-@movefg textoff=0 storage=red time=400 accel=0 center=512 vcenter=288 opacity=40
-@movefg textoff=0 storage=white time=600 accel=0 center=512 vcenter=288 opacity=210
+@movefg accel=0 center=512 opacity=40 storage=red textoff=0 time=400 vcenter=288
+@movefg accel=0 center=512 opacity=210 storage=white textoff=0 time=600 vcenter=288
 @r
 　まだらに染まった小さな命。[l][r]
 　子猫はもう目も見えないのか、[ruby text=ふる]震えながら、一心に死んだ母親の胸にくるまっている。
@@ -133,10 +133,10 @@
 @textoff
 @invisibleframe
 @clall
-@bg page=back storage=im木絵a noclear=0
-@fgact textoff=0 page=back props=-storage,center,vcenter,opacity,-visible keys=(0,0,n,im木絵b,512,288,0,1)(450,,l,,,,,)(600,,n,,,,255,)(1050,,l,,,,,)(1200,,n,,,,0,)(1800,,,,,,,) loop=1 storage=im木絵b
-@fgact textoff=0 page=back props=-storage,center,vcenter,absolute,opacity,-visible keys=(0,0,n,im木絵c,512,288,1100,0,1)(1050,,l,,,,,,)(1200,,n,,,,,255,)(1650,,l,,,,,,)(1800,,n,,,,,0,) loop=1 storage=im木絵c
-@trans textoff=0 rule=crossfade time=2000 nowait=1
+@bg noclear=0 page=back storage=im木絵a
+@fgact keys=(0,0,n,im木絵b,512,288,0,1)(450,,l,,,,,)(600,,n,,,,255,)(1050,,l,,,,,)(1200,,n,,,,0,)(1800,,,,,,,) loop=1 page=back props=-storage,center,vcenter,opacity,-visible storage=im木絵b textoff=0
+@fgact keys=(0,0,n,im木絵c,512,288,1100,0,1)(1050,,l,,,,,,)(1200,,n,,,,,255,)(1650,,l,,,,,,)(1800,,n,,,,,0,) loop=1 page=back props=-storage,center,vcenter,absolute,opacity,-visible storage=im木絵c textoff=0
+@trans nowait=1 rule=crossfade textoff=0 time=2000
 「　　……？　待ちなさい、　　―――！」[l][r]
 @r
 　彼女は子猫を抱き上げ、[r]
@@ -152,7 +152,7 @@
 　祖父は何でもできる魔法使いだった。[l][r]
 　彼女自身「魔法」なんて見たコトもないし、おとぎ話の空想だと分かっていたけれど、そんな常識とは違う基準で、祖父はそういう生き物なんだと知っていた。[l][r]
 @wt canskip=0
-@bg textoff=0 time=1200 nowait=1 rule=crossfade storage=black
+@bg nowait=1 rule=crossfade storage=black textoff=0 time=1200
 @r
 　だから。[l][r]
 　祖父ならきっと、助けてくれると思ったのだ。
@@ -161,10 +161,10 @@
 @r
 『その子猫の運命を変えろと言う』[l][r]
 @wt canskip=0
-@bg page=back storage=im洞窟絵a noclear=0
-@fgact textoff=0 page=back props=-storage,center,vcenter,opacity,-visible keys=(0,0,n,im洞窟絵b,512,288,0,1)(450,,l,,,,,)(600,,n,,,,255,)(1050,,l,,,,,)(1200,,n,,,,0,)(1800,,,,,,,) loop=1 storage=im洞窟絵b
-@fgact textoff=0 page=back props=-storage,center,vcenter,absolute,opacity,-visible keys=(0,0,n,im洞窟絵c,512,288,1100,0,1)(1050,,l,,,,,,)(1200,,n,,,,,255,)(1650,,l,,,,,,)(1800,,n,,,,,0,) loop=1 storage=im洞窟絵c
-@trans textoff=0 rule=crossfade time=2000 nowait=1
+@bg noclear=0 page=back storage=im洞窟絵a
+@fgact keys=(0,0,n,im洞窟絵b,512,288,0,1)(450,,l,,,,,)(600,,n,,,,255,)(1050,,l,,,,,)(1200,,n,,,,0,)(1800,,,,,,,) loop=1 page=back props=-storage,center,vcenter,opacity,-visible storage=im洞窟絵b textoff=0
+@fgact keys=(0,0,n,im洞窟絵c,512,288,1100,0,1)(1050,,l,,,,,,)(1200,,n,,,,,255,)(1650,,l,,,,,,)(1800,,n,,,,,0,) loop=1 page=back props=-storage,center,vcenter,absolute,opacity,-visible storage=im洞窟絵c textoff=0
+@trans nowait=1 rule=crossfade textoff=0 time=2000
 @r
 　洞窟に[ruby text=す]棲む魔法使いは、関心のない声で言った。
 @pg
@@ -178,25 +178,25 @@
 *page18|
 @wt canskip=0
 @clall
-@bg time=300 rule=crossfade storage=white
+@bg rule=crossfade storage=white time=300
 @stopaction
 @clall
-@fg storage=red center=512 vcenter=288 index=6000 opacity=0 type=19 effect=mono8e0707
-@fg storage=imルーン反応白光 center=512 vcenter=288 index=3000 opacity=0 type=14 rotate=15
-@partbg storage=im0911根源光 srcleft=-188 srctop=38 index=2000 width=1024 height=576 type=13 effect=monocro noclear=1 srczoom=400 id=pb1
-@fg storage=im12宇宙の果て01(中心無し) center=512 vcenter=288 opacity=0 type=13 effect=nega contrast=62 index=1000 partbgid=pb1
-@fgact page=back props=-storage,center,vcenter,absolute,opacity,-type,-effect,-visible keys=(0,0,n,red,512,288,6000,0,19,mono8e0707,1)(2500,,l,,,,,,,,)(5000,,,,,,,255,,,) storage=red
-@fgact page=back props=-storage,center,vcenter,absolute,opacity,-type,rotate,zoomx,zoomy,-visible keys=(0,0,n,imルーン反応白光,512,288,3000,0,14,15,,,1)(1600,3,l,,,,,,,,,,)(2500,2,,,,,,255,,80,20,26,)(5000,0,,,,,,0,,320,200,200,) storage=imルーン反応白光
-@partbgact page=back props=-storage,srcleft,srctop,srczoomx,srczoomy,absolute,width,height,center,vcenter,-type,-effect,-visible keys=(0,3,l,im0911根源光,-188,38,400,400,2000,1024,576,512,288,13,monocro,1)(2500,6,,,,,3,3,,,,512,288,,,)(5000,0,,,,,400,400,,,,,,,,) storage=im0911根源光
-@fgact page=back props=-storage,center,vcenter,opacity,-type,rotate,zoomx,zoomy,-effect,-contrast,-visible keys=(0,0,l,im12宇宙の果て01(中心無し),512,288,0,13,,,,nega,62,1)(2500,0,,,,,255,,,5,5,,,)(4600,,,,~,~,,,~,~,~,,,)(5000,,,,,,0,,150,100,100,,,) storage=im12宇宙の果て01(中心無し) partbgid=pb1
-@se storage=seetc02 volume=100 loop=0
-@se delay=2000 storage=se12087 volume=100 loop=0
-@bg rule=crossfade time=300 storage=black noclear=1
+@fg center=512 effect=mono8e0707 index=6000 opacity=0 storage=red type=19 vcenter=288
+@fg center=512 index=3000 opacity=0 rotate=15 storage=imルーン反応白光 type=14 vcenter=288
+@partbg effect=monocro height=576 id=pb1 index=2000 noclear=1 srcleft=-188 srctop=38 srczoom=400 storage=im0911根源光 type=13 width=1024
+@fg center=512 contrast=62 effect=nega index=1000 opacity=0 partbgid=pb1 storage=im12宇宙の果て01(中心無し) type=13 vcenter=288
+@fgact keys=(0,0,n,red,512,288,6000,0,19,mono8e0707,1)(2500,,l,,,,,,,,)(5000,,,,,,,255,,,) page=back props=-storage,center,vcenter,absolute,opacity,-type,-effect,-visible storage=red
+@fgact keys=(0,0,n,imルーン反応白光,512,288,3000,0,14,15,,,1)(1600,3,l,,,,,,,,,,)(2500,2,,,,,,255,,80,20,26,)(5000,0,,,,,,0,,320,200,200,) page=back props=-storage,center,vcenter,absolute,opacity,-type,rotate,zoomx,zoomy,-visible storage=imルーン反応白光
+@partbgact keys=(0,3,l,im0911根源光,-188,38,400,400,2000,1024,576,512,288,13,monocro,1)(2500,6,,,,,3,3,,,,512,288,,,)(5000,0,,,,,400,400,,,,,,,,) page=back props=-storage,srcleft,srctop,srczoomx,srczoomy,absolute,width,height,center,vcenter,-type,-effect,-visible storage=im0911根源光
+@fgact keys=(0,0,l,im12宇宙の果て01(中心無し),512,288,0,13,,,,nega,62,1)(2500,0,,,,,255,,,5,5,,,)(4600,,,,~,~,,,~,~,~,,,)(5000,,,,,,0,,150,100,100,,,) page=back partbgid=pb1 props=-storage,center,vcenter,opacity,-type,rotate,zoomx,zoomy,-effect,-contrast,-visible storage=im12宇宙の果て01(中心無し)
+@se loop=0 storage=seetc02 volume=100
+@se delay=2000 loop=0 storage=se12087 volume=100
+@bg noclear=1 rule=crossfade storage=black time=300
 @wait canskip=0 time=5000
 @clall
-@se storage=se13010 volume=100 loop=1
+@se loop=1 storage=se13010 volume=100
 @fadebgm time=100 volume=0
-@bg rule=crossfade time=100 storage=im14祖父の洞窟 left=-48 top=-48 noclear=0
+@bg left=-48 noclear=0 rule=crossfade storage=im14祖父の洞窟 time=100 top=-48
 @stopaction
 @wait canskip=0 time=2000
 ;画面・光速の宇宙。ワープ中。
@@ -213,14 +213,14 @@
 　胸には灰色の空みたいに果てのない、大きすぎる後悔の念。
 @pg
 *page19|
-@bg time=1200 rule=crossfade storage=black
+@bg rule=crossfade storage=black time=1200
 @stopaction
 @stopnoise
 @r
 『徒労だったな。結局、元に戻すとは』
 @pg
 *page20|
-@bg rule=crossfade time=800 storage=im14祖父の洞窟 noclear=0
+@bg noclear=0 rule=crossfade storage=im14祖父の洞窟 time=800
 　何が起こったのか、彼女には把握できない。
 @pg
 *page21|
@@ -229,7 +229,7 @@
 　何を知ったのかも、無責任にも元通り。[l][r]
 　確かなコトは、死に行く命は戻らないという事と、[l][r]
 @r
-@se storage=se01132 volume=30 loop=1
+@se loop=1 storage=se01132 volume=30
 @noise monocro=1 opacity=60 type=ltPsScreen
 　　　　「あの―――そこにだれか、いるの？」[l][r]
 @wait canskip=0 time=600
@@ -238,9 +238,9 @@
 　私という、彼女が生まれた[ruby text=あやま]過ちだけ。
 @pg
 *page22|
-@sestop time=5000 nowait=1
+@sestop nowait=1 time=5000
 @fadebgm time=5000 volume=100
-@bg textoff=0 time=5000 rule=crossfade storage=black nowait=1
+@bg nowait=1 rule=crossfade storage=black textoff=0 time=5000
 @r
 @r
 　　　　　　………ああ。[l][r]
@@ -249,17 +249,17 @@
 　　　　　　全てが[ruby text=なつ]懐かしく、待ち遠しい。
 @pg
 *page23|
-@playstop time=10000 nowait=1
+@playstop nowait=1 time=10000
 @wt canskip=1
 @clall
 @invisibleframe
 @bg storage=im家絵02a top=77 zoom=120
-@fg storage=black center=512 vcenter=288 index=6000 opacity=255
-@fg storage=im円黒グラデ center=512 vcenter=288 index=5000 opacity=0
-@fg storage=bg09l青崎家03外観-(昼) center=512 vcenter=602 index=1300 opacity=0 effect=sepia zoom=120
-@fg storage=im家絵02c center=512 vcenter=602 index=1100 opacity=0 zoom=120
-@fg storage=im家絵02b center=512 vcenter=702 opacity=0 zoom=120 index=1000
-@trans textoff=0 rule=crossfade time=600 nowait=0 noback=1
+@fg center=512 index=6000 opacity=255 storage=black vcenter=288
+@fg center=512 index=5000 opacity=0 storage=im円黒グラデ vcenter=288
+@fg center=512 effect=sepia index=1300 opacity=0 storage=bg09l青崎家03外観-(昼) vcenter=602 zoom=120
+@fg center=512 index=1100 opacity=0 storage=im家絵02c vcenter=602 zoom=120
+@fg center=512 index=1000 opacity=0 storage=im家絵02b vcenter=702 zoom=120
+@trans noback=1 nowait=0 rule=crossfade textoff=0 time=600
 @stopaction
 @stopnoise
 @r
@@ -268,28 +268,28 @@
 　それは[ruby char=2 text=イマ]現実から８年前のおとぎ話。[l][r]
 　どんな魔法を使っても取り戻せない、いちばん初めに、彼女たちの出会った日。[p][r]
 *page24|
-@movefg textoff=0 opacity=0 vcenter=288 time=6000 accel=0 storage=black center=512
-@fgact textoff=0 page=fore props=-storage,center,vcenter,absolute,opacity,zoomx,zoomy,-visible keys=(0,0,n,im家絵02c,512,602,1100,0,120,120,1)(1050,,l,,,,,,,,)(1200,,n,,,,,255,,,)(1650,,l,,,,,,,,)(1800,,n,,,,,0,,,) storage=im家絵02c loop=0
-@fgact textoff=0 page=fore props=-storage,center,vcenter,opacity,zoomx,zoomy,-visible keys=(0,0,n,im家絵02b,512,702,0,120,120,1)(450,,l,,,602,,,,)(600,,n,,,,255,,,)(1050,,l,,,,,,,)(1200,,n,,,,0,,,)(1800,,,,,,,,,) storage=im家絵02b loop=0
-@fgact textoff=0 page=fore props=-storage,center,vcenter,absolute,opacity,zoomx,zoomy,-effect,-visible keys=(0,0,n,bg09l青崎家03外観-(昼),512,602,1300,0,120,120,sepia,1)(4000,,l,,,,,,,,,)(7000,,,,,,,255,,,,) storage=bg09l青崎家03外観-(昼)
-@fgact textoff=0 page=fore props=-storage,center,vcenter,absolute,opacity,-visible keys=(0,0,n,im円黒グラデ,512,288,5000,0,1)(4000,,l,,,,,,)(7000,,,,,,,196,) storage=im円黒グラデ
+@movefg accel=0 center=512 opacity=0 storage=black textoff=0 time=6000 vcenter=288
+@fgact keys=(0,0,n,im家絵02c,512,602,1100,0,120,120,1)(1050,,l,,,,,,,,)(1200,,n,,,,,255,,,)(1650,,l,,,,,,,,)(1800,,n,,,,,0,,,) loop=0 page=fore props=-storage,center,vcenter,absolute,opacity,zoomx,zoomy,-visible storage=im家絵02c textoff=0
+@fgact keys=(0,0,n,im家絵02b,512,702,0,120,120,1)(450,,l,,,602,,,,)(600,,n,,,,255,,,)(1050,,l,,,,,,,)(1200,,n,,,,0,,,)(1800,,,,,,,,,) loop=0 page=fore props=-storage,center,vcenter,opacity,zoomx,zoomy,-visible storage=im家絵02b textoff=0
+@fgact keys=(0,0,n,bg09l青崎家03外観-(昼),512,602,1300,0,120,120,sepia,1)(4000,,l,,,,,,,,,)(7000,,,,,,,255,,,,) page=fore props=-storage,center,vcenter,absolute,opacity,zoomx,zoomy,-effect,-visible storage=bg09l青崎家03外観-(昼) textoff=0
+@fgact keys=(0,0,n,im円黒グラデ,512,288,5000,0,1)(4000,,l,,,,,,)(7000,,,,,,,196,) page=fore props=-storage,center,vcenter,absolute,opacity,-visible storage=im円黒グラデ textoff=0
 @textoff time=6000
 @cm4pg
-@se storage=seetc23 volume=100 time=6000 nodup=1 loop=1
+@se loop=1 nodup=1 storage=seetc23 time=6000 volume=100
 @wait canskip=0 time=200
 @clall
-@bg storage=black left=-48 top=-48
-@fg storage=im円黒グラデ center=512 vcenter=288 index=5000 opacity=196
-@fg storage=im01オープニング06(背景) center=512 vcenter=288 index=2200 opacity=128 type=18 zoomx=80 zoomy=200 effect=monocro contrast=58 yblur=20
-@fg storage=bg09l青崎家03外観-(昼) center=512 vcenter=602 index=2000 effect=sepia zoom=120
-@fgact page=back props=-storage,center,vcenter,absolute,opacity,-type,zoomx,zoomy,-effect,-contrast,-yblur,-visible keys=(0,0,n,im01オープニング06(背景),512,288,2200,128,18,80,200,monocro,58,20,1)(50,,,,431,395,,,,,,,,,)(100,,,,591,255,,,,,,,,,)(150,,,,563,603,,,,,-200,,,,)(200,,,,454,225,,,,,200,,,,)(250,,,,584,427,,,,,,,,,)(300,,,,539,389,,,,-80,,,,,)(350,,,,547,259,,,,,-200,,,,)(400,,,,,,,,,,,,,,)(450,,,,448,296,,,,,200,,,,) storage=im01オープニング06(背景) loop=0
-@quake page=back vmax=1 hmax=1 interval=200
-@trans rule=crossfade time=3000 nowait=0 noback=1
+@bg left=-48 storage=black top=-48
+@fg center=512 index=5000 opacity=196 storage=im円黒グラデ vcenter=288
+@fg center=512 contrast=58 effect=monocro index=2200 opacity=128 storage=im01オープニング06(背景) type=18 vcenter=288 yblur=20 zoomx=80 zoomy=200
+@fg center=512 effect=sepia index=2000 storage=bg09l青崎家03外観-(昼) vcenter=602 zoom=120
+@fgact keys=(0,0,n,im01オープニング06(背景),512,288,2200,128,18,80,200,monocro,58,20,1)(50,,,,431,395,,,,,,,,,)(100,,,,591,255,,,,,,,,,)(150,,,,563,603,,,,,-200,,,,)(200,,,,454,225,,,,,200,,,,)(250,,,,584,427,,,,,,,,,)(300,,,,539,389,,,,-80,,,,,)(350,,,,547,259,,,,,-200,,,,)(400,,,,,,,,,,,,,,)(450,,,,448,296,,,,,200,,,,) loop=0 page=back props=-storage,center,vcenter,absolute,opacity,-type,zoomx,zoomy,-effect,-contrast,-yblur,-visible storage=im01オープニング06(背景)
+@quake hmax=1 interval=200 page=back vmax=1
+@trans noback=1 nowait=0 rule=crossfade time=3000
 @stopaction page=back
 @wait canskip=0 time=3000
-@sestop time=100 nowait=1
+@sestop nowait=1 time=100
 @clall
-@bg time=100 rule=crossfade storage=black
+@bg rule=crossfade storage=black time=100
 @stopaction
 @visibleframe
 @wait canskip=0 time=2000
@@ -309,6 +309,7 @@ global.__tmp_tla = Scripts.eval('(const) %[
  "version" => 1
 ]');
 global.__tla_name = "1-0";
+
 @endscript
 @eval exp=timeline_object.loadByData(global.__tmp_tla,global.__tla_name)
 @return

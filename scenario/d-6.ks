@@ -1,7 +1,7 @@
 ﻿@call target=*tladata
 *page0|
 @invisibleframe
-@bg time=100 rule=crossfade storage=black
+@bg rule=crossfade storage=black time=100
 @wait canskip=0 time=2000
 @r
 @r
@@ -11,36 +11,36 @@
 *page1|
 @textoff time=3000
 @cm
-@se delay=800 storage=se13004 volume=80 loop=1
+@se delay=800 loop=1 storage=se13004 volume=80
 @clall
-@partbg storage=im12草十郎回想01 srcleft=550 srctop=138 index=1000 width=402 height=576 center=758 effect=monocro noclear=1 srczoom=70 id=pb1
-@partbgact page=back props=-storage,srcleft,srctop,srczoomx,srczoomy,absolute,width,height,center,-effect,-visible keys=(0,0,l,im12草十郎回想01,550,138,70,70,1000,402,576,758,monocro,1)(50000,,,,168,,,,,504,,-226,,) storage=im12草十郎回想01
-@bg rule=crossfade time=800 storage=black noclear=1 noback=1
+@partbg center=758 effect=monocro height=576 id=pb1 index=1000 noclear=1 srcleft=550 srctop=138 srczoom=70 storage=im12草十郎回想01 width=402
+@partbgact keys=(0,0,l,im12草十郎回想01,550,138,70,70,1000,402,576,758,monocro,1)(50000,,,,168,,,,,504,,-226,,) page=back props=-storage,srcleft,srctop,srczoomx,srczoomy,absolute,width,height,center,-effect,-visible storage=im12草十郎回想01
+@bg noback=1 noclear=1 rule=crossfade storage=black time=800
 「山での暮らしは、別に、どうといった事はない。[wait canskip=0 time=300]毎日同じ事を繰り返して、毎日同じ事を教えられた。[l][r]
 　そこでは明日はないんだ。[l]始まりが朝で、夜になれば終わる。一日は次の日には繋がらない。[wait canskip=0 time=300]だから、明日を夢見る事もない」
 @pg
 *page2|
-@sestop storage=se13004 time=6000 nowait=1
-@play storage=m31 volume=100 time=4000
+@sestop nowait=1 storage=se13004 time=6000
+@play storage=m31 time=4000 volume=100
 「次の日を楽しみにする、なんて言葉は、こっちに来てから知った感覚だったな。[l][r]
 　初めは馴染めなかったし、馴染む気もなかった。[l][r]
 　けど、みんながまた明日、と満足そうに口にする。いつのまにか、そういうものを夢見るようになっている自分がいた」
 @pg
 *page3|
-@bg time=800 rule=crossfade storage=black
+@bg rule=crossfade storage=black time=800
 @stopaction
 @visibleframe
 @clall
-@fg storage=im02l空(月) center=426 vcenter=400 index=3000 type=8 afx=1009 afy=267 zoom=200 blur=5
-@fg storage=im16l樹木(影)_高木02c center=-2 vcenter=346 index=2600 type=16 rotate=-9.766 blur=1
-@fg storage=im16樹木(影)_高木03c center=1007 vcenter=670 index=2400 type=16 rotate=13.653 blur=3
-@fg storage=im16樹木(影)_高木01c center=175 vcenter=-72 index=2100 type=16 rotate=-22.338 blur=2
-@fg storage=im02l空(昼b) center=219 vcenter=474 index=1600 opacity=128 type=23 rotate=8.459 effect=monocro zoom=200
-@fg storage=im02l空(昼b) center=219 vcenter=474 index=1500 opacity=128 type=24 rotate=8.459 effect=monocro zoom=200
-@fg storage=im17ep02 center=546 vcenter=834 type=3 effect=monocro blur=1 index=1000
-@fg storage=im02空(夜) center=512 vcenter=288 index=1300 type=18 blur=2
-@fg storage=im02l空(昼) center=681 vcenter=350 index=1100 type=19 rotate=-4.12 effect=monocro contrast=-60
-@bg rule=crossfade time=800 storage=im02空(夜) left=-48 top=-48 noclear=1 nobacl=1
+@fg afx=1009 afy=267 blur=5 center=426 index=3000 storage=im02l空(月) type=8 vcenter=400 zoom=200
+@fg blur=1 center=-2 index=2600 rotate=-9.766 storage=im16l樹木(影)_高木02c type=16 vcenter=346
+@fg blur=3 center=1007 index=2400 rotate=13.653 storage=im16樹木(影)_高木03c type=16 vcenter=670
+@fg blur=2 center=175 index=2100 rotate=-22.338 storage=im16樹木(影)_高木01c type=16 vcenter=-72
+@fg center=219 effect=monocro index=1600 opacity=128 rotate=8.459 storage=im02l空(昼b) type=23 vcenter=474 zoom=200
+@fg center=219 effect=monocro index=1500 opacity=128 rotate=8.459 storage=im02l空(昼b) type=24 vcenter=474 zoom=200
+@fg blur=1 center=546 effect=monocro index=1000 storage=im17ep02 type=3 vcenter=834
+@fg blur=2 center=512 index=1300 storage=im02空(夜) type=18 vcenter=288
+@fg center=681 contrast=-60 effect=monocro index=1100 rotate=-4.12 storage=im02l空(昼) type=19 vcenter=350
+@bg left=-48 nobacl=1 noclear=1 rule=crossfade storage=im02空(夜) time=800 top=-48
 　歩きながら草十郎は語っていく。[l][r]
 　青子には視線を向けず、前を見つめながら、夜に語りかけるように。[l][r]
 　青子は沈黙に徹している。[l][r]
@@ -57,16 +57,16 @@
 @pg
 *page6|
 @clall
-@fg storage=im16l樹木(影)_低木02c center=855 vcenter=483 index=2200 opacity=128 rotate=39.718 effect=mono09092d blur=8
-@fg storage=im16l樹木(影)_高木01c center=-135 vcenter=-236 index=2000 opacity=128 rotate=-102.447 zoomx=50 zoomy=80 effect=mono09092d blur=10
-@fg storage=im16l樹木(影)_高木02c center=1273 vcenter=29 index=1600 opacity=128 rotate=67.69 zoomx=60 effect=mono09092d blur=8
-@fg storage=im16l樹木(影)_低木02c vcenter=229 index=2100 opacity=128 rotate=-105.65 zoomx=50 zoomy=120 effect=mono09092d blur=8
-@fg storage=im02l空(小雨) center=411 vcenter=341 index=1500 type=18
-@fg storage=im15lヘリのライトa center=894 vcenter=342 index=1200 opacity=128 type=16 rotate=-134.147 zoomx=140 zoomy=40 effect=mono09092d
-@fg storage=im15lヘリのライトa center=738 vcenter=490 index=1100 opacity=160 type=19 rotate=-134.147 zoomx=160 zoomy=80 effect=mono09092d
-@fg storage=im15lヘリのライトa center=280 vcenter=113 opacity=160 type=19 rotate=-161.282 zoomy=50 effect=mono09092d index=1000
-@partbg storage=im02空(雪) srcleft=126 srctop=86 srcrotate=-14.097 srczoomx=180 srczoomy=120 index=3000 width=1024 height=482 vcenter=348 type=20 bordersize=100 bordercolor=none noclear=1 blur=3 id=pb1
-@bg rule=crossfade time=600 storage=bg06l大きい公園02広場-(全消灯深夜) left=-83 top=-61 afx=956.5 afy=901.5 rotate=-15.798 zoomx=200 zoomy=300 effect=屋外蛍雪 noclear=1 noback=1
+@fg blur=8 center=855 effect=mono09092d index=2200 opacity=128 rotate=39.718 storage=im16l樹木(影)_低木02c vcenter=483
+@fg blur=10 center=-135 effect=mono09092d index=2000 opacity=128 rotate=-102.447 storage=im16l樹木(影)_高木01c vcenter=-236 zoomx=50 zoomy=80
+@fg blur=8 center=1273 effect=mono09092d index=1600 opacity=128 rotate=67.69 storage=im16l樹木(影)_高木02c vcenter=29 zoomx=60
+@fg blur=8 effect=mono09092d index=2100 opacity=128 rotate=-105.65 storage=im16l樹木(影)_低木02c vcenter=229 zoomx=50 zoomy=120
+@fg center=411 index=1500 storage=im02l空(小雨) type=18 vcenter=341
+@fg center=894 effect=mono09092d index=1200 opacity=128 rotate=-134.147 storage=im15lヘリのライトa type=16 vcenter=342 zoomx=140 zoomy=40
+@fg center=738 effect=mono09092d index=1100 opacity=160 rotate=-134.147 storage=im15lヘリのライトa type=19 vcenter=490 zoomx=160 zoomy=80
+@fg center=280 effect=mono09092d index=1000 opacity=160 rotate=-161.282 storage=im15lヘリのライトa type=19 vcenter=113 zoomy=50
+@partbg blur=3 bordercolor=none bordersize=100 height=482 id=pb1 index=3000 noclear=1 srcleft=126 srcrotate=-14.097 srctop=86 srczoomx=180 srczoomy=120 storage=im02空(雪) type=20 vcenter=348 width=1024
+@bg afx=956.5 afy=901.5 effect=屋外蛍雪 left=-83 noback=1 noclear=1 rotate=-15.798 rule=crossfade storage=bg06l大きい公園02広場-(全消灯深夜) time=600 top=-61 zoomx=200 zoomy=300
 「山では食べる物も少なかった。飢えないためには、他の人がよりつけない場所に行くことが多くなる。その途中の道で、いなくなってしまう人も多かった」
 @pg
 *page7|
@@ -82,25 +82,25 @@
 　けれど、そこからの告白は、ゆっくりと苦悩を刻んでいった。
 @pg
 *page9|
-@bg textoff=0 time=600 rule=crossfade storage=black
+@bg rule=crossfade storage=black textoff=0 time=600
 「もう半分は、まあ、身を守る手段を教わっていた。[l][r]
 　学校の授業に比べたら些細な事だ。単に、自分の体はどう動くものなのか、生き物はどう動くものなのかを、よく見て、よく考えろと言われた。[l][r]
 　単純な反復運動だ。小石を蹴ったり森の中にこもったり、まあ、そんな意味合いのコトをやっていたんだ」
 @pg
 *page10|
 @clall
-@fg storage=im02空(夜) center=520 vcenter=257 index=2400 type=22 zoomx=-100 blur=1
-@fg storage=im16樹木(影)_高木03b center=-157 vcenter=682 index=2000 type=16 rotate=-46.94 blur=2
-@fg storage=im16樹木(影)_高木01b center=112 vcenter=1005 index=1900 type=16 rotate=-40.156 blur=1
-@fg storage=im16樹木(影)_高木03c center=160 vcenter=330 index=1700 type=16 rotate=-40.738 blur=1
-@fg storage=im16樹木(影)_高木02c center=1181 vcenter=-7 index=2100 type=16 rotate=-28.27 zoomx=200 blur=3
-@fg storage=im黒グラデ上から center=512 vcenter=544 index=1500 type=20 zoomy=-100 effect=mono09092d
-@fg storage=im16樹木(影)_低木01c center=1052 vcenter=564 index=2300 type=16 rotate=-33.771 zoomy=200 blur=2
-@fg storage=im16樹木(影)_高木02b center=-431 vcenter=326 index=2200 type=16 rotate=-54.501 blur=3
-@fg storage=im16樹木(影)_高木02c center=501 vcenter=268 index=1800 type=16 rotate=-40.816 zoomx=-100 blur=2
-@fg storage=im16樹木(影)_高木01c center=-218 vcenter=749 index=1600 type=16 rotate=-44.138 blur=3
-@fg storage=im02l空(昼b) center=469 vcenter=84 index=1200 opacity=128 type=19 rotate=-48.791 zoomy=130 effect=monocro contrast=-30
-@bg textoff=0 rule=crossfade time=600 storage=im02空(夜) left=-40 top=-79 zoomx=-100 noclear=1 noback=1
+@fg blur=1 center=520 index=2400 storage=im02空(夜) type=22 vcenter=257 zoomx=-100
+@fg blur=2 center=-157 index=2000 rotate=-46.94 storage=im16樹木(影)_高木03b type=16 vcenter=682
+@fg blur=1 center=112 index=1900 rotate=-40.156 storage=im16樹木(影)_高木01b type=16 vcenter=1005
+@fg blur=1 center=160 index=1700 rotate=-40.738 storage=im16樹木(影)_高木03c type=16 vcenter=330
+@fg blur=3 center=1181 index=2100 rotate=-28.27 storage=im16樹木(影)_高木02c type=16 vcenter=-7 zoomx=200
+@fg center=512 effect=mono09092d index=1500 storage=im黒グラデ上から type=20 vcenter=544 zoomy=-100
+@fg blur=2 center=1052 index=2300 rotate=-33.771 storage=im16樹木(影)_低木01c type=16 vcenter=564 zoomy=200
+@fg blur=3 center=-431 index=2200 rotate=-54.501 storage=im16樹木(影)_高木02b type=16 vcenter=326
+@fg blur=2 center=501 index=1800 rotate=-40.816 storage=im16樹木(影)_高木02c type=16 vcenter=268 zoomx=-100
+@fg blur=3 center=-218 index=1600 rotate=-44.138 storage=im16樹木(影)_高木01c type=16 vcenter=749
+@fg center=469 contrast=-30 effect=monocro index=1200 opacity=128 rotate=-48.791 storage=im02l空(昼b) type=19 vcenter=84 zoomy=130
+@bg left=-40 noback=1 noclear=1 rule=crossfade storage=im02空(夜) textoff=0 time=600 top=-79 zoomx=-100
 「あの決まり事がはじまると朝も夜もなかった。[l][r]
 　外の変化に気持ちを向ける余裕はなくて、ふと気が付くとずいぶん長く食事をしていない、なんてのもざらだった。[l][r]
 　あ、ちゃんとご[ruby text=はん]飯はもらえたよ、そういうのの後は」
@@ -110,11 +110,11 @@
 　ただ山で暮らしていくには役に立ったし、そもそもあれだって生活の一部だった。[l][r]
 　生きるって事はそうする事だって思ってた。こうやって息をして歩くためには、あの繰り返しは当然のものだったんだ」[l][r]
 @clall
-@fg storage=im10スナッチ霧bベタ center=1254 vcenter=623 index=2000 opacity=32 type=13
-@fg storage=青子私服aジャケット05(全)|h center=743 vcenter=1008 index=2200 effect=屋外深夜 zoom=80
-@fg storage=im02l空(月) center=341 vcenter=233 index=1800 type=21
-@fg storage=bg04l三咲町03目抜き通り(広)-(夜) center=938 vcenter=1031 index=1400 type=25 zoom=200
-@bg rule=crossfade time=400 storage=im02l空(月) left=-391 top=-283 noclear=1 noback=1
+@fg center=1254 index=2000 opacity=32 storage=im10スナッチ霧bベタ type=13 vcenter=623
+@fg center=743 effect=屋外深夜 index=2200 storage=青子私服aジャケット05(全)|h vcenter=1008 zoom=80
+@fg center=341 index=1800 storage=im02l空(月) type=21 vcenter=233
+@fg center=938 index=1400 storage=bg04l三咲町03目抜き通り(広)-(夜) type=25 vcenter=1031 zoom=200
+@bg left=-391 noback=1 noclear=1 rule=crossfade storage=im02l空(月) time=400 top=-283
 「草十郎、それは」
 @pg
 *page12|
@@ -123,33 +123,33 @@
 @pg
 *page13|
 @clall
-@fg storage=im02l空(月) center=244 vcenter=237 index=1800 type=21
-@fg storage=im10スナッチ霧bベタ center=922 vcenter=672 index=2000 opacity=32 type=13
-@fg storage=草十郎私服コート04(全)|f center=629 vcenter=1118 index=2600 rotate=-9.479 effect=屋外深夜 blur=2
-@fg storage=bg04l三咲町03目抜き通り(広)-(夜) center=516 vcenter=961 index=1400 type=25 rotate=11.514 zoomx=-200 zoomy=200
-@bg rule=crossfade time=600 storage=im02l空(月) left=-391 top=-283 noclear=1 noback=1
+@fg center=244 index=1800 storage=im02l空(月) type=21 vcenter=237
+@fg center=922 index=2000 opacity=32 storage=im10スナッチ霧bベタ type=13 vcenter=672
+@fg blur=2 center=629 effect=屋外深夜 index=2600 rotate=-9.479 storage=草十郎私服コート04(全)|f vcenter=1118
+@fg center=516 index=1400 rotate=11.514 storage=bg04l三咲町03目抜き通り(広)-(夜) type=25 vcenter=961 zoomx=-200 zoomy=200
+@bg left=-391 noback=1 noclear=1 rule=crossfade storage=im02l空(月) time=600 top=-283
 「何かがおかしかったんだろう。あれは身を守る知恵じゃなくて、もっと違う用途のものだった。[l][r]
 　たまにいなくなる知り合いは、山の土になったんじゃなくて、他の場所で、他の理由で消えた場合もあったんだろう」
 @pg
 *page14|
 @clall
-@fg storage=im10スナッチ霧aベタ center=486 vcenter=550 index=4000 opacity=64 type=19 zoomx=60 zoomy=26
-@fg storage=im16樹木(影)_低木01c center=455 vcenter=416 index=2500 type=16 zoomx=50 blur=1
-@fg storage=im16樹木(影)_高木03c center=664 vcenter=566 index=1900 type=16 zoomx=-60 zoomy=60 blur=2
-@fg storage=im16樹木(影)_高木01c center=536 vcenter=725 index=2300 type=16 rotate=2.961 zoom=40 blur=2
-@fg storage=im16樹木(影)_高木03c center=377 vcenter=422 index=2200 type=16 zoom=60 blur=2
-@fg storage=im16樹木(影)_低木01c center=310 vcenter=398 index=1700 type=16 zoomx=50 blur=2
-@fg storage=im16樹木(影)_高木02c center=750 vcenter=383 index=2100 type=16 zoom=40 blur=2
-@fg storage=im16樹木(影)_高木02c center=196 vcenter=435 index=2400 type=16 zoomx=-36 zoomy=26 blur=2
-@fg storage=im16樹木(影)_高木02c center=1033 vcenter=371 index=1600 type=16 zoom=30 blur=2
-@fg storage=im16樹木(影)_低木01c center=984 vcenter=489 index=1800 type=16 zoom=50 blur=2
-@fg storage=im16樹木(影)_高木02c center=164 vcenter=359 index=1500 type=16 zoom=30 blur=2
-@fg storage=im0909魔法発動の影響05秋(bg) center=512 vcenter=187 index=1200 type=18 zoomy=120 effect=monocro contrast=15
-@fg storage=im16樹木(影)_高木01c center=20 vcenter=600 index=1400 type=16 zoom=30 blur=2
-@fg storage=im16樹木(影)_高木01c center=831 vcenter=485 index=2600 type=16 zoomx=-30 zoomy=30 blur=2
-@fg storage=im16樹木(影)_高木01c center=54 vcenter=425 index=2700 type=16 zoom=30 blur=2
-@fg storage=im黒グラデ上から center=512 vcenter=541 index=5000 opacity=192 zoomy=-100
-@bg rule=crossfade time=600 storage=im02空(夜) left=-48 top=-48 zoomx=-100 noclear=1 noback=1
+@fg center=486 index=4000 opacity=64 storage=im10スナッチ霧aベタ type=19 vcenter=550 zoomx=60 zoomy=26
+@fg blur=1 center=455 index=2500 storage=im16樹木(影)_低木01c type=16 vcenter=416 zoomx=50
+@fg blur=2 center=664 index=1900 storage=im16樹木(影)_高木03c type=16 vcenter=566 zoomx=-60 zoomy=60
+@fg blur=2 center=536 index=2300 rotate=2.961 storage=im16樹木(影)_高木01c type=16 vcenter=725 zoom=40
+@fg blur=2 center=377 index=2200 storage=im16樹木(影)_高木03c type=16 vcenter=422 zoom=60
+@fg blur=2 center=310 index=1700 storage=im16樹木(影)_低木01c type=16 vcenter=398 zoomx=50
+@fg blur=2 center=750 index=2100 storage=im16樹木(影)_高木02c type=16 vcenter=383 zoom=40
+@fg blur=2 center=196 index=2400 storage=im16樹木(影)_高木02c type=16 vcenter=435 zoomx=-36 zoomy=26
+@fg blur=2 center=1033 index=1600 storage=im16樹木(影)_高木02c type=16 vcenter=371 zoom=30
+@fg blur=2 center=984 index=1800 storage=im16樹木(影)_低木01c type=16 vcenter=489 zoom=50
+@fg blur=2 center=164 index=1500 storage=im16樹木(影)_高木02c type=16 vcenter=359 zoom=30
+@fg center=512 contrast=15 effect=monocro index=1200 storage=im0909魔法発動の影響05秋(bg) type=18 vcenter=187 zoomy=120
+@fg blur=2 center=20 index=1400 storage=im16樹木(影)_高木01c type=16 vcenter=600 zoom=30
+@fg blur=2 center=831 index=2600 storage=im16樹木(影)_高木01c type=16 vcenter=485 zoomx=-30 zoomy=30
+@fg blur=2 center=54 index=2700 storage=im16樹木(影)_高木01c type=16 vcenter=425 zoom=30
+@fg center=512 index=5000 opacity=192 storage=im黒グラデ上から vcenter=541 zoomy=-100
+@bg left=-48 noback=1 noclear=1 rule=crossfade storage=im02空(夜) time=600 top=-48 zoomx=-100
 「でも、考える事さえなかった。[l][r]
 　精神の[ruby char=2 text=すきま]隙間を知れだの、命の勝ち負けを知れだの、意味をくみ取らないまま[ruby o2o=1 text=うの]鵜呑みにして、当然のように繰り返した。[l][r]
 　それがどう評価されるものなのか、俺には分からない。[l][r]
@@ -158,26 +158,26 @@
 「……貴方の嫌いな、生き死にの真似を続けて？」
 @pg
 *page15|
-@bg textoff=0 time=600 rule=crossfade storage=black
+@bg rule=crossfade storage=black textoff=0 time=600
 　その問いに、彼は答えなかった。[l][r]
 　無言のまま足は進む。[l][r]
 　……数々の矛盾、点在していた不合理を、今更ながら青子は噛みしめる。
 @pg
 *page16|
 @clall
-@fg storage=im02l空(月) center=373 vcenter=311 index=3000 type=8 afx=1009 afy=267 zoom=400 blur=5
-@fg storage=im16l樹木(影)_高木02c center=-32 vcenter=9 index=2600 type=16 rotate=-9.766 zoom=200 blur=1
-@fg storage=im16樹木(影)_高木03c center=764 vcenter=765 index=2400 type=16 rotate=-26.712 blur=3
-@fg storage=im16樹木(影)_高木01c center=-173 vcenter=167 index=2100 type=16 rotate=-22.338 blur=2
-@fg storage=im02l空(昼b) center=-40 vcenter=-40 index=1600 opacity=192 type=23 rotate=-38 effect=monocro zoom=200 id=1
-@fg storage=im02l空(昼b) center=-40 vcenter=-40 index=1500 opacity=128 type=24 rotate=-38 effect=monocro contrast=40 zoom=200 id=2
-@fg storage=im17ep02 center=546 vcenter=834 opacity=0 type=3 effect=monocro blur=1 index=1000
-@fg storage=black center=512 vcenter=288 index=2900 opacity=0
-@fgact page=back props=-storage,center,vcenter,absolute,-type,afx,afy,zoomx,zoomy,-xblur,-yblur,-visible keys=(0,0,l,im02l空(月),373,311,3000,8,1009,267,400,400,5,5,1)(60000,,,,506,444,,,,,,,,,) storage=im02l空(月)
-@fgact page=back props=-storage,center,vcenter,absolute,opacity,-type,rotate,zoomx,zoomy,-effect,-visible keys=(0,0,l,im02l空(昼b),-40,-40,1600,192,23,-38,200,200,monocro,1)(60000,,,,300,171,,,,,,,,) id=1
-@fgact page=back props=-storage,center,vcenter,absolute,opacity,-type,rotate,zoomx,zoomy,-effect,-contrast,-visible keys=(0,0,l,im02l空(昼b),-40,-40,1500,128,24,-38,200,200,monocro,40,1)(60000,,,,300,171,,,,,,,,,) id=2
-@fgact page=back props=-storage,center,vcenter,opacity,-type,-effect,-xblur,-yblur,-visible keys=(0,0,l,im17ep02,546,834,0,3,monocro,1,1,1)(15000,,,,~,~,,,,,,)(24000,,,,~,~,255,,,,,)(36000,,,,~,~,0,,,,,) storage=im17ep02
-@bg rule=crossfade time=600 storage=im02空(夜) left=-48 top=-48 noclear=1 noback=1
+@fg afx=1009 afy=267 blur=5 center=373 index=3000 storage=im02l空(月) type=8 vcenter=311 zoom=400
+@fg blur=1 center=-32 index=2600 rotate=-9.766 storage=im16l樹木(影)_高木02c type=16 vcenter=9 zoom=200
+@fg blur=3 center=764 index=2400 rotate=-26.712 storage=im16樹木(影)_高木03c type=16 vcenter=765
+@fg blur=2 center=-173 index=2100 rotate=-22.338 storage=im16樹木(影)_高木01c type=16 vcenter=167
+@fg center=-40 effect=monocro id=1 index=1600 opacity=192 rotate=-38 storage=im02l空(昼b) type=23 vcenter=-40 zoom=200
+@fg center=-40 contrast=40 effect=monocro id=2 index=1500 opacity=128 rotate=-38 storage=im02l空(昼b) type=24 vcenter=-40 zoom=200
+@fg blur=1 center=546 effect=monocro index=1000 opacity=0 storage=im17ep02 type=3 vcenter=834
+@fg center=512 index=2900 opacity=0 storage=black vcenter=288
+@fgact keys=(0,0,l,im02l空(月),373,311,3000,8,1009,267,400,400,5,5,1)(60000,,,,506,444,,,,,,,,,) page=back props=-storage,center,vcenter,absolute,-type,afx,afy,zoomx,zoomy,-xblur,-yblur,-visible storage=im02l空(月)
+@fgact id=1 keys=(0,0,l,im02l空(昼b),-40,-40,1600,192,23,-38,200,200,monocro,1)(60000,,,,300,171,,,,,,,,) page=back props=-storage,center,vcenter,absolute,opacity,-type,rotate,zoomx,zoomy,-effect,-visible
+@fgact id=2 keys=(0,0,l,im02l空(昼b),-40,-40,1500,128,24,-38,200,200,monocro,40,1)(60000,,,,300,171,,,,,,,,,) page=back props=-storage,center,vcenter,absolute,opacity,-type,rotate,zoomx,zoomy,-effect,-contrast,-visible
+@fgact keys=(0,0,l,im17ep02,546,834,0,3,monocro,1,1,1)(15000,,,,~,~,,,,,,)(24000,,,,~,~,255,,,,,)(36000,,,,~,~,0,,,,,) page=back props=-storage,center,vcenter,opacity,-type,-effect,-xblur,-yblur,-visible storage=im17ep02
+@bg left=-48 noback=1 noclear=1 rule=crossfade storage=im02空(夜) time=600 top=-48
 　たとえば、この少年の教養のバランスだ。[l][r]
 　文明の機器をまったく知らないくせに、基礎知識だけは持ち合わせていた。[l][r]
 　今の話では人付き合いは皆無だというのに、意思の[ruby char=2 text=そつう]疎通、言葉による対話に慣れていた。[l][r]
@@ -189,7 +189,7 @@
 　利害目的か、それとも、その山奥ではいまだに当然の[ruby char=2 text=ありかた]生活だったのか。
 @pg
 *page18|
-@movefg textoff=0 opacity=255 vcenter=288 time=9000 accel=0 storage=black center=512
+@movefg accel=0 center=512 opacity=255 storage=black textoff=0 time=9000 vcenter=288
 　彼は一度だけ、どうして、と訊ねたコトがあるらしい。[l][r]
 　疑問を覚えた彼に、彼を引き取った老人は、[l][r]
 @r
@@ -199,17 +199,17 @@
 　そう笑って、彼に[ruby char=2 text=こせき]戸籍と新生活を[ruby char=2 text=みつくろ]見繕って、山以外で[ruby o2o=1 text=のた]野垂れ死ねと見送った。
 @pg
 *page19|
-@playstop time=8000 nowait=1
-@bg time=800 rule=crossfade storage=black
+@playstop nowait=1 time=8000
+@bg rule=crossfade storage=black time=800
 @stopaction
 @clall
-@partbg storage=im09l04旧校舎へ続く森(夜雪) srcleft=126 srctop=474 index=1300 width=367 height=576 center=781 noclear=1 id=pb2
-@fg storage=im黒グラデ上から center=190 vcenter=395 type=13 zoomy=-100 index=1000 partbgid=pb2
-@fg storage=im16樹木(影)_高木02c center=388 vcenter=39 index=1100 type=16 rotate=10.878 blur=3 partbgid=pb2
-@partbg storage=bg09青崎家03外観(雪)-(夜) srcleft=180 srctop=219.4 srcrotate=-2.138 srczoomx=40 srczoomy=35 index=2000 width=204 height=251 center=799 vcenter=522 bordersize=100 bordercolor=none noclear=1 blur=5 id=pb1
-@bg rule=crossfade time=800 storage=black noclear=1 zoom=200 noback=1
+@partbg center=781 height=576 id=pb2 index=1300 noclear=1 srcleft=126 srctop=474 storage=im09l04旧校舎へ続く森(夜雪) width=367
+@fg center=190 index=1000 partbgid=pb2 storage=im黒グラデ上から type=13 vcenter=395 zoomy=-100
+@fg blur=3 center=388 index=1100 partbgid=pb2 rotate=10.878 storage=im16樹木(影)_高木02c type=16 vcenter=39
+@partbg blur=5 bordercolor=none bordersize=100 center=799 height=251 id=pb1 index=2000 noclear=1 srcleft=180 srcrotate=-2.138 srctop=219.4 srczoomx=40 srczoomy=35 storage=bg09青崎家03外観(雪)-(夜) vcenter=522 width=204
+@bg noback=1 noclear=1 rule=crossfade storage=black time=800 zoom=200
 @wait canskip=0 time=400
-@se delay=800 storage=se13004 volume=80 loop=1
+@se delay=800 loop=1 storage=se13004 volume=80
 　道の終わりには、彼女の帰る場所があった。[l][r]
 　これといって特色のない一般家屋。[l][r]
 　街にある一戸建てをそのまま持ってきて、日々の趣味として畑や家畜を育てている、あまりにも平和な家。[l][r]
@@ -217,30 +217,30 @@
 　それを視界に収めて、先ほどの少女の問いに答えようと、彼は口を開けた。
 @pg
 *page20|
-@sestop storage=se13004 time=4000 nowait=1
+@sestop nowait=1 storage=se13004 time=4000
 @clall
-@fg storage=im10スナッチ霧bベタ center=475 vcenter=803 index=2000 opacity=32 type=13
-@fg storage=im02l空(月) center=466 vcenter=223 index=1800 type=21
-@fg storage=草十郎私服コート02a(全) center=276 vcenter=265 index=1600 effect=屋外深夜 zoom=70
-@fg storage=bg04l三咲町03目抜き通り(広)-(夜) center=516 vcenter=961 index=1400 type=25 rotate=11.514 zoomx=-200 zoomy=200
-@bg rule=crossfade time=600 storage=im02l空(月) left=-391 top=-283 noclear=1 noback=1
+@fg center=475 index=2000 opacity=32 storage=im10スナッチ霧bベタ type=13 vcenter=803
+@fg center=466 index=1800 storage=im02l空(月) type=21 vcenter=223
+@fg center=276 effect=屋外深夜 index=1600 storage=草十郎私服コート02a(全) vcenter=265 zoom=70
+@fg center=516 index=1400 rotate=11.514 storage=bg04l三咲町03目抜き通り(広)-(夜) type=25 vcenter=961 zoomx=-200 zoomy=200
+@bg left=-391 noback=1 noclear=1 rule=crossfade storage=im02l空(月) time=600 top=-283
 「自分には、できなかった。知らなければ良かったのに、知ってしまったから。[l]その後は簡単だ。[l][r]
 　鳴けない鳥はいらないと言われた。[l][r]
 　今まで疑いもなく出来た事を、意味を知っただけで出来なくなったものはいらないと」
 @pg
 *page21|
 @clall
-@fg storage=草十郎私服コート02a(大) center=873 vcenter=276 index=3100 opacity=148 rotate=81.299 zoomx=80 zoomy=190 effect=mono09092d xblur=10 yblur=8
-@fg storage=im16l樹木(影)_低木02c center=778 vcenter=793 index=2200 opacity=128 rotate=39.718 effect=mono09092d blur=8
-@fg storage=im16l樹木(影)_高木01c center=235 vcenter=492 index=2000 opacity=128 rotate=-102.447 zoomx=50 zoomy=80 effect=mono09092d blur=10
-@fg storage=im16l樹木(影)_高木02c center=1247 vcenter=70 index=1600 opacity=128 rotate=93.828 zoomx=60 effect=mono09092d blur=8
-@fg storage=im16l樹木(影)_低木02c vcenter=229 index=2100 opacity=128 rotate=-105.65 zoomx=50 zoomy=120 effect=mono09092d blur=8
-@fg storage=im02l空(小雨) center=411 vcenter=341 index=1500 type=18
-@fg storage=im15lヘリのライトa center=148 vcenter=416 index=1200 opacity=128 type=16 rotate=-17.398 zoomx=140 zoomy=40 effect=mono09092d
-@fg storage=im15lヘリのライトa center=423 vcenter=508 index=1100 opacity=192 type=19 rotate=-19.273 zoomx=160 zoomy=80 effect=mono09092d
-@fg storage=im15lヘリのライトa center=842 vcenter=67 opacity=160 type=19 rotate=-7.835 zoomx=120 zoomy=50 effect=mono09092d index=1000
-@partbg storage=im02空(雪) srcleft=126 srctop=86 srcrotate=-14.097 srczoomx=180 srczoomy=120 index=3000 width=1024 height=482 vcenter=348 type=20 bordersize=100 bordercolor=none noclear=1 blur=3 id=pb1
-@bg rule=crossfade time=600 storage=bg06l大きい公園02広場-(全消灯深夜) left=-83 top=-61 afx=956.5 afy=901.5 rotate=-15.798 zoomx=200 zoomy=300 effect=屋外蛍雪 noclear=1 noback=1
+@fg center=873 effect=mono09092d index=3100 opacity=148 rotate=81.299 storage=草十郎私服コート02a(大) vcenter=276 xblur=10 yblur=8 zoomx=80 zoomy=190
+@fg blur=8 center=778 effect=mono09092d index=2200 opacity=128 rotate=39.718 storage=im16l樹木(影)_低木02c vcenter=793
+@fg blur=10 center=235 effect=mono09092d index=2000 opacity=128 rotate=-102.447 storage=im16l樹木(影)_高木01c vcenter=492 zoomx=50 zoomy=80
+@fg blur=8 center=1247 effect=mono09092d index=1600 opacity=128 rotate=93.828 storage=im16l樹木(影)_高木02c vcenter=70 zoomx=60
+@fg blur=8 effect=mono09092d index=2100 opacity=128 rotate=-105.65 storage=im16l樹木(影)_低木02c vcenter=229 zoomx=50 zoomy=120
+@fg center=411 index=1500 storage=im02l空(小雨) type=18 vcenter=341
+@fg center=148 effect=mono09092d index=1200 opacity=128 rotate=-17.398 storage=im15lヘリのライトa type=16 vcenter=416 zoomx=140 zoomy=40
+@fg center=423 effect=mono09092d index=1100 opacity=192 rotate=-19.273 storage=im15lヘリのライトa type=19 vcenter=508 zoomx=160 zoomy=80
+@fg center=842 effect=mono09092d index=1000 opacity=160 rotate=-7.835 storage=im15lヘリのライトa type=19 vcenter=67 zoomx=120 zoomy=50
+@partbg blur=3 bordercolor=none bordersize=100 height=482 id=pb1 index=3000 noclear=1 srcleft=126 srcrotate=-14.097 srctop=86 srczoomx=180 srczoomy=120 storage=im02空(雪) type=20 vcenter=348 width=1024
+@bg afx=956.5 afy=901.5 effect=屋外蛍雪 left=-83 noback=1 noclear=1 rotate=-15.798 rule=crossfade storage=bg06l大きい公園02広場-(全消灯深夜) time=600 top=-61 zoomx=200 zoomy=300
 「どんなに山にいたくても、できないのなら意味がない。[l][r]
 　俺は意味を知った瞬間に、意味を信じるコトができなくなった。だから山を下りたんだ。[l][r]
 　……けれど、どうなんだろう。[l][r]
@@ -253,29 +253,29 @@
 　自戒のように、彼の呟きは途切れていった。
 @pg
 *page23|
-@bg textoff=0 time=600 rule=crossfade storage=black
+@bg rule=crossfade storage=black textoff=0 time=600
 　……青子は思う。[l][r]
 　彼の[ruby text=す]棲んでいた世界は、ある意味で完成していた。
 @pg
 *page24|
 @clall
-@fg storage=im02l空(月) center=404 vcenter=360 index=3000 type=8 blur=5
-@fg storage=im16樹木(影)_高木02b center=963 vcenter=569 index=2900 type=16 rotate=5.429 zoom=50
-@fg storage=im16樹木(影)_高木02c center=280 vcenter=581 index=2800 type=16 rotate=-10.666 zoomx=-50 zoomy=60
-@fg storage=im16樹木(影)_低木01c center=271 vcenter=515 index=2700 type=16 rotate=-10.506
-@fg storage=im16樹木(影)_高木02c center=790 vcenter=482 index=2600 type=16 rotate=15.499 zoomx=-50 zoomy=50
-@fg storage=im16樹木(影)_高木02c center=293 vcenter=-22 index=2500 type=16 rotate=-8.232
-@fg storage=im16樹木(影)_高木03c center=898 vcenter=431 index=2400 type=16 rotate=13.653
-@fg storage=im16樹木(影)_高木01c center=930 vcenter=89 index=2300 type=16 rotate=7.123
-@fg storage=im16樹木(影)_低木02c center=57 vcenter=397 index=2200 type=16
-@fg storage=im16樹木(影)_高木01c center=72 vcenter=239 index=2100 type=16 rotate=-11.322
-@fg storage=im17ep02 center=546 vcenter=834 type=3 effect=monocro blur=1 index=1000
-@fg storage=im02空(夜) center=512 vcenter=288 index=1300 type=18 blur=2
-@fg storage=im02l空(昼) center=681 vcenter=350 index=1100 type=19 rotate=-4.12 effect=monocro contrast=-60
-@fg storage=im黒グラデ上から center=892 vcenter=308 index=5100 rotate=-90
-@fg storage=im黒グラデ上から center=263 vcenter=308 index=5000 rotate=90
-@fg storage=草十郎私服コート02a(遠) center=521 vcenter=598 index=5500 effect=mono000000 zoom=70
-@bg rule=crossfade time=800 storage=im02空(夜) left=-48 top=-48 noclear=1 noback=1
+@fg blur=5 center=404 index=3000 storage=im02l空(月) type=8 vcenter=360
+@fg center=963 index=2900 rotate=5.429 storage=im16樹木(影)_高木02b type=16 vcenter=569 zoom=50
+@fg center=280 index=2800 rotate=-10.666 storage=im16樹木(影)_高木02c type=16 vcenter=581 zoomx=-50 zoomy=60
+@fg center=271 index=2700 rotate=-10.506 storage=im16樹木(影)_低木01c type=16 vcenter=515
+@fg center=790 index=2600 rotate=15.499 storage=im16樹木(影)_高木02c type=16 vcenter=482 zoomx=-50 zoomy=50
+@fg center=293 index=2500 rotate=-8.232 storage=im16樹木(影)_高木02c type=16 vcenter=-22
+@fg center=898 index=2400 rotate=13.653 storage=im16樹木(影)_高木03c type=16 vcenter=431
+@fg center=930 index=2300 rotate=7.123 storage=im16樹木(影)_高木01c type=16 vcenter=89
+@fg center=57 index=2200 storage=im16樹木(影)_低木02c type=16 vcenter=397
+@fg center=72 index=2100 rotate=-11.322 storage=im16樹木(影)_高木01c type=16 vcenter=239
+@fg blur=1 center=546 effect=monocro index=1000 storage=im17ep02 type=3 vcenter=834
+@fg blur=2 center=512 index=1300 storage=im02空(夜) type=18 vcenter=288
+@fg center=681 contrast=-60 effect=monocro index=1100 rotate=-4.12 storage=im02l空(昼) type=19 vcenter=350
+@fg center=892 index=5100 rotate=-90 storage=im黒グラデ上から vcenter=308
+@fg center=263 index=5000 rotate=90 storage=im黒グラデ上から vcenter=308
+@fg center=521 effect=mono000000 index=5500 storage=草十郎私服コート02a(遠) vcenter=598 zoom=70
+@bg left=-48 noback=1 noclear=1 rule=crossfade storage=im02空(夜) time=800 top=-48
 　一つの事柄を成立させたければ、それ以外は何もない世界を作ればいい。[l][r]
 　それがどんな不道徳な事でも、不道徳という概念を知らなければ、それは正義だ。[l][r]
 　いや、そもそも正しさの観念すらない。[l][r]
@@ -297,25 +297,25 @@
 　だって、それを知らなければ、彼は今でも幸福だったのだから。
 @pg
 *page27|
-@bg time=600 rule=crossfade storage=white
+@bg rule=crossfade storage=white time=600
 @clall
-@fg storage=im02l空(月) center=654 vcenter=535 index=3000 type=8 afx=1009 afy=267 zoom=400 blur=5
-@fg storage=im16l樹木(影)_高木02c center=210 vcenter=308 index=2600 type=16 rotate=-9.766 zoom=200 blur=1
-@fg storage=im16樹木(影)_高木03b center=127 vcenter=780 index=3300 type=16 rotate=-35.236 blur=2
-@fg storage=im16樹木(影)_高木03c center=129 vcenter=185 index=2400 type=16 rotate=-37.671 blur=3
-@fg storage=im16樹木(影)_高木01c center=435 vcenter=925 index=2100 type=16 rotate=-22.338 blur=2
-@fg storage=im02l空(昼b) center=353 vcenter=-215 index=1600 opacity=160 type=23 rotate=-38 effect=monocro zoom=200
-@fg storage=im02l空(昼b) center=353 vcenter=-216 index=1500 opacity=96 type=24 rotate=-38 effect=monocro contrast=40 zoom=200
-@fg storage=im17ep02 center=546 vcenter=834 opacity=0 type=3 effect=monocro blur=1 index=1000
-@fg storage=im02空(夜) center=512 vcenter=288 index=1300 type=18 blur=2
-@fg storage=im02l空(昼) center=681 vcenter=350 index=1100 type=19 rotate=-4.12 effect=monocro contrast=-60
-@bg rule=crossfade time=1000 storage=im02空(夜) left=-48 top=-48 noclear=1 noback=1
+@fg afx=1009 afy=267 blur=5 center=654 index=3000 storage=im02l空(月) type=8 vcenter=535 zoom=400
+@fg blur=1 center=210 index=2600 rotate=-9.766 storage=im16l樹木(影)_高木02c type=16 vcenter=308 zoom=200
+@fg blur=2 center=127 index=3300 rotate=-35.236 storage=im16樹木(影)_高木03b type=16 vcenter=780
+@fg blur=3 center=129 index=2400 rotate=-37.671 storage=im16樹木(影)_高木03c type=16 vcenter=185
+@fg blur=2 center=435 index=2100 rotate=-22.338 storage=im16樹木(影)_高木01c type=16 vcenter=925
+@fg center=353 effect=monocro index=1600 opacity=160 rotate=-38 storage=im02l空(昼b) type=23 vcenter=-215 zoom=200
+@fg center=353 contrast=40 effect=monocro index=1500 opacity=96 rotate=-38 storage=im02l空(昼b) type=24 vcenter=-216 zoom=200
+@fg blur=1 center=546 effect=monocro index=1000 opacity=0 storage=im17ep02 type=3 vcenter=834
+@fg blur=2 center=512 index=1300 storage=im02空(夜) type=18 vcenter=288
+@fg center=681 contrast=-60 effect=monocro index=1100 rotate=-4.12 storage=im02l空(昼) type=19 vcenter=350
+@bg left=-48 noback=1 noclear=1 rule=crossfade storage=im02空(夜) time=1000 top=-48
 “知らなければ、良かったのに。”[l][r]
 @r
 　その言葉の罪深さは、呟く本人が誰よりも。
 @pg
 *page28|
-@sestop storage=se13004 time=5000 nowait=1
+@sestop nowait=1 storage=se13004 time=5000
 　だから彼は問うたのだ。[l][r]
 　おかしいのは一体なんなのか。[l][r]
 　間違っていたのは誰なのかを。[l][r]
@@ -324,28 +324,28 @@
 　一瞬の、けれど[ruby char=2 text=えいごう]永劫のような思考の末、
 @pg
 *page29|
-@bg textoff=0 time=400 rule=crossfade storage=black
-@play storage=m42 volume=100 time=0
+@bg rule=crossfade storage=black textoff=0 time=400
+@play storage=m42 time=0 volume=100
 「―――私には、答えられないわ」[l][r]
 @clall
-@fg storage=im10スナッチ霧aベタ center=486 vcenter=550 index=4000 opacity=64 type=19 zoomx=60 zoomy=26
-@fg storage=im16樹木(影)_低木01c center=455 vcenter=416 index=2500 type=16 zoomx=50 blur=1
-@fg storage=im16樹木(影)_高木03c center=664 vcenter=566 index=1900 type=16 zoomx=-60 zoomy=60 blur=2
-@fg storage=im16樹木(影)_高木01c center=536 vcenter=725 index=2300 type=16 rotate=2.961 zoom=40 blur=2
-@fg storage=im16樹木(影)_高木03c center=377 vcenter=422 index=2200 type=16 zoom=60 blur=2
-@fg storage=im16樹木(影)_低木01c center=310 vcenter=398 index=1700 type=16 zoomx=50 blur=2
-@fg storage=im16樹木(影)_高木02c center=750 vcenter=383 index=2100 type=16 zoom=40 blur=2
-@fg storage=im16樹木(影)_高木02c center=196 vcenter=435 index=2400 type=16 zoomx=-36 zoomy=26 blur=2
-@fg storage=im16樹木(影)_高木02c center=1033 vcenter=371 index=1600 type=16 zoom=30 blur=2
-@fg storage=im16樹木(影)_低木01c center=984 vcenter=489 index=1800 type=16 zoom=50 blur=2
-@fg storage=im16樹木(影)_高木02c center=164 vcenter=359 index=1500 type=16 zoom=30 blur=2
-@fg storage=im0909魔法発動の影響05秋(bg) center=512 vcenter=187 index=1200 type=18 zoomy=120 effect=monocro contrast=15
-@fg storage=im16樹木(影)_高木01c center=20 vcenter=600 index=1400 type=16 zoom=30 blur=2
-@fg storage=im16樹木(影)_高木01c center=831 vcenter=485 index=2600 type=16 zoomx=-30 zoomy=30 blur=2
-@fg storage=im16樹木(影)_高木01c center=54 vcenter=425 index=2700 type=16 zoom=30 blur=2
-@fg storage=im黒グラデ上から center=512 vcenter=541 index=5000 opacity=192 zoomy=-100
-@fg storage=im02l空(昼) center=599 vcenter=514 index=1300 type=18 zoomy=-100 effect=monocro
-@bg textoff=0 rule=crossfade time=800 storage=im02空(夜) left=-48 top=-48 zoomx=-100 noclear=1 noback=1
+@fg center=486 index=4000 opacity=64 storage=im10スナッチ霧aベタ type=19 vcenter=550 zoomx=60 zoomy=26
+@fg blur=1 center=455 index=2500 storage=im16樹木(影)_低木01c type=16 vcenter=416 zoomx=50
+@fg blur=2 center=664 index=1900 storage=im16樹木(影)_高木03c type=16 vcenter=566 zoomx=-60 zoomy=60
+@fg blur=2 center=536 index=2300 rotate=2.961 storage=im16樹木(影)_高木01c type=16 vcenter=725 zoom=40
+@fg blur=2 center=377 index=2200 storage=im16樹木(影)_高木03c type=16 vcenter=422 zoom=60
+@fg blur=2 center=310 index=1700 storage=im16樹木(影)_低木01c type=16 vcenter=398 zoomx=50
+@fg blur=2 center=750 index=2100 storage=im16樹木(影)_高木02c type=16 vcenter=383 zoom=40
+@fg blur=2 center=196 index=2400 storage=im16樹木(影)_高木02c type=16 vcenter=435 zoomx=-36 zoomy=26
+@fg blur=2 center=1033 index=1600 storage=im16樹木(影)_高木02c type=16 vcenter=371 zoom=30
+@fg blur=2 center=984 index=1800 storage=im16樹木(影)_低木01c type=16 vcenter=489 zoom=50
+@fg blur=2 center=164 index=1500 storage=im16樹木(影)_高木02c type=16 vcenter=359 zoom=30
+@fg center=512 contrast=15 effect=monocro index=1200 storage=im0909魔法発動の影響05秋(bg) type=18 vcenter=187 zoomy=120
+@fg blur=2 center=20 index=1400 storage=im16樹木(影)_高木01c type=16 vcenter=600 zoom=30
+@fg blur=2 center=831 index=2600 storage=im16樹木(影)_高木01c type=16 vcenter=485 zoomx=-30 zoomy=30
+@fg blur=2 center=54 index=2700 storage=im16樹木(影)_高木01c type=16 vcenter=425 zoom=30
+@fg center=512 index=5000 opacity=192 storage=im黒グラデ上から vcenter=541 zoomy=-100
+@fg center=599 effect=monocro index=1300 storage=im02l空(昼) type=18 vcenter=514 zoomy=-100
+@bg left=-48 noback=1 noclear=1 rule=crossfade storage=im02空(夜) textoff=0 time=800 top=-48 zoomx=-100
 @r
 　少女は静かに、そう返答した。[l][r]
 　分からない、ではなく、答えられない。[l][r]
@@ -368,11 +368,11 @@
 @pg
 *page32|
 @clall
-@fg storage=im10スナッチ霧bベタ center=1254 vcenter=623 index=2000 opacity=32 type=13
-@fg storage=青子私服aジャケット02a(全)|c center=743 vcenter=1008 index=2200 effect=屋外深夜 zoom=80
-@fg storage=im02l空(月) center=341 vcenter=233 index=1800 type=21
-@fg storage=bg04l三咲町03目抜き通り(広)-(夜) center=938 vcenter=1031 index=1400 type=25 zoom=200 blur=1
-@bg textoff=0 rule=crossfade time=600 storage=im02l空(月) left=-391 top=-283 noclear=1 noback=1
+@fg center=1254 index=2000 opacity=32 storage=im10スナッチ霧bベタ type=13 vcenter=623
+@fg center=743 effect=屋外深夜 index=2200 storage=青子私服aジャケット02a(全)|c vcenter=1008 zoom=80
+@fg center=341 index=1800 storage=im02l空(月) type=21 vcenter=233
+@fg blur=1 center=938 index=1400 storage=bg04l三咲町03目抜き通り(広)-(夜) type=25 vcenter=1031 zoom=200
+@bg left=-391 noback=1 noclear=1 rule=crossfade storage=im02l空(月) textoff=0 time=600 top=-283
 「……そうね。優しくなんかないわね、私」[l][r]
 @r
 　どこか[ruby text=さみ]寂しげな青子の同意に、ほら、と草十郎は笑った。[l][r]
@@ -383,9 +383,9 @@
 　もっと違う、なんでもない話をすれば、こんな[ruby char=2 text=いんうつ]陰欝とした気分にはならなかったのにと。
 @pg
 *page34|
-@bg time=600 rule=crossfade storage=black
+@bg rule=crossfade storage=black time=600
 @clall
-@partbg rule=crossfade time=800 storage=bg09青崎家03外観(雪)-(夜) srctop=48 index=1000 width=559 height=576 center=825 bgstorage=black noclear=0 id=pb1
+@partbg bgstorage=black center=825 height=576 id=pb1 index=1000 noclear=0 rule=crossfade srctop=48 storage=bg09青崎家03外観(雪)-(夜) time=800 width=559
 　道は、あと数歩分もない。[l][r]
 　木の柵に囲まれた建物は、冬の中にある[ruby text=いこ]憩いの宿に見えた。[l][r]
 　窓からこぼれる明かりが、今の気分に逆らって食卓の[ruby text=にぎ]賑わいを想像させる。
@@ -393,22 +393,22 @@
 *page35|
 「ごめん。悪いこと聞いちゃって」[l][r]
 @r
-@se delay=800 storage=se13007 volume=70 loop=0
+@se delay=800 loop=0 storage=se13007 volume=70
 　青子は庭の入り口で立ち止まる。[l][r]
 　最後なのに、それとも最後だから、一度くらいは謝っておこうと思ったのか。[l][r]
 　それに草十郎はいや、と答えるだけだった。
 @pg
 *page36|
 @clall
-@fg storage=青子私服aジャケット02a(全) center=883 vcenter=1096 index=2300 effect=mono000000 zoom=70 blur=10
-@fg storage=青子私服aジャケット02a(全) center=880 vcenter=1093 index=2200 effect=屋外蛍雪 zoom=70
-@fg storage=草十郎私服コート02a(全) center=203 vcenter=930 index=1700 zoomx=-70 zoomy=70 effect=mono000000 blur=10
-@fg storage=草十郎私服コート02a(全) center=205 vcenter=927 index=1600 zoomx=-70 zoomy=70 effect=屋外蛍雪
-@bg rule=crossfade time=600 storage=bg09l青崎家03外観(雪)-(夜) left=126 top=-589 noclear=1 zoom=140 blur=2 noback=1
+@fg blur=10 center=883 effect=mono000000 index=2300 storage=青子私服aジャケット02a(全) vcenter=1096 zoom=70
+@fg center=880 effect=屋外蛍雪 index=2200 storage=青子私服aジャケット02a(全) vcenter=1093 zoom=70
+@fg blur=10 center=203 effect=mono000000 index=1700 storage=草十郎私服コート02a(全) vcenter=930 zoomx=-70 zoomy=70
+@fg center=205 effect=屋外蛍雪 index=1600 storage=草十郎私服コート02a(全) vcenter=927 zoomx=-70 zoomy=70
+@bg blur=2 left=126 noback=1 noclear=1 rule=crossfade storage=bg09l青崎家03外観(雪)-(夜) time=600 top=-589 zoom=140
 「話、途中なのにね」[l][r]
 @r
 　辿り着いてしまった家を見上げて、白い息をこぼす。[l][r]
-　うなずく草十郎の顔に、もう[ruby text=くら char=1]昏い[ruby text=かげ char=1]翳りは微塵もない。
+　うなずく草十郎の顔に、もう[ruby char=1 text=くら]昏い[ruby char=1 text=かげ]翳りは微塵もない。
 @pg
 *page37|
 「自分も、話してみてようやく振り向けたと思う。だから蒼崎には感謝してるよ。[l][r]
@@ -417,56 +417,56 @@
 @pg
 *page38|
 @clall
-@fg storage=im16樹木(影)_低木02c center=361 vcenter=569 index=2700 type=16 rotate=-17.084 zoom=60
-@fg storage=im16樹木(影)_高木01c center=961 vcenter=745 index=1400 type=16 rotate=12.953 zoomx=-50 zoomy=50
-@fg storage=im16樹木(影)_高木03c center=87 vcenter=401 index=2500 type=16 rotate=-47.463 zoomy=80
-@fg storage=im16樹木(影)_低木01c center=127 vcenter=116 index=2400 type=16 rotate=-69.29
-@fg storage=im16樹木(影)_高木01b center=41 vcenter=755 index=2300 type=16 rotate=-31.003 zoomx=40 zoomy=50
-@fg storage=im16樹木(影)_低木02b center=1089 vcenter=544 index=2200 type=16 rotate=54.448
-@fg storage=im16樹木(影)_高木02c center=1082 vcenter=-32 index=2100 type=16 rotate=57.124
-@fg storage=im16樹木(影)_高木02c center=118 vcenter=276 index=2000 type=16 rotate=-51.533 zoom=50
-@fg storage=im16樹木(影)_高木03c center=1032 vcenter=373 index=1900 type=16 rotate=58.686
-@fg storage=im16樹木(影)_低木02c center=995 vcenter=566 index=1800 type=16 rotate=38.477 zoomx=50
-@fg storage=im16樹木(影)_高木01c center=86 vcenter=480 index=1600 type=16 rotate=-8.416 zoom=50
-@fg storage=im16樹木(影)_低木01c center=773 vcenter=566 index=2800 type=16 rotate=48.165 zoom=60
-@fg storage=im16樹木(影)_高木01c center=336 vcenter=452 index=3100 type=16 rotate=-18.508 zoom=30
-@fg storage=im16樹木(影)_低木02b center=889 vcenter=172 index=3000 type=16 rotate=76.36 zoomx=-100
-@fg storage=im16樹木(影)_高木03c center=1060 vcenter=482 index=2900 type=16 rotate=45.397 zoomx=-100
-@fg storage=im17ep02 center=512 vcenter=632 index=1500 type=21
-@fg storage=im02空(夜) center=512 vcenter=288 index=1300 type=18 blur=2
-@fg storage=im02l空(昼) center=332 vcenter=234 index=1100 type=19 rotate=6.176 zoomx=-100 effect=monocro contrast=-40
-@bg rule=crossfade time=600 storage=im02空(夜) left=-48 top=-48 noclear=1 noback=1
+@fg center=361 index=2700 rotate=-17.084 storage=im16樹木(影)_低木02c type=16 vcenter=569 zoom=60
+@fg center=961 index=1400 rotate=12.953 storage=im16樹木(影)_高木01c type=16 vcenter=745 zoomx=-50 zoomy=50
+@fg center=87 index=2500 rotate=-47.463 storage=im16樹木(影)_高木03c type=16 vcenter=401 zoomy=80
+@fg center=127 index=2400 rotate=-69.29 storage=im16樹木(影)_低木01c type=16 vcenter=116
+@fg center=41 index=2300 rotate=-31.003 storage=im16樹木(影)_高木01b type=16 vcenter=755 zoomx=40 zoomy=50
+@fg center=1089 index=2200 rotate=54.448 storage=im16樹木(影)_低木02b type=16 vcenter=544
+@fg center=1082 index=2100 rotate=57.124 storage=im16樹木(影)_高木02c type=16 vcenter=-32
+@fg center=118 index=2000 rotate=-51.533 storage=im16樹木(影)_高木02c type=16 vcenter=276 zoom=50
+@fg center=1032 index=1900 rotate=58.686 storage=im16樹木(影)_高木03c type=16 vcenter=373
+@fg center=995 index=1800 rotate=38.477 storage=im16樹木(影)_低木02c type=16 vcenter=566 zoomx=50
+@fg center=86 index=1600 rotate=-8.416 storage=im16樹木(影)_高木01c type=16 vcenter=480 zoom=50
+@fg center=773 index=2800 rotate=48.165 storage=im16樹木(影)_低木01c type=16 vcenter=566 zoom=60
+@fg center=336 index=3100 rotate=-18.508 storage=im16樹木(影)_高木01c type=16 vcenter=452 zoom=30
+@fg center=889 index=3000 rotate=76.36 storage=im16樹木(影)_低木02b type=16 vcenter=172 zoomx=-100
+@fg center=1060 index=2900 rotate=45.397 storage=im16樹木(影)_高木03c type=16 vcenter=482 zoomx=-100
+@fg center=512 index=1500 storage=im17ep02 type=21 vcenter=632
+@fg blur=2 center=512 index=1300 storage=im02空(夜) type=18 vcenter=288
+@fg center=332 contrast=-40 effect=monocro index=1100 rotate=6.176 storage=im02l空(昼) type=19 vcenter=234 zoomx=-100
+@bg left=-48 noback=1 noclear=1 rule=crossfade storage=im02空(夜) time=600 top=-48
 　消え入るような笑顔で、草十郎は青子と顔を向き合わせる。[l][r]
 　今まで通りの、何でもない静希草十郎として。[l][r]
 　それが痛ましくて、そんな日がこない事を青子は祈った。[l][r]
 　自分のためと、この特異な少年のために。
 @pg
 *page39|
-@bg textoff=0 time=600 rule=crossfade storage=black
+@bg rule=crossfade storage=black textoff=0 time=600
 “……もっとも、そんな機会はもうこないか”[l][r]
 @r
 　そして、彼女は一軒家の更に向こう、小さな森に隠れた[ruby char=2 text=どうけつ]洞穴を指さした。
 @pg
 *page40|
 @clall
-@fg storage=草十郎私服コート01b(全) center=-472 vcenter=2130 index=1700 opacity=192 type=16 effect=mono09092d xblur=5 yblur=10 zoom=200
-@fg storage=青子私服aジャケット03a(全) center=805 vcenter=767 index=2300 opacity=192 type=16 zoomx=-90 zoomy=90 effect=mono09092d blur=5
-@fg storage=青子私服aジャケット03a(全) center=777 vcenter=760 index=2200 zoomx=-90 zoomy=90 effect=屋外深夜
-@fg storage=草十郎私服コート01b(全) center=-430 vcenter=2077 index=1600 effect=屋外深夜 zoom=200 blur=2
-@bg rule=crossfade time=600 storage=bg09l青崎家03外観(雪)-(夜) left=50 top=-476 afx=434 afy=1002 noclear=1 zoom=260 blur=1 noback=1
+@fg center=-472 effect=mono09092d index=1700 opacity=192 storage=草十郎私服コート01b(全) type=16 vcenter=2130 xblur=5 yblur=10 zoom=200
+@fg blur=5 center=805 effect=mono09092d index=2300 opacity=192 storage=青子私服aジャケット03a(全) type=16 vcenter=767 zoomx=-90 zoomy=90
+@fg center=777 effect=屋外深夜 index=2200 storage=青子私服aジャケット03a(全) vcenter=760 zoomx=-90 zoomy=90
+@fg blur=2 center=-430 effect=屋外深夜 index=1600 storage=草十郎私服コート01b(全) vcenter=2077 zoom=200
+@bg afx=434 afy=1002 blur=1 left=50 noback=1 noclear=1 rule=crossfade storage=bg09l青崎家03外観(雪)-(夜) time=600 top=-476 zoom=260
 「あそこ、ちょっとした洞穴があるの。そこに祖父がいるから、行って。[l][r]
 　……ほんとはもっと違った話が聞きたかったけど。仕方ないか、魔法は十二時になるときれちゃうものだしね」
 @pg
 *page41|
 @clall
-@fg storage=青子私服aジャケット03a(全) center=805 vcenter=767 index=2300 opacity=192 type=16 zoomx=-90 zoomy=90 effect=mono09092d blur=5
-@fg storage=青子私服aジャケット03a(全) center=777 vcenter=760 index=2200 zoomx=-90 zoomy=90 effect=屋外深夜
-@bg textoff=0 rule=crossfade time=600 storage=bg09l青崎家03外観(雪)-(夜) left=50 top=-476 afx=434 afy=1002 noclear=1 zoom=260 blur=1 noback=1
+@fg blur=5 center=805 effect=mono09092d index=2300 opacity=192 storage=青子私服aジャケット03a(全) type=16 vcenter=767 zoomx=-90 zoomy=90
+@fg center=777 effect=屋外深夜 index=2200 storage=青子私服aジャケット03a(全) vcenter=760 zoomx=-90 zoomy=90
+@bg afx=434 afy=1002 blur=1 left=50 noback=1 noclear=1 rule=crossfade storage=bg09l青崎家03外観(雪)-(夜) textoff=0 time=600 top=-476 zoom=260
 　皮肉げな微笑みを浮かべて、青子はそう言った。[l][r]
-@se delay=800 storage=se13006 volume=80 loop=0
+@se delay=800 loop=0 storage=se13006 volume=80
 　それがどんな童話の引用かも知らず、草十郎は歩きだす。[l][r]
 @r
-　家から離れた森は遠すぎて、青子には[ruby text=ここ char=2]地上とは別の場所のように思えた。[l][r]
+　家から離れた森は遠すぎて、青子には[ruby char=2 text=ここ]地上とは別の場所のように思えた。[l][r]
 　実際は五分もかからない、短く、手の届く距離なのに。
 @pg
 *page42|
@@ -480,46 +480,46 @@
 　少年は片手を上げて答えると、彼方の森へと消えていった。
 @pg
 *page43|
-@bg time=600 rule=crossfade storage=black
+@bg rule=crossfade storage=black time=600
 @clall
 @invisibleframe
-@fg storage=im16樹木(影)_低木02c center=361 vcenter=569 index=2700 type=16 rotate=-17.084 zoom=60 id=1
-@fg storage=im16樹木(影)_高木01c center=961 vcenter=745 index=1400 type=16 rotate=12.953 zoomx=-50 zoomy=50 id=2
-@fg storage=im16樹木(影)_高木03c center=87 vcenter=401 index=2500 type=16 rotate=-47.463 zoomy=80 id=3
-@fg storage=im16樹木(影)_低木01c center=127 vcenter=116 index=2400 type=16 rotate=-69.29 id=4
-@fg storage=im16樹木(影)_高木01b center=41 vcenter=755 index=2300 type=16 rotate=-31.003 zoomx=40 zoomy=50 id=5
-@fg storage=im16樹木(影)_低木02b center=1089 vcenter=544 index=2200 type=16 rotate=54.448 id=6
-@fg storage=im16樹木(影)_高木02c center=1082 vcenter=-32 index=2100 type=16 rotate=57.124 id=7
-@fg storage=im16樹木(影)_高木02c center=118 vcenter=276 index=2000 type=16 rotate=-51.533 zoom=50 id=8
-@fg storage=im16樹木(影)_高木03c center=1032 vcenter=373 index=1900 type=16 rotate=58.686 id=9
-@fg storage=im16樹木(影)_低木02c center=995 vcenter=566 index=1800 type=16 rotate=38.477 zoomx=50 id=10
-@fg storage=im16樹木(影)_高木01c center=86 vcenter=480 index=1600 type=16 rotate=-8.416 zoom=50 id=11
-@fg storage=im16樹木(影)_低木01c center=773 vcenter=566 index=2800 type=16 rotate=48.165 zoom=60 id=12
-@fg storage=im16樹木(影)_高木01c center=336 vcenter=452 index=3100 type=16 rotate=-18.508 zoom=30 id=13
-@fg storage=im16樹木(影)_低木02b center=889 vcenter=172 index=3000 type=16 rotate=76.36 zoomx=-100 id=14
-@fg storage=im16樹木(影)_高木03c center=1060 vcenter=482 index=2900 type=16 rotate=45.397 zoomx=-100 id=15
-@fg storage=im17ep02 center=512 vcenter=517 index=1500 type=21
-@fg storage=im02空(夜) center=512 vcenter=288 index=1300 type=18
-@fg storage=im02l空(昼) center=332 vcenter=234 index=1100 type=19 rotate=6.176 zoomx=-100 effect=monocro contrast=-40
-@fgact page=back props=-storage,center,vcenter,absolute,-type,rotate,zoomx,zoomy,-visible keys=(0,3,l,im16樹木(影)_低木02c,361,569,2700,16,-17.084,60,60,1)(8000,,,,296,752,,,,,,) id=1
-@fgact page=back props=-storage,center,vcenter,absolute,-type,rotate,zoomx,zoomy,-visible keys=(0,3,l,im16樹木(影)_高木01c,961,745,1400,16,12.953,-50,50,1)(8000,,,,1037,897,,,,,,) id=2
-@fgact page=back props=-storage,center,vcenter,absolute,-type,rotate,zoomy,-visible keys=(0,3,l,im16樹木(影)_高木03c,87,401,2500,16,-47.463,80,1)(8000,,,,-110,567,,,,,) id=3
-@fgact page=back props=-storage,center,vcenter,absolute,-type,rotate,-visible keys=(0,3,l,im16樹木(影)_低木01c,127,116,2400,16,-69.29,1)(8000,,,,-30,159,,,,) id=4
-@fgact page=back props=-storage,center,vcenter,absolute,-type,rotate,zoomx,zoomy,-visible keys=(0,3,l,im16樹木(影)_高木01b,41,755,2300,16,-31.003,40,50,1)(8000,,,,-61,891,,,,,,) id=5
-@fgact page=back props=-storage,center,vcenter,absolute,-type,rotate,-visible keys=(0,3,l,im16樹木(影)_低木02b,1089,544,2200,16,54.448,1)(8000,,,,1272,669,,,,) id=6
-@fgact page=back props=-storage,center,vcenter,absolute,-type,rotate,-visible keys=(0,3,l,im16樹木(影)_高木02c,1082,-32,2100,16,57.124,1)(8000,,,,1571,158,,,,) id=7
-@fgact page=back props=-storage,center,vcenter,absolute,-type,rotate,zoomx,zoomy,-visible keys=(0,3,l,im16樹木(影)_高木02c,118,276,2000,16,-51.533,50,50,1)(8000,,,,-82,388,,,,,,) id=8
-@fgact page=back props=-storage,center,vcenter,absolute,-type,rotate,-visible keys=(0,3,l,im16樹木(影)_高木03c,1032,373,1900,16,58.686,1)(8000,,,,1290,550,,,,) id=9
-@fgact page=back props=-storage,center,vcenter,absolute,-type,rotate,zoomx,-visible keys=(0,3,l,im16樹木(影)_低木02c,995,566,1800,16,38.477,50,1)(8000,,,,1084,654,,,,,) id=10
-@fgact page=back props=-storage,center,vcenter,absolute,-type,rotate,zoomx,zoomy,-visible keys=(0,3,l,im16樹木(影)_高木01c,86,480,1600,16,-8.416,50,50,1)(8000,,,,-29,804,,,,,,) id=11
-@fgact page=back props=-storage,center,vcenter,absolute,-type,rotate,zoomx,zoomy,-visible keys=(0,3,l,im16樹木(影)_低木01c,773,566,2800,16,48.165,60,60,1)(8000,,,,820,630,,,,,,) id=12
-@fgact page=back props=-storage,center,vcenter,absolute,-type,rotate,zoomx,zoomy,-visible keys=(0,3,l,im16樹木(影)_高木01c,336,452,3100,16,-18.508,30,30,1)(8000,,,,246,673,,,,,,) id=13
-@fgact page=back props=-storage,center,vcenter,absolute,-type,rotate,zoomx,-visible keys=(0,3,l,im16樹木(影)_低木02b,889,172,3000,16,76.36,-100,1)(8000,,,,1152,277,,,,,) id=14
-@fgact page=back props=-storage,center,vcenter,absolute,-type,rotate,zoomx,-visible keys=(0,3,l,im16樹木(影)_高木03c,1060,482,2900,16,45.397,-100,1)(8000,,,,1269,678,,,,,) id=15
-@fgact page=back props=-storage,center,vcenter,absolute,-type,-visible keys=(0,3,l,im17ep02,512,517,1500,21,1)(8000,,,,,632,,,) storage=im17ep02
-@fgact page=back props=-storage,center,vcenter,absolute,-type,zoomx,zoomy,-visible keys=(0,3,l,im02空(夜),512,288,1300,18,,,1)(8000,,,,512,376,,,130,130,) storage=im02空(夜)
-@fgact page=back props=-storage,center,vcenter,absolute,-type,rotate,zoomx,zoomy,-effect,-contrast,-visible keys=(0,3,l,im02l空(昼),332,234,1100,19,6.176,-100,,monocro,-40,1)(8000,,,,281,289,,,,-130,130,,,) storage=im02l空(昼)
-@bg rule=crossfade time=800 storage=im02空(夜) left=-48 top=-48 noclear=1 noback=1
+@fg center=361 id=1 index=2700 rotate=-17.084 storage=im16樹木(影)_低木02c type=16 vcenter=569 zoom=60
+@fg center=961 id=2 index=1400 rotate=12.953 storage=im16樹木(影)_高木01c type=16 vcenter=745 zoomx=-50 zoomy=50
+@fg center=87 id=3 index=2500 rotate=-47.463 storage=im16樹木(影)_高木03c type=16 vcenter=401 zoomy=80
+@fg center=127 id=4 index=2400 rotate=-69.29 storage=im16樹木(影)_低木01c type=16 vcenter=116
+@fg center=41 id=5 index=2300 rotate=-31.003 storage=im16樹木(影)_高木01b type=16 vcenter=755 zoomx=40 zoomy=50
+@fg center=1089 id=6 index=2200 rotate=54.448 storage=im16樹木(影)_低木02b type=16 vcenter=544
+@fg center=1082 id=7 index=2100 rotate=57.124 storage=im16樹木(影)_高木02c type=16 vcenter=-32
+@fg center=118 id=8 index=2000 rotate=-51.533 storage=im16樹木(影)_高木02c type=16 vcenter=276 zoom=50
+@fg center=1032 id=9 index=1900 rotate=58.686 storage=im16樹木(影)_高木03c type=16 vcenter=373
+@fg center=995 id=10 index=1800 rotate=38.477 storage=im16樹木(影)_低木02c type=16 vcenter=566 zoomx=50
+@fg center=86 id=11 index=1600 rotate=-8.416 storage=im16樹木(影)_高木01c type=16 vcenter=480 zoom=50
+@fg center=773 id=12 index=2800 rotate=48.165 storage=im16樹木(影)_低木01c type=16 vcenter=566 zoom=60
+@fg center=336 id=13 index=3100 rotate=-18.508 storage=im16樹木(影)_高木01c type=16 vcenter=452 zoom=30
+@fg center=889 id=14 index=3000 rotate=76.36 storage=im16樹木(影)_低木02b type=16 vcenter=172 zoomx=-100
+@fg center=1060 id=15 index=2900 rotate=45.397 storage=im16樹木(影)_高木03c type=16 vcenter=482 zoomx=-100
+@fg center=512 index=1500 storage=im17ep02 type=21 vcenter=517
+@fg center=512 index=1300 storage=im02空(夜) type=18 vcenter=288
+@fg center=332 contrast=-40 effect=monocro index=1100 rotate=6.176 storage=im02l空(昼) type=19 vcenter=234 zoomx=-100
+@fgact id=1 keys=(0,3,l,im16樹木(影)_低木02c,361,569,2700,16,-17.084,60,60,1)(8000,,,,296,752,,,,,,) page=back props=-storage,center,vcenter,absolute,-type,rotate,zoomx,zoomy,-visible
+@fgact id=2 keys=(0,3,l,im16樹木(影)_高木01c,961,745,1400,16,12.953,-50,50,1)(8000,,,,1037,897,,,,,,) page=back props=-storage,center,vcenter,absolute,-type,rotate,zoomx,zoomy,-visible
+@fgact id=3 keys=(0,3,l,im16樹木(影)_高木03c,87,401,2500,16,-47.463,80,1)(8000,,,,-110,567,,,,,) page=back props=-storage,center,vcenter,absolute,-type,rotate,zoomy,-visible
+@fgact id=4 keys=(0,3,l,im16樹木(影)_低木01c,127,116,2400,16,-69.29,1)(8000,,,,-30,159,,,,) page=back props=-storage,center,vcenter,absolute,-type,rotate,-visible
+@fgact id=5 keys=(0,3,l,im16樹木(影)_高木01b,41,755,2300,16,-31.003,40,50,1)(8000,,,,-61,891,,,,,,) page=back props=-storage,center,vcenter,absolute,-type,rotate,zoomx,zoomy,-visible
+@fgact id=6 keys=(0,3,l,im16樹木(影)_低木02b,1089,544,2200,16,54.448,1)(8000,,,,1272,669,,,,) page=back props=-storage,center,vcenter,absolute,-type,rotate,-visible
+@fgact id=7 keys=(0,3,l,im16樹木(影)_高木02c,1082,-32,2100,16,57.124,1)(8000,,,,1571,158,,,,) page=back props=-storage,center,vcenter,absolute,-type,rotate,-visible
+@fgact id=8 keys=(0,3,l,im16樹木(影)_高木02c,118,276,2000,16,-51.533,50,50,1)(8000,,,,-82,388,,,,,,) page=back props=-storage,center,vcenter,absolute,-type,rotate,zoomx,zoomy,-visible
+@fgact id=9 keys=(0,3,l,im16樹木(影)_高木03c,1032,373,1900,16,58.686,1)(8000,,,,1290,550,,,,) page=back props=-storage,center,vcenter,absolute,-type,rotate,-visible
+@fgact id=10 keys=(0,3,l,im16樹木(影)_低木02c,995,566,1800,16,38.477,50,1)(8000,,,,1084,654,,,,,) page=back props=-storage,center,vcenter,absolute,-type,rotate,zoomx,-visible
+@fgact id=11 keys=(0,3,l,im16樹木(影)_高木01c,86,480,1600,16,-8.416,50,50,1)(8000,,,,-29,804,,,,,,) page=back props=-storage,center,vcenter,absolute,-type,rotate,zoomx,zoomy,-visible
+@fgact id=12 keys=(0,3,l,im16樹木(影)_低木01c,773,566,2800,16,48.165,60,60,1)(8000,,,,820,630,,,,,,) page=back props=-storage,center,vcenter,absolute,-type,rotate,zoomx,zoomy,-visible
+@fgact id=13 keys=(0,3,l,im16樹木(影)_高木01c,336,452,3100,16,-18.508,30,30,1)(8000,,,,246,673,,,,,,) page=back props=-storage,center,vcenter,absolute,-type,rotate,zoomx,zoomy,-visible
+@fgact id=14 keys=(0,3,l,im16樹木(影)_低木02b,889,172,3000,16,76.36,-100,1)(8000,,,,1152,277,,,,,) page=back props=-storage,center,vcenter,absolute,-type,rotate,zoomx,-visible
+@fgact id=15 keys=(0,3,l,im16樹木(影)_高木03c,1060,482,2900,16,45.397,-100,1)(8000,,,,1269,678,,,,,) page=back props=-storage,center,vcenter,absolute,-type,rotate,zoomx,-visible
+@fgact keys=(0,3,l,im17ep02,512,517,1500,21,1)(8000,,,,,632,,,) page=back props=-storage,center,vcenter,absolute,-type,-visible storage=im17ep02
+@fgact keys=(0,3,l,im02空(夜),512,288,1300,18,,,1)(8000,,,,512,376,,,130,130,) page=back props=-storage,center,vcenter,absolute,-type,zoomx,zoomy,-visible storage=im02空(夜)
+@fgact keys=(0,3,l,im02l空(昼),332,234,1100,19,6.176,-100,,monocro,-40,1)(8000,,,,281,289,,,,-130,130,,,) page=back props=-storage,center,vcenter,absolute,-type,rotate,zoomx,zoomy,-effect,-contrast,-visible storage=im02l空(昼)
+@bg left=-48 noback=1 noclear=1 rule=crossfade storage=im02空(夜) time=800 top=-48
 @wait canskip=0 time=2000
 　それを見届けて、青子はひとり[ruby text=そら]天を[ruby text=あお]仰ぐ。[l][r]
 　今夜は月よりも星が綺麗だ。[l][r]
@@ -544,12 +544,12 @@
 　あれは確かに、人間だけが持つ輝きだった。
 @pg
 *page46|
-@bg time=600 rule=crossfade storage=black
+@bg rule=crossfade storage=black time=600
 @stopaction
 @clall
-@playstop time=12000 nowait=1
-@partbg rule=crossfade time=800 storage=bg09青崎家03外観(雪)-(夜) srctop=48 index=1000 width=559 height=576 center=343 bgstorage=black noclear=0 id=pb1
-@se delay=800 storage=se13009 volume=90 loop=0
+@playstop nowait=1 time=12000
+@partbg bgstorage=black center=343 height=576 id=pb1 index=1000 noclear=0 rule=crossfade srctop=48 storage=bg09青崎家03外観(雪)-(夜) time=800 width=559
+@se delay=800 loop=0 storage=se13009 volume=90
 　彼女は星空から目を離して歩きだした。[l][r]
 　玄関の明かりはついていて、鍵はかかっていない。[l][r]
 　くっと服の袖をあげて時計を見ると、時刻はあと半刻で零時になろうとしていた。[l][r]
@@ -560,10 +560,10 @@
 　それで、さっきまでの淡い未練を、彼女は綺麗に断ち切った。
 @pg
 *page48|
-@bg time=600 rule=crossfade storage=black
+@bg rule=crossfade storage=black time=600
 @clall
-@fg storage=white center=512 vcenter=288 index=6000 opacity=0 effect=none
-@partbg rule=crossfade time=800 storage=bg09l青崎家03外観(雪)-(夜) srcleft=38 srctop=449 index=1000 width=559 height=576 center=700 bgstorage=black noclear=1 id=pb1
+@fg center=512 effect=none index=6000 opacity=0 storage=white vcenter=288
+@partbg bgstorage=black center=700 height=576 id=pb1 index=1000 noclear=1 rule=crossfade srcleft=38 srctop=449 storage=bg09l青崎家03外観(雪)-(夜) time=800 width=559
 　実家に帰ってくるのは二年ぶりだ。[l][r]
 　高校に入学してから下宿を始めて、今日までの二年間。[l][r]
 　早かったといえば早くすぎたその月日は、なぜか今になって思い出のように、自分の中を走り抜けていった。[l][r]
@@ -576,7 +576,7 @@
 　……中の風景はどこか微妙に違うけれど、記憶の中で見なれた温かい風景だった。
 @pg
 *page50|
-@movefg textoff=0 opacity=255 vcenter=288 time=6000 accel=0 storage=white center=512
+@movefg accel=0 center=512 opacity=255 storage=white textoff=0 time=6000 vcenter=288
 　自分が去って、月日が経っても変わらず出迎えてくれるものがある事は、なんて幸福なんだろう。[l][r]
 　それにほんの些細な、言葉にしない小さな感謝をして、彼女は自分の家に帰ってきた。[l][r]
 @r
@@ -584,9 +584,9 @@
 　呼び鈴も押さずに、ただいまと微笑んで。[p][r]
 *page51|
 @textoff time=4000
-@bg time=600 rule=crossfade storage=white
+@bg rule=crossfade storage=white time=600
 @stopaction
-@bg time=1500 rule=crossfade storage=black
+@bg rule=crossfade storage=black time=1500
 @cm
 @visibleframe
 @return
@@ -605,6 +605,7 @@ global.__tmp_tla = Scripts.eval('(const) %[
  "version" => 1
 ]');
 global.__tla_name = "d-6";
+
 @endscript
 @eval exp=timeline_object.loadByData(global.__tmp_tla,global.__tla_name)
 @return

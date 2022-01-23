@@ -19,21 +19,22 @@
 		.fillRect(0, 0, .imageWidth, .imageHeight, 0xFF000000);
 	}
 }
+
 @endscript
 @stopaction
 @stoptrans
-@eval exp="tracer_object.title_format=''"
-@eval exp="kag.tagHandlers.clearsuspects()" cond="kag.tagHandlers.clearsuspects!=void"
-@eval exp="kag.tagHandlers.hidealter()" cond="typeof kag.tagHandlers.hidealter!='undefined'"
-@eval exp="kag.tagHandlers.afterhidemap()" cond="typeof kag.tagHandlers.afterhidemap!='undefined'"
-@eval exp="f.scripttitle=f.lastscripttitle"
+@eval exp=tracer_object.title_format=''
+@eval cond=kag.tagHandlers.clearsuspects!=void exp=kag.tagHandlers.clearsuspects()
+@eval cond="typeof kag.tagHandlers.hidealter!='undefined'" exp=kag.tagHandlers.hidealter()
+@eval cond="typeof kag.tagHandlers.afterhidemap!='undefined'" exp=kag.tagHandlers.afterhidemap()
+@eval exp=f.scripttitle=f.lastscripttitle
 @clearfocusline
 @endploy
 @return
 
 ;タイトル/他からのロード
 *load
-@eval exp="Menu_object.doInvalidateByInvisible('fore');tf.do_systemmenu=false;kag.stopAllActions();kag.freeSnapshot();outMenu('title',,false);"
+@eval exp=Menu_object.doInvalidateByInvisible('fore');tf.do_systemmenu=false;kag.stopAllActions();kag.freeSnapshot();outMenu('title',,false);
 ;lockquickmenu する
 @lockquickmenu
 @textoff
@@ -54,6 +55,7 @@
 		.font.height	= lastfontheight;
 	}
 }
+
 @endscript
 @trans time=400
 ;archive からロードしたときは archive には戻らないので、記憶していた戻り道を破棄する
@@ -80,16 +82,17 @@
 		.font.height	= lastfontheight;
 	}
 }
+
 @endscript
 @trans time=500
 ;↓のclearMenuItems で確認ウィンドウが消されてしまうので、開いていたら一時停止する
-@waittrig name=closeaskyesno cond=tf.do_askyesno
+@waittrig cond=tf.do_askyesno name=closeaskyesno
 ;メッセージが消えていないことがあるので
 @cm
 @eval exp=Menu_object.clearMenuItems()
-@history enabled=true
+@history enabled
 @eval exp=enabledShortcutKey=true
-@hidecursor enabled=true
+@hidecursor enabled
 @iscript
 with(tracer_object)
 {
@@ -117,17 +120,18 @@ with(tracer_object)
 	}
 	f.scripttitle	= .title_format.sprintf(blocktitle);
 }
+
 @endscript
 *archive_repeat|&f.scripttitle
 @if exp=!NoPlayScript
-@autocache enabled=true
+@autocache enabled
 @call storage=&(f.av_storage[f.av_no])
 @autocache enabled=false
 @else
-[emb exp='f.av_storage[f.av_no]'][l][r]
+[emb exp=f.av_storage[f.av_no]][l][r]
 @endif
 @eval exp=f.av_no++
-@jump cond="(typeof(f.av_storage)==='Object')&&(f.av_storage.count>f.av_no)&&(System.getArgument('-archiveonlyonescenario')===void)" target=*archive_repeat
+@jump cond=(typeof(f.av_storage)==='Object')&&(f.av_storage.count>f.av_no)&&(System.getArgument('-archiveonlyonescenario')===void) target=*archive_repeat
 @hidecursor enabled=false
 @call target=*resetall
 @history enabled=false
@@ -148,7 +152,7 @@ with(tracer_object)
 @position page=back visible=false
 ;lockquickmenu を維持するため、onceIgnoreUnlockQuickMenu=true
 @eval exp="onceIgnoreUnlockQuickMenu=true;delete tf.do_systemmenu;delete tf.ttm_opened;delete f.in_ttm;outMenu(__menuStack[__menuStack.count-1],, false);with(Menu_object).doInvalidateByInvisible('fore'),.clearClick(),.setAllContrary(false);kag.setHistoryOptions(%[enabled:false]);kag.stopAllActions();kag.freeSnapshot();"
-@eval exp="global.kag.set_skip()"
+@eval exp=global.kag.set_skip()
 @stoptrans
 @fadeoutbgm time=400
 @bg storage=black time=400
@@ -157,7 +161,7 @@ with(tracer_object)
 @visibleframe
 @call target=*resetall
 @cm
-@waittrig name=closeaskyesno cond=&tf.do_askyesno
+@waittrig cond=&tf.do_askyesno name=closeaskyesno
 @jump storage=first.ks target=*titlemenu
 
 ;タイトルメニューからゲーム開始
@@ -179,9 +183,10 @@ with(tracer_object)
 		.font.height	= lastfontheight;
 	}
 }
+
 @endscript
 @trans time=1200
-@waittrig name=closeaskyesno cond=&tf.do_askyesno
+@waittrig cond=&tf.do_askyesno name=closeaskyesno
 @jump storage=first.ks target=*startgame
 
 ;右クリックメニューからアーカイブメニューへ
@@ -204,20 +209,20 @@ with(tracer_object)
 @return
 @endif
 ;	右クリックのスタックを再構成
-@eval exp="with(Menu_object){.setClick();.setClick(,'returnTitleMenu()');}"
+@eval exp=with(Menu_object){.setClick();.setClick(,'returnTitleMenu()');}
 @autocache enabled=false
-@waittrig name=closeaskyesno cond=&tf.do_askyesno
+@waittrig cond=&tf.do_askyesno name=closeaskyesno
 @eval exp=openArchiveMenu('back')
 @trans time=800
 @s
 
 ;Fade to black quit.
 *quit
-@eval exp="kag.pauseAction();kag.pauseTransition();"
+@eval exp=kag.pauseAction();kag.pauseTransition();
 @position visible=false
 @position page=back visible=false
 ;lockquickmenu を維持するため、onceIgnoreUnlockQuickMenu=true
-@eval exp="closeConfigMenu();closeSaveMenu();closeLoadMenu();closeQuickMenu();closeRClickMenu();"
+@eval exp=closeConfigMenu();closeSaveMenu();closeLoadMenu();closeQuickMenu();closeRClickMenu();
 @eval exp="onceIgnoreUnlockQuickMenu=true;delete tf.do_systemmenu;delete tf.ttm_opened;delete f.in_ttm;outMenu(__menuStack[__menuStack.count-1],, false);with(Menu_object).doInvalidateByInvisible('fore'),.clearClick(),.setAllContrary(false);kag.setHistoryOptions(%[enabled:false]);kag.freeSnapshot();"
 @stoptrans
 @fadeoutbgm time=400
@@ -227,8 +232,8 @@ with(tracer_object)
 ;@visibleframe
 ;@call target=*resetall
 @cm
-@waittrig name=closeaskyesno cond=&tf.do_askyesno
-@eval exp="kag.shutdown()"
+@waittrig cond=&tf.do_askyesno name=closeaskyesno
+@eval exp=kag.shutdown()
 @s
 
 ;ダミーラベル

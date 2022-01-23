@@ -1,8 +1,8 @@
 ﻿@call target=*tladata
 *page0|
 @effectskip enabled=false
-@playtimeline scene=4 canskip=true norapid=true
-@effectskip enabled=true
+@playtimeline canskip norapid scene=4
+@effectskip enabled
 
 @return
 *tladata
@@ -585,6 +585,7 @@ global.__tmp_tla = Scripts.eval('(const) %[
  "version" => 1
 ]');
 global.__tla_name = "logo";
+
 @endscript
 @eval exp=timeline_object.loadByData(global.__tmp_tla,global.__tla_name)
 @return

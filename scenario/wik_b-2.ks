@@ -12,23 +12,23 @@
 @pg
 *page2|
 　了解、と頷いて移動する。[l][r]
-@bg time=800 rule=crossfade storage=black
+@bg rule=crossfade storage=black time=800
 @wait canskip=0 time=800
 @clall
-@partbg storage=bg01l久遠寺邸11廊下2f-(曇) srcleft=66 srctop=237 index=1000 width=643 height=576 center=369 noclear=1 srczoom=82.968 id=pb1
-@bg rule=crossfade time=1200 storage=black noclear=1
+@partbg center=369 height=576 id=pb1 index=1000 noclear=1 srcleft=66 srctop=237 srczoom=82.968 storage=bg01l久遠寺邸11廊下2f-(曇) width=643
+@bg noclear=1 rule=crossfade storage=black time=1200
 ;画面・二階廊下
 　階段から二階に上がる。[l][r]
 　わたしの部屋は手前から二つ目の部屋だ。
 @pg
 *page3|
-@se storage=se01013 volume=100 loop=0
-@bg time=600 rule=crossfade storage=black
-@playstop time=2000 nowait=1
+@se loop=0 storage=se01013 volume=100
+@bg rule=crossfade storage=black time=600
+@playstop nowait=1 time=2000
 @wait canskip=0 time=600
 @clall
-@bg rule=crossfade time=1000 storage=bg01久遠寺邸13客室-(曇) noclear=0
-@se storage=se01014 volume=100 loop=0
+@bg noclear=0 rule=crossfade storage=bg01久遠寺邸13客室-(曇) time=1000
+@se loop=0 storage=se01014 volume=100
 @wait canskip=0 time=300
 ;画面・客間・曇り
 　部屋には誰もいない。[l][r]
@@ -38,39 +38,39 @@
 @pg
 *page4|
 「鍵は……ああ、これね」[l][r]
-@se storage=se01068 volume=80 loop=0
+@se loop=0 storage=se01068 volume=80
 　[ruby char=2 text=しんちゅう]真鍮の鍵。この洋館に相応しい、古めかしくも凝ったデザインだった。[l][r]
-@bg time=500 rule=crossfade storage=black
-@se storage=se01013 volume=100 loop=0
+@bg rule=crossfade storage=black time=500
+@se loop=0 storage=se01013 volume=100
 @wait canskip=0 time=500
 @clall
-@partbg storage=bg01l久遠寺邸11廊下2f-(曇) srcleft=43.1 srctop=289 index=1000 width=643 height=576 center=607 bgstorage=black noclear=0 srczoom=88.878 id=pb1
-@bg rule=crossfade time=800 storage=black noclear=1
-@se storage=se01014 volume=100 loop=0
+@partbg bgstorage=black center=607 height=576 id=pb1 index=1000 noclear=0 srcleft=43.1 srctop=289 srczoom=88.878 storage=bg01l久遠寺邸11廊下2f-(曇) width=643
+@bg noclear=1 rule=crossfade storage=black time=800
+@se loop=0 storage=se01014 volume=100
 @wait canskip=0 time=400
 ;画面・廊下
 　廊下に出ると、[l][r]
 @clall
-@fg storage=土桔01(中) center=705 vcenter=464 index=1100 type=13
-@partbg storage=bg01l久遠寺邸11廊下2f-(曇) srcleft=-199 srctop=213 index=1000 width=643 height=576 center=607 noclear=1 srczoom=383.745 id=pb1
-@bg rule=crossfade time=800 storage=black noclear=1
+@fg center=705 index=1100 storage=土桔01(中) type=13 vcenter=464
+@partbg center=607 height=576 id=pb1 index=1000 noclear=1 srcleft=-199 srctop=213 srczoom=383.745 storage=bg01l久遠寺邸11廊下2f-(曇) width=643
+@bg noclear=1 rule=crossfade storage=black time=800
 @wait canskip=0 time=300
-@movefg opacity=0 vcenter=464 time=800 accel=-2 storage=土桔01(中) center=668
+@movefg accel=-2 center=668 opacity=0 storage=土桔01(中) time=800 vcenter=464
 @wact canskip=0
 @clall
-@partbg storage=bg01l久遠寺邸11廊下2f-(曇) srcleft=43.1 srctop=289 index=1000 width=643 height=576 center=607 bgstorage=black noclear=0 srczoom=88.878 id=pb1
-@bg rule=crossfade time=600 storage=black noclear=1
+@partbg bgstorage=black center=607 height=576 id=pb1 index=1000 noclear=0 srcleft=43.1 srctop=289 srczoom=88.878 storage=bg01l久遠寺邸11廊下2f-(曇) width=643
+@bg noclear=1 rule=crossfade storage=black time=600
 ;立ち絵・トッキィー
 　ちらりと、二階のホールに老人の姿が見えた。[l][r]
 　ゲストの一人だろう。挨拶をしておこうとホールに向かう。
 @pg
 *page5|
-@bg time=800 rule=crossfade storage=black
-@se storage=se01046 volume=100 loop=1
+@bg rule=crossfade storage=black time=800
+@se loop=1 storage=se01046 volume=100
 @wait canskip=0 time=1100
-@bg rule=crossfade time=1000 storage=bg01久遠寺邸02ロビー-(曇) noclear=0
+@bg noclear=0 rule=crossfade storage=bg01久遠寺邸02ロビー-(曇) time=1000
 ;画面・一階ロビー
-@sestop time=800 nowait=1 storage=se01046
+@sestop nowait=1 storage=se01046 time=800
 「あれ？」[l][r]
 　……と。[l][r]
 　二階のホールに老人の姿はなく、一階に下りたものと思ってロビーに下りてみたが、そこにも老人の姿はなかった。
@@ -98,6 +98,7 @@ global.__tmp_tla = Scripts.eval('(const) %[
  "version" => 1
 ]');
 global.__tla_name = "wik_b-2";
+
 @endscript
 @eval exp=timeline_object.loadByData(global.__tmp_tla,global.__tla_name)
 @return

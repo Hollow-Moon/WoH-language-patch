@@ -1,6 +1,6 @@
 ﻿@call target=*tladata
 *page0|
-@bg time=100 rule=crossfade storage=black
+@bg rule=crossfade storage=black time=100
 ;@clall
 ;@fg storage=im02l空(昼b) center=122 vcenter=-1 index=1400 opacity=128 type=19 rotate=14.25 effect=monocro zoom=160 blur=2
 ;@fg storage=im02l空(夜) center=512 vcenter=288 index=1600 opacity=128 type=16
@@ -8,22 +8,22 @@
 ;@fgact page=back props=-storage,center,vcenter,absolute,opacity,-type,zoomx,zoomy,-visible keys=(0,0,l,im02l空(雪),952,295,2000,100,19,140,140,1)(20000,,,,892,508,,,,,,) id=1
 ;@bg rule=crossfade time=1200 storage=im02l空(月) left=-486 top=-139 contrast=20 noclear=1 noback=1
 ;@wait canskip=0 time=1200
-@se storage=se10016 volume=30 loop=1 time=4000
+@se loop=1 storage=se10016 time=4000 volume=30
 @clall
-@bg storage=im04l公園の街灯b left=194 top=88 zoom=160
-@fg storage=im02l空(雪) center=403 vcenter=272 type=19 effect=monocro blur=2 index=1000 id=1
-@fg storage=im04l公園のフェンス(網-横x2) center=478 vcenter=635 index=1100 rotate=-0.096 zoomx=-40 xblur=16 yblur=8 id=2
-@fg storage=im02l空(雪) center=265 vcenter=18 index=2000 type=19 effect=monocro zoom=200 blur=2 id=3
-@bgact page=back props=-storage,left,top,zoomx,zoomy keys=(0,0,l,im04l公園の街灯b,194,88,160,160)(14000,,,,,-22,,) storage=im04l公園の街灯b
-@fgact page=back props=-storage,center,vcenter,-type,-effect,-xblur,-yblur,-visible keys=(0,0,l,im02l空(雪),403,272,19,monocro,2,2,1)(10000,,,,,423,,,,,) id=1
-@fgact page=back props=-storage,center,vcenter,absolute,rotate,zoomx,-xblur,-yblur,-visible keys=(0,0,l,im04l公園のフェンス(網-横x2),478,635,1100,-0.096,-40,16,8,1)(10000,,,,,924,,,,,,) id=2
-@fgact page=back props=-storage,center,vcenter,absolute,-type,zoomx,zoomy,-effect,-xblur,-yblur,-visible keys=(0,0,l,im02l空(雪),265,18,2000,19,200,200,monocro,2,2,1)(10000,,,,262,846,,,,,,,,) id=3
-@trans rule=crossfade time=2000 nowait=0 noback=1
+@bg left=194 storage=im04l公園の街灯b top=88 zoom=160
+@fg blur=2 center=403 effect=monocro id=1 index=1000 storage=im02l空(雪) type=19 vcenter=272
+@fg center=478 id=2 index=1100 rotate=-0.096 storage=im04l公園のフェンス(網-横x2) vcenter=635 xblur=16 yblur=8 zoomx=-40
+@fg blur=2 center=265 effect=monocro id=3 index=2000 storage=im02l空(雪) type=19 vcenter=18 zoom=200
+@bgact keys=(0,0,l,im04l公園の街灯b,194,88,160,160)(14000,,,,,-22,,) page=back props=-storage,left,top,zoomx,zoomy storage=im04l公園の街灯b
+@fgact id=1 keys=(0,0,l,im02l空(雪),403,272,19,monocro,2,2,1)(10000,,,,,423,,,,,) page=back props=-storage,center,vcenter,-type,-effect,-xblur,-yblur,-visible
+@fgact id=2 keys=(0,0,l,im04l公園のフェンス(網-横x2),478,635,1100,-0.096,-40,16,8,1)(10000,,,,,924,,,,,,) page=back props=-storage,center,vcenter,absolute,rotate,zoomx,-xblur,-yblur,-visible
+@fgact id=3 keys=(0,0,l,im02l空(雪),265,18,2000,19,200,200,monocro,2,2,1)(10000,,,,262,846,,,,,,,,) page=back props=-storage,center,vcenter,absolute,-type,zoomx,zoomy,-effect,-xblur,-yblur,-visible
+@trans noback=1 nowait=0 rule=crossfade time=2000
 @wait canskip=0 time=6000
 @clall
-@fadese storage=se10016 volume=60 time=2000
-@partbg storage=im04電話ボックス(夜)_血無し srctop=96 index=1000 width=496 height=576 center=691 noclear=1 id=pb1
-@bg rule=crossfade time=800 storage=black noclear=1
+@fadese storage=se10016 time=2000 volume=60
+@partbg center=691 height=576 id=pb1 index=1000 noclear=1 srctop=96 storage=im04電話ボックス(夜)_血無し width=496
+@bg noclear=1 rule=crossfade storage=black time=800
 @stopaction
 ;画面・夜空、電話ボックス等
 ;se野犬の声、で、有珠にカメラが戻った事をプレイヤーにアッピール
@@ -35,13 +35,13 @@
 *page1|
 @stopnoise
 @clall
-@fg storage=im0907血飛沫 center=498 vcenter=142 index=2000 opacity=192 type=8 blur=10 id=1
-@fg storage=im0907血飛沫 center=498 vcenter=142 index=2200 opacity=100 type=8 blur=10 noise=1 noisemonocro=0 id=2
-@fg storage=有珠制服ケープ無帽04b(全)|i center=650 vcenter=1053 index=1800 opacity=0 blur=1 id=3
-@fg storage=有珠制服ケープ無帽04b(全)|i center=650 vcenter=1053 index=1500 opacity=0 xblur=10 id=4
-@fgact textoff=0 page=back props=-storage,center,vcenter,absolute,opacity,-xblur,-yblur,-visible keys=(0,3,l,有珠制服ケープ無帽04b(全)|i,650,1053,1800,0,1,1,1)(6000,,,,349,1204,,128,,,) id=3
-@fgact textoff=0 page=back props=-storage,center,vcenter,absolute,opacity,-xblur,-visible keys=(0,3,l,有珠制服ケープ無帽04b(全)|i,650,1053,1500,0,10,1)(6000,,,,349,1204,,255,,) id=4
-@bg textoff=0 time=600 rule=crossfade storage=black noclear=1
+@fg blur=10 center=498 id=1 index=2000 opacity=192 storage=im0907血飛沫 type=8 vcenter=142
+@fg blur=10 center=498 id=2 index=2200 noise=1 noisemonocro=0 opacity=100 storage=im0907血飛沫 type=8 vcenter=142
+@fg blur=1 center=650 id=3 index=1800 opacity=0 storage=有珠制服ケープ無帽04b(全)|i vcenter=1053
+@fg center=650 id=4 index=1500 opacity=0 storage=有珠制服ケープ無帽04b(全)|i vcenter=1053 xblur=10
+@fgact id=3 keys=(0,3,l,有珠制服ケープ無帽04b(全)|i,650,1053,1800,0,1,1,1)(6000,,,,349,1204,,128,,,) page=back props=-storage,center,vcenter,absolute,opacity,-xblur,-yblur,-visible textoff=0
+@fgact id=4 keys=(0,3,l,有珠制服ケープ無帽04b(全)|i,650,1053,1500,0,10,1)(6000,,,,349,1204,,255,,) page=back props=-storage,center,vcenter,absolute,opacity,-xblur,-visible textoff=0
+@bg noclear=1 rule=crossfade storage=black textoff=0 time=600
 　その希望も、地を這って電話ボックスに入った時点で、もう満足に動かなかった。[l][r]
 　腹部の傷を癒すために起動した刻印は、凶悪な炉熱を放って、有珠の小さな体を押し潰そうとする。[l][r]
 @r
@@ -54,8 +54,8 @@
 @pg
 *page3|
 @backlay
-@fg opacity=168 storage=black center=512 vcenter=288 index=1850
-@fg rule=crossfade time=600 storage=有珠制服ケープ無帽04b(近)|b3 center=921 vcenter=72 index=1900 zoom=130 preback=0
+@fg center=512 index=1850 opacity=168 storage=black vcenter=288
+@fg center=921 index=1900 preback=0 rule=crossfade storage=有珠制服ケープ無帽04b(近)|b3 time=600 vcenter=72 zoom=130
 「……、―――」[l][r]
 @r
 　腹部の痛みと、魔術刻印による不快感。[l][r]
@@ -63,20 +63,20 @@
 @pg
 *page4|
 @se storage=se09006 volume=100
-@bg time=400 rule=crossfade storage=black
+@bg rule=crossfade storage=black time=400
 @stopaction
 @stopnoise
 @clall
-@partbg storage=im04l電話ボックス(夜)_通話中 srcleft=381 srctop=429 index=1000 width=498 height=576 center=750 srczoom=130 id=pb1
-@partbg opacity=0 storage=im04l電話ボックス(夜)_受話器落ち srcleft=29 srctop=432 index=1700 width=400 height=576 center=347 srczoom=130 id=pb2
-@fadese storage=se10016 volume=40 time=3000
-@play storage=m07 volume=100 time=5000
-@bg rule=crossfade time=600 storage=black noclear=1
+@partbg center=750 height=576 id=pb1 index=1000 srcleft=381 srctop=429 srczoom=130 storage=im04l電話ボックス(夜)_通話中 width=498
+@partbg center=347 height=576 id=pb2 index=1700 opacity=0 srcleft=29 srctop=432 srczoom=130 storage=im04l電話ボックス(夜)_受話器落ち width=400
+@fadese storage=se10016 time=3000 volume=40
+@play storage=m07 time=5000 volume=100
+@bg noclear=1 rule=crossfade storage=black time=600
 　青子が帰還している可能性は低い。[l][r]
 　それを知りながら洋館に電話をしたのは、電話ボックスに集まりだした野犬達の目つきに[ruby text=お]圧されての事かもしれない。[l][r]
 　けれど、電話に出たのは草十郎だった。[l][r]
-@partbgact textoff=0 page=fore props=-storage,srcleft,srctop,srczoomx,srczoomy,absolute,width,height,center,-visible keys=(0,3,l,im04l電話ボックス(夜)_通話中,381,429,130,130,1000,498,576,750,1)(4000,,,,,163,,,,,,,) id=pb1
-@partbgact textoff=0 page=fore props=-storage,srcleft,srctop,srczoomx,srczoomy,absolute,width,height,center,vcenter,opacity,-visible keys=(0,3,l,im04l電話ボックス(夜)_受話器落ち,29,432,130,130,1700,400,576,347,,0,1)(4000,0,,,-127,176,,,,,,206,288,255,) storage=im04l電話ボックス(夜)_受話器落ち
+@partbgact id=pb1 keys=(0,3,l,im04l電話ボックス(夜)_通話中,381,429,130,130,1000,498,576,750,1)(4000,,,,,163,,,,,,,) page=fore props=-storage,srcleft,srctop,srczoomx,srczoomy,absolute,width,height,center,-visible textoff=0
+@partbgact keys=(0,3,l,im04l電話ボックス(夜)_受話器落ち,29,432,130,130,1700,400,576,347,,0,1)(4000,0,,,-127,176,,,,,,206,288,255,) page=fore props=-storage,srcleft,srctop,srczoomx,srczoomy,absolute,width,height,center,vcenter,opacity,-visible storage=im04l電話ボックス(夜)_受話器落ち textoff=0
 　関係のない彼なら無言で切るべきだったのに、有珠は名前を呼んでしまった。
 @pg
 *page5|
@@ -84,20 +84,20 @@
 　どうあっても彼を関わらせるのはいけない、そう本能が律したのだ。
 @pg
 *page6|
-@fadese storage=se10016 volume=1 time=1000
-@bg time=200 rule=crossfade storage=white
+@fadese storage=se10016 time=1000 volume=1
+@bg rule=crossfade storage=white time=200
 @clall
-@fg storage=有珠制服01a(近) center=884 vcenter=202 effect=monocro zoom=90 index=1000
-@fg storage=草十郎私服04(近) center=197 vcenter=169 index=1100 opacity=200 effect=mono000000 zoom=160 blur=1
-@bg rule=crossfade time=600 storage=bg01l久遠寺邸13客室-(昼) left=128 top=152 zoomx=-140 zoomy=200 effect=monocro noclear=1 blur=2
+@fg center=884 effect=monocro index=1000 storage=有珠制服01a(近) vcenter=202 zoom=90
+@fg blur=1 center=197 effect=mono000000 index=1100 opacity=200 storage=草十郎私服04(近) vcenter=169 zoom=160
+@bg blur=2 effect=monocro left=128 noclear=1 rule=crossfade storage=bg01l久遠寺邸13客室-(昼) time=600 top=152 zoomx=-140 zoomy=200
 @wait canskip=0 time=100
-@bg time=200 rule=crossfade storage=white
-@bg rule=crossfade time=800 storage=bg01久遠寺邸13客室-(昼) left=-77 top=-14 effect=monocro noclear=0
+@bg rule=crossfade storage=white time=200
+@bg effect=monocro left=-77 noclear=0 rule=crossfade storage=bg01久遠寺邸13客室-(昼) time=800 top=-14
 　……それは、一般人だからとか、そんな事とは関係なく。[l][r]
 @clall
-@partbg storage=im04l電話ボックス(夜)_受話器落ち srcleft=509 srctop=501 srcafx=326 srcafy=390 srcrotate=8.316 index=1000 width=545 height=576 center=721 srczoom=140 id=pb1
-@fadese storage=se10016 volume=40 time=3000
-@bg textoff=0 rule=crossfade time=3000 storage=black left=-48 top=-48 noclear=1 nowait=1
+@partbg center=721 height=576 id=pb1 index=1000 srcafx=326 srcafy=390 srcleft=509 srcrotate=8.316 srctop=501 srczoom=140 storage=im04l電話ボックス(夜)_受話器落ち width=545
+@fadese storage=se10016 time=3000 volume=40
+@bg left=-48 noclear=1 nowait=1 rule=crossfade storage=black textoff=0 time=3000 top=-48
 　あの日ささやかな秘密を共有した時から、少女にとって、静希草十郎はそういう風に映っていた。
 @pg
 *page7|
@@ -105,29 +105,29 @@
 @r
 　喉からこぼれる息が、細い。[l][r]
 @wt canskip=0
-@bg time=600 rule=crossfade storage=black
+@bg rule=crossfade storage=black time=600
 @clall
-@fg storage=im02l空(昼) center=389 vcenter=122 index=1300 type=18 rotate=1.769 effect=monocro
-@fg storage=im02l空(夜) center=512 vcenter=288 index=1600 opacity=128 type=16
-@fg storage=im02l空(雪) center=391 vcenter=448 index=2000 opacity=192 type=19 rotate=8.13 yblur=2 zoom=200
-@partbg storage=im02l空(月) srcleft=853 srctop=234 index=1100 width=358 height=576 noclear=1 id=pb1
-@bg rule=crossfade time=1200 storage=black contrast=20 noclear=1
+@fg center=389 effect=monocro index=1300 rotate=1.769 storage=im02l空(昼) type=18 vcenter=122
+@fg center=512 index=1600 opacity=128 storage=im02l空(夜) type=16 vcenter=288
+@fg center=391 index=2000 opacity=192 rotate=8.13 storage=im02l空(雪) type=19 vcenter=448 yblur=2 zoom=200
+@partbg height=576 id=pb1 index=1100 noclear=1 srcleft=853 srctop=234 storage=im02l空(月) width=358
+@bg contrast=20 noclear=1 rule=crossfade storage=black time=1200
 　頭上の月が薄らいでいく。[l][r]
-@se storage=se10086 volume=60 pan=20
+@se pan=20 storage=se10086 volume=60
 　降り始めた雪が遠くなっていく。[l][r]
 　周囲からは野犬たちの騒ぎ声。どん、と電話ボックスに体当たりをする音も聞こえだした。[l][r]
-@se storage=se10086 volume=80 pan=-20
+@se pan=-20 storage=se10086 volume=80
 　……少女は最後に大きく息をついて、目蓋を閉じる。
 @pg
 *page8|
-@bg textoff=0 time=4000 rule=crossfade storage=black nowait=1
-　硝子の[ruby text=ひつぎ char=1]棺の中で意識を手放す。[l][r]
+@bg nowait=1 rule=crossfade storage=black textoff=0 time=4000
+　硝子の[ruby char=1 text=ひつぎ]棺の中で意識を手放す。[l][r]
 @r
 　少年に助けを乞わなかった事を最後まで正しく、そして不思議に思いながら。
 @pg
 *page9|
 @wait canskip=0 time=2000
-@sestop storage=se10016 time=3000 nowait=1
+@sestop nowait=1 storage=se10016 time=3000
 @r
 @r
 　　　　　―――合間。[wait canskip=0 time=1000]おかしな風景を見た。
@@ -137,9 +137,9 @@
 @invisibleframe
 @wt canskip=0
 @clall
-@fg storage=ev1217魔法発動02(スーパー)背景のみ center=532 vcenter=-98 index=1100 zoom=200 blur=2
-@partbg storage=ev1217魔法発動02(スーパー)背景のみ srcleft=186 srctop=757 index=2000 width=766 height=576 center=525 bordersize=400 bordercolor=none noclear=1 blur=1 id=pb1
-@bg rule=crossfade time=4000 storage=white left=-48 top=-48 noclear=1 nowait=1
+@fg blur=2 center=532 index=1100 storage=ev1217魔法発動02(スーパー)背景のみ vcenter=-98 zoom=200
+@partbg blur=1 bordercolor=none bordersize=400 center=525 height=576 id=pb1 index=2000 noclear=1 srcleft=186 srctop=757 storage=ev1217魔法発動02(スーパー)背景のみ width=766
+@bg left=-48 noclear=1 nowait=1 rule=crossfade storage=white time=4000 top=-48
 @wait canskip=0 time=1200
 　一面に花が咲き乱れた野原。[l][r]
 @r
@@ -154,8 +154,8 @@
 @r
 　冷たい風は人里離れた[ruby char=2 text=とうげん]桃源の匂いがして、太陽すら人の[ruby char=2 text=てあか]手垢に汚れていない。[l][r]
 @r
-　楽土と錯覚する[ruby text=ひがん char=2]彼岸の原。[l][r]
-　そう言えば、[ruby text=とむら char=1]弔いは悲しいものなのに、いつも[ruby text=はな]華やかな事を思い出す。
+　楽土と錯覚する[ruby char=2 text=ひがん]彼岸の原。[l][r]
+　そう言えば、[ruby char=1 text=とむら]弔いは悲しいものなのに、いつも[ruby text=はな]華やかな事を思い出す。
 @pg
 *page12|
 @r
@@ -177,40 +177,40 @@
 @fadebgm time=6000 volume=50
 @textoff time=3000
 @cm4pg
-@bg time=1200 rule=crossfade storage=black
+@bg rule=crossfade storage=black time=1200
 @wait canskip=0 time=1000
 @clall
-@fg storage=im02l空(昼) center=389 vcenter=122 index=1300 type=18 rotate=1.769 effect=monocro
-@fg storage=im02l空(昼b) center=77 vcenter=25 index=1400 opacity=128 type=19 rotate=14.25 effect=monocro zoom=160 blur=2
-@fg storage=im02l空(夜) center=512 vcenter=288 index=1600 opacity=128 type=16
-@fg storage=im02l空(雪) center=391 vcenter=448 index=2000 opacity=192 type=19 rotate=8.13 yblur=2 zoom=200
+@fg center=389 effect=monocro index=1300 rotate=1.769 storage=im02l空(昼) type=18 vcenter=122
+@fg blur=2 center=77 effect=monocro index=1400 opacity=128 rotate=14.25 storage=im02l空(昼b) type=19 vcenter=25 zoom=160
+@fg center=512 index=1600 opacity=128 storage=im02l空(夜) type=16 vcenter=288
+@fg center=391 index=2000 opacity=192 rotate=8.13 storage=im02l空(雪) type=19 vcenter=448 yblur=2 zoom=200
 @visibleframe
-@se storage=se10087 volume=80 time=8000 loop=1
-@se storage=se10085 volume=80 time=6000 loop=1
-@bg rule=crossfade time=1200 storage=black noclear=1
+@se loop=1 storage=se10087 time=8000 volume=80
+@se loop=1 storage=se10085 time=6000 volume=80
+@bg noclear=1 rule=crossfade storage=black time=1200
 ;画面・ぼんやりと夜空に戻し。可能であるなら洋館に続く坂道から街を見下ろしているものを。深夜、雪が降ってる//
 「………………」[l][r]
 @r
-@bg time=600 rule=crossfade storage=black
+@bg rule=crossfade storage=black time=600
 @clall
-@fg storage=bg04l三咲町01坂道上り-(雨) center=397 vcenter=313 index=1100 opacity=128 type=19 rotate=20 effect=屋外深夜
-@fg storage=im02l空(雪) center=783 vcenter=498 index=2000 type=19 rotate=30.362 effect=monocro zoom=200
-@bg rule=crossfade time=800 storage=bg04l三咲町01坂道上り-(夜) left=-478 top=-213 rotate=20 noclear=1
+@fg center=397 effect=屋外深夜 index=1100 opacity=128 rotate=20 storage=bg04l三咲町01坂道上り-(雨) type=19 vcenter=313
+@fg center=783 effect=monocro index=2000 rotate=30.362 storage=im02l空(雪) type=19 vcenter=498 zoom=200
+@bg left=-478 noclear=1 rotate=20 rule=crossfade storage=bg04l三咲町01坂道上り-(夜) time=800 top=-213
 　気が付くと、有珠は見慣れた坂を上っていた。[l][r]
 　夜気は冷たく、手足は凍てついたように動かない。[l][r]
 　当然と言えば当然だが、金狼によって裂かれた腹部は剥きだしで、体はしきりに震えていた。
 @pg
 *page15|
 @fadebgm time=6000 volume=100
-@fadese storage=se10087 volume=60 time=6000 loop=1
+@fadese loop=1 storage=se10087 time=6000 volume=60
 @se storage=se10088 volume=80
-@bg rule=crossfade time=800 storage=ev10l13有珠を背負う left=-209 top=-120 noclear=0
+@bg left=-209 noclear=0 rule=crossfade storage=ev10l13有珠を背負う time=800 top=-120
 「……静希……君？」[l][r]
 @r
 　自分がその人物におぶられて白犬塚の坂を登っている事を、有珠はうつろな意識で認めた。
 @pg
 *page16|
-@bg rule=crossfade time=1200 storage=ev1013有珠を背負うb noclear=0
+@bg noclear=0 rule=crossfade storage=ev1013有珠を背負うb time=1200
 　草十郎は有珠を背中におぶったまま、無言で坂を上っていた。[l][r]
 　落ち着いた瞳は、寒さのせいか辛そうな色をしている。[l][r]
 　見れば、この寒さの中で歩き回る服装ではなかった。[l][r]
@@ -219,13 +219,13 @@
 *page17|
 「……どうして、ここにいるの……？」[l][r]
 @r
-@partbg textoff=0 rule=crossfade time=600 storage=ev10l13有珠を背負う srcleft=1067 srctop=167 index=1000 width=490 height=576 center=275 bordercolor=none noclear=1 id=pb1
+@partbg bordercolor=none center=275 height=576 id=pb1 index=1000 noclear=1 rule=crossfade srcleft=1067 srctop=167 storage=ev10l13有珠を背負う textoff=0 time=600 width=490
 　おぶられたまま有珠は問うた。[l][r]
 　体を起こしたくても力が入らない。[l][r]
 　自分の重さがすべて他人に預けられている事が、今はひどく気にかかる。
 @pg
 *page18|
-@bg rule=crossfade time=600 storage=ev10l13有珠を背負うb left=-717 top=-627 noclear=0
+@bg left=-717 noclear=0 rule=crossfade storage=ev10l13有珠を背負うb time=600 top=-627
 「橙子さんから電話があった。有珠が危ないって。[l][r]
 　……蒼崎はともかく、有珠は意地を張りすぎだ。あの状況で助けを呼ばないのはどうかしてる。そりゃあ、自分が行っても何もできなかっただろうけど」
 @pg
@@ -235,15 +235,15 @@
 @pg
 *page20|
 @clall
-@bg storage=bg04l三咲町02坂道下り-(夜) left=-523 top=-93
-@fg storage=im02l空(雪) center=148 vcenter=115 index=1500 opacity=128 type=19 zoomx=-140 zoomy=140 effect=monocro id=1
-@fg storage=im02l空(雪) center=433 vcenter=275 index=2000 type=19 rotate=20 effect=monocro zoom=200 id=2
-@fg storage=im02l空(昼b) center=841 vcenter=391 index=2500 opacity=160 type=8 zoomy=-100 effect=monocro id=3
-@bgact textoff=0 page=back props=-storage,left,top,-xblur,-yblur keys=(0,0,l,bg04l三咲町02坂道下り-(夜),-523,-94,2,2)(50000,,,,-39,,,) storage=bg04l三咲町02坂道下り-(夜)
-@fgact textoff=0 page=back props=-storage,center,vcenter,absolute,opacity,-type,zoomx,zoomy,-effect,-xblur,-yblur,-visible keys=(0,0,l,im02l空(雪),542,142,1500,160,19,-140,140,monocro,1,2,1)(50000,,,,804,574,,128,,,,,,,) id=1
-@fgact textoff=0 page=back props=-storage,center,vcenter,absolute,-type,rotate,zoomx,zoomy,-effect,-xblur,-yblur,-visible keys=(0,0,l,im02l空(雪),615,274,2000,19,20,260,260,monocro,2,2,1)(50000,,,,941,1053,,,,300,300,,,,) id=2
-@fgact textoff=0 page=back props=-storage,center,vcenter,absolute,opacity,-type,zoomy,-effect,-visible keys=(0,0,l,im02l空(昼b),423,391.004,2500,160,8,-100,monocro,1)(50000,,,,670,,,,,,,) id=3
-@trans textoff=0 rule=crossfade time=800 nowait=0 noback=1
+@bg left=-523 storage=bg04l三咲町02坂道下り-(夜) top=-93
+@fg center=148 effect=monocro id=1 index=1500 opacity=128 storage=im02l空(雪) type=19 vcenter=115 zoomx=-140 zoomy=140
+@fg center=433 effect=monocro id=2 index=2000 rotate=20 storage=im02l空(雪) type=19 vcenter=275 zoom=200
+@fg center=841 effect=monocro id=3 index=2500 opacity=160 storage=im02l空(昼b) type=8 vcenter=391 zoomy=-100
+@bgact keys=(0,0,l,bg04l三咲町02坂道下り-(夜),-523,-94,2,2)(50000,,,,-39,,,) page=back props=-storage,left,top,-xblur,-yblur storage=bg04l三咲町02坂道下り-(夜) textoff=0
+@fgact id=1 keys=(0,0,l,im02l空(雪),542,142,1500,160,19,-140,140,monocro,1,2,1)(50000,,,,804,574,,128,,,,,,,) page=back props=-storage,center,vcenter,absolute,opacity,-type,zoomx,zoomy,-effect,-xblur,-yblur,-visible textoff=0
+@fgact id=2 keys=(0,0,l,im02l空(雪),615,274,2000,19,20,260,260,monocro,2,2,1)(50000,,,,941,1053,,,,300,300,,,,) page=back props=-storage,center,vcenter,absolute,-type,rotate,zoomx,zoomy,-effect,-xblur,-yblur,-visible textoff=0
+@fgact id=3 keys=(0,0,l,im02l空(昼b),423,391.004,2500,160,8,-100,monocro,1)(50000,,,,670,,,,,,,) page=back props=-storage,center,vcenter,absolute,opacity,-type,zoomy,-effect,-visible textoff=0
+@trans noback=1 nowait=0 rule=crossfade textoff=0 time=800
 「…………静希君は、関係ないもの」[l][r]
 「だろうね。けど、これで関係はできた。館についたら話してもらうぞ」
 @pg
@@ -254,18 +254,18 @@
 @pg
 *page22|
 @clall
-@partbg rule=crossfade time=600 storage=ev10l13有珠を背負うb srcleft=895 srctop=355 index=1200 width=534 height=576 center=320 bgstorage=black noclear=0 id=pb1
+@partbg bgstorage=black center=320 height=576 id=pb1 index=1200 noclear=0 rule=crossfade srcleft=895 srctop=355 storage=ev10l13有珠を背負うb time=600 width=534
 @stopaction
 「降りるわ、もう大丈夫だから」[l][r]
 「お腹をむきだしでかい。このほうが少しは暖かいよ。[l][r]
 　それに、有珠は薪より軽い。山じゃこの程度は朝飯前だから気にしないでくれ。息があがっているのは公園まで急いだからだし。[l]……まあ、その意味はなかったんだが」[l][r]
 @se storage=se10088 volume=80
-@partbg rule=crossfade time=1000 storage=ev10l13有珠を背負う srcleft=895 srctop=355 index=1200 width=534 height=576 center=320 bgstorage=black noclear=0 id=pb1
+@partbg bgstorage=black center=320 height=576 id=pb1 index=1200 noclear=0 rule=crossfade srcleft=895 srctop=355 storage=ev10l13有珠を背負う time=1000 width=534
 「……なぜ？」
 @pg
 *page23|
 「俺が着いたら、犬はさっさと散っていった。はじめから、橙子さんはそういうつもりだったんだ。[l][r]
-@partbg textoff=0 rule=crossfade time=600 storage=ev10l13有珠を背負うb srcleft=1403 srctop=407 index=1100 width=432 height=576 center=770 bordercolor=none bgstorage=black noclear=0 id=pb2
+@partbg bgstorage=black bordercolor=none center=770 height=576 id=pb2 index=1100 noclear=0 rule=crossfade srcleft=1403 srctop=407 storage=ev10l13有珠を背負うb textoff=0 time=600 width=432
 　有珠をどうにかするつもりもなければ、時間制限もなかった。喜ぶべき事なんだろうけど」
 @pg
 *page24|
@@ -274,17 +274,17 @@
 　橙子に殺意はなかったが、結果として有珠が死んでしまう事には何の罪悪感もなかっただろう。
 @pg
 *page25|
-@bg rule=crossfade time=600 storage=ev10l13有珠を背負うb left=-388 top=-498 rotate=16 noclear=0
+@bg left=-388 noclear=0 rotate=16 rule=crossfade storage=ev10l13有珠を背負うb time=600 top=-498
 　……有珠は思う。[l][r]
 　この少年がどれほどの速さで公園に着いたかは知らないけれど、彼が来なければ間違いなく電話ボックスは破られて、自分は生きてはいなかったと。
 @pg
 *page26|
 @clall
-@fg storage=ev10l13有珠を背負う center=317 vcenter=564 index=2000 zoom=200 blur=2
-@fg storage=im02l空(雪) center=654 vcenter=468 index=2400 opacity=128 type=19 effect=屋外深夜 zoom=200 blur=2
-@partbg storage=ev10l13有珠を背負う srcleft=1187 srctop=109 index=2200 width=603 height=576 center=684 opacity=224 bordersize=200 bordercolor=none noclear=1 srczoom=200 id=pb1
-@partbg storage=ev10l13有珠を背負う srcleft=659 srctop=350 index=2300 width=697 height=563 center=204 vcenter=522 bordersize=200 bordercolor=none noclear=1 srczoom=200 id=pb2
-@trans rule=crossfade time=800 nowait=0
+@fg blur=2 center=317 index=2000 storage=ev10l13有珠を背負う vcenter=564 zoom=200
+@fg blur=2 center=654 effect=屋外深夜 index=2400 opacity=128 storage=im02l空(雪) type=19 vcenter=468 zoom=200
+@partbg bordercolor=none bordersize=200 center=684 height=576 id=pb1 index=2200 noclear=1 opacity=224 srcleft=1187 srctop=109 srczoom=200 storage=ev10l13有珠を背負う width=603
+@partbg bordercolor=none bordersize=200 center=204 height=563 id=pb2 index=2300 noclear=1 srcleft=659 srctop=350 srczoom=200 storage=ev10l13有珠を背負う vcenter=522 width=697
+@trans nowait=0 rule=crossfade time=800
 ;画面、差分でちょい感謝の有珠。口にはしなしい。乙女モード！　立ち絵でいうなら01A|gぐらい？//
 「………………」[l][r]
 @r
@@ -294,18 +294,18 @@
 @pg
 *page27|
 @clall
-@fg storage=ev10l13有珠を背負うb center=317 vcenter=564 index=2000 zoom=200 blur=2
-@fg storage=im02l空(雪) center=-221 vcenter=589 index=2400 opacity=128 type=19 effect=屋外深夜 zoom=200 blur=2
-@partbg storage=ev10l13有珠を背負うb srcleft=1187 srctop=109 index=2200 width=603 height=576 center=684 opacity=224 bordersize=200 bordercolor=none noclear=1 srczoom=200 id=pb1
-@partbg storage=ev10l13有珠を背負うb srcleft=659 srctop=350 index=2300 width=697 height=563 center=204 vcenter=522 bordersize=200 bordercolor=none noclear=1 srczoom=200 id=pb2
-@trans textoff=0 rule=crossfade time=1000 nowait=0
+@fg blur=2 center=317 index=2000 storage=ev10l13有珠を背負うb vcenter=564 zoom=200
+@fg blur=2 center=-221 effect=屋外深夜 index=2400 opacity=128 storage=im02l空(雪) type=19 vcenter=589 zoom=200
+@partbg bordercolor=none bordersize=200 center=684 height=576 id=pb1 index=2200 noclear=1 opacity=224 srcleft=1187 srctop=109 srczoom=200 storage=ev10l13有珠を背負うb width=603
+@partbg bordercolor=none bordersize=200 center=204 height=563 id=pb2 index=2300 noclear=1 srcleft=659 srctop=350 srczoom=200 storage=ev10l13有珠を背負うb vcenter=522 width=697
+@trans nowait=0 rule=crossfade textoff=0 time=1000
 「……もしかして、公園からずっと？」[l][r]
 @clall
-@partbg storage=im04l街灯 srcleft=6 srctop=846 srcafx=405.5 srcafy=534 srcrotate=14.911 index=1200 width=571 height=576 center=727 noclear=1 srczoom=200 id=pb1
-@fg storage=im02l空(雪) center=369 vcenter=-5 index=2000 type=19 effect=none zoom=200 partbgid=pb1
-@partbgact textoff=0 page=back props=-storage,srcleft,srctop,srcafx,srcafy,srcrotate,srczoomx,srczoomy,absolute,width,height,center,-visible keys=(0,0,l,im04l街灯,-24,674,405.5,534,14.911,200,200,1200,571,576,727,1)(30000,,,,108,236,,,,100,100,,,,,) storage=im04l街灯
-@fgact textoff=0 page=back props=-storage,center,vcenter,absolute,-type,zoomx,zoomy,-effect,-visible keys=(0,0,l,im02l空(雪),369,-5,2000,19,200,200,none,1)(30000,,,,248,624,,,,,,) storage=im02l空(雪) partbgid=pb1
-@bg textoff=0 rule=crossfade time=800 storage=black noclear=1 noback=1
+@partbg center=727 height=576 id=pb1 index=1200 noclear=1 srcafx=405.5 srcafy=534 srcleft=6 srcrotate=14.911 srctop=846 srczoom=200 storage=im04l街灯 width=571
+@fg center=369 effect=none index=2000 partbgid=pb1 storage=im02l空(雪) type=19 vcenter=-5 zoom=200
+@partbgact keys=(0,0,l,im04l街灯,-24,674,405.5,534,14.911,200,200,1200,571,576,727,1)(30000,,,,108,236,,,,100,100,,,,,) page=back props=-storage,srcleft,srctop,srcafx,srcafy,srcrotate,srczoomx,srczoomy,absolute,width,height,center,-visible storage=im04l街灯 textoff=0
+@fgact keys=(0,0,l,im02l空(雪),369,-5,2000,19,200,200,none,1)(30000,,,,248,624,,,,,,) page=back partbgid=pb1 props=-storage,center,vcenter,absolute,-type,zoomx,zoomy,-effect,-visible storage=im02l空(雪) textoff=0
+@bg noback=1 noclear=1 rule=crossfade storage=black textoff=0 time=800
 「仕方ないだろ。電車、終わってたんだから。タクシーを使えれば良かったんだけど、あいにく持ち合わせがなくて。[l][r]
 　……ほんと。今日ほどお金の不便さを思い知った日はない」
 @pg
@@ -316,20 +316,20 @@
 @pg
 *page29|
 @clall
-@partbg storage=ev10l13有珠を背負う srcleft=955 srctop=325 index=1200 width=578 height=576 center=539 noclear=1 id=pb1
-@partbg storage=ev10l13有珠を背負うb srcleft=902 srctop=346 srcrotate=11.409 index=1300 width=1024 height=276 vcenter=176 opacity=0 bordercolor=none srczoom=200 id=pb2
-@partbgact textoff=0 page=back props=-storage,srcleft,srctop,absolute,width,height,center,vcenter,-visible keys=(0,0,l,ev10l13有珠を背負う,955,325,1200,578,576,539,,1)(14000,,,,1071,422,,781,,625,288,) storage=ev10l13有珠を背負う
-@bg textoff=0 rule=crossfade time=600 storage=black left=-48 top=-48 noclear=1 noback=1
+@partbg center=539 height=576 id=pb1 index=1200 noclear=1 srcleft=955 srctop=325 storage=ev10l13有珠を背負う width=578
+@partbg bordercolor=none height=276 id=pb2 index=1300 opacity=0 srcleft=902 srcrotate=11.409 srctop=346 srczoom=200 storage=ev10l13有珠を背負うb vcenter=176 width=1024
+@partbgact keys=(0,0,l,ev10l13有珠を背負う,955,325,1200,578,576,539,,1)(14000,,,,1071,422,,781,,625,288,) page=back props=-storage,srcleft,srctop,absolute,width,height,center,vcenter,-visible storage=ev10l13有珠を背負う textoff=0
+@bg left=-48 noback=1 noclear=1 rule=crossfade storage=black textoff=0 time=600 top=-48
 「……でも。それを言うなら、お金の大切さ、じゃない？」[l][r]
 「なんで。使えるものがあるのにお金がないだけで使えないんだから、それって不便って言わないか？」[l][r]
-@partbgact textoff=0 page=fore props=-storage,srcleft,srctop,srcrotate,srczoomx,srczoomy,absolute,width,height,center,vcenter,opacity,bordersize,-bordercolor,-visible keys=(0,0,l,ev10l13有珠を背負うb,1076.5,342.5,11.409,200,200,1300,840,299,228,234.5,0,120,none,1)(1500,,,,~,~,~,~,~,~,~,~,~,~,255,~,,)(4500,,,,~,~,~,~,~,~,~,~,~,~,,~,,)(6000,,,,,,,,,,,,,386.5,0,,,) storage=ev10l13有珠を背負うb
+@partbgact keys=(0,0,l,ev10l13有珠を背負うb,1076.5,342.5,11.409,200,200,1300,840,299,228,234.5,0,120,none,1)(1500,,,,~,~,~,~,~,~,~,~,~,~,255,~,,)(4500,,,,~,~,~,~,~,~,~,~,~,~,,~,,)(6000,,,,,,,,,,,,,386.5,0,,,) page=fore props=-storage,srcleft,srctop,srcrotate,srczoomx,srczoomy,absolute,width,height,center,vcenter,opacity,bordersize,-bordercolor,-visible storage=ev10l13有珠を背負うb textoff=0
 「――――――」[l][r]
 　純粋な疑問に、有珠は一時、傷の痛みを忘れてしまった。[l][r]
 　自分も、それなりに文明社会とは縁がないつもりだったけれど。[l][r]
 　この少年の素朴さに比べれば、ちゃんと文明人らしいのだ。
 @pg
 *page30|
-@bg rule=crossfade time=600 storage=ev10l13有珠を背負うb left=-297 top=-118 noclear=0 zoom=140
+@bg left=-297 noclear=0 rule=crossfade storage=ev10l13有珠を背負うb time=600 top=-118 zoom=140
 @stopaction
 「なにか、貴方らしいわ」[l][r]
 @r
@@ -338,35 +338,35 @@
 　少年の首に巻かれた、青子からの首輪だった。
 @pg
 *page31|
-@bg rule=crossfade time=600 storage=ev1013有珠を背負うb noclear=0
+@bg noclear=0 rule=crossfade storage=ev1013有珠を背負うb time=600
 「館についたら着替えるんだ。お腹の血も拭って、落ち着いたら居間で話そう。[l][r]
 　橙子さんに言わせれば、俺もこれで敵らしいから」
 @pg
 *page32|
-@sestop storage=se10087 time=1000 nowait=1
-@bg time=600 rule=crossfade storage=black
+@sestop nowait=1 storage=se10087 time=1000
+@bg rule=crossfade storage=black time=600
 @clall
-@partbg storage=bg01久遠寺邸08正門(雪)-(深夜) srcleft=14 index=1100 width=573 height=576 center=329 noclear=1 id=pb1
-@fg storage=im02l空(雪) center=440 vcenter=388 index=2400 opacity=224 type=19 effect=monocro blur=2 partbgid=pb1
-@fg storage=im02l空(雪) center=55 vcenter=293 index=2500 opacity=192 type=19 effect=monocro blur=2 partbgid=pb1
-@bg rule=crossfade time=800 storage=black noclear=1
+@partbg center=329 height=576 id=pb1 index=1100 noclear=1 srcleft=14 storage=bg01久遠寺邸08正門(雪)-(深夜) width=573
+@fg blur=2 center=440 effect=monocro index=2400 opacity=224 partbgid=pb1 storage=im02l空(雪) type=19 vcenter=388
+@fg blur=2 center=55 effect=monocro index=2500 opacity=192 partbgid=pb1 storage=im02l空(雪) type=19 vcenter=293
+@bg noclear=1 rule=crossfade storage=black time=800
 　その言葉を有珠が聞いた時、彼はもう坂を登りきっていた。[l][r]
 　森の入り口にあたる正門。その奥には、月明かりの下に佇む彼女の洋館がある。[l][r]
 　それを見上げて、少女は少しだけ残念に思った。[l][r]
-@bg time=600 rule=crossfade storage=black
+@bg rule=crossfade storage=black time=600
 @clall
-@partbg storage=im03l森の洋館の屋根 srctop=110 srczoomx=-100 index=1100 width=565 height=576 center=698 effect=屋外深夜 noclear=1 id=pb1
-@fg storage=im02l空(雪) center=815 vcenter=243 index=2400 opacity=224 type=19 effect=monocro blur=2 partbgid=pb1
-@fg storage=im02l空(雪) center=44 vcenter=428 index=2500 opacity=192 type=19 effect=monocro blur=2 partbgid=pb1
-@sestop time=3000 nowait=1
-@bg rule=crossfade time=800 storage=black noclear=1
+@partbg center=698 effect=屋外深夜 height=576 id=pb1 index=1100 noclear=1 srctop=110 srczoomx=-100 storage=im03l森の洋館の屋根 width=565
+@fg blur=2 center=815 effect=monocro index=2400 opacity=224 partbgid=pb1 storage=im02l空(雪) type=19 vcenter=243
+@fg blur=2 center=44 effect=monocro index=2500 opacity=192 partbgid=pb1 storage=im02l空(雪) type=19 vcenter=428
+@sestop nowait=1 time=3000
+@bg noclear=1 rule=crossfade storage=black time=800
 @r
 　……もちろん。[l][r]
 　何を残念に思ったのかは、気が付く事はなかったけれど。
 @pg
 *page33|
-@playstop time=6000 nowait=1
-@bg time=2000 rule=crossfade storage=black
+@playstop nowait=1 time=6000
+@bg rule=crossfade storage=black time=2000
 @return
 *tladata
 @iscript
@@ -383,6 +383,7 @@ global.__tmp_tla = Scripts.eval('(const) %[
  "version" => 1
 ]');
 global.__tla_name = "a-7";
+
 @endscript
 @eval exp=timeline_object.loadByData(global.__tmp_tla,global.__tla_name)
 @return

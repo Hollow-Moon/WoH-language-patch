@@ -1,7 +1,7 @@
 ﻿@call target=*tladata
 *page0|
 ;選択肢Ｑ－１
-@bg rule=crossfade time=0 storage=bg01久遠寺邸02ロビー-(夜) left=-48 top=-322
+@bg left=-48 rule=crossfade storage=bg01久遠寺邸02ロビー-(夜) time=0 top=-322
 @r
 　不謹慎だけど、ホラー映画ならまっさきに死ぬパターンだ、と思った。
 ;Ｑ－ａに合流。
@@ -12,7 +12,7 @@
 @return
 
 @return
-*tladata
+*tladata:14
 @iscript
 global.__tmp_tla = Scripts.eval('(const) %[
  "baseHeight" => 576,
@@ -27,6 +27,7 @@ global.__tmp_tla = Scripts.eval('(const) %[
  "version" => 1
 ]');
 global.__tla_name = "wik_q-1";
+
 @endscript
 @eval exp=timeline_object.loadByData(global.__tmp_tla,global.__tla_name)
 @return

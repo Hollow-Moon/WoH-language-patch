@@ -1,7 +1,7 @@
 ﻿@call target=*tladata
 *page0|
 ;選択肢Ｑ－２
-@bg rule=crossfade time=0 storage=bg01久遠寺邸02ロビー-(夜) left=-48 top=-322
+@bg left=-48 rule=crossfade storage=bg01久遠寺邸02ロビー-(夜) time=0 top=-322
 @r
 　……そういえば。[l][r]
 　あの人も蒼崎同様、土桔氏と山城先生、その両名を殺害できる“不在時間”を持つ人だった、と思った。
@@ -13,7 +13,7 @@
 @return
 
 @return
-*tladata
+*tladata:15
 @iscript
 global.__tmp_tla = Scripts.eval('(const) %[
  "baseHeight" => 576,
@@ -28,6 +28,7 @@ global.__tmp_tla = Scripts.eval('(const) %[
  "version" => 1
 ]');
 global.__tla_name = "wik_q-2";
+
 @endscript
 @eval exp=timeline_object.loadByData(global.__tmp_tla,global.__tla_name)
 @return

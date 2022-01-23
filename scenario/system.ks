@@ -12,7 +12,7 @@
 @l
 ;消去する
 *close
-@playtimeline scene=8 nopgbg=1 noclear=1 next=0
+@playtimeline next=0 noclear=1 nopgbg=1 scene=8
 @eval exp=tf.do_systemmenu=0
 @r
 @l
@@ -4591,6 +4591,7 @@ global.__tmp_tla = Scripts.eval('(const) %[
  "version" => 1
 ]');
 global.__tla_name = "system";
+
 @endscript
 @eval exp=timeline_object.loadByData(global.__tmp_tla,global.__tla_name)
 @return

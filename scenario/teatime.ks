@@ -10,7 +10,7 @@
 ;レイヤー数を調整/キャッシュをリセット
 @eval exp=kag.simplifyLayers(false);
 ;ちょっと待つ
-@wait time=2000 canskip=true
+@wait canskip time=2000
 @eval exp=TTMsetScriptTitle()
 *startteatime|&f.scripttitle
 @eval exp=TTMresetScriptTitle()
@@ -18,10 +18,10 @@
 @eval exp=global.lcdl=tkdlNone,kag.conductor.debugLevel<->global.lcdl
 *loop
 @wait time=100
-@jump target=*loop cond=__menuStack.count>0
+@jump cond=__menuStack.count>0 target=*loop
 @eval exp=kag.conductor.debugLevel<->global.lcdl
 ;teatime menu を開く(f.chapter 毎に呼び出す背景を変える)
-@eval exp="openTeatime()"
+@eval exp=openTeatime()
 @eval exp=kag.inSleep=true
 ;ポップアップメッセージを表示
 @iscript
@@ -45,6 +45,7 @@ case 9:
 	}
 	break;
 }
+
 @endscript
 ;トリガを待つ
 *finishteatime
@@ -53,11 +54,11 @@ case 9:
 ;ポップアップメッセージを消去する
 @eval exp=eraseMessage()
 ;消去処理が終わるまで待つ
-@wait time=&TTMouttime canskip=false
+@wait canskip=false time=&TTMouttime
 ;ちょっと待つ
-@wait time=2000 canskip=true
+@wait canskip time=2000
 ;テキスト履歴を有効化
-@history enabled=true
+@history enabled
 ;付け焼刃でおかしくなるので
 ;;シーンタイトルに章が表示されるように
 ;@eval exp="tracer_object.title_format=__('第%s章 %s').sprintf(f.chapter, '%s')"
@@ -68,7 +69,7 @@ case 9:
 @eval exp=TTMsetScriptTitle()
 *fromarchive2|&f.scripttitle
 @eval exp=TTMresetScriptTitle()
-@eval exp="returnTeatime()"
+@eval exp=returnTeatime()
 @jump target=*finishteatime
 
 ;ダミーラベル

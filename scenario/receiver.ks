@@ -2,24 +2,24 @@
 ;@image storage=white page=fore layer=base
 
 ; 裏にも文字を描画する
-@current withback=true
+@current withback
 
 ; 初期処理を行なって、タイトルへ
 *start
 @store enabled=false
-@autocache enabled=true
+@autocache enabled
 @call storage=macro.ks
 @call storage=loadPlugins.ks
 @s
 
 ; テスト用
 *initandplay
-@autocache enabled=true
+@autocache enabled
 @call storage=&(global.initandplaystorage) target=*tladata
 @call storage=&(global.initandplaystorage) target=&(global.initandplaytarget)
 @s
 
 *play
-@autocache enabled=true
+@autocache enabled
 @call storage=&(global.initandplaystorage)
 @s

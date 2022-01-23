@@ -10,6 +10,7 @@ Scripts.execStorage("TracerPlugin.tjs");
 var	NoPlayScript	= false;	//	スクリプトを再生せず、ファイル名を表示します
 var	SaveSceneHead	= false;	//	シーンの先頭でセーブする
 f.savescenecount= 40 if SaveSceneHead;	//	最初のシーンのセーブ先番号
+
 @endscript
 @endif
 
@@ -88,7 +89,7 @@ f.savescenecount= 40 if SaveSceneHead;	//	最初のシーンのセーブ先番�
 @endmacro
 
 ;	autocache が存在しなければ追加する
-@eval exp="kag.tagHandlers.autocache=function(){return 0;}" cond="kag.tagHandlers.autocache==void"
+@eval cond=kag.tagHandlers.autocache==void exp="kag.tagHandlers.autocache=function(){return 0;}"
 
 ;定義終了
 @return
@@ -103,14 +104,14 @@ f.savescenecount= 40 if SaveSceneHead;	//	最初のシーンのセーブ先番�
 ;＊ゲームの実行
 *play
 ;(まほよ用)確認ウィンドウが開いていたら、一時停止する
-@waittrig name=closeaskyesno cond=&tf.do_askyesno
+@waittrig cond=&tf.do_askyesno name=closeaskyesno
 ;	フローチャートの現在ブロックを実行
 @if exp=tracer_object.syncask
 ;askyesnoが同期の場合
 @jump cond=!(global.result=tracer_object.exec()) target=*skipscene
 @else
 ;askyesnoが非同期の場合
-@eval exp="global.result=tracer_object.exec()"
+@eval exp=global.result=tracer_object.exec()
 ;待つなら
 @if exp=!global.result
 ;次の停止(s)だけ、unlockQuickMenu を無視する
@@ -124,19 +125,19 @@ f.savescenecount= 40 if SaveSceneHead;	//	最初のシーンのセーブ先番�
 ;@cancelskip
 @cm
 *scenarioplay|&f.scripttitle
-@eval exp=setHideCursor(true) cond="typeof global.setHideCursor!='undefined'"
-@eval exp=kag.skipToStop(true) cond=cf.ch2ndSkip&&kag.skipMode!=3
-@save place=&(f.savescenecount++) ask=false cond=SaveSceneHead
+@eval cond="typeof global.setHideCursor!='undefined'" exp=setHideCursor(true)
+@eval cond=cf.ch2ndSkip&&kag.skipMode!=3 exp=kag.skipToStop(true)
+@save ask=false cond=SaveSceneHead place=&(f.savescenecount++)
 *scenariorepeat
 @if exp=!NoPlayScript
-@autocache enabled=true
+@autocache enabled
 @call storage=&tracer_object.script
 @autocache enabled=false
 @else
 [emb exp=tracer_object.script][l][r]
 @endif
 @jump cond=&tracer_object.isRemainScript target=*scenariorepeat
-@eval exp=setHideCursor(false) cond="typeof global.setHideCursor!='undefined'"
+@eval cond="typeof global.setHideCursor!='undefined'" exp=setHideCursor(false)
 ;		後片付け処理 - 開始 -
 ;@sestop
 ;@interlude_end
@@ -204,7 +205,7 @@ f.savescenecount= 40 if SaveSceneHead;	//	最初のシーンのセーブ先番�
 @if exp=tf.tmp!=void
 @eval exp=tf.cid=tf.tmp
 @getcategoryname id=tf.tmp
-@eval exp=tf.cat=tf.tmp+tf.sept+tf.cat;tf.sept=' - '
+@eval ' - exp=tf.cat=tf.tmp+tf.sept+tf.cat;tf.sept='
 @jump target=*getparentcategory
 @endif
 Category: [emb exp=tf.cat][r]
@@ -214,14 +215,14 @@ Category: [emb exp=tf.cat][r]
 *listupcategory
 @if exp=tf.tmp.type=='block'
 ;		ブロックを追加
-　[eval exp="kag.tagHandlers.link(%[target:'*playscene',exp:'tf.tmp='+tf.children[tf.no].id])"][emb exp=tf.tmp.title][endlink][r]
+　[eval exp=kag.tagHandlers.link(%[target:'*playscene',exp:'tf.tmp='+tf.children[tf.no].id])][emb exp=tf.tmp.title][endlink][r]
 @elsif exp=tf.tmp.type=='category'
 ;		カテゴリを追加
-　[eval exp="kag.tagHandlers.link(%[target:'*setcurrentcategory',exp:'tf.tmp='+tf.children[tf.no].id])"][emb exp=tf.tmp.name][endlink][r]
+　[eval exp=kag.tagHandlers.link(%[target:'*setcurrentcategory',exp:'tf.tmp='+tf.children[tf.no].id])][emb exp=tf.tmp.name][endlink][r]
 @else
 ;		「上のカテゴリへ移動」を追加
 @getparentcategory
-　[eval exp="kag.tagHandlers.link(%[target:'*setcurrentcategory',exp:'tf.tmp='+tf.tmp])"]Return[endlink]
+　[eval exp=kag.tagHandlers.link(%[target:'*setcurrentcategory',exp:'tf.tmp='+tf.tmp])]Return[endlink]
 ;		待機
 @endnowait
 @s

@@ -2,7 +2,7 @@
 *page0|
 ;　クイックセーブロード画面です。
 ;　ほんの少し動きを入れました。ウザいなら削除予定[l]
-@playtimeline scene=7 nopgbg=1 noclear=1
+@playtimeline noclear=1 nopgbg=1 scene=7
 @r
 ;消去
 @playtimeline scene=8
@@ -3056,6 +3056,7 @@ global.__tmp_tla = Scripts.eval('(const) %[
  "version" => 1
 ]');
 global.__tla_name = "qsaveload";
+
 @endscript
 @eval exp=timeline_object.loadByData(global.__tmp_tla,global.__tla_name)
 @return

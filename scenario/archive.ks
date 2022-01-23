@@ -15,21 +15,21 @@
 ;アーカイヴウィンドウ
 ;下の段の本を選んだら上に表示。上の場合は逆に下に表示するという感じです
 ;座標は　上の位置（297/51）　下の位置（297/274）[l]
-@playtimeline scene=8 noclear=1
+@playtimeline noclear=1 scene=8
 ;出現
 @l
 @r
-@playtimeline scene=9 noclear=1
+@playtimeline noclear=1 scene=9
 ;消滅
 @pg
 *page2|
 @r
 ;ウィンドウ案その2[l]
-@playtimeline scene=10 noclear=1
+@playtimeline noclear=1 scene=10
 ;出現
 @l
 @r
-@playtimeline scene=11 noclear=1
+@playtimeline noclear=1 scene=11
 ;消滅
 ;※こっちが有力かなー
 @r
@@ -16685,6 +16685,7 @@ global.__tmp_tla = Scripts.eval('(const) %[
  "version" => 1
 ]');
 global.__tla_name = "archive";
+
 @endscript
 @eval exp=timeline_object.loadByData(global.__tmp_tla,global.__tla_name)
 @return

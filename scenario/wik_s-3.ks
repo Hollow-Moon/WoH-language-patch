@@ -1,7 +1,7 @@
 ﻿@call target=*tladata
 *page0|
 @clall
-@bg rule=crossfade time=500 storage=bg01久遠寺邸13客室-(夜) noclear=1
+@bg noclear=1 rule=crossfade storage=bg01久遠寺邸13客室-(夜) time=500
 ;選択肢Ｓ－２（or３or４～）
 @r
 　わたしは、蒼崎橙子が死亡したのは１８時から２０時の間なのかもしれない、と思った。
@@ -14,7 +14,7 @@
 @return
 
 @return
-*tladata
+*tladata:16
 @iscript
 global.__tmp_tla = Scripts.eval('(const) %[
  "baseHeight" => 576,
@@ -29,6 +29,7 @@ global.__tmp_tla = Scripts.eval('(const) %[
  "version" => 1
 ]');
 global.__tla_name = "wik_s-3";
+
 @endscript
 @eval exp=timeline_object.loadByData(global.__tmp_tla,global.__tla_name)
 @return

@@ -2,9 +2,9 @@
 *page0|
 ;Ｈ－２
 @clall
-@fg storage=唯架シスター01b(全) center=798 vcenter=847 index=1400 zoom=65
-@fg storage=律架01b(大)|i2 center=318 vcenter=337 index=1300
-@bg rule=crossfade time=0 storage=bg01久遠寺邸03居間-(夜隣明)奥扉開 left=-48 top=-48 noclear=1
+@fg center=798 index=1400 storage=唯架シスター01b(全) vcenter=847 zoom=65
+@fg center=318 index=1300 storage=律架01b(大)|i2 vcenter=337
+@bg left=-48 noclear=1 rule=crossfade storage=bg01久遠寺邸03居間-(夜隣明)奥扉開 time=0 top=-48
 @r
 　わたしは、一晩笑わないのなんて簡単、と思った。
 ;Ｈ－ａに合流
@@ -15,7 +15,7 @@
 @return
 
 @return
-*tladata
+*tladata:17
 @iscript
 global.__tmp_tla = Scripts.eval('(const) %[
  "baseHeight" => 576,
@@ -30,6 +30,7 @@ global.__tmp_tla = Scripts.eval('(const) %[
  "version" => 1
 ]');
 global.__tla_name = "wik_h-2";
+
 @endscript
 @eval exp=timeline_object.loadByData(global.__tmp_tla,global.__tla_name)
 @return

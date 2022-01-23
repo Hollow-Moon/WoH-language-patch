@@ -1,43 +1,43 @@
 ﻿@call target=*tladata
 *page0|
-@bg time=100 rule=crossfade storage=black
+@bg rule=crossfade storage=black time=100
 @stopaction
 @clall
-@fg storage=ev05b03時計台に座る有珠_有珠 center=601 vcenter=162 index=2500 effect=屋外蒼緑 brightness=-60 zoom=16 blur=12
-@fg storage=im0718電飾化した全景_スナーク(オブジェ) center=1205 vcenter=10 index=2400 type=19 brightness=10 zoom=500 blur=1
-@fg storage=im0718電飾化した全景_オブジェi(奥木) center=948 vcenter=587 index=2000 opacity=224 type=19
-@fg storage=im0718電飾化した全景_オブジェc(青ライト) center=853 vcenter=196 index=1900 type=22 rotate=-65.569
-@fg storage=ev0502b時計台正面 center=760 vcenter=234 index=1700 zoomx=105 brightness=-35 blur=4
-@fg storage=im0718電飾化した全景_オブジェb(紫ライト) center=471 vcenter=325 index=1600 type=17 rotate=-129.872
-@fg storage=im0718電飾化した全景_オブジェd(赤ライト) center=281 vcenter=203 index=1800 type=13 rotate=-40.892
-@fg storage=im0718電飾化した全景_オブジェf(風船) center=503 vcenter=230 index=1500
-@fg storage=im0718電飾化した全景_オブジェe(電飾) center=405 vcenter=413 index=1300 type=14
-@fg storage=im0718電飾化した全景_スナーク(オブジェ) center=-4 vcenter=386 index=1200 type=17
-@se storage=se03001 volume=100 time=2000 loop=1
-@partbg storage=ev05b03時計台に座る有珠a srctop=242 index=3600 width=1024 height=298 vcenter=328 opacity=0 bordersize=20 noclear=1 id=pb1
-@bg rule=crossfade time=800 storage=im07l18電飾化した全景_スナーク(背景) top=-243 brightness=-10 noclear=1 noback=1
+@fg blur=12 brightness=-60 center=601 effect=屋外蒼緑 index=2500 storage=ev05b03時計台に座る有珠_有珠 vcenter=162 zoom=16
+@fg blur=1 brightness=10 center=1205 index=2400 storage=im0718電飾化した全景_スナーク(オブジェ) type=19 vcenter=10 zoom=500
+@fg center=948 index=2000 opacity=224 storage=im0718電飾化した全景_オブジェi(奥木) type=19 vcenter=587
+@fg center=853 index=1900 rotate=-65.569 storage=im0718電飾化した全景_オブジェc(青ライト) type=22 vcenter=196
+@fg blur=4 brightness=-35 center=760 index=1700 storage=ev0502b時計台正面 vcenter=234 zoomx=105
+@fg center=471 index=1600 rotate=-129.872 storage=im0718電飾化した全景_オブジェb(紫ライト) type=17 vcenter=325
+@fg center=281 index=1800 rotate=-40.892 storage=im0718電飾化した全景_オブジェd(赤ライト) type=13 vcenter=203
+@fg center=503 index=1500 storage=im0718電飾化した全景_オブジェf(風船) vcenter=230
+@fg center=405 index=1300 storage=im0718電飾化した全景_オブジェe(電飾) type=14 vcenter=413
+@fg center=-4 index=1200 storage=im0718電飾化した全景_スナーク(オブジェ) type=17 vcenter=386
+@se loop=1 storage=se03001 time=2000 volume=100
+@partbg bordersize=20 height=298 id=pb1 index=3600 noclear=1 opacity=0 srctop=242 storage=ev05b03時計台に座る有珠a vcenter=328 width=1024
+@bg brightness=-10 noback=1 noclear=1 rule=crossfade storage=im07l18電飾化した全景_スナーク(背景) time=800 top=-243
 　時計台の上で、少女は使い魔の成長を監視している。[l][r]
 　フラットスナーク。[l][r]
 　廃棄されたモノたちの救世主。[l][r]
-　朽ちゆく[ruby text=さだめ char=2]運命のモノたちに一時の希望を与え、根こそぎ奪い去る、[ruby char=2 text=しょうわる]性悪で[ruby char=2 text=ていぞく]低俗な“童話の怪物”。[l][r]
-@partbgact textoff=0 page=fore props=-storage,srctop,absolute,width,height,vcenter,opacity,bordersize,-visible keys=(0,3,l,ev05b03時計台に座る有珠a,242,3600,1024,298,328,0,20,1)(4000,0,,,160,,,,354,255,,) storage=ev05b03時計台に座る有珠a
+　朽ちゆく[ruby char=2 text=さだめ]運命のモノたちに一時の希望を与え、根こそぎ奪い去る、[ruby char=2 text=しょうわる]性悪で[ruby char=2 text=ていぞく]低俗な“童話の怪物”。[l][r]
+@partbgact keys=(0,3,l,ev05b03時計台に座る有珠a,242,3600,1024,298,328,0,20,1)(4000,0,,,160,,,,354,255,,) page=fore props=-storage,srctop,absolute,width,height,vcenter,opacity,bordersize,-visible storage=ev05b03時計台に座る有珠a textoff=0
 @r
 　自らの手駒ではあるが、スナークがその[ruby char=2 text=あくへき]悪癖を発揮しないよう、少女は目を光らせていた。
 @pg
 *page1|
-@se storage=se01047c volume=50 loop=0
+@se loop=0 storage=se01047c volume=50
 　いまやひとつの街ほどまでに広がった遊園地を一周した駒鳥が、少女に現状を報告する。[l][r]
 @r
 @clall
-@fg storage=im07l18電飾化した全景_オブジェe(電飾) center=702 vcenter=373 index=1400 type=17
-@fg storage=im07l18電飾化した全景_オブジェa(黄ライト) center=549 vcenter=192 index=1300 type=22 rotate=-52.352
-@fg storage=im0729(風船) center=836 vcenter=194 index=1200
-@fg storage=im11(コマ200) center=232 vcenter=307 index=3500 rotate=1.5 effect=屋内緑 zoom=90
-@fg storage=im0802ディドル(手) center=249 vcenter=610 index=3400 rotate=20.574 opacity=128 effect=屋内緑 zoom=90 blur=2
-@fg storage=im0802ディドル(手) center=249 vcenter=610 index=3300 rotate=20.574 effect=屋外蒼緑 zoom=90 blur=2
-@fg storage=有珠制服ケープ01a(近) center=947 vcenter=-78 index=3200 opacity=110 effect=屋外蒼緑 zoom=180
-@fg storage=有珠制服ケープ01a(近) center=947 vcenter=-78 index=3100 effect=屋外蒼緑 zoom=180 blur=1
-@bg rule=crossfade time=600 storage=ev05b03時計台に座る有珠(時計台背景) left=-48 top=-36 noclear=1 noback=1 zoom=140
+@fg center=702 index=1400 storage=im07l18電飾化した全景_オブジェe(電飾) type=17 vcenter=373
+@fg center=549 index=1300 rotate=-52.352 storage=im07l18電飾化した全景_オブジェa(黄ライト) type=22 vcenter=192
+@fg center=836 index=1200 storage=im0729(風船) vcenter=194
+@fg center=232 effect=屋内緑 index=3500 rotate=1.5 storage=im11(コマ200) vcenter=307 zoom=90
+@fg blur=2 center=249 effect=屋内緑 index=3400 opacity=128 rotate=20.574 storage=im0802ディドル(手) vcenter=610 zoom=90
+@fg blur=2 center=249 effect=屋外蒼緑 index=3300 rotate=20.574 storage=im0802ディドル(手) vcenter=610 zoom=90
+@fg center=947 effect=屋外蒼緑 index=3200 opacity=110 storage=有珠制服ケープ01a(近) vcenter=-78 zoom=180
+@fg blur=1 center=947 effect=屋外蒼緑 index=3100 storage=有珠制服ケープ01a(近) vcenter=-78 zoom=180
+@bg left=-48 noback=1 noclear=1 rule=crossfade storage=ev05b03時計台に座る有珠(時計台背景) time=600 top=-36 zoom=140
 @stopaction
 「……そう。外を目指しているの」[l][r]
 @r
@@ -46,16 +46,16 @@
 @pg
 *page2|
 @clall
-@fg storage=im07l18電飾化した全景_オブジェe(電飾) center=702 vcenter=373 index=1400 type=17
-@fg storage=im07l18電飾化した全景_オブジェa(黄ライト) center=549 vcenter=192 index=1300 type=22 rotate=-52.352
-@fg storage=im0729(風船) center=836 vcenter=194 index=1200
-@fg storage=im11ミニコマドリc center=187 vcenter=223 index=1900 rotate=3.752 zoomx=-180 zoomy=180 yblur=1 effect=屋内緑
-@fg storage=im0802ディドル(手) center=420 vcenter=613 index=3400 opacity=128 rotate=13.143 effect=屋内緑 zoom=75 blur=2
-@fg storage=im0802ディドル(手) center=420 vcenter=613 index=3300 rotate=13.143 effect=屋外蒼緑 zoom=75 blur=2
-@fg storage=有珠制服ケープ01b(近)|b center=947 vcenter=-78 index=3200 opacity=110 effect=屋外蒼緑 zoom=180
-@fg storage=有珠制服ケープ01b(近)|b center=947 vcenter=-78 index=3100 effect=屋外蒼緑 zoom=180 blur=1
-@se storage=se05087 volume=80 loop=0
-@bg rule=crossfade time=600 storage=ev05b03時計台に座る有珠(時計台背景) left=-48 top=-36 noclear=1 noback=1 zoom=140
+@fg center=702 index=1400 storage=im07l18電飾化した全景_オブジェe(電飾) type=17 vcenter=373
+@fg center=549 index=1300 rotate=-52.352 storage=im07l18電飾化した全景_オブジェa(黄ライト) type=22 vcenter=192
+@fg center=836 index=1200 storage=im0729(風船) vcenter=194
+@fg center=187 effect=屋内緑 index=1900 rotate=3.752 storage=im11ミニコマドリc vcenter=223 yblur=1 zoomx=-180 zoomy=180
+@fg blur=2 center=420 effect=屋内緑 index=3400 opacity=128 rotate=13.143 storage=im0802ディドル(手) vcenter=613 zoom=75
+@fg blur=2 center=420 effect=屋外蒼緑 index=3300 rotate=13.143 storage=im0802ディドル(手) vcenter=613 zoom=75
+@fg center=947 effect=屋外蒼緑 index=3200 opacity=110 storage=有珠制服ケープ01b(近)|b vcenter=-78 zoom=180
+@fg blur=1 center=947 effect=屋外蒼緑 index=3100 storage=有珠制服ケープ01b(近)|b vcenter=-78 zoom=180
+@se loop=0 storage=se05087 volume=80
+@bg left=-48 noback=1 noclear=1 rule=crossfade storage=ev05b03時計台に座る有珠(時計台背景) time=600 top=-36 zoom=140
 「残念ね。青子の事だから、時計台ごと私を焼き払いにくるかと思ったけど」[l][r]
 @r
 　チチチ、と[ruby text=くちばし]嘴を鳴らす青い鳥。[l][r]
@@ -65,80 +65,80 @@
 @pg
 *page3|
 @clall
-@fg storage=ev05b03時計台に座る有珠_コマドリc center=158 vcenter=381 rotate=-1.6 zoomx=-100 effect=屋内緑 brightness=-18 index=1000
-@bg rule=crossfade time=600 storage=ev05b03時計台に座る有珠a left=193 top=-38 noclear=1 noback=1 zoom=140
+@fg brightness=-18 center=158 effect=屋内緑 index=1000 rotate=-1.6 storage=ev05b03時計台に座る有珠_コマドリc vcenter=381 zoomx=-100
+@bg left=193 noback=1 noclear=1 rule=crossfade storage=ev05b03時計台に座る有珠a time=600 top=-38 zoom=140
 「退屈？」[l][r]
 @r
-@se storage=se01047c volume=65 loop=0
-@se storage=se01049 volume=65 loop=0
+@se loop=0 storage=se01047c volume=65
+@se loop=0 storage=se01049 volume=65
 　突然話しかけられ、ビクッと震える駒鳥。[l][r]
 　チチチ、と必死に羽を振る仕草は、“そんなコトないっス！”とあわてる[ruby char=2 text=でっち]丁稚のようだ。
 @pg
 *page4|
 @clall
-@fg storage=ef18放射状ef_虹(太) center=487 vcenter=206 index=5900 opacity=168 type=22 effect=none zoom=90 blur=2
-@fg storage=im0732ダンプティ(オブジェ) center=797 vcenter=437 index=4800 type=16 rotate=26 zoomx=24 zoomy=22 blur=20
-@fg storage=im0802ディドル(手) center=825 vcenter=617 index=5100 rotate=25 zoomx=60 zoomy=-60 effect=屋外深夜 blur=2
-@fg storage=im0802ディドル(手) center=900 vcenter=527 index=4500 rotate=121 zoomx=40 zoomy=-40 effect=屋外深夜 blur=2
-@fg storage=im0732ダンプティ(オブジェ) center=797 vcenter=457 index=4700 rotate=23 zoom=30 blur=3
-@fg storage=ev05b03(有珠のみ) center=825 vcenter=942 index=3700 rotate=45 zoomx=-150 zoomy=150 brightness=-60
-@fg storage=ev05b03時計台に座る有珠_時計台 center=1858 vcenter=1176 index=2100 rotate=45 zoomx=300 zoomy=400 brightness=-80 blur=1
-@fg storage=im0718電飾化した全景_オブジェf(風船) center=751 vcenter=276 index=2000 rotate=37
-@fg storage=im0718電飾化した全景_オブジェb(紫ライト) center=926 vcenter=242 index=1900 type=17 rotate=-73
-@fg storage=im07l18電飾化した全景_オブジェc(青ライト) center=936 vcenter=463 index=1600 type=22 rotate=-5.038 zoom=40
-@fg storage=ef18放射状ef_衝撃波a center=463 vcenter=264 index=5500 type=20 zoom=110 blur=10
-@fg storage=im07l18電飾化した全景_スナーク(オブジェ) center=264 vcenter=960 index=1400 type=17 rotate=39 zoom=70 blur=2
-@fg storage=im02l空(昼b) center=334 vcenter=400 index=1200 type=18 rotate=42.5 effect=monocro brightness=-30
-@fg storage=im07l62スナーク満月b center=470 vcenter=60 index=1100 type=14 effect=屋外蛍雪 zoom=60 blur=1
-@se storage=se01090 volume=70 loop=0
-@sestop delay=800 storage=se01090 time=2000 nowait=1
-@bg rule=crossfade time=600 storage=im07l18電飾化した全景_スナーク(背景) left=-910 top=-308 rotate=41 zoomy=140 effect=屋外蛍雪 noclear=1 noback=1
+@fg blur=2 center=487 effect=none index=5900 opacity=168 storage=ef18放射状ef_虹(太) type=22 vcenter=206 zoom=90
+@fg blur=20 center=797 index=4800 rotate=26 storage=im0732ダンプティ(オブジェ) type=16 vcenter=437 zoomx=24 zoomy=22
+@fg blur=2 center=825 effect=屋外深夜 index=5100 rotate=25 storage=im0802ディドル(手) vcenter=617 zoomx=60 zoomy=-60
+@fg blur=2 center=900 effect=屋外深夜 index=4500 rotate=121 storage=im0802ディドル(手) vcenter=527 zoomx=40 zoomy=-40
+@fg blur=3 center=797 index=4700 rotate=23 storage=im0732ダンプティ(オブジェ) vcenter=457 zoom=30
+@fg brightness=-60 center=825 index=3700 rotate=45 storage=ev05b03(有珠のみ) vcenter=942 zoomx=-150 zoomy=150
+@fg blur=1 brightness=-80 center=1858 index=2100 rotate=45 storage=ev05b03時計台に座る有珠_時計台 vcenter=1176 zoomx=300 zoomy=400
+@fg center=751 index=2000 rotate=37 storage=im0718電飾化した全景_オブジェf(風船) vcenter=276
+@fg center=926 index=1900 rotate=-73 storage=im0718電飾化した全景_オブジェb(紫ライト) type=17 vcenter=242
+@fg center=936 index=1600 rotate=-5.038 storage=im07l18電飾化した全景_オブジェc(青ライト) type=22 vcenter=463 zoom=40
+@fg blur=10 center=463 index=5500 storage=ef18放射状ef_衝撃波a type=20 vcenter=264 zoom=110
+@fg blur=2 center=264 index=1400 rotate=39 storage=im07l18電飾化した全景_スナーク(オブジェ) type=17 vcenter=960 zoom=70
+@fg brightness=-30 center=334 effect=monocro index=1200 rotate=42.5 storage=im02l空(昼b) type=18 vcenter=400
+@fg blur=1 center=470 effect=屋外蛍雪 index=1100 storage=im07l62スナーク満月b type=14 vcenter=60 zoom=60
+@se loop=0 storage=se01090 volume=70
+@sestop delay=800 nowait=1 storage=se01090 time=2000
+@bg effect=屋外蛍雪 left=-910 noback=1 noclear=1 rotate=41 rule=crossfade storage=im07l18電飾化した全景_スナーク(背景) time=600 top=-308 zoomy=140
 @wait canskip=0 time=500
 「……珍しく気があったわね。[l][r]
 　いいわ。せっかくのゲームだし、もう少しだけ盛り上げましょう」[l][r]
 @r
 　無表情のまま少女は小さな器物を取り出した。[l][r]
-　カチカチと内から秒針の音をこぼす、鈍色の[ruby text=イースターエッグ char=3]装飾卵。[l][r]
+　カチカチと内から秒針の音をこぼす、鈍色の[ruby char=3 text=イースターエッグ]装飾卵。[l][r]
 @clall
-@fg storage=im11コマドリ01b center=492 vcenter=226 index=2500 rotate=-13.426 zoomx=-60 zoomy=60 brightness=-27 blur=1
-@fg storage=im11コマドリ02b center=423 vcenter=390 index=2200 opacity=192 type=20 rotate=-222 zoomx=40 zoomy=70 effect=mono09092d aorder=rm blur=6
-@fg storage=ev05b03(有珠のみ) center=1183 vcenter=216 index=2600 effect=屋外蒼緑 brightness=-30 zoom=200 blur=1
-@fg storage=im07l18電飾化した全景_オブジェe(電飾) center=873 vcenter=162 index=1700 type=14
-@fg storage=im0729(風船) center=166 vcenter=265 index=1800
-@fg storage=ev05b03時計台に座る有珠_時計台 center=1131 vcenter=451 index=2000 rotate=-35 brightness=-30 zoom=300
-@fg storage=im07l18電飾化した全景_オブジェc(青ライト) center=430 vcenter=-166 index=1500 type=22 rotate=-111 zoomy=120
-@se storage=se01047c volume=70 loop=0
-@bg textoff=0 rule=crossfade time=600 storage=im07l18電飾化した全景_スナークb left=-508 top=-441 noclear=1 noback=1 zoom=160 blur=3
-　それがフラットスナークには及ばずとも、対個人戦においてトップランクに[ruby text=タチ char=2]性質の悪い“[ruby text=プロイキッシャー char=5]童話の怪物”である事を、駒鳥は知っている。
+@fg blur=1 brightness=-27 center=492 index=2500 rotate=-13.426 storage=im11コマドリ01b vcenter=226 zoomx=-60 zoomy=60
+@fg aorder=rm blur=6 center=423 effect=mono09092d index=2200 opacity=192 rotate=-222 storage=im11コマドリ02b type=20 vcenter=390 zoomx=40 zoomy=70
+@fg blur=1 brightness=-30 center=1183 effect=屋外蒼緑 index=2600 storage=ev05b03(有珠のみ) vcenter=216 zoom=200
+@fg center=873 index=1700 storage=im07l18電飾化した全景_オブジェe(電飾) type=14 vcenter=162
+@fg center=166 index=1800 storage=im0729(風船) vcenter=265
+@fg brightness=-30 center=1131 index=2000 rotate=-35 storage=ev05b03時計台に座る有珠_時計台 vcenter=451 zoom=300
+@fg center=430 index=1500 rotate=-111 storage=im07l18電飾化した全景_オブジェc(青ライト) type=22 vcenter=-166 zoomy=120
+@se loop=0 storage=se01047c volume=70
+@bg blur=3 left=-508 noback=1 noclear=1 rule=crossfade storage=im07l18電飾化した全景_スナークb textoff=0 time=600 top=-441 zoom=160
+　それがフラットスナークには及ばずとも、対個人戦においてトップランクに[ruby char=2 text=タチ]性質の悪い“[ruby char=5 text=プロイキッシャー]童話の怪物”である事を、駒鳥は知っている。
 @pg
 *page5|
-@bg time=600 rule=crossfade storage=black
+@bg rule=crossfade storage=black time=600
 @stopaction
 @clall
-@bg storage=im0718電飾化した全景_スナーク(背景) left=-510 top=10 rotate=6 zoomy=140 effect=屋外蛍雪 blur=1
-@fg storage=im10(炎) center=470 vcenter=255 index=5500 opacity=0 type=22 rotate=34.263 zoomx=-40 zoomy=60 effect=blue blur=6
-@fg storage=im0723(ダンプティセンターb) center=472 vcenter=283 index=4200 rotate=16 zoomx=45 zoomy=70 blur=1 id=3
-@fg storage=im0723(ダンプティセンターb) center=472 vcenter=283 index=4100 type=14 rotate=16 zoomx=45 zoomy=70 effect=blue brightness=-50 blur=1 id=4
-@fg storage=im0723(ダンプティアウター) center=570 vcenter=236 index=4000 rotate=16 zoom=70 blur=1 id=1
-@fg storage=im0723(ダンプティアウター) center=570 vcenter=236 index=3900 type=14 rotate=16 contrast=35 zoom=70 blur=1 id=2
-@fg storage=im0802ディドル(手) center=689 vcenter=577 index=5000 rotate=-32.256 effect=屋外蒼緑 brightness=-15 zoom=-120
-@fg storage=ev05b03時計台に座る有珠_時計台 center=1620 vcenter=650 index=2100 rotate=-30 zoomx=250 zoomy=300 yblur=1 brightness=-40
-@fg storage=im0718電飾化した全景_オブジェf(風船) center=928 vcenter=403 index=1800
-@fg storage=im0718電飾化した全景_オブジェa(黄ライト) center=939 vcenter=361 index=1700 type=22 rotate=-115.436 zoom=50
-@fg storage=im07l18電飾化した全景_オブジェc(青ライト) center=370 vcenter=393 index=1600 type=22 rotate=-71.118 zoom=40
-@fg storage=im07l18電飾化した全景_オブジェd(赤ライト) center=222 vcenter=493 index=1500 type=17 rotate=-134.591 zoom=50
-@fg storage=im07l18電飾化した全景_スナーク(オブジェ) center=1239 vcenter=394 index=1400 type=17 rotate=4.34 blur=1
-@fgact page=back props=-storage,center,vcenter,absolute,opacity,-type,rotate,zoomx,zoomy,-effect,-xblur,-yblur,-visible keys=(0,0,n,im10(炎),470,255,5500,0,22,34.263,-40,60,blue,6,6,1)(2000,3,l,,,,,,,,,,,,,)(5000,,,,215,81,,255,,61.869,-70,80,,,,) storage=im10(炎)
-@fgact page=back props=-storage,center,vcenter,absolute,opacity,rotate,zoomx,zoomy,-xblur,-yblur,-visible keys=(0,4,s,im0723(ダンプティセンターb),472,283,4200,,16,45,70,1,1,1)(2000,,,,459.319,219.439,,,~,70,,,,)(4000,,,,472,192,,0,22,60,,,,) asone=1 id=3
-@fgact page=back props=-storage,center,vcenter,absolute,-type,rotate,zoomx,zoomy,-effect,-xblur,-yblur,-brightness,-visible keys=(0,4,s,im0723(ダンプティセンターb),472,283,4100,14,16,45,70,blue,1,1,-50,1)(2000,,,,459.319,219.439,,,~,70,,,,,,)(4000,,,,472,192,,,22,60,,,,,,) id=4 asone=1
-@fgact page=back props=-storage,center,vcenter,absolute,opacity,rotate,zoomx,zoomy,-xblur,-yblur,-visible keys=(0,4,l,im0723(ダンプティアウター),570,236,4000,,16,70,70,1,1,1)(2000,,,,~,~,,,,,,,,)(4000,,,,397,222,,0,,,,,,) id=1
-@fgact page=back props=-storage,center,vcenter,absolute,-type,rotate,zoomx,zoomy,-contrast,-xblur,-yblur,-brightness,-visible keys=(0,4,l,im0723(ダンプティアウター),570,236,3900,14,16,70,70,35,1,1,0,1)(4000,,,,397,222,,,,,,,,,,) id=2
-@fgact page=back props=-storage,center,vcenter,absolute,rotate,zoomx,zoomy,-effect,-brightness,-visible keys=(0,4,l,im0802ディドル(手),689,577,5000,-32.256,-120,-120,屋外蒼緑,-15,1)(4000,,,,881,614,,-41.529,,,,,) storage=im0802ディドル(手)
-@fgact page=back props=-storage,center,vcenter,absolute,rotate,zoomx,zoomy,-yblur,-brightness,-visible keys=(0,4,l,ev05b03時計台に座る有珠_時計台,1620,650,2100,-30,250,300,1,-40,1)(4000,,,,1666,666,,,,,,,) storage=ev05b03時計台に座る有珠_時計台
-@se storage=se06005 volume=80 loop=0
-@se storage=se12090 volume=60 loop=1
-@sestop delay=2000 storage=se12090 time=2000 nowait=1
-@trans rule=crossfade time=600 nowait=0 noback=1
+@bg blur=1 effect=屋外蛍雪 left=-510 rotate=6 storage=im0718電飾化した全景_スナーク(背景) top=10 zoomy=140
+@fg blur=6 center=470 effect=blue index=5500 opacity=0 rotate=34.263 storage=im10(炎) type=22 vcenter=255 zoomx=-40 zoomy=60
+@fg blur=1 center=472 id=3 index=4200 rotate=16 storage=im0723(ダンプティセンターb) vcenter=283 zoomx=45 zoomy=70
+@fg blur=1 brightness=-50 center=472 effect=blue id=4 index=4100 rotate=16 storage=im0723(ダンプティセンターb) type=14 vcenter=283 zoomx=45 zoomy=70
+@fg blur=1 center=570 id=1 index=4000 rotate=16 storage=im0723(ダンプティアウター) vcenter=236 zoom=70
+@fg blur=1 center=570 contrast=35 id=2 index=3900 rotate=16 storage=im0723(ダンプティアウター) type=14 vcenter=236 zoom=70
+@fg brightness=-15 center=689 effect=屋外蒼緑 index=5000 rotate=-32.256 storage=im0802ディドル(手) vcenter=577 zoom=-120
+@fg brightness=-40 center=1620 index=2100 rotate=-30 storage=ev05b03時計台に座る有珠_時計台 vcenter=650 yblur=1 zoomx=250 zoomy=300
+@fg center=928 index=1800 storage=im0718電飾化した全景_オブジェf(風船) vcenter=403
+@fg center=939 index=1700 rotate=-115.436 storage=im0718電飾化した全景_オブジェa(黄ライト) type=22 vcenter=361 zoom=50
+@fg center=370 index=1600 rotate=-71.118 storage=im07l18電飾化した全景_オブジェc(青ライト) type=22 vcenter=393 zoom=40
+@fg center=222 index=1500 rotate=-134.591 storage=im07l18電飾化した全景_オブジェd(赤ライト) type=17 vcenter=493 zoom=50
+@fg blur=1 center=1239 index=1400 rotate=4.34 storage=im07l18電飾化した全景_スナーク(オブジェ) type=17 vcenter=394
+@fgact keys=(0,0,n,im10(炎),470,255,5500,0,22,34.263,-40,60,blue,6,6,1)(2000,3,l,,,,,,,,,,,,,)(5000,,,,215,81,,255,,61.869,-70,80,,,,) page=back props=-storage,center,vcenter,absolute,opacity,-type,rotate,zoomx,zoomy,-effect,-xblur,-yblur,-visible storage=im10(炎)
+@fgact asone=1 id=3 keys=(0,4,s,im0723(ダンプティセンターb),472,283,4200,,16,45,70,1,1,1)(2000,,,,459.319,219.439,,,~,70,,,,)(4000,,,,472,192,,0,22,60,,,,) page=back props=-storage,center,vcenter,absolute,opacity,rotate,zoomx,zoomy,-xblur,-yblur,-visible
+@fgact asone=1 id=4 keys=(0,4,s,im0723(ダンプティセンターb),472,283,4100,14,16,45,70,blue,1,1,-50,1)(2000,,,,459.319,219.439,,,~,70,,,,,,)(4000,,,,472,192,,,22,60,,,,,,) page=back props=-storage,center,vcenter,absolute,-type,rotate,zoomx,zoomy,-effect,-xblur,-yblur,-brightness,-visible
+@fgact id=1 keys=(0,4,l,im0723(ダンプティアウター),570,236,4000,,16,70,70,1,1,1)(2000,,,,~,~,,,,,,,,)(4000,,,,397,222,,0,,,,,,) page=back props=-storage,center,vcenter,absolute,opacity,rotate,zoomx,zoomy,-xblur,-yblur,-visible
+@fgact id=2 keys=(0,4,l,im0723(ダンプティアウター),570,236,3900,14,16,70,70,35,1,1,0,1)(4000,,,,397,222,,,,,,,,,,) page=back props=-storage,center,vcenter,absolute,-type,rotate,zoomx,zoomy,-contrast,-xblur,-yblur,-brightness,-visible
+@fgact keys=(0,4,l,im0802ディドル(手),689,577,5000,-32.256,-120,-120,屋外蒼緑,-15,1)(4000,,,,881,614,,-41.529,,,,,) page=back props=-storage,center,vcenter,absolute,rotate,zoomx,zoomy,-effect,-brightness,-visible storage=im0802ディドル(手)
+@fgact keys=(0,4,l,ev05b03時計台に座る有珠_時計台,1620,650,2100,-30,250,300,1,-40,1)(4000,,,,1666,666,,,,,,,) page=back props=-storage,center,vcenter,absolute,rotate,zoomx,zoomy,-yblur,-brightness,-visible storage=ev05b03時計台に座る有珠_時計台
+@se loop=0 storage=se06005 volume=80
+@se loop=1 storage=se12090 volume=60
+@sestop delay=2000 nowait=1 storage=se12090 time=2000
+@trans noback=1 nowait=0 rule=crossfade time=600
 @wait canskip=0 time=2000
 「行ってらっしゃい。[ruby text=たた]讃える時間は二十分に設定したわ。[l][r]
 　……いつも通り、控え目に壊れてきて」[l][r]
@@ -146,16 +146,16 @@
 　魔女の一息と共に、[ruby text=いわ]祝いの言葉がつまった卵が消える。
 @pg
 *page6|
-@bg time=600 rule=crossfade storage=black
-@se storage=se03002 volume=70 time=2500 loop=1
+@bg rule=crossfade storage=black time=600
+@se loop=1 storage=se03002 time=2500 volume=70
 @clall
-@fg storage=im02空(朝fg) center=1010 vcenter=184 index=1300 type=14 rotate=7 zoomx=-100 effect=monobfdfff
-@fg storage=im02l空(昼b) center=612 vcenter=414 index=1600 type=19 rotate=8 effect=monocro xblur=6 brightness=-67
-@fg storage=im07l62スナーク満月(統合b) center=729 vcenter=-425 opacity=224 contrast=40 index=1000
-@fgact page=back props=-storage,center,vcenter,absolute,-type,rotate,zoomx,-effect,-visible keys=(0,0,l,im02空(朝fg),1010,184,1300,14,7,-100,monobfdfff,1)(45000,,,,223,294,,,,,,) storage=im02空(朝fg)
-@fgact page=back props=-storage,center,vcenter,absolute,-type,rotate,-effect,-xblur,-brightness,-visible keys=(0,0,l,im02l空(昼b),612,414,1600,19,8,monocro,6,-67,1)(45000,,,,265,470,,,,,,,) storage=im02l空(昼b)
-@fgact page=back props=-storage,center,vcenter,opacity,-contrast,-visible keys=(0,0,l,im07l62スナーク満月(統合b),729,-425,224,40,1)(45000,,,,517,-372,160,,) storage=im07l62スナーク満月(統合b)
-@bg rule=crossfade time=1200 storage=black noclear=1 noback=1
+@fg center=1010 effect=monobfdfff index=1300 rotate=7 storage=im02空(朝fg) type=14 vcenter=184 zoomx=-100
+@fg brightness=-67 center=612 effect=monocro index=1600 rotate=8 storage=im02l空(昼b) type=19 vcenter=414 xblur=6
+@fg center=729 contrast=40 index=1000 opacity=224 storage=im07l62スナーク満月(統合b) vcenter=-425
+@fgact keys=(0,0,l,im02空(朝fg),1010,184,1300,14,7,-100,monobfdfff,1)(45000,,,,223,294,,,,,,) page=back props=-storage,center,vcenter,absolute,-type,rotate,zoomx,-effect,-visible storage=im02空(朝fg)
+@fgact keys=(0,0,l,im02l空(昼b),612,414,1600,19,8,monocro,6,-67,1)(45000,,,,265,470,,,,,,,) page=back props=-storage,center,vcenter,absolute,-type,rotate,-effect,-xblur,-brightness,-visible storage=im02l空(昼b)
+@fgact keys=(0,0,l,im07l62スナーク満月(統合b),729,-425,224,40,1)(45000,,,,517,-372,160,,) page=back props=-storage,center,vcenter,opacity,-contrast,-visible storage=im07l62スナーク満月(統合b)
+@bg noback=1 noclear=1 rule=crossfade storage=black time=1200
 　不意に、遊園地に強い風が吹いた。[l][r]
 @r
 　　　『彼らを殺すのは、自分だけで十分なのに』と。[l][r]
@@ -163,8 +163,8 @@
 　それは、目に映っていながら見過ごしてしまう、巨大な何かの嘆息のようだった。
 @pg
 *page7|
-@sestop time=3000 nowait=1
-@bg time=2500 rule=crossfade storage=black
+@sestop nowait=1 time=3000
+@bg rule=crossfade storage=black time=2500
 @stopaction
 @wait canskip=0 time=2000
 @return
@@ -183,6 +183,7 @@ global.__tmp_tla = Scripts.eval('(const) %[
  "version" => 1
 ]');
 global.__tla_name = "5b-8";
+
 @endscript
 @eval exp=timeline_object.loadByData(global.__tmp_tla,global.__tla_name)
 @return

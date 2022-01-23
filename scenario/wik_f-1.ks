@@ -1,7 +1,7 @@
 ﻿@call target=*tladata
 *page0|
 ;選択肢Ｆ－１
-@bg time=0 rule=crossfade storage=black  noclear=0
+@bg noclear=0 rule=crossfade storage=black time=0
 @r
 　これから陰惨な事件が始まるのだ、と思った。
 ;Ｆ－ａに合流
@@ -12,7 +12,7 @@
 @return
 
 @return
-*tladata
+*tladata:14
 @iscript
 global.__tmp_tla = Scripts.eval('(const) %[
  "baseHeight" => 576,
@@ -27,6 +27,7 @@ global.__tmp_tla = Scripts.eval('(const) %[
  "version" => 1
 ]');
 global.__tla_name = "wik_f-1";
+
 @endscript
 @eval exp=timeline_object.loadByData(global.__tmp_tla,global.__tla_name)
 @return

@@ -1,14 +1,14 @@
 ﻿@call target=*tladata
 *page0|
-@bg time=100 rule=crossfade storage=black
+@bg rule=crossfade storage=black time=100
 ;本編とは違うテキスト表示で//
 ;そんなリソースはねえので諦めるんぐ。
 @invisibleframe
-@se delay=1000 storage=seed03 volume=100 loop=0
-@bg time=2000 rule=crossfade storage=white
-@partbg rule=crossfade time=1500 storage=bg01l久遠寺邸01外観(草刈)-(昼) srcleft=399 srctop=208 index=1100 width=508 height=576 center=318 bordersize=200 bordercolor=none bgstorage=white noclear=0 srczoom=60 id=pb2
+@se delay=1000 loop=0 storage=seed03 volume=100
+@bg rule=crossfade storage=white time=2000
+@partbg bgstorage=white bordercolor=none bordersize=200 center=318 height=576 id=pb2 index=1100 noclear=0 rule=crossfade srcleft=399 srctop=208 srczoom=60 storage=bg01l久遠寺邸01外観(草刈)-(昼) time=1500 width=508
 @wait canskip=0 time=600
-@partbg rule=crossfade time=1500 storage=bg01l久遠寺邸02ロビー-(昼) srcleft=1231.4 srctop=1572 srcrotate=3.313 srczoomx=140 srczoomy=200 index=1000 width=478 height=576 center=739 bordersize=200 bordercolor=none bgstorage=white noclear=0 id=pb1
+@partbg bgstorage=white bordercolor=none bordersize=200 center=739 height=576 id=pb1 index=1000 noclear=0 rule=crossfade srcleft=1231.4 srcrotate=3.313 srctop=1572 srczoomx=140 srczoomy=200 storage=bg01l久遠寺邸02ロビー-(昼) time=1500 width=478
 @r
 @r
 @r
@@ -16,12 +16,12 @@
 　　　　　　日曜のけだるい午前中の事だった。
 @pg
 *page1|
-@bg time=1200 rule=crossfade storage=black
+@bg rule=crossfade storage=black time=1200
 @visibleframe
-@play storage=m55 volume=100 time=0
-@bg storage=bg01l久遠寺邸14図書室(明)-(昼) left=-30 top=-321
-@bgact page=back props=-storage,left,top keys=(0,0,l,bg01l久遠寺邸14図書室(明)-(昼),-30,-321)(180000,,,,-639,) storage=bg01l久遠寺邸14図書室(明)-(昼)
-@trans rule=crossfade time=3000 nowait=0 noback=1
+@play storage=m55 time=0 volume=100
+@bg left=-30 storage=bg01l久遠寺邸14図書室(明)-(昼) top=-321
+@bgact keys=(0,0,l,bg01l久遠寺邸14図書室(明)-(昼),-30,-321)(180000,,,,-639,) page=back props=-storage,left,top storage=bg01l久遠寺邸14図書室(明)-(昼)
+@trans noback=1 nowait=0 rule=crossfade time=3000
 @wait canskip=0 time=1000
 @r
 　部外者……というか約一名の冒険野郎……立ち入り禁止の、久遠寺邸の図書室。[l][r]
@@ -32,7 +32,7 @@
 @r
 　盾にでもなりそうなほど大きな本を、苦労しながら本棚の上から引っ張り出す。[l][r]
 @r
-　パラパラとめくっていくうちに、これがルーン魔術の[ruby text=グリモア char=3]魔導書、それも[ruby text=オリジナル char=2]原書に関するものである事に気が付いた。
+　パラパラとめくっていくうちに、これがルーン魔術の[ruby char=3 text=グリモア]魔導書、それも[ruby char=2 text=オリジナル]原書に関するものである事に気が付いた。
 @pg
 *page3|
 @r
@@ -76,7 +76,7 @@
 @r
 　この前は、有珠のお母さんが保存していた亡霊船を開放して大騒ぎになったんだっけ。[l][r]
 @r
-　カティサークとかいう[ruby text=スピードスター char=4]飛ばし屋を捕まえるのは、本当に苦労した。[l]あのいけすかない金狼の手を借りるのはもうゴメンである。
+　カティサークとかいう[ruby char=4 text=スピードスター]飛ばし屋を捕まえるのは、本当に苦労した。[l]あのいけすかない金狼の手を借りるのはもうゴメンである。
 @pg
 *page10|
 @r
@@ -86,46 +86,46 @@
 　もう少しさかのぼれば、有珠の部屋に勝手に入って、そのとばっちりで私も鏡の国に落っこちて、あやうく有珠と全面戦争をする羽目になりかけた。
 @pg
 *page11|
-@bg textoff=0 time=800 rule=crossfade storage=black
+@bg rule=crossfade storage=black textoff=0 time=800
 @stopaction
 @r
 　……考えてみると。[l][r]
 　あいつ、学習能力がないみたい。[l][r]
-@bg textoff=0 rule=crossfade time=600 storage=bg01久遠寺邸14図書室(明)-(昼) noclear=0
+@bg noclear=0 rule=crossfade storage=bg01久遠寺邸14図書室(明)-(昼) textoff=0 time=600
 @r
 「もう、いい加減にしてよね、あのバカ……！」
 @pg
 *page12|
 @textoff
 @invisibleframe
-@bg time=800 rule=crossfade storage=white
+@bg rule=crossfade storage=white time=800
 @r
 　さっきまでの幸福な気分が台無しになって、私は図書室から飛び出した。[l][r]
 　たぶん、この後は廊下で立ち尽くしている元凶に飛び蹴りでも食らわせる、なんて未来視をうかべながら。
 @pg
 *page13|
-@playstop time=10000 nowait=1
+@playstop nowait=1 time=10000
 @r
 　でもまあ、それはそれで楽しい日常には変わりはない。[l][r]
 @r
 @clall
-@bg storage=im03隠された本 top=-261 noclear=0 zoom=220 blur=1
-@partbg storage=im03隠された本 srctop=48 index=1500 width=496 height=576 center=702 opacity=0 bordersize=160 bordercolor=none id=pb1
-@fg storage=white center=512 vcenter=288 index=1200 opacity=0
-@bgact page=back props=-storage,left,top,zoomx,zoomy,-xblur,-yblur keys=(0,3,l,im03隠された本,264,-261,220,220,1,1)(20000,,,,,-35,,,,) storage=im03隠された本
-@partbgact page=back props=-storage,srctop,absolute,width,height,center,opacity,bordersize,-bordercolor,-visible keys=(0,0,l,im03隠された本,48,1500,496,576,702,0,160,none,1)(4000,,,,,,,,,,,,)(6000,,,,,,,,,255,,,) storage=im03隠された本
-@fgact page=back props=-storage,center,vcenter,absolute,opacity,-visible keys=(0,0,l,white,512,288,1200,0,1)(4000,,,,,,,,)(6000,,,,,,,255,) storage=white
-@trans rule=crossfade time=2000 nowait=0 noback=1
+@bg blur=1 noclear=0 storage=im03隠された本 top=-261 zoom=220
+@partbg bordercolor=none bordersize=160 center=702 height=576 id=pb1 index=1500 opacity=0 srctop=48 storage=im03隠された本 width=496
+@fg center=512 index=1200 opacity=0 storage=white vcenter=288
+@bgact keys=(0,3,l,im03隠された本,264,-261,220,220,1,1)(20000,,,,,-35,,,,) page=back props=-storage,left,top,zoomx,zoomy,-xblur,-yblur storage=im03隠された本
+@partbgact keys=(0,0,l,im03隠された本,48,1500,496,576,702,0,160,none,1)(4000,,,,,,,,,,,,)(6000,,,,,,,,,255,,,) page=back props=-storage,srctop,absolute,width,height,center,opacity,bordersize,-bordercolor,-visible storage=im03隠された本
+@fgact keys=(0,0,l,white,512,288,1200,0,1)(4000,,,,,,,,)(6000,,,,,,,255,) page=back props=-storage,center,vcenter,absolute,opacity,-visible storage=white
+@trans noback=1 nowait=0 rule=crossfade time=2000
 @wait canskip=0 time=5000
-@se delay=600 storage=seed02 volume=100 loop=0
+@se delay=600 loop=0 storage=seed02 volume=100
 　棚の上に隠された私たちふたりの秘密。[l][r]
 　あの本はたぶん、もう開かれる事はないだろう―――[p][r]
 *page14|
 @textoff time=1600
 @cm
-@bg time=2000 rule=crossfade storage=white
+@bg rule=crossfade storage=white time=2000
 @stopaction
-@bg time=2500 rule=crossfade storage=black
+@bg rule=crossfade storage=black time=2500
 @visibleframe
 @return
 *tladata
@@ -143,6 +143,7 @@ global.__tmp_tla = Scripts.eval('(const) %[
  "version" => 1
 ]');
 global.__tla_name = "d-9";
+
 @endscript
 @eval exp=timeline_object.loadByData(global.__tmp_tla,global.__tla_name)
 @return

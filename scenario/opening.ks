@@ -3,18 +3,18 @@
 @lockquickmenu
 @invisibleframe
 @pauseautomode
-@eval exp="kag.historyWriteEnabled=false"
+@eval exp=kag.historyWriteEnabled=false
 @if exp=cf.speffect
-@playtimeline scene=4 canskip=&(sf.openingplaycount>0) norapid=true next=197250
+@playtimeline canskip=&(sf.openingplaycount>0) next=197250 norapid scene=4
 @else
-@playtimeline scene=7 canskip=&(sf.openingplaycount>0) norapid=true next=197250
+@playtimeline canskip=&(sf.openingplaycount>0) next=197250 norapid scene=7
 @endif
 @eval exp=sf.openingplaycount++
 @r
 @visibleframe
 ;念のため
 @playstop time=3000
-@eval exp="kag.historyWriteEnabled=true"
+@eval exp=kag.historyWriteEnabled=true
 @resumeautomode
 @return
 *tladata
@@ -29544,6 +29544,7 @@ global.__tmp_tla = Scripts.eval('(const) %[
  "version" => 1
 ]');
 global.__tla_name = "opening";
+
 @endscript
 @eval exp=timeline_object.loadByData(global.__tmp_tla,global.__tla_name)
 @return

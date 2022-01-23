@@ -167,6 +167,5 @@ kag.tagHandlers.endofaddautopath	= function(elm)
 } incontextof kag;
 /*---------------------------------------------------------------------------*/
 @endif
-
 @endscript
 @return

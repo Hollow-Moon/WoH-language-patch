@@ -9,7 +9,7 @@
 ;シングルクリックでメニューを開くのでなければ、
 @if exp="typeof global.singleclick_menu!='undefined'&&!global.singleclick_menu"
 ;	右クリックでメニューを開く
-@rclick call=false jump storage= target=*menuopen
+@rclick call=false jump storage="" target=*menuopen
 ;	左クリックで戻る
 @l
 @rclick call storage=gamemenu.ks target=*start
@@ -19,7 +19,7 @@
 
 ;ゲームメニューの呼び出し
 *menuopen
-@rclick call=false jump storage= target=*close
+@rclick call=false jump storage="" target=*close
 @savetemptimeline
 @loadtimeline storage=gamemenu.tla
 @playtimeline frame=0 textoff=false

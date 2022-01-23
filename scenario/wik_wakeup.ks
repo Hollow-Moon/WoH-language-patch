@@ -207,7 +207,6 @@ global.__tmp_tla = Scripts.eval('(const) %[
  "version" => 1
 ]');
 global.__tla_name = "wik_wakeup";
-
 @endscript
 @eval exp=timeline_object.loadByData(global.__tmp_tla,global.__tla_name)
 @return

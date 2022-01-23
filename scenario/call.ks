@@ -19,7 +19,6 @@
 		.fillRect(0, 0, .imageWidth, .imageHeight, 0xFF000000);
 	}
 }
-
 @endscript
 @stopaction
 @stoptrans
@@ -55,7 +54,6 @@
 		.font.height	= lastfontheight;
 	}
 }
-
 @endscript
 @trans time=400
 ;archive からロードしたときは archive には戻らないので、記憶していた戻り道を破棄する
@@ -82,7 +80,6 @@
 		.font.height	= lastfontheight;
 	}
 }
-
 @endscript
 @trans time=500
 ;↓のclearMenuItems で確認ウィンドウが消されてしまうので、開いていたら一時停止する
@@ -120,7 +117,6 @@ with(tracer_object)
 	}
 	f.scripttitle	= .title_format.sprintf(blocktitle);
 }
-
 @endscript
 *archive_repeat|&f.scripttitle
 @if exp=!NoPlayScript
@@ -183,7 +179,6 @@ with(tracer_object)
 		.font.height	= lastfontheight;
 	}
 }
-
 @endscript
 @trans time=1200
 @waittrig cond=&tf.do_askyesno name=closeaskyesno

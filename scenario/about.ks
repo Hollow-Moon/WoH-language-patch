@@ -2,7 +2,7 @@
 @clickskip enabled=false
 @rclick enabled=false
 @bg left=0 page=fore storage=about top=0
-@position frame= height=88 layer=0 left=8 marginb=2 marginl=2 marginr=2 margint=2 opacity=0 page=fore top=112 transparent width=304
+@position frame="" height=88 layer=0 left=8 marginb=2 marginl=2 marginr=2 margint=2 opacity=0 page=fore top=112 transparent width=304
 @style align=center linespacing=2
 @font bold=0 color=0x000000 edge=0 shadow=0 size=10
 @nowait

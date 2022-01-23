@@ -340,56 +340,56 @@
 @staffrolltext size=19 text=ロケ地 y=72
 @staffrolltext size=19 text=三咲市三咲町白犬塚 y=36
 @staffrolltext size=19 text=「魔法使いの夜」　STAFF y=468
-@staffrolltext size=19 text= y=144
+@staffrolltext size=19 text="" y=144
 @staffrolltext size=14 text=Planning y=19
 @staffrolltext size=19 text="Takashi Takeuchi" y=17
 @staffrolltext size=19 text="Kinoko Nasu" y=36
-@staffrolltext size=19 text= y=72
+@staffrolltext size=19 text="" y=72
 @staffrolltext size=14 text=Scenario y=19
 @staffrolltext size=19 text="Kinoko Nasu" y=17
-@staffrolltext size=19 text= y=72
+@staffrolltext size=19 text="" y=72
 @staffrolltext size=14 text="Character Design/Original Drawings" y=19
 @staffrolltext size=19 text="Koyama Hirokazu" y=17
-@staffrolltext size=19 text= y=72
+@staffrolltext size=19 text="" y=72
 @staffrolltext size=14 text="Original Character Design" y=19
 @staffrolltext size=19 text="Takashi Takeuchi" y=17
-@staffrolltext size=19 text= y=72
+@staffrolltext size=19 text="" y=72
 @staffrolltext size=14 text=Storyboard/Layout y=19
 @staffrolltext size=19 text="Tsukuri Monoji" y=17
 @staffrolltext size=19 text=BLACK x=182 y=36
 @staffrolltext size=19 text="Koyama Hirokazu" y=0
 @staffrolltext size=19 text="Takashi Takeuchi" x=642 y=0
-@staffrolltext size=19 text= y=72
+@staffrolltext size=19 text="" y=72
 @staffrolltext size=14 text="Design Assistance" y=19
 @staffrolltext size=19 text="Tsukuri Monoji" y=17
-@staffrolltext size=19 text= y=72
+@staffrolltext size=19 text="" y=72
 @staffrolltext size=14 text="PLOY-Kickshaw Original Design" y=19
 @staffrolltext size=19 text=PFALZ y=17
-@staffrolltext size=19 text= y=72
+@staffrolltext size=19 text="" y=72
 @staffrolltext size=14 text="Color Coordination" y=19
 @staffrolltext size=19 text="Koyama Hirokazu" y=17
-@staffrolltext size=19 text= y=72
+@staffrolltext size=19 text="" y=72
 @staffrolltext size=14 text="Main Graphic Design" y=19
 @staffrolltext size=19 text="Koyama Hirokazu" y=17
 @staffrolltext size=19 text="Takao Aotuki" y=36
 @staffrolltext size=19 text=Shimokoshi y=36
-@staffrolltext size=19 text= y=72
+@staffrolltext size=19 text="" y=72
 @staffrolltext size=14 text="Graphic Management" y=19
 @staffrolltext size=19 text=BLACK y=17
-@staffrolltext size=19 text= y=72
+@staffrolltext size=19 text="" y=72
 @staffrolltext size=14 text="Scripting Assistance" y=19
 @staffrolltext size=19 text=BLACK y=17
-@staffrolltext size=19 text= y=72
+@staffrolltext size=19 text="" y=72
 @staffrolltext size=14 text="3D Modeling/Art Work & Scripting Support" y=19
 @staffrolltext size=19 text=Sunadorineko y=17
-@staffrolltext size=19 text= y=72
+@staffrolltext size=19 text="" y=72
 @staffrolltext size=14 text="Main Background Art Work" y=19
 @staffrolltext size=19 text=IURO y=17
-@staffrolltext size=19 text= y=72
+@staffrolltext size=19 text="" y=72
 @staffrolltext size=14 text="Background Art Work Quality Control" y=19
 @staffrolltext size=19 text=Shimokoshi y=17
 @staffrolltext size=19 text="Koyama Hirokazu" y=36
-@staffrolltext size=19 text= y=72
+@staffrolltext size=19 text="" y=72
 @staffrolltext size=14 text="Background Art Work" y=19
 @staffrolltext size=19 text="Taira Kato" x=182 y=17
 @staffrolltext size=19 text="Shinichi Kojima" y=0
@@ -402,7 +402,7 @@
 @staffrolltext size=19 text="Hideaki Iwami(Stingray Co.,Ltd.)" x=527 y=0
 @staffrolltext r=497 size=19 text="Kei Shiduki(minori)" y=36
 @staffrolltext size=19 text=Patle-arc(minori) x=527 y=0
-@staffrolltext size=19 text= y=72
+@staffrolltext size=19 text="" y=72
 @staffrolltext size=14 text="Background Art Work Finishing" y=19
 @staffrolltext size=19 text=Shimokoshi y=17
 @staffrolltext size=19 text="Miki Kagari" x=182 y=36
@@ -410,45 +410,45 @@
 @staffrolltext size=19 text="Masataka Nakazima" x=642 y=0
 @staffrolltext r=497 size=19 text="Takao Aotuki" y=36
 @staffrolltext size=19 text="Koyama Hirokazu" x=527 y=0
-@staffrolltext size=19 text= y=72
+@staffrolltext size=19 text="" y=72
 @staffrolltext size=14 text="System Graphics" y=19
 @staffrolltext size=19 text=BLACK y=17
-@staffrolltext size=19 text= y=72
+@staffrolltext size=19 text="" y=72
 @staffrolltext size=14 text="Main Programming" y=19
 @staffrolltext size=19 text=Kiyobee y=17
-@staffrolltext size=19 text= y=72
+@staffrolltext size=19 text="" y=72
 @staffrolltext size=14 text="Sub Programming" y=19
 @staffrolltext size=19 text=ＡＺ-ＵＭＥ y=17
-@staffrolltext size=19 text= y=72
+@staffrolltext size=19 text="" y=72
 @staffrolltext size=14 text=Music y=19
 @staffrolltext size=19 text="Hideyuki Fukasawa/OfficeWithout" y=17
 @staffrolltext size=19 text=KATE y=72
 @staffrolltext size=19 text="James Harris" y=36
 @staffrolltext size=19 text=hil y=36
-@staffrolltext size=19 text= y=72
+@staffrolltext size=19 text="" y=72
 @staffrolltext size=14 text=Strings y=19
 @staffrolltext size=19 text="Hitoshi Konno STRINGS" y=17
-@staffrolltext size=19 text= y=72
+@staffrolltext size=19 text="" y=72
 @staffrolltext size=14 text="Recording Engineer" y=19
 @staffrolltext size=19 text="Takashi Koiwa/SIGN SOUND" y=17
-@staffrolltext size=19 text= y=72
+@staffrolltext size=19 text="" y=72
 @staffrolltext size=14 text="Mixing Engineer" y=19
 @staffrolltext size=19 text="Takashi Koiwa/SIGN SOUND" y=17
 @staffrolltext size=19 text="James Harris" y=36
-@staffrolltext size=19 text= y=72
+@staffrolltext size=19 text="" y=72
 @staffrolltext size=14 text="Recording Studio" y=19
 @staffrolltext size=19 text="SOUND INN STUDIO" x=182 y=17
 @staffrolltext size=19 text="Sound City STUDIO" y=0
 @staffrolltext size=19 text="Studio SoundValley" x=642 y=0
-@staffrolltext size=19 text= y=72
+@staffrolltext size=19 text="" y=72
 @staffrolltext size=14 text="Mixing Studio" y=19
 @staffrolltext size=19 text="SoundCity STUDIO" x=182 y=17
 @staffrolltext size=19 text="Studio SoundValley" y=0
 @staffrolltext size=19 text="STUDIO G3" x=642 y=0
-@staffrolltext size=19 text= y=72
+@staffrolltext size=19 text="" y=72
 @staffrolltext size=14 text="Sound Effect" y=19
 @staffrolltext size=19 text="Keita Haga" y=17
-@staffrolltext size=19 text= y=72
+@staffrolltext size=19 text="" y=72
 @staffrolltext size=14 text="Ending Theme Song" y=19
 @staffrolltext size=19 text=『星が瞬くこんな夜に』 y=53
 @staffrolltext size=19 text=supercell y=72
@@ -464,36 +464,36 @@
 @staffrolltext r=482 size=19 text=Arrangement y=36
 @staffrolltext size=19 text=： y=0
 @staffrolltext size=19 text=ryo x=542 y=0
-@staffrolltext size=19 text= y=72
+@staffrolltext size=19 text="" y=72
 @staffrolltext size=14 text="KIRI-KIRI 2 provided by" y=19
 @staffrolltext size=19 text=W.Dee y=17
-@staffrolltext size=19 text= y=72
+@staffrolltext size=19 text="" y=72
 @staffrolltext size=14 text=Emendation y=19
 @staffrolltext size=19 text=Ouraidou y=17
-@staffrolltext size=19 text= y=72
+@staffrolltext size=19 text="" y=72
 @staffrolltext size=14 text="English Translation" y=19
 @staffrolltext size=19 text="Norimitsu Kaiho" y=17
-@staffrolltext size=19 text= y=72
+@staffrolltext size=19 text="" y=72
 @staffrolltext size=14 text="Latin Translation" y=19
 @staffrolltext size=19 text=MIWA=Kiyomune y=17
-@staffrolltext size=19 text= y=72
+@staffrolltext size=19 text="" y=72
 @staffrolltext size=14 text="Title Logo Design" y=19
 @staffrolltext size=19 text=WINFANWORKS y=17
-@staffrolltext size=19 text= y=72
+@staffrolltext size=19 text="" y=72
 @staffrolltext size=14 text="Fonts provided by" y=19
 @staffrolltext size=19 text="Fontworks LETS" y=17
 @staffrolltext size=19 text="Anzu moji/Kyoko" y=36
-@staffrolltext size=19 text= y=72
+@staffrolltext size=19 text="" y=72
 @staffrolltext size=14 text="Test Players" y=19
 @staffrolltext size=19 text="Pole To Win Co.,Ltd." y=17
 @staffrolltext size=19 text="TYPE-MOON Staff" y=36
-@staffrolltext size=19 text= y=72
+@staffrolltext size=19 text="" y=72
 @staffrolltext size=14 text="Production Assistance" y=19
 @staffrolltext r=497 size=19 text="Norio Sasaya" y=17
 @staffrolltext size=19 text="Nokiwa Todaka" x=527 y=0
 @staffrolltext r=497 size=19 text=OKSG y=36
 @staffrolltext size=19 text="Hoshizora Meteor" x=527 y=0
-@staffrolltext size=19 text= y=72
+@staffrolltext size=19 text="" y=72
 @staffrolltext size=14 text="Special Thanks" y=19
 @staffrolltext size=19 text="Atsuhiro Iwakami(Aniplex Inc.)" y=17
 @staffrolltext size=19 text="Sei Sato(OfficeWithout)" y=36
@@ -514,25 +514,25 @@
 @staffrolltext size=19 text="Mitsutoshi Ogura(Geneon Universal Entertainment)" x=527 y=0
 @staffrolltext size=19 text="Kensuke　Suzuki(DIGICRAFT CORPORATION)" y=36
 @staffrolltext size=19 text="TYPE-MOON ACE Editorial Staff" y=36
-@staffrolltext size=19 text= y=72
+@staffrolltext size=19 text="" y=72
 @staffrolltext size=14 text="Package & publicity & WEB Design" y=19
 @staffrolltext size=19 text=WINFANWORKS y=17
-@staffrolltext size=19 text= y=72
+@staffrolltext size=19 text="" y=72
 @staffrolltext size=14 text="Publicity & Promotion" y=19
 @staffrolltext size=19 text="Norio Sasaya" y=17
-@staffrolltext size=19 text= y=72
+@staffrolltext size=19 text="" y=72
 @staffrolltext size=14 text=Producer y=19
 @staffrolltext size=19 text="Tomotaka Takeuchi" y=17
-@staffrolltext size=19 text= y=144
+@staffrolltext size=19 text="" y=144
 @staffrolltext size=14 text="General Art Director" y=19
 @staffrolltext size=19 text="Koyama Hirokazu" y=53
-@staffrolltext size=19 text= y=144
+@staffrolltext size=19 text="" y=144
 @staffrolltext size=14 text=Director/Scripting y=19
 @staffrolltext size=19 text="Tsukuri Monoji" y=53
-@staffrolltext size=19 text= y=144
+@staffrolltext size=19 text="" y=144
 @staffrolltext size=14 text="General Director" y=19
 @staffrolltext size=19 text="Kinoko Nasu" y=53
-@staffrolltext size=19 text= y=252
+@staffrolltext size=19 text="" y=252
 @staffrolltext size=14 text="Produced by" y=19
 @staffrolltext size=19 text=TYPE-MOON y=53
 @eval exp="dm('staffroll initialize: '+(System.getTickCount()-.sttime)+'(ms)')"
@@ -566,7 +566,6 @@ global.__tmp_tla = Scripts.eval('(const) %[
  "version" => 1
 ]');
 global.__tla_name = "wik_fin";
-
 @endscript
 @eval exp=timeline_object.loadByData(global.__tmp_tla,global.__tla_name)
 @return

@@ -10,7 +10,6 @@ Scripts.execStorage("TracerPlugin.tjs");
 var	NoPlayScript	= false;	//	スクリプトを再生せず、ファイル名を表示します
 var	SaveSceneHead	= false;	//	シーンの先頭でセーブする
 f.savescenecount= 40 if SaveSceneHead;	//	最初のシーンのセーブ先番号
-
 @endscript
 @endif
 

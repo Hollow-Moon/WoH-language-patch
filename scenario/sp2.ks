@@ -4,7 +4,6 @@
 f.lasttracer = %[];
 tracer_object.onStore(f.lasttracer);
 f.doArchiveMenu=true;
-
 @endscript
 ;フローチャート終了時点の戻り位置を指定
 @settracerreturn storage=sp2.ks target=*endofex02
@@ -28,7 +27,6 @@ tracer_object.onRestore(f.lasttracer) if f.lasttracer != void;
 delete f.lasttracer;
 delete f.★;
 delete f.Z;
-
 @endscript
 @textoff
 ; フローチャートからの戻り位置を再指定

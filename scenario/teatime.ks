@@ -45,7 +45,6 @@ case 9:
 	}
 	break;
 }
-
 @endscript
 ;トリガを待つ
 *finishteatime

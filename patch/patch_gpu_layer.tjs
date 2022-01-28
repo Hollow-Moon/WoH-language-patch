@@ -14,6 +14,7 @@ class WindowShimBitmapLayerTreeOwner extends BitmapLayerTreeOwner
 {
 	var window = void;
 	var texture = void;
+	var call_on_paint_list = [];
 	function WindowShimBitmapLayerTreeOwner(window)
 	{
 		this.window = window;
@@ -25,7 +26,17 @@ class WindowShimBitmapLayerTreeOwner extends BitmapLayerTreeOwner
 		var primaryLayer = this.primaryLayer;
 		if (typeof(primaryLayer) === "Object" && primaryLayer !== null)
 		{
-
+			var call_on_paint_list_tmp = [];
+			call_on_paint_list_tmp.assign(this.call_on_paint_list);
+			this.call_on_paint_list.clear();
+			for (var i = 0; i < call_on_paint_list_tmp.count; i += 1)
+			{
+				var item = call_on_paint_list_tmp[i];
+				if (isvalid(item))
+				{
+					item.onPaint_call_recursive();
+				}
+			}
 		}
 		else
 		{
@@ -67,22 +78,249 @@ class WindowShimBitmapLayerTreeOwner extends BitmapLayerTreeOwner
 		//canvas.clearColor = 0xff000000;
 		canvas.matrix.reset();
 		canvas.renderTarget = void;
+		if (typeof(canvas.clipRect) !== "Object")
+		{
+			canvas.clipRect = new Rect(0, 0, canvas.width, canvas.height);
+		}
 		canvas.enableClipRect = false;
-		canvas.fill(canvas.width, canvas.height, 0xffFFFFFF);
-		//canvas.clearColor = 0xffFFFFFF;
+		canvas.fill(canvas.width, canvas.height, 0x00FFFFFF);
+		canvas.clearColor = 0x00000000;
 		canvas.clear();
 		canvas.blendMode = bmOpaque;
 		canvas.a_opacity = 1.0;
 
 		canvas.save();
+		var primaryLayer = this.primaryLayer;
 		var texture = this.get_texture();
 		if (texture !== void)
 		{
+@if(0)
 			canvas.drawTexture(texture);
+@endif
+			if (typeof(primaryLayer) === "Object" && primaryLayer !== null)
+			{
+				primaryLayer.Draw();
+			}
 		}
 		canvas.restore();
 		//canvas.fill(300, 300, 0xff000000);
 		canvas.flush();
+	}
+
+	// Avoid calling fire when already in firing
+	var in_fire = false;
+
+	// Default arguments are added because BitmapLayerTreeOwner native does not check argument count
+	// which can cause segfault
+
+	function fireClick(x=0, y=0)
+	{
+		var ret = void;
+		if (this.in_fire)
+		{
+			return;
+		}
+		this.in_fire = true;
+		try
+		{
+			ret = super.fireClick(x, y);
+		}
+		catch(e)
+		{
+			this.in_fire = false;
+			throw e;
+		}
+		this.in_fire = false;
+		return ret;
+	}
+
+	function fireDoubleClick(x=0, y=0)
+	{
+		var ret = void;
+		if (this.in_fire)
+		{
+			return;
+		}
+		this.in_fire = true;
+		try
+		{
+			ret = super.fireDoubleClick(x, y);
+		}
+		catch(e)
+		{
+			this.in_fire = false;
+			throw e;
+		}
+		this.in_fire = false;
+		return ret;
+	}
+
+	function fireMouseDown(x=0, y=0, button=0, shift=0)
+	{
+		var ret = void;
+		if (this.in_fire)
+		{
+			return;
+		}
+		this.in_fire = true;
+		try
+		{
+			ret = super.fireMouseDown(x, y, button, shift);
+		}
+		catch(e)
+		{
+			this.in_fire = false;
+			throw e;
+		}
+		this.in_fire = false;
+		return ret;
+	}
+
+	function fireMouseUp(x=0, y=0, button=0, shift=0)
+	{
+		var ret = void;
+		if (this.in_fire)
+		{
+			return;
+		}
+		this.in_fire = true;
+		try
+		{
+			ret = super.fireMouseUp(x, y, button, shift);
+		}
+		catch(e)
+		{
+			this.in_fire = false;
+			throw e;
+		}
+		this.in_fire = false;
+		return ret;
+	}
+
+	function fireMouseMove(x=0, y=0, shift=0)
+	{
+		var ret = void;
+		if (this.in_fire)
+		{
+			return;
+		}
+		this.in_fire = true;
+		try
+		{
+			ret = super.fireMouseMove(x, y, shift);
+		}
+		catch(e)
+		{
+			this.in_fire = false;
+			throw e;
+		}
+		this.in_fire = false;
+		return ret;
+	}
+
+	function fireMouseWheel(shift=0, delta=0, x=0, y=0)
+	{
+		var ret = void;
+		if (this.in_fire)
+		{
+			return;
+		}
+		this.in_fire = true;
+		try
+		{
+			ret = super.fireMouseWheel(shift, delta, x, y);
+		}
+		catch(e)
+		{
+			this.in_fire = false;
+			throw e;
+		}
+		this.in_fire = false;
+		return ret;
+	}
+
+	function fireMouseOutOfWindow()
+	{
+		var ret = void;
+		if (this.in_fire)
+		{
+			return;
+		}
+		this.in_fire = true;
+		try
+		{
+			ret = super.fireMouseOutOfWindow();
+		}
+		catch(e)
+		{
+			this.in_fire = false;
+			throw e;
+		}
+		this.in_fire = false;
+		return ret;
+	}
+
+	function fireKeyDown(key=0, shift=0)
+	{
+		var ret = void;
+		if (this.in_fire)
+		{
+			return;
+		}
+		this.in_fire = true;
+		try
+		{
+			ret = super.fireKeyDown(key, shift);
+		}
+		catch(e)
+		{
+			this.in_fire = false;
+			throw e;
+		}
+		this.in_fire = false;
+		return ret;
+	}
+
+	function fireKeyPress(key=0)
+	{
+		var ret = void;
+		if (this.in_fire)
+		{
+			return;
+		}
+		this.in_fire = true;
+		try
+		{
+			ret = super.fireKeyPress(key);
+		}
+		catch(e)
+		{
+			this.in_fire = false;
+			throw e;
+		}
+		this.in_fire = false;
+		return ret;
+	}
+
+	function fireKeyUp(key=0, shift=0)
+	{
+		var ret = void;
+		if (this.in_fire)
+		{
+			return;
+		}
+		this.in_fire = true;
+		try
+		{
+			ret = super.fireKeyUp(key, shift);
+		}
+		catch(e)
+		{
+			this.in_fire = false;
+			throw e;
+		}
+		this.in_fire = false;
+		return ret;
 	}
 
 	var last_cursor_x = 0;
@@ -120,7 +358,7 @@ class WindowShimBitmapLayerTreeOwner extends BitmapLayerTreeOwner
 
 	function onResizeLayer(w, h)
 	{
-		// stub
+		this.window.setSize(w, h);
 	}
 
 	function onSetAttentionPoint(layer, x, y)
@@ -218,6 +456,7 @@ class Window_patch_gpu_layer_override extends Window_patch_gpu_layer_original
 	{
 		if (typeof(this.canvas) === "Object" && this.canvas !== null && typeof(this.bitmap_layer_tree_owner) === "Object")
 		{
+			bitmap_layer_tree_owner.fireClick(x, y);
 			bitmap_layer_tree_owner.fireMouseUp(x, y, button, shift);
 		}
 		return super.onMouseUp(...);
@@ -227,10 +466,7 @@ class Window_patch_gpu_layer_override extends Window_patch_gpu_layer_original
 	{
 		if (typeof(this.canvas) === "Object" && this.canvas !== null && typeof(this.bitmap_layer_tree_owner) === "Object")
 		{
-			// XXX: this causes segmentation fault!
-@if(0)
 			bitmap_layer_tree_owner.fireMouseMove(x, y, shift);
-@endif
 		}
 		return super.onMouseMove(...);
 	}
@@ -291,19 +527,6 @@ class Layer_patch_gpu_layer_override extends Layer_patch_gpu_layer_original
 		getter
 		{
 			return this.orig_window;
-		}
-	}
-
-	var orig_call_on_paint = false;
-	property callOnPaint
-	{
-		getter
-		{
-			return this.orig_call_on_paint;
-		}
-		setter(v)
-		{
-			this.orig_call_on_paint = !!v;
 		}
 	}
 
@@ -531,27 +754,27 @@ class Layer_patch_gpu_layer_override extends Layer_patch_gpu_layer_original
 	function get_texture()
 	{
 		var bitmap = new Bitmap();
-		this.copyToBitmapFromMainImage(this.bitmap);
-		if (texture === void)
+		this.copyToBitmapFromMainImage(bitmap);
+		if (this.texture === void)
 		{
-			texture = new Offscreen(super.width, super.height);
-			texture.copyRect(0, 0, bitmap, 0, 0, super.width, super.height);
+			this.texture = new Offscreen(super.imageWidth, super.imageHeight);
+			this.texture.copyRect(0, 0, bitmap, 0, 0, super.imageWidth, super.imageHeight);
 		}
 		else
 		{
-			if (texture.width != super.width || texture.height != super.height)
+			if (this.texture.width != super.imageWidth || this.texture.height != super.imageHeight)
 			{
-				invalidate texture;
-				texture = new Offscreen(super.width, super.height);
-				texture.copyRect(0, 0, bitmap, 0, 0, super.width, super.height);
+				invalidate this.texture;
+				this.texture = new Offscreen(super.imageWidth, super.imageHeight);
+				this.texture.copyRect(0, 0, bitmap, 0, 0, super.imageWidth, super.imageHeight);
 			}
 			else
 			{
-				texture.copyRect(0, 0, bitmap, 0, 0, super.width, super.height);
+				this.texture.copyRect(0, 0, bitmap, 0, 0, super.imageWidth, super.imageHeight);
 			}
 		}
 		invalidate bitmap;
-		return texture;
+		return this.texture;
 	}
 
 	var _inCompletion = false;
@@ -598,30 +821,74 @@ class Layer_patch_gpu_layer_override extends Layer_patch_gpu_layer_original
 
 	function Draw()
 	{
+		if (!this.visible)
+		{
+			return;
+		}
 		var canvas = this.window.canvas;
-		canvas.save();
 		canvas.matrix.translate(super.left, super.top);
+@if(0)
 		var current_cliprect = new Rect(super.clipLeft, super.clipTop, super.clipLeft + super.clipWidth, super.clipTop + super.clipHeight);
-		canvas.clipRect.clip(current_cliprect);
+		canvas.enableClipRect = true;
+		var clipRect = canvas.clipRect;
+		clipRect.clip(current_cliprect);
+@endif
 
 		// draw self
-		canvas.save();
 		canvas.matrix.translate(super.imageLeft, super.imageTop);
-		var texture = this.get_texture();
-		if (texture !== void)
+		if (super.hasImage && super.opacity !== 0)
 		{
-			canvas.drawTexture(texture);
+			var texture = this.get_texture();
+			switch (super.type)
+			{
+				case ltAlpha:
+				{
+					canvas.blendMode = bmAlpha;
+					break;
+				}
+				case ltAddAlpha:
+				{
+					canvas.blendMode = bmAddWithAlpha;
+					break;
+				}
+				case ltAdditive:
+				{
+					canvas.blendMode = bmAdd;
+					break;
+				}
+				case ltCoverRect:
+				case ltOpaque:
+				{
+					canvas.blendMode = bmOpaque;
+					break;
+				}
+				default:
+				{
+					// TODO: fix alpha
+					canvas.blendMode = bmAlpha;
+					break;
+				}
+			}
+
+			
+			if (texture !== void)
+			{
+				canvas.a_opacity = 1 - (super.opacity / 255.0);
+				canvas.drawTexture(texture);
+				canvas.a_opacity = 1.0;
+			}
 		}
-		canvas.restore();
+		canvas.matrix.translate(0 - super.imageLeft, 0 - super.imageTop);
 
 		// draw children
-		for (var i = 0, internal_forloop_count = this.children.count; i < internal_forloop_count; i += 1)
+		var children = this.children;
+		for (var i = 0, internal_forloop_count = children.count; i < internal_forloop_count; i += 1)
 		{
-			this.children[i].Draw();
+			children[i].Draw();
 		}
 
 		// TODO: send completion message
-		canvas.restore();
+		canvas.matrix.translate(0 - super.left, 0 - super.top);
 	}
 
 	function piledCopy_to_canvas()
@@ -651,16 +918,62 @@ class Layer_patch_gpu_layer_override extends Layer_patch_gpu_layer_original
 		this.AfterCompletion();
 	}
 
+	function callOnPaint_updated(v)
+	{
+		var call_on_paint_list = window.bitmap_layer_tree_owner.call_on_paint_list;
+		if (v)
+		{
+			if (call_on_paint_list.find(this) === -1)
+			{
+				call_on_paint_list.add(this);
+			}
+		}
+		else
+		{
+			call_on_paint_list.remove(this);
+		}
+	}
+
+	var _call_on_paint = false;
+	property callOnPaint
+	{
+		getter
+		{
+			return this._call_on_paint;
+		}
+		setter(v)
+		{
+			this._call_on_paint = v;
+			this.callOnPaint_updated(v);
+		}
+	}
+
+	function onPaint_call_recursive()
+	{
+		if (this._call_on_paint)
+		{
+			this._call_on_paint = false;
+			if (typeof(this.onPaint) === "Object")
+			{
+				this.onPaint();
+			}
+		}
+		// draw children
+		var children = this.children;
+		for (var i = 0, internal_forloop_count = children.count; i < internal_forloop_count; i += 1)
+		{
+			children[i].onPaint_call_recursive();
+		}
+	}
+
 	function update()
 	{
+		// Don't call update() here. This causes callOnPaint to be set and could cause a recursive call -> out of stack
 @if(0)
 		var ret = super.update(...);
 @endif
-		if (super.callOnPaint)
-		{
-			orig_call_on_paint = true;
-			super.callOnPaint = false;
-		}
+		this._call_on_paint = true;
+		this.callOnPaint_updated(true);
 @if(0)
 		return ret;
 @endif

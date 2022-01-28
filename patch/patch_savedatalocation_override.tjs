@@ -13,13 +13,25 @@ global.test_write_in_directory = function(test_directory)
 		test_file_contents.save(test_file_path);
 	}
 	catch {}
-	var test_file_size = Storages.fstat(test_file_path).size;
+	var test_file_size = 0;
+	try
+	{
+		test_file_size = Storages.fstat(test_file_path).size;
+	}
+	catch {}
+	
 	// When TJS_TEXT_OUT_CRLF is defined, there will be a carriage return in the last log string.
 	// Use this information to adjust the size calculation
 	var has_carriage_return = ((typeof(global.Debug.getLastLog) !== "Object") || (Debug.getLastLog().indexOf("\r") !== -1)) ? 1 : 0;
 	if (test_file_size === ((test_file_contents[0].length + 2 + has_carriage_return) * 2))
 	{
-		if (Storages.deleteFile(test_file_path))
+		var delete_file_result = false;
+		try
+		{
+			delete_file_result = Storages.deleteFile(test_file_path);
+		}
+		catch {}
+		if (delete_file_result)
 		{
 			return true;
 		}

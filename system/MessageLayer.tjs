@@ -701,7 +701,7 @@ class MessageLayer extends KAGLayer
 		this.tmpCharLayer = createNewCharLayer(false);
 		for (var i = 0; i < maxCharPoolCount; i += 1)
 		{
-			charPool.add(createNewCharLayer(false));
+			_removeCharLayer(createNewCharLayer(false));
 		}
 		//	run ハンドラを追加
 		owner.runHandlers.add(runHandler);
@@ -727,7 +727,12 @@ class MessageLayer extends KAGLayer
 			this.tmpCharLayer = void;
 		}
 		for (var i = 0, internal_forloop_count = charPool.count; i < internal_forloop_count; i += 1)
-			invalidate charPool[i] if charPool[i] != void;
+		{
+			if (charPool[i] != void)
+			{
+				invalidate charPool[i];
+			}
+		}
 
 		var layers = [ charLayers, rubyLayers ];
 		for (var k = 0, internal_forloop_count = layers.count; k < internal_forloop_count; k += 1)
@@ -739,7 +744,13 @@ class MessageLayer extends KAGLayer
 				if(ls != void)
 				{
 					for (var j = 0, internal_forloop_count = ls.count; j < internal_forloop_count; j += 1)
-						invalidate ls[j] if ls[j] != void;
+					{
+						if (ls[j] != void)
+						{
+							ls[j].group = void;
+							invalidate ls[j];
+						}
+					}
 					invalidate ls;
 				}
 			}
@@ -895,7 +906,7 @@ class MessageLayer extends KAGLayer
 @if(MESSAGELAYER_USECHARLAYER)
 		for (var i = charPool.count, internal_forloop_count = maxCharPoolCount; i < internal_forloop_count; i += 1)
 		{
-			charPool.add(createNewCharLayer(false));
+			_removeCharLayer(createNewCharLayer(false));
 		}
 @endif
 
@@ -1623,6 +1634,7 @@ class MessageLayer extends KAGLayer
 		}
 		else
 			nc	= new MessageCharLayer(window, this);
+		nc.group_set_callback = this.group_set_callback;
 
 		return nc;
 	}
@@ -1643,7 +1655,11 @@ class MessageLayer extends KAGLayer
 @if(MESSAGELAYER_ACTIONMANAGER)
 			window.stopAction(char);	//	アクション停止
 @endif
-
+			char.group = void;
+			char.row = void;
+			char.column = void;
+			char.ruby = void;
+			char.group_set_callback = void;
 			if (charPool.count < maxCharPoolCount)
 			{
 				char.name		= "in char pool";
@@ -1666,6 +1682,9 @@ class MessageLayer extends KAGLayer
 		if(layer == void)
 		{
 			layer = createNewCharLayer();
+			layer.row = line;
+			layer.column = col;
+			layer.ruby = false;
 			charLayers[line][col] = layer;
 		}
 		layer.group	= currentCharGroup;
@@ -2399,6 +2418,9 @@ class MessageLayer extends KAGLayer
 		if(layer == void)
 		{
 			layer = createNewCharLayer();
+			layer.row = line;
+			layer.column = col;
+			layer.ruby = true;
 			rubyLayers[line][col] = layer;
 		}
 		layer.group	= currentCharGroup;
@@ -4938,6 +4960,41 @@ class MessageLayer extends KAGLayer
 	];
 @endif
 
+	var layer_groups = %[];
+
+	function group_set_callback(layer, oldgroup, newgroup)
+	{
+		var layer_groups = this.layer_groups;
+		var layer_group_old = void;
+		if (oldgroup !== void)
+		{
+			layer_group_old = layer_groups[oldgroup];
+			if (layer_group_old === void)
+			{
+				layer_group_old = [];
+				layer_groups[oldgroup] = layer_group_old;
+			}
+		}
+		var layer_group = void;
+		if (newgroup !== void)
+		{
+			layer_group = layer_groups[newgroup];
+			if (layer_group === void)
+			{
+				layer_group = [];
+				layer_groups[newgroup] = layer_group;
+			}
+		}
+		if (layer_group_old !== void)
+		{
+			layer_group_old.remove(layer);
+		}
+		if (layer_group !== void)
+		{
+			layer_group.add(layer);
+		}
+	}
+
 	//	グループ管理
 	//		表示される文字をグループで分ける
 	//		通常は cur で、beginSelection, endSelection の間は sel
@@ -4959,22 +5016,16 @@ class MessageLayer extends KAGLayer
 	//	指定のグループに対して、指定のメソッドを実行
 	function executeCharGroup(group, func, args*)
 	{
-		var	layers	= [ charLayers, rubyLayers ];
-		for (var i = 0, internal_forloop_count = layers.count; i < internal_forloop_count; i += 1)
+		var layer_groups = this.layer_groups;
+		var layer_group = layer_groups[group];
+		if (layer_group !== void)
 		{
-			var	lines	= layers[i];
-			for (var i = 0, internal_forloop_count = lines.count; i < internal_forloop_count; i += 1)
+			var tmp_arr = [];
+			tmp_arr.assign(layer_group);
+			for (var i = 0, internal_forloop_count = tmp_arr.count; i < internal_forloop_count; i += 1)
 			{
-				var	line	= lines[i];
-				if(line === void)
-				{
-					continue;
-				}
-				for (var i = 0, internal_forloop_count = line.count; i < internal_forloop_count; i += 1)
-				{
-					var char = line[i];
-					func(char, args*) if char !== void && char.group === group;
-				}
+				var char = tmp_arr[i];
+				func(char, args*);
 			}
 		}
 	}
@@ -4994,20 +5045,16 @@ class MessageLayer extends KAGLayer
 	//	範囲指定の解除
 	function resetSelection()
 	{
-		var	layers	= [ charLayers, rubyLayers ];
-		for (var i = 0, internal_forloop_count = layers.count; i < internal_forloop_count; i += 1)
+		var layer_groups = this.layer_groups;
+		var layer_group = layer_groups["sel"];
+		if (layer_group !== void)
 		{
-			var	lines	= layers[i];
-			for (var i = 0, internal_forloop_count = lines.count; i < internal_forloop_count; i += 1)
+			var tmp_arr = [];
+			tmp_arr.assign(layer_group);
+			for (var i = 0, internal_forloop_count = tmp_arr.count; i < internal_forloop_count; i += 1)
 			{
-				var	line	= lines[i];
-				if(line == void)
-					continue;
-				for (var i = 0, internal_forloop_count = line.count; i < internal_forloop_count; i += 1)
-				{
-					var char = line[i];
-					char.group	= "cur" if char !== void;
-				}
+				var char = tmp_arr[i];
+				char.group = "cur";
 			}
 		}
 	}
@@ -5048,36 +5095,51 @@ class MessageLayer extends KAGLayer
 	function procedureGroup()
 	{
 		var	tog	= %[cur:"def", def:"fix"];
-		var	layerss	= [ charLayers, rubyLayers ];
-		for (var i = 0, internal_forloop_count = layerss.count; i < internal_forloop_count; i += 1)
+		var layer_groups = this.layer_groups;
 		{
-			var	layers	= layerss[i];
-			for (var r = 0, internal_forloop_count = layers.count; r < internal_forloop_count; r += 1)
+			var group = "cur";
+			var layer_group = layer_groups[group];
+			if (layer_group !== void)
 			{
-				var	line	= layers[r];
-				if(line == void)
-					continue;
-				for (var c = 0, internal_forloop_count = line.count; c < internal_forloop_count; c += 1)
+				var tmp_arr = [];
+				tmp_arr.assign(layer_group);
+				var	g = tog[group];
+				for (var i = 0, internal_forloop_count = tmp_arr.count; i < internal_forloop_count; i += 1)
 				{
-					var	char	= line[c];
-					if(char == void)
-						continue;
-					var	g	= tog[char.group];
-					if(g == void)
-						continue;
-					if(g == "fix")
+					var char = tmp_arr[i];
+					char.group = g;
+				}
+			}
+		}
+		{
+			var group = "def";
+			var layer_group = layer_groups[group];
+			if (layer_group !== void)
+			{
+				var tmp_arr = [];
+				tmp_arr.assign(layer_group);
+				var	g = tog[group];
+				for (var i = 0, internal_forloop_count = tmp_arr.count; i < internal_forloop_count; i += 1)
+				{
+					var char = tmp_arr[i];
 					{
 @if(MESSAGELAYER_ACTIONMANAGER)
 						window.stopAction(char);
 @endif
 						operateRect(char.left, char.top, char, 0, 0, char.width, char.height,, char.opacity);
-						lastCharLayerInfos[r] = [] if lastCharLayerInfos[r] == void;
-						lastCharLayerInfos[r][c] = [] if lastCharLayerInfos[r][c] == void;
+						var r = char.row;
+						var c = char.column;
+						if (lastCharLayerInfos[r] == void)
+						{
+							lastCharLayerInfos[r] = [];
+						}
+						if (lastCharLayerInfos[r][c] == void)
+						{
+							lastCharLayerInfos[r][c] = [];
+						}
 						lastCharLayerInfos[r][c].add(char.store());
-						removeCharLayer(r, c, layers);
+						removeCharLayer(char.row, char.column, char.ruby ? this.rubyLayers : this.charLayers);
 					}
-					else
-						char.group	= g;
 				}
 			}
 		}

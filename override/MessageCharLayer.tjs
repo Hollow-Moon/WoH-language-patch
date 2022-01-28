@@ -22,20 +22,32 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 
 	var	clearcolor	= 0x00000000;
 
-	var	group/*_;
+	var group_set_callback = void;
+	var	group_;
+	var row;
+	var column;
+	var ruby;
 	property group
 	{
 		setter(v)
 		{
-			if(v !== group)
+			if (v !== this.group_)
 			{
 //				dmt(name+".group = "+group+" → "+v);
-				group_	= v;
-				name	= name.substr(0, 11) + "("+v+")";
+				var old_group = this.group_;
+				this.group_ = v;
+//				name	= name.substr(0, 11) + "("+v+")";
+				if (group_set_callback !== void)
+				{
+					group_set_callback(this, old_group, this.group_);
+				}
 			}
 		}
-		getter	{ return group_; }
-	}*/;
+		getter
+		{
+			return this.group_;
+		}
+	};
 
 	var	_linkno;	//	対応するリンク
 
@@ -81,6 +93,9 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 			.textWidth	= textWidth;
 			.textHeight	= textHeight;
 			.group		= group;
+			.row		= row;
+			.column		= column;
+			.ruby		= ruby;
 			.left		= left;
 			.top		= top;
 			.opacity	= opacity;
@@ -106,6 +121,9 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 			textWidth	= .textWidth;
 			textHeight	= .textHeight;
 			group		= .group;
+			row			= .row;
+			column		= .column;
+			ruby		= .ruby;
 			opacity		= .opacity;
 			lastParams.assign(.lastParams);
 			lastFontParams.assign(.lastFontParams);

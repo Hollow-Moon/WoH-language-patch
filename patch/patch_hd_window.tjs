@@ -162,6 +162,29 @@ class Window_patch_hd_layer_override extends Window_patch_hd_layer_original
 		setter(v) { this._innerHeight = v; super.innerHeight = scaleHeight(v); }
 	}
 
+	property widthOriginal
+	{
+		getter { return *((&(global.Window_patch_hd_layer_original).width) incontextof this); }
+		setter(v) { *((&(global.Window_patch_hd_layer_original).width) incontextof this) = v; }
+	}
+	property heightOriginal
+	{
+		getter { return *((&(global.Window_patch_hd_layer_original).height) incontextof this); }
+		setter(v) { *((&(global.Window_patch_hd_layer_original).height) incontextof this) = v; }
+	}
+
+	property innerWidthOriginal
+	{
+		getter { return *((&(global.Window_patch_hd_layer_original).innerWidth) incontextof this); }
+		setter(v) { *((&(global.Window_patch_hd_layer_original).innerWidth) incontextof this) = v; }
+	}
+
+	property innerHeightOriginal
+	{
+		getter { return *((&(global.Window_patch_hd_layer_original).innerHeight) incontextof this); }
+		setter(v) { *((&(global.Window_patch_hd_layer_original).innerHeight) incontextof this) = v; }
+	}
+
 	function Window_patch_hd_layer_override()
 	{
 		super.Window(...);
@@ -183,7 +206,7 @@ class Window_patch_hd_layer_override extends Window_patch_hd_layer_original
         if (this.isMainWindow) {
             return left;
         }
-        return mainWindow.left + scalePosition(left-mainWindow.left, _width, super.width, mainWindow.width, mainWindow.actualWidth);
+        return mainWindow.left + scalePosition(left-mainWindow.left, _width, super.width, mainWindow.width, mainWindow.widthOriginal);
     }
 
 	function scaleTop(top)
@@ -191,7 +214,7 @@ class Window_patch_hd_layer_override extends Window_patch_hd_layer_original
 		if (this.isMainWindow) {
 			return top;
 		}
-		return mainWindow.top + scalePosition(top-mainWindow.top, _height, super.height, mainWindow.height, mainWindow.actualHeight);
+		return mainWindow.top + scalePosition(top-mainWindow.top, _height, super.height, mainWindow.height, mainWindow.heightOriginal);
 	}
 
 	function scaleWidth(w)
@@ -231,8 +254,8 @@ class Window_patch_hd_layer_override extends Window_patch_hd_layer_original
 		this._height = height;
 		super.setSize(scaleWidth(width), scaleHeight(height));
 
-		this._innerWidth = unscaleWidth(super.innerWidth);
-		this._innerHeight = unscaleHeight(super.innerHeight);
+		this._innerWidth = unscaleWidth(this.innerWidthOriginal);
+		this._innerHeight = unscaleHeight(this.innerHeightOriginal);
 	}
 
 	function setInnerSize(innerWidth, innerHeight)
@@ -241,8 +264,8 @@ class Window_patch_hd_layer_override extends Window_patch_hd_layer_original
 		this._innerHeight = innerHeight;
 		super.setInnerSize(scaleWidth(innerWidth), scaleHeight(innerHeight));
 
-		this._width = unscaleWidth(super.width);
-		this._height = unscaleHeight(super.height);
+		this._width = unscaleWidth(this.widthOriginal);
+		this._height = unscaleHeight(this.heightOriginal);
 	}
 }
 global.Window = Window_patch_hd_layer_override;

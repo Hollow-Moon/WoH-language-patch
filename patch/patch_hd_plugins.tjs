@@ -177,20 +177,10 @@ if (typeof(global.finishSlideOpen) === "Object")
 
 function drawLine_patch_hd_plugins_override(layer, x0, y0, cx, cy, lc)
 {
-	var widthScale = layer.widthScale;
-	var heightScale = layer.heightScale;
-
-	x0 *= widthScale;
-	y0 *= heightScale;
-	cx *= widthScale;
-	cy *= heightScale;
-
-@if(SCALE_ROUND_TOWARDS_NEAREST)
-	x0 = global.Math.round(x0) | 0;
-	y0 = global.Math.round(y0) | 0;
-	cx = global.Math.round(cx) | 0;
-	cy = global.Math.round(cy) | 0;
-@endif
+	x0 = layer.scaleInsideImageWidth(x0);
+	y0 = layer.scaleInsideImageHeight(y0);
+	cx = layer.scaleInsideImageWidth(cx);
+	cy = layer.scaleInsideImageHeight(cy);
 
 	var ie;
 	try
@@ -217,20 +207,10 @@ if (typeof(global.drawLine) === "Object")
 
 function drawAALine_patch_hd_plugins_override(layer, x0, y0, cx, cy, lc)
 {
-	var widthScale = layer.widthScale;
-	var heightScale = layer.heightScale;
-
-	x0 *= widthScale;
-	y0 *= heightScale;
-	cx *= widthScale;
-	cy *= heightScale;
-
-@if(SCALE_ROUND_TOWARDS_NEAREST)
-	x0 = global.Math.round(x0) | 0;
-	y0 = global.Math.round(y0) | 0;
-	cx = global.Math.round(cx) | 0;
-	cy = global.Math.round(cy) | 0;
-@endif
+	x0 = layer.scaleInsideImageWidth(x0);
+	y0 = layer.scaleInsideImageHeight(y0);
+	cx = layer.scaleInsideImageWidth(cx);
+	cy = layer.scaleInsideImageHeight(cy);
 
 	var ie;
 	try
@@ -260,24 +240,17 @@ if (typeof(global.Layer.drawNoise) === "Object")
 	global.Layer.drawNoise_patch_hd_plugins_original = global.Layer.drawNoise;
 	global.Layer.drawNoise = function(monocro, under, upper, seed, l, t, w, h, holdalpha)
 	{
-		l = this.transformLeft(l);
-		t = this.transformTop(t);
-		w *= this.widthScale;
-		h *= this.heightScale;
-
-@if(SCALE_ROUND_TOWARDS_NEAREST)
-		l = global.Math.round(l) | 0;
-		t = global.Math.round(t) | 0;
-		w = global.Math.round(w) | 0;
-		h = global.Math.round(h) | 0;
-@endif
-
+		var wOriginal = this.scaleInsideImageWidth(w);
+		var hOriginal = this.scaleInsideImageWidth(h);
+		var lOriginal = this.scaleInsideImageLeft(l, w, wOriginal);
+		var tOriginal = this.scaleInsideImageTop(t, h, hOriginal);
+		
 		var ret;
 		var ie;
 		try
 		{
 			this.absoluteMode += 1;
-			ret = (global.Layer.drawNoise_patch_hd_plugins_original incontextof this)(monocro, under, upper, seed, l, t, w, h, holdalpha);
+			ret = (global.Layer.drawNoise_patch_hd_plugins_original incontextof this)(monocro, under, upper, seed, lOriginal, tOriginal, wOriginal, hOriginal, holdalpha);
 		}
 		catch (e)
 		{
@@ -368,32 +341,22 @@ if (typeof(global.Layer.hazeCopy) === "Object")
 	global.Layer.hazeCopy_patch_hd_plugins_original = global.Layer.hazeCopy;
 	global.Layer.hazeCopy = function(waveinfono, srcLayer, sl, st, rad, delta, per, alphablend, dl, dt, dw, dh, sw, sh)
 	{
-		sl = srcLayer.transformLeft(sl);
-		st = srcLayer.transformTop(st);
-		sw *= srcLayer.widthScale;
-		sh *= srcLayer.heightScale;
-		dl = this.transformLeft(dl);
-		dt = this.transformTop(dt);
-		dw *= this.widthScale;
-		dh *= this.heightScale;
+		var swOriginal = srcLayer.scaleInsideImageWidth(sw);
+		var shOriginal = srcLayer.scaleInsideImageHeight(sh);
+		var slOriginal = srcLayer.scaleInsideImageLeft(sl, sw, swOriginal);
+		var stOriginal = srcLayer.scaleInsideImageTop(st, sh, shOriginal);
 
-@if(SCALE_ROUND_TOWARDS_NEAREST)
-		sl = global.Math.round(sl) | 0;
-		st = global.Math.round(st) | 0;
-		sw = global.Math.round(sw) | 0;
-		sh = global.Math.round(sh) | 0;
-		dl = global.Math.round(dl) | 0;
-		dt = global.Math.round(dt) | 0;
-		dw = global.Math.round(dw) | 0;
-		dh = global.Math.round(dh) | 0;
-@endif
+		var dwOriginal = this.scaleInsideImageWidth(dw);
+		var dhOriginal = this.scaleInsideImageHeight(dh);
+		var dlOriginal = this.scaleInsideImageLeft(dl, dw, dwOriginal);
+		var dtOriginal = this.scaleInsideImageTop(dt, dt, dtOriginal);
 
 		var ret;
 		var ie;
 		try
 		{
 			this.absoluteMode += 1;
-			ret = (global.Layer.hazeCopy_patch_hd_plugins_original incontextof this)(waveinfono, srcLayer, sl, st, rad, delta, per, alphablend, dl, dt, dw, dh, sw, sh);
+			ret = (global.Layer.hazeCopy_patch_hd_plugins_original incontextof this)(waveinfono, srcLayer, sl, st, rad, delta, per, alphablend, dlOriginal, dtOriginal, dwOriginal, dhOriginal, swOriginal, shOriginal);
 		}
 		catch (e)
 		{
@@ -414,17 +377,10 @@ if (typeof(global.Layer.initVectorParticle) === "Object")
 	global.Layer.initVectorParticle_patch_hd_plugins_original = global.Layer.initVectorParticle;
 	global.Layer.initVectorParticle = function(unk, mc, gr, l, t, w, h)
 	{
-		l = this.transformLeft(l);
-		t = this.transformTop(t);
-		w *= this.widthScale;
-		h *= this.heightScale;
-
-@if(SCALE_ROUND_TOWARDS_NEAREST)
-		l = global.Math.round(l) | 0;
-		t = global.Math.round(t) | 0;
-		w = global.Math.round(w) | 0;
-		h = global.Math.round(h) | 0;
-@endif
+		var wOriginal = this.scaleInsideImageWidth(w);
+		var hOriginal = this.scaleInsideImageWidth(h);
+		var lOriginal = this.scaleInsideImageLeft(l, w, wOriginal);
+		var tOriginal = this.scaleInsideImageTop(t, h, hOriginal);
 
 		var ret;
 		var ie;
@@ -435,7 +391,7 @@ if (typeof(global.Layer.initVectorParticle) === "Object")
 				this.particleImage.absoluteMode += 1;
 			}
 			this.absoluteMode += 1;
-			ret = (global.Layer.initVectorParticle_patch_hd_plugins_original incontextof this)(unk, mc, gr, l, t, w, h);
+			ret = (global.Layer.initVectorParticle_patch_hd_plugins_original incontextof this)(unk, mc, gr, lOriginal, tOriginal, wOriginal, hOriginal);
 		}
 		catch (e)
 		{
@@ -458,13 +414,8 @@ if (typeof(global.Layer.initRotateParticle) === "Object")
 	global.Layer.initRotateParticle_patch_hd_plugins_original = global.Layer.initRotateParticle;
 	global.Layer.initRotateParticle = function(unk, mc, gr, cx, cy)
 	{
-		cx = this.transformLeft(cx);
-		cy = this.transformTop(cy);
-
-@if(SCALE_ROUND_TOWARDS_NEAREST)
-		cx = global.Math.round(cx) | 0;
-		cy = global.Math.round(cy) | 0;
-@endif
+		cx = this.scaleInsideImageWidth(cx);
+		cy = this.scaleInsideImageHeight(cy);
 
 		var ret;
 		var ie;
@@ -498,8 +449,8 @@ if (typeof(global.Layer.initAccelRotateParticle) === "Object")
 	global.Layer.initAccelRotateParticle_patch_hd_plugins_original = global.Layer.initAccelRotateParticle;
 	global.Layer.initAccelRotateParticle = function(unk, mc, gr, cx, cy)
 	{
-		cx = this.transformLeft(cx);
-		cy = this.transformTop(cy);
+		cx = this.scaleInsideImageWidth(cx);
+		cy = this.scaleInsideImageHeight(cy);
 		var ret;
 		var ie;
 		if (this.initializedParticle && typeof(this.particleImage) === "Object")
@@ -532,17 +483,10 @@ if (typeof(global.Layer.initBlinkParticle) === "Object")
 	global.Layer.initBlinkParticle_patch_hd_plugins_original = global.Layer.initBlinkParticle;
 	global.Layer.initBlinkParticle = function(unk, mc, gr, l, t, w, h)
 	{
-		l = this.transformLeft(l);
-		t = this.transformTop(t);
-		w *= this.widthScale;
-		h *= this.heightScale;
-
-@if(SCALE_ROUND_TOWARDS_NEAREST)
-		l = global.Math.round(l) | 0;
-		t = global.Math.round(t) | 0;
-		w = global.Math.round(w) | 0;
-		h = global.Math.round(h) | 0;
-@endif
+		var wOriginal = this.scaleInsideImageWidth(w);
+		var hOriginal = this.scaleInsideImageWidth(h);
+		var lOriginal = this.scaleInsideImageLeft(l, w, wOriginal);
+		var tOriginal = this.scaleInsideImageTop(t, h, hOriginal);
 
 		var ret;
 		var ie;
@@ -553,7 +497,7 @@ if (typeof(global.Layer.initBlinkParticle) === "Object")
 		try
 		{
 			this.absoluteMode += 1;
-			ret = (global.Layer.initBlinkParticle_patch_hd_plugins_original incontextof this)(unk, mc, gr, l, t, w, h);
+			ret = (global.Layer.initBlinkParticle_patch_hd_plugins_original incontextof this)(unk, mc, gr, lOriginal, tOriginal, wOriginal, hOriginal);
 		}
 		catch (e)
 		{
@@ -676,13 +620,8 @@ if (typeof(global.Layer.drawFocusLines) === "Object")
 	global.Layer.drawFocusLines_patch_hd_plugins_original = global.Layer.drawFocusLines;
 	global.Layer.drawFocusLines = function(cx, cy, cmin, cmax, lmin, lmax, emin, emax, color)
 	{
-		cx = this.transformLeft(cx);
-		cy = this.transformTop(cy);
-
-@if(SCALE_ROUND_TOWARDS_NEAREST)
-		cx = global.Math.round(cx) | 0;
-		cy = global.Math.round(cy) | 0;
-@endif
+		cx = this.scaleInsideImageWidth(cx);
+		cy = this.scaleInsideImageHeight(cy);
 
 		var ret;
 		var ie;
@@ -857,32 +796,21 @@ if (typeof(global.Layer.stretchCopyAA) === "Object")
 	global.Layer.stretchCopyAA_patch_hd_plugins_original = global.Layer.stretchCopyAA;
 	global.Layer.stretchCopyAA = function(left, top, width, height, src, sleft, stop, swidth, sheight, type)
 	{
-		left = src.transformLeft(left, this);
-		top = src.transformTop(top, this);
-		width *= this.widthScale;
-		height *= this.heightScale;
-		sleft = this.transformSLeft(src, sleft, swidth);
-		stop *= src.heightScale;
-		swidth *= src.widthScale;
-		sheight *= src.heightScale;
-
-@if(SCALE_ROUND_TOWARDS_NEAREST)
-		left = global.Math.round(left) | 0;
-		top = global.Math.round(top) | 0;
-		width = global.Math.round(width) | 0;
-		height = global.Math.round(height) | 0;
-		sleft = global.Math.round(sleft) | 0;
-		stop = global.Math.round(stop) | 0;
-		swidth = global.Math.round(swidth) | 0;
-		sheight = global.Math.round(sheight) | 0;
-@endif
+		var swidthOriginal = src.scaleInsideImageWidth(swidth);
+		var sheightOriginal = src.scaleInsideImageHeight(sheight);
+		var sleftOriginal = src.scaleInsideImageLeft(sleft, swidth, swidthOriginal);
+		var stopOriginal = src.scaleInsideImageTop(stop, sheight, sheightOriginal);
+		var widthOriginal = scaleInsideImageWidth(width);
+		var heightOriginal = scaleInsideImageHeight(height);
+		var leftOriginal = scaleInsideImageLeft(left, swidth, swidthOriginal);
+		var topOriginal = scaleInsideImageTop(top, sheight, sheightOriginal);
 
 		var ie;
 		try
 		{
 			src.absoluteMode += 1;
 			this.absoluteMode += 1;
-			(global.Layer.stretchCopyAA_patch_hd_plugins_original incontextof this)(left, top, width, height, src, sleft, stop, swidth, sheight, type);
+			(global.Layer.stretchCopyAA_patch_hd_plugins_original incontextof this)(leftOriginal, topOriginal, widthOriginal, heightOriginal, src, sleftOriginal, stopOriginal, swidthOriginal, sheightOriginal, type);
 		}
 		catch (e)
 		{
@@ -903,32 +831,21 @@ if (typeof(global.Layer.shrinkCopy) === "Object")
 	global.Layer.shrinkCopy_patch_hd_plugins_original = global.Layer.shrinkCopy;
 	global.Layer.shrinkCopy = function(left, top, width, height, src, sleft, stop, swidth, sheight)
 	{
-		left = src.transformLeft(left, this);
-		top = src.transformTop(top, this);
-		width *= this.widthScale;
-		height *= this.heightScale;
-		sleft *= src.widthScale;
-		stop *= src.heightScale;
-		swidth *= src.widthScale;
-		sheight *= src.heightScale;
-
-@if(SCALE_ROUND_TOWARDS_NEAREST)
-		left = global.Math.round(left) | 0;
-		top = global.Math.round(top) | 0;
-		width = global.Math.round(width) | 0;
-		height = global.Math.round(height) | 0;
-		sleft = global.Math.round(sleft) | 0;
-		stop = global.Math.round(stop) | 0;
-		swidth = global.Math.round(swidth) | 0;
-		sheight = global.Math.round(sheight) | 0;
-@endif
+		var swidthOriginal = src.scaleInsideImageWidth(swidth);
+		var sheightOriginal = src.scaleInsideImageHeight(sheight);
+		var sleftOriginal = src.scaleInsideImageLeft(sleft, swidth, swidthOriginal);
+		var stopOriginal = src.scaleInsideImageTop(stop, sheight, sheightOriginal);
+		var widthOriginal = scaleInsideImageWidth(width);
+		var heightOriginal = scaleInsideImageHeight(height);
+		var leftOriginal = scaleInsideImageLeft(left, swidth, swidthOriginal);
+		var topOriginal = scaleInsideImageTop(top, sheight, sheightOriginal);
 
 		var ie;
 		try
 		{
 			this.absoluteMode += 1;
 			src.absoluteMode += 1;
-			(global.Layer.shrinkCopy_patch_hd_plugins_original incontextof this)(left, top, width, height, src, sleft, stop, swidth, sheight);
+			(global.Layer.shrinkCopy_patch_hd_plugins_original incontextof this)(leftOriginal, topOriginal, widthOriginal, heightOriginal, src, sleftOriginal, stopOriginal, swidthOriginal, sheightOriginal);
 		}
 		catch (e)
 		{

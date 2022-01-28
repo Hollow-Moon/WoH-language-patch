@@ -1,25 +1,44 @@
-function scalePosition(v, size, scaledSize, parentSize, parentScaledSize)
+function scalePosition(v, size, scaledSize, parentSize, parentScaledSize, align=0)
 {
-    v *= scaledSize / size;
-    v *= (parentScaledSize - scaledSize) / (parentSize - size);
+    if (size >= parentSize) {
+        v *= scaledSize / size;
+        if (size == parentSize) {
+            v += (parentScaledSize - scaledSize) * align;
+        }
+    } else {
+        if (v < 0) {
+            v *= scaledSize / size;
+        } else if (v > parentSize - size) {
+            var m = scaledSize / size;
+            var n = parentScaledSize - m * parentSize;
+            v = m * v + n;
+        } else {
+            v *= (parentScaledSize - scaledSize) / (parentSize - size);
+        }
+    }
 @if(SCALE_ROUND_TOWARDS_NEAREST)
-    v = global.Math.round(v) | 0;
+    v = global.Math.round(v);
 @endif
-    return v; 
+    return v | 0;
 }
 
 function scaleSize(v, scale)
 {
     v *= scale;
 @if(SCALE_ROUND_TOWARDS_NEAREST)
-    v = global.Math.round(v) | 0;
+    v = global.Math.round(v);
 @endif
-    return v;
+    return v | 0;
 }
 
 function unscaleSize(v, scale)
 {
+@if(SCALE_USING_FLOATING_POINT)
     v /= scale;
+@endif
+@if(!SCALE_USING_FLOATING_POINT)
+    v \= scale;
+@endif
 @if(SCALE_ROUND_TOWARDS_NEAREST)
     v = global.Math.round(v) | 0;
 @endif

@@ -103,6 +103,9 @@ class HistoryLayer extends Layer
 	function HistoryLayer(win, par)
 	{
 		super.Layer(...);
+@if(WIDE_MODE)
+		this.stretch = true;
+@endif
 		(HistoryLayer_config incontextof this)(); // configuration
 		(HistoryLayer_config_override incontextof this)()
 			if typeof global.HistoryLayer_config_override != "undefined";

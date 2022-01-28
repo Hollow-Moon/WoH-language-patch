@@ -115,6 +115,7 @@ global.layer_tagdata_replacement = %[];
 global.Layer_patch_layer_original	= Layer;
 class Layer_patch_layer_override extends Layer_patch_layer_original
 {
+	var _font = void;
 	var fontWrapper = void;
 
 	property font
@@ -129,7 +130,8 @@ class Layer_patch_layer_override extends Layer_patch_layer_original
 	{
 		super.Layer(...);
 		// Can set default font here.
-		fontWrapper = new FontWrapper(super.font, this);
+		this._font = super.font;
+		this.fontWrapper = new FontWrapper(super.font, this);
 	}
 
 	// 覆盖Layer
@@ -255,7 +257,7 @@ class Layer_patch_layer_override extends Layer_patch_layer_original
 				x += font.getTextWidth(character);
 @endif
 @if(HD_MODE)
-				x += font.getTextWidth(character) * widthScale;
+				x += scaleWidth(font.getTextWidth(character));
 @endif
 				font.face = previousFontFace;
 			} else {
@@ -264,7 +266,7 @@ class Layer_patch_layer_override extends Layer_patch_layer_original
 				x += font.getTextWidth(character);
 @endif
 @if(HD_MODE)
-				x += font.getTextWidth(character) * widthScale;
+				x += scaleWidth(font.getTextWidth(character));
 @endif
 			}
 		}

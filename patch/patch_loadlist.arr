@@ -98,6 +98,7 @@
 	["patch_hd_functions.tjs", ,,, "HD_MODE"],
 	["patch_hd_window.tjs", ,,, "HD_MODE"],
 	["patch_hd_video_overlay.tjs", ,,, "HD_MODE"],
+	["patch_font_wrapper_hd.tjs", ,,, "HD_MODE"],
 	["patch_hd_layer.tjs", ,,, "HD_MODE"],
 	"patch_hd.tjs",
 	["patch_hd_plugins.tjs", ,,, "HD_MODE"],
@@ -194,7 +195,8 @@
 	"global.tf = kag.tflags;",
 	"global.cf = kag.scflags;",
 	"property mp { getter { return global.kag.conductor.macroParams; } };",
-	["mobile.tjs", ,,, "GAME_FATE||GAME_FHAT"],
+	["patch_mobile.tjs", ,,, "GAME_FATE||GAME_FHAT"],
+	["patch_wide_scroll.tjs", ,,, "GAME_FATE||GAME_FHAT"],
 	["AfterInit.tjs", ,,, "GAME_FHAT"],
 
 	[,,,,, "KAG macros and plugins"],

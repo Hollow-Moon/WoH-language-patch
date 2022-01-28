@@ -1,4 +1,20 @@
 ﻿global.opPatchName = "op";
+
+global.mobileBreakGlyphsFlagName = "mobileBreakGlyphs";
+global.mobileBreakGlyphsPatchName = devMode? "ImagesPatch" : mainPatchName;
+global.mobileBreakGlyphsFolderName = "break-mobile";
+
+global.mobileWindowFlagName = "mobileWindow";
+global.mobileWindowPatchName = devMode? "ImagesPatch" : mainPatchName;
+global.mobileWindowFolderName = "window-mobile";
+
+global.wideWindowFlagName = "wideWindow";
+global.wideWindowPatchName = devMode? "ImagesPatch" : mainPatchName;
+global.wideWindowFolderName = "window-wide";
+
+global.wideMobileWindowPatchName = devMode? "ImagesPatch" : mainPatchName;
+global.wideMobileWindowFolderName = "window-wide-mobile";
+
 function get_opPatchExists() { { return patchExists(opPatchName); } }
 function get_movieMenuPatch(kag=global.kag) { { return get_opPatchExists() && typeof(kag) === "Object" && typeof(kag.sflags) === "Object" && typeof(kag.sflags.movieMenuPatch) === "Integer" && kag.sflags.movieMenuPatch; } }
 function get_playVitaOp(kag=global.kag) { { return get_opPatchExists() && typeof(kag) === "Object" && typeof(kag.sflags) === "Object" && typeof(kag.sflags.playVitaOp) === "Integer" && kag.sflags.playVitaOp; } }
@@ -239,7 +255,7 @@ class KAGFlagFolderMenuItem extends KAGFlagMenuItem
 		}
 	}
 
-	function KAGFlagFolderMenuItem(window, name, group=0, flag, patchNames="", folderNames=void, inverseFolderNames=void, languageSpecific=true)
+	function KAGFlagFolderMenuItem(window, name, group=0, flag, patchNames="", folderNames=void, inverseFolderNames=void, languageSpecific=true, restart=false)
 	{
 		if (typeof patchNames === "String") {
 			patchNames = [patchNames];
@@ -257,22 +273,37 @@ class KAGFlagFolderMenuItem extends KAGFlagMenuItem
 		this.folderNames = folderNames;
 		this.inverseFolderNames = inverseFolderNames;
 		this.languageSpecific = languageSpecific;
-		super.KAGFlagMenuItem(window, name, group, flag);
+		super.KAGFlagMenuItem(window, name, group, flag,, restart);
 		for (var i = 0, internal_forloop_count = patchNames.count; i < internal_forloop_count; i += 1) {
 			disableIfPatchDoesntExist(patchNames[i]);
 		}
 	}
 
-	function afterCallback(sender, firstTime=false)
+	function defaultEvaluateFlag(sender)
+	{
+		return sender.flag.value;
+	}
+
+	function evaluateFlag(sender)
+	{
+		return defaultEvaluateFlag(sender);
+	}
+
+	function defaultAfterCallback(sender, firstTime=false)
 	{
 		// Radio options that are not of boolean type should implement their own logic.
 		// if (sender.radio) return;
 
-		if (sender.flag.value) {
+		if (evaluateFlag(sender)) {
 			loadAllFolders(firstTime);
 		} else {
 			unloadAllFolders(firstTime); // Don't unload if wasn't ever loaded.
 		}
+	}
+
+	function afterCallback(sender, firstTime=false)
+	{
+		defaultAfterCallback(sender, firstTime);
 	}
 
 	function loadFolders(folderNames)
@@ -443,20 +474,80 @@ class KAGCensorMenuItem extends KAGMenuItem
 
 	function loadFullyCensored(sender)
 	{
-		load_patches([
+		var patches_arr = [
 			[sender.patchName, fullyCensoredFolderName],
 			[languagePatchName(japaneseLanguage), fullyCensoredFolderName],
 			(owner.sflags.language !== void && owner.sflags.language !== japaneseLanguage) ? [languagePatchName(owner.sflags.language), fullyCensoredFolderName] : void,
-		]);
+		];
+		load_patches(patches_arr);
 	}
 
 	function unloadFullyCensored(sender)
 	{
-		unload_patches([
+		var patches_arr = [
 			(owner.sflags.language !== void && owner.sflags.language !== japaneseLanguage) ? [languagePatchName(owner.sflags.language), fullyCensoredFolderName] : void,
 			[languagePatchName(japaneseLanguage), fullyCensoredFolderName],
 			[sender.patchName, fullyCensoredFolderName],
-		]);
+		];
+		unload_patches(patches_arr);
+	}
+}
+
+class KAGMessageWindowMenuItem extends KAGMenuItem
+{
+	var wideMessageWindowMenuItem;
+	var mobileMessageWindowMenuItem;
+	var mobileBreakGlyphsMenuItem;
+
+	var mobileBreakGlyphsFlag;
+	var mobileWindowFlag;
+	var wideWindowFlag;
+
+	function KAGMessageWindowMenuItem(window, name)
+	{
+		super.KAGMenuItem(window, name, 0, void, false);
+		addChildren();
+	}
+
+	function addChildren()
+	{
+@if(GAME_FATE)
+		this.mobileBreakGlyphsFlag = new GameFlag(owner, owner.sflags, mobileBreakGlyphsFlagName, false);
+		this.add(this.mobileBreakGlyphsMenuItem = new KAGFlagFolderMenuItem(owner, "Mobile text &break glyphs",, mobileBreakGlyphsFlag, mobileBreakGlyphsPatchName, mobileBreakGlyphsFolderName,,,true));
+		this.mobileBreakGlyphsMenuItem.restartCondition = this.mobileBreakGlyphsMenuItem.onlyScenarioRestartCondition;
+
+		this.mobileWindowFlag = new GameFlag(owner, owner.sflags, mobileWindowFlagName, false);
+		this.add(this.mobileMessageWindowMenuItem = new KAGFlagFolderMenuItem(owner, "&Mobile message window",, mobileWindowFlag, mobileWindowPatchName, mobileWindowFolderName,,,true));
+		this.mobileMessageWindowMenuItem.restartCondition = this.mobileMessageWindowMenuItem.onlyScenarioRestartCondition;
+		this.mobileMessageWindowMenuItem.afterCallback = this.afterCallback;
+@endif
+		this.wideWindowFlag = new GameFlag(owner, owner.sflags, wideWindowFlagName, true);
+		this.add(this.wideMessageWindowMenuItem = new KAGFlagFolderMenuItem(owner, __t("ワイドモードで4:3のメッセージウィンドウ(&W)"),, inverseFlag(wideWindowFlag), wideWindowPatchName,, wideWindowFolderName,,true));
+		this.wideMessageWindowMenuItem.restartCondition = this.wideMessageWindowMenuItem.onlyScenarioRestartCondition;
+		this.wideMessageWindowMenuItem.afterCallback = this.afterCallback;
+		this.wideMessageWindowMenuItem.evaluateFlag = function(sender) { return sender.defaultEvaluateFlag(sender) || !owner.wideScreen; };
+		this.wideMessageWindowMenuItem.initialize(); // need to reinitialize since overriding evaluateFlag
+
+		this.updateMobileWide();
+	}
+
+	function updateMobileWide() {
+		var patches_arr = [[wideMobileWindowPatchName, wideMobileWindowFolderName]];
+@if(HD_MODE)
+		addHdPaths(patches_arr, wideMobileWindowPatchName, wideMobileWindowFolderName) if owner.isHd;
+@endif
+		if (wideWindowFlag.value && mobileWindowFlag.value && owner.wideScreen) {
+			load_patches(patches_arr);
+		} else {
+			unload_patches(patches_arr);
+		}
+	}
+
+	function afterCallback()
+	{
+		this.mobileMessageWindowMenuItem.defaultAfterCallback(this.mobileMessageWindowMenuItem);
+		this.wideMessageWindowMenuItem.defaultAfterCallback(this.wideMessageWindowMenuItem);
+		updateMobileWide();
 	}
 }
 
@@ -884,16 +975,5 @@ function addGraphicUsageMenu(displayMenu) {
 
 function addMessageWindowMenu(patchMenu)
 {
-	patchMenu.add(this.messageWindowMenuItem = new KAGMenuItem(this, __t("メッセージウィンドウ(&M)"), 0, void, false));
-@if(GAME_FATE)
-	var mobileWindowFlag = new GameFlag(this, this.sflags, "mobileWindow", false);
-	messageWindowMenuItem.add(this.mobileMessageWindowMenuItem = new KAGFlagMenuItem(this, "&Mobile message window",, mobileWindowFlag,,true));
-	this.mobileMessageWindowMenuItem.restartCondition = this.mobileMessageWindowMenuItem.onlyScenarioRestartCondition;
-	var mobileBreakGlyphsFlag = new GameFlag(this, this.sflags, "mobileBreakGlyphs", false);
-	messageWindowMenuItem.add(this.mobileBreakGlyphsMenuItem = new KAGFlagMenuItem(this, "Mobile text &break glyphs",, mobileBreakGlyphsFlag,,true));
-	this.mobileBreakGlyphsMenuItem.restartCondition = this.mobileBreakGlyphsMenuItem.onlyScenarioRestartCondition;
-@endif
-	var wideStrechWindowFlag = new GameFlag(this, this.sflags, "wideStrechWindow", true);
-	messageWindowMenuItem.add(this.wideMessageStretchMenuItem = new KAGFlagMenuItem(this, __t("ワイドモードで4:3のメッセージウィンドウ(&W)"),, inverseFlag(wideStrechWindowFlag),,true));
-	this.wideMessageStretchMenuItem.restartCondition = this.wideMessageStretchMenuItem.onlyScenarioRestartCondition;
+	patchMenu.add(this.messageWindowMenuItem = new KAGMessageWindowMenuItem(this, __t("メッセージウィンドウ(&M)"), 0, void, false));
 }

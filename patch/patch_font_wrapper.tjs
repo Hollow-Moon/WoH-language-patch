@@ -259,13 +259,6 @@ class FontWrapper
 	var font;
 	var layer;
 
-@if(HD_MODE)
-	var originalHeight;
-
-	property widthScale { getter { return layer.widthScale; } }
-	property heightScale { getter { return layer.heightScale; } }
-@endif
-
 	function FontWrapper(font, layer)
 	{
 		if (typeof(font) !== "Object")
@@ -278,9 +271,6 @@ class FontWrapper
 		}
 		this.font = font;
 		this.layer = layer;
-@if(HD_MODE)
-		originalHeight = font.height;
-@endif
 		var to_remap_face = this.get_remap_facename(font.face);
 		if (typeof(to_remap_face) === "String")
 		{
@@ -293,29 +283,13 @@ class FontWrapper
 	{
 		getter
 		{
-@if(HD_MODE)
-			return originalHeight;
-@endif
-@if(!HD_MODE)
 			return font.height;
-@endif
 		}
 		setter(v)
 		{
-@if(HD_MODE)
-			if ((Math.abs(v) | 0) != originalHeight || font.height != (v * heightScale))
-@endif
-@if(!HD_MODE)
 			if (v != font.height)
-@endif
 			{
-@if(HD_MODE)
-				originalHeight = (Math.abs(v) | 0);
-				font.height = v * heightScale;
-@endif
-@if(!HD_MODE)
 				font.height = v;
-@endif
 				global.automapPrerenderedFont(font) if typeof global.automapPrerenderedFont === "Object";
 			}
 		}
@@ -467,17 +441,7 @@ class FontWrapper
 
 	function getTextHeight(text)
 	{
-@if(HD_MODE)
-@if(SCALE_USING_FLOATING_POINT)
-		return font.getTextHeight(text) / heightScale;
-@endif
-@if(!SCALE_USING_FLOATING_POINT)
-		return font.getTextHeight(text) \ heightScale;
-@endif
-@endif
-@if(!HD_MODE)
 		return font.getTextHeight(text);
-@endif
 	}
 
 	function getList(flags)
@@ -560,17 +524,7 @@ class FontWrapper
 @if(!DRAWTEXT_ESCAPE)
 	function getTextWidth(text)
 	{
-@if(HD_MODE)
-@if(SCALE_USING_FLOATING_POINT)
-		return font.getTextWidth(text) / widthScale;
-@endif
-@if(!SCALE_USING_FLOATING_POINT)
-		return font.getTextWidth(text) \ widthScale;
-@endif
-@endif
-@if(!HD_MODE)
 		return font.getTextWidth(text);
-@endif
 	}
 @endif
 
@@ -581,17 +535,7 @@ class FontWrapper
 		fontToSpecialCharacters = %[] if fontToSpecialCharacters === void;
 		if (fontToSpecialCharacters[face] === void)
 		{
-@if(HD_MODE)
-@if(SCALE_USING_FLOATING_POINT)
-			return font.getTextWidth(text) / widthScale;
-@endif
-@if(!SCALE_USING_FLOATING_POINT)
-			return font.getTextWidth(text) \ widthScale;
-@endif
-@endif
-@if(!HD_MODE)
 			return font.getTextWidth(text);
-@endif
 		}
 		var specialCharacters = fontToSpecialCharacters[face][0];
 		var alternativeFontFace = fontToSpecialCharacters[face][1];
@@ -608,17 +552,7 @@ class FontWrapper
 				width += font.getTextWidth(character);
 			}
 		}
-@if(HD_MODE)
-@if(SCALE_USING_FLOATING_POINT)
-		return width / widthScale;
-@endif
-@if(!SCALE_USING_FLOATING_POINT)
-		return width \ widthScale;
-@endif
-@endif
-@if(!HD_MODE)
 		return width;
-@endif
 	}
 @endif
 
@@ -629,75 +563,27 @@ class FontWrapper
 			return;
 		}
 		var rect = font.getGlyphDrawRect(text);
-@if(HD_MODE)
-@if(SCALE_USING_FLOATING_POINT)
-		rect.setSize(rect.width / widthScale, rect.height / widthScale);
-@endif
-@if(!SCALE_USING_FLOATING_POINT)
-		rect.setSize(rect.width \ widthScale, rect.height \ widthScale);
-@endif	
-@endif
 		return rect;
 	}
 
 	function getEscWidthX(text)
 	{
-@if(HD_MODE)
-@if(SCALE_USING_FLOATING_POINT)
-		return font.getEscWidthX(text) / widthScale;
-@endif
-@if(!SCALE_USING_FLOATING_POINT)
-		return font.getEscWidthX(text) \ widthScale;
-@endif	
-@endif
-@if(!HD_MODE)
 		return font.getEscWidthX(text);
-@endif
 	}
 
 	function getEscWidthY(text)
 	{
-@if(HD_MODE)
-@if(SCALE_USING_FLOATING_POINT)
-		return font.getEscWidthY(text) / widthScale;
-@endif
-@if(!SCALE_USING_FLOATING_POINT)
-		return font.getEscWidthY(text) \ widthScale;
-@endif
-@endif
-@if(!HD_MODE)
 		return font.getEscWidthY(text);
-@endif
 	}
 
 	function getEscHeightX(text)
 	{
-@if(HD_MODE)
-@if(SCALE_USING_FLOATING_POINT)
-		return font.getEscHeightX(text) / heightScale;
-@endif
-@if(!SCALE_USING_FLOATING_POINT)
-		return font.getEscHeightX(text) \ heightScale;
-@endif
-@endif
-@if(!HD_MODE)
 		return font.getEscHeightX(text);
-@endif
 	}
 
 	function getEscHeightY(text)
 	{
-@if(HD_MODE)
-@if(SCALE_USING_FLOATING_POINT)
-		return font.getEscHeightY(text) / heightScale;
-@endif
-@if(!SCALE_USING_FLOATING_POINT)
-		return font.getEscHeightY(text) \ heightScale;
-@endif
-@endif
-@if(!HD_MODE)
 		return font.getEscHeightY(text);
-@endif
 	}
 
 	// krfreetype function

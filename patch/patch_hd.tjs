@@ -21,12 +21,14 @@ global.standardWideRatio = 16/9;
 
 @if(GAME_FATE)
 global.hdPatchesNames = [
-	devMode? "ImagesHD" : "HD",
-	devMode?  "ImagesHD2" : "FHD",
-	devMode?  "ImagesHD3" : "UHD"
+	devMode? "ImagesHD" : "hd", // 1280x960
+	devMode? "ImagesHD_1600" : "hd_1600", // 1600x1200
+	devMode? "ImagesHD_1920" : "hd_1920", // 1920x1440
+	devMode? "ImagesHD_2400" : "hd_2400", // 2400x1800
+	devMode? "ImagesHD_3200" : "hd_3200" // 3200x2400
 ];
-global.scaleFactors = [1.6, 2.4, 4];
-global.hdNames = ["hd", "fhd", "uhd"];
+global.scaleFactors = [1.6, 2, 2.4, 3, 4];
+global.hdNames = ["hd", "hd_1600", "hd_1920", "hd_2400", "hd_3200"];
 @endif
 @if(GAME_FHAT)
 global.hdPatchesNames = [
@@ -52,14 +54,15 @@ for (var i=0; i<global.scaleFactors.count; i++) {
 	global.scaleFactorsToHdNames[global.scaleFactors[i]] = global.hdNames[i];
 }
 
-property wideRulePatchName { getter() { return devMode? "RuleWide" : mainPatchName; } }
-global.wideRuleFolderName = devMode? "" : "RuleWide";
+property widePatchName { getter() { return devMode? "ImagesPatch" : mainPatchName; } }
+global.ruleWideFolderName = "rule-wide";
 
 global.hdScaleFactorFlagName = "hdScaleFactor";
 global.wideScreenFlagName = "wideScreen";
 global.autoWideRatioFlagName = "autoWideRatio";
 global.wideRatioFlagName = "wideRatio";
 
+global.devImageFolders = ["ImagesPatch"];
 global.devHdImageFolders = ["BGImageHD", "FGImageHD", "ImageHD", "ImagesClassicHD", "ImagesConfigHD", "ImagesMobile", "ImagesPatchHD", "ImagesPS2HD", "ImagesTitleHD", "ImagesTrialHD", "ImagesHanafudaHD", "RuleHD", "Image_transparentHDcolor"];
 
 property systemRatio { getter { return System.screenWidth / System.screenHeight; } }
@@ -82,7 +85,7 @@ function addHdPaths(patches_arr, patchName, folder="", innerPath="") {
 			break;
 		}
 	}
-	var patchNameHd = patchName === mainPatchName? hdPatchName : (patchName + hdPatchSuffix);
+	var patchNameHd = patchName === mainPatchName || (devMode && devImageFolders.contains(patchName))? hdPatchName : (patchName + hdPatchSuffix);
 	if (folder != "") {
 		patches_arr.add([patchNameHd, folder + innerPath]);
 	}
@@ -104,11 +107,8 @@ function unloadAllHdPatches(kag=global.kag) {
 	scaleFactor = originalScaleFactor;
 }
 
-function loadHdPatch(kag=global.kag)
+function getHdPatchesArray(kag=global.kag)
 {
-	if (hdPatchName === void) {
-		return;
-	}
 	var patches_arr = [];
 	patches_arr.add([hdPatchName]);
 	if (devMode && scaleFactor === global.scaleFactors[0]) {
@@ -119,7 +119,12 @@ function loadHdPatch(kag=global.kag)
 	addHdPaths(patches_arr, opPatchName) if get_opPatchExists();
 	if (typeof(kag) === "Object")
 	{
-		addHdPaths(patches_arr, wideRulePatchName, wideRuleFolderName) if kag.scflags[wideScreenFlagName];
+		addHdPaths(patches_arr, widePatchName, ruleWideFolderName) if kag.scflags[wideScreenFlagName];
+
+		addHdPaths(patches_arr, mobileBreakGlyphsPatchName, mobileBreakGlyphsFolderName) if kag.sflags[mobileBreakGlyphsFlagName];
+		addHdPaths(patches_arr, mobileWindowPatchName, mobileWindowFolderName) if kag.sflags[mobileWindowFlagName];
+		addHdPaths(patches_arr, wideWindowPatchName, wideWindowFolderName) if kag.scflags[wideScreenFlagName] && kag.sflags[wideWindowFlagName];
+		addHdPaths(patches_arr, wideMobileWindowPatchName, wideMobileWindowFolderName) if kag.scflags[wideScreenFlagName] && kag.sflags[wideWindowFlagName] && kag.sflags[mobileWindowFlagName];
 
 		addHdPaths(patches_arr, maturePatchName, uncensoredMatureFolderName) if kag.sflags[matureFlagName];
 		addHdPaths(patches_arr, hPatchName, uncensoredHFolderName) if kag.sflags[hFlagName];
@@ -127,6 +132,17 @@ function loadHdPatch(kag=global.kag)
 		addHdPaths(patches_arr, languagePatchName(japaneseLanguage), imagesFolderName);
 		addHdPaths(patches_arr, languagePatchName(kag.sflags.language), imagesFolderName) if kag.sflags.language !== void && kag.sflags.language !== japaneseLanguage;
 	}
+
+	return patches_arr;
+}
+
+function loadHdPatch(kag=global.kag)
+{
+	if (hdPatchName === void) {
+		return;
+	}
+	
+	var patches_arr = getHdPatchesArray(kag);
 
 	load_patches(patches_arr);
 	invalidate patches_arr;
@@ -143,24 +159,8 @@ function unloadHdPatch(kag=global.kag)
 	if (hdPatchName === void) {
 		return;
 	}
-	var patches_arr = [];
-	patches_arr.add([hdPatchName]);
-	if (devMode && scaleFactor === global.scaleFactors[0]) {
-		for (var i = 0, internal_forloop_count = devHdImageFolders.count; i < internal_forloop_count; i += 1) {
-			patches_arr.add([devHdImageFolders[i]]);
-		}
-	}
-	addHdPaths(patches_arr, opPatchName) if get_opPatchExists();
-	if (typeof(kag) === "Object")
-	{
-		addHdPaths(patches_arr, wideRulePatchName, wideRuleFolderName) if kag.scflags[wideScreenFlagName];
 
-		addHdPaths(patches_arr, maturePatchName, uncensoredMatureFolderName) if kag.sflags[matureFlagName];
-		addHdPaths(patches_arr, hPatchName, uncensoredHFolderName) if kag.sflags[hFlagName];
-		
-		addHdPaths(patches_arr, languagePatchName(japaneseLanguage), imagesFolderName);
-		addHdPaths(patches_arr, languagePatchName(kag.sflags.language), imagesFolderName) if kag.sflags.language !== void && kag.sflags.language !== japaneseLanguage;
-	}
+	var patches_arr = getHdPatchesArray(kag);
 
 	unload_patches(patches_arr);
 	invalidate patches_arr;
@@ -181,6 +181,20 @@ function initializeQuality(scale) {
 	loadHdPatch(this);
 }
 
+function getWidePatchesArray(kag=global.kag) {
+	var patches_arr = [[widePatchName, ruleWideFolderName]];
+	patches_arr.add([wideWindowPatchName, wideWindowFolderName]) if kag.sflags[wideWindowFlagName];
+	patches_arr.add([wideMobileWindowPatchName, wideMobileWindowFolderName]) if kag.sflags[wideWindowFlagName] && kag.sflags[mobileWindowFlagName];
+@if(HD_MODE)
+	if (kag.isHd) {
+		addHdPaths(patches_arr, widePatchName, ruleWideFolderName);
+		addHdPaths(patches_arr, wideWindowPatchName, wideWindowFolderName) if kag.sflags[wideWindowFlagName];
+		addHdPaths(patches_arr, wideMobileWindowPatchName, wideMobileWindowFolderName) if kag.sflags[wideWindowFlagName] && kag.sflags[mobileWindowFlagName];
+	}
+@endif
+	return patches_arr;
+}
+
 function initializeWide(ratio) {
 	wideScreen = ratio > cubicRatio;
 	wideRatio = ratio;
@@ -195,17 +209,11 @@ function initializeWide(ratio) {
 	}
 @endif
 
+	var patches_arr = getWidePatchesArray(this);
+
 	if (wideScreen) {
-		var patches_arr = [[wideRulePatchName, wideRuleFolderName]];
-@if(HD_MODE)
-		addHdPaths(patches_arr, wideRulePatchName, wideRuleFolderName) if this.isHd;
-@endif
 		load_patches(patches_arr);
 	} else {
-		var patches_arr = [[wideRulePatchName, wideRuleFolderName]];
-@if(HD_MODE)
-		addHdPaths(patches_arr, wideRulePatchName, wideRuleFolderName) if this.isHd;
-@endif
 		unload_patches(patches_arr);
 	}
 }

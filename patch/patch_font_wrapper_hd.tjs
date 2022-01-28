@@ -1,0 +1,89 @@
+﻿class FontWrapperHD extends FontWrapper
+{
+	var _height;
+
+	function FontWrapperHD(font, layer)
+	{
+		super.FontWrapper(...);
+		height = font.height;
+	}
+
+	property height
+	{
+		getter
+		{
+			return _height;
+		}
+		setter(v)
+		{
+			if ((Math.abs(v) | 0) != _height || font.height != layer.scaleHeight(v))
+			{
+				_height = (Math.abs(v) | 0);
+				font.height = layer.scaleHeight(v);
+				global.automapPrerenderedFont(font) if typeof global.automapPrerenderedFont === "Object";
+			}
+		}
+	}
+
+	function getTextHeight(text)
+	{
+		return layer.window.unscaleHeight(font.getTextHeight(text));
+	}
+
+	function mapPrerenderedFont(fontstorage)
+	{
+		return font.mapPrerenderedFont(fontstorage);
+	}
+
+	function unmapPrerenderedFont()
+	{
+		return font.unmapPrerenderedFont();
+	}
+
+@if(!DRAWTEXT_ESCAPE)
+	function getTextWidth(text)
+	{
+		var factor = layer.stretch? wideFactor : 1;
+		return layer.window.unscaleHeight(font.getTextWidth(text)) / factor;
+	}
+@endif
+
+@if(DRAWTEXT_ESCAPE)
+	function getTextWidth(text, language=(typeof(global.kag) === "Object" ? global.kag.sflags.language : this.layer.window.sflags.language))
+	{
+		var factor = layer.stretch? wideFactor : 1;
+		return layer.window.unscaleHeight(super.getTextWidth(text, language)) / factor;
+	}
+@endif
+
+	function getGlyphDrawRect(text)
+	{
+		if (typeof(font.getGlyphDrawRect) !== "Object")
+		{
+			return;
+		}
+		var rect = font.getGlyphDrawRect(text);
+		rect.setSize(layer.window.unscaleHeight(rect.width), layer.window.unscaleHeight(rect.height));
+		return rect;
+	}
+
+	function getEscWidthX(text)
+	{
+		return layer.window.unscaleHeight(font.getEscWidthX(text));
+	}
+
+	function getEscWidthY(text)
+	{
+		return layer.window.unscaleHeight(font.getEscWidthY(text));
+	}
+
+	function getEscHeightX(text)
+	{
+		return layer.window.unscaleHeight(font.getEscHeightX(text));
+	}
+
+	function getEscHeightY(text)
+	{
+		return layer.window.unscaleHeight(font.getEscHeightY(text));
+	}
+}

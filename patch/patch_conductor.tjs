@@ -177,10 +177,12 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 		"pg",
 		"cm",
 @endif
-@if(0)
+@if(1)
 		"graph",
-		"hch",
 		"ruby",
+@endif
+@if(0)
+		"hch",
 		"style",
 		"defstyle",
 		"resetstyle",
@@ -373,6 +375,15 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 			ret.__patch_conductor_line = this.curLine;
 		}
 		return ret;
+	}
+
+	function queueTag(i, elm)
+	{
+		var ret2 = %[];
+		(Dictionary.assignStruct incontextof ret2)(elm);
+		ret2.__patch_conductor_storage = elm.__patch_conductor_storage;
+		ret2.__patch_conductor_line = elm.__patch_conductor_line;
+		this.pendings.insert(i, ret2);
 	}
 
 	function requeueText(text, elm)

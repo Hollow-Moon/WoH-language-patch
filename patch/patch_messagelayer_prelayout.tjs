@@ -12,8 +12,21 @@ class KAGWindow_patch_messagelayer_prelayout_override extends KAGWindow_patch_me
 		KAGWindow_patch_messagelayer_prelayout_override(...);
 	}
 
+	var patch_messagelayer_prelayout_tags_execnow = [
+		"ch",
+		"graph",
+		"ruby",
+		"r",
+		"hr",
+		"history",
+		"font",
+		"resetfont",
+		"deffont",
+	];
+
 	function onConductorPreprocessChCompletion(conductor, elm)
 	{
+		var patch_messagelayer_prelayout_tags_execnow = this.patch_messagelayer_prelayout_tags_execnow;
 		this.current.in_prelayout_mode = true;
 		var last_visible = this.current.visible;
 		var last_opacity = this.current.opacity;
@@ -53,7 +66,7 @@ class KAGWindow_patch_messagelayer_prelayout_override extends KAGWindow_patch_me
 						conductor.lastTagName = ret2.tagname;
 						var rettime = conductor.handlers[ret2.tagname](ret2);
 						rettime |= 0;
-						if (ret2.tagname === "ch" && this.current.prelayout_charlayers.count > 0)
+						if (rettime !== 0 && (ret2.tagname === "ch" || ret2.tagname === "ruby") && this.current.prelayout_charlayers.count > 0)
 						{
 							var charlayer = this.current.prelayout_charlayers[this.current.prelayout_charlayers.count-1];
 							charlayer.queued_wait_time = rettime;
@@ -63,11 +76,17 @@ class KAGWindow_patch_messagelayer_prelayout_override extends KAGWindow_patch_me
 				else
 				{
 					var tag = strelm[ii];
-					if (tag.tagname === "r" || tag.tagname === "hr" || tag.tagname === "history" || tag.tagname === "font" || tag.tagname === "resetfont" || tag.tagname === "deffont")
+					if (patch_messagelayer_prelayout_tags_execnow.find(tag.tagname) !== -1)
 					{
-						// reline now
+						// execute tag handler now
 						conductor.lastTagName = tag.tagname;
-						conductor.handlers[tag.tagname](tag);
+						var rettime = conductor.handlers[tag.tagname](tag);
+						rettime |= 0;
+						if (rettime !== 0 && (tag.tagname === "ch" || tag.tagname === "ruby") && this.current.prelayout_charlayers.count > 0)
+						{
+							var charlayer = this.current.prelayout_charlayers[this.current.prelayout_charlayers.count-1];
+							charlayer.queued_wait_time = rettime;
+						}
 					}
 					else if (tag.tagname === "ch_patch_conductor_split")
 					{
@@ -117,6 +136,15 @@ class Conductor_patch_messagelayer_prelayout_override extends Conductor_patch_me
 	}
 
 	var pendings_prelayout = [];
+
+	function queueTag(i, elm)
+	{
+		var ret2 = %[];
+		(Dictionary.assignStruct incontextof ret2)(elm);
+		ret2.__patch_conductor_storage = elm.__patch_conductor_storage;
+		ret2.__patch_conductor_line = elm.__patch_conductor_line;
+		this.pendings_prelayout.insert(i, ret2);
+	}
 
 	function requeueText(text, elm)
 	{

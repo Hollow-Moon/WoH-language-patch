@@ -298,6 +298,7 @@ class MessageLayer_patch_messagelayer_prelayout_override extends MessageLayer_pa
 	{
 		if (in_prelayout_mode)
 		{
+			charlayer.group = void;
 			charlayer.visible = false;
 			prelayout_charlayers.add(charlayer);
 			if (typeof(charlayer.queued_appear_action) === "Object")
@@ -329,6 +330,7 @@ class MessageLayer_patch_messagelayer_prelayout_override extends MessageLayer_pa
 
 	function prelayoutExecCharLayer(charlayer)
 	{
+		charlayer.group = this.currentCharGroup;
 		charlayer.visible = true;
 @if(MESSAGELAYER_ACTIONMANAGER)
 		this.lastCharLayer = charlayer;

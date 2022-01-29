@@ -33,13 +33,13 @@ class KAGWindow_patch_messagelayer_prelayout_override extends KAGWindow_patch_me
 		this.current.visible = true;
 		this.current.opacity = 255;
 		this.updateBeforeCh = false;
+		var has_break_tag = false;
 		while (conductor.pendings_prelayout.count > 0)
 		{
 			var strelm = [];
 			strelm.assign(conductor.pendings_prelayout);
 			conductor.pendings_prelayout.clear();
 			var ret2 = %[];
-			var has_break_tag = false;
 			for (var ii = 0; ii < strelm.count; ii += 1)
 			{
 				if (typeof(strelm[ii]) === "String")
@@ -98,11 +98,33 @@ class KAGWindow_patch_messagelayer_prelayout_override extends KAGWindow_patch_me
 					}
 					else
 					{
-						if (tag.tagname === "p" || tag.tagname === "l" || tag.tagname === "cm")
+						if (tag.tagname === "cm")
 						{
 							has_break_tag = true;
 						}
-						this.current.prelayout_charlayers.add(strelm[ii]);
+						else if (tag.tagname === "p" || tag.tagname === "l")
+						{
+							var current = this.current;
+							if (current.glyphFixedPosition)
+							{
+								tag.glyph_left = current.glyphFixedLeft;
+								tag.glyph_top = current.glyphFixedTop;
+							}
+							else
+							{
+								if (!current.vertical)
+								{
+									tag.glyph_left = current.x + current.getCharLayerLeftOffset();
+									tag.glyph_top = current.y + current.getCharLayerTopOffset();
+								}
+								else
+								{
+									tag.glyph_left = current.x + current.getCharLayerLeftOffset();
+									tag.glyph_top = current.y + current.getCharLayerTopOffset();
+								}
+							}
+						}
+						this.current.prelayout_charlayers.add(tag);
 					}
 				}
 			}
@@ -110,7 +132,7 @@ class KAGWindow_patch_messagelayer_prelayout_override extends KAGWindow_patch_me
 		this.current.visible = last_visible;
 		this.current.opacity = last_opacity;
 		this.current.in_prelayout_mode = false;
-		if ((conductor.pendings.length == 0) || (conductor.pendings.length > 0 && conductor.pendings[0].tagname !== "ch_patch_conductor_split" && conductor.pendings[0].tagname !== "ch_patch_conductor_messagelayer_tag") || (conductor.pendings.length > 0 && (conductor.pendings[0].tagname === "ch_patch_conductor_split" || conductor.pendings[0].tagname === "ch_patch_conductor_messagelayer_tag")) || has_break_tag)
+		if ((conductor.pendings.length == 0) || (conductor.pendings.length > 0 && conductor.pendings[0].tagname !== "ch_patch_conductor_split" && conductor.pendings[0].tagname !== "ch_patch_conductor_messagelayer_tag") || has_break_tag)
 		{
 			var ret2 = %[];
 			ret2.__patch_conductor_storage = elm.__patch_conductor_storage;
@@ -527,6 +549,26 @@ class MessageLayer_patch_messagelayer_prelayout_override extends MessageLayer_pa
 					this.window.conductor.lastTagName = charlayer.tagname;
 					queued_wait_time = this.window.conductor.handlers[charlayer.tagname](charlayer);
 					queued_wait_time |= 0;
+					if (charlayer.tagname === "p" || charlayer.tagname === "l")
+					{
+						if (!this.glyphFixedPosition)
+						{
+							if (!this.vertical)
+							{
+								charlayer.glyph_top -= this.glyphLayer.height;
+							}
+							else
+							{
+@if(SCALE_USING_FLOATING_POINT)
+								charlayer.glyph_left += (this.glyphLayer.width/2);
+@endif
+@if(!SCALE_USING_FLOATING_POINT)
+								charlayer.glyph_left += (this.glyphLayer.width>>1);
+@endif
+							}
+						}
+						this.glyphLayer.setPos(charlayer.glyph_left, charlayer.glyph_top);
+					}
 				}
 			}
 			var ret2 = %[];

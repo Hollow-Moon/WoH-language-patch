@@ -2246,10 +2246,6 @@ class MessageLayer extends KAGLayer
 @endif
 
 @if(MESSAGELAYER_USECHARLAYER)
-@if(MESSAGELAYER_ACTIONMANAGER)
-		fadeoutLastMessage() if typeof global.fadeoutLastMessage != "undefined";
-@endif
-
 @if(1)
 		if(	(ch.length == 1 && char2graph[ch] != void) ||	// 表示文字が1文字で、登録されている文字の場合
 			(ch.length > 1 && ch[0].repeat(ch.length) == ch && char2graph[ch[0]] != void))	// 全ての表示文字が同じで、且つ登録されている文字の場合
@@ -4804,7 +4800,16 @@ class MessageLayer extends KAGLayer
 			var	row	= charLayers[i];
 			if( row === void ) return;
 			for (var i = 0, internal_forloop_count = row.count; i < internal_forloop_count; i += 1)
-				window.pauseAction(true, row[i]) if row[i] != void;
+			{
+				if (row[i] != void)
+				{
+					window.pauseAction(true, row[i]);
+				}
+				else
+				{
+					break;
+				}
+			}
 		}
 	}
 
@@ -4818,7 +4823,16 @@ class MessageLayer extends KAGLayer
 			var	row	= charLayers[i];
 			if( row === void ) return;
 			for (var i = 0, internal_forloop_count = row.count; i < internal_forloop_count; i += 1)
-				window.resumeAction(row[i]) if row[i] != void;
+			{
+				if (row[i] != void)
+				{
+					window.resumeAction(row[i]);
+				}
+				else
+				{
+					break;
+				}
+			}
 		}
 	}
 
@@ -4841,14 +4855,27 @@ class MessageLayer extends KAGLayer
 						var	row	= charLayers[i];
 						if( row === void ) continue;
 						for (var i = 0, internal_forloop_count = row.count; i < internal_forloop_count; i += 1)
-							window.stopAction(row[i]) if row[i] != void;
+						{
+							if (row[i] != void)
+							{
+								window.stopAction(row[i]);
+							}
+							else
+							{
+								break;
+							}
+						}
 					}
 				}
 				else
+				{
 					window.stopAction(tr);
+				}
 			}
 			else if(tr !== void && charLayers[tr][col] != void)
+			{
 				window.stopAction(charLayers[tr][col]);
+			}
 		}
 	}
 
@@ -5097,21 +5124,6 @@ class MessageLayer extends KAGLayer
 		var	tog	= %[cur:"def", def:"fix"];
 		var layer_groups = this.layer_groups;
 		{
-			var group = "cur";
-			var layer_group = layer_groups[group];
-			if (layer_group !== void)
-			{
-				var tmp_arr = [];
-				tmp_arr.assign(layer_group);
-				var	g = tog[group];
-				for (var i = 0, internal_forloop_count = tmp_arr.count; i < internal_forloop_count; i += 1)
-				{
-					var char = tmp_arr[i];
-					char.group = g;
-				}
-			}
-		}
-		{
 			var group = "def";
 			var layer_group = layer_groups[group];
 			if (layer_group !== void)
@@ -5143,10 +5155,30 @@ class MessageLayer extends KAGLayer
 				}
 			}
 		}
+		{
+			var group = "cur";
+			var layer_group = layer_groups[group];
+			if (layer_group !== void)
+			{
+				var tmp_arr = [];
+				tmp_arr.assign(layer_group);
+				var	g = tog[group];
+				for (var i = 0, internal_forloop_count = tmp_arr.count; i < internal_forloop_count; i += 1)
+				{
+					var char = tmp_arr[i];
+					char.group = g;
+				}
+			}
+		}
 	}
 
 	//	システムが走り始めたときにグループを切り替える
-	function runHandler()		{ procedureGroup(); }
+	function runHandler()
+	{
+@if(0)
+		procedureGroup();
+@endif
+	}
 
 	//	メッセージレイヤーを揺らす
 	var	quakeTimer;

@@ -293,6 +293,7 @@ class MessageLayer_patch_messagelayer_prelayout_override extends MessageLayer_pa
 	}
 
 	var prelayout_charlayers = [];
+	var prelayout_last_queued_time = void;
 
 	function prelayoutPrepareCharLayer(charlayer)
 	{
@@ -430,6 +431,17 @@ class MessageLayer_patch_messagelayer_prelayout_override extends MessageLayer_pa
 
 	function prelayoutExecOperation(elm)
 	{
+		if (this.prelayout_last_queued_time === -2)
+		{
+			this.procedureGroup();
+@if(MESSAGELAYER_ACTIONMANAGER)
+			if (typeof(global.fadeoutLastMessage) === "Object")
+			{
+				global.fadeoutLastMessage();
+			}
+@endif
+		}
+		this.prelayout_last_queued_time = void;
 		if (this.prelayout_charlayers.count > 0)
 		{
 @if(0)
@@ -494,6 +506,7 @@ class MessageLayer_patch_messagelayer_prelayout_override extends MessageLayer_pa
 			ret2.__patch_conductor_line = elm.__patch_conductor_line;
 			ret2.tagname = "patch_messagelayer_prelayout_exec";
 			this.window.conductor.pendings.insert(0, ret2);
+			this.prelayout_last_queued_time = queued_wait_time;
 			return queued_wait_time;
 		}
 		this.in_prelayout_exec_mode = false;

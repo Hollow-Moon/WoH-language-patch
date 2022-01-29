@@ -448,7 +448,7 @@ class Conductor extends BaseConductor
 		// それを引数としてハンドラに渡す
 		// waitUntil はクリアされる
 		if(status != mWait) return false;
-		if (this.debugLevel >= tkdlVerbose)
+		if (this.debugLevel >= tkdlVerbose && typeof(name) === "String" && name.substr(0, 6) !== "action")
 		{
 			//	引かれたトリガと待っているものを表示する
 			var	keys	= [];

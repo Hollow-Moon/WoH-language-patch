@@ -210,10 +210,16 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 		"mappfont",
 @endif
 	];
+
+	var patch_conductor_messagelayer_proconly_tags = [
+		"wait",
+	];
+
 	function getNextTag()
 	{
 		var ret = super.getNextTag(...);
 		var patch_conductor_messagelayer_tags = this.patch_conductor_messagelayer_tags;
+		var patch_conductor_messagelayer_proconly_tags = this.patch_conductor_messagelayer_proconly_tags;
 		if (this.processSpecialTags)
 		{
 			var conductor_split_tags = [];
@@ -228,7 +234,7 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 				while (ret !== void)
 				{
 					patch_conductor_temp_array.assign(ret);
-					if (patch_conductor_messagelayer_tags.find(ret.tagname) !== -1)
+					if (patch_conductor_messagelayer_tags.find(ret.tagname) !== -1 || (messagelayer_tag_prepend.count > 0 && patch_conductor_messagelayer_proconly_tags.find(ret.tagname) !== -1))
 					{
 						{
 							var messagelayer_tag_container = %[];
@@ -243,7 +249,7 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 				while (ret !== void)
 				{
 					patch_conductor_temp_array.assign(ret);
-					if (patch_conductor_messagelayer_tags.find(ret.tagname) !== -1)
+					if (patch_conductor_messagelayer_tags.find(ret.tagname) !== -1 || patch_conductor_messagelayer_proconly_tags.find(ret.tagname) !== -1)
 					{
 						break;
 					}
@@ -274,7 +280,7 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 				while (ret !== void)
 				{
 					patch_conductor_temp_array.assign(ret);
-					if (patch_conductor_messagelayer_tags.find(ret.tagname) !== -1)
+					if (patch_conductor_messagelayer_tags.find(ret.tagname) !== -1 || (messagelayer_tag_prepend.count > 0 && patch_conductor_messagelayer_proconly_tags.find(ret.tagname) !== -1))
 					{
 						{
 							var messagelayer_tag_container = %[];

@@ -6,82 +6,58 @@ class BidiUtilities
 		if (code_point > 0xFFFF)
 		{
 			code_point -= 0x10000;
-			return String.fromCharCode(0xD800 + (code_point >> 10), 0xDC00 + (code_point & 0x3FF));
+			return $(0xD800 + (code_point >> 10)) + $(0xDC00 + (code_point & 0x3FF));
 		}
 		else
 		{
-			return String.fromCharCode(code_point);
+			return $(code_point);
 		}
-	}
-
-	function char_code_at(str, idx)
-	{
-		var code, end, hi, li, low, surrogatePairs;
-		str += '';
-		end = str.length;
-		surrogatePairs = /[\uD800-\uDBFF][\uDC00-\uDFFF]/g;
-		while (surrogatePairs.exec(str) !== null)
-		{
-			li = surrogatePairs.lastIndex;
-			if (li - 2 < idx)
-			{
-				idx += 1;
-			}
-			else
-			{
-				break;
-			}
-		}
-		if ((idx >= end) || (idx < 0))
-		{
-			return NaN;
-		}
-		code = str.charCodeAt(idx);
-		if ((0xD800 <= code) && (code <= 0xDBFF))
-		{
-			hi = code;
-			low = str.charCodeAt(idx + 1);
-			return ((hi - 0xD800) * 0x400) + (low - 0xDC00) + 0x10000;
-		}
-		return code;
 	}
 
 	function unpack_string(str)
 	{
-		var code_point, idx, result, _i, _ref;
-		result = [];
-		for (idx = _i = 0, _ref = str.length; 0 <= _ref ? _i < _ref : _i > _ref; idx = 0 <= _ref ? ++_i : --_i)
+		var result = [];
+		var pos = 0;
+		while (pos < str.length)
 		{
-			code_point = this.char_code_at(str, idx);
-			if (!code_point)
+			var code = #(str[pos++]);
+			var next = #(str[pos]);
+			// If a surrogate pair
+			if ((0xd800 <= code && code <= 0xdbff) && (0xdc00 <= next && next <= 0xdfff))
 			{
-				break;
+				pos += 1;
+				result.add(((code - 0xd800) * 0x400) + (next - 0xdc00) + 0x10000);
 			}
-			result.push(code_point);
+			else
+			{
+				result.add(code);
+			}
 		}
 		return result;
 	}
 
 	function pack_array(char_arr)
 	{
-		var cur_char;
-		return ((function() {
+		return ((function(char_arr) {
 			var _i, _len, _results;
 			_results = [];
-			for (_i = 0, _len = char_arr.length; _i < _len; _i++)
+			for (_i = 0, _len = char_arr.count; _i < _len; _i++)
 			{
-				cur_char = char_arr[_i];
-				_results.push(this.from_char_code(cur_char));
+				_results.add(BidiUtilities.from_char_code(char_arr[_i]));
 			}
 			return _results;
-		}).call(this)).join("");
+		}) incontextof this)(char_arr).join("");
 	}
 
 	function arraycopy(orig, orig_index, dest, dest_index, length)
 	{
 		var count, elem, _i, _len, _ref;
-		_ref = orig.slice(orig_index, orig_index + length);
-		for (count = _i = 0, _len = _ref.length; _i < _len; count = ++_i)
+		_ref = []; // orig.slice(orig_index, orig_index + length);
+		for (var i = orig_index; i < orig_index + length; i += 1)
+		{
+			_ref.add(orig[i]);
+		}
+		for (count = _i = 0, _len = _ref.count; _i < _len; count = ++_i)
 		{
 			elem = _ref[count];
 			dest[dest_index + count] = elem;
@@ -91,17 +67,17 @@ class BidiUtilities
 	function max(arr)
 	{
 		var elem, i, max, start_index, _i, _j, _len, _ref;
-		max = null;
-		for (start_index = _i = 0, _len = arr.length; _i < _len; start_index = ++_i)
+		max = void;
+		for (start_index = _i = 0, _len = arr.count; _i < _len; start_index = ++_i)
 		{
 			elem = arr[start_index];
-			if (elem != null)
+			if (elem !== void)
 			{
 				max = elem;
 				break;
 			}
 		}
-		for (i = _j = start_index, _ref = arr.length; start_index <= _ref ? _j <= _ref : _j >= _ref; i = start_index <= _ref ? ++_j : --_j)
+		for (i = _j = start_index, _ref = arr.count; start_index <= _ref ? _j <= _ref : _j >= _ref; i = start_index <= _ref ? ++_j : --_j)
 		{
 			if (arr[i] > max)
 			{
@@ -114,17 +90,17 @@ class BidiUtilities
 	function min(arr)
 	{
 		var elem, i, min, start_index, _i, _j, _len, _ref;
-		min = null;
-		for (start_index = _i = 0, _len = arr.length; _i < _len; start_index = ++_i)
+		min = void;
+		for (start_index = _i = 0, _len = arr.count; _i < _len; start_index = ++_i)
 		{
 			elem = arr[start_index];
-			if (elem != null)
+			if (elem !== void)
 			{
 				min = elem;
 				break;
 			}
 		}
-		for (i = _j = start_index, _ref = arr.length; start_index <= _ref ? _j <= _ref : _j >= _ref; i = start_index <= _ref ? ++_j : --_j)
+		for (i = _j = start_index, _ref = arr.count; start_index <= _ref ? _j <= _ref : _j >= _ref; i = start_index <= _ref ? ++_j : --_j)
 		{
 			if (arr[i] < min)
 			{
@@ -153,17 +129,17 @@ class Bidi
 
 	function Bidi(options)
 	{
-		if (options == null)
+		if (options === void)
 		{
 			options = %[];
 		}
-		this.string_arr = options.string_arr || options.types;
-		this.types = options.types || [];
+		this.string_arr = options.string_arr !== void ? options.string_arr : options.types;
+		this.types = options.types !== void ? options.types : [];
 		this.levels = [];
 		this.runs = [];
 		this.direction = options.direction;
-		this.default_direction = options.default_direction || "LTR";
-		this.length = this.types.length;
+		this.default_direction = options.default_direction !== void ? options.default_direction : "LTR";
+		this.count = this.types.count;
 		this.run_bidi();
 	}
 
@@ -171,21 +147,23 @@ class Bidi
 	{
 		var end, range, start, _i, _len;
 		var _ref = global.bidi_classes;
-		var _ref_keys = global.Dictionary.keys(_ref);
-		for (var i = 0; i < _ref_keys.count; i += 1)
+		var _ref_keys = [];
+		_ref_keys.assign(_ref);
+		for (var i = 0; i < _ref_keys.count; i += 2)
 		{
 			var bidi_class = _ref_keys[i];
 			var ranges = _ref[bidi_class];
-			var ranges_keys = global.Dictionary.keys(ranges);
-			for (var j = 0; j < ranges_keys.count; j += 1)
+			var ranges_keys = [];
+			ranges_keys.assign(ranges);
+			for (var j = 0; j < ranges_keys.count; j += 2)
 			{
 				var range_offset = ranges_keys[j];
 				var range_list = ranges[range_offset];
-				for (_i = 0, _len = range_list.length; _i < _len; _i++)
+				for (_i = 0, _len = range_list.count; _i < _len; _i++)
 				{
 					range = range_list[_i];
 					start = range;
-					end = start + parseInt(range_offset);
+					end = start + (range_offset | 0);
 					if ((code_point >= start) && (code_point <= end))
 					{
 						return bidi_class;
@@ -193,22 +171,22 @@ class Bidi
 				}
 			}
 		}
-		return null;
+		return void;
 	}
 
 	function from_string(str, options)
 	{
 		var string_arr;
-		if (options == null)
+		if (options === void)
 		{
 			options = %[];
 		}
 		string_arr = BidiUtilities.unpack_string(str);
-		if (typeof(options.types) !== "Object")
+		if (typeof(string_arr) === "Object")
 		{
-			options.types = this.compute_types(string_arr);
+			options.types = Bidi.compute_types(string_arr);
 		}
-		if (typeof(options.string_arr) !== "Object")
+		if (typeof(string_arr) === "Object")
 		{
 			options.string_arr = string_arr;
 		}
@@ -217,11 +195,11 @@ class Bidi
 
 	function from_type_array(types, options)
 	{
-		if (options == null)
+		if (options === void)
 		{
 			options = %[];
 		}
-		if (typeof(options.types) !== "Object")
+		if (typeof(types) === "Object")
 		{
 			options.types = types;
 		}
@@ -230,12 +208,11 @@ class Bidi
 
 	function compute_types(arr)
 	{
-		var code_point, _i, _len, _results;
+		var _i, _len, _results;
 		_results = [];
-		for (_i = 0, _len = arr.length; _i < _len; _i++)
+		for (_i = 0, _len = arr.count; _i < _len; _i++)
 		{
-			code_point = arr[_i];
-			_results.push(Bidi.bidi_class_for(code_point));
+			_results.add(Bidi.bidi_class_for(arr[_i]));
 		}
 		return _results;
 	}
@@ -255,7 +232,7 @@ class Bidi
 		max = 0;
 		lowest_odd = MAX_DEPTH + 1;
 		_ref = this.levels;
-		for (_i = 0, _len = _ref.length; _i < _len; _i++)
+		for (_i = 0, _len = _ref.count; _i < _len; _i++)
 		{
 			level = _ref[_i];
 			max = BidiUtilities.max([level, max]);
@@ -267,22 +244,22 @@ class Bidi
 		for (depth = _j = max; max <= 0 ? _j < 0 : _j > 0; depth = max <= 0 ? ++_j : --_j)
 		{
 			start = 0;
-			while (start < this.levels.length)
+			while (start < this.levels.count)
 			{
-				while (start < this.levels.length && this.levels[start] < depth)
+				while (start < this.levels.count && this.levels[start] < depth)
 				{
 					start += 1;
 				}
-				if (start === this.levels.length)
+				if (start === this.levels.count)
 				{
 					break;
 				}
 				finish = start + 1;
-				while (finish < this.levels.length && this.levels[finish] >= depth)
+				while (finish < this.levels.count && this.levels[finish] >= depth)
 				{
 					finish += 1;
 				}
-				for (i = _k = 0, _ref1 = (finish - start) / 2; 0 <= _ref1 ? _k < _ref1 : _k > _ref1; i = 0 <= _ref1 ? ++_k : --_k)
+				for (i = _k = 0, _ref1 = (finish - start) \ 2; 0 <= _ref1 ? _k < _ref1 : _k > _ref1; i = 0 <= _ref1 ? ++_k : --_k)
 				{
 					tmpb = this.levels[finish - i - 1];
 					this.levels[finish - i - 1] = this.levels[start + i];
@@ -300,14 +277,14 @@ class Bidi
 	function compute_paragraph_embedding_level()
 	{
 		var type, _i, _len, _ref;
-		if (["LTR", "RTL"].indexOf(this.direction) > -1)
+		if (["LTR", "RTL"].find(this.direction) !== -1)
 		{
 			return this.direction === "LTR" ? 0 : 1;
 		}
 		else
 		{
 			_ref = this.types;
-			for (_i = 0, _len = _ref.length; _i < _len; _i++)
+			for (_i = 0, _len = _ref.count; _i < _len; _i++)
 			{
 				type = _ref[_i];
 				if (type === "L")
@@ -334,7 +311,7 @@ class Bidi
 			this.formatter_indices = [];
 		}
 		sp = 0;
-		for (i = _i = 0, _ref = this.length; 0 <= _ref ? _i < _ref : _i > _ref; i = 0 <= _ref ? ++_i : --_i)
+		for (i = _i = 0, _ref = this.count; 0 <= _ref ? _i < _ref : _i > _ref; i = 0 <= _ref ? ++_i : --_i)
 		{
 			is_ltr = false;
 			is_special = true;
@@ -364,7 +341,7 @@ class Bidi
 						sp -= 1;
 						new_embedding = embedding_stack[sp];
 						current_embedding = new_embedding & 0x7f;
-						directional_override = new_embedding < 0 ? (_ref1 = (new_embedding & 1) === 0) != null ? _ref1 : %["L" => "R"] : -1;
+						directional_override = new_embedding < 0 ? (_ref1 = (new_embedding & 1) === 0) ? _ref1 : %["L" => "R"] : -1;
 					}
 					break;
 				default:
@@ -373,7 +350,7 @@ class Bidi
 			this.levels[i] = current_embedding;
 			if (is_special)
 			{
-				this.formatter_indices.push(i);
+				this.formatter_indices.add(i);
 			}
 			else if (directional_override !== -1)
 			{
@@ -382,17 +359,17 @@ class Bidi
 		}
 		output = 0;
 		input = 0;
-		size = this.formatter_indices.length;
+		size = this.formatter_indices.count;
 		for (i = _j = 0; 0 <= size ? _j <= size : _j >= size; i = 0 <= size ? ++_j : --_j)
 		{
-			next_fmt = i === size ? this.length : this.formatter_indices[i];
+			next_fmt = i === size ? this.count : this.formatter_indices[i];
 			len = next_fmt - input;
 			BidiUtilities.arraycopy(this.levels, input, this.levels, output, len);
 			BidiUtilities.arraycopy(this.types, input, this.types, output, len);
 			output += len;
 			input = next_fmt + 1;
 		}
-		return this.length -= this.formatter_indices.length;
+		return this.count -= this.formatter_indices.count;
 	}
 
 	function compute_runs()
@@ -400,7 +377,7 @@ class Bidi
 		var current_embedding, i, last_run_start, run_count, where, _i, _j, _ref, _ref1;
 		run_count = 0;
 		current_embedding = this.base_embedding;
-		for (i = _i = 0, _ref = this.length; 0 <= _ref ? _i < _ref : _i > _ref; i = 0 <= _ref ? ++_i : --_i)
+		for (i = _i = 0, _ref = this.count; 0 <= _ref ? _i < _ref : _i > _ref; i = 0 <= _ref ? ++_i : --_i)
 		{
 			if (this.levels[i] !== current_embedding)
 			{
@@ -411,7 +388,7 @@ class Bidi
 		where = 0;
 		last_run_start = 0;
 		current_embedding = this.base_embedding;
-		for (i = _j = 0, _ref1 = this.length; 0 <= _ref1 ? _j < _ref1 : _j > _ref1; i = 0 <= _ref1 ? ++_j : --_j)
+		for (i = _j = 0, _ref1 = this.count; 0 <= _ref1 ? _j < _ref1 : _j > _ref1; i = 0 <= _ref1 ? ++_j : --_j)
 		{
 			if (this.levels[i] !== current_embedding)
 			{
@@ -427,15 +404,23 @@ class Bidi
 	function resolve_weak_types()
 	{
 		var eor, finish, i, j, k, level, next_level, next_type, prev_strong_type, prev_type, previous_level, run_count, run_idx, sor, start, _i, _j, _k;
-		run_count = this.runs.length;
+		run_count = this.runs.count;
 		previous_level = this.base_embedding;
 		for (run_idx = _i = 0; 0 <= run_count ? _i < run_count : _i > run_count; run_idx = 0 <= run_count ? ++_i : --_i)
 		{
 			start = this.get_run_start(run_idx);
 			finish = this.get_run_limit(run_idx);
-			level = this.get_run_level(run_idx) || 0;
+			level = this.get_run_level(run_idx);
+			if (level === void)
+			{
+				level = 0;
+			}
 			sor = BidiUtilities.is_even(BidiUtilities.max([previous_level, level])) ? "L" : "R";
-			next_level = run_idx === (run_count - 1) ? this.base_embedding : this.get_run_level(run_idx + 1) || 0;
+			next_level = run_idx === (run_count - 1) ? this.base_embedding : this.get_run_level(run_idx + 1);
+			if (next_level === void)
+			{
+				next_level = 0;
+			}
 			eor = BidiUtilities.is_even(BidiUtilities.max([level, next_level])) ? "L" : "R";
 			prev_type = sor;
 			prev_strong_type = sor;
@@ -513,7 +498,7 @@ class Bidi
 
 	function get_run_count()
 	{
-		return this.runs.length;
+		return this.runs.count;
 	}
 
 	function get_run_level(which)
@@ -523,9 +508,9 @@ class Bidi
 
 	function get_run_limit(which)
 	{
-		if (which === (this.runs.length - 1))
+		if (which === (this.runs.count - 1))
 		{
-			return this.length;
+			return this.count;
 		}
 		else
 		{
@@ -541,7 +526,7 @@ class Bidi
 	function resolve_implicit_levels()
 	{
 		var i, _i, _ref;
-		for (i = _i = 0, _ref = this.length; 0 <= _ref ? _i < _ref : _i > _ref; i = 0 <= _ref ? ++_i : --_i)
+		for (i = _i = 0, _ref = this.count; 0 <= _ref ? _i < _ref : _i > _ref; i = 0 <= _ref ? ++_i : --_i)
 		{
 			if ((this.levels[i] & 1) === 0)
 			{
@@ -574,7 +559,7 @@ class Bidi
 			start = this.get_run_start(run);
 			finish = this.get_run_limit(run);
 			level = this.get_run_level(run);
-			if (level == null)
+			if (level === void)
 			{
 				continue;
 			}
@@ -629,26 +614,26 @@ class Bidi
 	function reinsert_formatting_codes()
 	{
 		var index, input, left_level, len, next_fmt, output, right_level, _i, _ref;
-		if ((this.formatter_indices != null) && this.formatter_indices.length > 0)
+		if ((this.formatter_indices !== void) && this.formatter_indices.count > 0)
 		{
-			input = this.length;
-			output = this.levels.length;
-			for (index = _i = _ref = this.formatter_indices.length - 1; _ref <= 0 ? _i <= 0 : _i >= 0; index = _ref <= 0 ? ++_i : --_i)
+			input = this.count;
+			output = this.levels.count;
+			for (index = _i = _ref = this.formatter_indices.count - 1; _ref <= 0 ? _i <= 0 : _i >= 0; index = _ref <= 0 ? ++_i : --_i)
 			{
 				next_fmt = this.formatter_indices[index];
 				len = output - next_fmt - 1;
 				output = next_fmt;
 				input -= len;
-				if (next_fmt + 1 < this.levels.length)
+				if (next_fmt + 1 < this.levels.count)
 				{
 					BidiUtilities.arraycopy(this.levels, input, this.levels, next_fmt + 1, len);
 				}
-				right_level = output === this.levels.length - 1 ? this.base_embedding : this.levels[output + 1] != null ? this.levels[output + 1] : 0;
-				left_level = input === 0 ? this.base_embedding : this.levels[input] != null ? this.levels[input] : 0;
+				right_level = output === this.levels.count - 1 ? this.base_embedding : this.levels[output + 1] !== void ? this.levels[output + 1] : 0;
+				left_level = input === 0 ? this.base_embedding : this.levels[input] !== void ? this.levels[input] : 0;
 				this.levels[output] = BidiUtilities.max([left_level, right_level]);
 			}
 		}
-		return this.length = this.levels.length;
+		return this.count = this.levels.count;
 	}
 
 	function run_bidi()
@@ -662,5 +647,180 @@ class Bidi
 		this.reinsert_formatting_codes();
 		this.compute_runs();
 	}
-
 }
+
+
+@if(0)
+{
+	if (false)
+	{
+		// adapted from https://github.com/bminor/newlib/blob/80cda9bbda04a1e9e3bee5eadf99061ed69ca5fb/newlib/libc/stdlib/utoa.c
+		global.utoa = function(value, base)
+		{
+			var digits = "0123456789abcdefghijklmnopqrstuvwxyz";
+			var str = "";
+			var remainder = 0;
+
+			// Check base is supported.
+			if ((base < 2) || (base > 36))
+			{ 
+				return str;
+			}
+
+			// Convert to string. Digits are in reverse order.
+			do
+			{
+				var remainder = value % base;
+				str += digits[remainder];
+				value = value \ base;
+			} while (value != 0);  
+
+			return str.reverse();
+		};
+
+		global.expand_bitset_str = function(bitset)
+		{
+			var padded_str = ("0000" + utoa(bitset | 0, 2));
+			padded_str = padded_str.substring(padded_str.length - 3);
+			var result = [];
+
+			for (var padded_str_i = 0; padded_str_i < padded_str.length; padded_str_i += 1)
+			{
+				result.add(padded_str[padded_str_i] == "1");
+			}
+			result.reverse();
+
+			return result;
+		};
+
+		var DIRECTIONS = [void, "LTR", "RTL"];
+
+		var data = [];
+		data.load("classpath_bidi_test.txt");
+
+		var expected_level_data = [];
+		var expected_reorder_data = [];
+		var num_failed = 0;
+		var num_succeeded = 0;
+		var input_bitset, input, bitset, result_list, bitset_arr, index, check;
+		var types, bidi, passed, idx, level, levels, level_idx, string_arr, i;
+		var position, positions, pos_idx, line_idx, cur_line, first_char;
+
+		for (var data_i = 0; data_i < data.count; data_i += 1)
+		{
+			cur_line = data[data_i].trim();
+			first_char = cur_line[0];
+
+			switch (first_char)
+			{
+				case "#":
+				{
+					continue;
+				}
+
+				case "@":
+				{
+					if (cur_line.indexOf("@Levels:") !== -1)
+					{
+						expected_level_data = [];
+						levels = / /.split(/@Levels:/.replace(cur_line, "").trim());
+						for (var levels_i = 0; levels_i < levels.count; levels_i += 1)
+						{
+							var level = levels[levels_i];
+							expected_level_data.add(level | 0);
+						}
+					}
+
+					if (cur_line.indexOf("@Reorder:") !== -1)
+					{
+						expected_reorder_data = [];
+						positions = / /.split(/@Reorder:/.replace(cur_line, "").trim());
+						for (var positions_i = 0; positions_i < positions.count; positions_i += 1)
+						{
+							var position = positions[positions_i];
+							expected_reorder_data.add(position | 0);
+						}
+					}
+
+					break;
+				}
+
+
+				default:
+				{
+					input_bitset = /; /.split(cur_line);
+					input = input_bitset[0];
+					bitset = input_bitset[1];
+					result_list = [];
+					bitset_arr = expand_bitset_str(bitset);
+
+					for (var bitset_arr_i = 0; bitset_arr_i < bitset_arr.length; bitset_arr_i += 1)
+					{
+						check = bitset_arr[bitset_arr_i];
+
+						if (check)
+						{
+							types = / /.split(input);
+							bidi = Bidi.from_type_array(types, %["direction" => DIRECTIONS[bitset_arr_i], "default_direction" => "LTR"]);
+							passed = true;
+
+							var levels = bidi.levels;
+							for (var levels_i = 0; levels_i < levels.count; levels_i += 1)
+							{
+								level = levels[levels_i];
+								passed = passed && (level === expected_level_data[levels_i]);
+							}
+
+							string_arr = [];
+
+							for (i = 0; i < types.count; i += 1)
+							{
+								string_arr.add(i);
+							}
+
+							bidi.string_arr = string_arr;
+							bidi.reorder_visually();
+
+							var new_string_arr = bidi.string_arr;
+							for (var new_string_arr_i = 0; new_string_arr_i < new_string_arr.count; new_string_arr_i += 1)
+							{
+								position = new_string_arr[new_string_arr_i];
+								passed = passed && (position === expected_reorder_data[new_string_arr_i]);
+							}
+
+							if (passed)
+							{
+								//Debug.message("Succeed");
+								num_succeeded += 1;
+							}
+							else
+							{
+								//Debug.message("fail");
+								//Debug.message("Failed on line " + data_i);
+								num_failed += 1;
+								//System.exit();
+							}
+						}
+					}
+
+					break;
+				}
+
+			}
+		}
+
+		Debug.message("Success: " + num_succeeded);
+		Debug.message("Fail: " + num_failed);
+
+	}
+
+	if (false)
+	{
+		var bidi_str = Bidi.from_string("hello نزوة world", %["direction" => "RTL"]);
+		bidi_str.reorder_visually();
+		var tst = bidi_str.toString();
+		Debug.message(tst);
+		Debug.message(tst == "world ةوزن hello");
+	}
+}
+@endif

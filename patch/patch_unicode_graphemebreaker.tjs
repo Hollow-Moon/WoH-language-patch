@@ -1,0 +1,590 @@
+﻿
+// Grapheme breaker based on https://github.com/foliojs/grapheme-breaker
+
+global.grapheme_breaker_classes = [
+	"Other",
+	"CR",
+	"LF",
+	"Control",
+	"Extend",
+	"Regional_Indicator",
+	"SpacingMark",
+	"L",
+	"V",
+	"T",
+	"LV",
+	"LVT",
+];
+
+global.grapheme_breaker_class_trie = new UnicodeTrie(Scripts.evalStorage("patch_unicode_graphemebreak_data.ksc"));
+
+class GraphemeBreaker
+{
+	
+	// Gets a code point from a UTF-16 string
+	// handling surrogate pairs appropriately
+	function codePointAt(str, idx)
+	{
+		var hi, low;
+		idx = idx !== void ? idx : 0;
+		var code = #(str[idx]);
+
+		// High surrogate
+		if (0xD800 <= code && code <= 0xDBFF)
+		{
+			hi = code;
+			low = #(str[idx + 1]);
+			if (0xDC00 <= low && low <= 0xDFFF)
+			{
+				return ((hi - 0xD800) * 0x400) + (low - 0xDC00) + 0x10000;
+			}
+
+			return hi;
+		}
+
+		// Low surrogate
+		if (0xDC00 <= code && code <= 0xDFFF)
+		{
+			hi = #(str[idx - 1]);
+			low = code;
+			if (0xD800 <= hi && hi <= 0xDBFF)
+			{
+				return ((hi - 0xD800) * 0x400) + (low - 0xDC00) + 0x10000;
+			}
+
+			return low;
+		}
+
+		return code;
+	}
+
+	// Returns whether a break is allowed between the
+	// two given grapheme breaking classes
+	function shouldBreak(previous, current)
+	{
+		previous = global.grapheme_breaker_classes[previous];
+		current = global.grapheme_breaker_classes[current];
+		// GB3. CR X LF
+		if ((previous === "CR") && (current === "LF"))
+		{
+			return false;
+		}
+		// GB4. (Control|CR|LF) ÷
+		else if (["Control", "CR", "LF"].find(previous) !== -1)
+		{
+			return true;
+		}
+		// GB5. ÷ (Control|CR|LF)
+		else if (["Control", "CR", "LF"].find(current) !== -1)
+		{
+			return true;
+		}
+		// GB6. L X (L|V|LV|LVT)
+		else if ((previous === "L") && (["L", "V", "LV", "LVT"].find(current) !== -1))
+		{
+			return false;
+		}
+		// GB7. (LV|V) X (V|T)
+		else if ((["LV", "V"].find(previous) !== -1) && (["V", "T"].find(current) !== -1))
+		{
+			return false;
+		}
+		// GB8. (LVT|T) X (T)
+		else if ((["LVT", "T"].find(previous) !== -1) && (current === "T"))
+		{
+			return false;
+		}
+		// GB8a. Regional_Indicator X Regional_Indicator
+		else if ((previous === "Regional_Indicator") && (current === "Regional_Indicator"))
+		{
+			return false;
+		}
+		// GB9. X Extend
+		else if (current === "Extend")
+		{
+			return false;
+		}
+		// GB9a. X SpacingMark
+		else if (current === "SpacingMark")
+		{
+			return false;
+		}
+		// GB9b. Prepend X (there are currently no characters with this class)
+		else if (false && previous === "Prepend")
+		{
+			return false;
+		}
+
+		// GB10. Any ÷ Any
+		return true;
+	}
+
+
+	// Returns the next grapheme break in the string after the given index
+	function nextBreak(str, index)
+	{
+		if (index == void)
+		{
+			index = 0;
+		}
+		if (index < 0)
+		{
+			return 0;
+		}
+
+		if (index >= (str.length - 1))
+		{
+			return str.length;
+		}
+
+		var prev = global.grapheme_breaker_class_trie.get(GraphemeBreaker.codePointAt(str, index));
+		for (var i = index + 1; i < str.length; i += 1)
+		{
+			// check for already processed low surrogates
+			var middle, middle1;
+			if ((0xd800 <= (middle = #(str[i - 1])) && middle <= 0xdbff) &&
+				(0xdc00 <= (middle1 = #(str[i])) && middle1 <= 0xdfff))
+			{
+				continue;
+			}
+
+			var next = global.grapheme_breaker_class_trie.get(GraphemeBreaker.codePointAt(str, i));
+			if (GraphemeBreaker.shouldBreak(prev, next))
+			{
+				return i;
+			}
+
+			prev = next;
+		}
+
+		return str.length;
+	}
+
+	// Returns the next grapheme break in the string before the given index
+	function previousBreak(str, index)
+	{
+		if (index === void)
+		{
+			index = str.length;
+		}
+		if (index > str.length)
+		{
+			return str.length;
+		}
+
+		if (index <= 1)
+		{
+			return 0;
+		}
+
+		index -= 1;
+		var next = global.grapheme_breaker_class_trie.get(GraphemeBreaker.codePointAt(str, index));
+		for (var i = index - 1; i >= 0; i -= 1)
+		{
+			// check for already processed high surrogates
+			var middle, middle1;
+			if ((0xd800 <= (middle = #(str[i])) && middle <= 0xdbff) &&
+				(0xdc00 <= (middle1 = #(str[i + 1])) && middle1 <= 0xdfff))
+			{
+				continue;
+			}
+
+			var prev = global.grapheme_breaker_class_trie.get(GraphemeBreaker.codePointAt(str, i));
+			if (GraphemeBreaker.shouldBreak(prev, next))
+			{
+				return i + 1;
+			}
+
+			next = prev;
+		}
+
+		return 0;
+	}
+
+
+	// Breaks the given string into an array of grapheme cluster strings
+	function break_(str)
+	{
+		var brk;
+		var res = [];
+		var index = 0;
+
+		while ((brk = GraphemeBreaker.nextBreak(str, index)) < str.length)
+		{
+			res.add(str.substring(index, brk - index));
+			index = brk;
+		}
+
+		if (index < str.length)
+		{
+			res.add(str.substring(index));
+		}
+
+		return res;
+	}
+
+
+	// Returns the number of grapheme clusters there are in the given string
+	function countBreaks(str)
+	{
+		var brk;
+		var count = 0;
+		var index = 0;
+
+		while ((brk = GraphemeBreaker.nextBreak(str, index)) < str.length)
+		{
+			index = brk;
+			count += 1;
+		}
+
+		if (index < str.length)
+		{
+			count += 1;
+		}
+
+		return count;
+	}
+}
+
+
+@if(0)
+{
+
+	global.struct_is_equal = function(s1, s2)
+	{
+		if (s1 === s2)
+		{
+			return true;
+		}
+		else if (s1 instanceof "Array" && s2 instanceof "Array" && s1.count == s2.count)
+		{
+			for (var i = 0, internal_forloop_count = s1.count; i < internal_forloop_count; i += 1)
+			{
+				var s1item = s1[i];
+				var s2item = s2[i];
+				if(s1item instanceof "Array" || s1item instanceof "Dictionary")
+				{
+					if (!global.struct_is_equal(s1item, s2item))
+					{
+						return false;
+					}
+				}
+				else if (s1item !== s2item)
+				{
+					return false;
+				}
+			}
+		}
+		else if (s1 instanceof "Dictionary" && s2 instanceof "Dictionary")
+		{
+			var key1 = [];
+			var key2 = [];
+			key1.assign(s1);
+			key2.assign(s2);
+			if (key1.count !== key2.count)
+			{
+				return false;
+			}
+			for (var i = 0, internal_forloop_count = key1.count; i < internal_forloop_count; i += 2)
+			{
+				var key = key1[i];
+				var s1item = s1[key];
+				var s2item = s2[key];
+				if (s1item instanceof "Array" || s1item instanceof "Dictionary")
+				{
+					if (!global.struct_is_equal(s1item, s2item))
+					{
+						return false;
+					}
+				}
+				else if (s1item !== s2item)
+				{
+					return false;
+				}
+			}
+		}
+		else
+		{
+			return false;
+		}
+		return true;
+	};
+
+@if(0)
+	{
+		// basic test
+		var broken = GraphemeBreaker.break_('Z͑ͫ̓ͪ̂ͫ̽͏̴̙̤̞͉͚̯̞̠͍A̴̵̜̰͔ͫ͗͢L̠ͨͧͩ͘G̴̻͈͍͔̹̑͗̎̅͛́Ǫ̵̹̻̝̳͂̌̌͘!͖̬̰̙̗̿̋ͥͥ̂ͣ̐́́͜͞');
+		var expected = ['Z͑ͫ̓ͪ̂ͫ̽͏̴̙̤̞͉͚̯̞̠͍', 'A̴̵̜̰͔ͫ͗͢', 'L̠ͨͧͩ͘', 'G̴̻͈͍͔̹̑͗̎̅͛́', 'Ǫ̵̹̻̝̳͂̌̌͘', '!͖̬̰̙̗̿̋ͥͥ̂ͣ̐́́͜͞'];
+		Debug.message(global.struct_is_equal(broken, expected));
+	}
+@endif
+
+
+
+@if(0)
+	{
+		// nextBreak
+		var brk;
+		var str = 'Z͑ͫ̓ͪ̂ͫ̽͏̴̙̤̞͉͚̯̞̠͍A̴̵̜̰͔ͫ͗͢L̠ͨͧͩ͘G̴̻͈͍͔̹̑͗̎̅͛́Ǫ̵̹̻̝̳͂̌̌͘!͖̬̰̙̗̿̋ͥͥ̂ͣ̐́́͜͞';
+		var index = 0;
+
+		var res = [];
+		while ((brk = GraphemeBreaker.nextBreak(str, index)) < str.length)
+		{
+			res.add(str.substring(index, brk - index));
+			index = brk;
+		}
+
+		res.add(str.substring(index));
+		var expected = ['Z͑ͫ̓ͪ̂ͫ̽͏̴̙̤̞͉͚̯̞̠͍', 'A̴̵̜̰͔ͫ͗͢', 'L̠ͨͧͩ͘', 'G̴̻͈͍͔̹̑͗̎̅͛́', 'Ǫ̵̹̻̝̳͂̌̌͘', '!͖̬̰̙̗̿̋ͥͥ̂ͣ̐́́͜͞'];
+		Debug.message(global.struct_is_equal(res, expected));
+	}
+@endif
+
+@if(0)
+	{
+		// nextBreak intermediate indexes
+		var str = 'Z͑ͫ̓ͪ̂ͫ̽͏̴̙̤̞͉͚̯̞̠͍A̴̵̜̰͔ͫ͗͢L̠ͨͧͩ͘G̴̻͈͍͔̹̑͗̎̅͛́Ǫ̵̹̻̝̳͂̌̌͘!͖̬̰̙̗̿̋ͥͥ̂ͣ̐́́͜͞';
+		var breaks = %[];
+
+		for (var i = -1, end = str.length; i < end; i++)
+		{
+			var brk = GraphemeBreaker.nextBreak(str, i);
+			breaks[brk] = brk;
+		}
+
+		var res = [];
+		res.assign(breaks);
+		for (var i = res.count - 1; i >= 0; i -= 2)
+		{
+			res[i] = res[i] | 0;
+			res.erase(i - 1);
+		}
+		res.sort("a");
+		var expected = [0, 19, 28, 34, 47, 58, 75];
+		Debug.message(global.struct_is_equal(res, expected));
+	}
+@endif
+
+@if(0)
+	{
+		// previousBreak
+		var brk;
+		var str = 'Z͑ͫ̓ͪ̂ͫ̽͏̴̙̤̞͉͚̯̞̠͍A̴̵̜̰͔ͫ͗͢L̠ͨͧͩ͘G̴̻͈͍͔̹̑͗̎̅͛́Ǫ̵̹̻̝̳͂̌̌͘!͖̬̰̙̗̿̋ͥͥ̂ͣ̐́́͜͞';
+		var index = str.length;
+
+		var res = [];
+		while ((brk = GraphemeBreaker.previousBreak(str, index)) > 0)
+		{
+			res.push(str.substring(brk, index - brk));
+			index = brk;
+		}
+
+		res.push(str.substring(0, index));
+		var expected = ['Z͑ͫ̓ͪ̂ͫ̽͏̴̙̤̞͉͚̯̞̠͍', 'A̴̵̜̰͔ͫ͗͢', 'L̠ͨͧͩ͘', 'G̴̻͈͍͔̹̑͗̎̅͛́', 'Ǫ̵̹̻̝̳͂̌̌͘', '!͖̬̰̙̗̿̋ͥͥ̂ͣ̐́́͜͞'];
+		expected.reverse();
+		Debug.message(global.struct_is_equal(res, expected));
+	}
+@endif
+
+@if(0)
+	{
+		// previousBreak intermediate indexes
+		var str = 'Z͑ͫ̓ͪ̂ͫ̽͏̴̙̤̞͉͚̯̞̠͍A̴̵̜̰͔ͫ͗͢L̠ͨͧͩ͘G̴̻͈͍͔̹̑͗̎̅͛́Ǫ̵̹̻̝̳͂̌̌͘!͖̬̰̙̗̿̋ͥͥ̂ͣ̐́́͜͞';
+		var breaks = %[];
+
+		for (var i = str.length + 1; i >= 0; i -= 1)
+		{
+			var brk = GraphemeBreaker.previousBreak(str, i);
+			breaks[brk] = brk;
+		}
+		var res = [];
+		res.assign(breaks);
+		for (var i = res.count - 1; i >= 0; i -= 2)
+		{
+			res[i] = res[i] | 0;
+			res.erase(i - 1);
+		}
+		res.sort("a");
+		var expected = [0, 19, 28, 34, 47, 58, 75];
+		Debug.message(global.struct_is_equal(res, expected));
+	}
+@endif
+
+@if(0)
+	{
+		// previousBreak handles astral characters (e.g. emoji)
+		// XXX: only works when this file is saved as UTF16LE. UTF8 does not convert correctly.
+		var brk;
+		var str = '😜🇺🇸👍';
+
+		var res = [];
+		var index = str.length;
+		while ((brk = GraphemeBreaker.previousBreak(str, index)) > 0)
+		{
+			res.add(str.substring(brk, index - brk));
+			index = brk;
+		}
+
+		res.add(str.substring(0, index));
+		var expected = ['👍', '🇺🇸', '😜'];
+		Debug.message(global.struct_is_equal(res, expected));
+	}
+@endif
+
+@if(0)
+	{
+		// nextBreak handles astral characters (e.g. emoji)
+		// XXX: only works when this file is saved as UTF16LE. UTF8 does not convert correctly.
+		var brk;
+		var str = '😜🇺🇸👍';
+
+		var res = [];
+		var index = 0;
+		while ((brk = GraphemeBreaker.nextBreak(str, index)) < str.length)
+		{
+			res.push(str.substring(index, brk - index));
+			index = brk;
+		}
+
+		res.push(str.substring(index));
+		var expected = ['😜', '🇺🇸', '👍'];
+		Debug.message(global.struct_is_equal(res, expected));
+	}
+@endif
+
+@if(0)
+	// Test code.
+	global.codePointToString = function(code_point)
+	{
+		var MAX_SIZE = 0x4000;
+		var highSurrogate;
+		var lowSurrogate;
+		var result = '';
+		{
+			var codePoint = code_point;//ToNumber(arguments[index]);
+			if (
+				//!IsInteger(codePoint) ||
+				codePoint < 0 || codePoint > 0x10FFFF // not a valid Unicode code point
+			) {
+				throw Exception('Invalid code point: ' + codePoint);
+			}
+			if (codePoint <= 0xFFFF) { // BMP code point
+				result = $codePoint;
+			} else { // Astral code point; split in surrogate halves
+				// https://mathiasbynens.be/notes/javascript-encoding#surrogate-formulae
+				codePoint -= 0x10000;
+				highSurrogate = (codePoint >> 10) + 0xD800;
+				lowSurrogate = (codePoint % 0x400) + 0xDC00;
+				result += $highSurrogate;
+				result += $lowSurrogate;
+			}
+		}
+		return result;
+	};
+
+	{
+		// should pass all tests in GraphemeBreakTest.txt
+		var lines = [];
+		lines.load("GraphemeBreakTest.txt");
+
+		for (var i = 0; i < lines.count; i += 1)
+		{
+			var line = lines[i];
+			if (line === "" || line.substring(0, 1) === "#")
+			{
+				continue;
+			}
+
+			var cols_comment = /#/.split(line);
+			var cols = cols_comment[0];
+			var comment = cols_comment[1];
+			var str = "";
+			{
+				var codePoints = [];
+				var tmp = /\s*[×÷]\s*/.split(cols);
+				for (var ii = 1; ii < tmp.count - 1; ii += 1)
+				{
+					var hex = ("0x" + tmp[ii]) | 0;
+					str += global.codePointToString(hex);
+				}
+			}
+
+			var expected = [];
+			{
+				var tmp = /\s*÷\s*/.split(cols);
+				for (var ii = 0; ii < tmp.count; ii += 1)
+				{
+					if (tmp[ii] === "")
+					{
+						continue;
+					}
+					var codes = /\s*×\s*/.split(tmp[ii]);
+					var codes_str = "";
+					for (var iii = 0; iii < codes.count; iii += 1)
+					{
+						var c = codes[iii];
+						if (c === "")
+						{
+							continue;
+						}
+						c = ("0x" + c) | 0;
+						codes_str += global.codePointToString(c);
+					}
+					expected.add(codes_str);
+				}
+			}
+
+			comment = comment.trim();
+
+			// forwards
+			{
+				var res = GraphemeBreaker.break_(str);
+				var struct_is_equal_result = global.struct_is_equal(res, expected);
+				var found_len = GraphemeBreaker.countBreaks(str);
+				var expected_len_result = found_len == expected.length;
+				if (!struct_is_equal_result || !expected_len_result)
+				{
+					Debug.message("Fail on line " + (i + 1) + " " + struct_is_equal_result + " " + expected_len_result);
+					Debug.message(found_len + " " + expected.length);
+					Debug.message(res.join(","));
+					Debug.message(expected.join(","));
+					Debug.message(str.length);
+					System.exit();
+				}
+			}
+
+			// backwards
+			{
+				var res = [];
+				var index = str.length;
+				var brk;
+				while ((brk = GraphemeBreaker.previousBreak(str, index)) > 0)
+				{
+					res.add(str.substring(brk, index - brk));
+					index = brk;
+				}
+				res.add(str.substring(0, index));
+
+				var expected_reverse = [];
+				expected_reverse.assign(expected);
+				expected_reverse.reverse();
+
+				var struct_is_equal_result = global.struct_is_equal(res, expected_reverse);
+				var found_len = GraphemeBreaker.countBreaks(str);
+				var expected_len_result = found_len == expected_reverse.length;
+				if (!struct_is_equal_result || !expected_len_result)
+				{
+					Debug.message("Fail on line " + (i + 1) + " " + struct_is_equal_result + " " + expected_len_result);
+					Debug.message(found_len + " " + expected_reverse.length);
+					Debug.message(res.join(","));
+					Debug.message(expected_reverse.join(","));
+					Debug.message(str.length);
+					System.exit();
+				}
+			}
+		}
+	}
+@endif
+}
+@endif

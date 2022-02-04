@@ -511,7 +511,6 @@ class KAGMessageWindowMenuItem extends KAGMenuItem
 
 	function addChildren()
 	{
-@if(GAME_FATE)
 		this.mobileBreakGlyphsFlag = new GameFlag(owner, owner.sflags, mobileBreakGlyphsFlagName, false);
 		this.add(this.mobileBreakGlyphsMenuItem = new KAGFlagFolderMenuItem(owner, "Mobile text &break glyphs",, mobileBreakGlyphsFlag, mobileBreakGlyphsPatchName, mobileBreakGlyphsFolderName,,,true));
 		this.mobileBreakGlyphsMenuItem.restartCondition = this.mobileBreakGlyphsMenuItem.onlyScenarioRestartCondition;
@@ -520,7 +519,7 @@ class KAGMessageWindowMenuItem extends KAGMenuItem
 		this.add(this.mobileMessageWindowMenuItem = new KAGFlagFolderMenuItem(owner, "&Mobile message window",, mobileWindowFlag, mobileWindowPatchName, mobileWindowFolderName,,,true));
 		this.mobileMessageWindowMenuItem.restartCondition = this.mobileMessageWindowMenuItem.onlyScenarioRestartCondition;
 		this.mobileMessageWindowMenuItem.afterCallback = this.afterCallback;
-@endif
+
 		this.wideWindowFlag = new GameFlag(owner, owner.sflags, wideWindowFlagName, true);
 		this.add(this.wideMessageWindowMenuItem = new KAGFlagFolderMenuItem(owner, __t("ワイドモードで4:3のメッセージウィンドウ(&W)"),, inverseFlag(wideWindowFlag), wideWindowPatchName,, wideWindowFolderName,,true));
 		this.wideMessageWindowMenuItem.restartCondition = this.wideMessageWindowMenuItem.onlyScenarioRestartCondition;

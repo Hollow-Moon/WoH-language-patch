@@ -814,36 +814,37 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 			this._imageWidth = 128;
 			this._imageHeight = 96;
 		} else {
-			if (imagesHdDict[storageName] === void) {
+			var imageKey = Storages.extractStorageName(storageName);
+			if (imagesHdDict[imageKey] === void) {
 				throw new Exception("Missing image in images_hd.dic: " + storage);
 			}
 
-			if (imagesHdDict[storageName]["hd_name"] !== void || imagesHdDict[storageName]["number_of_images_hd"] !== void) {
+			if (imagesHdDict[imageKey]["hd_name"] !== void || imagesHdDict[imageKey]["number_of_images_hd"] !== void) {
 				var flag = true;
-				if (messageLayerImages.contains(storageName)) {
+				if (messageLayerImages.contains(imageKey)) {
 					flag = this.window.sflags.mobileWindow;
-				} else if (messageBreakImages.contains(storageName)) {
+				} else if (messageBreakImages.contains(imageKey)) {
 					flag = this.window.sflags.mobileBreakGlyphs;
 				} else {
 					flag = this.window.isHd;
 				}
-				this.imageStorage = (imagesHdDict[storageName]["hd_name"] !== void && flag)? imagesHdDict[storageName]["hd_name"] : storageName;
-				this.numberOfImages = (imagesHdDict[storageName]["number_of_images_hd"] !== void && flag)? imagesHdDict[storageName]["number_of_images_hd"] : (imagesHdDict[storageName]["number_of_images"] !== void? imagesHdDict[storageName]["number_of_images"] : 1);
+				this.imageStorage = (imagesHdDict[imageKey]["hd_name"] !== void && flag)? imagesHdDict[imageKey]["hd_name"] : storageName;
+				this.numberOfImages = (imagesHdDict[imageKey]["number_of_images_hd"] !== void && flag)? imagesHdDict[imageKey]["number_of_images_hd"] : (imagesHdDict[imageKey]["number_of_images"] !== void? imagesHdDict[imageKey]["number_of_images"] : 1);
 			} else {
 				this.imageStorage = storageName;
-				this.numberOfImages = imagesHdDict[storageName]["number_of_images"] !== void? imagesHdDict[storageName]["number_of_images"] : 1;
+				this.numberOfImages = imagesHdDict[imageKey]["number_of_images"] !== void? imagesHdDict[imageKey]["number_of_images"] : 1;
 			}
 			
-			this._imageWidth = imagesHdDict[storageName]["width"];
-			this._imageHeight = imagesHdDict[storageName]["height"];
+			this._imageWidth = imagesHdDict[imageKey]["width"];
+			this._imageHeight = imagesHdDict[imageKey]["height"];
 
-			if (messageLayerImages.contains(storageName) && this.window.sflags.wideWindow) {
+			if (messageLayerImages.contains(imageKey) && this.window.sflags.wideWindow) {
 				this._imageWidth = (this._imageWidth * wideFactor) | 0;
 			}
 
 			this._imageWidth *= this.numberOfImages;
 			
-			this.isbg = imagesHdDict[storageName]["bg"] !== void? imagesHdDict[storageName]["bg"] : false;
+			this.isbg = imagesHdDict[imageKey]["bg"] !== void? imagesHdDict[imageKey]["bg"] : false;
 		}
 
 @if(GAME_FATE||GAME_FHAT)

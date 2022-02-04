@@ -126,7 +126,7 @@ function dmt(msg*) { Debug.message(msg.join(", ")+": "+Scripts.getTraceString())
 @set(USE_KRMEMPLUGIN=1)
 @set(USE_MENU_LAYER=0)
 @set(ASYNC_IMAGE_LOAD=0)
-@set(USE_KR_VARIOUS_PLUGINS=0)
+@set(USE_KR_VARIOUS_PLUGINS=1)
 @set(NO_ASYNC_CACHE_IMAGE=1)
 @set(HD_COMPATIBLE_SAVES=1)
 // history buttons are unused anyway...
@@ -200,6 +200,7 @@ function dmt(msg*) { Debug.message(msg.join(", ")+": "+Scripts.getTraceString())
 @endif
 @endif
 @set(CROP_MODE=0)
+@set(EDGE_BLUR_HQ=1)
 
 {
 	var basepath = "";
@@ -253,6 +254,8 @@ function dmt(msg*) { Debug.message(msg.join(", ")+": "+Scripts.getTraceString())
 		Storages.addAutoPath(global.typemoon_repo_root + "common/patch/");
 		Storages.addAutoPath(global.typemoon_repo_root + "common/plugin/");
 		Storages.addAutoPath(global.typemoon_repo_root + "common/pluginpatch/");
+		Storages.addAutoPath(basepath + "/plugin/");
+		Storages.addAutoPath(basepath + "/pluginpatch/");
 	}
 }
 

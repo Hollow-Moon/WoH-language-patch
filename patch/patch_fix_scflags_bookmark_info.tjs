@@ -13,7 +13,8 @@ class KAGWindow_patch_fix_scflags_bookmark_info_override extends KAGWindow_patch
 	}
 
 	var patch_fix_scflags_bookmark_info_initialized = false;
-	var patch_fix_scflags_bookmark_info_regex = /(\d*)\.(bmp|ksd)$/g;
+	var patch_fix_scflags_bookmark_info_regex = /(\d+)\.(bmp|ksd)$/g;
+	var patch_fix_scflags_bookmark_info_processing = false;
 
 	function setSystemStateFromSystemVariables()
 	{
@@ -21,6 +22,8 @@ class KAGWindow_patch_fix_scflags_bookmark_info_override extends KAGWindow_patch
 		if (!this.patch_fix_scflags_bookmark_info_initialized)
 		{
 			this.patch_fix_scflags_bookmark_info_initialized = true;
+			this.patch_fix_scflags_bookmark_info_processing = true;
+			var made_changes = false;
 			if (typeof(Storages.dirlist) === "Object")
 			{
 				var storages = Storages.dirlist(saveDataLocation + "/");
@@ -33,27 +36,63 @@ class KAGWindow_patch_fix_scflags_bookmark_info_override extends KAGWindow_patch
 						if (matches.count > 0)
 						{
 							var num = matches[1] | 0;
-							if (this.bookMarkDates[num] == "" || this.bookMarkNames[num] == "")
+							if (this.getBookMarkDate(num) == "")
 							{
 								try
 								{
+									var fn = saveDataLocation + "/" + file;
 									var modestr = "";
 									if (saveThumbnail)
 									{
-										modestr += "o" + calcThumbnailSize().size;
+@if(!HD_COMPATIBLE_SAVES)
+										modestr += "o" + this.calcThumbnailSize().size;
+@endif
+@if(HD_COMPATIBLE_SAVES)
+										modestr += "o" + this.calcThumbnailSize(fn).size;
+@endif
 									}
-									var data = global.safeEvalStorage(saveDataLocation + "/" + file, modestr);
-									this.bookMarkDates[num] = data.core.storeTime;
-									this.bookMarkNames[num] = data.core.currentPageName;
+									var data = global.safeEvalStorage(fn, modestr);
+									this.getBookMarkInfoFromData(data.core, num);
+									made_changes = true;
 								}
-								catch (e) {}
+								catch (e)
+								{
+									Debug.message("Something went wrong while attempting to read " + file);
+									if (typeof(e) === "Object" && typeof(e.message) === "String")
+									{
+										Debug.message("Exception: " + e.message);
+									}
+								}
 							}
 						}
 					}
 				}
 			}
+			this.patch_fix_scflags_bookmark_info_processing = false;
+			if (made_changes)
+			{
+				this.saveSystemVariables();
+			}
 		}
 		return ret;
+	}
+
+	function saveSystemVariables()
+	{
+		if (this.patch_fix_scflags_bookmark_info_processing)
+		{
+			return;
+		}
+		return super.saveSystemVariables(...);
+	}
+
+	function setBookMarkMenuCaptions()
+	{
+		if (this.patch_fix_scflags_bookmark_info_processing)
+		{
+			return;
+		}
+		return super.setBookMarkMenuCaptions(...);
 	}
 
 }

@@ -1884,7 +1884,7 @@ class KAGWindow extends Window
 		cursorWaitingClick = f.cursorWaitingClick if f.cursorWaitingClick !== void;
 		cursorDraggable = f.cursorDraggable if f.cursorDraggable !== void;
 		supportReadingKey = f.supportReadingKey if f.supportReadingKey !== void;
-		//startAnchorEnabled = f.startAnchorEnabled if f.startAnchorEnabled !== void;	// commented out to prevent "Return Top" not working bug
+		startAnchorEnabled = f.startAnchorEnabled if f.startAnchorEnabled !== void;
 		storeEnabled = f.storeEnabled if f.storeEnabled !== void;
 		restoreEnabled = f.restoreEnabled if f.restoreEnabled !== void;
 		currentLabel = f.currentLabel if f.currentLabel !== void;
@@ -2898,7 +2898,12 @@ class KAGWindow extends Window
 	function goToStart()
 	{
 		// 最初に戻る
+@if(!GAME_FATE)
 		if(!startAnchorEnabled) return;
+@endif
+@if(GAME_FATE)
+		if (!sf.sawPrologue && !sf.prologueMenu) return;
+@endif
 		loadBookMark(999, false); // 栞を読み込む
 	}
 

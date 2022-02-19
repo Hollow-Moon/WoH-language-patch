@@ -93,6 +93,15 @@ class TextDrawer
 	function drawPlayTime(layer, storage) {
 		// XXX: uses _x, so need to re-evaluate
 		var labels = Scripts.evalStorage("play_time.ksc");
+		var timeUnitsLeftOffsets = global.timeUnitsLeftOffsets;
+		var timeUnitsLeftOffsetsKeys = global.timeUnitsLeftOffsetsKeys;
+		var playTimeSettings2 = global.playTimeSettings2;
+		for (var i = 0, internal_forloop_count = playTimeSettings2.count; i < internal_forloop_count; i += 1)
+		{
+			var currentPlayTimeSettings2 = playTimeSettings2[i];
+			var timeUnitsLeftOffsetsKey = timeUnitsLeftOffsetsKeys[i];
+			currentPlayTimeSettings2.title.leftOffset = __si(timeUnitsLeftOffsets[timeUnitsLeftOffsetsKey], timeUnitsLeftOffsetsKey);
+		}
 
 		playTimeSettings.dictionary = %["pt_base" => labels.playtime];
 		drawCenteredEntry(layer, storage, playTimeSettings);

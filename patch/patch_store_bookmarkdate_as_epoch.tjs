@@ -1,0 +1,57 @@
+﻿
+global.KAGWindow_patch_store_bookmarkdate_as_epoch_original = KAGWindow;
+class KAGWindow_patch_store_bookmarkdate_as_epoch_override extends KAGWindow_patch_store_bookmarkdate_as_epoch_original
+{
+	function KAGWindow_patch_store_bookmarkdate_as_epoch_override()
+	{
+		super.KAGWindow(...);
+	}
+
+	function KAGWindow()
+	{
+		KAGWindow_patch_store_bookmarkdate_as_epoch_override(...);
+	}
+
+	var bookMarkEpochDates = [];
+
+	function getBookMarkDate(num)
+	{
+		if (this.bookMarkEpochDates[num] == "")
+		{
+			return this.bookMarkEpochDates[num];
+		}
+		var date = new Date();
+		date.setTime(this.bookMarkEpochDates[num]);
+		date = global.strftime(__("%Y/%m/%d %H:%M"), date);
+		return date;
+	}
+
+	function getBookMarkInfoFromData(dic, num)
+	{
+		if (num < numBookMarks)
+		{
+			this.bookMarkEpochDates[num] = dic.storeTime;
+		}
+		return super.getBookMarkInfoFromData(...);
+	}
+
+	function setSystemStateFromSystemVariables()
+	{
+		var ret = super.setSystemStateFromSystemVariables(...);
+		if (this.scflags.bookMarkEpochDates !== void)
+		{
+			this.bookMarkEpochDates = this.scflags.bookMarkEpochDates;
+		}
+		return ret;
+	}
+
+	function saveSystemVariables()
+	{
+		if (this.isMain)
+		{
+			this.scflags.bookMarkEpochDates = this.bookMarkEpochDates;
+		}
+		return super.saveSystemVariables(...);
+	}
+}
+global.KAGWindow = global.KAGWindow_patch_store_bookmarkdate_as_epoch_override;

@@ -14,15 +14,28 @@ class KAGWindow_patch_store_bookmarkdate_as_epoch_override extends KAGWindow_pat
 
 	var bookMarkEpochDates = [];
 
-	function getBookMarkDate(num)
+	function getFormatDate(datetime)
 	{
-		if (this.bookMarkEpochDates[num] == "")
-		{
-			return this.bookMarkEpochDates[num];
-		}
 		var date = new Date();
-		date.setTime(this.bookMarkEpochDates[num]);
-		date = global.strftime(__("%Y/%m/%d %H:%M"), date);
+		date.setTime(datetime);
+		date = global.strftime(__("%Y/%m/%d %H:%M:%S"), date);
+		return date;
+	}
+
+	function getBookMarkDate(num, formated=true)
+	{
+		var date = this.bookMarkEpochDates[num];
+		if (formated)
+		{
+			if (date != void)
+			{
+				return this.getFormatDate(date);
+			}
+			else
+			{
+				return void;
+			}
+		}
 		return date;
 	}
 

@@ -1521,3 +1521,101 @@ Layer.setFontFace	= function(face, height=font.height, italic=font.italic)
 	}
 	return false;
 };
+
+/* Based on port of strftime() by T. H. Doan (https://thdoan.github.io/strftime/)
+ *
+ * Day of year (%j) code based on Joe Orost's answer:
+ * http://stackoverflow.com/questions/8619879/javascript-calculate-the-day-of-the-year-1-366
+ *
+ * Week number (%V) code based on Taco van den Broek's prototype:
+ * http://techblog.procurios.nl/k/news/view/33796/14863/calculate-iso-8601-week-and-year-in-javascript.html
+ */
+global.strftime = function(sFormat, date)
+{
+	if ((typeof(date) !== "Object") || !(date instanceof "Date"))
+	{
+		date = new Date();
+	}
+	var nDay = date.getDay();
+	var nDate = date.getDate();
+	var nMonth = date.getMonth();
+	var nYear = date.getYear();
+	var nHour = date.getHours();
+	var aDays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+	var aMonths = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+	var aDayCount = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
+	var isLeapYear = function(nYear)
+	{
+		return (nYear%4===0 && nYear%100!==0) || nYear%400===0;
+	};
+	var getThursday = function(date)
+	{
+		var nDay = date.getDay();
+		var nDate = date.getDate();
+		var target = new Date(date);
+		target.setDate(nDate - ((nDay+6)%7) + 3);
+		return target;
+	};
+	var zeroPad = function(nNum, nPad)
+	{
+		return (((Math.pow(10, nPad) | 0) + nNum) + '').substring(1);
+	};
+	var match_tbl = %[
+		'%a' => aDays[nDay].substring(0,3),
+		'%A' => aDays[nDay],
+		'%b' => aMonths[nMonth].substring(0,3),
+		'%B' => aMonths[nMonth],
+@if(0)
+		'%c' => date.toUTCString(),
+@endif
+		'%C' => Math.floor(nYear/100),
+		'%d' => zeroPad(nDate, 2),
+		'%e' => nDate,
+@if(0)
+		'%F' => date.toISOString().substring(0,10),
+		'%G' => getThursday().getYear(),
+		'%g' => (getThursday().getYear() + '').substring(2),
+@endif
+		'%H' => zeroPad(nHour, 2),
+		'%I' => zeroPad((nHour+11)%12 + 1, 2),
+		'%j' => zeroPad(aDayCount[nMonth] + nDate + ((nMonth>1 && isLeapYear(nYear)) ? 1 : 0), 3),
+		'%k' => nHour,
+		'%l' => ((nHour+11)%12 + 1),
+		'%m' => zeroPad(nMonth + 1, 2),
+		'%n' => nMonth + 1,
+		'%M' => zeroPad(date.getMinutes(), 2),
+		'%p' => ((nHour<12) ? 'AM' : 'PM'),
+		'%P' => ((nHour<12) ? 'am' : 'pm'),
+		'%s' => Math.round(date.getTime()/1000),
+		'%S' => zeroPad(date.getSeconds(), 2),
+		'%u' => ((nDay !== 0) ? nDay : 7),
+@if(0)
+		'%V' => (function() {
+			var target = getThursday();
+			var n1stThu = target.valueOf();
+			target.setMonth(0, 1);
+			var nJan1 = target.getDay();
+			if (nJan1!==4) target.setMonth(0, 1 + ((4-nJan1)+7)%7);
+			return zeroPad(1 + Math.ceil((n1stThu-target)/604800000), 2);
+		})(),
+@endif
+		'%w' => nDay,
+@if(0)
+		'%x' => date.toLocaleDateString(),
+		'%X' => date.toLocaleTimeString(),
+@endif
+		'%y' => (nYear + '').substring(2),
+		'%Y' => nYear,
+@if(0)
+		'%z' => date.toTimeString().getTime().replace(/.+GMT([+-]\d+).+/, '$1'),
+		'%Z' => date.toTimeString().replace(/.+\((.+?)\)$/, '$1'),
+@endif
+	];
+	var fmt_regex = /%[a-z]/gi;
+	var match_tbl_func = function(sMatch)
+	{
+		var match_tbl_data = this[sMatch[0]];
+		return ((match_tbl_data !== void ? (match_tbl_data + "") : sMatch) + '');
+	};
+	return fmt_regex.replace(sFormat, match_tbl_func incontextof match_tbl);
+};

@@ -27,6 +27,10 @@ class KAGWindow_patch_store_bookmarkdate_as_epoch_override extends KAGWindow_pat
 		var date = this.bookMarkEpochDates[num];
 		if (formated)
 		{
+			if (date == void)
+			{
+				date = this.bookMarkDates[num];
+			}
 			if (date != void)
 			{
 				return this.getFormatDate(date);

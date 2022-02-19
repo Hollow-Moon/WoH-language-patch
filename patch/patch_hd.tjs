@@ -63,7 +63,13 @@ global.autoWideRatioFlagName = "autoWideRatio";
 global.wideRatioFlagName = "wideRatio";
 
 global.devImageFolders = ["ImagesPatch"];
-global.devHdImageFolders = ["BGImageHD", "FGImageHD", "ImageHD", "ImagesClassicHD", "ImagesConfigHD", "ImagesMobile", "ImagesPatchHD", "ImagesPS2HD", "ImagesTitleHD", "ImagesTrialHD", "ImagesHanafudaHD", "RuleHD", "Image_transparentHDcolor"];
+
+@if(!GAME_FHAT)
+global.devHdImageFolders = [];
+@endif
+@if(GAME_FHAT)
+global.devHdImageFolders = ["BGImageHD", "FGImageHD", "ImageHD", "ImagesConfigHD", "ImagesPatchHD", "ImagesHanafudaHD", "RuleHD"];
+@endif
 
 property systemRatio { getter { return System.screenWidth / System.screenHeight; } }
 

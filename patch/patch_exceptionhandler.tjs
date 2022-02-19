@@ -533,10 +533,10 @@ System.exceptionHandler = function(e)
 			for (var i = 0; i < quickcount; i += 1)
 			{
 				no = win.numBookMarks - 1 - i;
-				if(win.bookMarkDates[no]=="" || win.bookMarkNames[no].substr(0, key.length)==key)
+				if(win.getBookMarkDate(no)=="" || win.getBookMarkPageName(no).substr(0, key.length)==key)
 				{
 					//	クイックセーブに保存
-					win.bookMarkNames[no]	= key+win.bookMarkNames[no];
+					win.bookMarkNames[no]	= key+win.getBookMarkPageName(no);
 					win.saveBookMark(no);
 					saved	= true;
 					msg_components.add(__("現在の状況をクイックセーブの%s番目に保存しました。").sprintf(i));
@@ -549,7 +549,7 @@ System.exceptionHandler = function(e)
 				for (var i = 0; i < normalcount; i += 1)
 				{
 					no	= i;
-					if(win.bookMarkDates[no]=="")
+					if(win.getBookMarkDate(no)=="")
 					{
 						//	通常のセーブ領域に保存
 						win.scflags.bookMarkComments[no]	= __("例外からの復帰用データ");

@@ -156,12 +156,17 @@ function load_fonts(language)
 					if (typeof(global.Font.rasterizer) === "Integer")
 					{
 						global.Font.rasterizer = rasterizers[j];
+						if (global.Font.rasterizer != rasterizers[j])
+						{
+							// Got clamped, probably doesn't exist.
+							continue;
+						}
 					}
 @endif
 					var result = global.Font.addFont(font_file_path);
 					if (typeof(result) === "Object" && result.count > 0)
 					{
-						Debug.message(("Successfully added font \"%s\"").sprintf(result[0]));
+						Debug.message(("Successfully added font \"%s\" from file \"%s\"").sprintf(result[0], font_file_path));
 					}
 					else
 					{

@@ -15,14 +15,49 @@ class VideoOverlayOwnerWindow extends Window
 	var parent;
 	function VideoOverlayOwnerWindow(parent)
 	{
+		this.parent = parent;
 		super.Window(parent);
 
-		// このウィンドウではもっとも基本的なdrawerを用いる
+		// This window uses the most basic drawer
 		// drawDevice.preferredDrawer = global.Window.PassThroughDrawDevice.dtDrawDib;
 
-		borderStyle = bsNone;
-		innerSunken = false;
-		showScrollBars = false;
+		this.borderStyle = bsNone;
+		this.innerSunken = false;
+		this.showScrollBars = false;
+		this.focusable = false;
+	}
+
+	function onMouseDown(x, y, button, shift)
+	{
+		if (typeof(this.parent) === "Object" && typeof(this.parent.onPrimaryClick) === "Object")
+		{
+			if (button === mbLeft)
+			{
+				this.parent.onPrimaryClick();
+				if (typeof(this.parent.focusedLayer) === "Object")
+				{
+					var focusedLayer = this.parent.focusedLayer;
+					if (typeof(focusedLayer) === "Object" && focusedLayer !== null)
+					{
+						if (typeof(focusedLayer.videoRectOnMouseDown) === "Object")
+						{
+							focusedLayer.videoRectOnMouseDown(...);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	function onMouseUp(x, y, button, shift)
+	{
+		if (typeof(this.parent) === "Object" && typeof(this.parent.onPrimaryClick) === "Object")
+		{
+			if (button === mbLeft)
+			{
+				this.parent.onMouseUp(...);
+			}
+		}
 	}
 }
 
@@ -30,31 +65,50 @@ class VideoOverlay
 {
 	var mp = null;
 	var window;
+	var owner_window;
 	/**
 	 * Constructing a VideoOverlay object
 	 *
 	 * @param window Specifies the window (an object of the Window class) that will own this layer.
 	 * @description Build an object of the VideoOverlay class.
 	 */
-	function VideoOverlay(window)
+	function VideoOverlay(owner)
 	{
-		this.window = new VideoOverlayOwnerWindow(window);
+		this.owner_window = owner;
+		this.window = new VideoOverlayOwnerWindow(owner);
+		this.window.setSize(this.owner_window.innerWidth, this.owner_window.innerHeight);
+		this.setPos(0, 0);
 		var mp = new KrMpv();
 		this.mp = mp;
-		mp.set_property("wid", window.HWND);
+		mp.set_property("wid", this.window.HWND + "");
 		mp.set_property("pause", "yes");
 		mp.set_property("input-default-bindings", "no");
 		mp.set_property("config", "no");
 		mp.set_property("idle", "yes");
 		mp.set_property("osc", "no");
 		mp.set_property("osd-level", "0");
+		mp.set_property("fixed-vo", "no");
+		mp.set_property("reset-on-next-file", "pause");
+@if(0)
+		mp.enable_messages("debug");
+@endif
 		mp.set_wakeup_callback(this.patch_mpv_videooverlay_wrapper_wakeup, window);
 		mp.initialize();
+@if(0)
 		mp.commandv("observe_property", "0", "pause");
 		mp.commandv("observe_property", "0", "seek");
 		mp.commandv("keybind", "CLOSE_WIN", "stop");
 		mp.commandv("keybind", "MBTN_LEFT", "stop");
 		mp.commandv("keybind", "ctrl", "stop");
+@endif
+		mp._hook_add("on_load", 0, 0);
+		mp._hook_add("on_after_end_file", 0, 0);
+		this.handle_events();
+	}
+
+	function finalize()
+	{
+		// Nothing to do here.
 	}
 
 	function handle_event(e)
@@ -67,12 +121,16 @@ class VideoOverlay
 			}
 			case "end-file":
 			{
+				this.onStatusChanged("stop");
 				this.onStatusChanged("unload");
 				break;
 			}
 			case "file-loaded":
 			{
-				this.onStatusChanged(this.mp.get_property("pause") ? "ready" : "play");
+				if (this.mode === vomMFEVR)
+				{
+					this.onStatusChanged("ready");
+				}
 				break;
 			}
 			case "seek":
@@ -95,6 +153,28 @@ class VideoOverlay
 			}
 			case "hook":
 			{
+				var window = this.window;
+				switch(e.hook_name)
+				{
+					case "on_load":
+					{
+						window.visible = true;
+						// Force mpv to get events that window size updated
+						window.setSize(window.width - 1, window.height - 1);
+						window.setSize(window.width + 1, window.height + 1);
+						break;
+					}
+					case "on_after_end_file":
+					{
+						window.visible = false;
+						break;
+					}
+					default:
+					{
+						break;
+					}
+				}
+				this.mp._hook_continue(e.hook_id);
 				break;
 			}
 			case "get-property-reply":
@@ -123,17 +203,19 @@ class VideoOverlay
 			}
 			case "property-change":
 			{
+@if(0)
 				if (e.name === "pause")
 				{
-					this.onStatusChanged(e.data == 0 ? "play" : "pause");
+					this.onStatusChanged(e.data == "no" ? "play" : "pause");
 				}
 				else if (e.name === "seek")
 				{
 					if (e.data == 0)
 					{
-						this.onStatusChanged(this.mp.get_property("pause") ? "stop" : "play");
+						this.onStatusChanged(this.mp.get_property("pause") === "yes" ? "stop" : "play");
 					}
 				}
+@endif
 				break;
 			}
 			default:
@@ -143,8 +225,11 @@ class VideoOverlay
 		}
 	}
 
+	var in_event_handling = false;
+
 	function handle_events()
 	{
+		this.in_event_handling = true;
 		// list of events: https://mpv.io/manual/master/#list-of-events
 		var mp = this.mp;
 		while (true)
@@ -154,8 +239,9 @@ class VideoOverlay
 			{
 				break;
 			}
-			this.handle_event(e);
+			(this.handle_event incontextof this)(e);
 		}
+		this.in_event_handling = false;
 	}
 
 	function patch_mpv_videooverlay_wrapper_wakeup()
@@ -234,7 +320,20 @@ class VideoOverlay
 	 */
 	function open(storage)
 	{
-		this.mp.commandv("loadfile", "krmpv://" + Storages.getFullPath(storage));
+		var full_path = Storages.getPlacedPath(storage);
+		var local = "";
+		var path_to_use = "krmpv://" + full_path;
+		try
+		{
+			local = Storages.getLocalName(full_path);
+		}
+		catch (e) {}
+		if (local != "")
+		{
+			path_to_use = local;
+		}
+		this.mp.set_property("pause", "yes");
+		this.mp.commandv("loadfile", path_to_use);
 	}
 
 	/**
@@ -244,7 +343,11 @@ class VideoOverlay
 	 */
 	function play()
 	{
-		this.mp.set_property("pause", false);
+		this.mp.set_property("pause", "no");
+		if (this.mode !== vomMFEVR)
+		{
+			this.onStatusChanged("play");
+		}
 	}
 
 	/**
@@ -254,8 +357,13 @@ class VideoOverlay
 	 */
 	function stop()
 	{
-		this.mp.set_property("pause", true);
-		this.mp.commandv("seek", 0, absolute);
+		if (this.in_event_handling)
+		{
+			return;
+		}
+		this.mp.set_property("pause", "yes");
+		this.mp.commandv("seek", "0", "absolute");
+		this.onStatusChanged("stop");
 	}
 
 	/**
@@ -265,7 +373,12 @@ class VideoOverlay
 	 */
 	function pause()
 	{
-		this.mp.set_property("pause", true);
+		if (this.in_event_handling)
+		{
+			return;
+		}
+		this.mp.set_property("pause", "yes");
+		this.onStatusChanged("pause");
 	}
 
 	/**
@@ -275,7 +388,7 @@ class VideoOverlay
 	 */
 	function rewind()
 	{
-		this.mp.commandv("seek", 0, absolute);
+		this.mp.commandv("seek", "0", "absolute");
 	}
 
 	/**
@@ -309,8 +422,8 @@ class VideoOverlay
 	function setSegmentLoop(comeFrame, goFrame)
 	{
 		var fps = this.mp.get_property("track-list/" + this.mp.get_property("vid") + "/demux-fps");
-		this.mp.set_property("ab-loop-a", comeFrame / fps);
-		this.mp.set_property("ab-loop-b", goFrame / fps);
+		this.mp.set_property("ab-loop-a", (comeFrame / fps) + "");
+		this.mp.set_property("ab-loop-b", (goFrame / fps) + "");
 	}
 
 	/**
@@ -373,7 +486,8 @@ class VideoOverlay
 	 */
 	function setPos(left, top)
 	{
-		this.window.setPos(this.window.parent.left + left, this.window.parent.top + top);
+		var owner = this.window.parent;
+		this.window.setPos(owner.left + (owner.width - owner.innerWidth) + left, owner.top + (owner.height - owner.innerHeight) + top);
 	}
 
 	/**
@@ -402,8 +516,8 @@ class VideoOverlay
 	 */
 	function setBounds(left, top, width, height)
 	{
-		this.window.setPos(this.window.parent.left + left, this.window.parent.top + top);
-		this.window.setSize(width, height);
+		this.setPos(left, top);
+		this.setSize(width, height);
 	}
 
 	/**
@@ -419,7 +533,7 @@ class VideoOverlay
 	 */
 	function selectAudioStream(streamNumber)
 	{
-		this.mp.set_property("aid", streamNumber);
+		this.mp.set_property("aid", streamNumber + "");
 	}
 
 @if(0)
@@ -467,7 +581,7 @@ class VideoOverlay
 		}
 		setter(value)
 		{
-			this.mp.set_property("time-pos", value / 1000);
+			this.mp.set_property("time-pos", (value / 1000) + "");
 		}
 	}
 	/**
@@ -488,7 +602,7 @@ class VideoOverlay
 		setter( value )
 		{
 			var fps = this.mp.get_property("track-list/" + this.mp.get_property("vid") + "/demux-fps");
-			this.mp.set_property("estimated-frame-number", value / fps);
+			this.mp.set_property("estimated-frame-number", (value / fps) + "");
 		}
 	}
 	/**
@@ -507,7 +621,7 @@ class VideoOverlay
 		}
 		setter( value )
 		{
-			this.mp.set_property("loop", value ? "inf" : no);
+			this.mp.set_property("loop", value ? "inf" : "no");
 		}
 	}
 	/**
@@ -524,11 +638,11 @@ class VideoOverlay
 	{
 		getter()
 		{
-			return this.geometry_width;
+			return this.window.width;
 		}
 		setter( value )
 		{
-			this.setSize(value, this.geometry_height);
+			this.setSize(value, this.height);
 		}
 	}
 	/**
@@ -545,11 +659,11 @@ class VideoOverlay
 	{
 		getter()
 		{
-			return this.geometry_height;
+			return this.window.height;
 		}
 		setter( value )
 		{
-			this.setSize(this.geometry_width, value);
+			this.setSize(this.width, value);
 		}
 	}
 	/**
@@ -671,6 +785,7 @@ class VideoOverlay
 		setter( value ) {}
 	}
 @endif
+	var mode_ = vomMFEVR;
 	/**
 	 * [Windows *] Specify overlay or layer drawing
 	 *
@@ -683,11 +798,11 @@ class VideoOverlay
 	{
 		getter()
 		{
-			return vomMixer;
+			return this.mode_;
 		}
 		setter( value )
 		{
-			// Stubbed.
+			this.mode_ = value;
 		}
 	}
 	/**
@@ -708,7 +823,7 @@ class VideoOverlay
 		}
 		setter(value)
 		{
-			this.mp.set_property("speed", value);
+			this.mp.set_property("speed", value + "");
 		}
 	}
 	/**
@@ -793,7 +908,7 @@ class VideoOverlay
 		}
 		setter(value)
 		{
-			this.mp.set_property("volume", value / 1000);
+			this.mp.set_property("volume", (value / 1000) + "");
 		}
 	}
 	/**
@@ -928,7 +1043,7 @@ class VideoOverlay
 		}
 		setter( value )
 		{
-			this.mp.set_property("contrast", value);
+			this.mp.set_property("contrast", value + "");
 		}
 	}
 	/**
@@ -998,7 +1113,7 @@ class VideoOverlay
 		}
 		setter( value )
 		{
-			this.mp.set_property("brightness", value);
+			this.mp.set_property("brightness", value + "");
 		}
 	}
 	/**
@@ -1068,7 +1183,7 @@ class VideoOverlay
 		}
 		setter( value )
 		{
-			this.mp.set_property("hue", value);
+			this.mp.set_property("hue", value + "");
 		}
 	}
 	/**
@@ -1138,7 +1253,7 @@ class VideoOverlay
 		}
 		setter( value )
 		{
-			this.mp.set_property("saturation", value);
+			this.mp.set_property("saturation", value + "");
 		}
 	}
 	/**
@@ -1151,7 +1266,7 @@ class VideoOverlay
 	{
 		getter()
 		{
-		 	return this.mp.get_property("width");
+		 	return this.mp.get_property("width") | 0;
 		}
 	}
 	/**
@@ -1164,7 +1279,7 @@ class VideoOverlay
 	{
 		getter()
 		{
-			return this.mp.get_property("height");
+			return this.mp.get_property("height") | 0;
 		}
 	}
 };

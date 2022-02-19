@@ -87,15 +87,31 @@ class Movie_patch_movie_override_override extends Movie_patch_movie_override_ori
 		this.storageName = storage;
 
 @if(kirikiriz)
-		if (isNewMovieKrkrz) {
-			if(/\.mp4$/i.test(storage)) {
-				if (this.mode != vomMFEVR) this.mode = vomMFEVR;
-			} else {
-				this.mode = vomOverlay;
+		if (isNewMovieKrkrz)
+		{
+			if (typeof(this.mp) === "Object")
+			{
+				this.mode = vomMFEVR;
 			}
-			if (haskrdslavf) {
-				this.mode = vomOverlay;
+			else
+			{
+				if(/\.mp4$/i.test(storage))
+				{
+					if (this.mode != vomMFEVR)
+					{
+						this.mode = vomMFEVR;
+					}
+				}
+				else
+				{
+					this.mode = vomOverlay;
+				}
+				if (haskrdslavf)
+				{
+					this.mode = vomOverlay;
+				}
 			}
+
 		}
 		var videosubsystem = System.getArgument("-videosubsystem");
 		if (videosubsystem) {

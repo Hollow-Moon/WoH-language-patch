@@ -1,4 +1,6 @@
 ﻿
+@set(TAG_QUEUE_DEBUG=0)
+
 global.BaseConductor_patch_conductor_original = BaseConductor;
 class BaseConductor_patch_conductor_override extends BaseConductor_patch_conductor_original
 {
@@ -172,6 +174,19 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 		"l",
 		"lr",
 		"r",
+@if(1)
+		"align",
+		"locatealign",
+		"line",
+		"block",
+		"indent",
+@endif
+@if(1)
+		"setdefaultmessageaction",
+		"resetdefaultmessageaction",
+		"setmessageappearaction",
+		"resetmessageappearaction",
+@endif
 @if(0)
 		"p",
 		"pg",
@@ -299,11 +314,11 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 					ret2.__patch_conductor_line = save_curLine;
 					ret2.tagname = "ch_patch_conductor_split";
 					ret2.text = temp_text.join("");
-@if(0)
+@if(TAG_QUEUE_DEBUG)
 					Debug.message("Submitting text " + ret2.text);
 @endif
 					ret2.append = messagelayer_tag_append;
-@if(0)
+@if(TAG_QUEUE_DEBUG)
 					if (messagelayer_tag_append.count > 0)
 					{
 						var tag_ls = [];
@@ -315,7 +330,7 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 					}
 @endif
 					ret2.prepend = messagelayer_tag_prepend;
-@if(0)
+@if(TAG_QUEUE_DEBUG)
 					if (messagelayer_tag_prepend.count > 0)
 					{
 						var tag_ls = [];
@@ -336,7 +351,7 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 					ret2.tagname = "ch_patch_conductor_messagelayer_tag";
 					{
 						ret2.append = messagelayer_tag_append;
-@if(0)
+@if(TAG_QUEUE_DEBUG)
 						var tag_ls = [];
 						for (var i = 0; i < messagelayer_tag_append.count; i += 1)
 						{
@@ -347,7 +362,7 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 					}
 					{
 						ret2.prepend = messagelayer_tag_prepend;
-@if(0)
+@if(TAG_QUEUE_DEBUG)
 						var tag_ls = [];
 						for (var i = 0; i < messagelayer_tag_prepend.count; i += 1)
 						{
@@ -366,8 +381,8 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 			}
 			if (conductor_split_tags.count > 0)
 			{
-@if(0)
-				Debug.message("End of submission");
+@if(TAG_QUEUE_DEBUG)
+				Debug.message("End of submission with " + conductor_split_tags.count);
 @endif
 				for (var i = conductor_split_tags.count - 1; i >= 0; i -= 1)
 				{
@@ -547,6 +562,10 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 		{
 			this.queueAppendMessageLayerRelatedTags(elm);
 			this.queuePrependMessageLayerRelatedTags(elm);
+		}
+		if (typeof(this.owner.onConductorPreprocessChCompletion) === "Object")
+		{
+			this.owner.onConductorPreprocessChCompletion(this, elm);
 		}
 		return 0;
 	}

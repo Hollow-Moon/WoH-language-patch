@@ -91,6 +91,13 @@ class KAGWindow_patch_align_override extends KAGWindow_patch_align_original
 	function getHandlers()
 	{
 		var handlers = super.getHandlers();
+		handlers.locatealign = function(elm)
+		{
+			historyLayer.locateAlign(elm.anchor, elm.textForLength, elm.offsetText, elm.offsetTextDirection);
+			if(currentWithBack) current.comp.locateAlign(elm.anchor, elm.textForLength, elm.offsetText, elm.offsetTextDirection);
+			current.locateAlign(elm.anchor, elm.textForLength, elm.offsetText, elm.offsetTextDirection);
+			return 0;
+		} incontextof this;
 		handlers.align = function(elm)
 		{
 			var textToAlign = elm.text;
@@ -100,55 +107,52 @@ class KAGWindow_patch_align_override extends KAGWindow_patch_align_original
 			offsetText = elm.offsettext if elm.offsettext !== void;
 			var offsetTextDirection = 0;
 			offsetTextDirection = elm.offsettextdirection if elm.offsettextdirection !== void;
-			if (elm.anchor !== void) {
-				if(elm.rubychar != void && ("" + (+elm.rubychar)) != elm.rubychar) {
-					textForLength = elm.rubychar;
-				}
-				textForLength = conductor.cleanLine(textForLength);
-				offsetText = conductor.cleanLine(offsetText);
-				historyLayer.locateAlign(elm.anchor, textForLength, offsetText, offsetTextDirection);
-				if(currentWithBack) current.comp.locateAlign(elm.anchor, textForLength, offsetText, offsetTextDirection);
-				current.locateAlign(elm.anchor, textForLength, offsetText, offsetTextDirection);
-			}
 			if (elm.rubytext !== void) {
 				var rubyTag = %[tagname:"ruby", text:elm.rubytext];
 				rubyTag.o2o    = elm.rubyo2o    if elm.rubyo2o    !== void;
 				rubyTag.pos    = elm.rubypos    if elm.rubypos    !== void;
 				rubyTag.char   = elm.rubychar   if elm.rubychar   !== void;
 				rubyTag.offset = elm.rubyoffset if elm.rubyoffset !== void;
-				conductor.pendings.insert(0, rubyTag);
+				conductor.queueTag(0, rubyTag);
 			}
 			if (elm.text !== void) {
 				textToAlign = conductor.cleanLine(textToAlign);
-				var tag_index = 0;
-				for (var i = 0, internal_forloop_count = textToAlign.length; i < internal_forloop_count; i += 1) {
-					var character = textToAlign[i];
-					var line_tag = %[tagname:"line", len:0];
-					var block_tag = %[tagname:"block", len:0];
-					while (character == conductor.dash_character) {
-						i++;
-						line_tag.len++;
-						character = textToAlign[i];
-					}
-					while (character == conductor.block_character) {
-						i++;
-						block_tag.len++;
-						character = textToAlign[i];
-					}
-					if (line_tag.len > 0 || block_tag.len > 0) {
-						if (line_tag.len > 0) {
-							conductor.pendings.insert(tag_index, line_tag);
-							i--;
+				if (textToAlign.indexOf(conductor.dash_character) !== -1 || textToAlign.indexOf(conductor.block_character) !== -1)
+				{
+					var tag_index = 0;
+					for (var i = 0, internal_forloop_count = textToAlign.length; i < internal_forloop_count; i += 1) {
+						var character = textToAlign[i];
+						var line_tag = %[tagname:"line", len:0];
+						var block_tag = %[tagname:"block", len:0];
+						while (character == conductor.dash_character) {
+							i++;
+							line_tag.len++;
+							character = textToAlign[i];
 						}
-						if (block_tag.len > 0) {
-							conductor.pendings.insert(tag_index, block_tag);
-							i--;
+						while (character == conductor.block_character) {
+							i++;
+							block_tag.len++;
+							character = textToAlign[i];
 						}
-					} else {
-						var chTag = %[tagname:"ch", text:textToAlign[i]];
-						conductor.pendings.insert(tag_index, chTag);
+						if (line_tag.len > 0 || block_tag.len > 0) {
+							if (line_tag.len > 0) {
+								conductor.queueTag(tag_index, line_tag);
+								i--;
+							}
+							if (block_tag.len > 0) {
+								conductor.queueTag(tag_index, block_tag);
+								i--;
+							}
+						} else {
+							var chTag = %[tagname:"ch", text:textToAlign[i]];
+							conductor.queueTag(tag_index, chTag);
+						}
+						tag_index++;
 					}
-					tag_index++;
+				}
+				else
+				{
+					conductor.queueText(textToAlign, elm);
 				}
 			}
 			if (elm.indent) {
@@ -157,7 +161,16 @@ class KAGWindow_patch_align_override extends KAGWindow_patch_align_original
 				if (elm.indentoffset !== void) {
 					indentOffset = elm.indentoffset;
 				}
-				conductor.pendings.insert(indentOffset, indentTag);
+				conductor.queueTag(indentOffset, indentTag);
+			}
+			if (elm.anchor !== void) {
+				if(elm.rubychar != void && ("" + (+elm.rubychar)) != elm.rubychar) {
+					textForLength = elm.rubychar;
+				}
+				textForLength = conductor.cleanLine(textForLength);
+				offsetText = conductor.cleanLine(offsetText);
+				var locatealignTag = %[tagname:"locatealign", anchor:elm.anchor, textForLength:textForLength, offsetText:offsetText, offsetTextDirection:offsetTextDirection];
+				conductor.queueTag(0, locatealignTag);
 			}
 			return 0;
 		} incontextof this;

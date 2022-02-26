@@ -233,53 +233,86 @@ class Layer_patch_layer_override extends Layer_patch_layer_original
 		return super.saveLayerImage(storage, type);
 	}
 
+	function drawText(left, top, text, color, opacity, aa, slevel, scolor, swidth, sofsx, sofxy)
+	{
+		this.font.update_font_info();
 @if(DRAWTEXT_ESCAPE)
-	function drawText(left, top, text, color, opacity, aa, slevel, scolor, swidth, sofsx, sofxy, language=(typeof(global.kag) === "Object" ? global.kag.sflags.language : this.window.sflags.language))
-	{
-		this.font.update_font_info();
-		var fontToSpecialCharacters = languageSettings[language].special_characters;
+		var specialCharacters = this.font.fontToSpecialCharacters_specialCharacters;
+		var alternativeFontFace = this.font.fontToSpecialCharacters_alternativeFontFace;
 @if(!KIRIKIROID)
-		if (fontToSpecialCharacters === void || fontToSpecialCharacters[font.face] === void)
-@endif
+		if ((specialCharacters != void && alternativeFontFace != void) || ((text.length > 1) && (text.indexOf("―") !== -1 || text.indexOf("■") !== -1)))
 		{
-			return super.drawText(left, top, text, color, opacity, aa, slevel, scolor, swidth, sofsx, sofxy);
-		}
-		var specialCharacters = fontToSpecialCharacters[font.face][0];
-		var alternativeFontFace = fontToSpecialCharacters[font.face][1];
-
-		var x = 0;
-		for (var i = 0, internal_forloop_count = text.length; i < internal_forloop_count; i += 1) {
-			var character = text[i];
-			if (specialCharacters.contains(character)) {
+			var x = 0;
+			for (var i = 0, internal_forloop_count = text.length; i < internal_forloop_count; i += 1)
+			{
+				var character = text[i];
+				var should_swap_font_face = false;
+				if ((specialCharacters !== void && alternativeFontFace !== void) && specialCharacters.contains(character))
+				{
+					should_swap_font_face = true;
+				}
 				var previousFontFace = font.face;
-				font.face = alternativeFontFace;
-				super.drawText(left+x, top, character, color, opacity, aa, slevel, scolor, swidth, sofsx, sofxy);
+				if (should_swap_font_face)
+				{
+					font.face = alternativeFontFace;
+				}
 @if(!HD_MODE)
-				x += font.getTextWidth(character);
+				var textwidth = font.getTextWidth(character);
+				var textheight = font.getTextHeight(character);
 @endif
 @if(HD_MODE)
-				x += scaleWidth(font.getTextWidth(character));
+				var textwidth = scaleWidth(font.getTextWidth(character));
+				var textheight = scaleHeight(font.getTextHeight(character));
 @endif
-				font.face = previousFontFace;
-			} else {
-				super.drawText(left+x, top, character, color, opacity, aa, slevel, scolor, swidth, sofsx, sofxy);
-@if(!HD_MODE)
-				x += font.getTextWidth(character);
-@endif
-@if(HD_MODE)
-				x += scaleWidth(font.getTextWidth(character));
-@endif
+				var found_same_characters = 1;
+				if (("―■").indexOf(character) !== -1)
+				{
+					for (var j = i + 1, internal_forloop_count = text.length; j < internal_forloop_count; j += 1)
+					{
+						var character2 = text[j];
+						if (character2 === character)
+						{
+							found_same_characters += 1;
+						}
+						else
+						{
+							break;
+						}
+					}
+				}
+				if (found_same_characters > 1)
+				{
+					var	tmp	= window.temporaryLayer;
+					tmp.setImageSize(textwidth, textheight);
+					tmp.fillRect(0, 0, tmp.imageWidth, tmp.imageHeight, 0);
+					tmp.font.assign_font_properties(this.font);
+					var textwidth_half = textwidth / 2;
+					var textwidth_quarter = textwidth_half / 2;
+					var textwidth_middle_len = textwidth * (found_same_characters - 1);
+					tmp.drawText(0, 0, character, color, opacity, aa, slevel, scolor, swidth, sofsx, sofxy);
+					this.operateStretch(left + x + textwidth_quarter, top, textwidth_middle_len, textheight, tmp, textwidth_quarter, 0, textwidth_half, textheight, omAuto, 255, stLinear);
+					this.operateRect(left + x, top, tmp, 0, 0, textwidth_quarter, textheight, omAuto, 255);
+					this.operateRect(left + x + (textwidth_middle_len + textwidth_quarter), top, tmp, textwidth_middle_len + textwidth_quarter, 0, textwidth_quarter, textheight, omAuto, 255);
+					i += found_same_characters - 1;
+					textwidth *= found_same_characters;
+				}
+				else
+				{
+					super.drawText(left + x, top, character, color, opacity, aa, slevel, scolor, swidth, sofsx, sofxy);
+				}
+				x += textwidth;
+				if (should_swap_font_face)
+				{
+					font.face = previousFontFace;
+				}
 			}
+			return;
 		}
-	}
 @endif
-@if(!DRAWTEXT_ESCAPE)
-	function drawText()
-	{
-		this.font.update_font_info();
+@endif
 		return super.drawText(...);
 	}
-@endif
+
 }
 global.Layer = Layer_patch_layer_override;
 

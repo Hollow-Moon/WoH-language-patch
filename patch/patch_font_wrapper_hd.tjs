@@ -1,89 +1,61 @@
 ﻿class FontWrapperHD extends FontWrapper
 {
-	var _height;
-
 	function FontWrapperHD(font, layer)
 	{
 		super.FontWrapper(...);
-		height = font.height;
 	}
 
 	property height
 	{
 		getter
 		{
-			return _height;
+			return layer.window.unscaleHeight(super.height);
 		}
 		setter(v)
 		{
-			if ((Math.abs(v) | 0) != _height || font.height != layer.scaleHeight(v))
-			{
-				_height = (Math.abs(v) | 0);
-				font.height = layer.scaleHeight(v);
-				global.automapPrerenderedFont(font) if typeof global.automapPrerenderedFont === "Object";
-			}
+			super.height = layer.scaleHeight(v);
 		}
 	}
 
-	function getTextHeight(text)
+	function getTextHeight()
 	{
-		return layer.window.unscaleHeight(font.getTextHeight(text));
+		return layer.window.unscaleHeight(super.getTextHeight(...));
 	}
 
-	function mapPrerenderedFont(fontstorage)
-	{
-		return font.mapPrerenderedFont(fontstorage);
-	}
-
-	function unmapPrerenderedFont()
-	{
-		return font.unmapPrerenderedFont();
-	}
-
-@if(!DRAWTEXT_ESCAPE)
-	function getTextWidth(text)
+	function getTextWidth()
 	{
 		var factor = layer.stretch? wideFactor : 1;
-		return layer.window.unscaleHeight(font.getTextWidth(text)) / factor;
+		return layer.window.unscaleHeight(super.getTextWidth(...)) / factor;
 	}
-@endif
 
-@if(DRAWTEXT_ESCAPE)
-	function getTextWidth(text, language=(typeof(global.kag) === "Object" ? global.kag.sflags.language : this.layer.window.sflags.language))
-	{
-		var factor = layer.stretch? wideFactor : 1;
-		return layer.window.unscaleHeight(super.getTextWidth(text, language)) / factor;
-	}
-@endif
-
-	function getGlyphDrawRect(text)
+	function getGlyphDrawRect()
 	{
 		if (typeof(font.getGlyphDrawRect) !== "Object")
 		{
 			return;
 		}
-		var rect = font.getGlyphDrawRect(text);
+		var rect = super.getGlyphDrawRect(...);
 		rect.setSize(layer.window.unscaleHeight(rect.width), layer.window.unscaleHeight(rect.height));
 		return rect;
 	}
 
-	function getEscWidthX(text)
+	function getEscWidthX()
 	{
-		return layer.window.unscaleHeight(font.getEscWidthX(text));
+		return layer.window.unscaleHeight(super.getEscWidthX(...));
 	}
 
-	function getEscWidthY(text)
+	function getEscWidthY()
 	{
-		return layer.window.unscaleHeight(font.getEscWidthY(text));
+		return layer.window.unscaleHeight(super.getEscWidthY(...));
 	}
 
-	function getEscHeightX(text)
+	function getEscHeightX()
 	{
-		return layer.window.unscaleHeight(font.getEscHeightX(text));
+		return layer.window.unscaleHeight(super.getEscHeightX(...));
 	}
 
-	function getEscHeightY(text)
+	function getEscHeightY()
 	{
-		return layer.window.unscaleHeight(font.getEscHeightY(text));
+		return layer.window.unscaleHeight(super.getEscHeightY(...));
 	}
 }

@@ -150,7 +150,32 @@ global.font_remove_list = [
 	"Script",
 	"Roman",
 	"MS Serif",
-	"#44 Font Bitmap"
+	"#44 Font Bitmap",
+	"System Font",
+	"Apple Braille",
+	"Apple Symbols",
+	"Arial Hebrew",
+	"Arial Hebrew Scholar",
+	"Avenir",
+	"Avenir Next",
+	"Avenir Next Condensed",
+	"Geeza Pro",
+	"Helvetica",
+	"Helvetica Neue",
+	"Kohinoor Bangla",
+	"Kohinoor Devanagari",
+	"Kohinoor Telugu",
+	"Lucida Grande",
+	"Marker Felt",
+	"Menlo",
+	"Noteworthy",
+	"Noto Nastaliq Urdu",
+	"Optima",
+	"Palatino",
+	"Symbol",
+	"Thonburi",
+	"Times",
+	"Zapf Dingbats"
 ];
 
 global.font_file_add_list = [
@@ -166,6 +191,7 @@ global.font_file_add_list = [
 
 global.font_remap_cache = %[];
 global.font_metrics_cache = %[];
+global.font_state_cache = %[];
 global.font_metrics_none_cache = [0, 0, null, 0, 0, 0, 0];
 
 @if(FREETYPE_FONT)
@@ -270,39 +296,54 @@ class FontWrapper
 	{
 		if (typeof(font) !== "Object")
 		{
+			Debug.message("Warning: Font passed in is not an object!");
 			font = new Font();
-		}
-		if (typeof(font.face) !== "String" || font.face === "")
-		{
-			font.face = "MS PGothic";
 		}
 		this.font = font;
 		this.layer = layer;
-		var to_remap_face = this.get_remap_facename(font.face);
-		if (typeof(to_remap_face) === "String")
-		{
-			font.face = to_remap_face;
-		}
+		this.apply_initial_properties();
 	}
 
 	var curFontParams = [];
 	var curFontParamsString = "";
 	var font_info_is_dirty = true;
 	var font_info_metrics;
+	var font_info_state;
 	var fontToSpecialCharacters_specialCharacters;
 	var fontToSpecialCharacters_alternativeFontFace;
+
+	var _font_height = 0;
+	var _font_face = "";
+	var _font_angle = 0;
+	var _font_bold = false;
+	var _font_italic = false;
+	var _font_strikeout = false;
+	var _font_underline = false;
+
+	function apply_initial_properties()
+	{
+		var font = this.font;
+		this._font_height = font.height;
+		this._font_face = font.face;
+		this._font_angle = font.angle;
+		this._font_bold = font.bold;
+		this._font_italic = font.italic;
+		this._font_strikeout = font.strikeout;
+		this._font_underline = font.underline;
+	}
 
 	property height
 	{
 		getter
 		{
-			return font.height;
+			this.update_font_info();
+			return this._font_height;
 		}
-		setter(v)
+		setter (v)
 		{
-			if (v != font.height)
+			if (v != this._font_height)
 			{
-				font.height = v;
+				this._font_height = v;
 				this.font_info_is_dirty = true;
 			}
 		}
@@ -312,22 +353,14 @@ class FontWrapper
 	{
 		getter
 		{
-			return font.face;
+			this.update_font_info();
+			return this._font_face;
 		}
-		setter(v)
+		setter (v)
 		{
-			if (v != font.face)
+			if (v != this._font_face)
 			{
-				if (typeof(v) !== "String" || v === "")
-				{
-					v = "MS PGothic";
-				}
-				font.face = v;
-				var to_remap_face = this.get_remap_facename(font.face);
-				if (typeof(to_remap_face) === "String")
-				{
-					font.face = to_remap_face;
-				}
+				this._font_face = v;
 				this.font_info_is_dirty = true;
 			}
 		}
@@ -337,13 +370,14 @@ class FontWrapper
 	{
 		getter
 		{
-			return font.angle;
+			this.update_font_info();
+			return this._font_angle;
 		}
-		setter(v)
+		setter (v)
 		{
-			if (v != font.angle)
+			if (v != this._font_angle)
 			{
-				font.angle = v;
+				this._font_angle = v;
 				this.font_info_is_dirty = true;
 			}
 
@@ -354,13 +388,14 @@ class FontWrapper
 	{
 		getter
 		{
-			return font.bold;
+			this.update_font_info();
+			return this._font_bold;
 		}
-		setter(v)
+		setter (v)
 		{
-			if (v != font.bold)
+			if (v != this._font_bold)
 			{
-				font.bold = v;
+				this._font_bold = v;
 				this.font_info_is_dirty = true;
 			}
 		}
@@ -370,13 +405,14 @@ class FontWrapper
 	{
 		getter
 		{
-			return font.italic;
+			this.update_font_info();
+			return this._font_italic;
 		}
-		setter(v)
+		setter (v)
 		{
-			if (v != font.italic)
+			if (v != this._font_italic)
 			{
-				font.italic = v;
+				this._font_italic = v;
 				this.font_info_is_dirty = true;
 			}
 		}
@@ -386,13 +422,14 @@ class FontWrapper
 	{
 		getter
 		{
-			return font.strikeout;
+			this.update_font_info();
+			return this._font_strikeout;
 		}
-		setter(v)
+		setter (v)
 		{
-			if (v != font.strikeout)
+			if (v != this._font_strikeout)
 			{
-				font.strikeout = v;
+				this._font_strikeout = v;
 				this.font_info_is_dirty = true;
 			}
 		}
@@ -402,35 +439,90 @@ class FontWrapper
 	{
 		getter
 		{
-			return font.underline;
+			this.update_font_info();
+			return this._font_underline;
 		}
-		setter(v)
+		setter (v)
 		{
-			if (v != font.underline)
+			if (v != this._font_underline)
 			{
-				font.underline = v;
+				this._font_underline = v;
 				this.font_info_is_dirty = true;
 			}
 		}
 	}
 
-	function assign_font_properties(src)
+	function assign_font_properties(src, dest=this)
 	{
-		this.height = src.height;
-		this.face = src.face;
-		this.angle = src.angle;
-		this.bold = src.bold;
-		this.italic = src.italic;
-		this.strikeout = src.strikeout;
-		this.underline = src.underline;
+		dest.height = src.height;
+		dest.face = src.face;
+		dest.angle = src.angle;
+		dest.bold = src.bold;
+		dest.italic = src.italic;
+		dest.strikeout = src.strikeout;
+		dest.underline = src.underline;
 	}
 
 	function update_font_info()
 	{
 		if (this.font_info_is_dirty)
 		{
+			var font = this.font;
+			if (this._font_height < 0)
+			{
+				this._font_height = -(this._font_height);
+			}
+			var face = this._font_face;
+			if (typeof(face) !== "String" || face === "")
+			{
+				face = "MS PGothic";
+			}
+			var to_remap_face = this.get_remap_facename(face);
+			if (typeof(to_remap_face) === "String")
+			{
+				this._font_face = to_remap_face;
+			}
+			else
+			{
+				this._font_face = face;
+			}
+			if (this._font_face != font.face)
+			{
+				font.face = this._font_face;
+				this._font_face = font.face;
+			}
+			if (this._font_height != font.height)
+			{
+				font.height = this._font_height;
+				this._font_height = font.height;
+			}
+			if (this._font_angle != font.angle)
+			{
+				font.angle = this._font_angle;
+				this._font_angle = font.angle;
+			}
+			if (this._font_bold != font.bold)
+			{
+				font.bold = this._font_bold;
+				this._font_bold = font.bold;
+			}
+			if (this._font_italic != font.italic)
+			{
+				font.italic = this._font_italic;
+				this._font_italic = font.italic;
+			}
+			if (this._font_strikeout != font.strikeout)
+			{
+				font.strikeout = this._font_strikeout;
+				this._font_strikeout = font.strikeout;
+			}
+			if (this._font_underline != font.underline)
+			{
+				font.underline = this._font_underline;
+				this._font_underline = font.underline;
+			}
 			this.curFontParams.clear();
-			this.curFontParams.push(font.face, font.height, font.angle, font.bold, font.italic, font.strikeout, font.underline);
+			this.curFontParams.push(this._font_face, this._font_height, this._font_angle, this._font_bold, this._font_italic, this._font_strikeout, this._font_underline);
 			var curFontParamsString = this.curFontParams.join("|");
 			this.curFontParamsString = curFontParamsString;
 			if (curFontParamsString != "")
@@ -442,10 +534,19 @@ class FontWrapper
 					global.font_metrics_cache[curFontParamsString] = cache;
 				}
 				this.font_info_metrics = cache;
+				var state = global.font_state_cache[curFontParamsString];
+				if (state === void)
+				{
+					state = new Font();
+					global.font_state_cache[curFontParamsString] = state;
+					this.assign_font_properties(this, state);
+				}
+				this.font_info_state = state;
 			}
 			else
 			{
 				this.font_info_metrics = void;
+				this.font_info_state = void;
 			}
 @if(DRAWTEXT_ESCAPE)
 			var language = (typeof(global.kag) === "Object" ? global.kag.sflags.language : this.layer.window.sflags.language);
@@ -496,24 +597,43 @@ class FontWrapper
 		{
 			return;
 		}
+		var font_faces_arr = face.split(",");
 		var font_list = this.getList();
+		var deffont = System.getArgument("-deffont");
 		for (var i = 0, internal_forloop_count = global.font_remap_list.count; i < internal_forloop_count; i += 1)
 		{
-			if (global.font_remap_list[i].find(face) !== -1)
+			for (var ii = 0, internal_forloop_count1 = font_faces_arr.count; ii < internal_forloop_count1; ii += 1)
 			{
-				for (var j = 0, internal_forloop_count = global.font_remap_list[i].count; j < internal_forloop_count; j += 1)
+				var face_item = font_faces_arr[ii];
+				if (face_item == "")
 				{
-					var xface = global.font_remap_list[i][j];
-					if (font_list.find(xface) !== -1)
-					{
-						global.font_remap_cache[face] = xface;
-						return xface;
-					}
+					continue;
 				}
-				global.font_remap_cache[face] = null;
-				return;
+				if (global.font_remap_list[i].find(face_item) !== -1)
+				{
+					var face_found = false;
+					for (var j = 0, internal_forloop_count2 = global.font_remap_list[i].count; j < internal_forloop_count2; j += 1)
+					{
+						var xface = global.font_remap_list[i][j];
+						if (font_list.find(xface) !== -1)
+						{
+							global.font_remap_cache[face_item] = xface;
+							font_faces_arr[ii] = xface;
+							face_found = true;
+							break;
+						}
+					}
+					if (!face_found)
+					{
+						global.font_remap_cache[face_item] = null;
+					}
+					continue;
+				}
 			}
 		}
+		var font_faces_join = font_faces_arr.join(",");
+		global.font_remap_cache[face] = font_faces_join;
+		return font_faces_join;
 	}
 
 	function getList(flags)
@@ -574,6 +694,14 @@ class FontWrapper
 		{
 			ret = [];
 		}
+		for (var i = 0, internal_forloop_count = ret.count; i < internal_forloop_count; i += 1)
+		{
+			var face = ret[i];
+			if (#face === 46) // period character
+			{
+				ret[i] = face.substring(1);
+			}
+		}
 		for (var i = 0, internal_forloop_count = global.font_remove_list.count; i < internal_forloop_count; i += 1)
 		{
 			var to_remove = global.font_remove_list[i];
@@ -586,52 +714,42 @@ class FontWrapper
 	function mapPrerenderedFont(fontstorage)
 	{
 		var ret = font.mapPrerenderedFont(fontstorage);
-		this.update_font_info();
+		this.font_info_is_dirty = true;
 		return ret;
 	}
 
 	function unmapPrerenderedFont()
 	{
 		var ret = font.unmapPrerenderedFont();
-		this.update_font_info();
+		this.font_info_is_dirty = true;
 		return ret;
 	}
 
+	var should_persist_to_font_metric_cache = true;
 	function generate_font_metric_cache(str)
 	{
+		this.update_font_info();
 		var font_info_metrics = this.font_info_metrics;
 		var strlen = str.length;
+		// XXX: Metrics of created Font object are mismatched with passed in Font object?
+@if(0)
+		var font = this.font_info_state;
+@endif
+		var font = this.font;
 		if (strlen === 1) // XXX: does not deal with surgate pairs
 		{
 			var cache = font_info_metrics[str];
 			if (cache === void)
 			{
-				cache = [];
-				font_info_metrics[str] = cache;
 				var glyphdrawrect = null;
 				if (typeof(font.getGlyphDrawRect) === "Object" && typeof(global.Rect) === "Object")
 				{
 					glyphdrawrect = font.getGlyphDrawRect(str);
 				}
-				var textwidth = 0;
-@if(DRAWTEXT_ESCAPE)
+				cache = [font.getTextWidth(str), font.getTextHeight(str), font.getGlyphDrawRect(str), font.getEscWidthX(str), font.getEscWidthY(str), font.getEscHeightX(str), font.getEscHeightY(str)];
 				{
-					var specialCharacters = this.fontToSpecialCharacters_specialCharacters;
-					var alternativeFontFace = this.fontToSpecialCharacters_alternativeFontFace;
-					if ((specialCharacters !== void && alternativeFontFace !== void) && specialCharacters.contains(str))
-					{
-						var previousFontFace = font.face;
-						font.face = alternativeFontFace;
-						textwidth = font.getTextWidth(str);
-						font.face = previousFontFace;
-					}
+					font_info_metrics[str] = cache;
 				}
-@endif
-				if (textwidth === 0)
-				{
-					textwidth = font.getTextWidth(str);
-				}
-				cache.push(textwidth, font.getTextHeight(str), glyphdrawrect, font.getEscWidthX(str), font.getEscWidthY(str), font.getEscHeightX(str), font.getEscHeightY(str));
 			}
 			return cache;
 		}
@@ -640,13 +758,30 @@ class FontWrapper
 			var cache = font_info_metrics[str];
 			if (cache === void)
 			{
-				cache = [];
 				var textwidth = 0;
 				var textheight = 0;
 				var glyphdrawrect = null;
 				for (var i = 0, internal_forloop_count = str.length; i < internal_forloop_count; i += 1)
 				{
+@if(DRAWTEXT_ESCAPE)
+					var previousFontFace = void;
+					{
+						var specialCharacters = this.fontToSpecialCharacters_specialCharacters;
+						var alternativeFontFace = this.fontToSpecialCharacters_alternativeFontFace;
+						if ((specialCharacters !== void && alternativeFontFace !== void) && (specialCharacters.find(str[i]) !== -1))
+						{
+							previousFontFace = this.face;
+							this.face = alternativeFontFace;
+						}
+					}
+@endif
 					var char_cache = this.generate_font_metric_cache(str[i]);
+@if(DRAWTEXT_ESCAPE)
+					if (previousFontFace !== void)
+					{
+						this.face = previousFontFace;
+					}
+@endif
 					if (char_cache[2] !== null)
 					{
 						if (i === 0)
@@ -672,8 +807,10 @@ class FontWrapper
 				var escwidthy = Math.sin(radianangle) * (-textwidth);
 				var escheightx = Math.sin(radianangle) * textheight;
 				var escheighty = Math.cos(radianangle) * textheight;
-				font_info_metrics[str] = cache;
-				cache.push(textwidth, textheight, glyphdrawrect, escwidthx, escwidthy, escheightx, escheighty);
+				cache = [textwidth, textheight, glyphdrawrect, escwidthx, escwidthy, escheightx, escheighty];
+				{
+					font_info_metrics[str] = cache;
+				}
 			}
 			return cache;
 		}
@@ -682,49 +819,42 @@ class FontWrapper
 
 	function getTextWidth(text)
 	{
-		this.update_font_info();
 		var cache = this.generate_font_metric_cache(text);
 		return cache[0];
 	}
 
 	function getTextHeight(text)
 	{
-		this.update_font_info();
 		var cache = this.generate_font_metric_cache(text);
 		return cache[1];
 	}
 
 	function getGlyphDrawRect(text)
 	{
-		this.update_font_info();
 		var cache = this.generate_font_metric_cache(text);
-		return cache[2];
+		return new Rect(cache[2]);
 	}
 
 	function getEscWidthX(text)
 	{
-		this.update_font_info();
 		var cache = this.generate_font_metric_cache(text);
 		return cache[3];
 	}
 
 	function getEscWidthY(text)
 	{
-		this.update_font_info();
 		var cache = this.generate_font_metric_cache(text);
 		return cache[4];
 	}
 
 	function getEscHeightX(text)
 	{
-		this.update_font_info();
 		var cache = this.generate_font_metric_cache(text);
 		return cache[5];
 	}
 
 	function getEscHeightY(text)
 	{
-		this.update_font_info();
 		var cache = this.generate_font_metric_cache(text);
 		return cache[6];
 	}

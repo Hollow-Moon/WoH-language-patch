@@ -240,7 +240,7 @@ class Layer_patch_layer_override extends Layer_patch_layer_original
 		var specialCharacters = this.font.fontToSpecialCharacters_specialCharacters;
 		var alternativeFontFace = this.font.fontToSpecialCharacters_alternativeFontFace;
 @if(!KIRIKIROID)
-		if ((specialCharacters != void && alternativeFontFace != void) || ((text.length > 1) && (text.indexOf("―") !== -1 || text.indexOf("■") !== -1)))
+		if (specialCharacters != void && alternativeFontFace != void)
 		{
 			var x = 0;
 			for (var i = 0, internal_forloop_count = text.length; i < internal_forloop_count; i += 1)
@@ -264,39 +264,6 @@ class Layer_patch_layer_override extends Layer_patch_layer_original
 				var textwidth = scaleWidth(font.getTextWidth(character));
 				var textheight = scaleHeight(font.getTextHeight(character));
 @endif
-				var found_same_characters = 1;
-				if (("―■").indexOf(character) !== -1)
-				{
-					for (var j = i + 1, internal_forloop_count = text.length; j < internal_forloop_count; j += 1)
-					{
-						var character2 = text[j];
-						if (character2 === character)
-						{
-							found_same_characters += 1;
-						}
-						else
-						{
-							break;
-						}
-					}
-				}
-				if (found_same_characters > 1)
-				{
-					var	tmp	= window.temporaryLayer;
-					tmp.setImageSize(textwidth, textheight);
-					tmp.fillRect(0, 0, tmp.imageWidth, tmp.imageHeight, 0);
-					tmp.font.assign_font_properties(this.font);
-					var textwidth_half = textwidth / 2;
-					var textwidth_quarter = textwidth_half / 2;
-					var textwidth_middle_len = textwidth * (found_same_characters - 1);
-					tmp.drawText(0, 0, character, color, opacity, aa, slevel, scolor, swidth, sofsx, sofxy);
-					this.operateStretch(left + x + textwidth_quarter, top, textwidth_middle_len, textheight, tmp, textwidth_quarter, 0, textwidth_half, textheight, omAuto, 255, stLinear);
-					this.operateRect(left + x, top, tmp, 0, 0, textwidth_quarter, textheight, omAuto, 255);
-					this.operateRect(left + x + (textwidth_middle_len + textwidth_quarter), top, tmp, textwidth_middle_len + textwidth_quarter, 0, textwidth_quarter, textheight, omAuto, 255);
-					i += found_same_characters - 1;
-					textwidth *= found_same_characters;
-				}
-				else
 				{
 					super.drawText(left + x, top, character, color, opacity, aa, slevel, scolor, swidth, sofsx, sofxy);
 				}
@@ -319,6 +286,16 @@ global.Layer = Layer_patch_layer_override;
 global.Window_patch_layer_original	= Window;
 class Window_patch_layer_override extends Window_patch_layer_original
 {
+	function Window_patch_layer_override()
+	{
+		super.Window(...);
+	}
+
+	function Window()
+	{
+		Window_patch_layer_override(...);
+	}
+
 	var isActive = true;
 
 	function onActivate() {

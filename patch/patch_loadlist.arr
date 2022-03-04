@@ -147,6 +147,7 @@
 	["EditLayer.override.tjs", ,,, "GAME_WOHN"],
 	"Plugin.tjs",
 	[,,,,, "After KAG system scripts"],
+	"patch_drawtext_join_characters.tjs",
 	"patch_kagconfig.tjs",
 	"patch_historylayer.tjs",
 	"patch_language_override.tjs",

@@ -1,0 +1,105 @@
+﻿
+global.Layer_patch_drawtext_join_characters_original = Layer;
+class Layer_patch_drawtext_join_characters_override extends Layer_patch_drawtext_join_characters_original
+{
+	function Layer_patch_drawtext_join_characters_override()
+	{
+		super.Layer(...);
+	}
+
+	function Layer()
+	{
+		Layer_patch_drawtext_join_characters_override(...);
+	}
+
+	function drawText(left, top, text, color, opacity, aa, slevel, scolor, swidth, sofsx, sofxy)
+	{
+		if ((text.length > 1) && (text.indexOf("―") !== -1 || text.indexOf("■") !== -1))
+		{
+			var x = 0;
+			for (var i = 0, internal_forloop_count = text.length; i < internal_forloop_count; i += 1)
+			{
+				var character = text[i];
+@if(!HD_MODE)
+				var textwidth = font.getTextWidth(character);
+				var textheight = font.getTextHeight(character);
+@endif
+@if(HD_MODE)
+				var textwidth = scaleWidth(font.getTextWidth(character));
+				var textheight = scaleHeight(font.getTextHeight(character));
+@endif
+				var found_same_characters = 1;
+				if (("―■").indexOf(character) !== -1)
+				{
+					for (var j = i + 1, internal_forloop_count = text.length; j < internal_forloop_count; j += 1)
+					{
+						var character2 = text[j];
+						if (character2 === character)
+						{
+							found_same_characters += 1;
+						}
+						else
+						{
+							break;
+						}
+					}
+				}
+				if (found_same_characters > 1)
+				{
+					var	tmp	= window.temporaryLayer_patch_drawtext_join_characters;
+					tmp.setImageSize(textwidth, textheight);
+					tmp.fillRect(0, 0, tmp.imageWidth, tmp.imageHeight, 0);
+					tmp.font.assign_font_properties(this.font);
+					var textwidth_half = textwidth / 2;
+					var textwidth_quarter = textwidth_half / 2;
+					var textwidth_middle_len = textwidth * (found_same_characters - 1);
+					tmp.drawText(0, 0, character, color, opacity, aa, slevel, scolor, swidth, sofsx, sofxy);
+					this.operateStretch(left + x + textwidth_quarter, top, textwidth_middle_len, textheight, tmp, textwidth_quarter, 0, textwidth_half, textheight, omAuto, 255, stLinear);
+					this.operateRect(left + x, top, tmp, 0, 0, textwidth_quarter, textheight, omAuto, 255);
+					this.operateRect(left + x + (textwidth_middle_len + textwidth_quarter), top, tmp, textwidth_middle_len + textwidth_quarter, 0, textwidth_quarter, textheight, omAuto, 255);
+					i += found_same_characters - 1;
+					textwidth *= found_same_characters;
+				}
+				else
+				{
+					super.drawText(left + x, top, character, color, opacity, aa, slevel, scolor, swidth, sofsx, sofxy);
+				}
+				x += textwidth;
+			}
+			return;
+		}
+		return super.drawText(...);
+	}
+
+}
+global.Layer = Layer_patch_drawtext_join_characters_override;
+
+global.Window_patch_drawtext_join_characters_original = Window;
+class Window_patch_drawtext_join_characters_override extends Window_patch_drawtext_join_characters_original
+{
+	function Window_patch_drawtext_join_characters_override()
+	{
+		super.Window(...);
+	}
+
+	function Window()
+	{
+		Window_patch_drawtext_join_characters_override(...);
+	}
+
+	var tempLayer_patch_drawtext_join_characters = void;
+	property temporaryLayer_patch_drawtext_join_characters
+	{
+		getter
+		{
+			if (this.tempLayer_patch_drawtext_join_characters === void)
+			{
+				this.tempLayer_patch_drawtext_join_characters = new Layer(this, this.primaryLayer);
+				this.tempLayer_patch_drawtext_join_characters.name = "Temporary layer for joining text";
+			}
+			return this.tempLayer_patch_drawtext_join_characters;
+		}
+	}
+}
+global.Window = Window_patch_drawtext_join_characters_override;
+

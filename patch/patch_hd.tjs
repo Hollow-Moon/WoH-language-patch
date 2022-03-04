@@ -54,7 +54,7 @@ for (var i=0; i<global.scaleFactors.count; i++) {
 	global.scaleFactorsToHdNames[global.scaleFactors[i]] = global.hdNames[i];
 }
 
-property widePatchName { getter() { return devMode? "ImagesPatch" : mainPatchName; } }
+global.get_widePatchName = function() { { return devMode? "ImagesPatch" : mainPatchName; } };
 global.ruleWideFolderName = "rule-wide";
 
 global.hdScaleFactorFlagName = "hdScaleFactor";
@@ -71,39 +71,41 @@ global.devHdImageFolders = [];
 global.devHdImageFolders = ["BGImageHD", "FGImageHD", "ImageHD", "ImagesConfigHD", "ImagesPatchHD", "ImagesHanafudaHD", "RuleHD"];
 @endif
 
-property systemRatio { getter { return System.screenWidth / System.screenHeight; } }
+global.get_systemRatio = function() { { return System.screenWidth / System.screenHeight; } };
 
-property inverseScaleFactor { getter() { return 1/scaleFactor; } }
-property inverseWideFactor { getter() { return 1/wideFactor; } }
-property inverseCubicRatio { getter() { return 1/cubicRatio; } }
-property wideScaleFactor { getter() { return scaleFactor * wideFactor; } }
+global.get_inverseScaleFactor = function() { { return 1/scaleFactor; } };
+global.get_inverseWideFactor = function() { { return 1/wideFactor; } };
+global.get_inverseCubicRatio = function() { { return 1/cubicRatio; } };
+global.get_wideScaleFactor = function() { { return scaleFactor * wideFactor; } };
 
-property hdPatchName { getter() { return global.scaleFactorsToPatchName[scaleFactor]; } }
-property hdFolderName {getter() { return global.scaleFactorsToHdNames[scaleFactor]; }}
-property hdFolderSuffix {getter() { return "-" + hdFolderName; }}
-property hdPatchSuffix {getter() { return "_" + hdFolderName; }}
+global.get_hdPatchName = function() { { return global.scaleFactorsToPatchName[scaleFactor]; } };
+global.get_hdFolderName = function() { { return global.scaleFactorsToHdNames[scaleFactor]; } };
+global.get_hdFolderSuffix = function() { { return "-" + global.get_hdFolderName(); } };
+global.get_hdPatchSuffix = function() { { return "_" + global.get_hdFolderName(); } };
 
-function addHdPaths(patches_arr, patchName, folder="", innerPath="") {
+global.addHdPaths = function(patches_arr, patchName, folder="", innerPath="")
+{
 	var separator = folder === ""? "" : "-";
 	for (var i = 0; i < hdNames.count; i++) {
 		patches_arr.add([patchName, folder + separator + hdNames[i] + innerPath]);
-		if (hdNames[i] == hdFolderName) {
+		if (hdNames[i] == global.get_hdFolderName()) {
 			break;
 		}
 	}
-	var patchNameHd = patchName === mainPatchName || (devMode && devImageFolders.contains(patchName))? hdPatchName : (patchName + hdPatchSuffix);
+	var patchNameHd = patchName === mainPatchName || (devMode && devImageFolders.contains(patchName))? global.get_hdPatchName() : (patchName + global.get_hdPatchSuffix());
 	if (folder != "") {
 		patches_arr.add([patchNameHd, folder + innerPath]);
 	}
 	for (var i = 0; i < hdNames.count; i++) {
 		patches_arr.add([patchNameHd, folder + separator + hdNames[i] + innerPath]);
-		if (hdNames[i] == hdFolderName) {
+		if (hdNames[i] == global.get_hdFolderName()) {
 			break;
 		}
 	}
-}
+};
 
-function unloadAllHdPatches(kag=global.kag) {
+global.unloadAllHdPatches = function(kag=global.kag)
+{
 	var originalScaleFactor = scaleFactor;
 
 	for (var i = 0; i < scaleFactors.count; i++) {
@@ -111,12 +113,12 @@ function unloadAllHdPatches(kag=global.kag) {
 		unloadHdPatch(kag);
 	}
 	scaleFactor = originalScaleFactor;
-}
+};
 
-function getHdPatchesArray(kag=global.kag)
+global.getHdPatchesArray = function(kag=global.kag)
 {
 	var patches_arr = [];
-	patches_arr.add([hdPatchName]);
+	patches_arr.add([global.get_hdPatchName()]);
 	if (devMode && scaleFactor === global.scaleFactors[0]) {
 		for (var i = 0, internal_forloop_count = devHdImageFolders.count; i < internal_forloop_count; i += 1) {
 			patches_arr.add([devHdImageFolders[i]]);
@@ -125,7 +127,7 @@ function getHdPatchesArray(kag=global.kag)
 	addHdPaths(patches_arr, opPatchName) if get_opPatchExists();
 	if (typeof(kag) === "Object")
 	{
-		addHdPaths(patches_arr, widePatchName, ruleWideFolderName) if kag.scflags[wideScreenFlagName];
+		addHdPaths(patches_arr, global.get_widePatchName(), ruleWideFolderName) if kag.scflags[wideScreenFlagName];
 
 		addHdPaths(patches_arr, mobileBreakGlyphsPatchName, mobileBreakGlyphsFolderName) if kag.sflags[mobileBreakGlyphsFlagName];
 		addHdPaths(patches_arr, mobileWindowPatchName, mobileWindowFolderName) if kag.sflags[mobileWindowFlagName];
@@ -140,11 +142,11 @@ function getHdPatchesArray(kag=global.kag)
 	}
 
 	return patches_arr;
-}
+};
 
-function loadHdPatch(kag=global.kag)
+global.loadHdPatch = function(kag=global.kag)
 {
-	if (hdPatchName === void) {
+	if (global.get_hdPatchName() === void) {
 		return;
 	}
 	
@@ -158,11 +160,11 @@ function loadHdPatch(kag=global.kag)
 	{
 		updateDecensorConfig(kag);
 	}
-}
+};
 
-function unloadHdPatch(kag=global.kag)
+global.unloadHdPatch = function(kag=global.kag)
 {
-	if (hdPatchName === void) {
+	if (global.get_hdPatchName() === void) {
 		return;
 	}
 
@@ -176,32 +178,35 @@ function unloadHdPatch(kag=global.kag)
 	{
 		updateDecensorConfig(kag);
 	}
-}
+};
 
-function initializeQuality(scale) {
+global.initializeQuality = function(scale)
+{
 	unloadHdPatch(this);
 
 	scaleFactor = scale;
 	hdScaleFactor = scale;
 
 	loadHdPatch(this);
-}
+};
 
-function getWidePatchesArray(kag=global.kag) {
-	var patches_arr = [[widePatchName, ruleWideFolderName]];
+global.getWidePatchesArray = function(kag=global.kag)
+{
+	var patches_arr = [[global.get_widePatchName(), ruleWideFolderName]];
 	patches_arr.add([wideWindowPatchName, wideWindowFolderName]) if kag.sflags[wideWindowFlagName];
 	patches_arr.add([wideMobileWindowPatchName, wideMobileWindowFolderName]) if kag.sflags[wideWindowFlagName] && kag.sflags[mobileWindowFlagName];
 @if(HD_MODE)
 	if (kag.isHd) {
-		addHdPaths(patches_arr, widePatchName, ruleWideFolderName);
+		addHdPaths(patches_arr, global.get_widePatchName(), ruleWideFolderName);
 		addHdPaths(patches_arr, wideWindowPatchName, wideWindowFolderName) if kag.sflags[wideWindowFlagName];
 		addHdPaths(patches_arr, wideMobileWindowPatchName, wideMobileWindowFolderName) if kag.sflags[wideWindowFlagName] && kag.sflags[mobileWindowFlagName];
 	}
 @endif
 	return patches_arr;
-}
+};
 
-function initializeWide(ratio) {
+global.initializeWide = function(ratio)
+{
 	wideScreen = ratio > cubicRatio;
 	wideRatio = ratio;
 @if(SCALE_USING_FLOATING_POINT)
@@ -222,9 +227,10 @@ function initializeWide(ratio) {
 	} else {
 		unload_patches(patches_arr);
 	}
-}
+};
 
-function onQualityMenuItemClick(sender) {
+global.onQualityMenuItemClick = function(sender)
+{
 	with (sender.owner) {
 		var changed = false;
 		if (sender.scaleFactor !== .hdScaleFactor) {
@@ -246,13 +252,14 @@ function onQualityMenuItemClick(sender) {
 			.reload_scenario_execute();
 		}
 	}
-}
+};
 
-function onWideMenuItemClick(sender, ratio, cropped=false) {
+global.onWideMenuItemClick = function(sender, ratio, cropped=false)
+{
 	if (ratio == "standard") {
 		ratio = cubicRatio;
 	} else if (ratio == "wide") {
-		ratio = systemRatio;
+		ratio = global.get_systemRatio();
 	}
 	
 	if (ratio !== void && !floatEquals(ratio, sender.owner.wideRatio))
@@ -296,9 +303,10 @@ function onWideMenuItemClick(sender, ratio, cropped=false) {
 	}
 
 	sender.checked = true;
-}
+};
 
-function changeResolution(win) {
+global.changeResolution = function(win)
+{
 	with (win) {
 		(updateResolution incontextof win)(%[]);
 		if (typeof(._primaryLayer) === "Object")
@@ -320,9 +328,9 @@ function changeResolution(win) {
 		.setInnerSize(originalResWidth, originalResHeight);
 @endif
 	}
-}
+};
 
-function updateResolution(mp)
+global.updateResolution = function(mp)
 {
 	isPossibleChangeScreen	= true if mp.changescreen === true;
 	var curfullscreen	= false;
@@ -346,10 +354,10 @@ function updateResolution(mp)
 @endif
 
 	isPossibleChangeScreen	= false if mp.changescreen === false;
-}
+};
 
 
-function initializeHDPatch()
+global.initializeHDPatch = function()
 {
 @if(HD_MODE)
 	if (System.getArgument("-hdscalefactor") !== void)
@@ -371,4 +379,4 @@ function initializeHDPatch()
 @if(!HD_MODE)
 	unloadAllHdPatches(this);
 @endif
-}
+};

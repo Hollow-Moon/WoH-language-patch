@@ -1,21 +1,21 @@
 ﻿
 @if(GAME_WOHN)
-var	isStopTag	= %[
+global.isStopTag = %[
 	l:1, lr:1, p:1, pg:1, s:1, stopcache:1, autocache:1,	//	コンダクタが解釈してしまうタグ以外(macro を登録しても、先にコンダクタが元のタグに分解してしまう)
 ];
-var	isSoundTags	= %[
+global.isSoundTags = %[
 	se:1, sestop:1, fadese:1, seact:1,
 	play:1, playstop:1, bgmact:1,
 ];
-var	isActionTags= %[
+global.isActionTags = %[
 	action:1, bgact:1, fgact:1, partbgact:1
 ];
 //	トランジションを行うタグ
-var	isTransTag	= %[
+global.isTransTag = %[
 	trans:1, bg:1, fg:1, clfg:1, chgfg:1, partbg:1, clpartbg:1, chgpartbg:1,
 	monocro:1, red:1, green:1, blue:1, sepia:1, nega:1, contrast:1, blur:1, bluroff:1,
 ];
-var	isSpecialTag = %[
+global.isSpecialTag = %[
 	"if" => 1,
 	"ignore" => 1,
 	"endif" => 1,
@@ -368,7 +368,7 @@ global.Conductor = Conductor_patch_conductor_woh_override_override;
 @if(GAME_WOHN)
 //	画像をリストへ入れる
 //	立ち絵ならパーツ画像も入れる
-function addTouchList(list, storage)
+global.addTouchList = function(list, storage)
 {
 	if(storage == "")
 		return;
@@ -381,7 +381,7 @@ function addTouchList(list, storage)
 		storage	= __Layer_monoPartsFormat.sprintf(storage);
 	}
 	list.add(storage) if list.find(storage) < 0;
-}
+};
 
 global.handle_cache_of_tag = function(list, obj)
 {

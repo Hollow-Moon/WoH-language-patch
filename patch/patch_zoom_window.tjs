@@ -114,7 +114,8 @@ class PopupMenuWindow extends Window
  * @param res 復帰表示   -1:無効 0:非表示 1:表示
  * @param cls 閉じる表示 -1:無効 0:非表示 1:表示
  */
-function SetWindowControlMenu(win, min, max, res, cls) {
+global.SetWindowControlMenu = function(win, min, max, res, cls)
+{
 	if (typeof win.minimize != "Object") return;
 	var btns, tag = "__windowControlMenus";
 	if (typeof win[tag] !== "Object") {
@@ -193,7 +194,7 @@ function SetWindowControlMenu(win, min, max, res, cls) {
 		// 右寄せ
 		first.rightJustify = true if (first !== void);
 	}
-}
+};
 
 global.KAGWindow_patch_zoom_window_original = KAGWindow;
 class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_original

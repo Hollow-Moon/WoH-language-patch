@@ -15,12 +15,12 @@ global.wideWindowFolderName = "window-wide";
 global.wideMobileWindowPatchName = devMode? "ImagesPatch" : mainPatchName;
 global.wideMobileWindowFolderName = "window-wide-mobile";
 
-function get_opPatchExists() { { return patchExists(opPatchName); } }
-function get_movieMenuPatch(kag=global.kag) { { return get_opPatchExists() && typeof(kag) === "Object" && typeof(kag.sflags) === "Object" && typeof(kag.sflags.movieMenuPatch) === "Integer" && kag.sflags.movieMenuPatch; } }
-function get_playVitaOp(kag=global.kag) { { return get_opPatchExists() && typeof(kag) === "Object" && typeof(kag.sflags) === "Object" && typeof(kag.sflags.playVitaOp) === "Integer" && kag.sflags.playVitaOp; } }
+global.get_opPatchExists = function() { { return patchExists(opPatchName); } };
+global.get_movieMenuPatch = function(kag=global.kag) { { return get_opPatchExists() && typeof(kag) === "Object" && typeof(kag.sflags) === "Object" && typeof(kag.sflags.movieMenuPatch) === "Integer" && kag.sflags.movieMenuPatch; } };
+global.get_playVitaOp = function(kag=global.kag) { { return get_opPatchExists() && typeof(kag) === "Object" && typeof(kag.sflags) === "Object" && typeof(kag.sflags.playVitaOp) === "Integer" && kag.sflags.playVitaOp; } };
 
 global.patchMenuIndex = -1;
-function getPatchMenuIndex(kag)
+global.getPatchMenuIndex = function(kag)
 {
 @if(kirikiriz)
 	patchMenuIndex = kag.helpMenu.index;
@@ -29,7 +29,7 @@ function getPatchMenuIndex(kag)
 	patchMenuIndex = 4; // No "index" member so we hardcode the number.
 @endif
 	return patchMenuIndex;
-}
+};
 
 class GameFlag
 {
@@ -108,10 +108,10 @@ class ComplexGameFlag extends GameFlag
 }
 
 // For some reason this can't be an instance method...
-function inverseFlag(flag)
+global.inverseFlag = function(flag)
 {
 	return new GameFlag(flag.owner, flag.holder, flag.name, !flag.defaultValue, !flag.reverse);
-}
+};
 
 class CompositeAndFlag
 {
@@ -572,7 +572,7 @@ class LoadScenarioMenuItem extends KAGMenuItem
 	}
 }
 
-function addEnableDisableRestartMenuFunctions()
+global.addEnableDisableRestartMenuFunctions = function()
 {
 	this.restart_menu_state = true;
 	this.restart_menu_state_stack = [];
@@ -624,9 +624,10 @@ function addEnableDisableRestartMenuFunctions()
 	};
 
 	this.disableRestartMenus();
-}
+};
 
-function addPatchMenu() {
+global.addPatchMenu = function()
+{
 	menu.insert(this.patchMenu = new KAGMenuItem(this, __t("パッチ(&P)"), 0, void, false), getPatchMenuIndex(this));
 	(addCensorMenu incontextof this)(patchMenu, __t("検閲(&C)"));
 	(addVoiceMenu incontextof this)(patchMenu);
@@ -655,9 +656,10 @@ function addPatchMenu() {
 	(addPatchMenuItems incontextof this)(patchMenu);
 
 	(addEnableDisableRestartMenuFunctions incontextof this)();
-}
+};
 
-function addDevelopmentMenu() {
+global.addDevelopmentMenu = function()
+{
 	menu.add(this.devMenuItem = new KAGMenuItem(this, "&Development", 0, void, false));
 	this.devMenuItem.visible = devMode || devMode2;
 	(addDevelopmentMenuItems incontextof this)(devMenuItem);
@@ -677,9 +679,10 @@ function addDevelopmentMenu() {
 	devMenuItem.add(this.openCommandPromptInProjectDirectory = new KAGMenuItem(this, "Open command prompt in project directory", 1, function(sender) { global.System.shellExecute("cmd.exe", "/k cd " + ('"%s"').sprintf(global.git_base_path)); }, false));
 	devMenuItem.add(this.gitCheckoutDashDashCurrentDirectory = new KAGMenuItem(this, "git checkout -- .", 1, function(sender) { global.build_exec_command_line("git.exe", ["-C", global.git_base_path, "checkout", "--", "."], false, false); }, false));
 	devMenuItem.add(this.gitPullOriginMaster = new KAGMenuItem(this, "git pull origin master", 1, function(sender) { global.build_exec_command_line("git.exe", ["-C", global.git_base_path, "pull", "origin", "master"], false, false); }, false));
-}
+};
 
-function addConductorVerbosityMenu() {
+global.addConductorVerbosityMenu = function()
+{
 	debugMenu.add(this.debugLevelNoneMenuItem = new KAGMenuItem(this, __t("デバッグレベル:なし"), 2,
 		this.onDebugLevelNoneMenuItemClick, false));
 	this.debugLevelNoneMenuItem.checked = this.debugLevel === tkdlNone;
@@ -693,9 +696,10 @@ function addConductorVerbosityMenu() {
 	this.debugLevelVerboseMenuItem.checked = this.debugLevel === tkdlVerbose;
 
 	debugMenu.add(new MenuItem(this, "-"));
-}
+};
 
-function addVoiceMenu(patchMenu) {
+global.addVoiceMenu = function(patchMenu)
+{
 	var unmatchedVoiceFlag = new GameFlag(this, this.sflags, "playUnmatchedVoices", true);
 	var playUnusedVoicesFlag = new GameFlag(this, this.sflags, "unusedVoices", true);
 	var customWaitvoiceFlag = new GameFlag(this, this.sflags, "customWaitvoice", true);
@@ -714,9 +718,10 @@ function addVoiceMenu(patchMenu) {
 	voiceMenuItem.add(this.disableStopVoiceWithClickMenuItem = new KAGFlagMenuItem(this, __t("クリックすると現在のボイスが停止しません(&V)"),, disableStopVoiceWithClickFlag));
 
 	(addVoiceMenuItems incontextof this)(voiceMenuItem);
-}
+};
 
-function addVitaMenu(patchMenu) {
+global.addVitaMenu = function(patchMenu)
+{
 	var playVitaOpFlag = new GameFlag(this, this.sflags, "playVitaOp", get_opPatchExists(this));
 	var vitaMovieMenuFlag = new GameFlag(this, this.sflags, "movieMenuPatch", get_opPatchExists(this));
 	var vitaAboutFlag = new GameFlag(this, this.sflags, "aboutPatch", get_vitaPatchExists(this));
@@ -729,9 +734,10 @@ function addVitaMenu(patchMenu) {
 	vitaMenuItem.add(this.vitaAboutMenuItem = new KAGFlagMenuItem(this, __t("Vitaの「このスフとについて」ページ(&A)"),, vitaAboutFlag));
 
 	(addVitaMenuItems incontextof this)(vitaMenuItem);
-}
+};
 
-function addMovieMenu(patchMenu) {
+global.addMovieMenu = function(patchMenu)
+{
 	var subbedVideosFlag = new GameFlag(this, this.sflags, subbedVideosFlagName, true);
 	var skipMoviesFlag = new GameFlag(this, this.sflags, "skipMovies", false);
 	var forceMpvPlaybackFlag = new GameFlag(this, this.sflags, "forceMpvPlayback", false);
@@ -741,9 +747,10 @@ function addMovieMenu(patchMenu) {
 	movieMenuItem.add(this.skipMoviesMenuItem = new KAGFlagMenuItem(this, __t("ゲーム中にムービーをスキップする(&K)"),,skipMoviesFlag));
 	movieMenuItem.add(this.forceMpvPlaybackMenuItem = new KAGFlagMenuItem(this, __t("mpvを使用して強制的に動画を再生する"),,forceMpvPlaybackFlag));
 	this.forceMpvPlaybackMenuItem.enabled = (typeof(global.playVideoMPV) === "Object");
-}
+};
 
-function addOptionsMenu(patchMenu) {
+global.addOptionsMenu = function(patchMenu)
+{
 	var historyTitleFlag = new GameFlag(this, this.sflags, "historyTitle", false);
 	var showLogoFlag = new GameFlag(this, this.sflags, "showLogo", true);
 	var savedataRepairFlag = new GameFlag(this, this.sflags, "savedataRepair", false);
@@ -757,9 +764,9 @@ function addOptionsMenu(patchMenu) {
 	patchOptionsMenuItem.add(this.savedataRepairMenuItem = new KAGFlagMenuItem(this, __t("修復保存データモードを有効にする"),, savedataRepairFlag));
 
 	(addOptionsMenuItems incontextof this)(patchOptionsMenuItem);
-}
+};
 
-function addFullScreenMenu(displayMenu)
+global.addFullScreenMenu = function(displayMenu)
 {
 	displayMenu.add(new MenuItem(this, "-"));
 
@@ -773,9 +780,10 @@ function addFullScreenMenu(displayMenu)
 
 		fullscreenMenu.add(this.noneMagnifyMenuItem = new KAGMenuItem(this, __t("拡大しない(&N)"), 1,
 			onNoneMagnifyMenuItemClick, false));
-}
+};
 
-function addWindowSizeMenu(displayMenu) {
+global.addWindowSizeMenu = function(displayMenu)
+{
 	displayMenu.add(new MenuItem(this, "-"));
 
 		displayMenu.add(this.windowSizeMenu = new KAGMenuItem(this, __t("ウィンドウ内部のサイズ指定(&S)"), 0, void, false));
@@ -852,9 +860,10 @@ function addWindowSizeMenu(displayMenu) {
 
 			windowSizeMenu.add(this.windowResizeableMenuItem = new KAGMenuItem(this, __t("サイズを固定する"), 0,
 				function(sender) { sender.owner.onWindowSizeMenuItemClick(,0); }, false));
-}
+};
 
-function addHdMenu(displayMenu) {
+global.addHdMenu = function(displayMenu)
+{
 	var wideResolutions = %[ __t("ワイド(16:9)(&W)") => standardWideRatio];
 
 	displayMenu.add(new MenuItem(this, "-"));
@@ -907,9 +916,10 @@ function addHdMenu(displayMenu) {
 		wideMenu.add(this.wideCroppedMenuItem = new KAGMenuItem(this, "Wide (&cropped)", 1,
 			function(sender) { onWideMenuItemClick(sender,'standard',true); }, false));
 @endif
-}
+};
 
-function addGraphicUsageMenu(displayMenu) {
+global.addGraphicUsageMenu = function(displayMenu)
+{
 	var fpsLimitDefault = "60";
 	var multiThreadDefault = 0;
 
@@ -970,9 +980,9 @@ function addGraphicUsageMenu(displayMenu) {
 		this.multiThreadDraw8MenuItem.afterCallback = multiThreadDrawCallback;
 		multiThreadDrawCallback(this.multiThreadDraw1MenuItem);
 	}
-}
+};
 
-function addMessageWindowMenu(patchMenu)
+global.addMessageWindowMenu = function(patchMenu)
 {
 	patchMenu.add(this.messageWindowMenuItem = new KAGMessageWindowMenuItem(this, __t("メッセージウィンドウ(&M)"), 0, void, false));
-}
+};

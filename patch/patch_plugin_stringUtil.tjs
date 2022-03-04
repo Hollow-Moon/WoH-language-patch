@@ -1,15 +1,15 @@
 ﻿
 global.isNumber_regex = /^-?[0-9]\d*(\.\d+)?$/g;
-function isNumber(v)
+global.isNumber = function(v)
 {
 	if (typeof(v) !== "String")
 	{
 		return true;
 	}
 	return global.isNumber_regex.match(v).count !== 0;
-}
+};
 
-function initSpline(keys)
+global.initSpline = function(keys)
 {
 	var count = keys.count;
 	var arr1 = [];
@@ -95,13 +95,13 @@ function initSpline(keys)
 	}
 	arr2.pop();
 	return arr2;
-}
+};
 
 //	キーフレームの解析
 //		"(...)(...)(...)" となっているところの"..."(要素)のみを取り出す
 // XXX: This regex implementation of parseKeyFrame only supports nested 2 levels deep of parentheses
 global.parseKeyFrame_regex = /\(((?:[^)(]+|\((?:[^)(]+|\([^)(]*\))*\))*)\)/g;
-function parseKeyFrame(keyframe)
+global.parseKeyFrame = function(keyframe)
 {
 	//	解析する必要がなければ、そのまま返す
 	if (typeof(keyframe) === "Object" && keyframe instanceof "Array")
@@ -128,4 +128,4 @@ function parseKeyFrame(keyframe)
 	keyframe.replace(global.parseKeyFrame_regex, (split_func incontextof keys));
 
 	return keys;
-}
+};

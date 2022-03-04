@@ -158,7 +158,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		var parentHeightOriginal = this.parent.isbg && !this.isbg? this.parent.heightForScaleOriginal / wideFactor : this.parent.heightForScaleOriginal;
 		var topScroll = this.window.wideScreen? this.topScroll : 0;
 
-        return scalePosition(y, this.heightForScale, this.heightForScaleOriginal, this.parent.heightForScale, parentHeightOriginal, verticalAlignment) + topScroll * wideScaleFactor;
+        return scalePosition(y, this.heightForScale, this.heightForScaleOriginal, this.parent.heightForScale, parentHeightOriginal, verticalAlignment) + topScroll * global.get_wideScaleFactor();
     }
 
 	function scaleImageLeft(x)
@@ -179,7 +179,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
     function scaleCursorTop(y)
     {
 		var topOffset = this.window.wideScreen? this.window.scrollYOffset : 0;
-        return this.window.unscaleHeight(y - topOffset * wideScaleFactor);
+        return this.window.unscaleHeight(y - topOffset * global.get_wideScaleFactor());
     }
 
 	function scaleCursorX(x)
@@ -190,7 +190,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 	function scaleCursorY(y)
 	{
 		var topOffset = this.window.wideScreen? this.window.scrollYOffset : 0;
-		return scaleHeight(y / wideFactor) + topOffset * wideScaleFactor;
+		return scaleHeight(y / wideFactor) + topOffset * global.get_wideScaleFactor();
 	}
 
     function scaleWidth(w)
@@ -260,7 +260,7 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 	{
 		var topScroll = this.window.wideScreen? (this.isbg? window.scrollYOffset : 0) : 0;
 		var heightForScaleOriginal = this.isbg? this.heightForScaleOriginal / wideFactor : this.heightForScaleOriginal;
-		return scalePosition(y, h, hOriginal, this.heightForScale, heightForScaleOriginal) + topScroll * wideScaleFactor;
+		return scalePosition(y, h, hOriginal, this.heightForScale, heightForScaleOriginal) + topScroll * global.get_wideScaleFactor();
 	}
 
     property left

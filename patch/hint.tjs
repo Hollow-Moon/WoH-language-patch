@@ -2,6 +2,16 @@
 global.Window_hint_original = Window;
 class Window_hint_override extends Window_hint_original
 {
+	function Window_hint_override()
+	{
+		super.Window(...);
+	}
+
+	function Window()
+	{
+		Window_hint_override(...);
+	}
+
 	var hintlayer = void;
 
 	function initHintLayer()
@@ -54,12 +64,12 @@ class Window_hint_override extends Window_hint_original
 @if(HD_MODE)
 			if (typeof this.fullScreened === "Integer" && fullScreened) {
 				var windowToScreenRatio = (innerHeight*scaleFactor) / System.screenHeight;
-				x -= (System.screenWidth - (innerWidth*wideScaleFactor / windowToScreenRatio)) / 2;
+				x -= (System.screenWidth - (innerWidth*global.get_wideScaleFactor() / windowToScreenRatio)) / 2;
 				x *= windowToScreenRatio;
 				y *= windowToScreenRatio;
 			}
 
-			x /= wideScaleFactor;
+			x /= global.get_wideScaleFactor();
 			y /= scaleFactor;
 @endif
 @if(ZOOM_WINDOW)

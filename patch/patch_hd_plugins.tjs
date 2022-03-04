@@ -1,7 +1,7 @@
 ﻿@if(HD_MODE)
 // filter.dll
 
-function Noise_patch_hd_plugins_override(param)
+global.Noise_patch_hd_plugins_override = function(param)
 {
 	var ie;
 	try
@@ -18,14 +18,14 @@ function Noise_patch_hd_plugins_override(param)
 	{
 		throw ie;
 	}
-}
+};
 if (typeof(global.Noise) === "Object")
 {
 	global.Noise_patch_hd_plugins_original = Noise;
 	global.Noise = Noise_patch_hd_plugins_override;
 }
 
-function Contrast_patch_hd_plugins_override(elm)
+global.Contrast_patch_hd_plugins_override = function(elm)
 {
 	var ie;
 	try
@@ -42,21 +42,21 @@ function Contrast_patch_hd_plugins_override(elm)
 	{
 		throw ie;
 	}
-}
+};
 if (typeof(global.Contrast) === "Object")
 {
 	global.Contrast_patch_hd_plugins_original = Contrast;
 	global.Contrast = Contrast_patch_hd_plugins_override;
 }
 
-function initHaze_patch_hd_plugins_override(elm)
+global.initHaze_patch_hd_plugins_override = function(elm)
 {
 	var originalUpper = elm.upper;
 	var originalCenter = elm.center;
 	var originalLower = elm.lower;
 	var originalCycle = elm.cycle;
 	elm.upper = elm.upper * scaleFactor if elm.upper > 0;
-	elm.center = elm.center * wideScaleFactor if elm.center > 0;
+	elm.center = elm.center * global.get_wideScaleFactor() if elm.center > 0;
 	elm.lower = elm.lower * scaleFactor if elm.lower > 0;
 	elm.cycle = elm.cycle / scaleFactor;
 	for (var i=0; i < elm.waves.count; i++) {
@@ -88,14 +88,14 @@ function initHaze_patch_hd_plugins_override(elm)
 	{
 		throw ie;
 	}
-}
+};
 if (typeof(global.initHaze) === "Object")
 {
 	global.initHaze_patch_hd_plugins_original = initHaze;
 	global.initHaze = initHaze_patch_hd_plugins_override;
 }
 
-function doHaze_patch_hd_plugins_override(elm)
+global.doHaze_patch_hd_plugins_override = function(elm)
 {
 	var ie;
 	try
@@ -114,7 +114,7 @@ function doHaze_patch_hd_plugins_override(elm)
 	{
 		throw ie;
 	}
-}
+};
 if (typeof(global.doHaze) === "Object")
 {
 	global.doHaze_patch_hd_plugins_original = doHaze;
@@ -123,7 +123,7 @@ if (typeof(global.doHaze) === "Object")
 
 // slideopen.dll
 
-function initSlideOpen_patch_hd_plugins_override(plugin)
+global.initSlideOpen_patch_hd_plugins_override = function(plugin)
 {
 	if (global.kag.wideScreen) return; // Plugin doesn't work in wide screen for some reason.
 
@@ -144,29 +144,29 @@ function initSlideOpen_patch_hd_plugins_override(plugin)
 	{
 		throw ie;
 	}
-}
+};
 if (typeof(global.initSlideOpen) === "Object")
 {
 	global.initSlideOpen_patch_hd_plugins_original = initSlideOpen;
 	global.initSlideOpen = initSlideOpen_patch_hd_plugins_override;
 }
 
-function drawSlideOpen_patch_hd_plugins_override()
+global.drawSlideOpen_patch_hd_plugins_override = function()
 {
 	if (global.kag.wideScreen) return;
 	return global.drawSlideOpen_patch_hd_plugins_original(...);
-}
+};
 if (typeof(global.drawSlideOpen) === "Object")
 {
 	global.drawSlideOpen_patch_hd_plugins_original = drawSlideOpen;
 	global.drawSlideOpen = drawSlideOpen_patch_hd_plugins_override;
 }
 
-function finishSlideOpen_patch_hd_plugins_override()
+global.finishSlideOpen_patch_hd_plugins_override = function()
 {
 	if (global.kag.wideScreen) return;
 	return global.finishSlideOpen_patch_hd_plugins_original(...);
-}
+};
 if (typeof(global.finishSlideOpen) === "Object")
 {
 	global.finishSlideOpen_patch_hd_plugins_original = finishSlideOpen;
@@ -175,7 +175,7 @@ if (typeof(global.finishSlideOpen) === "Object")
 
 // drawer.dll
 
-function drawLine_patch_hd_plugins_override(layer, x0, y0, cx, cy, lc)
+global.drawLine_patch_hd_plugins_override = function(layer, x0, y0, cx, cy, lc)
 {
 	x0 = layer.scaleInsideImageWidth(x0);
 	y0 = layer.scaleInsideImageHeight(y0);
@@ -197,7 +197,7 @@ function drawLine_patch_hd_plugins_override(layer, x0, y0, cx, cy, lc)
 	{
 		throw ie;
 	}
-}
+};
 if (typeof(global.drawLine) === "Object")
 {
 	global.drawLine_patch_hd_plugins_original = drawLine;
@@ -205,7 +205,7 @@ if (typeof(global.drawLine) === "Object")
 }
 
 
-function drawAALine_patch_hd_plugins_override(layer, x0, y0, cx, cy, lc)
+global.drawAALine_patch_hd_plugins_override = function(layer, x0, y0, cx, cy, lc)
 {
 	x0 = layer.scaleInsideImageWidth(x0);
 	y0 = layer.scaleInsideImageHeight(y0);
@@ -227,7 +227,7 @@ function drawAALine_patch_hd_plugins_override(layer, x0, y0, cx, cy, lc)
 	{
 		throw ie;
 	}
-}
+};
 if (typeof(global.drawAALine) === "Object")
 {
 	global.drawAALine_patch_hd_plugins_original = drawAALine;

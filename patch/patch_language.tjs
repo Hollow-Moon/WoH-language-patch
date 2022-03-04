@@ -1,41 +1,41 @@
 ﻿// i18n
-function __t(text)
+global.__t = function(text)
 {
 	return text;
-}
+} incontextof global;
 
-function _mt(text)
+global._mt = function(text)
 {
 	return text;
-}
+} incontextof global;
 
 global.settingsDomain = "settings";
-function __s(text, context)
+global.__s = function(text, context)
 {
 	return _x(text, context, settingsDomain);
-}
+} incontextof global;
 
-function __si(text, context)
+global.__si = function(text, context)
 {
 	return (__s("" + text, context)) | 0;
-}
+} incontextof global;
 
-function __sb(text, context)
+global.__sb = function(text, context)
 {
 	return __si(text, context) == true;
-}
+} incontextof global;
 
-function __st(text, context)
+global.__st = function(text, context)
 {
 	return text;
-}
+} incontextof global;
 
-function __sti(text, context)
+global.__sti = function(text, context)
 {
 	return (__st(text, context)) | 0;
-}
+} incontextof global;
 
-function loadMOs(language)
+global.loadMOs = function(language)
 {
 	removeAllMO();
 	var translation_mo_path = find_file_in_language_paths("Translation.mo", language);
@@ -48,9 +48,9 @@ function loadMOs(language)
 	{
 		loadMoFile(settings_mo_path, settingsDomain);
 	}
-}
+};
 
-function refreshMenuString(kag, menu)
+global.refreshMenuString = function(kag, menu)
 {
 	if (typeof(menu.originalCaption) === "String") {
 		menu.caption = __(menu.originalCaption);
@@ -65,9 +65,10 @@ function refreshMenuString(kag, menu)
 @if(ZOOM_WINDOW)
 	kag.refreshExSystemMenu();
 @endif
-}
+};
 
-function refreshStringWithLanguage(kag, language) {
+global.refreshStringWithLanguage = function(kag, language)
+{
 	loadMOs(language);
 
 	var patch_info_url = __s("https://example.com/", "patch_info_url");
@@ -89,7 +90,7 @@ function refreshStringWithLanguage(kag, language) {
 			kag.hintlayer = void;
 		}
 	}
-}
+};
 
 global.orig_font_rasterizer = 0;
 if (typeof(global.Font) === "Object" && typeof(global.Font.rasterizer) === "Integer")
@@ -97,7 +98,7 @@ if (typeof(global.Font) === "Object" && typeof(global.Font.rasterizer) === "Inte
 	global.orig_font_rasterizer = global.Font.rasterizer;
 }
 global.loaded_language_fonts = [];
-function load_fonts(language)
+global.load_fonts = function(language)
 {
 @if(!FREETYPE_FONT)
 	var raster_to_use = global.orig_font_rasterizer;
@@ -200,10 +201,11 @@ function load_fonts(language)
 @endif
 
 	loaded_language_fonts.add(language);
-}
+};
 
 global.loaded_language_prerendered_fonts = [];
-function load_prerendered_fonts(language) {
+global.load_prerendered_fonts = function(language)
+{
 	if (loaded_language_prerendered_fonts.contains(language)) {
 		return;
 	}
@@ -232,10 +234,10 @@ function load_prerendered_fonts(language) {
 	}
 
 	loaded_language_prerendered_fonts.add(language);
-}
+};
 
 
-function setFontWithLanguage(language, kag=global.kag)
+global.setFontWithLanguage = function(language, kag=global.kag)
 {
 	load_fonts(language);
 
@@ -290,16 +292,16 @@ function setFontWithLanguage(language, kag=global.kag)
 			.bold = kag.sflags.historyFontBold	= hf[1];
 		}
 	}
-}
+};
 
-function set_default_history_settings(curlangset)
+global.set_default_history_settings = function(curlangset)
 {
 	var histsetting = global.get_default_history_settings();
 	curlangset.history_default = histsetting.fontName;
 	curlangset.history_default_bold = histsetting.fontBold;
-}
+};
 
-function saveFontWithLanguage(kag=global.kag)
+global.saveFontWithLanguage = function(kag=global.kag)
 {
 	var defaultface = void;
 	var bold = false;
@@ -352,7 +354,7 @@ function saveFontWithLanguage(kag=global.kag)
 			.sflags.userFont[.sflags.language] = uf;
 		}
 	}
-}
+};
 
 global.chara2displaynamefile = "chara2displayname.dic";
 global.chara2displayname = %[];
@@ -367,7 +369,7 @@ global.languagePatchPaths = %[];
 global.languageFilePathCache = %[];
 global.languageFileCache = %[];
 
-function find_file_in_language_paths(filename, language = void, exts = "")
+global.find_file_in_language_paths = function(filename, language = void, exts = "")
 {
 	// Check for absolute path
 	if (typeof(filename) !== "String")
@@ -460,9 +462,9 @@ function find_file_in_language_paths(filename, language = void, exts = "")
 
 	languageFilePathCache[language][filename] = potential_path;
 	return potential_path;
-}
+};
 
-global.Array.load_PatchLanguage_original = global.Array.load;
+global.Array.load_patch_language_original = global.Array.load;
 global.Array.load = function(filename, mode='')
 {
 	var file_result = void;
@@ -477,14 +479,14 @@ global.Array.load = function(filename, mode='')
 		if ((filename.indexOf(".ks") === filename.length - 3) && global.get_fsncleaner_rescript_enabled() && typeof(global.fsncleaner_rescript) === "Object")
 		{
 			this.clear();
-			this.load_PatchLanguage_original(filename, mode);
+			this.load_patch_language_original(filename, mode);
 			var language_load = [];
-			language_load.load_PatchLanguage_original(file_result, mode);
+			language_load.load_patch_language_original(file_result, mode);
 			global.fsncleaner_rescript(this, language_load);
 			delete language_load;
 			return this;
 		}
-		return global.Array.load_PatchLanguage_original(file_result, mode);
+		return global.Array.load_patch_language_original(file_result, mode);
 	}
 	else if (typeof(file_result) === "Integer" && file_result === true)
 	{
@@ -493,7 +495,7 @@ global.Array.load = function(filename, mode='')
 		if ((filename.indexOf(".ks") === filename.length - 3) && global.get_fsncleaner_rescript_enabled() && typeof(global.fsncleaner_rescript) === "Object")
 		{
 			language_load = [];
-			this.load_PatchLanguage_original(filename, mode);
+			this.load_patch_language_original(filename, mode);
 		}
 		language_load.assign(languageFileCache[global.kag.sflags.language][filename]);
 		if (language_load.count > 0 && language_load[language_load.count - 1] === "")
@@ -509,17 +511,17 @@ global.Array.load = function(filename, mode='')
 	}
 	else
 	{
-		return global.Array.load_PatchLanguage_original(...);
+		return global.Array.load_patch_language_original(...);
 	}
 };
 
-global.Scripts.execStorage_PatchLanguage_original = global.Scripts.execStorage;
+global.Scripts.execStorage_patch_language_original = global.Scripts.execStorage;
 global.Scripts.execStorage = function(filename, mode='', context=global)
 {
 	var file_result = find_file_in_language_paths(filename);
 	if (typeof(file_result) === "String")
 	{
-		return global.Scripts.execStorage_PatchLanguage_original(file_result, mode, context);
+		return global.Scripts.execStorage_patch_language_original(file_result, mode, context);
 	}
 	else if (typeof(file_result) === "Integer" && file_result === true)
 	{
@@ -527,17 +529,17 @@ global.Scripts.execStorage = function(filename, mode='', context=global)
 	}
 	else
 	{
-		return global.Scripts.execStorage_PatchLanguage_original(...);
+		return global.Scripts.execStorage_patch_language_original(...);
 	}
 };
 
-global.Scripts.evalStorage_PatchLanguage_original = global.Scripts.evalStorage;
+global.Scripts.evalStorage_patch_language_original = global.Scripts.evalStorage;
 global.Scripts.evalStorage = function(filename, mode='', context=global)
 {
 	var file_result = find_file_in_language_paths(filename);
 	if (typeof(file_result) === "String")
 	{
-		return global.Scripts.evalStorage_PatchLanguage_original(file_result, mode, context);
+		return global.Scripts.evalStorage_patch_language_original(file_result, mode, context);
 	}
 	else if (typeof(file_result) === "Integer" && file_result === true)
 	{
@@ -545,11 +547,11 @@ global.Scripts.evalStorage = function(filename, mode='', context=global)
 	}
 	else
 	{
-		return global.Scripts.evalStorage_PatchLanguage_original(...);
+		return global.Scripts.evalStorage_patch_language_original(...);
 	}
 };
 
-global.Storages.isExistentStorage_PatchLanguage_original = global.Storages.isExistentStorage;
+global.Storages.isExistentStorage_patch_language_original = global.Storages.isExistentStorage;
 global.Storages.isExistentStorage = function(filename)
 {
 	var file_result = find_file_in_language_paths(filename);
@@ -563,11 +565,11 @@ global.Storages.isExistentStorage = function(filename)
 	}
 	else
 	{
-		return global.Storages.isExistentStorage_PatchLanguage_original(...);
+		return global.Storages.isExistentStorage_patch_language_original(...);
 	}
 };
 
-global.Storages.getPlacedPath_PatchLanguage_original = global.Storages.getPlacedPath;
+global.Storages.getPlacedPath_patch_language_original = global.Storages.getPlacedPath;
 global.Storages.getPlacedPath = function(filename, exts)
 {
 	var file_result = find_file_in_language_paths(filename, , exts);
@@ -581,15 +583,17 @@ global.Storages.getPlacedPath = function(filename, exts)
 	}
 	else
 	{
-		return global.Storages.getPlacedPath_PatchLanguage_original(...);
+		return global.Storages.getPlacedPath_patch_language_original(...);
 	}
 };
 
-function languagePatchName(language) {
+global.languagePatchName = function(language)
+{
 	return language == japaneseLanguage? japanese_patch_name : language_patch_prefix + language;
-}
+};
 
-function languagePatchExists(language) {
+global.languagePatchExists = function(language)
+{
 	if (language == japaneseLanguage) {
 		return true;
 	}
@@ -597,16 +601,18 @@ function languagePatchExists(language) {
 		return Storages.isExistentDirectory("../" + language + "/");
 	}
 	return patchExists(languagePatchName(language));
-}
+};
 
-function language_paths_translate(paths) {
+global.language_paths_translate = function(paths)
+{
 	for (var i = 0, internal_forloop_count = paths.count; i < internal_forloop_count; i += 1)
 	{
 		paths[i] = global.translate_archive_path(paths[i]);
 	}
-}
+};
 
-function load_language_patch(language, kag) {
+global.load_language_patch = function(language, kag)
+{
 	var languagePatchName = languagePatchName(language);
 	if (typeof(languagePatchPaths[language]) !== "Object")
 	{
@@ -671,9 +677,10 @@ function load_language_patch(language, kag) {
 	if (language == japaneseLanguage) {
 		japaneseLanguageLoaded = true;
 	}
-}
+};
 
-function unload_language_patch(language, kag) {
+global.unload_language_patch = function(language, kag)
+{
 	var languagePatchName = languagePatchName(language);
 	var patches_arr = [];
 
@@ -726,9 +733,10 @@ function unload_language_patch(language, kag) {
 	}
 
 	chara2displayname = %[];
-}
+};
 
-function loadLanguageSettings() {
+global.loadLanguageSettings = function()
+{
 	// system locale might be void on older windows systems (such as Windows XP), or systems other than windows (Android, Mac, etc.)
 	var systemLocale = System.readRegValue("HKEY_CURRENT_USER\\Control Panel\\International\\LocaleName");
 	var found = 0;
@@ -748,7 +756,7 @@ function loadLanguageSettings() {
 
 		unload_language_patch(language, void);
 	}
-}
+};
 
 // constants
 global.japaneseLanguage = "japanese";
@@ -759,7 +767,8 @@ global.simplifiedChineseLanguage = "simplified_chinese";
 global.russianLanguage = "russian";
 global.languagesPatches = [englishLanguage, koreanLanguage, russianLanguage, frenchLanguage, simplifiedChineseLanguage];
 
-function loadLanguagesList() {
+global.loadLanguagesList = function()
+{
 	if (devMode || isKirikiroid) {
 		var patches_arr = [];
 		// It's important that Japanese is first.
@@ -813,38 +822,20 @@ function loadLanguagesList() {
 	invalidate patches_arr;
 	delete patches_arr;
 	return loadedLanguages;
-}
+};
 
 global.language_patch_prefix = devMode? "" : "lang_";
 global.languageMenuItemFormat = "language%sMenuItem";
 
-global.languages = loadLanguagesList();
+global.languages = [];
 
 global.default_language = japaneseLanguage;
 global.languageSettings = %[];
 
-// Initialize the Japanese language first.
-load_language_patch(default_language, void);
-
-loadLanguageSettings();
-
-// If we only have a single language patch, we most probably want the game to run in that language (regardless of locale).
-if (languages.count == 2)
-{
-	default_language = languages[1];
-}
-
-// If the language has changed, reload into the new language.
-if (default_language !== japaneseLanguage)
-{
-	unload_language_patch(japaneseLanguage, void);
-	load_language_patch(default_language, void);
-}
-
 // For convenience
-function get_currentLanguageSettings(kag=global.kag) { { return languageSettings[kag.sflags.language]; } }
-function get_special_characters(kag=global.kag) { { return get_currentLanguageSettings(kag).special_characters !== void? get_currentLanguageSettings(kag).special_characters : %[]; } }
-function get_default_history_font(kag=global.kag)
+global.get_currentLanguageSettings = function(kag=global.kag) { { return languageSettings[kag.sflags.language]; } };
+global.get_special_characters = function(kag=global.kag) { { return get_currentLanguageSettings(kag).special_characters !== void? get_currentLanguageSettings(kag).special_characters : %[]; } };
+global.get_default_history_font = function(kag=global.kag)
 {
 	var cur_langset = get_currentLanguageSettings(kag);
 	if (cur_langset.history_default === void)
@@ -852,8 +843,8 @@ function get_default_history_font(kag=global.kag)
 		global.set_default_history_settings(global.get_currentLanguageSettings(kag));
 	}
 	return cur_langset.history_default;
-}
-function get_default_history_bold(kag=global.kag)
+};
+global.get_default_history_bold = function(kag=global.kag)
 {
 	var cur_langset = get_currentLanguageSettings(kag);
 	if (cur_langset.history_default_bold === void)
@@ -861,18 +852,18 @@ function get_default_history_bold(kag=global.kag)
 		global.set_default_history_settings(global.get_currentLanguageSettings(kag));
 	}
 	return cur_langset.history_default_bold;
-}
-function get_historyFontDefault(kag=global.kag) { { return [ get_default_history_font(kag), get_default_history_bold(kag) ]; } }
-function get_historyFont(kag=global.kag) { { return get_currentLanguageSettings(kag).history !== void? get_currentLanguageSettings(kag).history : %[]; } }
-function get_fsncleaner_rescript_enabled(kag=global.kag) { { return !!(get_currentLanguageSettings(kag).fsncleaner_rescript_enabled); } }
-function get_replace_jp_tilde_disabled(kag=global.kag) { { return !!(get_currentLanguageSettings(kag).replace_jp_tilde_disabled); } }
-function get_replace_jp_whitespace_disabled(kag=global.kag) { { return !!(get_currentLanguageSettings(kag).replace_jp_whitespace_disabled); } }
-function get_rtl_enabled(kag=global.kag) { { return !!(get_currentLanguageSettings(kag).rtl_enabled); } }
-function get_arabic_shaping_enabled(kag=global.kag) { { return !!(get_currentLanguageSettings(kag).arabic_shaping_enabled); } }
-function get_half_height_offset_hack(kag=global.kag) { { return !!(get_currentLanguageSettings(kag).half_height_offset_hack); } }
+};
+global.get_historyFontDefault = function(kag=global.kag) { { return [ get_default_history_font(kag), get_default_history_bold(kag) ]; } };
+global.get_historyFont = function(kag=global.kag) { { return get_currentLanguageSettings(kag).history !== void? get_currentLanguageSettings(kag).history : %[]; } };
+global.get_fsncleaner_rescript_enabled = function(kag=global.kag) { { return !!(get_currentLanguageSettings(kag).fsncleaner_rescript_enabled); } };
+global.get_replace_jp_tilde_disabled = function(kag=global.kag) { { return !!(get_currentLanguageSettings(kag).replace_jp_tilde_disabled); } };
+global.get_replace_jp_whitespace_disabled = function(kag=global.kag) { { return !!(get_currentLanguageSettings(kag).replace_jp_whitespace_disabled); } };
+global.get_rtl_enabled = function(kag=global.kag) { { return !!(get_currentLanguageSettings(kag).rtl_enabled); } };
+global.get_arabic_shaping_enabled = function(kag=global.kag) { { return !!(get_currentLanguageSettings(kag).arabic_shaping_enabled); } };
+global.get_half_height_offset_hack = function(kag=global.kag) { { return !!(get_currentLanguageSettings(kag).half_height_offset_hack); } };
 
 
-function get_default_font()
+global.get_default_font = function()
 {
 	var dic = %[];
 	dic.missing = function(set, name, prop)
@@ -887,9 +878,9 @@ function get_default_font()
 	global.Scripts.setCallMissing(dic);
 	(global.MessageLayer_config incontextof dic)();
 	return dic.userFace;
-}
+};
 
-function get_default_userfont_settings(kag=global.kag)
+global.get_default_userfont_settings = function(kag=global.kag)
 {
 	var dic = %[];
 	dic.missing = function(set, name, prop)
@@ -914,9 +905,9 @@ function get_default_userfont_settings(kag=global.kag)
 		bold: dic.defaultBold,
 		rubybold: false
 	];
-}
+};
 
-function get_default_history_settings()
+global.get_default_history_settings = function()
 {
 	var dic = %[];
 	dic.missing = function(set, name, prop)
@@ -932,33 +923,39 @@ function get_default_history_settings()
 	(global.HistoryLayer_config incontextof dic)();
 
 	return dic;
-}
+};
 
-function getFontFiles(language) {
+global.getFontFiles = function(language)
+{
 	var fontFiles = languageSettings[language].fontFiles;
 	return (fontFiles !== void? fontFiles : []);
-}
+};
 
-function getPrerenderedFontFiles(language) {
+global.getPrerenderedFontFiles = function(language)
+{
 	var fontFiles = languageSettings[language].prerenderedFontFiles;
 	return (fontFiles !== void? fontFiles : []);
-}
+};
 
 
-function isChinese(kag=global.kag) {
+global.isChinese = function(kag=global.kag)
+{
 	//Catch simplified and traditional.
 	return kag.sflags.language.toLowerCase().indexOf("chinese") !== -1;
-}
+};
 
-function isJapanese(kag=global.kag) {
+global.isJapanese = function(kag=global.kag)
+{
 	return japaneseLanguage == kag.sflags.language.toLowerCase();
-}
+};
 
-function isNoSpaceLanguage(kag=global.kag) {
+global.isNoSpaceLanguage = function(kag=global.kag)
+{
 	return isJapanese(kag) || isChinese(kag);
-}
+};
 
-function initializeLanguage(kag=global.kag) {
+global.initializeLanguage = function(kag=global.kag)
+{
 	if (kag.sflags.language === void || global.languages.find(kag.sflags.language) === -1) {
 		// language already loaded
 		kag.sflags.language = default_language;
@@ -973,9 +970,10 @@ function initializeLanguage(kag=global.kag) {
 		(addLanguageMenu incontextof kag)();
 		kag[languageMenuItemFormat.sprintf(kag.sflags.language)].checked	= true;
 	}
-}
+};
 
-function addLanguageMenu() {
+global.addLanguageMenu = function()
+{
 	menu.insert(this.languageMenu = new KAGMenuItem(this, __t("言語(&Language)"), 0, void, false), patchMenuIndex);
 	for (var i = 0, internal_forloop_count = languages.count; i < internal_forloop_count; i += 1) {
 		var language = languages[i];
@@ -984,9 +982,10 @@ function addLanguageMenu() {
 		function (sender) { sender.owner.onLanguageMenuItemClick(sender, sender.language); }, false));
 		this[languageMenuItemName].language = language;
 	}
-}
+};
 
-function loadLanguageDict(language) {
+global.loadLanguageDict = function(language)
+{
 	if (languageSettings[language] === void) {
 		var language_dic_path = find_file_in_language_paths("language.dic", language);
 		if (typeof(language_dic_path) === "String")
@@ -1016,11 +1015,11 @@ function loadLanguageDict(language) {
 			(Dictionary.assignStruct incontextof languageFileCache[language])(currentLanguageSettings.files);
 		}
 	}
-}
+};
 
 if (typeof(global.get_full_path_of_image) === "Object" && typeof(global.chop_image_extension) === "Object" && typeof(global.image_extensions) === "Object")
 {
-	global.get_full_path_of_image_PatchLanguage_original = global.get_full_path_of_image;
+	global.get_full_path_of_image_patch_language_original = global.get_full_path_of_image;
 	global.get_full_path_of_image = function(storage)
 	{
 		var result = void;
@@ -1032,12 +1031,35 @@ if (typeof(global.get_full_path_of_image) === "Object" && typeof(global.chop_ima
 		{
 			return result;
 		}
-		return global.get_full_path_of_image_PatchLanguage_original(...);
+		return global.get_full_path_of_image_patch_language_original(...);
 	};
 }
 
-global.Layer_PatchLanguage_original = Layer;
-class Layer_PatchLanguage_override extends Layer_PatchLanguage_original
+global.initialize_language_early = function()
+{
+	global.languages = loadLanguagesList();
+
+	// Initialize the Japanese language first.
+	load_language_patch(default_language, void);
+
+	loadLanguageSettings();
+
+	// If we only have a single language patch, we most probably want the game to run in that language (regardless of locale).
+	if (languages.count == 2)
+	{
+		default_language = languages[1];
+	}
+
+	// If the language has changed, reload into the new language.
+	if (default_language !== japaneseLanguage)
+	{
+		unload_language_patch(japaneseLanguage, void);
+		load_language_patch(default_language, void);
+	}
+};
+
+global.Layer_patch_language_original = Layer;
+class Layer_patch_language_override extends Layer_patch_language_original
 {
 	property hint
 	{
@@ -1055,29 +1077,29 @@ class Layer_PatchLanguage_override extends Layer_PatchLanguage_original
 		getter { return super.hint; }
 	}
 
-	function Layer_PatchLanguage_override()
+	function Layer_patch_language_override()
 	{
 		super.Layer(...);
 	}
 
 	function Layer()
 	{
-		Layer_PatchLanguage_override(...);
+		Layer_patch_language_override(...);
 	}
 }
-global.Layer = Layer_PatchLanguage_override;
+global.Layer = Layer_patch_language_override;
 
-global.Window_PatchLanguage_original = Window;
-class Window_PatchLanguage_override extends Window_PatchLanguage_original
+global.Window_patch_language_original = Window;
+class Window_patch_language_override extends Window_patch_language_original
 {
-	function Window_PatchLanguage_override()
+	function Window_patch_language_override()
 	{
 		super.Window(...);
 	}
 
 	function Window()
 	{
-		Window_PatchLanguage_override(...);
+		Window_patch_language_override(...);
 	}
 
 	function onLanguageMenuItemClick(sender, language)
@@ -1167,11 +1189,21 @@ class Window_PatchLanguage_override extends Window_PatchLanguage_original
 		return text;
 	}
 }
-global.Window = Window_PatchLanguage_override;
+global.Window = Window_patch_language_override;
 
-global.System_PatchLanguage_original = System;
-class System_PatchLanguage_override extends System_PatchLanguage_original
+global.System_patch_language_original = System;
+class System_patch_language_override extends System_patch_language_original
 {
+	function System_patch_language_override()
+	{
+		super.System(...);
+	}
+
+	function System()
+	{
+		System_patch_language_override(...);
+	}
+
 	property title
 	{
 		setter(v)
@@ -1213,7 +1245,7 @@ class System_PatchLanguage_override extends System_PatchLanguage_original
 		return super.inform(text);
 	}
 }
-global.System = System_PatchLanguage_override;
+global.System = System_patch_language_override;
 
 global.pluralNames = %[
  "氷室と蒔寺" => 2,
@@ -1244,3 +1276,7 @@ global.pluralNames = %[
  "棺の贄" => 100,     // dummy value - used to invoke plural form.
  "others" => 100,    // dummy value - used to invoke plural form.
 ];
+
+{
+	global.initialize_language_early();
+}

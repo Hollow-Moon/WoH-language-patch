@@ -18,7 +18,7 @@ global.play_movie_resize = function(video, kag=global.kag, window=global.kag)
 				
 				var videoBoundsWidth;
 				var videoBoundsHeight;
-				if (systemRatio > kag.wideRatio) {
+				if (global.get_systemRatio() > kag.wideRatio) {
 					videoBoundsHeight = kag.scHeight;
 					videoBoundsWidth = videoBoundsHeight * videoRatio;
 				} else {
@@ -69,7 +69,7 @@ global.play_movie_resize = function(video, kag=global.kag, window=global.kag)
 		var windowSize = [videoSize[0]+windowExtraWidth, videoSize[1]+windowExtraHeight];
 
 @if(HD_MODE)
-		var desktopWidth = System.desktopWidth / wideScaleFactor;
+		var desktopWidth = System.desktopWidth / global.get_wideScaleFactor();
 		var desktopHeight = System.desktopHeight / scaleFactor;
 @endif
 @if(!HD_MODE)

@@ -1,7 +1,7 @@
 ﻿
 global.patch_plugin_slideopen_object = void;
 
-function initSlideOpen(obj)
+global.initSlideOpen = function(obj)
 {
 	global.finishSlideOpen();
 	obj.open |= 0;
@@ -75,9 +75,9 @@ function initSlideOpen(obj)
 		obj.slideopen_layer_2.affineCopy(blank_layer, 0, 0, 1, 1, false, 0, 0, obj.slideopen_layer_2.imageWidth, obj.slideopen_layer_2.imageHeight, obj.slideopen_layer_2.imageWidth, 0);
 	}
 	invalidate blank_layer;
-}
+};
 // pos from 0.0 to 1.0
-function drawSlideOpen(pos)
+global.drawSlideOpen = function(pos)
 {
 	var obj = global.patch_plugin_slideopen_object;
 	if (obj === void)
@@ -126,8 +126,8 @@ function drawSlideOpen(pos)
 	}
 	obj.slideopen_layer_1.visible = true;
 	obj.slideopen_layer_2.visible = true;
-}
-function finishSlideOpen()
+};
+global.finishSlideOpen = function()
 {
 	var obj = global.patch_plugin_slideopen_object;
 	if (obj === void)
@@ -150,4 +150,4 @@ function finishSlideOpen()
 	var output_layer = obj.dest;
 	var input_layer = obj.src;
 	output_layer.stretchCopy(0, 0, output_layer.imageWidth, output_layer.imageHeight, input_layer, 0, 0, input_layer.imageWidth, input_layer.imageHeight);
-}
+};

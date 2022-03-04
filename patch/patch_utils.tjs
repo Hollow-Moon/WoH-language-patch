@@ -1,5 +1,5 @@
 ﻿
-function name_to_patch_basename(name, isFolder=devMode)
+global.name_to_patch_basename = function(name, isFolder=devMode)
 {
 	if (isFolder)
 	{
@@ -15,14 +15,15 @@ function name_to_patch_basename(name, isFolder=devMode)
 
 		return (prefix + name + ".xp3").toLowerCase();
 	}
-}
+};
 
-function name_to_patch(name, isFolder=devMode, basePath=global.paths_base[0])
+global.name_to_patch = function(name, isFolder=devMode, basePath=global.paths_base[0])
 {
 	return basePath + name_to_patch_basename(name, isFolder);
-}
+};
 
-function name_to_patch_path(name, isFolder=devMode, basePath=global.paths_base[0]) {
+global.name_to_patch_path = function(name, isFolder=devMode, basePath=global.paths_base[0])
+{
 	var result = name_to_patch(name, isFolder, basePath);
 	if (isFolder)
 	{
@@ -33,9 +34,10 @@ function name_to_patch_path(name, isFolder=devMode, basePath=global.paths_base[0
 		result += ">";
 	}
 	return result;
-}
+};
 
-function patchExists(name, isFolder=devMode, basePath=global.paths_base[0]) {
+global.patchExists = function(name, isFolder=devMode, basePath=global.paths_base[0])
+{
 	var result = false;
 	if (!isFolder)
 	{
@@ -50,9 +52,9 @@ function patchExists(name, isFolder=devMode, basePath=global.paths_base[0]) {
 		result = global.paths_base_dirlist[basePath]["."].find(name_to_patch_basename(name, true) + "/") !== -1;
 	}
 	return result;
-}
+};
 
-function load_patches(patch_array, should_add_to_auto_path=true)
+global.load_patches = function(patch_array, should_add_to_auto_path=true)
 {
 	var patches_to_add = [];
 	for (var i = 0, internal_forloop_count = patch_array.count; i < internal_forloop_count; i += 1)
@@ -103,9 +105,9 @@ function load_patches(patch_array, should_add_to_auto_path=true)
 		}
 	}
 	return patches_to_add;
-}
+};
 
-function unload_patches(patch_array)
+global.unload_patches = function(patch_array)
 {
 	var patches_to_remove = [];
 	for (var i = 0, internal_forloop_count = patch_array.count; i < internal_forloop_count; i += 1)
@@ -138,9 +140,9 @@ function unload_patches(patch_array)
 		Storages.removeAutoPath(patches_to_remove[i]);
 		Storages.removeAutoPath(global.translate_archive_path(patches_to_remove[i], false));
 	}
-}
+};
 
-function getAnchorValue(anchor)
+global.getAnchorValue = function(anchor)
 {
 	var anchorValue = 0;
 	if (anchor == "right") {
@@ -151,23 +153,23 @@ function getAnchorValue(anchor)
 		anchorValue = +anchor;
 	}
 	return anchorValue;
-}
+};
 
 Array.contains = function(item) {
 	return this.find(item) != -1;
 };
 
-function lastIndexOf(obj, str)
+global.lastIndexOf = function(obj, str)
 {
 	var pos = reverseStr(str).indexOf(obj);
 	if(pos)
 		return str.length - pos - 1;
 	else
 		return -1;
-}
+};
 
 // FHA's exe doesn't have string.reverse
-function reverseStr(str)
+global.reverseStr = function(str)
 {
 // TODO should also use this method in RN exe.
 @if(kirikiriz)
@@ -180,24 +182,24 @@ function reverseStr(str)
 	}
 	return result;
 @endif
-}
+};
 
-function startsWith(obj, str)
+global.startsWith = function(obj, str)
 {
 	return str.substr(0, obj.length) === obj;
-}
+};
 
-function endsWith(obj, str)
+global.endsWith = function(obj, str)
 {
 	return str.substr(str.length - obj.length, obj.length) === obj;
-}
+};
 
-function capitalize(str)
+global.capitalize = function(str)
 {
 	return str.substr(0, 1).toUpperCase() + str.substr(1);
-}
+};
 
-function addMaskOverlay(layer, name, l=0, t=0, add=true, horizontalAlignment=void)
+global.addMaskOverlay = function(layer, name, l=0, t=0, add=true, horizontalAlignment=void)
 {
 	var overlay = new global.Layer(layer.window, layer);
 	with (overlay) {
@@ -212,7 +214,7 @@ function addMaskOverlay(layer, name, l=0, t=0, add=true, horizontalAlignment=voi
 		layer.operateRect(l, t, overlay, 0, 0, .imageWidth, .imageHeight);
 	}
 	invalidate overlay;
-}
+};
 
 
 global.defaultScrollbarImages =  [	//	base
@@ -224,7 +226,7 @@ global.defaultScrollbarImages =  [	//	base
 	"scroll_bottom_horizontal"
 ];
 
-function initializeScollbar(x, y, w, h, total, moving, top, scrimgs=defaultScrollbarImages)
+global.initializeScollbar = function(x, y, w, h, total, moving, top, scrimgs=defaultScrollbarImages)
 {
 	mini_layer = new global.FadeLayer(window, this);
 	with(mini_layer)
@@ -258,11 +260,11 @@ function initializeScollbar(x, y, w, h, total, moving, top, scrimgs=defaultScrol
 
 	window.org_onMouseWheel	= window.onMouseWheel;
 	window.onMouseWheel		= scrollbar.onMouseWheel;
-}
+};
 
 
 /// 停止所有视频图层的播放 ///
-function stopAllMovies(kag=global.kag)
+global.stopAllMovies = function(kag=global.kag)
 {
 	for (var i = 0, internal_forloop_count = kag.movies.count; i < internal_forloop_count; i += 1)
 	{
@@ -272,9 +274,9 @@ function stopAllMovies(kag=global.kag)
 				.stop();
 		}
 	}
-}
+};
 
-function isAnyMoviePlaying(kag=global.kag)
+global.isAnyMoviePlaying = function(kag=global.kag)
 {
 	for (var i = 0, internal_forloop_count = kag.movies.count; i < internal_forloop_count; i += 1)
 	{
@@ -285,14 +287,14 @@ function isAnyMoviePlaying(kag=global.kag)
 		}
 	}
 	return false;
-}
+};
 
-function fixAndLoadDictionaryForKrkr2(filename, mode)
+global.fixAndLoadDictionaryForKrkr2 = function(filename, mode)
 {
 	var file_as_array = [];
 	file_as_array.load(filename, mode);
 	return Scripts.eval(file_as_array.join("\n").replace(/\(const\)/g, ""));
-}
+};
 
 global.krkrzDictionaryReplace = function(matcharr)
 {
@@ -303,17 +305,17 @@ global.krkrzDictionaryReplace = function(matcharr)
 global.krkrzDictionaryRegex1 = new RegExp("(?:real (0x\\d\\.[A-F0-9][A-F0-9][A-F0-9][A-F0-9][A-F0-9][A-F0-9][A-F0-9][A-F0-9][A-F0-9][A-F0-9][A-F0-9][A-F0-9][A-F0-9]p-?\\d*|[-\+]?0\.0|NaN|[-\+]?Infinity)(?: /\\* (?:.*?) \\*/)?|int ([-\\+]?\\d*)|string (\".*\"))", "g");
 global.krkrzDictionaryRegex2 = /(?: )(?=\%?\[\n)/g;
 
-function fixAndLoadDictionaryForKrkrZ(filename, mode)
+global.fixAndLoadDictionaryForKrkrZ = function(filename, mode)
 {
 	var file_as_array = [];
 	file_as_array.load(filename, mode);
 	var j = file_as_array.join("\n").replace(global.krkrzDictionaryRegex1, global.krkrzDictionaryReplace).replace(global.krkrzDictionaryRegex2, " (const)");
 	Debug.message(j);
 	return Scripts.eval(("(const)[ (const)%s ]").sprintf(j))[0];
-}
+};
 
 // Avoid CVE-2015-5672
-function safeEvalStorage(filename, mode)
+global.safeEvalStorage = function(filename, mode)
 {
 @if(!KIRIKIROID)
 	if (typeof(global.Dictionary) === "Object" && typeof(global.Dictionary.loadStruct) === "Object")
@@ -354,9 +356,9 @@ function safeEvalStorage(filename, mode)
 		}
 		return ret;
 	}
-}
+};
 
-function build_exec_command_line(exepath, arguments, normalize_exepath=true, normalize_arguments=true)
+global.build_exec_command_line = function(exepath, arguments, normalize_exepath=true, normalize_arguments=true)
 {
 	var all_args = [];
 	var exe_path = exepath;
@@ -429,9 +431,9 @@ function build_exec_command_line(exepath, arguments, normalize_exepath=true, nor
 		args_joined = ('"%s"').sprintf(all_args.join('" "'));
 	}
 	return global.System.shellExecute(exe_path, args_joined);
-}
+};
 
-function showAboutKirikiriWindow()
+global.showAboutKirikiriWindow = function()
 {
 	if (typeof(global.System.showVersion) === 'Object')
 	{
@@ -441,17 +443,17 @@ function showAboutKirikiriWindow()
 	{
 		return global.build_exec_command_line(global.System.exeName, ["-about"]);
 	}
-}
+};
 
-function showEngineConfigureDialog()
+global.showEngineConfigureDialog = function()
 {
 	return global.build_exec_command_line(global.System.exeName, ["-userconf"]);
-}
+};
 
-function showURLUsingDefaultHandler(url)
+global.showURLUsingDefaultHandler = function(url)
 {
 	return global.build_exec_command_line(url, [], false, false);
-}
+};
 
 if (typeof(System.clearGraphicCache) !== "Object")
 {
@@ -779,9 +781,10 @@ global.full_game_reload = function(extra_args*)
 };
 
 
-function floatEquals(x, y, epsilon=0.0000001) {
+global.floatEquals = function(x, y, epsilon=0.0000001)
+{
 	return Math.abs(x - y) < epsilon;
-}
+};
 
 // https://stackoverflow.com/a/54137634
 global.binary_to_decimal = function(arr)
@@ -869,7 +872,7 @@ global.real_to_hex_string = function(v)
 	return ("%s0x1.%013Xp%d").sprintf(s ? "-" : "", binary_to_decimal(fbits_arr), binary_to_decimal(ebits_arr) - 1023);
 };
 
-function reload_messagelayer_config(window=global.kag)
+global.reload_messagelayer_config = function(window=global.kag)
 {
 	var ignore_changes_tmp = false;
 	if (typeof(window.ignore_font_changes) === "Integer" && window.ignore_font_changes)
@@ -896,7 +899,7 @@ function reload_messagelayer_config(window=global.kag)
 		window.fore.messages[i].appearTimeRate = 3;
 	}
 @endif
-}
+};
 
 {
 	if (System.getArgument("-systeminformgoestolog") !== void)
@@ -908,7 +911,7 @@ function reload_messagelayer_config(window=global.kag)
 	}
 }
 
-function parse_iso8601(str)
+global.parse_iso8601 = function(str)
 {
 	// https://www.myintervals.com/blog/2009/05/20/iso-8601-date-validation-that-doesnt-suck/
 	var re = new RegExp("^([\\+-]?\\d{4}(?!\\d{2}\\b))((-?)((0[1-9]|1[0-2])(\\3([12]\\d|0[1-9]|3[01]))?|W([0-4]\\d|5[0-2])(-?[1-7])?|(00[1-9]|0[1-9]\\d|[12]\\d{2}|3([0-5]\\d|6[1-6])))([T\\s]((([01]\\d|2[0-3])((:?)[0-5]\\d)?|24\\:?00)([\\.,]\\d+(?!:))?)?(\\17[0-5]\\d([\\.,]\\d+)?)?([zZ]|([\\+-])([01]\\d|2[0-3]):?([0-5]\\d)?)?)?)?$");
@@ -928,7 +931,7 @@ function parse_iso8601(str)
 		var second = (("" + match[19]).substr(1,3) | 0) - date_offset_seconds;
 		return new Date(year, month, day, hour, minute, second);
 	}
-}
+};
 
 global.open_savedata_dir = function(kag=global.kag)
 {
@@ -1004,7 +1007,7 @@ global.struct_is_equal = function(s1, s2)
 };
 
 // Splits a string (without any delimiters)
-function split_string(s)
+global.split_string = function(s)
 {
 	var split_func = function(matcharr)
 	{
@@ -1013,10 +1016,10 @@ function split_string(s)
 	var arr = [];
 	s.replace(/(?s)./g, (split_func incontextof arr));
 	return arr;
-}
+};
 
 // Equivalent to JS Array.prototype.slice
-function slice_array(in_arr, begin, end)
+global.slice_array = function(in_arr, begin, end)
 {
 	var arr = [];
 	for (var i = begin; i < end; i += 1)
@@ -1024,24 +1027,24 @@ function slice_array(in_arr, begin, end)
 		arr.add(in_arr[i]);
 	}
 	return arr;
-}
+};
 
 
-function from_codepoint_array(arr)
+global.from_codepoint_array = function(arr)
 {
 	for (var i = 0; i < arr.count; i += 1)
 	{
 		arr[i] = $arr[i];
 	}
-}
+};
 
-function to_codepoint_array(arr)
+global.to_codepoint_array = function(arr)
 {
 	for (var i = 0; i < arr.count; i += 1)
 	{
 		arr[i] = #arr[i];
 	}
-}
+};
 
 // Largely based on the following: http://www.arabic-keyboard.org/photoshop-arabic/
 global.LINK_MAP = ['\xFE80', '\xFE81', '\xFE83', '\xFE85', '\xFE87', '\xFE89', '\xFE8D', '\xFE8F', '\xFE93', '\xFE95', '\xFE99', '\xFE9D', '\xFEA1', '\xFEA5', '\xFEA9', '\xFEAB', '\xFEAD', '\xFEAF', '\xFEB1', '\xFEB5', '\xFEB9', '\xFEBD', '\xFEC1', '\xFEC5', '\xFEC9', '\xFECD', '\x063B', '\x063C', '\x063D', '\x063E', '\x063F', '\x0640', '\xFED1', '\xFED5', '\xFED9', '\xFEDD', '\xFEE1', '\xFEE5', '\xFEE9', '\xFEED', '\xFEEF', '\xFEF1'];
@@ -1060,37 +1063,37 @@ global.CHAR_LINK_TYPE = [0 /* NONE */, 1 /* BEFORE */, 1 /* BEFORE */, 1 /* BEFO
 	to_codepoint_array(ALEF_CHARS);
 }
 
-function shape_arabic_is_alef_char(c)
+global.shape_arabic_is_alef_char = function(c)
 {
 	return ALEF_CHARS.find(c) !== -1;
-}
+};
 
-function shape_arabic_is_lam_char(c)
+global.shape_arabic_is_lam_char = function(c)
 {
 	return c == #'\x0644' /* LAM_CHAR */;
-}
+};
 
-function shape_arabic_is_lam_alef_char(c)
+global.shape_arabic_is_lam_alef_char = function(c)
 {
 	return c >= #'\xFEF5' && c <= #'\xFEFC';
-}
+};
 
-function shape_arabic_is_transparent_char(c)
+global.shape_arabic_is_transparent_char = function(c)
 {
 	return c >= #'\x064B' && c <= #'\x065E';
-}
+};
 
-function shape_arabic_in_link_range(c)
+global.shape_arabic_in_link_range = function(c)
 {
 	return c >= #'\x0621' /* LINK_MAP_RANGE[0] */ && c <= #'\x064A' /* LINK_MAP_RANGE[1] */;
-}
+};
 
-function shape_arabic_in_unlink_range(c)
+global.shape_arabic_in_unlink_range = function(c)
 {
 	return c >= #'\xFE80' /* UNLINK_MAP_RANGE[0] */ && c <= #'\xFEF4' /* UNLINK_MAP_RANGE[1] */ || shape_arabic_is_lam_alef_char(c);
-}
+};
 
-function shape_arabic_is_linkable_before(c)
+global.shape_arabic_is_linkable_before = function(c)
 {
 	if (!shape_arabic_in_link_range(c))
 	{
@@ -1098,9 +1101,9 @@ function shape_arabic_is_linkable_before(c)
 	}
 	var placement = CHAR_LINK_TYPE[c - #'\x0621' /* LINK_MAP_RANGE[0] */];
 	return placement == 1 /* BEFORE */ || placement == 2 /* DUAL */ || placement == 3 /* CAUSING */;
-}
+};
 
-function shape_arabic_is_linkable_after(c)
+global.shape_arabic_is_linkable_after = function(c)
 {
 	if (!shape_arabic_in_link_range(c))
 	{
@@ -1108,18 +1111,18 @@ function shape_arabic_is_linkable_after(c)
 	}
 	var placement = CHAR_LINK_TYPE[c - #'\x0621' /* LINK_MAP_RANGE[0] */];
 	return placement == 2 /* DUAL */ || placement == 3 /* CAUSING */;
-}
+};
 
-function shape_arabic_get_char_link_type(c)
+global.shape_arabic_get_char_link_type = function(c)
 {
 	if (!shape_arabic_in_link_range(c))
 	{
 		return 0 /* NONE */;
 	}
 	return CHAR_LINK_TYPE[c - #'\x0621' /* LINK_MAP_RANGE[0] */];
-}
+};
 
-function shape_arabic_link_char(c, type)
+global.shape_arabic_link_char = function(c, type)
 {
 	if (!shape_arabic_in_link_range(c))
 	{
@@ -1138,37 +1141,37 @@ function shape_arabic_link_char(c, type)
 		default:
 			return c;
 	}
-}
+};
 
-function shape_arabic_link_lam_alef(c, type)
+global.shape_arabic_link_lam_alef = function(c, type)
 {
 	if (!shape_arabic_is_alef_char(c))
 	{
 		return c;
 	}
 	return LAMALEF_LINK_MAP[c - #'\x0622' /* LAMALEF_LINK_MAP_RANGE[0] */] + type % 2;
-}
+};
 
-function shape_arabic_unlink_char(c)
+global.shape_arabic_unlink_char = function(c)
 {
 	if (!shape_arabic_in_unlink_range(c))
 	{
 		return c;
 	}
 	return UNLINK_MAP[c - #'\xFE80' /* UNLINK_MAP_RANGE[0] */];
-}
+};
 
-function shape_arabic_unlink_lam_alef(c)
+global.shape_arabic_unlink_lam_alef = function(c)
 {
 	if (!shape_arabic_is_lam_alef_char(c))
 	{
 		return c;
 	}
 	return LAMALEF_UNLINK_MAP[c - #'\xFEF5' /* LAMALEF_UNLINK_MAP_RANGE[0] */];
-}
+};
 
 global.internal_shape_arabic_linkage_temp = [];
-function internal_shape_arabic(in_split_text, out_split_text, should_split_by_linkage=false)
+global.internal_shape_arabic = function(in_split_text, out_split_text, should_split_by_linkage=false)
 {
 	var type1;
 	var type2 = 0 /* ISOLATED */;
@@ -1237,10 +1240,10 @@ function internal_shape_arabic(in_split_text, out_split_text, should_split_by_li
 		}
 		res.clear();
 	}
-}
+};
 
 global.shape_arabic_array_temp = [];
-function shape_arabic(text, should_split_by_linkage=false)
+global.shape_arabic = function(text, should_split_by_linkage=false)
 {
 	text += "";
 	if (text.length == 0)
@@ -1258,9 +1261,9 @@ function shape_arabic(text, should_split_by_linkage=false)
 	{
 		return out_split_text.join("");
 	}
-}
+};
 
-function internal_unshape_arabic(in_split_text, out_split_text)
+global.internal_unshape_arabic = function(in_split_text, out_split_text)
 {
 	for (var i = 0; i < in_split_text.length; i++)
 	{
@@ -1275,10 +1278,10 @@ function internal_unshape_arabic(in_split_text, out_split_text)
 			out_split_text.add($(shape_arabic_unlink_char(isBground)));
 		}
 	}
-}
+};
 
 global.unshape_arabic_array_temp = [];
-function unshape_arabic(text)
+global.unshape_arabic = function(text)
 {
 	text += "";
 	if (text.length == 0)
@@ -1289,17 +1292,17 @@ function unshape_arabic(text)
 	out_split_text.clear();
 	var end_pos = internal_unshape_arabic(text, out_split_text);
 	return out_split_text.join("");
-}
+};
 
-function dmt(args*)
+global.dmt = function(args*)
 {
 	Debug.message(args.join(", ")+": "+Scripts.getTraceString());
-}
+};
 @if(DEBUG==1)
-var	_dm	= Debug.message;
+global._dm = Debug.message;
 @endif
 @if(DEBUG!=1)
-var	_dm	= function(){};
+global._dm = function() {};
 @endif
 
 //	krkr 2.25 beta 8 より前のexeには"imageTagLayerType"が存在しないので、仮に定義する
@@ -1321,7 +1324,7 @@ if (typeof global.imageTagLayerType == "undefined")
 
 @if(DEBUG==1)
 //開発時トレース用
-function getDebugStringFromElm( elm, str="", maxdepth=3, depth=0 )
+global.getDebugStringFromElm = function( elm, str="", maxdepth=3, depth=0 )
 {
 	var tmp = [];
 	var ret = "";
@@ -1358,10 +1361,10 @@ function getDebugStringFromElm( elm, str="", maxdepth=3, depth=0 )
 	}
 
 	return ret;
-}
+};
 @endif
 @if(DEBUG==0)
-function getDebugStringFromElm(){ return ""; }
+global.getDebugStringFromElm = function() { return ""; };
 @endif
 
 @if(0)
@@ -1391,7 +1394,7 @@ if(typeof global.Plugins.cxdec != "undefined" && typeof global.Plugins.cxdec.emb
 	ClassName の獲得関数
 */
 //※あとで適切な場所に移動(krkrirc 2008/04/22 log よりHALO氏の情報)
-function getClassName( obj )
+global.getClassName = function( obj )
 {
 	var tmp = [];
 	var ret = [];
@@ -1406,9 +1409,9 @@ function getClassName( obj )
 		}
 	}
 	return "is not class object";
-}
+};
 
-function getLayerInfo()
+global.getLayerInfo = function()
 {
 	var	func	= function(children, indent, func)
 	{
@@ -1439,9 +1442,9 @@ function getLayerInfo()
 		return text;
 	};
 	return func(kag.primaryLayer.children, "", func);
-}
-var	sharelogdir		= "file://192.168.101.232/exchange/WoHエラーログ/";
-function saveLogToExchange()
+};
+global.sharelogdir = "file://192.168.101.232/exchange/WoHエラーログ/";
+global.saveLogToExchange = function()
 {
 	if(Storages.isExistentStorage(System.exePath+"savedata/NoSendExchange.txt"))
 	{
@@ -1481,7 +1484,7 @@ function saveLogToExchange()
 	var	msg	= "現在の情報をクリップボードへコピーしました。\n問題の発生を伝えるときに、この情報も渡してください。\n(念の為 savedata/lasterrorinfo.txt にも同じ情報を記録しています)";
 	msg	+= "(対応するエラーログ・セーブデータも提出してください)" if !copied;
 	System.inform(msg);
-}
+};
 
 Layer.setFontFace	= function(face, height=font.height, italic=font.italic)
 {

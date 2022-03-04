@@ -1,7 +1,7 @@
 ﻿
 global.image_extensions = [".webp", ".png", ".tlg", ".jpg", ".bmp"];
 
-function chop_image_extension(storage)
+global.chop_image_extension = function(storage)
 {
 	var image_extensions = global.image_extensions;
 
@@ -24,9 +24,9 @@ function chop_image_extension(storage)
 
 
 	return storage;
-}
+};
 
-function get_file_name_of_image_with_extension_that_exists(storage)
+global.get_file_name_of_image_with_extension_that_exists = function(storage)
 {
 	var image_extensions = global.image_extensions;
 
@@ -56,14 +56,14 @@ function get_file_name_of_image_with_extension_that_exists(storage)
 
 
 	return storage;
-}
+};
 
-function check_if_image_exists(storage)
+global.check_if_image_exists = function(storage)
 {
 	return global.Storages.isExistentStorage(global.get_file_name_of_image_with_extension_that_exists(storage));
-}
+};
 
-function get_full_path_of_image(storage)
+global.get_full_path_of_image = function(storage)
 {
 	var path = global.get_file_name_of_image_with_extension_that_exists(storage);
 	if (path === void)
@@ -71,22 +71,22 @@ function get_full_path_of_image(storage)
 		return "";
 	}
 	return global.Storages.getPlacedPath(path);
-}
+};
 
 global.Storages.isExistentImage = function(storage)
 {
 	return global.check_if_image_exists(storage);
 };
 
-function isExistentImage(storage)
+global.isExistentImage = function(storage)
 {
 	return global.check_if_image_exists(storage);
-}
+};
 
-function getExistImageName(storage)
+global.getExistImageName = function(storage)
 {
 	return global.get_full_path_of_image(storage);
-}
+};
 
 global.System.touchImages_patch_layer_original = global.System.touchImages;
 global.System.touchImages = function(storage, limitbytes=0, timeout=0)

@@ -1264,7 +1264,7 @@ global.KAGWindow = KAGWindow_patch_wordwrap_override;
 // Words longer than one line break at the first character that is over the limit.
 // If maxlines is reached, the rest of the string is returned in the last line regardless of length.
 // Note: Breaking on characters other than space (e.g. tab, hyphen) is not supported.
-function wordWrapSplit(text, maxWidth, font, offset=0, maxLines=0, directiveCharacters="", delimiter=" ", delimiterOnNewLine=false)
+global.wordWrapSplit = function(text, maxWidth, font, offset=0, maxLines=0, directiveCharacters="", delimiter=" ", delimiterOnNewLine=false)
 {
 	var directiveCharactersRegex = directiveCharacters != ""? new RegExp("["+directiveCharacters+"]", "g") : void;
 
@@ -1303,10 +1303,10 @@ function wordWrapSplit(text, maxWidth, font, offset=0, maxLines=0, directiveChar
 	}
 	if (tmp != "") out.add(tmp);
 	return out;
-}
+};
 
 
-function wordWrapSplitLines(lines, maxWidth, font, offset=0, maxLines=0)
+global.wordWrapSplitLines = function(lines, maxWidth, font, offset=0, maxLines=0)
 {
 	if (typeof lines == "String") {
 		lines = lines.split("\n");
@@ -1329,9 +1329,10 @@ function wordWrapSplitLines(lines, maxWidth, font, offset=0, maxLines=0)
 		return out2;
 	}
 	return out;
-}
+};
 
-function wordWrapSplitParagraphs(paragraphs, maxWidth, font, offset=0, maxLines=0) {
+global.wordWrapSplitParagraphs = function(paragraphs, maxWidth, font, offset=0, maxLines=0)
+{
 	if (typeof paragraphs == "String") {
 		paragraphs = paragraphs.replace(/\n\n/g, "\v");
 		paragraphs = paragraphs.split("\v");
@@ -1340,6 +1341,6 @@ function wordWrapSplitParagraphs(paragraphs, maxWidth, font, offset=0, maxLines=
 		paragraphs[p] = wordWrapSplitLines(paragraphs[p], maxWidth, font, offset, maxLines);
 	}
 	return paragraphs;
-}
+};
 
 @endif

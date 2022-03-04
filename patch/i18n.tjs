@@ -14,11 +14,13 @@ global.domains = %[];
 
 global.contextDelimiter = "\x04"; // EOT
 
-function __(text, domain=defaultDomain) {
+global.__ = function(text, domain=defaultDomain)
+{
 	return _x(text,,domain);
-}
+};
 
-function _x(text, context=defaultContext, domain=defaultDomain) {
+global._x = function(text, context=defaultContext, domain=defaultDomain)
+{
 	var dict = domains[domain];
 	if (dict === void) {
 		return text;
@@ -28,9 +30,10 @@ function _x(text, context=defaultContext, domain=defaultDomain) {
 		return text;
 	}
 	return result;
-}
+};
 
-function _n(textSingle, textPlural, pluralNumber, domain=defaultDomain) {
+global._n = function(textSingle, textPlural, pluralNumber, domain=defaultDomain)
+{
 	if (pluralExpressions === void) {
 		return textSingle;
 	}
@@ -48,14 +51,16 @@ function _n(textSingle, textPlural, pluralNumber, domain=defaultDomain) {
 		return plural == 0? textSingle : textPlural;
 	}
 	return result[plural];
-}
+};
 
-function removeAllMO() {
+global.removeAllMO = function()
+{
 	(Dictionary.clear incontextof domains)();
 	pluralExpressions = void;
-}
+};
 
-function loadMoFile(moFile, domain=defaultDomain) {
+global.loadMoFile = function(moFile, domain=defaultDomain)
+{
 	var poFile = Storages.chopStorageExt(moFile) + ".po";
 
 	if (!Storages.isExistentStorage(poFile)) {
@@ -123,14 +128,16 @@ function loadMoFile(moFile, domain=defaultDomain) {
 	domains[domain] = dict;
 	readPluralForms(dict[context + contextDelimiter + ""]);
 	dict[context + contextDelimiter + ""] = void;
-}
+};
 
 
-function isEntry(header, lines, i) {
+global.isEntry = function(header, lines, i)
+{
 	return lines[i].substr(0, header.length) == header;
-}
+};
 
-function readEntry(header, lines, i) {
+global.readEntry = function(header, lines, i)
+{
 	var text = lines[i].substr(header.length + 2, lines[i].length-(header.length + 2)-1);
 	var index = 1;
 	var nextLine = lines[i+index];
@@ -142,9 +149,10 @@ function readEntry(header, lines, i) {
 	// TODO: handle \x00 and \000 sequences
 	text = text.replace(/\\n/g, "\n").replace(/\\t/g, "\t").replace(/\\b/g, "\b").replace(/\\r/g, "\r").replace(/\\f/g, "\f").replace(/\\v/g, "\v").replace(/\\a/g, "\a").replace(/\\\\/g, "\\").replace(/\\"/g, "\"");
 	return [text, index-1];
-}
+};
 
-function readPluralForms(text) {
+global.readPluralForms = function(text)
+{
 	var lines = text.split("\n");
 	for (var i = 0, internal_forloop_count = lines.count; i < internal_forloop_count; i += 1) {
 		if (lines[i].substr(0, pluralForms.length) == pluralForms) {
@@ -152,4 +160,4 @@ function readPluralForms(text) {
 			break;
 		}
 	}
-}
+};

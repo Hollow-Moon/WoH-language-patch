@@ -31,7 +31,7 @@ class Window_patch_hd_layer_override extends Window_patch_hd_layer_original
 		return result;
 	} }
 
-	property widthScale { getter { return wideScaleFactor; } }
+	property widthScale { getter { return global.get_wideScaleFactor(); } }
 	property heightScale { getter { return scaleFactor * (this.isMainWindow? cropFactor : 1); } }
 	property isMainWindow { getter { return this === global.Window.mainWindow; } }
 	property body { getter() { return fore; } }
@@ -98,9 +98,9 @@ class Window_patch_hd_layer_override extends Window_patch_hd_layer_original
 			if (!this.wideScreen) {
 				retvalue = cubicRatio;
 			} else if (this.scflags[autoWideRatioFlagName]) {
-				retvalue = systemRatio;
+				retvalue = global.get_systemRatio();
 			} else {
-				retvalue = this.scflags[wideRatioFlagName] != void? this.scflags[wideRatioFlagName] : systemRatio;
+				retvalue = this.scflags[wideRatioFlagName] != void? this.scflags[wideRatioFlagName] : global.get_systemRatio();
 			}
 @if(!SCALE_USING_FLOATING_POINT)
 			retvalue |= 0;
@@ -113,7 +113,7 @@ class Window_patch_hd_layer_override extends Window_patch_hd_layer_original
 				this.scflags[autoWideRatioFlagName] = false;
 				this.scflags[wideRatioFlagName] = cubicRatio;
 			}
-			this.scflags[autoWideRatioFlagName] = floatEquals(v, systemRatio);
+			this.scflags[autoWideRatioFlagName] = floatEquals(v, global.get_systemRatio());
 			this.scflags[wideRatioFlagName] = v;
 		}
 	}
@@ -219,12 +219,12 @@ class Window_patch_hd_layer_override extends Window_patch_hd_layer_original
 
 	function scaleWidth(w)
 	{
-		return scaleSize(w, wideScaleFactor);
+		return scaleSize(w, global.get_wideScaleFactor());
 	}
 
 	function unscaleWidth(w)
 	{
-		return unscaleSize(w, wideScaleFactor);
+		return unscaleSize(w, global.get_wideScaleFactor());
 	}
 
 	function scaleHeight(h)

@@ -19,11 +19,11 @@ global.hCensoredFlagName = "censored";
 global.matureFlagName = "gmature";
 global.decensoredFlagName = "decensor";
 
-function get_hPatchExists() { { return patchExists(hPatchName); } }
-function get_isHCensored(kag=global.kag) { { return kag.sflags[hCensoredFlagName] !== void? kag.sflags[hCensoredFlagName] : !kag.sflags[hFlagName]; } } // RN uses hFlagName while HA uses hCensoredFlagName
-function get_isMatureCensored(kag=global.kag) { { return !kag.sflags[matureFlagName]; } }
-function get_fullyCensored(kag=global.kag) { { return get_isHCensored(kag) && get_isMatureCensored(kag); } }
-function get_isDecensored(kag=global.kag) { { return kag.sflags[decensoredFlagName]; } };
+global.get_hPatchExists = function() { { return patchExists(hPatchName); } };
+global.get_isHCensored = function(kag=global.kag) { { return kag.sflags[hCensoredFlagName] !== void? kag.sflags[hCensoredFlagName] : !kag.sflags[hFlagName]; } }; // RN uses hFlagName while HA uses hCensoredFlagName
+global.get_isMatureCensored = function(kag=global.kag) { { return !kag.sflags[matureFlagName]; } };
+global.get_fullyCensored = function(kag=global.kag) { { return get_isHCensored(kag) && get_isMatureCensored(kag); } };
+global.get_isDecensored = function(kag=global.kag) { { return kag.sflags[decensoredFlagName]; } };
 
 // Folder names
 global.fullyCensoredFolderName = "censored";
@@ -36,7 +36,8 @@ global.uncensoredMatureFolderName = "mature";
 
 global.decensoredFolderName = "decensored";
 
-function getTextCensored(text, kag=global.kag) {
+global.getTextCensored = function(text, kag=global.kag)
+{
 	if (text == void) return text;
 	if (text.indexOf("|") >=0)
 	{
@@ -46,9 +47,9 @@ function getTextCensored(text, kag=global.kag) {
 		return splitText[1];
 	}
 	return text;
-}
+};
 
-function isHScene(kag=global.kag)
+global.isHScene = function(kag=global.kag)
 {
 	var name = kag.flags.scriptlabel;
 	if (name == void || name == "") return false;
@@ -58,9 +59,9 @@ function isHScene(kag=global.kag)
 	var split = [].split("-",name);
 
 	return split.length >= 2 && split[1].length == 3;
-}
+};
 
-function updateDecensorConfig(kag=global.kag)
+global.updateDecensorConfig = function(kag=global.kag)
 {
 	var decensor_types = [void, "bishopcruz", "Bellandy", "original"];
 	var decensor_config_file_name = "decensor_config.dic";
@@ -142,4 +143,4 @@ function updateDecensorConfig(kag=global.kag)
 		}
 	}
 	invalidate decensoredImages;
-}
+};

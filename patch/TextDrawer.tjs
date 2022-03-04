@@ -78,12 +78,13 @@ class TextualSettings
 	}
 }
 
-function loadDictionaryIfExists(dictionaryName) {
+global.loadDictionaryIfExists = function(dictionaryName)
+{
 	if (Storages.isExistentStorage(dictionaryName)) {
 		return Scripts.evalStorage(dictionaryName);
 	}
 	return void;
-}
+};
 
 global.textDrawerSettingsFileName = "TextDrawerSettings.tjs";
 Scripts.execStorage(textDrawerSettingsFileName) if Storages.isExistentStorage(textDrawerSettingsFileName);

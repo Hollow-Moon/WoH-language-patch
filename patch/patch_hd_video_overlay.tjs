@@ -16,10 +16,10 @@ class VideoOverlay_patch_hd_layer_override extends VideoOverlay_patch_hd_layer_o
 		getter
 		{
 @if(SCALE_USING_FLOATING_POINT)
-			return super.width / wideScaleFactor;
+			return super.width / global.get_wideScaleFactor();
 @endif
 @if(!SCALE_USING_FLOATING_POINT)
-			return super.width \ wideScaleFactor;
+			return super.width \ global.get_wideScaleFactor();
 @endif
 		}
 	}
@@ -42,10 +42,10 @@ class VideoOverlay_patch_hd_layer_override extends VideoOverlay_patch_hd_layer_o
 		getter
 		{
 @if(SCALE_USING_FLOATING_POINT)
-			return super.originalWidth / wideScaleFactor;
+			return super.originalWidth / global.get_wideScaleFactor();
 @endif
 @if(!SCALE_USING_FLOATING_POINT)
-			return super.originalWidth \ wideScaleFactor;
+			return super.originalWidth \ global.get_wideScaleFactor();
 @endif
 		}
 	}
@@ -65,7 +65,7 @@ class VideoOverlay_patch_hd_layer_override extends VideoOverlay_patch_hd_layer_o
 
 	function setBounds(left, top, width, height)
 	{
-		return super.setBounds(left*wideScaleFactor, top*scaleFactor, width*wideScaleFactor, height*scaleFactor);
+		return super.setBounds(left*global.get_wideScaleFactor(), top*scaleFactor, width*global.get_wideScaleFactor(), height*scaleFactor);
 	}
 }
 global.VideoOverlay = VideoOverlay_patch_hd_layer_override;

@@ -189,6 +189,11 @@ global.font_file_add_list = [
 	"TIMESI.TTF",
 ];
 
+global.font_file_face_replacements = %[
+	",Sabon Next LT Pro Display" => "Sabon Next LT Pro",
+	",Bernhard Modern Std Roman" => "Bernhard Modern Std",
+];
+
 global.font_remap_cache = %[];
 global.font_metrics_cache = %[];
 global.font_state_cache = %[];
@@ -476,6 +481,11 @@ class FontWrapper
 			if (typeof(face) !== "String" || face === "")
 			{
 				face = "MS PGothic";
+			}
+			var font_file_face_replacements = global.font_file_face_replacements;
+			if (font_file_face_replacements[face] !== void)
+			{
+				face = font_file_face_replacements[face];
 			}
 			var to_remap_face = this.get_remap_facename(face);
 			if (typeof(to_remap_face) === "String")

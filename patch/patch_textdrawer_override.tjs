@@ -1,0 +1,223 @@
+﻿global.Layer_patch_textdrawer_override_original = Layer;
+class Layer_patch_textdrawer_override_override extends Layer_patch_textdrawer_override_original
+{
+	var textDrawer;
+	var voiceNameSettings;
+	var wallpapersNamesSettings;
+
+	function getTextDrawer()
+	{
+		if (this.textDrawer === void)
+		{
+			this.textDrawer = new TextDrawer();
+		}
+		return this.textDrawer;
+	}
+
+	function Layer_patch_textdrawer_override_override()
+	{
+		super.Layer(...);
+		if (this instanceof "CharacterVoiceConfigLayer")
+		{
+			voiceNameSettings = new EntriesSettings();
+			with (voiceNameSettings) {
+				.dictionary = loadDictionaryIfExists("voice_names.dic");
+				.title.exists = false;
+				.imageWidth = 138;
+				.emptyLayerImage = true;
+				with (.text) {
+					.alignment = "left";
+					.maxHeight = 40;
+					.fontHeight = __si("20", "voice_config_font_height");
+					.fontFace = __st("ＭＳ Ｐ明朝", "voice_config_font_face");
+					.fontContext = "voice_config_font_face";
+					.fontBold = true;
+					.color = 0xffffff;
+					.opacity = 200;
+					.shadowOpacity = 200;
+					.shadowColor = 0x000000;
+					.shadowWidth = 1;
+					.shadowOffsetX = -2;
+					.shadowOffsetY = 2;
+				}
+				.imageHeight = .text.maxHeight;
+			}
+		}
+@if(GAME_FHAT)
+		if (this instanceof "WallPaperMenuLayer")
+		{
+			wallpapersNamesSettings = new EntriesSettings();
+			with (wallpapersNamesSettings) {
+				.useDictionary = false;
+				.cleanBgImage = "wp_name_template";
+				with(.text) {
+					.bottomOffset = 7;
+					.fontFace = __st("ＭＳ Ｐ明朝", "wallpaper_name_font_face");
+					.fontContext = "wallpaper_name_font_face";
+					.fontHeight = 15;
+					.fontBold = true;
+					.color = 0xa60764;
+				}
+			}
+		}
+@endif
+	}
+
+	function Layer()
+	{
+		Layer_patch_textdrawer_override_override(...);
+	}
+
+	var in_text_drawer = false;
+	function loadImages(storage, key)
+	{
+		if (!this.in_text_drawer)
+		{
+@if(GAME_FATE)
+			if (this instanceof "MessageLayer" || (this.parent) instanceof "MessageLayer")
+			{
+				if (/tw_/.test(storage))
+				{
+					this.in_text_drawer = true;
+					this.getTextDrawer().drawTigerDojoName(this, storage, key);
+					this.in_text_drawer = false;
+					return;
+				}
+			}
+@endif
+@if(GAME_FATE||GAME_FHAT)
+			if (this.parent instanceof "ManagedLayer" && typeof(global.playtime_object) === "Object" && typeof(global.playtime_object.baseStorage) === "String" && storage === global.playtime_object.baseStorage)
+			{
+				this.in_text_drawer = true;
+				this.getTextDrawer().drawPlayTime(this, storage);
+				this.in_text_drawer = false;
+				return;
+			}
+@endif
+			if (this.parent instanceof "VoiceConfigLayer")
+			{
+				var voice_config_layer = this.parent;
+				var voice_config_layer_children = voice_config_layer.children;
+				var voiceNameSettings = void;
+				for (var i = 0; i < voice_config_layer_children.count; i += 1)
+				{
+					var voice_config_layer_child = voice_config_layer_children[i];
+					if (voice_config_layer_child instanceof "CharacterVoiceConfigLayer")
+					{
+						if (typeof(voice_config_layer_child.voiceNameSettings) === "Object")
+						{
+							voiceNameSettings = voice_config_layer_child.voiceNameSettings;
+						}
+					}
+				}
+				if (voiceNameSettings !== void)
+				{
+					this.in_text_drawer = true;
+					this.getTextDrawer().drawVoiceName(this, storage, voiceNameSettings);
+					this.in_text_drawer = false;
+					return;
+				}
+				
+			}
+@if(GAME_FHAT)
+			if (this instanceof "SlideUpLayer" && (this.parent) instanceof "WallPaperMenuLayer" && typeof(this.parent.name_extension) === "String")
+			{
+				if (__sb("0", "wallpaper_text"))
+				{
+					this.in_text_drawer = true;
+					this.getTextDrawer().drawWallpaperName(this, storage, __(storage.substr(this.parent.name_extension.length)), this.parent.wallpapersNamesSettings);
+					this.in_text_drawer = false;
+					return;
+				}
+			}
+@endif
+@if(GAME_FATE)
+			if (this instanceof "StatusButtonLayer")
+			{
+				this.in_text_drawer = true;
+				this.getTextDrawer().drawStatusButtons(this, storage);
+				this.in_text_drawer = false;
+				return;
+			}
+			if (this instanceof "ExButtonLayer")
+			{
+				this.in_text_drawer = true;
+				this.getTextDrawer().drawExtraButtons(this, storage);
+				this.in_text_drawer = false;
+				return;
+			}
+			if (this.parent.parent instanceof "WeaponMenuLayer" && typeof(storage) === "String" && storage.substr(0, 3) === "wp_")
+			{
+				var weapon_menu_layer = this.parent.parent;
+				if (typeof(this.name) === "String" && this.name !== "")
+				{
+					var name = this.name;
+					if (name.substr(0, 3) === "武器名")
+					{
+						// skip "wp_" and "title"
+						var weapon_name = storage.substr(3, storage.length - 8);
+						var wds = weapon_menu_layer.weapondatas;
+						for (var i = 0; i < wds.count; i += 1)
+						{
+							var wd = wds[i];
+							if (wd[0] === weapon_name)
+							{
+								var localizedName = wd[6] !== void? __(wd[6]) : __(wd[0]);
+								var localizedRuby = wd[7] !== void? __(wd[7]) : void;
+								this.in_text_drawer = true;
+								this.getTextDrawer().drawWeaponsTitle(this, "wp_" + weapon_menu_layer.currentweapon + "title", localizedName, localizedRuby);
+								this.in_text_drawer = false;
+								return;
+							}
+						}
+					}
+					else if (name.substr(0, 4) === "使用者名")
+					{
+						// skip "wp_"
+						var weapon_user_name = storage.substr(3);
+						var wds = weapon_menu_layer.weapondatas;
+						for (var i = 0; i < wds.count; i += 1)
+						{
+							var wd = wds[i];
+							if (wd[4] === weapon_user_name)
+							{
+								this.in_text_drawer = true;
+								this.getTextDrawer().drawWeaponsUser(this, "wp_" + wd[4], __(wd[4]));
+								this.in_text_drawer = false;
+								return;
+							}
+						}
+					}
+					else if (name.substr(0, 4) === "武器説明")
+					{
+						this.in_text_drawer = true;
+						this.getTextDrawer().drawWeaponsText(this, storage);
+						this.in_text_drawer = false;
+						return;
+					}
+				}
+				else
+				{
+					// skip "wp_"
+					var weapon_name = storage.substr(3);
+					var wds = weapon_menu_layer.weapondatas;
+					for (var i = 0; i < wds.count; i += 1)
+					{
+						var wd = wds[i];
+						if (wd[0] === weapon_name)
+						{
+							var localizedName = wd[6] !== void ? __(wd[6]) : __(wd[0]);
+							this.in_text_drawer = true;
+							this.getTextDrawer().drawWeaponsName(this, "wp_"+wd[0], localizedName); // 名称画像を読み込んでおく
+							this.in_text_drawer = false;
+							return;
+						}
+					}
+				}
+			}
+@endif
+		}
+		return super.loadImages(...);
+	}
+}
+global.Layer = Layer_patch_textdrawer_override_override;

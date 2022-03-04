@@ -224,10 +224,6 @@ Scripts.execStorage("MessageCharLayer.tjs");	// 文字の表示に利用する�
 	var lineLayerYDrawOffset = 4;
 @endif
 
-@if(TEXT_DRAWER)
-Scripts.execStorage("TextDrawer.tjs");
-@endif
-
 class MessageLayer extends KAGLayer
 {
 	var wwFollowing = "%),:;]}｡｣ﾞﾟ。，、．：；゛゜ヽヾゝ"
@@ -566,10 +562,6 @@ class MessageLayer extends KAGLayer
         }
     }
 
-@if(TEXT_DRAWER)
-	var textDrawer;
-@endif
-
 	function MessageLayer(owner, parent, name, id, do_config)
 	{
 		// MessageLayer コンストラクタ
@@ -692,10 +684,6 @@ class MessageLayer extends KAGLayer
 @endif
 			// 領域画像で当たり判定を行う
 
-@if(TEXT_DRAWER)
-		textDrawer = new TextDrawer();
-@endif
-
 @if(MESSAGELAYER_USECHARLAYER)
 		this.cached = true;
 		this.tmpCharLayer = createNewCharLayer(false);
@@ -802,16 +790,8 @@ class MessageLayer extends KAGLayer
 			}
 			else
 			{
-@if(TEXT_DRAWER&&GAME_FATE)
-				if (/tw_/.test(frameGraphic)) {
-					textDrawer = new TextDrawer();
-					textDrawer.drawTigerDojoName(this, frameGraphic, frameKey);
-				} else
-@endif
-				{
-					loadImages(frameGraphic, frameKey);
-					setSizeToImageSize();
-				}
+				loadImages(frameGraphic, frameKey);
+				setSizeToImageSize();
 			}
 @if(SHOW_MARGINS)
 			var	col = 0xff0000, opa = 64;

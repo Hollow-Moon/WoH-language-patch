@@ -231,14 +231,12 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 
 	function scaleInsideImageWidth(w)
 	{
-		var imageWidthScaleFactor = this.widthForScaleInsideOriginal / this.widthForScaleInside;
-		return (w * imageWidthScaleFactor) | 0;
+		return (w * this.widthForScaleInsideOriginal / this.widthForScaleInside) | 0; // order of operations is important to avoid floating point errors causing visual glitch
 	}
 
 	function scaleInsideImageHeight(h)
 	{
-		var imageHeightScaleFactor = this.heightForScaleInsideOriginal / this.heightForScaleInside;
-		return (h * imageHeightScaleFactor) | 0;
+		return (h * this.heightForScaleInsideOriginal / this.heightForScaleInside) | 0; // order of operations is important to avoid floating point errors causing visual glitch
 	}
 
 	function scaleInsideImageLeft(x, w, wOriginal)

@@ -210,7 +210,7 @@ global.initializeWide = function(ratio)
 	wideScreen = ratio > cubicRatio;
 	wideRatio = ratio;
 @if(SCALE_USING_FLOATING_POINT)
-	wideFactor = originalResHeight * ratio / originalResWidth;
+	wideFactor = (originalResHeight / originalResWidth) * ratio; // order of operations is important to avoid floating point errors causing visual glitch
 @endif
 @if(!SCALE_USING_FLOATING_POINT)
 	wideFactor = originalResHeight * ratio \ originalResWidth;

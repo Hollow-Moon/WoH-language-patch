@@ -17,16 +17,17 @@ class Window_hint_override extends Window_hint_original
 	function initHintLayer()
 	{
 		hintlayer = new Layer(this, primaryLayer);
-		with (hintlayer) {
-			.visible = false;
-			.ignoreHintSensing = true;
-			.hitThreshold = 256;
+		{
+			var l = hintlayer;
+			l.visible = false;
+			l.ignoreHintSensing = true;
+			l.hitThreshold = 256;
 			if (["Integer", "Real"].find(typeof(this.innerHeightScale)) !== -1) {
-				.font.height = Math.ceil(9 / Math.min(1, innerHeightScale)); // upscale font when using window size < x1.0
+				l.font.height = Math.ceil(9 / Math.min(1, innerHeightScale)); // upscale font when using window size < x1.0
 			} else {
-				.font.height = 9;
+				l.font.height = 9;
 			}
-			.font.face = __s("MS UI Gothic", "hint_font_face");
+			l.font.face = __s("MS UI Gothic", "hint_font_face");
 		}
 
 		// hintDelay = 500; // default

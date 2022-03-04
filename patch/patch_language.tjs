@@ -241,43 +241,43 @@ global.setFontWithLanguage = function(language, kag=global.kag)
 {
 	load_fonts(language);
 
-	with (kag)
 	{
+		var w = kag;
 		/// Main ///
-		if (.sflags.userFont[language] === void)
+		if (w.sflags.userFont[language] === void)
 		{
-			.sflags.userFont[language] = global.get_default_userfont_settings(kag);
+			w.sflags.userFont[language] = global.get_default_userfont_settings(kag);
 		}
 
-		var uf = .sflags.userFont[language];
+		var uf = w.sflags.userFont[language];
 		if (typeof(uf.fontface) !== "String" || uf.fontface === "" || typeof(uf.bold) !== "Integer" || typeof(uf.rubybold) !== "Integer")
 		{
 			uf = global.get_default_userfont_settings(kag);
 		}
-		.chDefaultFace				= uf.fontface;
-		if (typeof(.tflags) === "Object")
+		w.chDefaultFace				= uf.fontface;
+		if (typeof(w.tflags) === "Object")
 		{
-			.tflags.chDefaultFace = uf.fontface;
+			w.tflags.chDefaultFace = uf.fontface;
 		}
 		{
-			.chDefaultBold				= !!uf.bold;
+			w.chDefaultBold				= !!uf.bold;
 		}
-		if (typeof(.tflags) === "Object")
+		if (typeof(w.tflags) === "Object")
 		{
-			.tflags.chDefaultBold = !!uf.bold;
+			w.tflags.chDefaultBold = !!uf.bold;
 		}
 		{
-			.chDefaultRubyBold				= !!uf.rubybold;
+			w.chDefaultRubyBold				= !!uf.rubybold;
 		}
-		if (typeof(.tflags) === "Object")
+		if (typeof(w.tflags) === "Object")
 		{
-			.tflags.chDefaultRubyBold = !!uf.rubybold;
+			w.tflags.chDefaultRubyBold = !!uf.rubybold;
 		}
-		if (typeof(.current) === "Object")
+		if (typeof(w.current) === "Object")
 		{
-			.current.defaultBold		= !!uf.bold;
-			.current.defaultRubyBold	= !!uf.rubybold;
-			.setMessageLayerUserFont();
+			w.current.defaultBold		= !!uf.bold;
+			w.current.defaultRubyBold	= !!uf.rubybold;
+			w.setMessageLayerUserFont();
 		}
 	}
 
@@ -286,10 +286,10 @@ global.setFontWithLanguage = function(language, kag=global.kag)
 
 	if (typeof(kag.historyLayer) === "Object")
 	{
-		with(kag.historyLayer.font)
 		{
-			.face = kag.sflags.historyFont		= hf[0];
-			.bold = kag.sflags.historyFontBold	= hf[1];
+			var f = kag.historyLayer.font;
+			f.face = kag.sflags.historyFont		= hf[0];
+			f.bold = kag.sflags.historyFontBold	= hf[1];
 		}
 	}
 };
@@ -306,39 +306,39 @@ global.saveFontWithLanguage = function(kag=global.kag)
 	var defaultface = void;
 	var bold = false;
 	var rubybold = false;
-	with(kag)
 	{
-		if (typeof(.chDefaultFace) === "String" && .chDefaultFace !== "")
+		var w = kag;
+		if (typeof(w.chDefaultFace) === "String" && w.chDefaultFace !== "")
 		{
-			defaultface = .chDefaultFace;
+			defaultface = w.chDefaultFace;
 		}
-		else if (typeof(.scflags) === "Object" && typeof(.scflags.chDefaultFace) === "String" && .scflags.chDefaultFace !== "")
+		else if (typeof(w.scflags) === "Object" && typeof(w.scflags.chDefaultFace) === "String" && w.scflags.chDefaultFace !== "")
 		{
-			defaultface = .scflags.chDefaultFace;
+			defaultface = w.scflags.chDefaultFace;
 		}
-		if (typeof(.chDefaultBold) === "Integer")
+		if (typeof(w.chDefaultBold) === "Integer")
 		{
-			bold = .chDefaultBold;
+			bold = w.chDefaultBold;
 		}
-		else if (typeof(.current) === "Object")
+		else if (typeof(w.current) === "Object")
 		{
-			bold = .current.defaultBold;
+			bold = w.current.defaultBold;
 		}
-		else if (typeof(.scflags) === "Object" && typeof(.scflags.chDefaultBold) === "Integer")
+		else if (typeof(w.scflags) === "Object" && typeof(w.scflags.chDefaultBold) === "Integer")
 		{
-			bold = .scflags.chDefaultBold;
+			bold = w.scflags.chDefaultBold;
 		}
-		if (typeof(.chDefaultRubyBold) === "Integer")
+		if (typeof(w.chDefaultRubyBold) === "Integer")
 		{
-			rubybold = .chDefaultRubyBold;
+			rubybold = w.chDefaultRubyBold;
 		}
-		else if (typeof(.current) === "Object")
+		else if (typeof(w.current) === "Object")
 		{
-			rubybold = .current.defaultRubyBold;
+			rubybold = w.current.defaultRubyBold;
 		}
-		else if (typeof(.scflags) === "Object" && typeof(.scflags.chDefaultRubyBold) === "Integer")
+		else if (typeof(w.scflags) === "Object" && typeof(w.scflags.chDefaultRubyBold) === "Integer")
 		{
-			rubybold = .scflags.chDefaultRubyBold;
+			rubybold = w.scflags.chDefaultRubyBold;
 		}
 		var uf = %[
 			fontface:defaultface,
@@ -351,7 +351,7 @@ global.saveFontWithLanguage = function(kag=global.kag)
 		}
 		else
 		{
-			.sflags.userFont[.sflags.language] = uf;
+			w.sflags.userFont[w.sflags.language] = uf;
 		}
 	}
 };

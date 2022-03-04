@@ -202,16 +202,17 @@ global.capitalize = function(str)
 global.addMaskOverlay = function(layer, name, l=0, t=0, add=true, horizontalAlignment=void)
 {
 	var overlay = new global.Layer(layer.window, layer);
-	with (overlay) {
+	{
+		var o = overlay;
 		if (horizontalAlignment !== void) {
-			.horizontalAlignment = horizontalAlignment;
+			o.horizontalAlignment = horizontalAlignment;
 		}
 		if (add) {
-			.type = ltPsAdditive;
+			o.type = ltPsAdditive;
 		}
-		.isMask = true;
-		.loadImages(name);
-		layer.operateRect(l, t, overlay, 0, 0, .imageWidth, .imageHeight);
+		o.isMask = true;
+		o.loadImages(name);
+		layer.operateRect(l, t, overlay, 0, 0, o.imageWidth, o.imageHeight);
 	}
 	invalidate overlay;
 };
@@ -229,33 +230,35 @@ global.defaultScrollbarImages =  [	//	base
 global.initializeScollbar = function(x, y, w, h, total, moving, top, scrimgs=defaultScrollbarImages)
 {
 	mini_layer = new global.FadeLayer(window, this);
-	with(mini_layer)
 	{
-		.setPos(x, y);
-		.setSize(w, h);
-		.visible = true;
-		.hitThreshold = 0;
-		.opacity = 255;
-		.focusable = true;
-		.onMouseDown = function() {
+		var l = mini_layer;
+		l.setPos(x, y);
+		l.setSize(w, h);
+		l.visible = true;
+		l.hitThreshold = 0;
+		l.opacity = 255;
+		l.focusable = true;
+		l.onMouseDown = function() {
 			parent.onMouseDown(...);
 		} incontextof mini_layer;
-		.onButtonDown = function() {
+		l.onButtonDown = function() {
 			parent.onButtonDown(...);
 		} incontextof mini_layer;
-		.onButtonUp = function() {
+		l.onButtonUp = function() {
 			parent.onButtonUp(...);
 		} incontextof mini_layer;
 	}
 
-	with(scrollbar = new ScrollBarLayer(window, mini_layer, w, 0, 0, false, scrimgs)) //6,6 margin if you use the horizontal background for the scroller
+	//6,6 margin if you use the horizontal background for the scroller
+	scrollbar = new ScrollBarLayer(window, mini_layer, w, 0, 0, false, scrimgs);
 	{
-		.top = top; //use top 0 if you use the horizontal background for the scroller
-		.total		= total;
-		.area		= .width;
-		.onscroll	= onScroll;
-		.current	= 0;
-		.moving		= moving;
+		var l = scrollbar;
+		l.top = top; //use top 0 if you use the horizontal background for the scroller
+		l.total		= total;
+		l.area		= l.width;
+		l.onscroll	= onScroll;
+		l.current	= 0;
+		l.moving	= moving;
 	}
 
 	window.org_onMouseWheel	= window.onMouseWheel;
@@ -268,10 +271,10 @@ global.stopAllMovies = function(kag=global.kag)
 {
 	for (var i = 0, internal_forloop_count = kag.movies.count; i < internal_forloop_count; i += 1)
 	{
-		with(kag.movies[i])
 		{
-			if(.canWaitStop)
-				.stop();
+			var m = kag.movies[i];
+			if(m.canWaitStop)
+				m.stop();
 		}
 	}
 };
@@ -280,9 +283,9 @@ global.isAnyMoviePlaying = function(kag=global.kag)
 {
 	for (var i = 0, internal_forloop_count = kag.movies.count; i < internal_forloop_count; i += 1)
 	{
-		with(kag.movies[i])
 		{
-			if(.canWaitStop)
+			var m = kag.movies[i];
+			if(m.canWaitStop)
 				return true;
 		}
 	}
@@ -1418,25 +1421,25 @@ global.getLayerInfo = function()
 		var	text;
 		for(var i=0; i<children.count; i++)
 		{
-			with(children[i])
 			{
-				if(.parent == kag.primaryLayer && .name == "Menuitem[pool]")
+				var c = children[i];
+				if(c.parent == kag.primaryLayer && c.name == "Menuitem[pool]")
 					continue;
 				if(children[i] instanceof "MessageCharLayer")
 					continue;
-				text	+= indent + (.visible ? "■" : "□")+" "+.name+(typeof .layerID != "undefined" ? "/"+.layerID : "")+
-					(typeof .storage != "undefined" ? " <"+Storages.extractStorageName(.storage)+">" : "")+
-					"["+.type+"]"+
+				text	+= indent + (c.visible ? "■" : "□")+" "+c.name+(typeof c.layerID != "undefined" ? "/"+c.layerID : "")+
+					(typeof c.storage != "undefined" ? " <"+Storages.extractStorageName(c.storage)+">" : "")+
+					"["+c.type+"]"+
 //					"["+(isbase ? ._effect +"/in:"+.childEffect : (typeof ._effect != "undefined" ? (._effect != "" ? ._effect : (typeof .parent.childEffect != "undefined" ? .parent.childEffect : "")): ""))+"]"+
-					" ("+.left+", "+.top+(typeof .realLeft != "undefined" ? "/"+.realLeft+","+.realTop+"/"+.realImageLeft+","+.realImageTop : "")+")-"+
-					(typeof .center != "undefined" ? ("(C:"+.center+", "+.vcenter+")-") : "")+
-					"("+.width+", "+.height+") opac="+.opacity+
-					(typeof .zoomx != "undefined" ? " zoom="+(.zoomx == .zoomy ? "%4.2f".sprintf(.zoomx) : "(%4.2f, %4.2f)".sprintf(.zoomx, .zoomy)) : "")+
-					(typeof .rotate != "undefined" ? " rot=%4.2f".sprintf(.rotate) : "")+
-					(typeof .afx != "undefined" ? " af=(%d, %d)".sprintf(.afx, .afy) : "")+
-					(typeof .srcleft != "undefined" ? " (%4.2f, %4.2f)[%4.2f/%4.2f](%d, %d)".sprintf(.srcleft, .srctop, .srczoomx, .srcrotate, .srcafx, .srcafy): "")+
-					(typeof .notuse != "undefined" ? " use=%d".sprintf(!.notuse) : "")+"\r\n";
-				text	+= func(.children, indent + "  ", func);
+					" ("+c.left+", "+c.top+(typeof c.realLeft != "undefined" ? "/"+c.realLeft+","+c.realTop+"/"+c.realImageLeft+","+c.realImageTop : "")+")-"+
+					(typeof c.center != "undefined" ? ("(C:"+c.center+", "+c.vcenter+")-") : "")+
+					"("+c.width+", "+c.height+") opac="+c.opacity+
+					(typeof c.zoomx != "undefined" ? " zoom="+(c.zoomx == c.zoomy ? "%4.2f".sprintf(c.zoomx) : "(%4.2f, %4.2f)".sprintf(c.zoomx, c.zoomy)) : "")+
+					(typeof c.rotate != "undefined" ? " rot=%4.2f".sprintf(c.rotate) : "")+
+					(typeof c.afx != "undefined" ? " af=(%d, %d)".sprintf(c.afx, c.afy) : "")+
+					(typeof c.srcleft != "undefined" ? " (%4.2f, %4.2f)[%4.2f/%4.2f](%d, %d)".sprintf(c.srcleft, c.srctop, c.srczoomx, c.srcrotate, c.srcafx, c.srcafy): "")+
+					(typeof c.notuse != "undefined" ? " use=%d".sprintf(!c.notuse) : "")+"\r\n";
+				text	+= func(c.children, indent + "  ", func);
 			}
 		}
 		return text;
@@ -1455,8 +1458,10 @@ global.saveLogToExchange = function()
 	var	logfn	= "krkr.console.log";
 	var	date	= new Date();
 	var	datestr;
-	with(date)
-		datestr	= "%02d%02d%02d-%02d%02d%02d".sprintf(.getYear() % 100, .getMonth()+1, .getDate(), .getHours(), .getMinutes(), .getSeconds());
+	{
+		var d = date;
+		datestr	= "%02d%02d%02d-%02d%02d%02d".sprintf(d.getYear() % 100, d.getMonth()+1, d.getDate(), d.getHours(), d.getMinutes(), d.getSeconds());
+	}
 	var	linfo	= getLayerInfo();
 	dm(linfo);	//	レイヤー構成をログ
 	var	savefn	= datestr+".bmp";
@@ -1473,8 +1478,10 @@ global.saveLogToExchange = function()
 
 	//	クリップボードに参照情報を書き込み、念のためテキストにも出力
 	var	text;
-	with(date)
-		text	+= "error date: %d年%d月%d日 %02d:%02d:%02d\r\n".sprintf(.getYear(), .getMonth()+1, .getDate(), .getHours(), .getMinutes(), .getSeconds());
+	{
+		var d = date;
+		text	+= "error date: %d年%d月%d日 %02d:%02d:%02d\r\n".sprintf(d.getYear(), d.getMonth()+1, d.getDate(), d.getHours(), d.getMinutes(), d.getSeconds());
+	}
 	text	+= "error log : "+datestr+"."+logfn+"\r\n";
 	text	+= "save data : "+savefn+"\r\n";
 	text	+= "layer info: \r\n" + linfo;

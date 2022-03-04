@@ -187,9 +187,10 @@ class KAGFlagMenuItem extends KAGMenuItem
 		sender.afterCallback(sender);
 
 		if (restart && flagValueChanged && restartCondition()) {
-			with (owner) {
-				.extraConductor.clear(); // Fix code for AutoPath
-				.onReloadScenarioMenuItemClick(sender);
+			{
+				var w = owner;
+				w.extraConductor.clear(); // Fix code for AutoPath
+				w.onReloadScenarioMenuItemClick(sender);
 			}
 		}
 	}

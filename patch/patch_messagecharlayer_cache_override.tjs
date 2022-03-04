@@ -385,46 +385,46 @@ class MessageLayer_patch_messagecharlayer_cache_override_override extends Messag
 			}
 			return;
 		}
-		with (this.tmpCharLayer)
 		{
-			.clear();
+			var l = this.tmpCharLayer;
+			l.clear();
 			if (graph)
 			{
 				if(ischar)
 				{
 					if(edge)
-						.drawGraphWithEdge(ch, key, chColor, edgeEmphasis, edgeColor, edgeExtent);
+						l.drawGraphWithEdge(ch, key, chColor, edgeEmphasis, edgeColor, edgeExtent);
 					else if(shadow)
-						.drawGraphWithShadow(ch, key, chColor, shadowColor, shadowOffsetX, shadowOffsetY);
+						l.drawGraphWithShadow(ch, key, chColor, shadowColor, shadowOffsetX, shadowOffsetY);
 					else
-						.drawGraph(ch, key, chColor);
+						l.drawGraph(ch, key, chColor);
 				}
 				else
 				{
-					.drawGraph(ch, key);
+					l.drawGraph(ch, key);
 				}
 			}
 			else
 			{
 				if (ruby)
 				{
-					.setFont(fontFace, fontAngle, rubyBold, italic, rubySize);
+					l.setFont(fontFace, fontAngle, rubyBold, italic, rubySize);
 					if(edge)
-						.drawTextWithEdge(ch, rubyChColor, rubyAntialiased, edgeEmphasis, rubyEdgeColor, edgeExtent, vertical, max, min);
+						l.drawTextWithEdge(ch, rubyChColor, rubyAntialiased, edgeEmphasis, rubyEdgeColor, edgeExtent, vertical, max, min);
 					else if(shadow)
-						.drawTextWithShadow(ch, rubyChColor, rubyAntialiased, rubyShadowColor, shadowOffsetX, shadowOffsetY, vertical, max, min);
+						l.drawTextWithShadow(ch, rubyChColor, rubyAntialiased, rubyShadowColor, shadowOffsetX, shadowOffsetY, vertical, max, min);
 					else
-						.drawText(ch, rubyChColor, rubyAntialiased, vertical, max, min);
+						l.drawText(ch, rubyChColor, rubyAntialiased, vertical, max, min);
 				}
 				else
 				{
-					.setFont(fontFace, fontAngle, bold, italic, fontSize);
+					l.setFont(fontFace, fontAngle, bold, italic, fontSize);
 					if(edge)
-						.drawTextWithEdge(ch, chColor, antialiased, edgeEmphasis, edgeColor, edgeExtent, vertical);
+						l.drawTextWithEdge(ch, chColor, antialiased, edgeEmphasis, edgeColor, edgeExtent, vertical);
 					else if(shadow)
-						.drawTextWithShadow(ch, chColor, antialiased, shadowColor, shadowOffsetX, shadowOffsetY, vertical);
+						l.drawTextWithShadow(ch, chColor, antialiased, shadowColor, shadowOffsetX, shadowOffsetY, vertical);
 					else
-						.drawText(ch, chColor, antialiased, vertical);
+						l.drawText(ch, chColor, antialiased, vertical);
 				}
 			}
 		}

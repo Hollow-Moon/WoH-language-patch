@@ -18,16 +18,16 @@ class KAGWindow_patch_textruby_override extends KAGWindow_patch_textruby_origina
 		handlers.ruby_patch_textruby_original = handlers.ruby;
 		handlers.ruby = function(elm)
 		{
-			with(elm)
 			{
-				if(.char != void && string(+.char) != .char)
+				var e = elm;
+				if(e.char != void && string(+e.char) != e.char)
 				{
 					var pendings_to_insert = [];
 					{
-						pendings_to_insert.add(%[tagname:"ruby", char:.char.length, text:.text]);
-						for (var i = 0, internal_forloop_count = .char.length; i < internal_forloop_count; i += 1)
+						pendings_to_insert.add(%[tagname:"ruby", char:e.char.length, text:e.text]);
+						for (var i = 0, internal_forloop_count = e.char.length; i < internal_forloop_count; i += 1)
 						{
-							pendings_to_insert.add(%[tagname:"ch", text:.char[i]]);
+							pendings_to_insert.add(%[tagname:"ch", text:e.char[i]]);
 						}
 					}
 					for (var i = 0, internal_forloop_count = pendings_to_insert.count; i < internal_forloop_count; i += 1)

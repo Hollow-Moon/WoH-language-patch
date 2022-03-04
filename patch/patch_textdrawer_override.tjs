@@ -20,43 +20,47 @@ class Layer_patch_textdrawer_override_override extends Layer_patch_textdrawer_ov
 		if (this instanceof "CharacterVoiceConfigLayer")
 		{
 			voiceNameSettings = new EntriesSettings();
-			with (voiceNameSettings) {
-				.dictionary = loadDictionaryIfExists("voice_names.dic");
-				.title.exists = false;
-				.imageWidth = 138;
-				.emptyLayerImage = true;
-				with (.text) {
-					.alignment = "left";
-					.maxHeight = 40;
-					.fontHeight = __si("20", "voice_config_font_height");
-					.fontFace = __st("ＭＳ Ｐ明朝", "voice_config_font_face");
-					.fontContext = "voice_config_font_face";
-					.fontBold = true;
-					.color = 0xffffff;
-					.opacity = 200;
-					.shadowOpacity = 200;
-					.shadowColor = 0x000000;
-					.shadowWidth = 1;
-					.shadowOffsetX = -2;
-					.shadowOffsetY = 2;
+			{
+				var d = voiceNameSettings;
+				d.dictionary = loadDictionaryIfExists("voice_names.dic");
+				d.title.exists = false;
+				d.imageWidth = 138;
+				d.emptyLayerImage = true;
+				{
+					var dd = d.text;
+					dd.alignment = "left";
+					dd.maxHeight = 40;
+					dd.fontHeight = __si("20", "voice_config_font_height");
+					dd.fontFace = __st("ＭＳ Ｐ明朝", "voice_config_font_face");
+					dd.fontContext = "voice_config_font_face";
+					dd.fontBold = true;
+					dd.color = 0xffffff;
+					dd.opacity = 200;
+					dd.shadowOpacity = 200;
+					dd.shadowColor = 0x000000;
+					dd.shadowWidth = 1;
+					dd.shadowOffsetX = -2;
+					dd.shadowOffsetY = 2;
 				}
-				.imageHeight = .text.maxHeight;
+				d.imageHeight = d.text.maxHeight;
 			}
 		}
 @if(GAME_FHAT)
 		if (this instanceof "WallPaperMenuLayer")
 		{
 			wallpapersNamesSettings = new EntriesSettings();
-			with (wallpapersNamesSettings) {
-				.useDictionary = false;
-				.cleanBgImage = "wp_name_template";
-				with(.text) {
-					.bottomOffset = 7;
-					.fontFace = __st("ＭＳ Ｐ明朝", "wallpaper_name_font_face");
-					.fontContext = "wallpaper_name_font_face";
-					.fontHeight = 15;
-					.fontBold = true;
-					.color = 0xa60764;
+			{
+				var d = wallpapersNamesSettings;
+				d.useDictionary = false;
+				d.cleanBgImage = "wp_name_template";
+				{
+					var d = d.text;
+					dd.bottomOffset = 7;
+					dd.fontFace = __st("ＭＳ Ｐ明朝", "wallpaper_name_font_face");
+					dd.fontContext = "wallpaper_name_font_face";
+					dd.fontHeight = 15;
+					dd.fontBold = true;
+					dd.color = 0xa60764;
 				}
 			}
 		}

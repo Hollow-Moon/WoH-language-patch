@@ -496,22 +496,22 @@ if (typeof(Storages.createDirectory) !== "Object")
 				global.tempLayerForFont = new global.Layer(win, win.primaryLayer);
 			}
 
-			with (global.tempLayerForFont)
 			{
+				var l = global.tempLayerForFont;
 				var str = "testing 123";
 				var lw = orig_font.height * 2, lh = orig_font.height * 2;
-				.setImageSize(lw, lh);
-				.fillRect(0, 0, lw, lh, 0xFF000000 | 0xFFFFFF);
-				.font.face = orig_font.face;
-				.font.height = orig_font.height;
-				.font.angle = orig_font.angle;
-				.font.bold = orig_font.bold;
-				.font.italic = orig_font.italic;
-				.font.strikeout = orig_font.strikeout;
-				.font.underline = orig_font.underline;
-				var w = .font.getTextWidth(str);
-				var h = .font.getTextHeight(str);
-				.drawText((lw-w)\2, (lh-h)\2, str, 0xFFFFFF, 255, true);
+				l.setImageSize(lw, lh);
+				l.fillRect(0, 0, lw, lh, 0xFF000000 | 0xFFFFFF);
+				l.font.face = orig_font.face;
+				l.font.height = orig_font.height;
+				l.font.angle = orig_font.angle;
+				l.font.bold = orig_font.bold;
+				l.font.italic = orig_font.italic;
+				l.font.strikeout = orig_font.strikeout;
+				l.font.underline = orig_font.underline;
+				var w = l.font.getTextWidth(str);
+				var h = l.font.getTextHeight(str);
+				l.drawText((lw-w)\2, (lh-h)\2, str, 0xFFFFFF, 255, true);
 			}
 
 			Debug.message(("Creating font \"%s\" with height %s, angle %s, %s bold, %s italic, %s strikeout, %s underline").sprintf(orig_font.face, orig_font.height, orig_font.angle, orig_font.bold ? "" : "not", orig_font.italic ? "" : "not", orig_font.strikeout ? "" : "not", orig_font.underline ? "" : "not"));

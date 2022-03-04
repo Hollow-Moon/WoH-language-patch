@@ -966,12 +966,12 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 		handlers.ruby_patch_wordwrap_original = handlers.ruby;
 		handlers.ruby = function(elm)
 		{
-			with(elm)
 			{
-				if(.char != void && string(+.char) != .char)
+				var e = elm;
+				if(e.char != void && string(+e.char) != e.char)
 				{
 					// We'll treat this ruby entry as one whole word.
-					var ttext = .char;
+					var ttext = e.char;
 					var word_length_cache = this.word_length_cache;
 					var word_lines_needed = this.word_lines_needed;
 					var wcacheentry = word_length_cache[ttext];
@@ -1201,13 +1201,14 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 	var lineStartsWithOpeningQuoteRegex = new RegExp(" {2}"+openingQuote);
 	var lineInSpeechRegex = new RegExp("^ {3}");
 
-	function processQuotesIndent(obj)
+	function processQuotesIndent(elm)
 	{
-		with (obj) {
-			if (.text == openingQuote) {
+		{
+			var text = elm.text;
+			if (text == openingQuote) {
 				inQuotes++;
 				onOpeningQuote();
-			} else if (.text == endingQuote) {
+			} else if (text == endingQuote) {
 				inQuotes--;
 				onEndingQuote();
 			}

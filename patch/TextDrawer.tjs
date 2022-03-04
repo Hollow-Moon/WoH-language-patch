@@ -207,15 +207,17 @@ class TextDrawer
 	{
 		var noblePhantasmImageWidth = layer.imageWidth;
 		for (var i = 0, internal_forloop_count = noblePhantasmButtonsSettings.count; i < internal_forloop_count; i += 1) {
-			with (noblePhantasmButtonsSettings[i]) {
-				with(.title) {
-					.imageWidth = noblePhantasmImageWidth;
-					.leftOffset = i * ((noblePhantasmImageWidth / noblePhantasmButtonsNumber) | 0);
-					.rightOffset = ((noblePhantasmImageWidth / noblePhantasmButtonsNumber) * (noblePhantasmButtonsNumber - (i+1))) | 0;
+			{
+				var d = noblePhantasmButtonsSettings[i];
+				{
+					var dd = d.title;
+					dd.imageWidth = noblePhantasmImageWidth;
+					dd.leftOffset = i * ((noblePhantasmImageWidth / noblePhantasmButtonsNumber) | 0);
+					dd.rightOffset = ((noblePhantasmImageWidth / noblePhantasmButtonsNumber) * (noblePhantasmButtonsNumber - (i+1))) | 0;
 				}
-				.rubyTitle.imageWidth = .title.imageWidth;
-				.rubyTitle.leftOffset = .title.leftOffset;
-				.rubyTitle.rightOffset = .title.rightOffset;
+				d.rubyTitle.imageWidth = d.title.imageWidth;
+				d.rubyTitle.leftOffset = d.title.leftOffset;
+				d.rubyTitle.rightOffset = d.title.rightOffset;
 			}
 			drawCenteredEntry(layer, storage, noblePhantasmButtonsSettings[i]);
 		}
@@ -232,11 +234,12 @@ class TextDrawer
 			for (var i = 0, internal_forloop_count = statusRankSettings.count; i < internal_forloop_count; i += 1) {
 				var settings = statusRankSettings[i];
 				var statusLabelLayer = new global.Layer(layer.window, layer);
-				with (statusLabelLayer) {
-					.setPos(settings.layerLeft, settings.layerTop);
-					.setSize(settings.layerWidth, settings.layerHeight);
-					.visible = true;
-					.hitThreshold = 0;
+				{
+					var l = statusLabelLayer;
+					l.setPos(settings.layerLeft, settings.layerTop);
+					l.setSize(settings.layerWidth, settings.layerHeight);
+					l.visible = true;
+					l.hitThreshold = 0;
 				}
 				statusLabelLayers[layer].add(statusLabelLayer);
 			}
@@ -248,10 +251,11 @@ class TextDrawer
 			statusRankSettings[i].text.content = rankLabels[i][0];
 			statusRankSettings[i].hint = rankLabels[i][1];
 			var statusLabelLayer = statusLabelLayers[layer][i];
-			with (statusLabelLayer) {
+			{
+				var l = statusLabelLayer;
 				drawCenteredEntry(statusLabelLayer,, statusRankSettings[i]);
-				layer.operateRect(.left, .top, statusLabelLayer, 0, 0, .imageWidth, .height);
-				.fillRect(0, 0, .imageWidth, .imageHeight, 0x00000000);
+				layer.operateRect(l.left, l.top, statusLabelLayer, 0, 0, l.imageWidth, l.height);
+				l.fillRect(0, 0, l.imageWidth, l.imageHeight, 0x00000000);
 			}
 		}
 	}
@@ -329,34 +333,34 @@ class TextDrawer
 
 	function drawCenteredEntry(layer, storage, settings, frameKey)
 	{
-		with (layer)
 		{
-			var previousFace = .face;
+			var l = layer;
+			var previousFace = l.face;
 
 			if (settings.useDictionary && (settings.dictionary == void || settings.dictionary[storage] == void)) {
-				.loadImages(storage, frameKey);
-				.setSizeToImageSize() if settings.updateSize;
+				l.loadImages(storage, frameKey);
+				l.setSizeToImageSize() if settings.updateSize;
 				return;
 			}
 
 			if (settings.cleanBgImage != void) {
-				.loadImages(isExistentImage(settings.cleanBgImage)? settings.cleanBgImage : storage, frameKey);
-				.setSizeToImageSize() if settings.updateSize;
+				l.loadImages(isExistentImage(settings.cleanBgImage)? settings.cleanBgImage : storage, frameKey);
+				l.setSizeToImageSize() if settings.updateSize;
 			} else {
 				if (settings.imageWidth != void && settings.imageHeight != void) {
-					.setImageSize(settings.imageWidth, settings.imageHeight);
-					.setSizeToImageSize() if settings.updateSize;
+					l.setImageSize(settings.imageWidth, settings.imageHeight);
+					l.setSizeToImageSize() if settings.updateSize;
 				}
 				if (settings.emptyLayerImage) {
-					.fillRect(0, 0, .imageWidth, .imageHeight, 0x00000000);
+					l.fillRect(0, 0, l.imageWidth, l.imageHeight, 0x00000000);
 				}
 			}
 
 			if (settings.hint != void) {
-				.hint = settings.hint;
+				l.hint = settings.hint;
 			}
 
-			.face = dfAlpha;
+			l.face = dfAlpha;
 
 			var text;
 			var title;
@@ -403,43 +407,43 @@ class TextDrawer
 					titleRuby = titleItems[0];
 					titleText = titleItems[1];
 
-					setFontFromSettings(.font, settings.rubyTitle);
-					textHeight += getTextHeight([[titleRuby]], settings.rubyTitle, .font);
+					setFontFromSettings(l.font, settings.rubyTitle);
+					textHeight += getTextHeight([[titleRuby]], settings.rubyTitle, l.font);
 				} else if (settings.rubyTitle.content != "") {
 					titleRuby = settings.rubyTitle.content;
 					titleText = title;
 
-					setFontFromSettings(.font, settings.rubyTitle);
-					textHeight += getTextHeight([[titleRuby]], settings.rubyTitle, .font);
+					setFontFromSettings(l.font, settings.rubyTitle);
+					textHeight += getTextHeight([[titleRuby]], settings.rubyTitle, l.font);
 				} else {
 					titleText = title;
 				}
 
-				setFontFromSettings(.font, settings.title);
-				var titleLines = wordWrapSplitLines(titleText, .imageWidth - settings.title.horizontalOffset, .font);
-				textHeight += getTextHeight([titleLines], settings.title, .font);
+				setFontFromSettings(l.font, settings.title);
+				var titleLines = wordWrapSplitLines(titleText, l.imageWidth - settings.title.horizontalOffset, l.font);
+				textHeight += getTextHeight([titleLines], settings.title, l.font);
 
 				var titleY = getYByAlignment(layer, settings.title, textHeight);
 
 				if (titleRuby !== void) {
-					setFontFromSettings(.font, settings.rubyTitle);
+					setFontFromSettings(l.font, settings.rubyTitle);
 					var titleX = getXByAlignment(layer, settings.rubyTitle, titleRuby);
 
 					drawTextGlow(settings.title, titleX, titleY, titleRuby, layer);
-					.drawText(titleX, titleY, titleRuby, settings.title.color);
-					titleY += .font.height + settings.title.lineSpace;
+					l.drawText(titleX, titleY, titleRuby, settings.title.color);
+					titleY += l.font.height + settings.title.lineSpace;
 				}
 
-				setFontFromSettings(.font, settings.title);
+				setFontFromSettings(l.font, settings.title);
 				drawLines(layer, titleY, titleLines, settings.title);
 			}
 
 			if (settings.text.exists) {
-				setFontFromSettings(.font, settings.text);
+				setFontFromSettings(l.font, settings.text);
 
-				var paragraphs = wordWrapSplitParagraphs(content, .imageWidth - settings.text.horizontalOffset, .font);
+				var paragraphs = wordWrapSplitParagraphs(content, l.imageWidth - settings.text.horizontalOffset, l.font);
 
-				var textHeight = getTextHeight(paragraphs, settings.text, .font);
+				var textHeight = getTextHeight(paragraphs, settings.text, l.font);
 				var textY = getYByAlignment(layer, settings.text, textHeight);
 
 				for (var p = 0, internal_forloop_count = paragraphs.count; p < internal_forloop_count; p += 1) {
@@ -451,20 +455,21 @@ class TextDrawer
 				}
 			}
 
-			.face = previousFace;
+			l.face = previousFace;
 
 			applyOverrideSettings(settings, originalSettings);
 		}
 	}
 
 	function drawLines(layer, y, lines, textSettings) {
-		with (layer) {
+		{
+			var l = layer;
 			for (var i = 0, internal_forloop_count = lines.count; i < internal_forloop_count; i += 1) {
 				var x = getXByAlignment(layer, textSettings, lines[i]);
 
 				drawTextGlow(textSettings, x, y, lines[i], layer);
-				.drawText(x, y, lines[i], textSettings.color, textSettings.opacity,,textSettings.shadowOpacity, textSettings.shadowColor, textSettings.shadowWidth, textSettings.shadowOffsetX, textSettings.shadowOffsetY);
-				y += .font.height;
+				l.drawText(x, y, lines[i], textSettings.color, textSettings.opacity,,textSettings.shadowOpacity, textSettings.shadowColor, textSettings.shadowWidth, textSettings.shadowOffsetX, textSettings.shadowOffsetY);
+				y += l.font.height;
 				if (i < lines.count-1) {
 					y += textSettings.lineSpace;
 				}
@@ -474,10 +479,10 @@ class TextDrawer
 	}
 
 	function drawTextGlow(textSettings, x, y, text, layer) {
-		with(layer)
 		{
+			var l = layer;
 			if (textSettings.glow) {
-				.drawText(x, y, text, textSettings.glowColor, textSettings.glowOpacity,, textSettings.glowStrength, textSettings.glowColor, textSettings.glowSize, 0, 0);
+				l.drawText(x, y, text, textSettings.glowColor, textSettings.glowOpacity,, textSettings.glowStrength, textSettings.glowColor, textSettings.glowSize, 0, 0);
 			}
 		}
 	}
@@ -496,9 +501,10 @@ class TextDrawer
 
 	function getXByAlignment(layer, textSettings, text) {
 		var x;
-		with (layer) {
+		{
+			var l = layer;
 			if (textSettings.alignment == "center") {
-				x = textSettings.leftOffset+(.imageWidth - textSettings.horizontalOffset - .font.getTextWidth(text))/2;
+				x = textSettings.leftOffset+(l.imageWidth - textSettings.horizontalOffset - l.font.getTextWidth(text))/2;
 			} else if (textSettings.alignment == "left") {
 				x = textSettings.leftOffset;
 			}
@@ -508,8 +514,9 @@ class TextDrawer
 
 	function getYByAlignment(layer, textSettings, textHeight) {
 		var y = 0;
-		with (layer) {
-			var maxHeight = textSettings.maxHeight != void? textSettings.maxHeight : .imageHeight - textSettings.verticalOffset;
+		{
+			var l = layer;
+			var maxHeight = textSettings.maxHeight != void? textSettings.maxHeight : l.imageHeight - textSettings.verticalOffset;
 			if (textSettings.verticalAlignment == "center") {
 				y = textSettings.topOffset+(maxHeight - textHeight)/2;
 			} else if (textSettings.verticalAlignment == "top") {
@@ -532,46 +539,46 @@ class TextDrawer
 	{
 		var settings = abilitiesSettings;
 
-		with (layer)
 		{
+			var l = layer;
 			if (settings.dictionary == void || settings.dictionary[storage] == void) {
-				.loadImages(storage);
-				.setSizeToImageSize();
+				l.loadImages(storage);
+				l.setSizeToImageSize();
 				return;
 			}
 
 			var abilities = settings.dictionary[storage];
 
-			.loadImages(isExistentImage(settings.cleanBgImage + abilities.count)? (settings.cleanBgImage + abilities.count) : storage);
-			.setSizeToImageSize();
+			l.loadImages(isExistentImage(settings.cleanBgImage + abilities.count)? (settings.cleanBgImage + abilities.count) : storage);
+			l.setSizeToImageSize();
 
-			var longestTitleWidth = getLongestTitle(.font, settings.title, abilities);
+			var longestTitleWidth = getLongestTitle(l.font, settings.title, abilities);
 
 			for (var i = 0, internal_forloop_count = abilities.count; i < internal_forloop_count; i += 1) {
 				var title = __(abilities[i][0]);
 				var rank = ": "+__(abilities[i][1]);
 				var content = __(abilities[i][2]);
 
-				var abilityHeight = (.height - (abilities.count-1)*settings.distanceBetweenEntries)/abilities.count;
+				var abilityHeight = (l.height - (abilities.count-1)*settings.distanceBetweenEntries)/abilities.count;
 
-				setFontFromSettings(.font, settings.title);
+				setFontFromSettings(l.font, settings.title);
 
-				var titleX = settings.title.leftOffset + (longestTitleWidth - .font.getTextWidth(title))/2;
-				var titleY = i*(abilityHeight+settings.distanceBetweenEntries) + (abilityHeight-.font.height)/2 + settings.abilityTopOffset*-(abilities.count-2);
-				.drawText(titleX, titleY, title, settings.title.color,,, settings.title.shadowOpacity, settings.title.shadowColor, settings.title.shadowWidth, settings.title.shadowOffsetX, settings.title.shadowOffsetY);
+				var titleX = settings.title.leftOffset + (longestTitleWidth - l.font.getTextWidth(title))/2;
+				var titleY = i*(abilityHeight+settings.distanceBetweenEntries) + (abilityHeight-l.font.height)/2 + settings.abilityTopOffset*-(abilities.count-2);
+				l.drawText(titleX, titleY, title, settings.title.color,,, settings.title.shadowOpacity, settings.title.shadowColor, settings.title.shadowWidth, settings.title.shadowOffsetX, settings.title.shadowOffsetY);
 
 				var rankX = settings.title.leftOffset +  longestTitleWidth;
-				.drawText(rankX, titleY, rank, settings.title.color,,, settings.title.shadowOpacity, settings.title.shadowColor, settings.title.shadowWidth, settings.title.shadowOffsetX, settings.title.shadowOffsetY);
+				l.drawText(rankX, titleY, rank, settings.title.color,,, settings.title.shadowOpacity, settings.title.shadowColor, settings.title.shadowWidth, settings.title.shadowOffsetX, settings.title.shadowOffsetY);
 
-				setFontFromSettings(.font, settings.text);
+				setFontFromSettings(l.font, settings.text);
 
 				var textX = rankX + settings.text.leftOffset;
-				var textMaxWidth = .imageWidth - textX - settings.text.rightOffset;
-				var textLines = wordWrapSplitLines(content, textMaxWidth, .font);
-				var textY = i*(abilityHeight+settings.distanceBetweenEntries) + (abilityHeight - textLines.count * .font.height - (textLines.count-1) * settings.text.lineSpace)/2 + settings.abilityTopOffset*-(abilities.count-2);
+				var textMaxWidth = l.imageWidth - textX - settings.text.rightOffset;
+				var textLines = wordWrapSplitLines(content, textMaxWidth, l.font);
+				var textY = i*(abilityHeight+settings.distanceBetweenEntries) + (abilityHeight - textLines.count * l.font.height - (textLines.count-1) * settings.text.lineSpace)/2 + settings.abilityTopOffset*-(abilities.count-2);
 				for (var j = 0, internal_forloop_count = textLines.count; j < internal_forloop_count; j += 1) {
-					.drawText(textX, textY, textLines[j], settings.text.color,,, settings.text.shadowOpacity, settings.text.shadowColor, settings.text.shadowWidth, settings.text.shadowOffsetX, settings.text.shadowOffsetY);
-					textY += .font.height + settings.text.lineSpace;
+					l.drawText(textX, textY, textLines[j], settings.text.color,,, settings.text.shadowOpacity, settings.text.shadowColor, settings.text.shadowWidth, settings.text.shadowOffsetX, settings.text.shadowOffsetY);
+					textY += l.font.height + settings.text.lineSpace;
 				}
 			}
 		}

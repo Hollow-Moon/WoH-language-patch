@@ -231,25 +231,26 @@ global.initializeWide = function(ratio)
 
 global.onQualityMenuItemClick = function(sender)
 {
-	with (sender.owner) {
+	{
+		var w = sender.owner;
 		var changed = false;
-		if (sender.scaleFactor !== .hdScaleFactor) {
+		if (sender.scaleFactor !== w.hdScaleFactor) {
 @if(!KIRIKIROID&&!KIRIKIRISDL2)
 			{
 				global.full_game_reload("-hdscalefactor="+sender.scaleFactor);
 			}
 @endif
-			.extraConductor.clear();
-			.lineBreak.loadedImage = null;
-			.pageBreak.loadedImage = null;
-			.reload_scenario_prepare();
+			w.extraConductor.clear();
+			w.lineBreak.loadedImage = null;
+			w.pageBreak.loadedImage = null;
+			w.reload_scenario_prepare();
 			(initializeQuality incontextof sender.owner)(sender.scaleFactor);
 			changed = true;
 			sender.checked = true;
 		}
 		if (changed) {
 			changeResolution(sender.owner);
-			.reload_scenario_execute();
+			w.reload_scenario_execute();
 		}
 	}
 };
@@ -269,17 +270,19 @@ global.onWideMenuItemClick = function(sender, ratio, cropped=false)
 			global.full_game_reload("-wideratio=" + global.real_to_hex_string(ratio));
 		}
 @endif
-		with (sender.owner) {
-			.extraConductor.clear();
-			.reload_scenario_prepare();
+		{
+			var w = sender.owner;
+			w.extraConductor.clear();
+			w.reload_scenario_prepare();
 			(initializeWide incontextof sender.owner)(ratio);
 			changeResolution(sender.owner);
-			.reload_scenario_execute();
+			w.reload_scenario_execute();
 		}
 	}
 	if (cropped != isCropped)
 	{
-		with (sender.owner) {
+		{
+			var w = sender.owner;
 @if(SCALE_USING_FLOATING_POINT)
 			if (cropped)
 			{
@@ -293,12 +296,12 @@ global.onWideMenuItemClick = function(sender, ratio, cropped=false)
 				cropFactor = 1;
 			}
 
-			.extraConductor.clear();
-			.reload_scenario_prepare();
+			w.extraConductor.clear();
+			w.reload_scenario_prepare();
 
-			.setSize(.width, .height);
+			w.setSize(w.width, w.height);
 
-			.reload_scenario_execute();
+			w.reload_scenario_execute();
 		}
 	}
 
@@ -307,16 +310,17 @@ global.onWideMenuItemClick = function(sender, ratio, cropped=false)
 
 global.changeResolution = function(win)
 {
-	with (win) {
+	{
+		var w = win;
 		(updateResolution incontextof win)(%[]);
-		if (typeof(._primaryLayer) === "Object")
+		if (typeof(w._primaryLayer) === "Object")
 		{
-			._primaryLayer.update_bounds_hd_layer();
+			w._primaryLayer.update_bounds_hd_layer();
 		}
-		if (typeof(.hintlayer) === "Object")
+		if (typeof(w.hintlayer) === "Object")
 		{
-			invalidate .hintlayer;
-			.hintlayer = void;
+			invalidate w.hintlayer;
+			w.hintlayer = void;
 		}
 		if (typeof(global.flow_tracker_object) === "Object" && typeof(global.flow_tracker_object.isTest) === "Integer" && global.flow_tracker_object.isTest)
 		{
@@ -324,8 +328,8 @@ global.changeResolution = function(win)
 			global.flow_tracker_object.isTest = true;
 		}
 @if(!ZOOM_WINDOW)
-		.setSize(originalResWidth, originalResHeight);
-		.setInnerSize(originalResWidth, originalResHeight);
+		w.setSize(originalResWidth, originalResHeight);
+		w.setInnerSize(originalResWidth, originalResHeight);
 @endif
 	}
 };

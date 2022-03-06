@@ -112,6 +112,16 @@
 			}
 			return xp3_res;
 		}
+		var zip_res = "";
+		if (typeof(global.Storages.mountZIP) === "Object")
+		{
+			zip_res = global.Storages.mountZIP(arc_fullpath);
+		}
+		if (zip_res.length !== 0)
+		{
+			archive_path_mapping[arc_fullpath] = zip_res;
+			return zip_res;
+		}
 		return "";
 	};
 	global.unmount_archive = function(arc_path)
@@ -144,6 +154,15 @@
 			{
 				delete archive_path_mapping[arc_fullpath];
 				return xp3_res;
+			}
+		}
+		if (archive_path_mapping[arc_fullpath].substring(0, 3) === "zip" && typeof(global.Storages.unmountZIP) === "Object")
+		{
+			var zip_res = global.Storages.unmountZIP(archive_path_mapping[arc_fullpath]);
+			if (zip_res)
+			{
+				delete archive_path_mapping[arc_fullpath];
+				return zip_res;
 			}
 		}
 		return false;
@@ -269,6 +288,24 @@
 		for (var i = 0, internal_forloop_count = krsquashfs_paths.count; i < internal_forloop_count; i += 1)
 		{
 			var path = "" + krsquashfs_paths[i];
+			if (path !== "" && Storages.isExistentStorage(path))
+			{
+				Plugins.link(path);
+				break;
+			}
+		}
+	}
+	if ((typeof(Storages.mountZIP) !== "Object"))
+	{
+		var krzipfile_paths = [
+			"krzipfile.dll",
+@if(GAME_WOHN)
+			System.exePath + "content-data/plugin/krzipfile.dll",
+@endif
+		];
+		for (var i = 0, internal_forloop_count = krzipfile_paths.count; i < internal_forloop_count; i += 1)
+		{
+			var path = "" + krzipfile_paths[i];
 			if (path !== "" && Storages.isExistentStorage(path))
 			{
 				Plugins.link(path);

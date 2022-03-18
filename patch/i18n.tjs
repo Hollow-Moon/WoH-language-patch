@@ -17,7 +17,7 @@ global.contextDelimiter = "\x04"; // EOT
 global.__ = function(text, domain=defaultDomain)
 {
 	return _x(text,,domain);
-};
+} incontextof global;
 
 global._x = function(text, context=defaultContext, domain=defaultDomain)
 {
@@ -30,7 +30,7 @@ global._x = function(text, context=defaultContext, domain=defaultDomain)
 		return text;
 	}
 	return result;
-};
+} incontextof global;
 
 global._n = function(textSingle, textPlural, pluralNumber, domain=defaultDomain)
 {
@@ -51,7 +51,7 @@ global._n = function(textSingle, textPlural, pluralNumber, domain=defaultDomain)
 		return plural == 0? textSingle : textPlural;
 	}
 	return result[plural];
-};
+} incontextof global;
 
 global.removeAllMO = function()
 {

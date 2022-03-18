@@ -7,6 +7,8 @@ class KAGWindow_patch_messagelayer_prelayout_override extends KAGWindow_patch_me
 	function KAGWindow_patch_messagelayer_prelayout_override()
 	{
 		super.KAGWindow(...);
+
+		this.conductor.getPreprocessChCompletionCallbacks().add(this.patch_messagelayer_prelayout_preprocess_ch_completion);
 	}
 
 	function KAGWindow()
@@ -35,7 +37,7 @@ class KAGWindow_patch_messagelayer_prelayout_override extends KAGWindow_patch_me
 		"resetmessageappearaction",
 	];
 
-	function onConductorPreprocessChCompletion(conductor, elm)
+	function patch_messagelayer_prelayout_preprocess_ch_completion(conductor, elm)
 	{
 		// Don't need to call recursively, already performing loop
 		if (this.current.in_prelayout_mode)

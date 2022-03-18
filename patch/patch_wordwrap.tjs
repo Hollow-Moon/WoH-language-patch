@@ -255,6 +255,8 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 	function KAGWindow_patch_wordwrap_override()
 	{
 		super.KAGWindow(...);
+
+		this.conductor.getPreprocessChCallbacks().add(this.processWordWrappingChunkAtOnce);
 	}
 
 	function KAGWindow()

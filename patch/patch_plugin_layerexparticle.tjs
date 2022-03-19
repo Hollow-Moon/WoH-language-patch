@@ -418,14 +418,12 @@ class ParticleManager
 		this.particleCount = a2.particleCount;
 		var v4 = a2.particleMaxCount_allocated;
 		this.particleMaxCount_allocated = v4;
-		v5 = this.alloc_particles(v4);
-		this.particle_objects = v5;
+		this.particle_objects = this.alloc_particles(v4);
 		for (var i = 0; i < this.particleMaxCount_allocated; i += 1)
 		{
 			if ( a2.particle_objects[i] != null )
 			{
 				this.particle_objects[i] = this.createParticle();
-				v8 = this.particle_objects[i];
 				this.particle_objects[i].assign(a2.particle_objects[i]);
 			}
 			else

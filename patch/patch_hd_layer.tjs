@@ -249,16 +249,16 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 		return scalePosition(y, h, hOriginal, this.heightForScaleInside, this.heightForScaleInsideOriginal);
 	}
 
-	function scaleInsideLeft(x, w, wOriginal)
+	function scaleInsideLeft(x, w, wOriginal, horizontalAlignment)
 	{
-		return scalePosition(x, w, wOriginal, this.widthForScale, this.widthForScaleOriginal);
+		return scalePosition(x, w, wOriginal, this.widthForScale, this.widthForScaleOriginal, horizontalAlignment);
 	}
 
-	function scaleInsideTop(y, h, hOriginal)
+	function scaleInsideTop(y, h, hOriginal, verticalAlignment)
 	{
 		var topScroll = this.window.wideScreen? (this.isbg? window.scrollYOffset : 0) : 0;
 		var heightForScaleOriginal = this.isbg? this.heightForScaleOriginal / wideFactor : this.heightForScaleOriginal;
-		return scalePosition(y, h, hOriginal, this.heightForScale, heightForScaleOriginal) + topScroll * global.get_wideScaleFactor();
+		return scalePosition(y, h, hOriginal, this.heightForScale, heightForScaleOriginal, verticalAlignment) + topScroll * global.get_wideScaleFactor();
 	}
 
     property left
@@ -1258,8 +1258,8 @@ class Layer_patch_hd_layer_override extends Layer_patch_hd_layer_original
 			leftOriginal = scaleInsideImageLeft(left, swidth, swidthOriginal);
 			topOriginal = scaleInsideImageTop(top, sheight, sheightOriginal);
 		} else {
-			leftOriginal = scaleInsideLeft(left, swidth, swidthOriginal);
-			topOriginal = scaleInsideTop(top, sheight, sheightOriginal);
+			leftOriginal = scaleInsideLeft(left, swidth, swidthOriginal, src.horizontalAlignment);
+			topOriginal = scaleInsideTop(top, sheight, sheightOriginal, src.verticalAlignment);
 		}
 
 		var ie;

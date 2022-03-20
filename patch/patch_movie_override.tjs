@@ -1,12 +1,12 @@
 ﻿
 @if(kirikiriz)
-global.versionTmp = System.versionString.split(".");
-global.isNewMovieKrkrz = versionTmp.count >=2 && versionTmp[0] >=1 && versionTmp[1] >=4;
-delete versionTmp;
+global.versionTmp = global.System.versionString.split(".");
+global.isNewMovieKrkrz = global.versionTmp.count >=2 && global.versionTmp[0] >=1 && global.versionTmp[1] >=4;
+delete global.versionTmp;
 @endif
 
-global.Movie_patch_movie_override_original = Movie;
-class Movie_patch_movie_override_override extends Movie_patch_movie_override_original
+global.Movie_patch_movie_override_original = global.Movie;
+class Movie_patch_movie_override_override extends global.Movie_patch_movie_override_original
 {
 	var isWide = false; // Cannot be a property as this causes issues when stopping a movie in full screen in the movie menu.
 	var haskrdslavf = false;
@@ -15,19 +15,19 @@ class Movie_patch_movie_override_override extends Movie_patch_movie_override_ori
 	{
 		super.Movie(...);
 
-		var videosubsystem = System.getArgument("-videosubsystem");
-		if (!haskrdslavf)
+		var videosubsystem = global.System.getArgument("-videosubsystem");
+		if (!this.haskrdslavf)
 		{
 			if ((videosubsystem === void) || (videosubsystem == "krdslavf"))
 			{
 				try
 				{
-					Plugins.link("krdslavf.dll");
-					haskrdslavf = true;
+					global.Plugins.link("krdslavf.dll");
+					this.haskrdslavf = true;
 				}
 				catch(e)
 				{
-					haskrdslavf = false;
+					this.haskrdslavf = false;
 					if (videosubsystem == "krdslavf")
 					{
 						throw e;
@@ -39,19 +39,19 @@ class Movie_patch_movie_override_override extends Movie_patch_movie_override_ori
 
 	function Movie()
 	{
-		Movie_patch_movie_override_override(...);
+		this.Movie_patch_movie_override_override(...);
 	}
 
 	function finalize()
 	{
-		if (haskrdslavf)
+		if (this.haskrdslavf)
 		{
-			if (lastStatus == "play")
+			if (this.lastStatus == "play")
 			{
-				stop();
+				this.stop();
 			}
-			Plugins.unlink("krdslavf.dll");
-			haskrdslavf = false;
+			global.Plugins.unlink("krdslavf.dll");
+			this.haskrdslavf = false;
 		}
 		super.finalize(...);
 	}
@@ -59,14 +59,14 @@ class Movie_patch_movie_override_override extends Movie_patch_movie_override_ori
 	function onStatusChanged(status)
 	{
 @if(kirikiriz)
-		if (isNewMovieKrkrz && this.mode == vomMFEVR && status == "ready")
+		if (global.isNewMovieKrkrz && this.mode == global.vomMFEVR && this.status == "ready")
 		{
-			_onOpen();
+			this._onOpen();
 		}
-		else if (lastStatus == "ready" && status == "play")
+		else if (this.lastStatus == "ready" && this.status == "play")
 		{
-			lastStatus = status; // TODO kinda duplicate, but the assignment is needed before the callback.
-			onPlay();
+			this.lastStatus = status; // TODO kinda duplicate, but the assignment is needed before the callback.
+			this.onPlay();
 		}
 		else
 @endif
@@ -74,7 +74,7 @@ class Movie_patch_movie_override_override extends Movie_patch_movie_override_ori
 			super.onStatusChanged(status);
 		}
 
-		lastStatus = status;
+		this.lastStatus = status;
 	}
 
 	function open(storage)
@@ -87,45 +87,45 @@ class Movie_patch_movie_override_override extends Movie_patch_movie_override_ori
 		this.storageName = storage;
 
 @if(kirikiriz)
-		if (isNewMovieKrkrz)
+		if (global.isNewMovieKrkrz)
 		{
 			if (typeof(this.mp) === "Object")
 			{
-				this.mode = vomMFEVR;
+				this.mode = global.vomMFEVR;
 			}
 			else
 			{
 				if(/\.mp4$/i.test(storage))
 				{
-					if (this.mode != vomMFEVR)
+					if (this.mode != global.vomMFEVR)
 					{
-						this.mode = vomMFEVR;
+						this.mode = global.vomMFEVR;
 					}
 				}
 				else
 				{
-					this.mode = vomOverlay;
+					this.mode = global.vomOverlay;
 				}
-				if (haskrdslavf)
+				if (this.haskrdslavf)
 				{
-					this.mode = vomOverlay;
+					this.mode = global.vomOverlay;
 				}
 			}
 
 		}
-		var videosubsystem = System.getArgument("-videosubsystem");
+		var videosubsystem = this.System.getArgument("-videosubsystem");
 		if (videosubsystem) {
 			if (videosubsystem == "mediafoundation") {
-				this.mode = vomMFEVR;
+				this.mode = global.vomMFEVR;
 			}
 			else if (videosubsystem == "overlay") {
-				this.mode = vomOverlay;
+				this.mode = global.vomOverlay;
 			}
 			else if (videosubsystem == "layer") {
-				this.mode = vomLayer;
+				this.mode = global.vomLayer;
 			}
 			else if (videosubsystem == "mixer") {
-				this.mode = vomMixer;
+				this.mode = global.vomMixer;
 			}
 		}
 @endif
@@ -135,10 +135,10 @@ class Movie_patch_movie_override_override extends Movie_patch_movie_override_ori
 		{
 			super.open(storage);
 @if(kirikiriz)
-			if (!isNewMovieKrkrz || this.mode != vomMFEVR)
+			if (!global.isNewMovieKrkrz || this.mode != global.vomMFEVR)
 @endif
 			{
-				_onOpen();
+				this._onOpen();
 			}
 
 		}
@@ -150,11 +150,11 @@ class Movie_patch_movie_override_override extends Movie_patch_movie_override_ori
 			}
 			if (typeof(e.message) === "String")
 			{
-				Debug.message("Movie error message: " + e.message);
+				global.Debug.message("Movie error message: " + e.message);
 			}
 			if (typeof(e.trace) === "String")
 			{
-				Debug.message("Movie error message: " + e.trace);
+				global.Debug.message("Movie error message: " + e.trace);
 			}
 			return false;
 		}
@@ -163,9 +163,9 @@ class Movie_patch_movie_override_override extends Movie_patch_movie_override_ori
 
 	function _onOpen()
 	{
-		opened = true;
-		isWide = (originalWidth / originalHeight) > 1.7;
-		onOpen();
+		this.opened = true;
+		this.isWide = (this.originalWidth / this.originalHeight) > 1.7;
+		this.onOpen();
 	}
 
 	function onOpen()
@@ -178,4 +178,4 @@ class Movie_patch_movie_override_override extends Movie_patch_movie_override_ori
 		// can override.
 	}
 }
-global.Movie = Movie_patch_movie_override_override;
+global.Movie = global.Movie_patch_movie_override_override;

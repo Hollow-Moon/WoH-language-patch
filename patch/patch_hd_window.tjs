@@ -1,5 +1,5 @@
-global.Window_patch_hd_layer_original = Window;
-class Window_patch_hd_layer_override extends Window_patch_hd_layer_original
+global.Window_patch_hd_layer_original = global.Window;
+class Window_patch_hd_layer_override extends global.Window_patch_hd_layer_original
 {
 	var _left;
 	var _top;
@@ -16,50 +16,50 @@ class Window_patch_hd_layer_override extends Window_patch_hd_layer_original
 	var scrollYOffsetMin = 0;
 	var scrollYOffsetMax = 150;
 
-	property transformedScrollXOffset { getter { return scrollXOffset; } }
+	property transformedScrollXOffset { getter { return this.scrollXOffset; } }
 
 	// Under normal conditions result=-scrollYOffset, but this transformation considers different scale/wide factors.
 	property transformedScrollYOffset { getter {
-		var scale = scrollYOffset / 150; // 0: image unchanged, 150: image scrolled all the way to the bottom.
-		var factor = this.wideScreen? wideFactor : cropFactor;
+		var scale = this.scrollYOffset / 150; // 0: image unchanged, 150: image scrolled all the way to the bottom.
+		var factor = this.wideScreen? global.wideFactor : global.cropFactor;
 @if(SCALE_USING_FLOATING_POINT)
-		var result = originalResHeight * (Math.abs(1 - factor)    ) * scale / wideFactor;
+		var result = originalResHeight * (global.Math.abs(1 - factor)    ) * scale / global.wideFactor;
 @endif
 @if(!SCALE_USING_FLOATING_POINT)
-		var result = originalResHeight * (Math.abs(1 - factor) | 0) * scale \ wideFactor;
+		var result = global.originalResHeight * (global.Math.abs(1 - factor) | 0) * scale \ global.wideFactor;
 @endif
 		return result;
 	} }
 
 	property widthScale { getter { return global.get_wideScaleFactor(); } }
-	property heightScale { getter { return scaleFactor * (this.isMainWindow? cropFactor : 1); } }
+	property heightScale { getter { return global.scaleFactor * (this.isMainWindow? global.cropFactor : 1); } }
 	property isMainWindow { getter { return this === global.Window.mainWindow; } }
-	property body { getter() { return fore; } }
+	property body { getter() { return this.fore; } }
 
 	property hdScaleFactor
 	{
 		getter
 		{
 			if (!this.isMainWindow) {
-				return mainWindow.scflags[hdScaleFactorFlagName];
+				return global.Window.mainWindow.scflags[global.hdScaleFactorFlagName];
 			}
-			if (this.scflags[hdScaleFactorFlagName] === void) {
+			if (this.scflags[global.hdScaleFactorFlagName] === void) {
 				for (var i=global.scaleFactors.count-1; i>=0; i--) {
-					if (patchExists(global.hdPatchesNames[i]) &&
-						System.desktopWidth >= originalResWidth * global.scaleFactors[i] && System.desktopHeight >= originalResHeight * global.scaleFactors[i]) {
-						this.scflags[hdScaleFactorFlagName] = global.scaleFactors[i];
+					if (global.patchExists(global.hdPatchesNames[i]) &&
+						global.System.desktopWidth >= global.originalResWidth * global.scaleFactors[i] && global.System.desktopHeight >= global.originalResHeight * global.scaleFactors[i]) {
+						this.scflags[global.hdScaleFactorFlagName] = global.scaleFactors[i];
 						break;
 					}
 				}
-				if (this.scflags[hdScaleFactorFlagName] === void) {
-					this.scflags[hdScaleFactorFlagName] = 1;
+				if (this.scflags[global.hdScaleFactorFlagName] === void) {
+					this.scflags[global.hdScaleFactorFlagName] = 1;
 				}
 			}
-			return this.scflags[hdScaleFactorFlagName];
+			return this.scflags[global.hdScaleFactorFlagName];
 		}
 		setter(v)
 		{
-			this.scflags[hdScaleFactorFlagName] = v;
+			this.scflags[global.hdScaleFactorFlagName] = v;
 		}
 	}
 
@@ -76,17 +76,17 @@ class Window_patch_hd_layer_override extends Window_patch_hd_layer_original
 		getter
 		{
 			if (!this.isMainWindow) {
-				// return mainWindow.scflags[wideScreenFlagName];
+				// return global.Window.mainWindow.scflags[global.wideScreenFlagName];
 				return false;
 			}
-			if (this.scflags[wideScreenFlagName] === void) {
-				this.scflags[wideScreenFlagName] = false;
+			if (this.scflags[global.wideScreenFlagName] === void) {
+				this.scflags[global.wideScreenFlagName] = false;
 			}
-			return this.scflags[wideScreenFlagName];
+			return this.scflags[global.wideScreenFlagName];
 		}
 		setter(v)
 		{
-			this.scflags[wideScreenFlagName] = v;
+			this.scflags[global.wideScreenFlagName] = v;
 		}
 	}
 
@@ -96,11 +96,11 @@ class Window_patch_hd_layer_override extends Window_patch_hd_layer_original
 		{
 			var retvalue;
 			if (!this.wideScreen) {
-				retvalue = cubicRatio;
-			} else if (this.scflags[autoWideRatioFlagName]) {
+				retvalue = global.cubicRatio;
+			} else if (this.scflags[global.autoWideRatioFlagName]) {
 				retvalue = global.get_systemRatio();
 			} else {
-				retvalue = this.scflags[wideRatioFlagName] != void? this.scflags[wideRatioFlagName] : global.get_systemRatio();
+				retvalue = this.scflags[global.wideRatioFlagName] != void? this.scflags[global.wideRatioFlagName] : global.get_systemRatio();
 			}
 @if(!SCALE_USING_FLOATING_POINT)
 			retvalue |= 0;
@@ -110,11 +110,11 @@ class Window_patch_hd_layer_override extends Window_patch_hd_layer_original
 		setter(v)
 		{
 			if (!this.wideScreen) {
-				this.scflags[autoWideRatioFlagName] = false;
-				this.scflags[wideRatioFlagName] = cubicRatio;
+				this.scflags[global.autoWideRatioFlagName] = false;
+				this.scflags[global.wideRatioFlagName] = global.cubicRatio;
 			}
-			this.scflags[autoWideRatioFlagName] = floatEquals(v, global.get_systemRatio());
-			this.scflags[wideRatioFlagName] = v;
+			this.scflags[global.autoWideRatioFlagName] = global.floatEquals(v, global.get_systemRatio());
+			this.scflags[global.wideRatioFlagName] = v;
 		}
 	}
 
@@ -122,44 +122,44 @@ class Window_patch_hd_layer_override extends Window_patch_hd_layer_original
 	{
 		getter
 		{
-			return this.scflags[autoWideRatioFlagName];
+			return this.scflags[global.autoWideRatioFlagName];
 		}
 	}
 
 	property left
 	{
 		getter { return this.isMainWindow? super.left : this._left; }
-		setter(v) { this._left = v; super.left = scaleLeft(v); }
+		setter(v) { this._left = v; super.left = this.scaleLeft(v); }
 	}
 
 	property top
 	{
 		getter { return this.isMainWindow? super.top : this._top; }
-		setter(v) { this._top = v; super.top = scaleTop(v); }
+		setter(v) { this._top = v; super.top = this.scaleTop(v); }
 	}
 
 	property width
 	{
 		getter { return this._width; }
-		setter(v) { this._width = v; super.width = scaleWidth(v); }
+		setter(v) { this._width = v; super.width = this.scaleWidth(v); }
 	}
 
 	property height
 	{
 		getter { return this._height; }
-		setter(v) { this._height = v; super.height = scaleHeight(v); }
+		setter(v) { this._height = v; super.height = this.scaleHeight(v); }
 	}
 
 	property innerWidth
 	{
 		getter { return this._innerWidth; }
-		setter(v) { this._innerWidth = v; super.innerWidth = scaleWidth(v); }
+		setter(v) { this._innerWidth = v; super.innerWidth = this.scaleWidth(v); }
 	}
 
 	property innerHeight
 	{
 		getter { return this._innerHeight; }
-		setter(v) { this._innerHeight = v; super.innerHeight = scaleHeight(v); }
+		setter(v) { this._innerHeight = v; super.innerHeight = this.scaleHeight(v); }
 	}
 
 	property widthOriginal
@@ -198,7 +198,7 @@ class Window_patch_hd_layer_override extends Window_patch_hd_layer_original
 
 	function Window()
 	{
-		Window_patch_hd_layer_override(...);
+		this.Window_patch_hd_layer_override(...);
 	}
 
 	function scaleLeft(left)
@@ -206,7 +206,7 @@ class Window_patch_hd_layer_override extends Window_patch_hd_layer_original
         if (this.isMainWindow) {
             return left;
         }
-        return mainWindow.left + scalePosition(left-mainWindow.left, _width, super.width, mainWindow.width, mainWindow.widthOriginal);
+        return global.Window.mainWindow.left + global.scalePosition(left-global.Window.mainWindow.left, this._width, super.width, global.Window.mainWindow.width, global.Window.mainWindow.widthOriginal);
     }
 
 	function scaleTop(top)
@@ -214,27 +214,27 @@ class Window_patch_hd_layer_override extends Window_patch_hd_layer_original
 		if (this.isMainWindow) {
 			return top;
 		}
-		return mainWindow.top + scalePosition(top-mainWindow.top, _height, super.height, mainWindow.height, mainWindow.heightOriginal);
+		return global.Window.mainWindow.top + global.scalePosition(top-global.Window.mainWindow.top, this._height, super.height, global.Window.mainWindow.height, global.Window.mainWindow.heightOriginal);
 	}
 
 	function scaleWidth(w)
 	{
-		return scaleSize(w, global.get_wideScaleFactor());
+		return global.scaleSize(w, global.get_wideScaleFactor());
 	}
 
 	function unscaleWidth(w)
 	{
-		return unscaleSize(w, global.get_wideScaleFactor());
+		return global.unscaleSize(w, global.get_wideScaleFactor());
 	}
 
 	function scaleHeight(h)
 	{
-		return scaleSize(h, scaleFactor);
+		return global.scaleSize(h, global.scaleFactor);
 	}
 
 	function unscaleHeight(h)
 	{
-		return unscaleSize(h, scaleFactor);
+		return global.unscaleSize(h, global.scaleFactor);
 	}
 
 	function setPos(left, top)
@@ -244,7 +244,7 @@ class Window_patch_hd_layer_override extends Window_patch_hd_layer_original
 		} else {
 			this._left = left;
 			this._top = top;
-			super.setPos(scaleLeft(left), scaleTop(top));
+			super.setPos(this.scaleLeft(left), this.scaleTop(top));
 		}
 	}
 
@@ -252,20 +252,20 @@ class Window_patch_hd_layer_override extends Window_patch_hd_layer_original
 	{
 		this._width = width;
 		this._height = height;
-		super.setSize(scaleWidth(width), scaleHeight(height));
+		super.setSize(this.scaleWidth(width), this.scaleHeight(height));
 
-		this._innerWidth = unscaleWidth(this.innerWidthOriginal);
-		this._innerHeight = unscaleHeight(this.innerHeightOriginal);
+		this._innerWidth = this.unscaleWidth(this.innerWidthOriginal);
+		this._innerHeight = this.unscaleHeight(this.innerHeightOriginal);
 	}
 
 	function setInnerSize(innerWidth, innerHeight)
 	{
 		this._innerWidth = innerWidth;
 		this._innerHeight = innerHeight;
-		super.setInnerSize(scaleWidth(innerWidth), scaleHeight(innerHeight));
+		super.setInnerSize(this.scaleWidth(innerWidth), this.scaleHeight(innerHeight));
 
-		this._width = unscaleWidth(this.widthOriginal);
-		this._height = unscaleHeight(this.heightOriginal);
+		this._width = this.unscaleWidth(this.widthOriginal);
+		this._height = this.unscaleHeight(this.heightOriginal);
 	}
 }
-global.Window = Window_patch_hd_layer_override;
+global.Window = global.Window_patch_hd_layer_override;

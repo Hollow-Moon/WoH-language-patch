@@ -1,5 +1,5 @@
-﻿global.Layer_patch_textdrawer_override_original = Layer;
-class Layer_patch_textdrawer_override_override extends Layer_patch_textdrawer_override_original
+﻿global.Layer_patch_textdrawer_override_original = global.Layer;
+class Layer_patch_textdrawer_override_override extends global.Layer_patch_textdrawer_override_original
 {
 	var textDrawer;
 	var voiceNameSettings;
@@ -9,7 +9,7 @@ class Layer_patch_textdrawer_override_override extends Layer_patch_textdrawer_ov
 	{
 		if (this.textDrawer === void)
 		{
-			this.textDrawer = new TextDrawer();
+			this.textDrawer = new global.TextDrawer();
 		}
 		return this.textDrawer;
 	}
@@ -19,10 +19,10 @@ class Layer_patch_textdrawer_override_override extends Layer_patch_textdrawer_ov
 		super.Layer(...);
 		if (this instanceof "CharacterVoiceConfigLayer")
 		{
-			voiceNameSettings = new EntriesSettings();
+			this.voiceNameSettings = new global.EntriesSettings();
 			{
-				var d = voiceNameSettings;
-				d.dictionary = loadDictionaryIfExists("voice_names.dic");
+				var d = this.voiceNameSettings;
+				d.dictionary = global.loadDictionaryIfExists("voice_names.dic");
 				d.title.exists = false;
 				d.imageWidth = 138;
 				d.emptyLayerImage = true;
@@ -48,7 +48,7 @@ class Layer_patch_textdrawer_override_override extends Layer_patch_textdrawer_ov
 @if(GAME_FHAT)
 		if (this instanceof "WallPaperMenuLayer")
 		{
-			wallpapersNamesSettings = new EntriesSettings();
+			wallpapersNamesSettings = new global.EntriesSettings();
 			{
 				var d = wallpapersNamesSettings;
 				d.useDictionary = false;
@@ -69,7 +69,7 @@ class Layer_patch_textdrawer_override_override extends Layer_patch_textdrawer_ov
 
 	function Layer()
 	{
-		Layer_patch_textdrawer_override_override(...);
+		this.Layer_patch_textdrawer_override_override(...);
 	}
 
 	var in_text_drawer = false;
@@ -224,4 +224,4 @@ class Layer_patch_textdrawer_override_override extends Layer_patch_textdrawer_ov
 		return super.loadImages(...);
 	}
 }
-global.Layer = Layer_patch_textdrawer_override_override;
+global.Layer = global.Layer_patch_textdrawer_override_override;

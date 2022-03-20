@@ -1,6 +1,6 @@
 
-global.KAGWindow_patch_language_override_original = KAGWindow;
-class KAGWindow_patch_language_override_override extends KAGWindow_patch_language_override_original
+global.KAGWindow_patch_language_override_original = global.KAGWindow;
+class KAGWindow_patch_language_override_override extends global.KAGWindow_patch_language_override_original
 {
 	function KAGWindow_patch_language_override_override()
 	{
@@ -8,7 +8,7 @@ class KAGWindow_patch_language_override_override extends KAGWindow_patch_languag
 
 		if (this instanceof "KAGWindow" && this.isMain)
 		{
-			setFontWithLanguage(this.sflags.language, this);
+			global.setFontWithLanguage(this.sflags.language, this);
 		}
 
 		this.conductor.getPreprocessChCallbacks().add(this.patch_language_override_preprocess_ch);
@@ -16,7 +16,7 @@ class KAGWindow_patch_language_override_override extends KAGWindow_patch_languag
 
 	function KAGWindow()
 	{
-		KAGWindow_patch_language_override_override(...);
+		this.KAGWindow_patch_language_override_override(...);
 	}
 
 	function onLanguageMenuItemClick(sender, language)
@@ -25,38 +25,38 @@ class KAGWindow_patch_language_override_override extends KAGWindow_patch_languag
 		{
 			return;
 		}
-		saveFontWithLanguage(this);
-		unload_language_patch(this.sflags.language, this);
-		load_language_patch(language, this);
+		global.saveFontWithLanguage(this);
+		global.unload_language_patch(this.sflags.language, this);
+		global.load_language_patch(language, this);
 		this.sflags.language = language;
 @if(!GAME_WOHN)
-		setFontWithLanguage(this.sflags.language, this);
+		global.setFontWithLanguage(this.sflags.language, this);
 @endif
 		sender.checked = true;
-		extraConductor.clear(); // Fix code for AutoPath
+		this.extraConductor.clear(); // Fix code for AutoPath
 @if(GAME_WOHN)
 		// Reload the font configuration.
 		global.reload_messagelayer_config(this);
-		setFontWithLanguage(this.sflags.language, this);
+		global.setFontWithLanguage(this.sflags.language, this);
 @endif
-		onReloadScenarioMenuItemClick(sender);
-		if(typeof(global.flow_tracker_object) === "Object" && typeof(flow_tracker_object.flowchart) === "Object" && flow_tracker_object.flowchart.filename !== void)
+		this.onReloadScenarioMenuItemClick(sender);
+		if(typeof(global.flow_tracker_object) === "Object" && typeof(global.flow_tracker_object.flowchart) === "Object" && global.flow_tracker_object.flowchart.filename !== void)
 		{
-			flow_tracker_object.isPlayOK();
-			currentPageName = f.scripttitle;
+			global.flow_tracker_object.isPlayOK();
+			this.currentPageName = global.f.scripttitle;
 		}
 	}
 
 	function replace_font_for_special_characters(elm)
 	{
-		var originalFontFace = current.lineLayer.font.face;
-		var special = get_special_characters(this)[originalFontFace];
+		var originalFontFace = this.current.lineLayer.font.face;
+		var special = global.get_special_characters(this)[originalFontFace];
 		if (special !== void && special[0].contains(elm.text))
 		{
 			var specialCharactersFontFace = special[1];
-			tagHandlers.font(%["face" => specialCharactersFontFace]);
+			this.tagHandlers.font(%["face" => specialCharactersFontFace]);
 			var restoreFontFaceTag = %[tagname:"font", face:"user"];
-			conductor.pendings.insert(0, restoreFontFaceTag);
+			this.conductor.pendings.insert(0, restoreFontFaceTag);
 		}
 	}
 
@@ -72,8 +72,8 @@ class KAGWindow_patch_language_override_override extends KAGWindow_patch_languag
 		}
 		if (
 			!global.get_replace_jp_whitespace_disabled((typeof(global.kag) === "Object") ? global.kag : this)
-			&& this.sflags.language == englishLanguage
-			&& !startsWith("花札", conductor.curStorage) // Not hanafuda
+			&& this.sflags.language == global.englishLanguage
+			&& !global.startsWith("花札", this.conductor.curStorage) // Not hanafuda
 			)
 		{
 			text = text.replace(this.replace_character_regex2, __s(" ", "replace_ideographic_space"));
@@ -99,4 +99,4 @@ class KAGWindow_patch_language_override_override extends KAGWindow_patch_languag
 		return text;
 	}
 }
-global.KAGWindow = KAGWindow_patch_language_override_override;
+global.KAGWindow = global.KAGWindow_patch_language_override_override;

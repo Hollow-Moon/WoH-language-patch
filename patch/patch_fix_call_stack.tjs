@@ -1,6 +1,6 @@
 ﻿
-global.Conductor_patch_fix_call_stack_original = Conductor;
-class Conductor_patch_fix_call_stack_override extends Conductor_patch_fix_call_stack_original
+global.Conductor_patch_fix_call_stack_original = global.Conductor;
+class Conductor_patch_fix_call_stack_override extends global.Conductor_patch_fix_call_stack_original
 {
 	function Conductor_patch_fix_call_stack_override()
 	{
@@ -9,7 +9,7 @@ class Conductor_patch_fix_call_stack_override extends Conductor_patch_fix_call_s
 
 	function Conductor()
 	{
-		Conductor_patch_fix_call_stack_override(...);
+		this.Conductor_patch_fix_call_stack_override(...);
 	}
 
 @if(1)
@@ -56,7 +56,7 @@ class Conductor_patch_fix_call_stack_override extends Conductor_patch_fix_call_s
 	}
 @endif
 }
-global.Conductor = Conductor_patch_fix_call_stack_override;
+global.Conductor = global.Conductor_patch_fix_call_stack_override;
 
 @if(1)
 {

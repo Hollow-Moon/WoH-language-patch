@@ -4,14 +4,14 @@
 	global.Storages.removeAutoPath_patch_storages_original = global.Storages.removeAutoPath;
 	global.Storages.removeAutoPath = function(path)
 	{
-		Debug.message("Removing to auto path: " + path + " : " + global.Scripts.getTraceString());
+		global.Debug.message("Removing to auto path: " + path + " : " + global.Scripts.getTraceString());
 		return global.Storages.removeAutoPath_patch_storages_original(...);
 	};
 
 	global.Storages.addAutoPath_patch_storages_original = global.Storages.addAutoPath;
 	global.Storages.addAutoPath = function(path)
 	{
-		Debug.message("Adding to auto path: " + path + " : " + global.Scripts.getTraceString());
+		global.Debug.message("Adding to auto path: " + path + " : " + global.Scripts.getTraceString());
 		return global.Storages.addAutoPath_patch_storages_original(...);
 	};
 @endif
@@ -63,7 +63,7 @@
 	global.mount_archive = function(arc_path)
 	{
 		var archive_path_mapping = global.archive_path_mapping;
-		var arc_fullpath = Storages.getFullPath(arc_path);
+		var arc_fullpath = global.Storages.getFullPath(arc_path);
 		if (arc_fullpath.length === 0)
 		{
 			// not valid path
@@ -127,7 +127,7 @@
 	global.unmount_archive = function(arc_path)
 	{
 		var archive_path_mapping = global.archive_path_mapping;
-		var arc_fullpath = Storages.getFullPath(arc_path);
+		var arc_fullpath = global.Storages.getFullPath(arc_path);
 		if (arc_fullpath.length === 0)
 		{
 			// not valid path
@@ -170,7 +170,7 @@
 	global.translate_archive_path = function(path, check_presence=true)
 	{
 		var archive_path_mapping = global.archive_path_mapping;
-		var arcdelim = System.getArgument("-arcdelim");
+		var arcdelim = global.System.getArgument("-arcdelim");
 		if (!arcdelim)
 		{
 			arcdelim = ">";
@@ -188,7 +188,7 @@
 		}
 		if (archive_path_to_fullpath[arc_path] === void)
 		{
-			archive_path_to_fullpath[arc_path] = Storages.getFullPath(arc_path);
+			archive_path_to_fullpath[arc_path] = global.Storages.getFullPath(arc_path);
 		}
 		var arc_mappedpath = archive_path_mapping[archive_path_to_fullpath[arc_path]];
 		if (typeof(arc_mappedpath) !== "String")
@@ -236,79 +236,79 @@
 		"update",
 		"patch"
 	];
-	var arcdelim = System.getArgument("-arcdelim");
+	var arcdelim = global.System.getArgument("-arcdelim");
 	if (!arcdelim)
 	{
 		arcdelim = ">";
 	}
-	if ((typeof(Storages.dirlist) !== "Object") || (typeof(Storages.isExistentDirectory) !== "Object"))
+	if ((typeof(global.Storages.dirlist) !== "Object") || (typeof(global.Storages.isExistentDirectory) !== "Object"))
 	{
 		var fstat_paths = [
 			"fstat.dll",
 @if(GAME_WOHN)
-			System.exePath + "content-data/plugin/fstat.dll",
+			global.System.exePath + "content-data/plugin/fstat.dll",
 @endif
 		];
 		for (var i = 0, internal_forloop_count = fstat_paths.count; i < internal_forloop_count; i += 1)
 		{
 			var path = "" + fstat_paths[i];
-			if (path !== "" && Storages.isExistentStorage(path))
+			if (path !== "" && global.Storages.isExistentStorage(path))
 			{
-				Plugins.link(path);
+				global.Plugins.link(path);
 				break;
 			}
 		}
 	}
-	if ((typeof(Storages.mountXP3) !== "Object"))
+	if ((typeof(global.Storages.mountXP3) !== "Object"))
 	{
 		var krxp3file_paths = [
 			"krxp3file.dll",
 @if(GAME_WOHN)
-			System.exePath + "content-data/plugin/krxp3file.dll",
+			global.System.exePath + "content-data/plugin/krxp3file.dll",
 @endif
 		];
 		for (var i = 0, internal_forloop_count = krxp3file_paths.count; i < internal_forloop_count; i += 1)
 		{
 			var path = "" + krxp3file_paths[i];
-			if (path !== "" && Storages.isExistentStorage(path))
+			if (path !== "" && global.Storages.isExistentStorage(path))
 			{
-				Plugins.link(path);
+				global.Plugins.link(path);
 				break;
 			}
 		}
 	}
-	if ((typeof(Storages.mountSquashFs) !== "Object"))
+	if ((typeof(global.Storages.mountSquashFs) !== "Object"))
 	{
 		var krsquashfs_paths = [
 			"krsquashfs.dll",
 @if(GAME_WOHN)
-			System.exePath + "content-data/plugin/krsquashfs.dll",
+			global.System.exePath + "content-data/plugin/krsquashfs.dll",
 @endif
 		];
 		for (var i = 0, internal_forloop_count = krsquashfs_paths.count; i < internal_forloop_count; i += 1)
 		{
 			var path = "" + krsquashfs_paths[i];
-			if (path !== "" && Storages.isExistentStorage(path))
+			if (path !== "" && global.Storages.isExistentStorage(path))
 			{
-				Plugins.link(path);
+				global.Plugins.link(path);
 				break;
 			}
 		}
 	}
-	if ((typeof(Storages.mountZIP) !== "Object"))
+	if ((typeof(global.Storages.mountZIP) !== "Object"))
 	{
 		var krzipfile_paths = [
 			"krzipfile.dll",
 @if(GAME_WOHN)
-			System.exePath + "content-data/plugin/krzipfile.dll",
+			global.System.exePath + "content-data/plugin/krzipfile.dll",
 @endif
 		];
 		for (var i = 0, internal_forloop_count = krzipfile_paths.count; i < internal_forloop_count; i += 1)
 		{
 			var path = "" + krzipfile_paths[i];
-			if (path !== "" && Storages.isExistentStorage(path))
+			if (path !== "" && global.Storages.isExistentStorage(path))
 			{
-				Plugins.link(path);
+				global.Plugins.link(path);
 				break;
 			}
 		}
@@ -337,22 +337,22 @@
 			}
 		}
 	}
-	var currentpath = Storages.getFullPath("./");
+	var currentpath = global.Storages.getFullPath("./");
 	var in_archive = false;
 	if (currentpath.indexOf(arcdelim) === -1 && currentpath.indexOf("file:") !== -1)
 	{
-		paths_base.add(Storages.getFullPath("../"));
+		paths_base.add(global.Storages.getFullPath("../"));
 	}
 	else
 	{
-		var basepath = System.getArgument("-basepath");
+		var basepath = global.System.getArgument("-basepath");
 		if (basepath !== void)
 		{
 			paths_base.add(basepath);
 		}
 		else
 		{
-			paths_base.add(System.exePath);
+			paths_base.add(global.System.exePath);
 		}
 		in_archive = true;
 	}
@@ -503,15 +503,15 @@
 		"content-data",
 	];
 
-	if (devMode || devMode2)
+	if (global.devMode || global.devMode2)
 	{
 		paths_to_search.add("data");
 	}
-	if (in_archive || (devMode || devMode2))
+	if (in_archive || (global.devMode || global.devMode2))
 	{
 		paths_to_search.add(".");
 	}
-	if (devMode || devMode2)
+	if (global.devMode || global.devMode2)
 	{
 		paths_to_search.add("patch");
 		paths_to_search.add("content-data");
@@ -561,7 +561,7 @@
 		}
 	}
 
-	if (devMode)
+	if (global.devMode)
 	{
 		var commondevpaths = [
 			"plugin",
@@ -574,7 +574,7 @@
 			var path = global.typemoon_repo_root + "common/" + commondevpaths[i] + "/";
 			paths_to_remove.add(path);
 @if(!KIRIKIROID)
-			if (Storages.isExistentDirectory(path))
+			if (global.Storages.isExistentDirectory(path))
 			{
 				paths_to_add.add(path);
 			}
@@ -626,7 +626,7 @@
 				var path = paths_base[j] + devpaths[i] + "/";
 				paths_to_remove.add(path);
 @if(!KIRIKIROID)
-				if (Storages.isExistentDirectory(path))
+				if (global.Storages.isExistentDirectory(path))
 				{
 					paths_to_add.add(path);
 				}
@@ -643,7 +643,7 @@
 		for (var j = 0, internal_forloop_count = files.count; j < internal_forloop_count; j += 1)
 		{
 			var fn = files[j];
-			if (fn.substr(0, 6) === "patch_" && Storages.extractStorageExt(fn) === ".xp3")
+			if (fn.substr(0, 6) === "patch_" && global.Storages.extractStorageExt(fn) === ".xp3")
 			{
 				patches.add(fn);
 			}
@@ -678,7 +678,7 @@
 		}
 		if (failed)
 		{
-			Debug.message("Unable to validate " + paths_to_add[i]);
+			global.Debug.message("Unable to validate " + paths_to_add[i]);
 			paths_to_add.erase(i);
 			i -= 1;
 		}

@@ -9,9 +9,9 @@ class EntriesSettings
 	var emptyLayerImage = false;
 	var imageWidth;
 	var imageHeight;
-	var rubyTitle = new TextualSettings();
-	var title = new TextualSettings();
-	var text = new TextualSettings();
+	var rubyTitle = new global.TextualSettings();
+	var title = new global.TextualSettings();
+	var text = new global.TextualSettings();
 	var distanceBetweenEntries;
 	var layerLeft;
 	var layerTop;
@@ -22,7 +22,7 @@ class EntriesSettings
 
 	function EntriesSettings()
 	{
-		rubyTitle.exists = false;
+		this.rubyTitle.exists = false;
 	}
 }
 
@@ -59,41 +59,41 @@ class TextualSettings
 
 	property horizontalOffset {
 		getter {
-			return leftOffset + rightOffset;
+			return this.leftOffset + this.rightOffset;
 		}
 		setter(offset) {
-			leftOffset = offset/2;
-			rightOffset = offset/2;
+			this.leftOffset = offset/2;
+			this.rightOffset = offset/2;
 		}
 	}
 
 	property verticalOffset {
 		getter {
-			return topOffset + bottomOffset;
+			return this.topOffset + this.bottomOffset;
 		}
 		setter(offset) {
-			topOffset = offset/2;
-			bottomOffset = offset/2;
+			this.topOffset = offset/2;
+			this.bottomOffset = offset/2;
 		}
 	}
 }
 
 global.loadDictionaryIfExists = function(dictionaryName)
 {
-	if (Storages.isExistentStorage(dictionaryName)) {
-		return Scripts.evalStorage(dictionaryName);
+	if (global.Storages.isExistentStorage(dictionaryName)) {
+		return global.Scripts.evalStorage(dictionaryName);
 	}
 	return void;
 };
 
 global.textDrawerSettingsFileName = "TextDrawerSettings.tjs";
-Scripts.execStorage(textDrawerSettingsFileName) if Storages.isExistentStorage(textDrawerSettingsFileName);
+global.Scripts.execStorage(global.textDrawerSettingsFileName) if global.Storages.isExistentStorage(global.textDrawerSettingsFileName);
 
 class TextDrawer
 {
 	function drawPlayTime(layer, storage) {
 		// XXX: uses _x, so need to re-evaluate
-		var labels = Scripts.evalStorage("play_time.ksc");
+		var labels = global.Scripts.evalStorage("play_time.ksc");
 		var timeUnitsLeftOffsets = global.timeUnitsLeftOffsets;
 		var timeUnitsLeftOffsetsKeys = global.timeUnitsLeftOffsetsKeys;
 		var playTimeSettings2 = global.playTimeSettings2;
@@ -101,138 +101,138 @@ class TextDrawer
 		{
 			var currentPlayTimeSettings2 = playTimeSettings2[i];
 			var timeUnitsLeftOffsetsKey = timeUnitsLeftOffsetsKeys[i];
-			currentPlayTimeSettings2.title.leftOffset = __si(timeUnitsLeftOffsets[timeUnitsLeftOffsetsKey], timeUnitsLeftOffsetsKey);
+			currentPlayTimeSettings2.title.leftOffset = global.__si(timeUnitsLeftOffsets[timeUnitsLeftOffsetsKey], timeUnitsLeftOffsetsKey);
 		}
 
-		playTimeSettings.dictionary = %["pt_base" => labels.playtime];
-		drawCenteredEntry(layer, storage, playTimeSettings);
+		global.playTimeSettings.dictionary = %["pt_base" => labels.playtime];
+		this.drawCenteredEntry(layer, storage, global.playTimeSettings);
 		for (var i = 0, internal_forloop_count = playTimeSettings2.count; i < internal_forloop_count; i += 1) {
 			playTimeSettings2[i].dictionary = %["pt_base" => labels.units[i]];
-			drawCenteredEntry(layer, storage, playTimeSettings2[i]);
+			this.drawCenteredEntry(layer, storage, playTimeSettings2[i]);
 		}
 	}
 
 	function drawTigerDojoName(layer, storage, frameKey) {
 		// XXX: uses _x, so need to re-evaluate
-		tigerDojoSettings.dictionary = loadDictionaryIfExists("tiger_dojo_names.dic");
-		drawCenteredEntry(layer, storage, tigerDojoSettings, frameKey);
+		global.tigerDojoSettings.dictionary = global.loadDictionaryIfExists("tiger_dojo_names.dic");
+		this.drawCenteredEntry(layer, storage, global.tigerDojoSettings, frameKey);
 	}
 
 	function drawSkills(layer, storage, name)
 	{
-		skillsTitleSettings.title.content = name;
-		drawCenteredEntry(layer, storage, skillsTitleSettings);
+		global.skillsTitleSettings.title.content = name;
+		this.drawCenteredEntry(layer, storage, global.skillsTitleSettings);
 
-		drawCenteredEntry(layer, storage, skillsSettings);
+		this.drawCenteredEntry(layer, storage, global.skillsSettings);
 	}
 
 	function drawWeaponsText(layer, storage)
 	{
-		drawCenteredEntry(layer, storage, weaponsTextSettings);
+		this.drawCenteredEntry(layer, storage, global.weaponsTextSettings);
 	}
 
 	function drawWeaponsTitle(layer, storage, name, ruby)
 	{
 		if (ruby !== void) {
 			if (layer.window.sflags.language == "english") {
-				weaponsTitleSettings.title.content = name;
-				weaponsTitleSettings.rubyTitle.content = ruby;
+				global.weaponsTitleSettings.title.content = name;
+				global.weaponsTitleSettings.rubyTitle.content = ruby;
 			} else {
-				weaponsTitleSettings.title.content = ruby;
-				weaponsTitleSettings.rubyTitle.content = name;
+				global.weaponsTitleSettings.title.content = ruby;
+				global.weaponsTitleSettings.rubyTitle.content = name;
 			}
 		} else {
-			weaponsTitleSettings.title.content = name;
-			weaponsTitleSettings.rubyTitle.content = void;
+			global.weaponsTitleSettings.title.content = name;
+			global.weaponsTitleSettings.rubyTitle.content = void;
 		}
-		drawCenteredEntry(layer, storage, weaponsTitleSettings);
+		this.drawCenteredEntry(layer, storage, global.weaponsTitleSettings);
 	}
 
 	function drawWeaponsUser(layer, storage, name)
 	{
-		weaponsUserSettings.text.content = name;
-		drawCenteredEntry(layer, storage, weaponsUserSettings);
+		global.weaponsUserSettings.text.content = name;
+		this.drawCenteredEntry(layer, storage, global.weaponsUserSettings);
 	}
 
 	function drawWeaponsName(layer, storage, name)
 	{
-		for (var i = 0, internal_forloop_count = weaponsNameSettings.count; i < internal_forloop_count; i += 1) {
-			weaponsNameSettings[i].text.content = name;
-			drawCenteredEntry(layer, storage, weaponsNameSettings[i]);
+		for (var i = 0, internal_forloop_count = global.weaponsNameSettings.count; i < internal_forloop_count; i += 1) {
+			global.weaponsNameSettings[i].text.content = name;
+			this.drawCenteredEntry(layer, storage, global.weaponsNameSettings[i]);
 		}
 	}
 
 	function drawVoiceName(layer, storage, settings) {
-		if (sf.language == japaneseLanguage) {
+		if (global.sf.language == global.japaneseLanguage) {
 			if (storage == "voicename_イリヤ") {
 				settings.text.fontHeight = 15;
 			} else {
 				settings.text.fontHeight = 20; // should be the same as the settings in VoiceConfigLayer.tjs
 			}
 		}
-		drawCenteredEntry(layer, storage, settings);
+		this.drawCenteredEntry(layer, storage, settings);
 	}
 
 	function drawStatusButtons(layer, storage)
 	{
 		layer.loadImages("ss_button_mask");
-		for (var i = 0, internal_forloop_count = statusButtonsSettings.count; i < internal_forloop_count; i += 1) {
-			statusButtonsSettings[i].dictionary = statusButtonsDictionary;
+		for (var i = 0, internal_forloop_count = global.statusButtonsSettings.count; i < internal_forloop_count; i += 1) {
+			global.statusButtonsSettings[i].dictionary = global.statusButtonsDictionary;
 			if(storage == "ss_宝具ボタン" && layer.window.sflags.language == "english") {
-				statusButtonsSettings[i].text.fontHeight = 15;
-				statusButtonsSettings[i].text.rightOffset = (statusButtonsImageWidth / statusButtonsNumber) * (statusButtonsNumber - (i+1)) + 15;
+				global.statusButtonsSettings[i].text.fontHeight = 15;
+				global.statusButtonsSettings[i].text.rightOffset = (global.statusButtonsImageWidth / global.statusButtonsNumber) * (global.statusButtonsNumber - (i+1)) + 15;
 			}
 			else
 			{
-				statusButtonsSettings[i].text.fontHeight = 18;
-				statusButtonsSettings[i].text.rightOffset = ((statusButtonsImageWidth / statusButtonsNumber) * (statusButtonsNumber - (i+1)) + 30) | 0;
+				global.statusButtonsSettings[i].text.fontHeight = 18;
+				global.statusButtonsSettings[i].text.rightOffset = ((global.statusButtonsImageWidth / global.statusButtonsNumber) * (global.statusButtonsNumber - (i+1)) + 30) | 0;
 			}
-			drawCenteredEntry(layer, storage, statusButtonsSettings[i]);
+			this.drawCenteredEntry(layer, storage, global.statusButtonsSettings[i]);
 		}
 	}
 
 	function drawNoblePhantasmSpecification(layer, storage)
 	{
 		// XXX: uses _n, so need to re-evaulate
-		noblePhantasmSpecificationSettings.dictionary = loadDictionaryIfExists("status_noble_phantasm_specification.dic");
-		drawCenteredEntry(layer, storage, noblePhantasmSpecificationSettings);
+		global.noblePhantasmSpecificationSettings.dictionary = global.loadDictionaryIfExists("status_noble_phantasm_specification.dic");
+		this.drawCenteredEntry(layer, storage, global.noblePhantasmSpecificationSettings);
 	}
 
 	function drawNoblePhantasmText(layer, storage)
 	{
-		drawCenteredEntry(layer, storage, noblePhantasmTextSettings);
+		this.drawCenteredEntry(layer, storage, global.noblePhantasmTextSettings);
 	}
 
 	function drawNoblePhantasmButtons(layer, storage)
 	{
 		var noblePhantasmImageWidth = layer.imageWidth;
-		for (var i = 0, internal_forloop_count = noblePhantasmButtonsSettings.count; i < internal_forloop_count; i += 1) {
+		for (var i = 0, internal_forloop_count = global.noblePhantasmButtonsSettings.count; i < internal_forloop_count; i += 1) {
 			{
-				var d = noblePhantasmButtonsSettings[i];
+				var d = global.noblePhantasmButtonsSettings[i];
 				{
 					var dd = d.title;
 					dd.imageWidth = noblePhantasmImageWidth;
-					dd.leftOffset = i * ((noblePhantasmImageWidth / noblePhantasmButtonsNumber) | 0);
-					dd.rightOffset = ((noblePhantasmImageWidth / noblePhantasmButtonsNumber) * (noblePhantasmButtonsNumber - (i+1))) | 0;
+					dd.leftOffset = i * ((noblePhantasmImageWidth / global.noblePhantasmButtonsNumber) | 0);
+					dd.rightOffset = ((noblePhantasmImageWidth / global.noblePhantasmButtonsNumber) * (global.noblePhantasmButtonsNumber - (i+1))) | 0;
 				}
 				d.rubyTitle.imageWidth = d.title.imageWidth;
 				d.rubyTitle.leftOffset = d.title.leftOffset;
 				d.rubyTitle.rightOffset = d.title.rightOffset;
 			}
-			drawCenteredEntry(layer, storage, noblePhantasmButtonsSettings[i]);
+			this.drawCenteredEntry(layer, storage, global.noblePhantasmButtonsSettings[i]);
 		}
 	}
 
 	function drawDetails(layer, storage)
 	{
-		drawCenteredEntry(layer, storage, detailsSettings);
+		this.drawCenteredEntry(layer, storage, global.detailsSettings);
 	}
 
 	function initializeStatusLabels(statusLabelLayers, layer) {
 		if (statusLabelLayers[layer] == void) {
 			statusLabelLayers[layer] = [];
-			for (var i = 0, internal_forloop_count = statusRankSettings.count; i < internal_forloop_count; i += 1) {
-				var settings = statusRankSettings[i];
+			for (var i = 0, internal_forloop_count = global.statusRankSettings.count; i < internal_forloop_count; i += 1) {
+				var settings = global.statusRankSettings[i];
 				var statusLabelLayer = new global.Layer(layer.window, layer);
 				{
 					var l = statusLabelLayer;
@@ -246,14 +246,14 @@ class TextDrawer
 		}
 
 		// XXX: uses _x, so need to re-evaulate
-		var rankLabels = Scripts.evalStorage("rank_labels.ksc");
-		for (var i = 0, internal_forloop_count = statusRankSettings.count; i < internal_forloop_count; i += 1) {
-			statusRankSettings[i].text.content = rankLabels[i][0];
-			statusRankSettings[i].hint = rankLabels[i][1];
+		var rankLabels = global.Scripts.evalStorage("rank_labels.ksc");
+		for (var i = 0, internal_forloop_count = global.statusRankSettings.count; i < internal_forloop_count; i += 1) {
+			global.statusRankSettings[i].text.content = rankLabels[i][0];
+			global.statusRankSettings[i].hint = rankLabels[i][1];
 			var statusLabelLayer = statusLabelLayers[layer][i];
 			{
 				var l = statusLabelLayer;
-				drawCenteredEntry(statusLabelLayer,, statusRankSettings[i]);
+				this.drawCenteredEntry(statusLabelLayer,, global.statusRankSettings[i]);
 				layer.operateRect(l.left, l.top, statusLabelLayer, 0, 0, l.imageWidth, l.height);
 				l.fillRect(0, 0, l.imageWidth, l.imageHeight, 0x00000000);
 			}
@@ -273,59 +273,59 @@ class TextDrawer
 	function drawStatusLabels(layer, storage)
 	{
 		// XXX: uses _x, so need to re-evaulate
-		var labels = Scripts.evalStorage("status_labels.ksc");
-		statusLabelsSettings.text.content = labels.labels.join("\n");
-		drawCenteredEntry(layer, storage, statusLabelsSettings);
-		classAbilitiesSettings.title.content = labels.abilities;
-		drawCenteredEntry(layer, storage, classAbilitiesSettings);
+		var labels = global.Scripts.evalStorage("status_labels.ksc");
+		global.statusLabelsSettings.text.content = labels.labels.join("\n");
+		this.drawCenteredEntry(layer, storage, global.statusLabelsSettings);
+		global.classAbilitiesSettings.title.content = labels.abilities;
+		this.drawCenteredEntry(layer, storage, global.classAbilitiesSettings);
 	}
 
 	function drawId(layer, storage) {
-		if (sf.language == japaneseLanguage) {
+		if (global.sf.language == global.japaneseLanguage) {
 			if (storage == "ss_マスターイリヤ") {
-				idSettings.text.fontHeight = 15;
+				global.idSettings.text.fontHeight = 15;
 			} else {
-				idSettings.text.fontHeight = 18; // should be same as idSettings in TextDrawerSettings.tjs
+				global.idSettings.text.fontHeight = 18; // should be same as idSettings in TextDrawerSettings.tjs
 			}
 		}
-		drawCenteredEntry(layer, storage, idSettings);
+		this.drawCenteredEntry(layer, storage, global.idSettings);
 	}
 
 	function drawClassNameTitle(layer, storage) {
-		drawCenteredEntry(layer, storage, classNameTitleSettings);
+		this.drawCenteredEntry(layer, storage, global.classNameTitleSettings);
 	}
 
 	function drawClassName(layer, storage) {
-		drawCenteredEntry(layer, storage, classNameSettings);
+		this.drawCenteredEntry(layer, storage, global.classNameSettings);
 	}
 
 	function drawWallpaperName(layer, storage, name, settings)
 	{
 		settings.text.content = name;
-		drawCenteredEntry(layer, storage, settings);
+		this.drawCenteredEntry(layer, storage, settings);
 	}
 
 	function drawExtraButtons(layer, storage)
 	{
-		for (var i = 0, internal_forloop_count = extraMenuButtonsSettings.count; i < internal_forloop_count; i += 1) {
-			drawCenteredEntry(layer, storage, extraMenuButtonsSettings[i]);
+		for (var i = 0, internal_forloop_count = global.extraMenuButtonsSettings.count; i < internal_forloop_count; i += 1) {
+			this.drawCenteredEntry(layer, storage, global.extraMenuButtonsSettings[i]);
 		}
 	}
 
 	function formatDictionary(dic)
 	{
-		var format = __(dic.format);
+		var format = global.__(dic.format);
 		var arguments = [];
 		arguments.assignStruct(dic.arguments);
 		for (var i = 0, internal_forloop_count = arguments.count; i < internal_forloop_count; i += 1)
 		{
 			if (typeof(arguments[i]) === "String")
 			{
-				arguments[i] = __(arguments[i]);
+				arguments[i] = global.__(arguments[i]);
 			}
 			else if (typeof(arguments[i]) === "Object" && typeof(arguments[i].format) === "String")
 			{
-				arguments[i] = formatDictionary(arguments[i]);
+				arguments[i] = this.formatDictionary(arguments[i]);
 			}
 		}
 		return format.sprintf(arguments*);
@@ -344,7 +344,7 @@ class TextDrawer
 			}
 
 			if (settings.cleanBgImage != void) {
-				l.loadImages(isExistentImage(settings.cleanBgImage)? settings.cleanBgImage : storage, frameKey);
+				l.loadImages(global.isExistentImage(settings.cleanBgImage)? settings.cleanBgImage : storage, frameKey);
 				l.setSizeToImageSize() if settings.updateSize;
 			} else {
 				if (settings.imageWidth != void && settings.imageHeight != void) {
@@ -360,7 +360,7 @@ class TextDrawer
 				l.hint = settings.hint;
 			}
 
-			l.face = dfAlpha;
+			l.face = global.dfAlpha;
 
 			var text;
 			var title;
@@ -369,20 +369,20 @@ class TextDrawer
 			if (settings.useDictionary) {
 				var dictionaryItem = settings.dictionary[storage];
 				if (typeof dictionaryItem == "String") {
-					text = __(dictionaryItem);
+					text = global.__(dictionaryItem);
 				} else if (typeof(dictionaryItem) === "Object" && typeof(dictionaryItem.format) === "String") {
-					text = formatDictionary(dictionaryItem);
+					text = this.formatDictionary(dictionaryItem);
 				} else {
 					if (typeof(dictionaryItem[0]) === "Object" && typeof(dictionaryItem[0].format) === "String")
 					{
-						text = formatDictionary(dictionaryItem[0]);
+						text = this.formatDictionary(dictionaryItem[0]);
 					}
 					else
 					{
-						text = __(dictionaryItem[0]);
+						text = global.__(dictionaryItem[0]);
 					}
 					var settingsOverride = dictionaryItem[1];
-					originalSettings = applyOverrideSettings(settings, settingsOverride);
+					originalSettings = this.applyOverrideSettings(settings, settingsOverride);
 				}
 				if (settings.title.exists && settings.text.exists) {
 					var items = [].split("|", text);
@@ -407,48 +407,48 @@ class TextDrawer
 					titleRuby = titleItems[0];
 					titleText = titleItems[1];
 
-					setFontFromSettings(l.font, settings.rubyTitle);
-					textHeight += getTextHeight([[titleRuby]], settings.rubyTitle, l.font);
+					this.setFontFromSettings(l.font, settings.rubyTitle);
+					textHeight += this.getTextHeight([[titleRuby]], settings.rubyTitle, l.font);
 				} else if (settings.rubyTitle.content != "") {
 					titleRuby = settings.rubyTitle.content;
 					titleText = title;
 
-					setFontFromSettings(l.font, settings.rubyTitle);
-					textHeight += getTextHeight([[titleRuby]], settings.rubyTitle, l.font);
+					this.setFontFromSettings(l.font, settings.rubyTitle);
+					textHeight += this.getTextHeight([[titleRuby]], settings.rubyTitle, l.font);
 				} else {
 					titleText = title;
 				}
 
-				setFontFromSettings(l.font, settings.title);
-				var titleLines = wordWrapSplitLines(titleText, l.imageWidth - settings.title.horizontalOffset, l.font);
-				textHeight += getTextHeight([titleLines], settings.title, l.font);
+				this.setFontFromSettings(l.font, settings.title);
+				var titleLines = global.wordWrapSplitLines(titleText, l.imageWidth - settings.title.horizontalOffset, l.font);
+				textHeight += this.getTextHeight([titleLines], settings.title, l.font);
 
-				var titleY = getYByAlignment(layer, settings.title, textHeight);
+				var titleY = this.getYByAlignment(layer, settings.title, textHeight);
 
 				if (titleRuby !== void) {
-					setFontFromSettings(l.font, settings.rubyTitle);
-					var titleX = getXByAlignment(layer, settings.rubyTitle, titleRuby);
+					this.setFontFromSettings(l.font, settings.rubyTitle);
+					var titleX = this.getXByAlignment(layer, settings.rubyTitle, titleRuby);
 
-					drawTextGlow(settings.title, titleX, titleY, titleRuby, layer);
+					this.drawTextGlow(settings.title, titleX, titleY, titleRuby, layer);
 					l.drawText(titleX, titleY, titleRuby, settings.title.color);
 					titleY += l.font.height + settings.title.lineSpace;
 				}
 
-				setFontFromSettings(l.font, settings.title);
-				drawLines(layer, titleY, titleLines, settings.title);
+				this.setFontFromSettings(l.font, settings.title);
+				this.drawLines(layer, titleY, titleLines, settings.title);
 			}
 
 			if (settings.text.exists) {
-				setFontFromSettings(l.font, settings.text);
+				this.setFontFromSettings(l.font, settings.text);
 
-				var paragraphs = wordWrapSplitParagraphs(content, l.imageWidth - settings.text.horizontalOffset, l.font);
+				var paragraphs = global.wordWrapSplitParagraphs(content, l.imageWidth - settings.text.horizontalOffset, l.font);
 
-				var textHeight = getTextHeight(paragraphs, settings.text, l.font);
-				var textY = getYByAlignment(layer, settings.text, textHeight);
+				var textHeight = this.getTextHeight(paragraphs, settings.text, l.font);
+				var textY = this.getYByAlignment(layer, settings.text, textHeight);
 
 				for (var p = 0, internal_forloop_count = paragraphs.count; p < internal_forloop_count; p += 1) {
 					var textLines = paragraphs[p];
-					textY = drawLines(layer, textY, textLines, settings.text);
+					textY = this.drawLines(layer, textY, textLines, settings.text);
 					if (p < paragraphs.count-1) {
 						textY += settings.text.paragraphSpace;
 					}
@@ -457,7 +457,7 @@ class TextDrawer
 
 			l.face = previousFace;
 
-			applyOverrideSettings(settings, originalSettings);
+			this.applyOverrideSettings(settings, originalSettings);
 		}
 	}
 
@@ -465,9 +465,9 @@ class TextDrawer
 		{
 			var l = layer;
 			for (var i = 0, internal_forloop_count = lines.count; i < internal_forloop_count; i += 1) {
-				var x = getXByAlignment(layer, textSettings, lines[i]);
+				var x = this.getXByAlignment(layer, textSettings, lines[i]);
 
-				drawTextGlow(textSettings, x, y, lines[i], layer);
+				this.drawTextGlow(textSettings, x, y, lines[i], layer);
 				l.drawText(x, y, lines[i], textSettings.color, textSettings.opacity,,textSettings.shadowOpacity, textSettings.shadowColor, textSettings.shadowWidth, textSettings.shadowOffsetX, textSettings.shadowOffsetY);
 				y += l.font.height;
 				if (i < lines.count-1) {
@@ -529,7 +529,7 @@ class TextDrawer
 	}
 
 	function setFontFromSettings(font, textSettings) {
-		font.face = __s(textSettings.fontFace, textSettings.fontContext);
+		font.face = global.__s(textSettings.fontFace, textSettings.fontContext);
 		font.height = textSettings.fontHeight;
 		font.bold = textSettings.fontBold;
 		font.italic = textSettings.fontItalic;
@@ -537,7 +537,7 @@ class TextDrawer
 
 	function drawAbilities(layer, storage)
 	{
-		var settings = abilitiesSettings;
+		var settings = global.abilitiesSettings;
 
 		{
 			var l = layer;
@@ -549,19 +549,19 @@ class TextDrawer
 
 			var abilities = settings.dictionary[storage];
 
-			l.loadImages(isExistentImage(settings.cleanBgImage + abilities.count)? (settings.cleanBgImage + abilities.count) : storage);
+			l.loadImages(global.isExistentImage(settings.cleanBgImage + abilities.count)? (settings.cleanBgImage + abilities.count) : storage);
 			l.setSizeToImageSize();
 
-			var longestTitleWidth = getLongestTitle(l.font, settings.title, abilities);
+			var longestTitleWidth = this.getLongestTitle(l.font, settings.title, abilities);
 
 			for (var i = 0, internal_forloop_count = abilities.count; i < internal_forloop_count; i += 1) {
-				var title = __(abilities[i][0]);
-				var rank = ": "+__(abilities[i][1]);
-				var content = __(abilities[i][2]);
+				var title = global.__(abilities[i][0]);
+				var rank = ": "+global.__(abilities[i][1]);
+				var content = global.__(abilities[i][2]);
 
 				var abilityHeight = (l.height - (abilities.count-1)*settings.distanceBetweenEntries)/abilities.count;
 
-				setFontFromSettings(l.font, settings.title);
+				this.setFontFromSettings(l.font, settings.title);
 
 				var titleX = settings.title.leftOffset + (longestTitleWidth - l.font.getTextWidth(title))/2;
 				var titleY = i*(abilityHeight+settings.distanceBetweenEntries) + (abilityHeight-l.font.height)/2 + settings.abilityTopOffset*-(abilities.count-2);
@@ -570,11 +570,11 @@ class TextDrawer
 				var rankX = settings.title.leftOffset +  longestTitleWidth;
 				l.drawText(rankX, titleY, rank, settings.title.color,,, settings.title.shadowOpacity, settings.title.shadowColor, settings.title.shadowWidth, settings.title.shadowOffsetX, settings.title.shadowOffsetY);
 
-				setFontFromSettings(l.font, settings.text);
+				this.setFontFromSettings(l.font, settings.text);
 
 				var textX = rankX + settings.text.leftOffset;
 				var textMaxWidth = l.imageWidth - textX - settings.text.rightOffset;
-				var textLines = wordWrapSplitLines(content, textMaxWidth, l.font);
+				var textLines = global.wordWrapSplitLines(content, textMaxWidth, l.font);
 				var textY = i*(abilityHeight+settings.distanceBetweenEntries) + (abilityHeight - textLines.count * l.font.height - (textLines.count-1) * settings.text.lineSpace)/2 + settings.abilityTopOffset*-(abilities.count-2);
 				for (var j = 0, internal_forloop_count = textLines.count; j < internal_forloop_count; j += 1) {
 					l.drawText(textX, textY, textLines[j], settings.text.color,,, settings.text.shadowOpacity, settings.text.shadowColor, settings.text.shadowWidth, settings.text.shadowOffsetX, settings.text.shadowOffsetY);
@@ -586,10 +586,10 @@ class TextDrawer
 
 	function getLongestTitle(font, settings, abilities)
 	{
-		setFontFromSettings(font, settings);
+		this.setFontFromSettings(font, settings);
 		var longestTitleWidth = settings.minWidth;
 		for (var i = 0, internal_forloop_count = abilities.count; i < internal_forloop_count; i += 1) {
-			var title = __(abilities[i][0]);
+			var title = global.__(abilities[i][0]);
 			var titleWidth = font.getTextWidth(title);
 			if ((titleWidth + settings.rightOffset) > longestTitleWidth) {
 				longestTitleWidth = titleWidth + settings.rightOffset;

@@ -832,20 +832,20 @@ class MenuItem
 	}
 }
 
-global.Window_patch_plugin_menu_original = Window;
-class Window_patch_plugin_menu_override extends Window_patch_plugin_menu_original
+global.Window_patch_plugin_menu_original = global.Window;
+class Window_patch_plugin_menu_override extends global.Window_patch_plugin_menu_original
 {
 	function Window_patch_plugin_menu_override()
 	{
 		super.Window(...);
-		this.menu = new MenuItem(this, this);
+		this.menu = new global.MenuItem(this, this);
 	}
 
 	function Window()
 	{
-		Window_patch_plugin_menu_override(...);
+		this.Window_patch_plugin_menu_override(...);
 	}
 }
-global.Window = Window_patch_plugin_menu_override;
+global.Window = global.Window_patch_plugin_menu_override;
 
 

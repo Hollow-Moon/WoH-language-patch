@@ -1,5 +1,5 @@
-global.VideoOverlay_patch_hd_layer_original = VideoOverlay;
-class VideoOverlay_patch_hd_layer_override extends VideoOverlay_patch_hd_layer_original
+global.VideoOverlay_patch_hd_layer_original = global.VideoOverlay;
+class VideoOverlay_patch_hd_layer_override extends global.VideoOverlay_patch_hd_layer_original
 {
 	function VideoOverlay_patch_hd_layer_override()
 	{
@@ -8,7 +8,7 @@ class VideoOverlay_patch_hd_layer_override extends VideoOverlay_patch_hd_layer_o
 
 	function VideoOverlay()
 	{
-		VideoOverlay_patch_hd_layer_override(...);
+		this.VideoOverlay_patch_hd_layer_override(...);
 	}
 
 	property width
@@ -29,10 +29,10 @@ class VideoOverlay_patch_hd_layer_override extends VideoOverlay_patch_hd_layer_o
 		getter
 		{
 @if(SCALE_USING_FLOATING_POINT)
-			return super.height / scaleFactor;
+			return super.height / global.scaleFactor;
 @endif
 @if(!SCALE_USING_FLOATING_POINT)
-			return super.height \ scaleFactor;
+			return super.height \ global.scaleFactor;
 @endif
 		}
 	}
@@ -55,17 +55,17 @@ class VideoOverlay_patch_hd_layer_override extends VideoOverlay_patch_hd_layer_o
 		getter
 		{
 @if(SCALE_USING_FLOATING_POINT)
-			return super.originalHeight / scaleFactor;
+			return super.originalHeight / global.scaleFactor;
 @endif
 @if(!SCALE_USING_FLOATING_POINT)
-			return super.originalHeight \ scaleFactor;
+			return super.originalHeight \ global.scaleFactor;
 @endif
 		}
 	}
 
 	function setBounds(left, top, width, height)
 	{
-		return super.setBounds(left*global.get_wideScaleFactor(), top*scaleFactor, width*global.get_wideScaleFactor(), height*scaleFactor);
+		return super.setBounds(left*global.get_wideScaleFactor(), top*global.scaleFactor, width*global.get_wideScaleFactor(), height*global.scaleFactor);
 	}
 }
-global.VideoOverlay = VideoOverlay_patch_hd_layer_override;
+global.VideoOverlay = global.VideoOverlay_patch_hd_layer_override;

@@ -3,25 +3,25 @@ global.enumFont = function(win, fonts) {};
 
 global.DeleteFile = function(filepath)
 {
-	Storages.deleteFile(filepath);
+	global.Storages.deleteFile(filepath);
 };
 
 global.MoveFile = function(from, to)
 {
-	Storages.moveFile(from, to);
+	global.Storages.moveFile(from, to);
 };
 
 global.CopyFile = function(from, to)
 {
-	Storages.exportFile(from, to);
+	global.Storages.exportFile(from, to);
 };
 
 global.GetFileSize = function(filepath)
 {
-	if(!Storages.isExistentStorage(filepath)) {
+	if(!global.Storages.isExistentStorage(filepath)) {
 		return -1;
 	}
-	return Storages.fstat(filepath).size;
+	return global.Storages.fstat(filepath).size;
 };
 
 global.GetFileTime = function() { return 0; };
@@ -35,7 +35,7 @@ global.SetClipboardText = function() {};
 
 global.GetDatetime = function()
 {
-	var d = new Date();
+	var d = new global.Date();
 	var ret = %[];
 	ret.mon = d.getMonth();
 	ret.day = d.getDay();
@@ -47,7 +47,7 @@ global.GetDatetime = function()
 
 global.CreateDirectory = function(dir)
 {
-	Storages.createDirectory(dir);
+	global.Storages.createDirectory(dir);
 };
 
 global.IsActiveWindow = function(win)
@@ -57,12 +57,12 @@ global.IsActiveWindow = function(win)
 
 global.SelectDirectory = function(_title, initdir)
 {
-	return Storages.extractStoragePath(
-		Storages.selectFile(%[initialDir: initdir, title: _title])
+	return global.Storages.extractStoragePath(
+		global.Storages.selectFile(%[initialDir: initdir, title: _title])
 	);
 };
 
 global.ExistDirectory = function(dir)
 {
-	return Storages.isExistentDirectory(dir) == true;
+	return global.Storages.isExistentDirectory(dir) == true;
 };

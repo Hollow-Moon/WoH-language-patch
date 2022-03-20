@@ -1,8 +1,8 @@
 ﻿
 @set(PRELAYOUT_DEBUG=0)
 
-global.KAGWindow_patch_messagelayer_prelayout_original = KAGWindow;
-class KAGWindow_patch_messagelayer_prelayout_override extends KAGWindow_patch_messagelayer_prelayout_original
+global.KAGWindow_patch_messagelayer_prelayout_original = global.KAGWindow;
+class KAGWindow_patch_messagelayer_prelayout_override extends global.KAGWindow_patch_messagelayer_prelayout_original
 {
 	function KAGWindow_patch_messagelayer_prelayout_override()
 	{
@@ -13,7 +13,7 @@ class KAGWindow_patch_messagelayer_prelayout_override extends KAGWindow_patch_me
 
 	function KAGWindow()
 	{
-		KAGWindow_patch_messagelayer_prelayout_override(...);
+		this.KAGWindow_patch_messagelayer_prelayout_override(...);
 	}
 
 	var patch_messagelayer_prelayout_tags_execnow = [
@@ -53,7 +53,7 @@ class KAGWindow_patch_messagelayer_prelayout_override extends KAGWindow_patch_me
 		this.updateBeforeCh = false;
 		var has_break_tag = false;
 @if(PRELAYOUT_DEBUG)
-		Debug.message("Prelayout start:");
+		global.Debug.message("Prelayout start:");
 @endif
 		while (conductor.pendings_prelayout.count > 0)
 		{
@@ -62,7 +62,7 @@ class KAGWindow_patch_messagelayer_prelayout_override extends KAGWindow_patch_me
 			conductor.pendings_prelayout.clear();
 			var ret2 = %[];
 @if(PRELAYOUT_DEBUG)
-			Debug.message("Prelayout chunk start:");
+			global.Debug.message("Prelayout chunk start:");
 @endif
 			for (var ii = 0; ii < strelm.count; ii += 1)
 			{
@@ -71,7 +71,7 @@ class KAGWindow_patch_messagelayer_prelayout_override extends KAGWindow_patch_me
 					var text = strelm[ii];
 					var text_sz = text.length;
 @if(PRELAYOUT_DEBUG)
-					Debug.message("String queued: " + text);
+					global.Debug.message("String queued: " + text);
 @endif
 					for (var i = 0; i < text_sz; i += 1)
 					{
@@ -104,7 +104,7 @@ class KAGWindow_patch_messagelayer_prelayout_override extends KAGWindow_patch_me
 				{
 					var tag = strelm[ii];
 @if(PRELAYOUT_DEBUG)
-					Debug.message("Tag queued: " + tag.tagname);
+					global.Debug.message("Tag queued: " + tag.tagname);
 @endif
 					if (patch_messagelayer_prelayout_tags_execnow.find(tag.tagname) !== -1)
 					{
@@ -186,11 +186,11 @@ class KAGWindow_patch_messagelayer_prelayout_override extends KAGWindow_patch_me
 				}
 			}
 @if(PRELAYOUT_DEBUG)
-			Debug.message("Prelayout chunk end:");
+			global.Debug.message("Prelayout chunk end:");
 @endif
 		}
 @if(PRELAYOUT_DEBUG)
-		Debug.message("Prelayout end:");
+		global.Debug.message("Prelayout end:");
 @endif
 		this.current.visible = last_visible;
 		this.current.opacity = last_opacity;
@@ -198,7 +198,7 @@ class KAGWindow_patch_messagelayer_prelayout_override extends KAGWindow_patch_me
 		if ((conductor.pendings.length == 0) || (conductor.pendings.length > 0 && conductor.pendings[0].tagname !== "ch_patch_conductor_split" && conductor.pendings[0].tagname !== "ch_patch_conductor_messagelayer_tag") || has_break_tag)
 		{
 @if(PRELAYOUT_DEBUG)
-			Debug.message("Prelayout execute:");
+			global.Debug.message("Prelayout execute:");
 @endif
 			var ret2 = %[];
 			ret2.__patch_conductor_storage = elm.__patch_conductor_storage;
@@ -208,10 +208,10 @@ class KAGWindow_patch_messagelayer_prelayout_override extends KAGWindow_patch_me
 		}
 	}
 }
-global.KAGWindow = KAGWindow_patch_messagelayer_prelayout_override;
+global.KAGWindow = global.KAGWindow_patch_messagelayer_prelayout_override;
 
-global.Conductor_patch_messagelayer_prelayout_original = Conductor;
-class Conductor_patch_messagelayer_prelayout_override extends Conductor_patch_messagelayer_prelayout_original
+global.Conductor_patch_messagelayer_prelayout_original = global.Conductor;
+class Conductor_patch_messagelayer_prelayout_override extends global.Conductor_patch_messagelayer_prelayout_original
 {
 	function Conductor_patch_messagelayer_prelayout_override()
 	{
@@ -220,7 +220,7 @@ class Conductor_patch_messagelayer_prelayout_override extends Conductor_patch_me
 
 	function Conductor()
 	{
-		Conductor_patch_messagelayer_prelayout_override(...);
+		this.Conductor_patch_messagelayer_prelayout_override(...);
 	}
 
 	var pendings_prelayout = [];
@@ -228,7 +228,7 @@ class Conductor_patch_messagelayer_prelayout_override extends Conductor_patch_me
 	function queueTag(i, elm)
 	{
 		var ret2 = %[];
-		(Dictionary.assignStruct incontextof ret2)(elm);
+		(global.Dictionary.assignStruct incontextof ret2)(elm);
 		ret2.__patch_conductor_storage = elm.__patch_conductor_storage;
 		ret2.__patch_conductor_line = elm.__patch_conductor_line;
 		this.pendings_prelayout.insert(i, ret2);
@@ -319,7 +319,7 @@ class Conductor_patch_messagelayer_prelayout_override extends Conductor_patch_me
 		for (var i = prepend.count - 1; i >= 0; i -= 1)
 		{
 			var ret2 = %[];
-			(Dictionary.assignStruct incontextof ret2)(prepend[i]);
+			(global.Dictionary.assignStruct incontextof ret2)(prepend[i]);
 			ret2.__patch_conductor_storage = elm.__patch_conductor_storage;
 			ret2.__patch_conductor_line = elm.__patch_conductor_line;
 			this.pendings_prelayout.insert(0, ret2);
@@ -333,7 +333,7 @@ class Conductor_patch_messagelayer_prelayout_override extends Conductor_patch_me
 		for (var i = append.count - 1; i >= 0; i -= 1)
 		{
 			var ret2 = %[];
-			(Dictionary.assignStruct incontextof ret2)(append[i]);
+			(global.Dictionary.assignStruct incontextof ret2)(append[i]);
 			ret2.__patch_conductor_storage = elm.__patch_conductor_storage;
 			ret2.__patch_conductor_line = elm.__patch_conductor_line;
 			this.pendings_prelayout.insert(0, ret2);
@@ -349,10 +349,10 @@ class Conductor_patch_messagelayer_prelayout_override extends Conductor_patch_me
 		return super.onTag(...);
 	}
 }
-global.Conductor = Conductor_patch_messagelayer_prelayout_override;
+global.Conductor = global.Conductor_patch_messagelayer_prelayout_override;
 
-global.MessageLayer_patch_messagelayer_prelayout_original = MessageLayer;
-class MessageLayer_patch_messagelayer_prelayout_override extends MessageLayer_patch_messagelayer_prelayout_original
+global.MessageLayer_patch_messagelayer_prelayout_original = global.MessageLayer;
+class MessageLayer_patch_messagelayer_prelayout_override extends global.MessageLayer_patch_messagelayer_prelayout_original
 {
 	function MessageLayer_patch_messagelayer_prelayout_override()
 	{
@@ -361,7 +361,7 @@ class MessageLayer_patch_messagelayer_prelayout_override extends MessageLayer_pa
 
 	function MessageLayer()
 	{
-		MessageLayer_patch_messagelayer_prelayout_override(...);
+		this.MessageLayer_patch_messagelayer_prelayout_override(...);
 	}
 
 	var in_prelayout_mode = false;
@@ -380,14 +380,14 @@ class MessageLayer_patch_messagelayer_prelayout_override extends MessageLayer_pa
 		{
 			if (!this.in_prelayout_exec_mode)
 			{
-				return _x;
+				return this._x;
 			}
-			return prelayout_x;
+			return this.prelayout_x;
 		}
 		setter(v)
 		{
-			_x = v;
-			prelayout_x = v;
+			this._x = v;
+			this.prelayout_x = v;
 		}
 	}
 
@@ -397,14 +397,14 @@ class MessageLayer_patch_messagelayer_prelayout_override extends MessageLayer_pa
 		{
 			if (!this.in_prelayout_exec_mode)
 			{
-				return _y;
+				return this._y;
 			}
-			return prelayout_y;
+			return this.prelayout_y;
 		}
 		setter(v)
 		{
-			_y = v;
-			prelayout_y = v;
+			this._y = v;
+			this.prelayout_y = v;
 		}
 	}
 
@@ -413,11 +413,11 @@ class MessageLayer_patch_messagelayer_prelayout_override extends MessageLayer_pa
 
 	function prelayoutPrepareCharLayer(charlayer)
 	{
-		if (in_prelayout_mode)
+		if (this.in_prelayout_mode)
 		{
 			charlayer.group = void;
 			charlayer.visible = false;
-			prelayout_charlayers.add(charlayer);
+			this.prelayout_charlayers.add(charlayer);
 			if (typeof(charlayer.queued_appear_action) === "Object")
 			{
 				delete charlayer.queued_appear_action;
@@ -431,15 +431,15 @@ class MessageLayer_patch_messagelayer_prelayout_override extends MessageLayer_pa
 
 	function backspace(cnt = 1)
 	{
-		if (in_prelayout_mode)
+		if (this.in_prelayout_mode)
 		{
-			if (prelayout_charlayers.count < cnt)
+			if (this.prelayout_charlayers.count < cnt)
 			{
-				cnt = prelayout_charlayers.count;
+				cnt = this.prelayout_charlayers.count;
 			}
 			for (var i = 0; i < cnt; i += 1)
 			{
-				prelayout_charlayers.erase(prelayout_charlayers.count - 1);
+				this.prelayout_charlayers.erase(this.prelayout_charlayers.count - 1);
 			}
 		}
 		super.backspace(...);
@@ -476,19 +476,19 @@ class MessageLayer_patch_messagelayer_prelayout_override extends MessageLayer_pa
 @endif
 		if (typeof(charlayer.currentLine) === "Integer")
 		{
-			prelayout_currentLine = charlayer.currentLine;
+			this.prelayout_currentLine = charlayer.currentLine;
 		}
 		if (typeof(charlayer.currentColumn) === "Integer")
 		{
-			prelayout_currentColumn = charlayer.currentColumn;
+			this.prelayout_currentColumn = charlayer.currentColumn;
 		}
 		if (typeof(charlayer.x_after) === "Integer")
 		{
-			prelayout_x = charlayer.x_after;
+			this.prelayout_x = charlayer.x_after;
 		}
 		if (typeof(charlayer.y_after) === "Integer")
 		{
-			prelayout_y = charlayer.y_after;
+			this.prelayout_y = charlayer.y_after;
 		}
 		if (typeof(charlayer.queued_wait_time) === "Integer")
 		{
@@ -563,24 +563,24 @@ class MessageLayer_patch_messagelayer_prelayout_override extends MessageLayer_pa
 @if(PRELAYOUT_DEBUG)
 			if (!this.in_prelayout_exec_mode)
 			{
-				Debug.message("?:");
+				global.Debug.message("?:");
 				for (var i = 0; i < this.prelayout_charlayers.count; i += 1)
 				{
 					var charlayer = this.prelayout_charlayers[i];
 					if (!(isvalid(charlayer)))
 					{
-						Debug.message("Invalid object");
+						global.Debug.message("Invalid object");
 					}
 					else if (charlayer instanceof "MessageCharLayer")
 					{
-						Debug.message("MessageCharLayer: " + charlayer.name);
+						global.Debug.message("MessageCharLayer: " + charlayer.name);
 					}
 					else if (charlayer instanceof "Dictionary")
 					{
-						Debug.message("Tag: " + charlayer.tagname);
+						global.Debug.message("Tag: " + charlayer.tagname);
 					}
 				}
-				Debug.message("?!");
+				global.Debug.message("?!");
 			}
 @endif
 			this.in_prelayout_exec_mode = true;
@@ -657,20 +657,20 @@ class MessageLayer_patch_messagelayer_prelayout_override extends MessageLayer_pa
 			{
 				return super.currentLineLengthSize;
 			}
-			if(prelayout_currentColumn > 0)
+			if(this.prelayout_currentColumn > 0)
 			{
-				var	chars	= charLayers[prelayout_currentLine];
+				var	chars	= this.charLayers[this.prelayout_currentLine];
 				var	len		= 0;
-				if(!vertical)
+				if(!this.vertical)
 				{
 					len	= chars[0].textWidth;
-					for(var i=1; i<prelayout_currentColumn; i++)
+					for(var i=1; i<this.prelayout_currentColumn; i++)
 						len	+= chars[i].textWidth + chars[i-1].pitch;
 				}
 				else
 				{
 					len	= chars[0].textHeight;
-					for(var i=1; i<prelayout_currentColumn; i++)
+					for(var i=1; i<this.prelayout_currentColumn; i++)
 						len	+= chars[i].textHeight + chars[i-1].pitch;
 				}
 				return len;
@@ -683,5 +683,5 @@ class MessageLayer_patch_messagelayer_prelayout_override extends MessageLayer_pa
 
 
 }
-global.MessageLayer = MessageLayer_patch_messagelayer_prelayout_override;
+global.MessageLayer = global.MessageLayer_patch_messagelayer_prelayout_override;
 

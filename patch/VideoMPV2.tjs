@@ -1,25 +1,25 @@
 ﻿
 if (typeof(global.NamedPipeClient) !== "Object")
 {
-	if (Storages.isExistentStorage("krnamedpipeclient.dll"))
+	if (global.Storages.isExistentStorage("krnamedpipeclient.dll"))
 	{
-		Plugins.link("krnamedpipeclient.dll");
+		global.Plugins.link("krnamedpipeclient.dll");
 	}
 }
 
-if (typeof(Scripts.evalJSON) !== "Object")
+if (typeof(global.Scripts.evalJSON) !== "Object")
 {
-	if (Storages.isExistentStorage("json.dll"))
+	if (global.Storages.isExistentStorage("json.dll"))
 	{
-		Plugins.link("json.dll");
+		global.Plugins.link("json.dll");
 	}
 }
 
-if (typeof(Storages.exportFile) !== "Object")
+if (typeof(global.Storages.exportFile) !== "Object")
 {
-	if (Storages.isExistentStorage("fstat.dll"))
+	if (global.Storages.isExistentStorage("fstat.dll"))
 	{
-		Plugins.link("fstat.dll");
+		global.Plugins.link("fstat.dll");
 	}
 }
 
@@ -101,7 +101,7 @@ class MpvNamedPipeClientIPC
 		this.subfileexportnpc = null;
 		this.mpvpath = global.paths_base[0] + "mpv.exe";
 		this.packedclose = ["{ \"command\": [\"quit\"] }\n"].pack("a*");
-		this.namedpipe = ("\\\\.\\pipe\\MpvNamedPipeClientIPC%i").sprintf(System.getTickCount());
+		this.namedpipe = ("\\\\.\\pipe\\MpvNamedPipeClientIPC%i").sprintf(global.System.getTickCount());
 		this.requests = [];
 	}
 
@@ -128,13 +128,13 @@ class MpvNamedPipeClientIPC
 		{
 			this.mpvpath = global.mpv_exepath;
 		}
-		var mpv_placedpath = Storages.getPlacedPath("mpv.exe");
-		if (mpv_placedpath !== "" && !Storages.isExistentStorage(this.mpvpath))
+		var mpv_placedpath = global.Storages.getPlacedPath("mpv.exe");
+		if (mpv_placedpath !== "" && !global.Storages.isExistentStorage(this.mpvpath))
 		{
-			var mpv_localpath = Storages.getLocalName(mpv_placedpath);
-			if (mpv_localpath === "" && typeof(Storages.exportFile) === "Object")
+			var mpv_localpath = global.Storages.getLocalName(mpv_placedpath);
+			if (mpv_localpath === "" && typeof(global.Storages.exportFile) === "Object")
 			{
-				Storages.exportFile(mpv_placedpath, this.mpvpath);
+				global.Storages.exportFile(mpv_placedpath, this.mpvpath);
 				this.mpvpath = mpv_placedpath;
 			}
 			else
@@ -142,7 +142,7 @@ class MpvNamedPipeClientIPC
 				this.mpvpath = mpv_placedpath;
 			}
 		}
-		return Storages.isExistentStorage(this.mpvpath);
+		return global.Storages.isExistentStorage(this.mpvpath);
 	}
 
 	function init()
@@ -171,7 +171,7 @@ class MpvNamedPipeClientIPC
 		var success = global.build_exec_command_line(this.mpvpath, command_line, true, false);
 		if (success)
 		{
-			System.addContinuousHandler(this.ensure_command_npc_continuous);
+			global.System.addContinuousHandler(this.ensure_command_npc_continuous);
 		}
 		return success;
 	}
@@ -204,30 +204,30 @@ class MpvNamedPipeClientIPC
 	{
 		if (this.commandnpc === null)
 		{
-			if (NamedPipeClient.waitForPath(this.namedpipe, wait_ms))
+			if (global.NamedPipeClient.waitForPath(this.namedpipe, wait_ms))
 			{
-				this.commandnpc = new NamedPipeClient();
+				this.commandnpc = new global.NamedPipeClient();
 				this.commandnpc.open(
 					this.namedpipe,
-					GENERIC_READ | GENERIC_WRITE,
+					global.GENERIC_READ | global.GENERIC_WRITE,
 					0,
 					false,
-					OPEN_EXISTING,
-					FILE_FLAG_WRITE_THROUGH
+					global.OPEN_EXISTING,
+					global.FILE_FLAG_WRITE_THROUGH
 				);
-				this.commandnpc.setState(PIPE_READMODE_MESSAGE | PIPE_WAIT, void, void);
+				this.commandnpc.setState(global.PIPE_READMODE_MESSAGE | global.PIPE_WAIT, void, void);
 				this.send_recv(%["command" => ["keybind", "CLOSE_WIN", "quit"]]);
 				this.send_recv(%["command" => ["keybind", "MBTN_LEFT", "stop"]]);
 				this.send_recv(%["command" => ["keybind", "ctrl", "stop"]]);
 				this.send_recv(%["command" => ["set_property", "pause", "yes"]]);
 				this.send_recv(%["command" => ["set_property", "window-minimized", "yes"]]);
 				this.send_recv(%["command" => ["set_property", "force-window", "yes"]]);
-				System.addContinuousHandler(this.get_stuff_continuous);
+				global.System.addContinuousHandler(this.get_stuff_continuous);
 			}
 		}
 		if (this.commandnpc !== null)
 		{
-			System.removeContinuousHandler(this.ensure_command_npc_continuous);
+			global.System.removeContinuousHandler(this.ensure_command_npc_continuous);
 		}
 	}
 
@@ -240,12 +240,12 @@ class MpvNamedPipeClientIPC
 	{
 		if (typeof(this.commandnpc) !== "Object")
 		{
-			System.removeContinuousHandler(this.get_stuff_continuous);
+			global.System.removeContinuousHandler(this.get_stuff_continuous);
 			return;
 		}
 		var ret = null;
 		var has_request = want_request_id === void;
-		var timeoutend = System.getTickCount() + timeout;
+		var timeoutend = global.System.getTickCount() + timeout;
 		while ((typeof(ret) !== "Octet") && !has_request)
 		{
 			ret = this.commandnpc.read();
@@ -258,7 +258,7 @@ class MpvNamedPipeClientIPC
 					var txt = ssplit[i];
 					if (txt.length > 0)
 					{
-						var ret3 = Scripts.evalJSON(txt);
+						var ret3 = global.Scripts.evalJSON(txt);
 						this.requests.add(ret3);
 						if (ret3.request_id === want_request_id)
 						{
@@ -268,7 +268,7 @@ class MpvNamedPipeClientIPC
 				}
 @endif
 @if(!VIDEOMPV2_USENEWLINE)
-				var ret3 = Scripts.evalJSON(ret.unpack("a" + ret.length)[0]);
+				var ret3 = global.Scripts.evalJSON(ret.unpack("a" + ret.length)[0]);
 				this.requests.add(ret3);
 				if (ret3.request_id === want_request_id)
 				{
@@ -276,7 +276,7 @@ class MpvNamedPipeClientIPC
 				}
 @endif
 			}
-			if (System.getTickCount() > timeoutend)
+			if (global.System.getTickCount() > timeoutend)
 			{
 				break;
 			}
@@ -287,16 +287,16 @@ class MpvNamedPipeClientIPC
 	{
 		if (this.commandnpc === null)
 		{
-			throw new Exception("MPV client not detected");
+			throw new global.Exception("MPV client not detected");
 		}
-		dict.request_id = System.getTickCount();
-		get_stuff();
-		this.commandnpc.write([("%s\n").sprintf(Scripts.toJSONString(dict).replace(/\r\n/g, ""))].pack("a*"));
+		dict.request_id = global.System.getTickCount();
+		this.get_stuff();
+		this.commandnpc.write([("%s\n").sprintf(global.Scripts.toJSONString(dict).replace(/\r\n/g, ""))].pack("a*"));
 		if (!want_request)
 		{
 			return null;
 		}
-		get_stuff(dict.request_id);
+		this.get_stuff(dict.request_id);
 		for (var i = 0, internal_forloop_count = this.requests.count; i < internal_forloop_count; i += 1)
 		{
 			if (this.requests[i].request_id == dict.request_id)
@@ -323,12 +323,12 @@ class MpvNamedPipeClientIPC
 		{
 			this.waitforplayfile();
 		}
-		var exportname = ("\\\\.\\pipe\\MpvNamedPipeClientIPC%i").sprintf(System.getTickCount());
-		this.exportnpc = new NamedPipeClient();
+		var exportname = ("\\\\.\\pipe\\MpvNamedPipeClientIPC%i").sprintf(global.System.getTickCount());
+		this.exportnpc = new global.NamedPipeClient();
 		this.exportnpc.create(
 			exportname,
-			PIPE_ACCESS_OUTBOUND | FILE_FLAG_FIRST_PIPE_INSTANCE,
-			PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT | PIPE_REJECT_REMOTE_CLIENTS,
+			global.PIPE_ACCESS_OUTBOUND | global.FILE_FLAG_FIRST_PIPE_INSTANCE,
+			global.PIPE_TYPE_BYTE | global.PIPE_READMODE_BYTE | global.PIPE_WAIT | global.PIPE_REJECT_REMOTE_CLIENTS,
 			2,
 			1024 * 16,
 			1024 * 16,
@@ -355,12 +355,12 @@ class MpvNamedPipeClientIPC
 		{
 			this.waitforsubfile();
 		}
-		var exportname = ("\\\\.\\pipe\\MpvNamedPipeClientIPC%i.ass").sprintf(System.getTickCount());
-		this.subfileexportnpc = new NamedPipeClient();
+		var exportname = ("\\\\.\\pipe\\MpvNamedPipeClientIPC%i.ass").sprintf(global.System.getTickCount());
+		this.subfileexportnpc = new global.NamedPipeClient();
 		this.subfileexportnpc.create(
 			exportname,
-			PIPE_ACCESS_OUTBOUND | FILE_FLAG_FIRST_PIPE_INSTANCE,
-			PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT | PIPE_REJECT_REMOTE_CLIENTS,
+			global.PIPE_ACCESS_OUTBOUND | global.FILE_FLAG_FIRST_PIPE_INSTANCE,
+			global.PIPE_TYPE_BYTE | global.PIPE_READMODE_BYTE | global.PIPE_WAIT | global.PIPE_REJECT_REMOTE_CLIENTS,
 			2,
 			1024 * 16,
 			1024 * 16,
@@ -372,38 +372,38 @@ class MpvNamedPipeClientIPC
 	}
 }
 
-if ((typeof(global.NamedPipeClient) === "Object") && (typeof(Scripts.evalJSON) === "Object") && (typeof(Array.pack) === "Object"))
+if ((typeof(global.NamedPipeClient) === "Object") && (typeof(global.Scripts.evalJSON) === "Object") && (typeof(global.Array.pack) === "Object"))
 {
-	global.mpvNPCIPCObj = new MpvNamedPipeClientIPC();
+	global.mpvNPCIPCObj = new global.MpvNamedPipeClientIPC();
 	if (!global.mpvNPCIPCObj.find_extract_mpv())
 	{
 		var msg = "VideoMPV2: could not find mpv executable; tried " + global.mpvNPCIPCObj.mpvpath;
-		var videosubsystem = System.getArgument("-videosubsystem");
+		var videosubsystem = global.System.getArgument("-videosubsystem");
 		if (videosubsystem !== void)
 		{
 			if (videosubsystem === "mpv")
 			{
-				throw new Exception(msg);
+				throw new global.Exception(msg);
 			}
 		}
-		Debug.notice(msg);
+		global.Debug.notice(msg);
 		return;
 	}
 	if (!global.mpvNPCIPCObj.init())
 	{
 		var msg = "VideoMPV2: failed to initialize due to ShellExecute failure";
-		var videosubsystem = System.getArgument("-videosubsystem");
+		var videosubsystem = global.System.getArgument("-videosubsystem");
 		if (videosubsystem !== void)
 		{
 			if (videosubsystem === "mpv")
 			{
-				throw new Exception(msg);
+				throw new global.Exception(msg);
 			}
 		}
-		Debug.notice(msg);
+		global.Debug.notice(msg);
 		return;
 	}
-	global.iswine = typeof(System.readRegValue("HKEY_CURRENT_USER\\Software\\Wine\\FileOpenAssociations\\Enable")) === "String";
+	global.iswine = typeof(global.System.readRegValue("HKEY_CURRENT_USER\\Software\\Wine\\FileOpenAssociations\\Enable")) === "String";
 
 	global.playVideoMPV = function(name)
 	{
@@ -413,17 +413,17 @@ if ((typeof(global.NamedPipeClient) === "Object") && (typeof(Scripts.evalJSON) =
 		}
 		var forceDeliverEvents = function()
 		{
-			var origEventDisabled = System.eventDisabled;
-			System.eventDisabled = true;
-			System.eventDisabled = false;
-			System.eventDisabled = origEventDisabled;
+			var origEventDisabled = global.System.eventDisabled;
+			global.System.eventDisabled = true;
+			global.System.eventDisabled = false;
+			global.System.eventDisabled = origEventDisabled;
 		};
 		var fullscreen = global.kag.fullScreen;
 		if (fullscreen)
 		{
 			global.kag.onWindowedMenuItemClick();
 		}
-		System.eventDisabled = true;
+		global.System.eventDisabled = true;
 		global.kag.visible = false;
 		global.mpvNPCIPCObj.ensure_command_npc(10000);
 		global.mpvNPCIPCObj.reload_command_npc();
@@ -431,7 +431,7 @@ if ((typeof(global.NamedPipeClient) === "Object") && (typeof(Scripts.evalJSON) =
 		var namerev = name.reverse();
 		var spos = namerev.indexOf(".");
 		var subname = ("ssa." + namerev.substring(spos + 1)).reverse();
-		if (Storages.isExistentStorage(subname))
+		if (global.Storages.isExistentStorage(subname))
 		{
 			global.mpvNPCIPCObj.subfile_storages(subname);
 		}
@@ -448,7 +448,7 @@ if ((typeof(global.NamedPipeClient) === "Object") && (typeof(Scripts.evalJSON) =
 		global.mpvNPCIPCObj.send_recv(%["command" => ["stop"]]);
 		global.mpvNPCIPCObj.send_recv(%["command" => ["stop"]]);
 		global.mpvNPCIPCObj.get_stuff();
-		System.eventDisabled = false;
+		global.System.eventDisabled = false;
 		forceDeliverEvents();
 		global.kag.visible = true;
 		if (fullscreen)
@@ -461,7 +461,7 @@ if ((typeof(global.NamedPipeClient) === "Object") && (typeof(Scripts.evalJSON) =
 
 	global.shouldUseMPV = function()
 	{
-		var videosubsystem = System.getArgument("-videosubsystem");
+		var videosubsystem = global.System.getArgument("-videosubsystem");
 		if (videosubsystem !== void)
 		{
 			return (videosubsystem === "mpv");
@@ -469,7 +469,7 @@ if ((typeof(global.NamedPipeClient) === "Object") && (typeof(Scripts.evalJSON) =
 		return global.iswine || (typeof(global.kag.sflags.forceMpvPlayback) === "Integer" && global.kag.sflags.forceMpvPlayback); // TODO should also return true in windows without WMF (need to find a way to query that...)
 	};
 
-	Debug.notice("VideoMPV2: initialized successfully");
+	global.Debug.notice("VideoMPV2: initialized successfully");
 }
 else
 {
@@ -479,21 +479,21 @@ else
 	{
 		msg += "VideoMPV2: NamedPipeClient object (krnamedpipeclient.dll) not found\n";
 	}
-	if (typeof(Scripts.evalJSON) !== "Object")
+	if (typeof(global.Scripts.evalJSON) !== "Object")
 	{
 		msg += "VideoMPV2: Scripts.evalJSON function (json.dll) not found\n";
 	}
-	if (typeof(Array.pack) !== "Object")
+	if (typeof(global.Array.pack) !== "Object")
 	{
 		msg += "VideoMPV2: Array.pack function (implemented in krkrz) not found\n";
 	}
-	var videosubsystem = System.getArgument("-videosubsystem");
+	var videosubsystem = global.System.getArgument("-videosubsystem");
 	if (videosubsystem !== void)
 	{
 		if (videosubsystem === "mpv")
 		{
-			throw new Exception(msg);
+			throw new global.Exception(msg);
 		}
 	}
-	Debug.notice(msg);
+	global.Debug.notice(msg);
 }

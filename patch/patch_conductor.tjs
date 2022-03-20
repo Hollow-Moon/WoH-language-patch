@@ -1,8 +1,8 @@
 ﻿
 @set(TAG_QUEUE_DEBUG=0)
 
-global.BaseConductor_patch_conductor_original = BaseConductor;
-class BaseConductor_patch_conductor_override extends BaseConductor_patch_conductor_original
+global.BaseConductor_patch_conductor_original = global.BaseConductor;
+class BaseConductor_patch_conductor_override extends global.BaseConductor_patch_conductor_original
 {
 	function BaseConductor_patch_conductor_override()
 	{
@@ -10,7 +10,7 @@ class BaseConductor_patch_conductor_override extends BaseConductor_patch_conduct
 	}
 	function BaseConductor()
 	{
-		BaseConductor_patch_conductor_override(...);
+		this.BaseConductor_patch_conductor_override(...);
 	}
 
 	var lines = [];
@@ -22,7 +22,7 @@ class BaseConductor_patch_conductor_override extends BaseConductor_patch_conduct
 		return this.lines.join("\n");
 	}
 }
-global.BaseConductor = BaseConductor_patch_conductor_override;
+global.BaseConductor = global.BaseConductor_patch_conductor_override;
 
 global.patch_conductor_regex_1 = /\[line(?: len=)?([0-9]*?)\]/g;
 global.patch_conductor_regex_2 = /\[block(?: len=)?([0-9]*?)\]/g;
@@ -32,9 +32,9 @@ global.patch_conductor_regex_4 = /(?:\["[a-zA-Z0-9_-]*"]|\['[a-zA-Z0-9_-]*']|\[[
 global.patch_conductor_regex_5 = /(?:(?<=^)|(?<=\n))(?:@|;|\*).*?(?=$|\n)/g;
 global.patch_conductor_regex_6 = /(?s)(?:(?:^|\n)\[iscript\]|(?:^|\n)\[iscript\]\\(?:\n)|(?:^|\n)@iscript(?:\n)).*?(?:(?:^|\n)\[endscript\]|(?:^|\n)\[endscript\]\\(?:\n)|(?:^|\n)@endscript(?:\n))/g;
 
-global.Conductor_patch_conductor_original = Conductor;
+global.Conductor_patch_conductor_original = global.Conductor;
 
-class Conductor_patch_conductor_override extends Conductor_patch_conductor_original
+class Conductor_patch_conductor_override extends global.Conductor_patch_conductor_original
 {
 	function Conductor_patch_conductor_override()
 	{
@@ -43,7 +43,7 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 
 	function Conductor()
 	{
-		Conductor_patch_conductor_override(...);
+		this.Conductor_patch_conductor_override(...);
 	}
 
 	var dash_character = "―";
@@ -51,7 +51,7 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 	var lines = [];
 	var cleaned_lines = [];
 
-	function replaceLine(text, reg, character=dash_character)
+	function replaceLine(text, reg, character=this.dash_character)
 	{
 		var results = reg.match(text);
 		while(results.count == 2) {
@@ -78,11 +78,11 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 		return "";
 	}
 
-	function cleanLine(line=curLineStr)
+	function cleanLine(line=this.curLineStr)
 	{
-		if (isInQuiz())
+		if (this.isInQuiz())
 		{
-			return quizdata.question;
+			return global.quizdata.question;
 		}
 		if (line.length === 0)
 		{
@@ -96,7 +96,7 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 		line = this.replaceLine(line, global.patch_conductor_regex_1);
 		// Replace line-tags with dashes
 		// Replace slightly-different-line-tags with dashes
-		line = this.replaceLine(line, global.patch_conductor_regex_2, block_character);
+		line = this.replaceLine(line, global.patch_conductor_regex_2, this.block_character);
 		line = line.replace(global.patch_conductor_regex_3, this.replaceRubyChar);
 		// Replace ruby tag containing text in char argument
 		line = line.replace(global.patch_conductor_regex_4, "");
@@ -128,7 +128,7 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 		line = this.replaceLine(line, global.patch_conductor_regex_1);
 		// Replace line-tags with dashes
 		// Replace slightly-different-line-tags with dashes
-		line = this.replaceLine(line, global.patch_conductor_regex_2, block_character);
+		line = this.replaceLine(line, global.patch_conductor_regex_2, this.block_character);
 		line = line.replace(global.patch_conductor_regex_3, this.replaceRubyChar);
 		// Replace ruby tag containing text in char argument
 		line = line.replace(global.patch_conductor_regex_4, "");
@@ -142,7 +142,7 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 
 	function isInQuiz()
 	{
-		return curStorage == 'QuizSystem.ks' && owner.currentLabel == '*quiz_question';
+		return this.curStorage == 'QuizSystem.ks' && this.owner.currentLabel == '*quiz_question';
 	}
 
 	var conductorPrevStorage;
@@ -151,9 +151,9 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 	var hasNewLineSinceLastCall = false;
 	function isNewLine()
 	{
-		if (hasNewLineSinceLastCall)
+		if (this.hasNewLineSinceLastCall)
 		{
-			hasNewLineSinceLastCall = false;
+			this.hasNewLineSinceLastCall = false;
 			return true;
 		}
 
@@ -247,12 +247,12 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 				var messagelayer_tag_append = [];
 				while (ret !== void)
 				{
-					patch_conductor_temp_array.assign(ret);
+					this.patch_conductor_temp_array.assign(ret);
 					if (patch_conductor_messagelayer_tags.find(ret.tagname) !== -1 || (messagelayer_tag_prepend.count > 0 && patch_conductor_messagelayer_proconly_tags.find(ret.tagname) !== -1))
 					{
 						{
 							var messagelayer_tag_container = %[];
-							(Dictionary.assignStruct incontextof messagelayer_tag_container)(ret);
+							(global.Dictionary.assignStruct incontextof messagelayer_tag_container)(ret);
 							ret = super.getNextTag(...);
 							messagelayer_tag_prepend.add(messagelayer_tag_container);
 							continue;
@@ -262,7 +262,7 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 				}
 				while (ret !== void)
 				{
-					patch_conductor_temp_array.assign(ret);
+					this.patch_conductor_temp_array.assign(ret);
 					if (patch_conductor_messagelayer_tags.find(ret.tagname) !== -1 || patch_conductor_messagelayer_proconly_tags.find(ret.tagname) !== -1)
 					{
 						break;
@@ -270,7 +270,7 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 					{
 						if (ret.tagname === "ch")
 						{
-							if (patch_conductor_temp_array.count === 4)
+							if (this.patch_conductor_temp_array.count === 4)
 							{
 								temp_text.add(ret.text);
 								ret = super.getNextTag(...);
@@ -280,7 +280,7 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 						else if (ret.tagname === "r")
 						{
 							// tagname only
-							if (patch_conductor_temp_array.count === 2)
+							if (this.patch_conductor_temp_array.count === 2)
 							{
 								temp_text.add("\n");
 								ret = super.getNextTag(...);
@@ -293,12 +293,12 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 				// continue to search for appended MessageLayer related tags
 				while (ret !== void)
 				{
-					patch_conductor_temp_array.assign(ret);
+					this.patch_conductor_temp_array.assign(ret);
 					if (patch_conductor_messagelayer_tags.find(ret.tagname) !== -1 || (messagelayer_tag_prepend.count > 0 && patch_conductor_messagelayer_proconly_tags.find(ret.tagname) !== -1))
 					{
 						{
 							var messagelayer_tag_container = %[];
-							(Dictionary.assignStruct incontextof messagelayer_tag_container)(ret);
+							(global.Dictionary.assignStruct incontextof messagelayer_tag_container)(ret);
 							ret = super.getNextTag(...);
 							messagelayer_tag_append.add(messagelayer_tag_container);
 							continue;
@@ -400,7 +400,7 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 	function queueTag(i, elm)
 	{
 		var ret2 = %[];
-		(Dictionary.assignStruct incontextof ret2)(elm);
+		(global.Dictionary.assignStruct incontextof ret2)(elm);
 		ret2.__patch_conductor_storage = elm.__patch_conductor_storage;
 		ret2.__patch_conductor_line = elm.__patch_conductor_line;
 		this.pendings.insert(i, ret2);
@@ -508,7 +508,7 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 		for (var i = prepend.count - 1; i >= 0; i -= 1)
 		{
 			var ret2 = %[];
-			(Dictionary.assignStruct incontextof ret2)(prepend[i]);
+			(global.Dictionary.assignStruct incontextof ret2)(prepend[i]);
 			ret2.__patch_conductor_storage = elm.__patch_conductor_storage;
 			ret2.__patch_conductor_line = elm.__patch_conductor_line;
 			this.pendings.insert(0, ret2);
@@ -522,7 +522,7 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 		for (var i = append.count - 1; i >= 0; i -= 1)
 		{
 			var ret2 = %[];
-			(Dictionary.assignStruct incontextof ret2)(append[i]);
+			(global.Dictionary.assignStruct incontextof ret2)(append[i]);
 			ret2.__patch_conductor_storage = elm.__patch_conductor_storage;
 			ret2.__patch_conductor_line = elm.__patch_conductor_line;
 			this.pendings.insert(0, ret2);
@@ -622,14 +622,14 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 		}
 		if (elm.tagname === "ch" && elm.__patch_conductor_storage !== void && elm.__patch_conductor_line !== void)
 		{
-			if (elm.__patch_conductor_storage != conductorPrevStorage || elm.__patch_conductor_line != conductorPrevLine || (isInQuiz() && lastQuizdataQuestion != quizdata.question))
+			if (elm.__patch_conductor_storage != this.conductorPrevStorage || elm.__patch_conductor_line != this.conductorPrevLine || (this.isInQuiz() && this.lastQuizdataQuestion != global.quizdata.question))
 			{
 				{
-					hasNewLineSinceLastCall = true;
-					conductorPrevStorage = elm.__patch_conductor_storage;
-					conductorPrevLine = elm.__patch_conductor_line;
-					if (isInQuiz() && lastQuizdataQuestion != quizdata.question) {
-						lastQuizdataQuestion = quizdata.question;
+					this.hasNewLineSinceLastCall = true;
+					this.conductorPrevStorage = elm.__patch_conductor_storage;
+					this.conductorPrevLine = elm.__patch_conductor_line;
+					if (this.isInQuiz() && this.lastQuizdataQuestion != global.quizdata.question) {
+						this.lastQuizdataQuestion = global.quizdata.question;
 					}
 				}
 			}
@@ -639,9 +639,9 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 
 	function onScenarioLoad(name)
 	{
-		conductorPrevStorage = void;
-		conductorPrevLine = void;
-		lastQuizdataQuestion = void;
+		this.conductorPrevStorage = void;
+		this.conductorPrevLine = void;
+		this.lastQuizdataQuestion = void;
 		super.onScenarioLoad(...);
 		// Use Array.load for loading scenario
 		this.lines.clear();
@@ -661,4 +661,4 @@ class Conductor_patch_conductor_override extends Conductor_patch_conductor_origi
 	}
 }
 
-global.Conductor = Conductor_patch_conductor_override;
+global.Conductor = global.Conductor_patch_conductor_override;

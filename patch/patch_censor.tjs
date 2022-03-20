@@ -1,15 +1,15 @@
 ﻿// Patch names
-global.vitaAssetsPatchName = devMode? "ImagesVita" : "vita"; // not the best place to decalre the vita patch name but we need it at this stage
+global.vitaAssetsPatchName = global.devMode? "ImagesVita" : "vita"; // not the best place to decalre the vita patch name but we need it at this stage
 @if(GAME_FATE)
 global.hPatchName = "h";
-global.hCensorPatchName = mainPatchName;
-global.maturePatchName = devMode? "ImagesPatch" : mainPatchName;
+global.hCensorPatchName = global.mainPatchName;
+global.maturePatchName = global.devMode? "ImagesPatch" : global.mainPatchName;
 global.decensoredPatchName = "h";
 @endif
 @if(GAME_FHAT)
-global.hPatchName = mainPatchName;
-global.hCensorPatchName = vitaAssetsPatchName;
-global.maturePatchName = vitaAssetsPatchName;
+global.hPatchName = global.mainPatchName;
+global.hCensorPatchName = global.vitaAssetsPatchName;
+global.maturePatchName = global.vitaAssetsPatchName;
 global.decensoredPatchName = "decensor";
 @endif
 
@@ -19,11 +19,11 @@ global.hCensoredFlagName = "censored";
 global.matureFlagName = "gmature";
 global.decensoredFlagName = "decensor";
 
-global.get_hPatchExists = function() { { return patchExists(hPatchName); } };
-global.get_isHCensored = function(kag=global.kag) { { return kag.sflags[hCensoredFlagName] !== void? kag.sflags[hCensoredFlagName] : !kag.sflags[hFlagName]; } }; // RN uses hFlagName while HA uses hCensoredFlagName
-global.get_isMatureCensored = function(kag=global.kag) { { return !kag.sflags[matureFlagName]; } };
-global.get_fullyCensored = function(kag=global.kag) { { return get_isHCensored(kag) && get_isMatureCensored(kag); } };
-global.get_isDecensored = function(kag=global.kag) { { return kag.sflags[decensoredFlagName]; } };
+global.get_hPatchExists = function() { { return global.patchExists(global.hPatchName); } };
+global.get_isHCensored = function(kag=global.kag) { { return kag.sflags[global.hCensoredFlagName] !== void? kag.sflags[global.hCensoredFlagName] : !kag.sflags[global.hFlagName]; } }; // RN uses hFlagName while HA uses hCensoredFlagName
+global.get_isMatureCensored = function(kag=global.kag) { { return !kag.sflags[global.matureFlagName]; } };
+global.get_fullyCensored = function(kag=global.kag) { { return global.get_isHCensored(kag) && global.get_isMatureCensored(kag); } };
+global.get_isDecensored = function(kag=global.kag) { { return kag.sflags[global.decensoredFlagName]; } };
 
 // Folder names
 global.fullyCensoredFolderName = "censored";
@@ -54,7 +54,7 @@ global.isHScene = function(kag=global.kag)
 	var name = kag.flags.scriptlabel;
 	if (name == void || name == "") return false;
 
-	name = Storages.chopStorageExt(name);
+	name = global.Storages.chopStorageExt(name);
 	name = name.replace(/trail_/g,"");
 	var split = [].split("-",name);
 
@@ -68,13 +68,13 @@ global.updateDecensorConfig = function(kag=global.kag)
 
 	var decensor_config;
 	var custom_decensor_config_file_path = global.paths_base[0] + decensor_config_file_name;
-	if (Storages.isExistentStorage(custom_decensor_config_file_path))
+	if (global.Storages.isExistentStorage(custom_decensor_config_file_path))
 	{
-		decensor_config = Scripts.evalStorage(custom_decensor_config_file_path);
+		decensor_config = global.Scripts.evalStorage(custom_decensor_config_file_path);
 	}
-	else if (Storages.isExistentStorage(decensor_config_file_name))
+	else if (global.Storages.isExistentStorage(decensor_config_file_name))
 	{
-		decensor_config = Scripts.evalStorage(decensor_config_file_name);
+		decensor_config = global.Scripts.evalStorage(decensor_config_file_name);
 	}
 
 	if (decensor_config === void) {
@@ -92,53 +92,53 @@ global.updateDecensorConfig = function(kag=global.kag)
 		{
 			var decensor_type = decensor_types[j];
 			var decensorInnerPath = "/" + decensoredImages[i] + "/" + decensor_type;
-			var decensorFullPath = decensoredFolderName + decensorInnerPath;
+			var decensorFullPath = global.decensoredFolderName + decensorInnerPath;
 
 			if(decensor_type == currentDecensorType)
 			{
-				if(get_isDecensored(kag))
+				if(global.get_isDecensored(kag))
 				{
-					var patches_arr = [[hPatchName, decensorFullPath]];
+					var patches_arr = [[global.hPatchName, decensorFullPath]];
 @if(HD_MODE)
-					addHdPaths(patches_arr, hPatchName, decensoredFolderName, decensorInnerPath) if kag.isHd;
+					addHdPaths(patches_arr, global.hPatchName, global.decensoredFolderName, decensorInnerPath) if kag.isHd;
 @endif
-					patches_arr.add([decensoredPatchName, decensorFullPath]);
+					patches_arr.add([global.decensoredPatchName, decensorFullPath]);
 @if(HD_MODE)
-					addHdPaths(patches_arr, decensoredPatchName, decensoredFolderName, decensorInnerPath) if kag.isHd;
+					addHdPaths(patches_arr, global.decensoredPatchName, global.decensoredFolderName, decensorInnerPath) if kag.isHd;
 @endif
-					load_patches(patches_arr);
+					global.load_patches(patches_arr);
 
 					patches_arr = [];
 @if(HD_MODE)
-					addHdPaths(patches_arr, decensoredPatchName, decensoredFolderName, decensorInnerPath) if !kag.isHd;
-					addHdPaths(patches_arr, hPatchName, decensoredFolderName, decensorInnerPath) if !kag.isHd;
+					addHdPaths(patches_arr, global.decensoredPatchName, global.decensoredFolderName, decensorInnerPath) if !kag.isHd;
+					addHdPaths(patches_arr, global.hPatchName, global.decensoredFolderName, decensorInnerPath) if !kag.isHd;
 @endif
-					unload_patches(patches_arr);
+					global.unload_patches(patches_arr);
 				}
 				else
 				{
-					var patches_arr = [[decensoredPatchName, decensorFullPath]];
+					var patches_arr = [[global.decensoredPatchName, decensorFullPath]];
 @if(HD_MODE)
-					addHdPaths(patches_arr, decensoredPatchName, decensoredFolderName, decensorInnerPath) if kag.isHd;
+					addHdPaths(patches_arr, global.decensoredPatchName, global.decensoredFolderName, decensorInnerPath) if kag.isHd;
 @endif
-					patches_arr.add([hPatchName, decensorFullPath]);
+					patches_arr.add([global.hPatchName, decensorFullPath]);
 @if(HD_MODE)
-					addHdPaths(patches_arr, hPatchName, decensoredFolderName, decensorInnerPath) if kag.isHd;
+					addHdPaths(patches_arr, global.hPatchName, global.decensoredFolderName, decensorInnerPath) if kag.isHd;
 @endif
-					unload_patches(patches_arr);
+					global.unload_patches(patches_arr);
 				}
 			}
 			else
 			{
-				var patches_arr = [[decensoredPatchName, decensorFullPath]];
+				var patches_arr = [[global.decensoredPatchName, decensorFullPath]];
 @if(HD_MODE)
-				addHdPaths(patches_arr, decensoredPatchName, decensoredFolderName, decensorInnerPath) if kag.isHd;
+				addHdPaths(patches_arr, global.decensoredPatchName, global.decensoredFolderName, decensorInnerPath) if kag.isHd;
 @endif
-				patches_arr.add([hPatchName, decensorFullPath]);
+				patches_arr.add([global.hPatchName, decensorFullPath]);
 @if(HD_MODE)
-				addHdPaths(patches_arr, hPatchName, decensoredFolderName, decensorInnerPath) if kag.isHd;
+				addHdPaths(patches_arr, global.hPatchName, global.decensoredFolderName, decensorInnerPath) if kag.isHd;
 @endif
-				unload_patches(patches_arr);
+				global.unload_patches(patches_arr);
 			}
 		}
 	}

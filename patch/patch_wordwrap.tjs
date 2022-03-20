@@ -8,8 +8,8 @@
 @set(DO_WORDWRAP_BENCHMARK=0)
 @set(USE_GET_INDIVIDUAL_CHARS=1)
 
-global.HistoryLayer_patch_wordwrap_original = HistoryLayer;
-class HistoryLayer_patch_wordwrap_override extends HistoryLayer_patch_wordwrap_original
+global.HistoryLayer_patch_wordwrap_original = global.HistoryLayer;
+class HistoryLayer_patch_wordwrap_override extends global.HistoryLayer_patch_wordwrap_original
 {
 	function HistoryLayer_patch_wordwrap_override()
 	{
@@ -18,7 +18,7 @@ class HistoryLayer_patch_wordwrap_override extends HistoryLayer_patch_wordwrap_o
 
 	function HistoryLayer()
 	{
-		HistoryLayer_patch_wordwrap_override(...);
+		this.HistoryLayer_patch_wordwrap_override(...);
 	}
 
 	function nextWord(elm)
@@ -47,11 +47,11 @@ class HistoryLayer_patch_wordwrap_override extends HistoryLayer_patch_wordwrap_o
 			currentWordWidth = elm.hllength;
 		}
 @endif
-		if ((getCurrentLineWidth() + currentWordWidth) >= relinePos && currentWordWidth < relinePos)
+		if ((this.getCurrentLineWidth() + currentWordWidth) >= this.relinePos && currentWordWidth < this.relinePos)
 		{
-			if (reline())
+			if (this.reline())
 			{
-				return autoReturn;
+				return this.autoReturn;
 			}
 		}
 		return false;
@@ -91,17 +91,17 @@ class HistoryLayer_patch_wordwrap_override extends HistoryLayer_patch_wordwrap_o
 			currentWordWidth = this.font.getTextWidth(elm);
 		}
 
-		if ((getCurrentLineWidth() + currentWordWidth) >= relinePos && currentWordWidth < relinePos)
+		if ((this.getCurrentLineWidth() + currentWordWidth) >= this.relinePos && currentWordWidth < this.relinePos)
 		{
 			return true;
 		}
 		return false;
 	}
 }
-global.HistoryLayer = HistoryLayer_patch_wordwrap_override;
+global.HistoryLayer = global.HistoryLayer_patch_wordwrap_override;
 
-global.MessageLayer_patch_wordwrap_original = MessageLayer;
-class MessageLayer_patch_wordwrap_override extends MessageLayer_patch_wordwrap_original
+global.MessageLayer_patch_wordwrap_original = global.MessageLayer;
+class MessageLayer_patch_wordwrap_override extends global.MessageLayer_patch_wordwrap_original
 {
 @if(GAME_WOHN)
 	var char2graph_arr = [];
@@ -116,18 +116,18 @@ class MessageLayer_patch_wordwrap_override extends MessageLayer_patch_wordwrap_o
 
 	function MessageLayer()
 	{
-		MessageLayer_patch_wordwrap_override(...);
+		this.MessageLayer_patch_wordwrap_override(...);
 	}
 
 	function shouldReline(ch)
 	{
-		var vert = vertical;
-		if((vert ?  y >= relinexpos  : x >= relinexpos ) && autoReturn)
+		var vert = this.vertical;
+		if((vert ?  this.y >= this.relinexpos  : this.x >= this.relinexpos ) && this.autoReturn)
 		{
-			if(((lastDrawnCh=="" || wwLeading.indexOf(lastDrawnCh)==-1) &&
-				wwFollowing.indexOf(ch)==-1) ||
-				(lastDrawnCh!="" && wwFollowingWeak.indexOf(lastDrawnCh)!=-1 &&
-					wwFollowingWeak.indexOf(ch)!=-1))
+			if(((this.lastDrawnCh=="" || this.wwLeading.indexOf(this.lastDrawnCh)==-1) &&
+				this.wwFollowing.indexOf(ch)==-1) ||
+				(this.lastDrawnCh!="" && this.wwFollowingWeak.indexOf(this.lastDrawnCh)!=-1 &&
+					this.wwFollowingWeak.indexOf(ch)!=-1))
 			{
 				// 最後に描画したのが行末禁則文字でない場合
 				// しかもこれから描画するのが行頭禁則文字でない
@@ -135,7 +135,7 @@ class MessageLayer_patch_wordwrap_override extends MessageLayer_patch_wordwrap_o
 				// または弱禁則文字が連続していない場合
 				return true;
 			}
-			else if(vert ? ( y>imageHeight ) : (x>imageWidth))
+			else if(vert ? ( this.y>this.imageHeight ) : (this.x>this.imageWidth))
 			{
 				// これから描画するのが強禁則文字ではなくて、
 				// 確実に 右端を越える場合
@@ -180,11 +180,11 @@ class MessageLayer_patch_wordwrap_override extends MessageLayer_patch_wordwrap_o
 			currentWordWidth = elm.mllength;
 		}
 @endif
-		if ((x + currentWordWidth) >= relinexpos && currentWordWidth < relinexpos)
+		if ((this.x + currentWordWidth) >= this.relinexpos && currentWordWidth < this.relinexpos)
 		{
-			if (reline())
+			if (this.reline())
 			{
-				return autoReturn;
+				return this.autoReturn;
 			}
 		}
 		return false;
@@ -240,17 +240,17 @@ class MessageLayer_patch_wordwrap_override extends MessageLayer_patch_wordwrap_o
 			}
 		}
 
-		if ((x + currentWordWidth) >= relinexpos && currentWordWidth < relinexpos)
+		if ((this.x + currentWordWidth) >= this.relinexpos && currentWordWidth < this.relinexpos)
 		{
 			return true;
 		}
 		return false;
 	}
 }
-global.MessageLayer = MessageLayer_patch_wordwrap_override;
+global.MessageLayer = global.MessageLayer_patch_wordwrap_override;
 
-global.KAGWindow_patch_wordwrap_original = KAGWindow;
-class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_original
+global.KAGWindow_patch_wordwrap_original = global.KAGWindow;
+class KAGWindow_patch_wordwrap_override extends global.KAGWindow_patch_wordwrap_original
 {
 	function KAGWindow_patch_wordwrap_override()
 	{
@@ -261,7 +261,7 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 
 	function KAGWindow()
 	{
-		KAGWindow_patch_wordwrap_override(...);
+		this.KAGWindow_patch_wordwrap_override(...);
 	}
 
 	var word_lines_scenario_changed = false;
@@ -309,7 +309,7 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 
 	function onNewLine(elm)
 	{
-		var is_japanese = isJapanese();
+		var is_japanese = global.isJapanese();
 		if (is_japanese)
 		{
 			// Don't bother doing the wordwrap calculations since we won't be using them
@@ -333,10 +333,10 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 
 		if ((clean === void) || (clean !== void && clean.length === 0)) return;
 
-		if (isChinese()) {
-			onNewLineWordWrapChinese(elm.__patch_conductor_line);
+		if (global.isChinese()) {
+			this.onNewLineWordWrapChinese(elm.__patch_conductor_line);
 		} else if (!is_japanese) {
-			onNewLineWordWrapSpace(elm.__patch_conductor_line);
+			this.onNewLineWordWrapSpace(elm.__patch_conductor_line);
 		}
 	}
 
@@ -422,7 +422,7 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 	var get_lengths_for_string_ret = [0, 0];
 	function getLengthsForString(str, hlf, mlf)
 	{
-		var ret = get_lengths_for_string_ret;
+		var ret = this.get_lengths_for_string_ret;
 		ret[0] = this.gtw_func(hlf, str);
 		ret[1] = this.gtw_func(mlf, str, true);
 		return ret;
@@ -476,7 +476,7 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 			// We are still at the initialization stage
 			return;
 		}
-		if (isJapanese())
+		if (global.isJapanese())
 		{
 			// Don't bother doing the wordwrap calculations since we won't be using them
 			return;
@@ -585,7 +585,7 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 				word_lines_needed.add(word_length_cache[word]);
 			}
 		}
-		if (isChinese())
+		if (global.isChinese())
 		{
 			for (var i = 0, internal_forloop_count = cleaned_lines.count; i < internal_forloop_count; i += 1)
 			{
@@ -683,13 +683,13 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 		mlf.italic = false;
 		var word_length_test_hl = gtw_func(hlf, word_length_test_str);
 		var word_length_test_ml = gtw_func(mlf, word_length_test_str, true);
-		if (word_length_test_hl !== word_length_test[0] || word_length_test_ml !== word_length_test[1])
+		if (word_length_test_hl !== this.word_length_test[0] || word_length_test_ml !== this.word_length_test[1])
 		{
 			invalidate_wordcache = true;
 			if (process)
 			{
-				word_length_test[0] = word_length_test_hl;
-				word_length_test[1] = word_length_test_ml;
+				this.word_length_test[0] = word_length_test_hl;
+				this.word_length_test[1] = word_length_test_ml;
 			}
 		}
 		hlf.bold = save_bold_hlf;
@@ -699,12 +699,12 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 @endif
 @if(!WORDWRAP_BOLDITALIC_MODIFIER)
 		var word_length_test_cur = this.getLengthsForString(word_length_test_str, hlf, mlf);
-		if (word_length_test_cur[0] !== word_length_test[0] || word_length_test_cur[1] !== word_length_test[1])
+		if (word_length_test_cur[0] !== this.word_length_test[0] || word_length_test_cur[1] !== this.word_length_test[1])
 		{
 			invalidate_wordcache = true;
 			if (process)
 			{
-				word_length_test.assign(word_length_test_cur);
+				this.word_length_test.assign(word_length_test_cur);
 			}
 		}
 @endif
@@ -861,8 +861,8 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 			words.assign(word_line);
 		}
 
-		currentWordIndex = 0;
-		currentCharPos = -2;
+		this.currentWordIndex = 0;
+		this.currentCharPos = -2;
 
 		/*if (words.count > 0) {
 			dm("clean line: " + clean);
@@ -876,10 +876,10 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 
 	function processWordWrapping(elm)
 	{
-		if (isChinese()) {
-			return processWordWrappingChinese(elm);
-		} else if (!isJapanese()) {
-			return processWordWrappingSpace(elm);
+		if (global.isChinese()) {
+			return this.processWordWrappingChinese(elm);
+		} else if (!global.isJapanese()) {
+			return this.processWordWrappingSpace(elm);
 		}
 		return false;
 	}
@@ -888,13 +888,13 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 	{
 		if (
 			#(elm.text) === 32 // " "
-			&& words.count > 1
+			&& this.words.count > 1
 			)
 		{
-			words.erase(0);
-			var nextWord = words[0];
+			this.words.erase(0);
+			var nextWord = this.words[0];
 
-			conductor.pendings.insert(0, nextWord);
+			this.conductor.pendings.insert(0, nextWord);
 			//dm("word: ["+nextWord[0]+"]");
 		}
 		return false;
@@ -904,11 +904,11 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 	{
 		var handlers = super.getHandlers();
 @if(!PROCESS_WORD_WRAPPING_IN_CHUNKS)
-		handlers[nextWordTagName] = function(elm)
+		handlers[this.nextWordTagName] = function(elm)
 		{
-			if (processNextWord(elm))
+			if (this.processNextWord(elm))
 			{
-				return showPageBreakAndClear();
+				return this.showPageBreakAndClear();
 			}
 			return 0;
 		} incontextof this;
@@ -916,48 +916,48 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 		handlers.ch = function(elm)
 		{
 			// 文字表示
-			var acs = actualChSpeed;
-			if(updateBeforeCh)
+			var acs = this.actualChSpeed;
+			if(this.updateBeforeCh)
 			{
-				if(acs) { updateBeforeCh--; return -5; } else { updateBeforeCh--; }
+				if(acs) { this.updateBeforeCh--; return -5; } else { this.updateBeforeCh--; }
 			}
 
-			if (conductor.isNewLine()) {
-				onNewLine(elm);
+			if (this.conductor.isNewLine()) {
+				this.onNewLine(elm);
 			}
 			else
 			{
-				if ((this.current.shouldReline(elm.text)) && #(elm.text) === 32 && !isJapanese())
+				if ((this.current.shouldReline(elm.text)) && #(elm.text) === 32 && !global.isJapanese())
 				{
 					return 0;
 				}
 			}
 @if(0)
-			replaceCharacters(elm);
+			this.replaceCharacters(elm);
 @endif
-			if(processWordWrapping(elm)) {
-				return showPageBreakAndClear();
+			if(this.processWordWrapping(elm)) {
+				return this.showPageBreakAndClear();
 			}
 
 			var text = elm.text;
-			if(currentWithBack) current.comp.processCh(text);
-			if(current.processCh(text))
+			if(this.currentWithBack) this.current.comp.processCh(text);
+			if(this.current.processCh(text))
 			{
-				return showPageBreakAndClear();
+				return this.showPageBreakAndClear();
 			}
-			if(historyWriteEnabled) historyLayer.store(text);
+			if(this.historyWriteEnabled) this.historyLayer.store(text);
 
 @if(0)
-			processQuotesIndent(elm);
+			this.processQuotesIndent(elm);
 @endif
 
-			if(autoWCEnabled)
+			if(this.autoWCEnabled)
 			{
 				// 自動ウェイト
 				var ind;
-				if((ind = autoWCChars.indexOf(text)) != -1)
+				if((ind = this.autoWCChars.indexOf(text)) != -1)
 				{
-					return (acs * autoWCWaits[ind]) | 0;
+					return (acs * this.autoWCWaits[ind]) | 0;
 				}
 			}
 			return acs;
@@ -979,7 +979,7 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 					if (typeof(wcacheentry) !== "Object")
 					{
 						word_length_cache[ttext] = %[
-							tagname: nextWordTagName,
+							tagname: this.nextWordTagName,
 							text: ttext,
 						];
 						word_lines_needed.add(word_length_cache[ttext]);
@@ -1026,58 +1026,58 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 
 	function processWordWrappingChinese(elm)
 	{
-		if(words.count > 1) {
-	//			dm(@"words[${currentWordIndex}][0] = ${words[currentWordIndex][0]}");
-			switch(currentCharPos)
+		if(this.words.count > 1) {
+	//			dm(@"this.words[${this.currentWordIndex}][0] = ${this.words[this.currentWordIndex][0]}");
+			switch(this.currentCharPos)
 			{	//	Lookup the position of the first occurrence of current character in the current word. / 在当前词组中查找该字符第一次出现的位置
 				case -3: // 禁用
 					return false;
 				case -1:
 					break;
 				case -2:	//	This is a new word or need start from 0 position. / 新词组
-					currentCharPos++;
+					this.currentCharPos++;
 				default:
-					currentCharPos = words[currentWordIndex].text.indexOf(elm.text, currentCharPos+1);
+					this.currentCharPos = this.words[this.currentWordIndex].text.indexOf(elm.text, this.currentCharPos+1);
 					break;
 			}
-			if(currentCharPos == -1) {	//	To determine the current word needs to be processed. / 处理
-				while(currentWordIndex++ <= words.count) {
-					if(words[currentWordIndex] === void)
+			if(this.currentCharPos == -1) {	//	To determine the current word needs to be processed. / 处理
+				while(this.currentWordIndex++ <= this.words.count) {
+					if(this.words[this.currentWordIndex] === void)
 					{
-						currentCharPos = -3;
+						this.currentCharPos = -3;
 						return false;
 					}
-					else if(words[currentWordIndex].text.indexOf(elm.text) != -1)
+					else if(this.words[this.currentWordIndex].text.indexOf(elm.text) != -1)
 					{
-						currentCharPos = -2;
-						if(currentWordIndex%2)
+						this.currentCharPos = -2;
+						if(this.currentWordIndex%2)
 						{
-							var word = words[currentWordIndex];
-							return processNextWord(word);
+							var word = this.words[this.currentWordIndex];
+							return this.processNextWord(word);
 						}
 						return false;
 					}
 				}
 			}
 			//	End of the word, the next word should be determined it needs to process. / 到该词组末尾，下一词组需要处理
-			if(currentCharPos == words[currentWordIndex].text.length - 1) currentCharPos = -1;
+			if(this.currentCharPos == this.words[this.currentWordIndex].text.length - 1) this.currentCharPos = -1;
 		}
 		return false;
 	}
 
 	function processNextWord(elm)
 	{
-		historyLayer.nextWord(elm);
-		if(currentWithBack) current.comp.nextWord(elm);
-		return current.nextWord(elm);
+		this.historyLayer.nextWord(elm);
+		if(this.currentWithBack) this.current.comp.nextWord(elm);
+		return this.current.nextWord(elm);
 	}
 
 	function getWordWrapBreakPosition(text)
 	{
-		if (isChinese()) {
-			return getWordWrapBreakPositionChinese(text);
-		} else if (!isJapanese()) {
-			return getWordWrapBreakPositionSpace(text);
+		if (global.isChinese()) {
+			return this.getWordWrapBreakPositionChinese(text);
+		} else if (!global.isJapanese()) {
+			return this.getWordWrapBreakPositionSpace(text);
 		}
 		return -1;
 	}
@@ -1145,7 +1145,7 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 		if (typeof(wcacheentry) !== "Object")
 		{
 			word_length_cache[ttext] = %[
-				tagname: nextWordTagName,
+				tagname: this.nextWordTagName,
 				text: ttext,
 			];
 			word_lines_needed.add(word_length_cache[ttext]);
@@ -1256,7 +1256,7 @@ class KAGWindow_patch_wordwrap_override extends KAGWindow_patch_wordwrap_origina
 	}
 @endif
 }
-global.KAGWindow = KAGWindow_patch_wordwrap_override;
+global.KAGWindow = global.KAGWindow_patch_wordwrap_override;
 
 
 // Splits text into an array of lines with wordwrapping on spaces.
@@ -1268,7 +1268,7 @@ global.KAGWindow = KAGWindow_patch_wordwrap_override;
 // Note: Breaking on characters other than space (e.g. tab, hyphen) is not supported.
 global.wordWrapSplit = function(text, maxWidth, font, offset=0, maxLines=0, directiveCharacters="", delimiter=" ", delimiterOnNewLine=false)
 {
-	var directiveCharactersRegex = directiveCharacters != ""? new RegExp("["+directiveCharacters+"]", "g") : void;
+	var directiveCharactersRegex = directiveCharacters != ""? new global.RegExp("["+directiveCharacters+"]", "g") : void;
 
 	var totalTextToTest = directiveCharactersRegex === void? text : text.replace(directiveCharactersRegex, "");
 	var textwidth = font.getTextWidth(totalTextToTest);
@@ -1315,15 +1315,15 @@ global.wordWrapSplitLines = function(lines, maxWidth, font, offset=0, maxLines=0
 	}
 	var out = [];
 	for (var i = 0, internal_forloop_count = lines.count; i < internal_forloop_count; i += 1) {
-		var sublines = wordWrapSplit(lines[i], maxWidth, font, offset, maxLines);
+		var sublines = global.wordWrapSplit(lines[i], maxWidth, font, offset, maxLines);
 		for (var j = 0, internal_forloop_count = sublines.count; j < internal_forloop_count; j += 1) {
 			out.add(sublines[j]);
 		}
 	}
-	if (sf.language == japaneseLanguage) {
+	if (global.sf.language == global.japaneseLanguage) {
 		var out2 = [];
 		for (var i = 0, internal_forloop_count = out.count; i < internal_forloop_count; i += 1) {
-			var sublines = wordWrapSplit(out[i], maxWidth, font, offset, maxLines,, "・", true);
+			var sublines = global.wordWrapSplit(out[i], maxWidth, font, offset, maxLines,, "・", true);
 			for (var j = 0, internal_forloop_count = sublines.count; j < internal_forloop_count; j += 1) {
 				out2.add(sublines[j]);
 			}
@@ -1340,7 +1340,7 @@ global.wordWrapSplitParagraphs = function(paragraphs, maxWidth, font, offset=0, 
 		paragraphs = paragraphs.split("\v");
 	}
 	for (var p = 0, internal_forloop_count = paragraphs.count; p < internal_forloop_count; p += 1) {
-		paragraphs[p] = wordWrapSplitLines(paragraphs[p], maxWidth, font, offset, maxLines);
+		paragraphs[p] = global.wordWrapSplitLines(paragraphs[p], maxWidth, font, offset, maxLines);
 	}
 	return paragraphs;
 };

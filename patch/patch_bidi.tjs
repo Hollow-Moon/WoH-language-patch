@@ -43,7 +43,7 @@ class BidiUtilities
 			_results = [];
 			for (_i = 0, _len = char_arr.count; _i < _len; _i++)
 			{
-				_results.add(BidiUtilities.from_char_code(char_arr[_i]));
+				_results.add(global.BidiUtilities.from_char_code(char_arr[_i]));
 			}
 			return _results;
 		}) incontextof this)(char_arr).join("");
@@ -121,7 +121,7 @@ class BidiUtilities
 	}
 }
 
-global.bidi_classes = Scripts.evalStorage("patch_bidi_classes.dic");
+global.bidi_classes = global.Scripts.evalStorage("patch_bidi_classes.dic");
 
 class Bidi
 {
@@ -181,16 +181,16 @@ class Bidi
 		{
 			options = %[];
 		}
-		string_arr = BidiUtilities.unpack_string(str);
+		string_arr = global.BidiUtilities.unpack_string(str);
 		if (typeof(string_arr) === "Object")
 		{
-			options.types = Bidi.compute_types(string_arr);
+			options.types = global.Bidi.compute_types(string_arr);
 		}
 		if (typeof(string_arr) === "Object")
 		{
 			options.string_arr = string_arr;
 		}
-		return new Bidi(options);
+		return new global.Bidi(options);
 	}
 
 	function from_type_array(types, options)
@@ -203,7 +203,7 @@ class Bidi
 		{
 			options.types = types;
 		}
-		return new Bidi(options);
+		return new global.Bidi(options);
 	}
 
 	function compute_types(arr)
@@ -212,14 +212,14 @@ class Bidi
 		_results = [];
 		for (_i = 0, _len = arr.count; _i < _len; _i++)
 		{
-			_results.add(Bidi.bidi_class_for(arr[_i]));
+			_results.add(global.Bidi.bidi_class_for(arr[_i]));
 		}
 		return _results;
 	}
 
 	function toString()
 	{
-		return BidiUtilities.pack_array(this.string_arr);
+		return global.BidiUtilities.pack_array(this.string_arr);
 	}
 
 	function reorder_visually()
@@ -230,15 +230,15 @@ class Bidi
 			throw "No string given!";
 		}
 		max = 0;
-		lowest_odd = MAX_DEPTH + 1;
+		lowest_odd = this.MAX_DEPTH + 1;
 		_ref = this.levels;
 		for (_i = 0, _len = _ref.count; _i < _len; _i++)
 		{
 			level = _ref[_i];
-			max = BidiUtilities.max([level, max]);
-			if (!BidiUtilities.is_even(level))
+			max = global.BidiUtilities.max([level, max]);
+			if (!global.BidiUtilities.is_even(level))
 			{
-				lowest_odd = BidiUtilities.min([lowest_odd, level]);
+				lowest_odd = global.BidiUtilities.min([lowest_odd, level]);
 			}
 		}
 		for (depth = _j = max; max <= 0 ? _j < 0 : _j > 0; depth = max <= 0 ? ++_j : --_j)
@@ -323,7 +323,7 @@ class Bidi
 				case "LRE":
 				case "LRO":
 					new_embedding = is_ltr ? (current_embedding & ~1) + 2 : (current_embedding + 1) | 1;
-					if (new_embedding < MAX_DEPTH)
+					if (new_embedding < this.MAX_DEPTH)
 					{
 						if (directional_override !== -1)
 						{
@@ -364,8 +364,8 @@ class Bidi
 		{
 			next_fmt = i === size ? this.count : this.formatter_indices[i];
 			len = next_fmt - input;
-			BidiUtilities.arraycopy(this.levels, input, this.levels, output, len);
-			BidiUtilities.arraycopy(this.types, input, this.types, output, len);
+			global.BidiUtilities.arraycopy(this.levels, input, this.levels, output, len);
+			global.BidiUtilities.arraycopy(this.types, input, this.types, output, len);
 			output += len;
 			input = next_fmt + 1;
 		}
@@ -415,13 +415,13 @@ class Bidi
 			{
 				level = 0;
 			}
-			sor = BidiUtilities.is_even(BidiUtilities.max([previous_level, level])) ? "L" : "R";
+			sor = global.BidiUtilities.is_even(global.BidiUtilities.max([previous_level, level])) ? "L" : "R";
 			next_level = run_idx === (run_count - 1) ? this.base_embedding : this.get_run_level(run_idx + 1);
 			if (next_level === void)
 			{
 				next_level = 0;
 			}
-			eor = BidiUtilities.is_even(BidiUtilities.max([level, next_level])) ? "L" : "R";
+			eor = global.BidiUtilities.is_even(global.BidiUtilities.max([level, next_level])) ? "L" : "R";
 			prev_type = sor;
 			prev_strong_type = sor;
 			for (i = _j = start; start <= finish ? _j < finish : _j > finish; i = start <= finish ? ++_j : --_j)
@@ -563,10 +563,10 @@ class Bidi
 			{
 				continue;
 			}
-			embedding_direction = BidiUtilities.is_even(level) ? "L" : "R";
-			sor = BidiUtilities.is_even(BidiUtilities.max([previous_level, level])) ? "L" : "R";
+			embedding_direction = global.BidiUtilities.is_even(level) ? "L" : "R";
+			sor = global.BidiUtilities.is_even(global.BidiUtilities.max([previous_level, level])) ? "L" : "R";
 			next_level = run === (run_count - 1) ? this.base_embedding : this.get_run_level(run + 1);
-			eor = BidiUtilities.is_even(BidiUtilities.max([level, next_level])) ? "L" : "R";
+			eor = global.BidiUtilities.is_even(global.BidiUtilities.max([level, next_level])) ? "L" : "R";
 			prev_strong = sor;
 			neutral_start = -1;
 			for (i = _j = start; start <= finish ? _j <= finish : _j >= finish; i = start <= finish ? ++_j : --_j)
@@ -626,11 +626,11 @@ class Bidi
 				input -= len;
 				if (next_fmt + 1 < this.levels.count)
 				{
-					BidiUtilities.arraycopy(this.levels, input, this.levels, next_fmt + 1, len);
+					global.BidiUtilities.arraycopy(this.levels, input, this.levels, next_fmt + 1, len);
 				}
 				right_level = output === this.levels.count - 1 ? this.base_embedding : this.levels[output + 1] !== void ? this.levels[output + 1] : 0;
 				left_level = input === 0 ? this.base_embedding : this.levels[input] !== void ? this.levels[input] : 0;
-				this.levels[output] = BidiUtilities.max([left_level, right_level]);
+				this.levels[output] = global.BidiUtilities.max([left_level, right_level]);
 			}
 		}
 		return this.count = this.levels.count;
@@ -761,7 +761,7 @@ class Bidi
 						if (check)
 						{
 							types = / /.split(input);
-							bidi = Bidi.from_type_array(types, %["direction" => DIRECTIONS[bitset_arr_i], "default_direction" => "LTR"]);
+							bidi = global.Bidi.from_type_array(types, %["direction" => DIRECTIONS[bitset_arr_i], "default_direction" => "LTR"]);
 							passed = true;
 
 							var levels = bidi.levels;
@@ -816,7 +816,7 @@ class Bidi
 
 	if (false)
 	{
-		var bidi_str = Bidi.from_string("hello نزوة world", %["direction" => "RTL"]);
+		var bidi_str = global.Bidi.from_string("hello نزوة world", %["direction" => "RTL"]);
 		bidi_str.reorder_visually();
 		var tst = bidi_str.toString();
 		Debug.message(tst);

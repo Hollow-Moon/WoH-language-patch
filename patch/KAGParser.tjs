@@ -81,7 +81,7 @@ class __internal_KAGParser_ScenarioCacheItem
 		}
 		else
 		{
-			throw new Exception("Name not Array or String!");
+			throw new global.Exception("Name not Array or String!");
 		}
 		// pass1: count lines
 		// pass2: split lines
@@ -116,7 +116,7 @@ class __internal_KAGParser_ScenarioCacheItem
 					{
 						if (prevlabel.length === 0)
 						{
-							throw new Exception(this.TVPKAGCannotOmmitFirstLabelName);
+							throw new global.Exception(this.TVPKAGCannotOmmitFirstLabelName);
 						}
 						label = prevlabel;
 					}
@@ -171,12 +171,12 @@ global.__internal_KAGParser_getScenario = function(storagename, isstring)
 	if (isstring)
 	{
 		// we do not cache when the string is passed as a scenario
-		return new __internal_KAGParser_ScenarioCacheItem(storagename, isstring);
+		return new global.__internal_KAGParser_ScenarioCacheItem(storagename, isstring);
 	}
 
 	if (global.__internal_KAGParser_scenarios[storagename] === void)
 	{
-		global.__internal_KAGParser_scenarios[storagename] = new __internal_KAGParser_ScenarioCacheItem(storagename, isstring);
+		global.__internal_KAGParser_scenarios[storagename] = new global.__internal_KAGParser_ScenarioCacheItem(storagename, isstring);
 	}
 	return global.__internal_KAGParser_scenarios[storagename];
 };
@@ -452,7 +452,7 @@ class __internal_KAGParser
 
 			if (this.macroArgStackDepth !== this.macroArgs.count)
 			{
-				throw new Exception(global.TVPKAGMalformedSaveData);
+				throw new global.Exception(global.TVPKAGMalformedSaveData);
 			}
 
 			this.macroArgStackBase = this.macroArgs.count; // later reset to MacroArgStackBase
@@ -652,12 +652,12 @@ class __internal_KAGParser
 			this.rewind();
 
 			this.storageName = name;
-			this.storageShortName = Storages.extractStorageName(name);
+			this.storageShortName = global.Storages.extractStorageName(name);
 
 			if (this.debugLevel >= global.tkdlSimple)
 			{
-				Debug.message("================================================================================");
-				Debug.message("Scenario loaded : " + name);
+				global.Debug.message("================================================================================");
+				global.Debug.message("Scenario loaded : " + name);
 			}
 		}
 
@@ -757,13 +757,13 @@ class __internal_KAGParser
 		else
 		{
 			// not found
-			throw new Exception(global.TVPKAGLabelNotFound.sprintf(name, this.storageName));
+			throw new global.Exception(global.TVPKAGLabelNotFound.sprintf(name, this.storageName));
 		}
 
 		if (this.debugLevel >= global.tkdlSimple)
 		{
-			Debug.message("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ");
-			Debug.message(this.storageShortName + " : jumped to : " + name);
+			global.Debug.message("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ");
+			global.Debug.message(this.storageShortName + " : jumped to : " + name);
 		}
 		this.breakConditionAndMacro();
 	}
@@ -817,7 +817,7 @@ class __internal_KAGParser
 				// label
 				if (this.recordingMacro)
 				{
-					throw new Exception(global.TVPLabelOrScriptInMacro);
+					throw new global.Exception(global.TVPLabelOrScriptInMacro);
 				}
 				var vl = p.indexOf("|");
 				var pagename;
@@ -846,7 +846,7 @@ class __internal_KAGParser
 				// inline TJS script
 				if (this.recordingMacro)
 				{
-					throw new Exception(global.TVPLabelOrScriptInMacro);
+					throw new global.Exception(global.TVPLabelOrScriptInMacro);
 				}
 
 				var script = "";
@@ -869,7 +869,7 @@ class __internal_KAGParser
 
 				if (this.curLine === this.lineCount)
 				{
-					throw new Exception(global.TVPKAGInlineScriptNotEnd);
+					throw new global.Exception(global.TVPKAGInlineScriptNotEnd);
 				}
 
 				// fire onScript callback event
@@ -896,7 +896,7 @@ class __internal_KAGParser
 
 		if (this.debugLevel >= global.tkdlVerbose)
 		{
-			Debug.message(this.storageShortName + " : " + this.curLineStr);
+			global.Debug.message(this.storageShortName + " : " + this.curLineStr);
 		}
 
 		return true;
@@ -913,7 +913,7 @@ class __internal_KAGParser
 		{
 			if (this.macroArgStackDepth > this.macroArgs.count)
 			{
-				throw new Exception("internal error");
+				throw new global.Exception("internal error");
 			}
 			dsp = %[];
 			this.macroArgs.add(dsp);
@@ -928,7 +928,7 @@ class __internal_KAGParser
 	{
 		if (this.macroArgStackDepth === 0)
 		{
-			throw new Exception(global.TVPKAGSyntaxError);
+			throw new global.Exception(global.TVPKAGSyntaxError);
 		}
 		this.macroArgStackDepth -= 1;
 	}
@@ -983,7 +983,7 @@ class __internal_KAGParser
 		// push current position information
 		if (this.debugLevel >= global.tkdlVerbose)
 		{
-			Debug.message(this.storageShortName + " : call stack depth before calling : " + this.callStack.count);
+			global.Debug.message(this.storageShortName + " : call stack depth before calling : " + this.callStack.count);
 		}
 
 		var labelinfo = this.findNearestLabel(this.curLine);
@@ -1029,7 +1029,7 @@ class __internal_KAGParser
 		// pop call stack information
 		if (this.callStack.count === 0)
 		{
-			throw new Exception(global.TVPKAGCallStackUnderflow);
+			throw new global.Exception(global.TVPKAGCallStackUnderflow);
 		}
 
 		// pop macro argument information
@@ -1054,14 +1054,14 @@ class __internal_KAGParser
 			this.curLine += data.offset;
 			if (this.curLine > this.lineCount)
 			{
-				throw new Exception(global.TVPKAGReturnLostSync);
+				throw new global.Exception(global.TVPKAGReturnLostSync);
 			}
 			/* CurLine == LineCount is OK (at end of file) */
 			if (this.curLine < this.lineCount)
 			{
 				if (data.orgLineStr !== this.lines[this.curLine]) // check original line information
 				{
-					throw new Exception(global.TVPKAGReturnLostSync);
+					throw new global.Exception(global.TVPKAGReturnLostSync);
 				}
 			}
 			if (data.lineBufferUsing)
@@ -1096,7 +1096,7 @@ class __internal_KAGParser
 				{
 					label = data.label;
 				}
-				Debug.message(this.storageShortName + " : returned to : " + label + " line offset " + data.offset);
+				global.Debug.message(this.storageShortName + " : returned to : " + label + " line offset " + data.offset);
 			}
 		}
 
@@ -1116,7 +1116,7 @@ class __internal_KAGParser
 
 		if (this.debugLevel >= global.tkdlVerbose)
 		{
-			Debug.message(this.storageShortName + " : call stack depth after returning : " + this.callStack.count);
+			global.Debug.message(this.storageShortName + " : call stack depth after returning : " + this.callStack.count);
 		}
 	}
 
@@ -1337,7 +1337,7 @@ class __internal_KAGParser
 
 			if (this.curLineStr.length === this.curPos)
 			{
-				throw new Exception(global.TVPKAGSyntaxError);
+				throw new global.Exception(global.TVPKAGSyntaxError);
 			}
 
 			// tag name
@@ -1347,7 +1347,7 @@ class __internal_KAGParser
 			}
 			if (this.curLineStr.length === this.curPos)
 			{
-				throw new Exception(global.TVPKAGSyntaxError);
+				throw new global.Exception(global.TVPKAGSyntaxError);
 			}
 			// XXX: verify offset
 			var tagnamestart = this.curPos;
@@ -1358,7 +1358,7 @@ class __internal_KAGParser
 
 			if (tagnamestart === this.curPos)
 			{
-				throw new Exception(global.TVPKAGSyntaxError);
+				throw new global.Exception(global.TVPKAGSyntaxError);
 			}
 
 			var tagname = this.curLineStr.substring(tagnamestart, this.curPos - tagnamestart);
@@ -1405,12 +1405,12 @@ class __internal_KAGParser
 							// endmacro
 							if (!this.recordingMacro)
 							{
-								throw new Exception(global.TVPKAGSyntaxError);
+								throw new global.Exception(global.TVPKAGSyntaxError);
 							}
 							this.recordingMacro = false;
 							if (this.debugLevel >= global.tkdlVerbose)
 							{
-								Debug.message("macro: " + this.recordingMacroName + " : " + this.recordingMacroStr);
+								global.Debug.message("macro: " + this.recordingMacroName + " : " + this.recordingMacroStr);
 							}
 
 							this.recordingMacroStr += "[macropop]"; // ensure macro arguments are to be popped
@@ -1476,10 +1476,10 @@ class __internal_KAGParser
 						{
 							if (typeof(this.dicObj[__exp_name]) !== "String" || this.dicObj[__exp_name] === "")
 							{
-								throw new Exception(global.TVPKAGSyntaxError);
+								throw new global.Exception(global.TVPKAGSyntaxError);
 							}
 
-							var val = Scripts.eval(this.dicObj[__exp_name] ,,, this.owner);
+							var val = global.Scripts.eval(this.dicObj[__exp_name] ,,, this.owner);
 
 							var cond = !!val;
 							if (tagkind === "ignore")
@@ -1512,10 +1512,10 @@ class __internal_KAGParser
 						{
 							if (typeof(this.dicObj[__exp_name]) !== "String" || this.dicObj[__exp_name] === "")
 							{
-								throw new Exception(global.TVPKAGSyntaxError);
+								throw new global.Exception(global.TVPKAGSyntaxError);
 							}
 
-							var val = Scripts.eval(this.dicObj[__exp_name] ,,, this.owner);
+							var val = global.Scripts.eval(this.dicObj[__exp_name] ,,, this.owner);
 
 							var cond = !!val;
 							if (cond)
@@ -1586,11 +1586,11 @@ class __internal_KAGParser
 								// execute expression
 								if (typeof(this.dicObj[__exp_name]) !== "String" || this.dicObj[__exp_name] === "")
 								{
-									throw new Exception(global.TVPKAGSyntaxError);
+									throw new global.Exception(global.TVPKAGSyntaxError);
 								}
 
 
-								var val = Scripts.eval(this.dicObj[__exp_name] ,,, this.owner);
+								var val = global.Scripts.eval(this.dicObj[__exp_name] ,,, this.owner);
 
 								var exp = val + "";
 
@@ -1715,7 +1715,7 @@ class __internal_KAGParser
 							{
 								if (typeof(this.dicObj["name"]) !== "String" || this.dicObj["name"] === "")
 								{
-									throw new Exception(global.TVPKAGSyntaxError); // missing macro name
+									throw new global.Exception(global.TVPKAGSyntaxError); // missing macro name
 								}
 								this.recordingMacroName = this.dicObj["name"].toLowerCase();
 								this.recordingMacro = true; // start recording macro
@@ -1730,11 +1730,11 @@ class __internal_KAGParser
 							{
 								if (typeof(this.dicObj["name"]) !== "String" || this.dicObj["name"] === "")
 								{
-									throw new Exception(global.TVPUnknownMacroName);
+									throw new global.Exception(global.TVPUnknownMacroName);
 								}
 								if (typeof(this.macros[this.dicObj["name"]]) !== "String")
 								{
-									throw new Exception(global.TVPUnknownMacroName + this.dicObj["name"]);
+									throw new global.Exception(global.TVPUnknownMacroName + this.dicObj["name"]);
 								}
 								delete this.macros[this.dicObj["name"]];
 							}
@@ -1747,7 +1747,7 @@ class __internal_KAGParser
 
 				if (this.curLineStr.length === this.curPos)
 				{
-					throw new Exception(global.TVPKAGSyntaxError);
+					throw new global.Exception(global.TVPKAGSyntaxError);
 				}
 
 				// attrib name
@@ -1802,12 +1802,12 @@ class __internal_KAGParser
 				{
 					if (this.curLineStr.length === this.curPos)
 					{
-						throw new Exception(global.TVPKAGSyntaxError);
+						throw new global.Exception(global.TVPKAGSyntaxError);
 					}
 					this.curPos += 1;
 					if (this.curLineStr.length === this.curPos)
 					{
-						throw new Exception(global.TVPKAGSyntaxError);
+						throw new global.Exception(global.TVPKAGSyntaxError);
 					}
 					while (this.curLineStr.length !== this.curPos && this.TVPIsWS(this.curLineStr[this.curPos]))
 					{
@@ -1815,7 +1815,7 @@ class __internal_KAGParser
 					}
 					if (this.curLineStr.length === this.curPos)
 					{
-						throw new Exception(global.TVPKAGSyntaxError);
+						throw new global.Exception(global.TVPKAGSyntaxError);
 					}
 
 					// attrib value
@@ -1848,7 +1848,7 @@ class __internal_KAGParser
 							this.curPos += 1;
 							if (this.curLineStr.length === this.curPos)
 							{
-								throw new Exception(global.TVPKAGSyntaxError);
+								throw new global.Exception(global.TVPKAGSyntaxError);
 							}
 						}
 						this.curPos += 1;
@@ -1856,7 +1856,7 @@ class __internal_KAGParser
 
 					if (ldelim !== "" && this.curLineStr.length === this.curPos)
 					{
-						throw new Exception(global.TVPKAGSyntaxError);
+						throw new global.Exception(global.TVPKAGSyntaxError);
 					}
 
 					var valueend = this.curPos;
@@ -1910,7 +1910,7 @@ class __internal_KAGParser
 					// process expression entity or macro argument
 					if (entity)
 					{
-						valueVariant = Scripts.eval(value ,,, this.owner);
+						valueVariant = global.Scripts.eval(value ,,, this.owner);
 						if (valueVariant !== void)
 						{
 							valueVariant += "";
@@ -1949,7 +1949,7 @@ class __internal_KAGParser
 					if (attribname === "cond")
 					{
 						// condition
-						var val = Scripts.eval(valueVariant + "" ,,, this.owner);
+						var val = global.Scripts.eval(valueVariant + "" ,,, this.owner);
 						condition = !!val;
 						store = false;
 					}
@@ -2058,7 +2058,7 @@ class KAGParser
 	 */	
 	function KAGParser()
 	{
-		this.__internal_KAGParser_instance = new __internal_KAGParser();
+		this.__internal_KAGParser_instance = new global.__internal_KAGParser();
 		this.__internal_KAGParser_instance.construct(this);
 	}
 
@@ -2132,7 +2132,7 @@ class KAGParser
 	{
 		if (typeof(src) !== "Object" || (typeof(src) === "Object" && !(src instanceof "KAGParser")))
 		{
-			throw new Exception(global.TVPKAGSpecifyKAGParser);
+			throw new global.Exception(global.TVPKAGSpecifyKAGParser);
 		}
 		this.__internal_KAGParser_instance.assign(src.__internal_KAGParser_instance);
 	}

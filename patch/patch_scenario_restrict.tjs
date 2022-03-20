@@ -1,6 +1,6 @@
 ﻿
-global.Conductor_patch_scenario_restrict_original = Conductor;
-class Conductor_patch_scenario_restrict_override extends Conductor_patch_scenario_restrict_original
+global.Conductor_patch_scenario_restrict_original = global.Conductor;
+class Conductor_patch_scenario_restrict_override extends global.Conductor_patch_scenario_restrict_original
 {
 	var return_on_next_label = false;
 	var scenario_restrict_storage = "";
@@ -12,7 +12,7 @@ class Conductor_patch_scenario_restrict_override extends Conductor_patch_scenari
 
 	function Conductor()
 	{
-		Conductor_patch_scenario_restrict_override(...);
+		this.Conductor_patch_scenario_restrict_override(...);
 	}
 
 	function reset_scenario_restrict()
@@ -60,10 +60,10 @@ class Conductor_patch_scenario_restrict_override extends Conductor_patch_scenari
 		return super.onLabel(...);
 	}
 }
-global.Conductor = Conductor_patch_scenario_restrict_override;
+global.Conductor = global.Conductor_patch_scenario_restrict_override;
 
-global.KAGWindow_patch_scenario_restrict_original = KAGWindow;
-class KAGWindow_patch_scenario_restrict_override extends KAGWindow_patch_scenario_restrict_original
+global.KAGWindow_patch_scenario_restrict_original = global.KAGWindow;
+class KAGWindow_patch_scenario_restrict_override extends global.KAGWindow_patch_scenario_restrict_original
 {
 	function KAGWindow_patch_scenario_restrict_override()
 	{
@@ -72,7 +72,7 @@ class KAGWindow_patch_scenario_restrict_override extends KAGWindow_patch_scenari
 
 	function KAGWindow()
 	{
-		KAGWindow_patch_scenario_restrict_override(...);
+		this.KAGWindow_patch_scenario_restrict_override(...);
 	}
 
 	function getHandlers()
@@ -94,4 +94,4 @@ class KAGWindow_patch_scenario_restrict_override extends KAGWindow_patch_scenari
 		return handlers;
 	}
 }
-global.KAGWindow = KAGWindow_patch_scenario_restrict_override;
+global.KAGWindow = global.KAGWindow_patch_scenario_restrict_override;

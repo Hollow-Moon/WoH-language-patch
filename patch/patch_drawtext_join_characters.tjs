@@ -1,6 +1,6 @@
 ﻿
-global.Layer_patch_drawtext_join_characters_original = Layer;
-class Layer_patch_drawtext_join_characters_override extends Layer_patch_drawtext_join_characters_original
+global.Layer_patch_drawtext_join_characters_original = global.Layer;
+class Layer_patch_drawtext_join_characters_override extends global.Layer_patch_drawtext_join_characters_original
 {
 	function Layer_patch_drawtext_join_characters_override()
 	{
@@ -9,7 +9,7 @@ class Layer_patch_drawtext_join_characters_override extends Layer_patch_drawtext
 
 	function Layer()
 	{
-		Layer_patch_drawtext_join_characters_override(...);
+		this.Layer_patch_drawtext_join_characters_override(...);
 	}
 
 	function drawText(left, top, text, color, opacity, aa, slevel, scolor, swidth, sofsx, sofxy)
@@ -21,12 +21,12 @@ class Layer_patch_drawtext_join_characters_override extends Layer_patch_drawtext
 			{
 				var character = text[i];
 @if(!HD_MODE)
-				var textwidth = font.getTextWidth(character);
-				var textheight = font.getTextHeight(character);
+				var textwidth = this.font.getTextWidth(character);
+				var textheight = this.font.getTextHeight(character);
 @endif
 @if(HD_MODE)
-				var textwidth = scaleWidth(font.getTextWidth(character));
-				var textheight = scaleHeight(font.getTextHeight(character));
+				var textwidth = scaleWidth(this.font.getTextWidth(character));
+				var textheight = scaleHeight(this.font.getTextHeight(character));
 @endif
 				var found_same_characters = 1;
 				if (("―■").indexOf(character) !== -1)
@@ -46,7 +46,7 @@ class Layer_patch_drawtext_join_characters_override extends Layer_patch_drawtext
 				}
 				if (found_same_characters > 1)
 				{
-					var	tmp	= window.temporaryLayer_patch_drawtext_join_characters;
+					var	tmp	= this.window.temporaryLayer_patch_drawtext_join_characters;
 					tmp.setImageSize(textwidth, textheight);
 					tmp.fillRect(0, 0, tmp.imageWidth, tmp.imageHeight, 0);
 					tmp.font.assign_font_properties(this.font);
@@ -54,9 +54,9 @@ class Layer_patch_drawtext_join_characters_override extends Layer_patch_drawtext
 					var textwidth_quarter = textwidth_half / 2;
 					var textwidth_middle_len = textwidth * (found_same_characters - 1);
 					tmp.drawText(0, 0, character, color, opacity, aa, slevel, scolor, swidth, sofsx, sofxy);
-					this.operateStretch(left + x + textwidth_quarter, top, textwidth_middle_len, textheight, tmp, textwidth_quarter, 0, textwidth_half, textheight, omAuto, 255, stLinear);
-					this.operateRect(left + x, top, tmp, 0, 0, textwidth_quarter, textheight, omAuto, 255);
-					this.operateRect(left + x + (textwidth_middle_len + textwidth_quarter), top, tmp, textwidth_middle_len + textwidth_quarter, 0, textwidth_quarter, textheight, omAuto, 255);
+					this.operateStretch(left + x + textwidth_quarter, top, textwidth_middle_len, textheight, tmp, textwidth_quarter, 0, textwidth_half, textheight, global.omAuto, 255, global.stLinear);
+					this.operateRect(left + x, top, tmp, 0, 0, textwidth_quarter, textheight, global.omAuto, 255);
+					this.operateRect(left + x + (textwidth_middle_len + textwidth_quarter), top, tmp, textwidth_middle_len + textwidth_quarter, 0, textwidth_quarter, textheight, global.omAuto, 255);
 					i += found_same_characters - 1;
 					textwidth *= found_same_characters;
 				}
@@ -72,10 +72,10 @@ class Layer_patch_drawtext_join_characters_override extends Layer_patch_drawtext
 	}
 
 }
-global.Layer = Layer_patch_drawtext_join_characters_override;
+global.Layer = global.Layer_patch_drawtext_join_characters_override;
 
-global.Window_patch_drawtext_join_characters_original = Window;
-class Window_patch_drawtext_join_characters_override extends Window_patch_drawtext_join_characters_original
+global.Window_patch_drawtext_join_characters_original = global.Window;
+class Window_patch_drawtext_join_characters_override extends global.Window_patch_drawtext_join_characters_original
 {
 	function Window_patch_drawtext_join_characters_override()
 	{
@@ -84,7 +84,7 @@ class Window_patch_drawtext_join_characters_override extends Window_patch_drawte
 
 	function Window()
 	{
-		Window_patch_drawtext_join_characters_override(...);
+		this.Window_patch_drawtext_join_characters_override(...);
 	}
 
 	var tempLayer_patch_drawtext_join_characters = void;
@@ -94,12 +94,12 @@ class Window_patch_drawtext_join_characters_override extends Window_patch_drawte
 		{
 			if (this.tempLayer_patch_drawtext_join_characters === void)
 			{
-				this.tempLayer_patch_drawtext_join_characters = new Layer(this, this.primaryLayer);
+				this.tempLayer_patch_drawtext_join_characters = new global.Layer(this, this.primaryLayer);
 				this.tempLayer_patch_drawtext_join_characters.name = "Temporary layer for joining text";
 			}
 			return this.tempLayer_patch_drawtext_join_characters;
 		}
 	}
 }
-global.Window = Window_patch_drawtext_join_characters_override;
+global.Window = global.Window_patch_drawtext_join_characters_override;
 

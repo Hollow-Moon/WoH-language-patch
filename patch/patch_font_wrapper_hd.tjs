@@ -1,4 +1,4 @@
-﻿class FontWrapperHD extends FontWrapper
+﻿class FontWrapperHD extends global.FontWrapper
 {
 	function FontWrapperHD(font, layer)
 	{
@@ -9,53 +9,53 @@
 	{
 		getter
 		{
-			return layer.window.unscaleHeight(super.height);
+			return this.layer.window.unscaleHeight(super.height);
 		}
 		setter(v)
 		{
-			super.height = layer.scaleHeight(v);
+			super.height = this.layer.scaleHeight(v);
 		}
 	}
 
 	function getTextHeight()
 	{
-		return layer.window.unscaleHeight(super.getTextHeight(...));
+		return this.layer.window.unscaleHeight(super.getTextHeight(...));
 	}
 
 	function getTextWidth()
 	{
-		var factor = layer.stretch? wideFactor : 1;
-		return layer.window.unscaleHeight(super.getTextWidth(...)) / factor;
+		var factor = this.layer.stretch? global.wideFactor : 1;
+		return this.layer.window.unscaleHeight(super.getTextWidth(...)) / factor;
 	}
 
 	function getGlyphDrawRect()
 	{
-		if (typeof(font.getGlyphDrawRect) !== "Object")
+		if (typeof(this.font.getGlyphDrawRect) !== "Object")
 		{
 			return;
 		}
 		var rect = super.getGlyphDrawRect(...);
-		rect.setSize(layer.window.unscaleHeight(rect.width), layer.window.unscaleHeight(rect.height));
+		rect.setSize(this.layer.window.unscaleHeight(rect.width), this.layer.window.unscaleHeight(rect.height));
 		return rect;
 	}
 
 	function getEscWidthX()
 	{
-		return layer.window.unscaleHeight(super.getEscWidthX(...));
+		return this.layer.window.unscaleHeight(super.getEscWidthX(...));
 	}
 
 	function getEscWidthY()
 	{
-		return layer.window.unscaleHeight(super.getEscWidthY(...));
+		return this.layer.window.unscaleHeight(super.getEscWidthY(...));
 	}
 
 	function getEscHeightX()
 	{
-		return layer.window.unscaleHeight(super.getEscHeightX(...));
+		return this.layer.window.unscaleHeight(super.getEscHeightX(...));
 	}
 
 	function getEscHeightY()
 	{
-		return layer.window.unscaleHeight(super.getEscHeightY(...));
+		return this.layer.window.unscaleHeight(super.getEscHeightY(...));
 	}
 }

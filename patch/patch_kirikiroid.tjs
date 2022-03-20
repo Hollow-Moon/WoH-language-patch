@@ -3,15 +3,15 @@ global.kirikiroidOsNames = ["android", "iphone", "ipad"];
 
 global.checkIfKirikiroid = function()
 {
-	for (var i = 0, internal_forloop_count = kirikiroidOsNames.count; i < internal_forloop_count; i += 1) {
-		if (System.osName.substr(0, kirikiroidOsNames[i].length).toLowerCase() == kirikiroidOsNames[i]) {
+	for (var i = 0, internal_forloop_count = global.kirikiroidOsNames.count; i < internal_forloop_count; i += 1) {
+		if (global.System.osName.substr(0, global.kirikiroidOsNames[i].length).toLowerCase() == global.kirikiroidOsNames[i]) {
 			return true;
 		}
 	}
 	return false;
 };
 
-global.isKirikiroid = checkIfKirikiroid();
-if (isKirikiroid) {
-	Scripts.eval("@set(KIRIKIROID=1)");
+global.isKirikiroid = global.checkIfKirikiroid();
+if (global.isKirikiroid) {
+	global.Scripts.eval("@set(KIRIKIROID=1)");
 }

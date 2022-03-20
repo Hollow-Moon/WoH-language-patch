@@ -1,6 +1,6 @@
 ﻿
-global.KAGWindow_patch_italictag_original = KAGWindow;
-class KAGWindow_patch_italictag_override extends KAGWindow_patch_italictag_original
+global.KAGWindow_patch_italictag_original = global.KAGWindow;
+class KAGWindow_patch_italictag_override extends global.KAGWindow_patch_italictag_original
 {
 	function KAGWindow_patch_italictag_override()
 	{
@@ -16,7 +16,7 @@ class KAGWindow_patch_italictag_override extends KAGWindow_patch_italictag_origi
 
 	function KAGWindow()
 	{
-		KAGWindow_patch_italictag_override(...);
+		this.KAGWindow_patch_italictag_override(...);
 	}
 }
-global.KAGWindow = KAGWindow_patch_italictag_override;
+global.KAGWindow = global.KAGWindow_patch_italictag_override;

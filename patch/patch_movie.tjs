@@ -12,7 +12,7 @@ global.play_movie_resize = function(video, kag=global.kag, window=global.kag)
 			// 1) can't stop movie if clicking out of the "square" (non-wide) area.
 			// 2) First time opening playing the movie it is offsetted by 10 px down (probably due to window.height having the wrong value)
 			//    It fixes itself when stopping and replaying the movie (in which case window.height displays the correct value).
-			if (isNewMovieKrkrz && video.mode == vomMFEVR)
+			if (global.isNewMovieKrkrz && video.mode == global.vomMFEVR)
 			{
 				var videoRatio = videoSize[0] / videoSize[1];
 				
@@ -36,7 +36,7 @@ global.play_movie_resize = function(video, kag=global.kag, window=global.kag)
 @endif
 			{
 				window.fullScreen = false;
-				window.borderStyle = bsNone;
+				window.borderStyle = global.bsNone;
 @if(ZOOM_WINDOW)
 				kag.pxWidth = videoSize[0];
 				kag.pxHeight = videoSize[1];
@@ -69,18 +69,18 @@ global.play_movie_resize = function(video, kag=global.kag, window=global.kag)
 		var windowSize = [videoSize[0]+windowExtraWidth, videoSize[1]+windowExtraHeight];
 
 @if(HD_MODE)
-		var desktopWidth = System.desktopWidth / global.get_wideScaleFactor();
-		var desktopHeight = System.desktopHeight / scaleFactor;
+		var desktopWidth = global.System.desktopWidth / global.get_wideScaleFactor();
+		var desktopHeight = global.System.desktopHeight / global.scaleFactor;
 @endif
 @if(!HD_MODE)
-		var desktopWidth = System.desktopWidth;
-		var desktopHeight = System.desktopHeight;
+		var desktopWidth = global.System.desktopWidth;
+		var desktopHeight = global.System.desktopHeight;
 @endif
 
 		// If too big, resize to fit desktop
 		if (windowSize[0] > desktopWidth || windowSize[1] > desktopHeight)
 		{
-			videoSize = calculateTouchFromInside(videoSize[0], videoSize[1], desktopWidth - windowExtraWidth, desktopHeight - windowExtraHeight);
+			videoSize = global.calculateTouchFromInside(videoSize[0], videoSize[1], desktopWidth - windowExtraWidth, desktopHeight - windowExtraHeight);
 			windowSize = [videoSize[0]+windowExtraWidth, videoSize[1]+windowExtraHeight];
 		}
 
@@ -117,7 +117,7 @@ global.stop_movie_resize = function(video, kag=global.kag, window=global.kag)
 			kag.pxHeight = 600;
 @endif
 		}
-		window.borderStyle = bsSingle;
+		window.borderStyle = global.bsSingle;
 		window.setInnerSize(800, 600);
 @if(ZOOM_WINDOW)
 		kag.addHook("afterChangeScreenMode", kag.fullScreenAfterChangeScreenMode);

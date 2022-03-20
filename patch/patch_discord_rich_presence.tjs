@@ -1,6 +1,6 @@
 ﻿
-global.KAGWindow_patch_discord_rich_presence_original = KAGWindow;
-class KAGWindow_patch_discord_rich_presence_override extends KAGWindow_patch_discord_rich_presence_original
+global.KAGWindow_patch_discord_rich_presence_original = global.KAGWindow;
+class KAGWindow_patch_discord_rich_presence_override extends global.KAGWindow_patch_discord_rich_presence_original
 {
 	var discord_start_timestamp = 0;
 	var discord_inited = false;
@@ -11,7 +11,7 @@ class KAGWindow_patch_discord_rich_presence_override extends KAGWindow_patch_dis
 		if (this.isMain && !this.discord_inited)
 		{
 			// need seconds here
-			this.discord_start_timestamp = (new Date()).getTime() \ 1000;
+			this.discord_start_timestamp = (new global.Date()).getTime() \ 1000;
 			var application_id = "";
 @if(GAME_FATE)
 			application_id = "918174971111542834";
@@ -37,7 +37,7 @@ class KAGWindow_patch_discord_rich_presence_override extends KAGWindow_patch_dis
 
 	function KAGWindow()
 	{
-		KAGWindow_patch_discord_rich_presence_override(...);
+		this.KAGWindow_patch_discord_rich_presence_override(...);
 	}
 
 	function finalize()
@@ -59,7 +59,7 @@ class KAGWindow_patch_discord_rich_presence_override extends KAGWindow_patch_dis
 		var ret = super.onConductorLabel(...);
 		if (this.isMain && this.discord_inited)
 		{
-			var new_page_name = currentPageName;
+			var new_page_name = this.currentPageName;
 			var new_label_text = "";
 			var on_title_menu = false;
 @if(GAME_FATE||GAME_FHAT)
@@ -82,7 +82,7 @@ class KAGWindow_patch_discord_rich_presence_override extends KAGWindow_patch_dis
 				on_title_menu = true;
 			}
 @endif
-			if (typeof(currentLabel) === "String" && currentLabel === "*title")
+			if (typeof(this.currentLabel) === "String" && this.currentLabel === "*title")
 			{
 				on_title_menu = true;
 			}
@@ -90,15 +90,15 @@ class KAGWindow_patch_discord_rich_presence_override extends KAGWindow_patch_dis
 			{
 				new_page_name = "Title Menu";
 			}
-			if (!on_title_menu && typeof(currentLabel) === "String" && currentLabel.substr(0, 5) === "*page")
+			if (!on_title_menu && typeof(this.currentLabel) === "String" && this.currentLabel.substr(0, 5) === "*page")
 			{
-				new_label_text = "Page " + currentLabel.substr(5);
+				new_label_text = "Page " + this.currentLabel.substr(5);
 			}
 			if (this.last_discord_updated_text !== new_page_name || this.last_discord_updated_label !== new_label_text)
 			{
 				var dic = %[];
 				dic.largeImageKey = "icon";
-				dic.state = __(new_page_name);
+				dic.state = global.__(new_page_name);
 				if (new_label_text !== "")
 				{
 					dic.details = new_label_text;
@@ -112,4 +112,4 @@ class KAGWindow_patch_discord_rich_presence_override extends KAGWindow_patch_dis
 		return ret;
 	}
 }
-global.KAGWindow = KAGWindow_patch_discord_rich_presence_override;
+global.KAGWindow = global.KAGWindow_patch_discord_rich_presence_override;

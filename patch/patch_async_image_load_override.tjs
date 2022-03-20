@@ -30,8 +30,8 @@ global.not_image_tags = %[
 ];
 
 
-global.Conductor_patch_async_image_load_override_original = Conductor;
-class Conductor_patch_async_image_load_override_override extends Conductor_patch_async_image_load_override_original
+global.Conductor_patch_async_image_load_override_original = global.Conductor;
+class Conductor_patch_async_image_load_override_override extends global.Conductor_patch_async_image_load_override_original
 {
 	function Conductor_patch_async_image_load_override_override()
 	{
@@ -39,14 +39,14 @@ class Conductor_patch_async_image_load_override_override extends Conductor_patch
 	}
 	function Conductor()
 	{
-		Conductor_patch_async_image_load_override_override(...);
+		this.Conductor_patch_async_image_load_override_override(...);
 	}
 
 	var is_immediate = false;
 
 	function startProcess(immediate = false)
 	{
-		if (!_interrupted)
+		if (!this._interrupted)
 		{
 			this.is_immediate = immediate;
 		}
@@ -60,7 +60,7 @@ class Conductor_patch_async_image_load_override_override extends Conductor_patch
 	function onTag(elm)
 	{
 		var	canskip	= elm.canskip === void ? false : +elm.canskip;
-		if (!this.is_immediate && !this.owner.usingExtraConductor && (elm.tagname === "playtimeline" ? ((canskip && !this.owner.skipMode) || !canskip) : true) && this.owner.isSkippingToTarget === void && !not_image_tags[elm.tagname] && this.processSpecialTags)
+		if (!this.is_immediate && !this.owner.usingExtraConductor && (elm.tagname === "playtimeline" ? ((canskip && !this.owner.skipMode) || !canskip) : true) && this.owner.isSkippingToTarget === void && !global.not_image_tags[elm.tagname] && this.processSpecialTags)
 		{
 			var list = [];
 			var storage = elm.storage;
@@ -116,5 +116,5 @@ class Conductor_patch_async_image_load_override_override extends Conductor_patch
 		return super.onTag(...);
 	}
 }
-global.Conductor = Conductor_patch_async_image_load_override_override;
+global.Conductor = global.Conductor_patch_async_image_load_override_override;
 

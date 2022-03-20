@@ -1,5 +1,5 @@
 ﻿
-global.name_to_patch_basename = function(name, isFolder=devMode)
+global.name_to_patch_basename = function(name, isFolder=global.devMode)
 {
 	if (isFolder)
 	{
@@ -17,14 +17,14 @@ global.name_to_patch_basename = function(name, isFolder=devMode)
 	}
 };
 
-global.name_to_patch = function(name, isFolder=devMode, basePath=global.paths_base[0])
+global.name_to_patch = function(name, isFolder=global.devMode, basePath=global.paths_base[0])
 {
-	return basePath + name_to_patch_basename(name, isFolder);
+	return basePath + global.name_to_patch_basename(name, isFolder);
 };
 
-global.name_to_patch_path = function(name, isFolder=devMode, basePath=global.paths_base[0])
+global.name_to_patch_path = function(name, isFolder=global.devMode, basePath=global.paths_base[0])
 {
-	var result = name_to_patch(name, isFolder, basePath);
+	var result = global.name_to_patch(name, isFolder, basePath);
 	if (isFolder)
 	{
 		result += "/";
@@ -36,20 +36,20 @@ global.name_to_patch_path = function(name, isFolder=devMode, basePath=global.pat
 	return result;
 };
 
-global.patchExists = function(name, isFolder=devMode, basePath=global.paths_base[0])
+global.patchExists = function(name, isFolder=global.devMode, basePath=global.paths_base[0])
 {
 	var result = false;
 	if (!isFolder)
 	{
-		result = global.paths_base_dirlist[basePath]["."].find(name_to_patch_basename(name, false)) !== -1;
-		if (devMode2)
+		result = global.paths_base_dirlist[basePath]["."].find(global.name_to_patch_basename(name, false)) !== -1;
+		if (global.devMode2)
 		{
-			result |= global.paths_base_dirlist[basePath]["."].find(name_to_patch_basename(name, true) + "/") !== -1;
+			result |= global.paths_base_dirlist[basePath]["."].find(global.name_to_patch_basename(name, true) + "/") !== -1;
 		}
 	}
 	else
 	{
-		result = global.paths_base_dirlist[basePath]["."].find(name_to_patch_basename(name, true) + "/") !== -1;
+		result = global.paths_base_dirlist[basePath]["."].find(global.name_to_patch_basename(name, true) + "/") !== -1;
 	}
 	return result;
 };
@@ -66,7 +66,7 @@ global.load_patches = function(patch_array, should_add_to_auto_path=true)
 		var name = patch_array[i][0];
 		if (typeof(name) !== "String")
 		{
-			throw new Exception("Expected a string when loading patch");
+			throw new global.Exception("Expected a string when loading patch");
 		}
 		var folderName = patch_array[i][1];
 		if (typeof(folderName) !== "String")
@@ -79,17 +79,17 @@ global.load_patches = function(patch_array, should_add_to_auto_path=true)
 		{
 			basePath = global.paths_base[0];
 		}
-		if (!devMode)
+		if (!global.devMode)
 		{
-			if (global.paths_base_dirlist[basePath]["."].find(name_to_patch_basename(name, false)) !== -1)
+			if (global.paths_base_dirlist[basePath]["."].find(global.name_to_patch_basename(name, false)) !== -1)
 			{
-				patches_to_add.add(name_to_patch_path(name, false, basePath) + folderName);
+				patches_to_add.add(global.name_to_patch_path(name, false, basePath) + folderName);
 			}
 		}
-		if (devMode || devMode2)
+		if (global.devMode || global.devMode2)
 		{
-			var fpath = name_to_patch_path(name, true, basePath) + folderName;
-			if (Storages.isExistentDirectory(fpath))
+			var fpath = global.name_to_patch_path(name, true, basePath) + folderName;
+			if (global.Storages.isExistentDirectory(fpath))
 			{
 				patches_to_add.add(fpath);
 			}
@@ -119,7 +119,7 @@ global.unload_patches = function(patch_array)
 		var name = patch_array[i][0];
 		if (typeof(name) !== "String")
 		{
-			throw new Exception("Expected a string when unloading patch");
+			throw new global.Exception("Expected a string when unloading patch");
 		}
 		var folderName = patch_array[i][1];
 		if (typeof(folderName) !== "String")
@@ -132,13 +132,13 @@ global.unload_patches = function(patch_array)
 		{
 			basePath = global.paths_base[0];
 		}
-		patches_to_remove.add(name_to_patch_path(name, false, basePath) + folderName);
-		patches_to_remove.add(name_to_patch_path(name, true, basePath) + folderName);
+		patches_to_remove.add(global.name_to_patch_path(name, false, basePath) + folderName);
+		patches_to_remove.add(global.name_to_patch_path(name, true, basePath) + folderName);
 	}
 	for (var i = 0, internal_forloop_count = patches_to_remove.count; i < internal_forloop_count; i += 1)
 	{
-		Storages.removeAutoPath(patches_to_remove[i]);
-		Storages.removeAutoPath(global.translate_archive_path(patches_to_remove[i], false));
+		global.Storages.removeAutoPath(patches_to_remove[i]);
+		global.Storages.removeAutoPath(global.translate_archive_path(patches_to_remove[i], false));
 	}
 };
 
@@ -155,13 +155,13 @@ global.getAnchorValue = function(anchor)
 	return anchorValue;
 };
 
-Array.contains = function(item) {
+global.Array.contains = function(item) {
 	return this.find(item) != -1;
 };
 
 global.lastIndexOf = function(obj, str)
 {
-	var pos = reverseStr(str).indexOf(obj);
+	var pos = global.reverseStr(str).indexOf(obj);
 	if(pos)
 		return str.length - pos - 1;
 	else
@@ -208,7 +208,7 @@ global.addMaskOverlay = function(layer, name, l=0, t=0, add=true, horizontalAlig
 			o.horizontalAlignment = horizontalAlignment;
 		}
 		if (add) {
-			o.type = ltPsAdditive;
+			o.type = global.ltPsAdditive;
 		}
 		o.isMask = true;
 		o.loadImages(name);
@@ -227,11 +227,11 @@ global.defaultScrollbarImages =  [	//	base
 	"scroll_bottom_horizontal"
 ];
 
-global.initializeScollbar = function(x, y, w, h, total, moving, top, scrimgs=defaultScrollbarImages)
+global.initializeScollbar = function(x, y, w, h, total, moving, top, scrimgs=global.defaultScrollbarImages)
 {
-	mini_layer = new global.FadeLayer(window, this);
+	this.mini_layer = new global.FadeLayer(this.window, this);
 	{
-		var l = mini_layer;
+		var l = this.mini_layer;
 		l.setPos(x, y);
 		l.setSize(w, h);
 		l.visible = true;
@@ -239,30 +239,30 @@ global.initializeScollbar = function(x, y, w, h, total, moving, top, scrimgs=def
 		l.opacity = 255;
 		l.focusable = true;
 		l.onMouseDown = function() {
-			parent.onMouseDown(...);
-		} incontextof mini_layer;
+			this.parent.onMouseDown(...);
+		} incontextof this.mini_layer;
 		l.onButtonDown = function() {
-			parent.onButtonDown(...);
-		} incontextof mini_layer;
+			this.parent.onButtonDown(...);
+		} incontextof this.mini_layer;
 		l.onButtonUp = function() {
-			parent.onButtonUp(...);
-		} incontextof mini_layer;
+			this.parent.onButtonUp(...);
+		} incontextof this.mini_layer;
 	}
 
 	//6,6 margin if you use the horizontal background for the scroller
-	scrollbar = new ScrollBarLayer(window, mini_layer, w, 0, 0, false, scrimgs);
+	this.scrollbar = new global.ScrollBarLayer(this.window, this.mini_layer, w, 0, 0, false, scrimgs);
 	{
-		var l = scrollbar;
+		var l = this.scrollbar;
 		l.top = top; //use top 0 if you use the horizontal background for the scroller
 		l.total		= total;
 		l.area		= l.width;
-		l.onscroll	= onScroll;
+		l.onscroll	= this.onScroll;
 		l.current	= 0;
 		l.moving	= moving;
 	}
 
-	window.org_onMouseWheel	= window.onMouseWheel;
-	window.onMouseWheel		= scrollbar.onMouseWheel;
+	this.window.org_onMouseWheel	= this.window.onMouseWheel;
+	this.window.onMouseWheel		= this.scrollbar.onMouseWheel;
 };
 
 
@@ -296,7 +296,7 @@ global.fixAndLoadDictionaryForKrkr2 = function(filename, mode)
 {
 	var file_as_array = [];
 	file_as_array.load(filename, mode);
-	return Scripts.eval(file_as_array.join("\n").replace(/\(const\)/g, ""));
+	return global.Scripts.eval(file_as_array.join("\n").replace(/\(const\)/g, ""));
 };
 
 global.krkrzDictionaryReplace = function(matcharr)
@@ -305,7 +305,7 @@ global.krkrzDictionaryReplace = function(matcharr)
 	return matcharr.join("");
 };
 
-global.krkrzDictionaryRegex1 = new RegExp("(?:real (0x\\d\\.[A-F0-9][A-F0-9][A-F0-9][A-F0-9][A-F0-9][A-F0-9][A-F0-9][A-F0-9][A-F0-9][A-F0-9][A-F0-9][A-F0-9][A-F0-9]p-?\\d*|[-\+]?0\.0|NaN|[-\+]?Infinity)(?: /\\* (?:.*?) \\*/)?|int ([-\\+]?\\d*)|string (\".*\"))", "g");
+global.krkrzDictionaryRegex1 = new global.RegExp("(?:real (0x\\d\\.[A-F0-9][A-F0-9][A-F0-9][A-F0-9][A-F0-9][A-F0-9][A-F0-9][A-F0-9][A-F0-9][A-F0-9][A-F0-9][A-F0-9][A-F0-9]p-?\\d*|[-\+]?0\.0|NaN|[-\+]?Infinity)(?: /\\* (?:.*?) \\*/)?|int ([-\\+]?\\d*)|string (\".*\"))", "g");
 global.krkrzDictionaryRegex2 = /(?: )(?=\%?\[\n)/g;
 
 global.fixAndLoadDictionaryForKrkrZ = function(filename, mode)
@@ -313,8 +313,8 @@ global.fixAndLoadDictionaryForKrkrZ = function(filename, mode)
 	var file_as_array = [];
 	file_as_array.load(filename, mode);
 	var j = file_as_array.join("\n").replace(global.krkrzDictionaryRegex1, global.krkrzDictionaryReplace).replace(global.krkrzDictionaryRegex2, " (const)");
-	Debug.message(j);
-	return Scripts.eval(("(const)[ (const)%s ]").sprintf(j))[0];
+	global.Debug.message(j);
+	return global.Scripts.eval(("(const)[ (const)%s ]").sprintf(j))[0];
 };
 
 // Avoid CVE-2015-5672
@@ -332,7 +332,7 @@ global.safeEvalStorage = function(filename, mode)
 		{
 			if (e !== void && e.message.indexOf("Invalid argument") !== -1)
 			{
-				dm("Attempting to fix " + filename + " for Kirikiri Z...");
+				global.dm("Attempting to fix " + filename + " for Kirikiri Z...");
 				return global.fixAndLoadDictionaryForKrkrZ(filename, mode);
 			}
 			throw e;
@@ -351,7 +351,7 @@ global.safeEvalStorage = function(filename, mode)
 		{
 			if (e !== void && e.message.indexOf("const") !== -1)
 			{
-				dm("Attempting to fix " + filename + " for Kirikiri 2...");
+				global.dm("Attempting to fix " + filename + " for Kirikiri 2...");
 				return global.fixAndLoadDictionaryForKrkr2(filename, mode);
 			}
 
@@ -367,10 +367,10 @@ global.build_exec_command_line = function(exepath, arguments, normalize_exepath=
 	var exe_path = exepath;
 	if (normalize_exepath)
 	{
-		var exe_path_placed = Storages.getPlacedPath(exe_path);
+		var exe_path_placed = global.Storages.getPlacedPath(exe_path);
 		if (exe_path_placed !== "")
 		{
-			var exe_path_local = Storages.getLocalName(exe_path_placed);
+			var exe_path_local = global.Storages.getLocalName(exe_path_placed);
 			if (exe_path_local !== "")
 			{
 				exe_path = exe_path_local;
@@ -385,10 +385,10 @@ global.build_exec_command_line = function(exepath, arguments, normalize_exepath=
 		{
 			if (typeof(arg_path) === "String")
 			{
-				var arg_path_placed = Storages.getPlacedPath(arg_path);
+				var arg_path_placed = global.Storages.getPlacedPath(arg_path);
 				if (arg_path_placed !== "")
 				{
-					var arg_path_local = Storages.getLocalName(arg_path_placed);
+					var arg_path_local = global.Storages.getLocalName(arg_path_placed);
 					if (arg_path_local !== "")
 					{
 						arg_path = arg_path_local;
@@ -401,10 +401,10 @@ global.build_exec_command_line = function(exepath, arguments, normalize_exepath=
 				for (var i = 0, internal_forloop_count = arg_path.count; i < internal_forloop_count; i += 1)
 				{
 					var arg_component = arg_path[i];
-					var arg_path_placed = Storages.getPlacedPath(arg_component);
+					var arg_path_placed = global.Storages.getPlacedPath(arg_component);
 					if (arg_path_placed !== "")
 					{
-						var arg_path_local = Storages.getLocalName(arg_path_placed);
+						var arg_path_local = global.Storages.getLocalName(arg_path_placed);
 						if (arg_path_local !== "")
 						{
 							arg_component = arg_path_local;
@@ -458,21 +458,21 @@ global.showURLUsingDefaultHandler = function(url)
 	return global.build_exec_command_line(url, [], false, false);
 };
 
-if (typeof(System.clearGraphicCache) !== "Object")
+if (typeof(global.System.clearGraphicCache) !== "Object")
 {
 	global.System.clearGraphicCache = function() {
-		var ccl = System.graphicCacheLimit;
-		System.graphicCacheLimit = 0;
-		System.graphicCacheLimit = ccl;
+		var ccl = global.System.graphicCacheLimit;
+		global.System.graphicCacheLimit = 0;
+		global.System.graphicCacheLimit = ccl;
 	};
 }
 
 global.check_app_lock = function()
 {
-	if (!System.createAppLock(System.exePath.replace(/[^A-Za-z]/g, '_')))
+	if (!global.System.createAppLock(global.System.exePath.replace(/[^A-Za-z]/g, '_')))
 	{
-		System.inform(__t("%sはすでに起動しています").sprintf(System.title));
-		System.exit();
+		global.System.inform(__t("%sはすでに起動しています").sprintf(global.System.title));
+		global.System.exit();
 	}
 };
 
@@ -669,12 +669,12 @@ global.open_scenario_using_scenario_tracker = function(kag=global.kag, scenario,
 global.initial_scenario_load_ready = function()
 {
 @if(GAME_FHAT)
-	if (System.getArgument("-loadticketatindex") !== void)
+	if (global.System.getArgument("-loadticketatindex") !== void)
 	{
 		global.kag.askOnClose = true;
-		global.loadTicketFile(System.getArgument("-loadticketatindex") | 0);
+		global.loadTicketFile(global.System.getArgument("-loadticketatindex") | 0);
 		(global.initializeTicketFlagsMenu incontextof global.kag)();
-		if (System.getArgument("-loadsaveatindex") === void)
+		if (global.System.getArgument("-loadsaveatindex") === void)
 		{
 			global.kag.setConductorToMain();
 			global.kag.conductor.inProcessing = false;
@@ -686,29 +686,29 @@ global.initial_scenario_load_ready = function()
 	}
 @endif
 @if(GAME_FATE||GAME_FHAT)
-	if (System.getArgument("-testmode") !== void)
+	if (global.System.getArgument("-testmode") !== void)
 	{
 		global.testmode = true;
 	}
 @endif
-	if (System.getArgument("-loadsaveatindex") !== void)
+	if (global.System.getArgument("-loadsaveatindex") !== void)
 	{
 		global.kag.askOnClose = true;
-		global.kag.loadBookMark(System.getArgument("-loadsaveatindex") | 0);
+		global.kag.loadBookMark(global.System.getArgument("-loadsaveatindex") | 0);
 	}
 @if(GAME_WOHN)
-	else if (System.getArgument("-archiveopenscenario") !== void)
+	else if (global.System.getArgument("-archiveopenscenario") !== void)
 	{
-		global.startArchiveWithScenario(System.getArgument("-archiveopenscenario"));
+		global.startArchiveWithScenario(global.System.getArgument("-archiveopenscenario"));
 	}
 @endif
-	else if (System.getArgument("-flowchartopen") !== void || System.getArgument("-flowchartopenbyscenario") !== void)
+	else if (global.System.getArgument("-flowchartopen") !== void || global.System.getArgument("-flowchartopenbyscenario") !== void)
 	{
-		global.open_scenario_using_scenario_tracker(global.kag, System.getArgument("-flowchartopenbyscenario"), System.getArgument("-flowchartopenbyid"), System.getArgument("-flowchartopen"));
+		global.open_scenario_using_scenario_tracker(global.kag, global.System.getArgument("-flowchartopenbyscenario"), global.System.getArgument("-flowchartopenbyid"), global.System.getArgument("-flowchartopen"));
 	}
-	if (System.getArgument("-fullscreen") !== void)
+	if (global.System.getArgument("-fullscreen") !== void)
 	{
-		var should_fullscreen = System.getArgument("-fullscreen") === "true";
+		var should_fullscreen = global.System.getArgument("-fullscreen") === "true";
 		if (should_fullscreen)
 		{
 			global.kag.onFullScreenMenuItemClick();
@@ -730,11 +730,11 @@ global.initial_scenario_load_ready = function()
 			global.kag.onWindowedMenuItemClick();
 		}
 	}
-	if (System.getArgument("-innersizewidth") !== void)
+	if (global.System.getArgument("-innersizewidth") !== void)
 	{
 		if (typeof(global.kag.onWindowSizeMenuItemClick) === "Object")
 		{
-			global.kag.onWindowSizeMenuItemClick(void, System.getArgument("-innersizewidth") | 0);
+			global.kag.onWindowSizeMenuItemClick(void, global.System.getArgument("-innersizewidth") | 0);
 		}
 	}
 	else
@@ -786,7 +786,7 @@ global.full_game_reload = function(extra_args*)
 
 global.floatEquals = function(x, y, epsilon=0.0000001)
 {
-	return Math.abs(x - y) < epsilon;
+	return global.Math.abs(x - y) < epsilon;
 };
 
 // https://stackoverflow.com/a/54137634
@@ -842,18 +842,18 @@ global.real_to_hex_string = function(v)
 	{
 		var bias = (1 << (ebits - 1)) - 1;
 		s = v < 0;
-		v = Math.abs(v);
+		v = global.Math.abs(v);
 
-		if (v >= Math.pow(2, 1 - bias))
+		if (v >= global.Math.pow(2, 1 - bias))
 		{
-			var ln = Math.min(Math.floor(Math.log(v) / Math.LN2), bias);
+			var ln = global.Math.min(global.Math.floor(global.Math.log(v) / global.Math.LN2), bias);
 			e = ln + bias;
-			f = v * Math.pow(2, fbits - ln) - Math.pow(2, fbits);
+			f = v * global.Math.pow(2, fbits - ln) - global.Math.pow(2, fbits);
 		}
 		else
 		{
 			e = 0;
-			f = v / Math.pow(2, 1 - bias - fbits);
+			f = v / global.Math.pow(2, 1 - bias - fbits);
 		}
 	}
 
@@ -862,17 +862,17 @@ global.real_to_hex_string = function(v)
 	for (var i = fbits; i !== 0; i -= 1)
 	{
 		fbits_arr.insert(0, f % 2 ? 1 : 0);
-		f = Math.floor(f / 2);
+		f = global.Math.floor(f / 2);
 	}
 	var ebits_arr = [];
 	for (var i = ebits; i !== 0; i -= 1)
 	{
 		ebits_arr.insert(0, e % 2 ? 1 : 0);
-		e = Math.floor(e / 2);
+		e = global.Math.floor(e / 2);
 	}
 
 	// Bits to bytes
-	return ("%s0x1.%013Xp%d").sprintf(s ? "-" : "", binary_to_decimal(fbits_arr), binary_to_decimal(ebits_arr) - 1023);
+	return ("%s0x1.%013Xp%d").sprintf(s ? "-" : "", global.binary_to_decimal(fbits_arr), global.binary_to_decimal(ebits_arr) - 1023);
 };
 
 global.reload_messagelayer_config = function(window=global.kag)
@@ -905,11 +905,11 @@ global.reload_messagelayer_config = function(window=global.kag)
 };
 
 {
-	if (System.getArgument("-systeminformgoestolog") !== void)
+	if (global.System.getArgument("-systeminformgoestolog") !== void)
 	{
 		global.System.inform = function(arg)
 		{
-			Debug.message(arg);
+			global.Debug.message(arg);
 		};
 	}
 }
@@ -917,11 +917,11 @@ global.reload_messagelayer_config = function(window=global.kag)
 global.parse_iso8601 = function(str)
 {
 	// https://www.myintervals.com/blog/2009/05/20/iso-8601-date-validation-that-doesnt-suck/
-	var re = new RegExp("^([\\+-]?\\d{4}(?!\\d{2}\\b))((-?)((0[1-9]|1[0-2])(\\3([12]\\d|0[1-9]|3[01]))?|W([0-4]\\d|5[0-2])(-?[1-7])?|(00[1-9]|0[1-9]\\d|[12]\\d{2}|3([0-5]\\d|6[1-6])))([T\\s]((([01]\\d|2[0-3])((:?)[0-5]\\d)?|24\\:?00)([\\.,]\\d+(?!:))?)?(\\17[0-5]\\d([\\.,]\\d+)?)?([zZ]|([\\+-])([01]\\d|2[0-3]):?([0-5]\\d)?)?)?)?$");
+	var re = new global.RegExp("^([\\+-]?\\d{4}(?!\\d{2}\\b))((-?)((0[1-9]|1[0-2])(\\3([12]\\d|0[1-9]|3[01]))?|W([0-4]\\d|5[0-2])(-?[1-7])?|(00[1-9]|0[1-9]\\d|[12]\\d{2}|3([0-5]\\d|6[1-6])))([T\\s]((([01]\\d|2[0-3])((:?)[0-5]\\d)?|24\\:?00)([\\.,]\\d+(?!:))?)?(\\17[0-5]\\d([\\.,]\\d+)?)?([zZ]|([\\+-])([01]\\d|2[0-3]):?([0-5]\\d)?)?)?)?$");
 	var match = re.match(str);
 	if (match.count > 0)
 	{
-		var date_offset = new Date(1970, 0, 1, 0, 0, 0);
+		var date_offset = new global.Date(1970, 0, 1, 0, 0, 0);
 		var date_offset_seconds_total = date_offset.getTime() \ 1000;
 		var date_offset_seconds =  (date_offset_seconds_total % 60);
 		var date_offset_minutes =  (date_offset_seconds_total \ 60) % 60;
@@ -932,7 +932,7 @@ global.parse_iso8601 = function(str)
 		var hour = (match[15] | 0) - date_offset_hours;
 		var minute = (("" + match[16]).substr(1,3) | 0) - date_offset_minutes;
 		var second = (("" + match[19]).substr(1,3) | 0) - date_offset_seconds;
-		return new Date(year, month, day, hour, minute, second);
+		return new global.Date(year, month, day, hour, minute, second);
 	}
 };
 
@@ -941,10 +941,10 @@ global.open_savedata_dir = function(kag=global.kag)
 	var dir = kag.saveDataLocation;
 	if (typeof(dir) === "String" && dir !== "")
 	{
-		var localpath = Storages.getLocalName(dir);
+		var localpath = global.Storages.getLocalName(dir);
 		if (localpath !== "")
 		{
-			System.shellExecute(("\"%s\"").sprintf(localpath));
+			global.System.shellExecute(("\"%s\"").sprintf(localpath));
 		}
 	}
 };
@@ -1059,16 +1059,16 @@ global.CHAR_LINK_TYPE = [0 /* NONE */, 1 /* BEFORE */, 1 /* BEFORE */, 1 /* BEFO
 
 {
 	// Convert the arrays unicode to codepoint.
-	to_codepoint_array(LINK_MAP);
-	to_codepoint_array(UNLINK_MAP);
-	to_codepoint_array(LAMALEF_LINK_MAP);
-	to_codepoint_array(LAMALEF_UNLINK_MAP);
-	to_codepoint_array(ALEF_CHARS);
+	global.to_codepoint_array(global.LINK_MAP);
+	global.to_codepoint_array(global.UNLINK_MAP);
+	global.to_codepoint_array(global.LAMALEF_LINK_MAP);
+	global.to_codepoint_array(global.LAMALEF_UNLINK_MAP);
+	global.to_codepoint_array(global.ALEF_CHARS);
 }
 
 global.shape_arabic_is_alef_char = function(c)
 {
-	return ALEF_CHARS.find(c) !== -1;
+	return global.ALEF_CHARS.find(c) !== -1;
 };
 
 global.shape_arabic_is_lam_char = function(c)
@@ -1093,53 +1093,53 @@ global.shape_arabic_in_link_range = function(c)
 
 global.shape_arabic_in_unlink_range = function(c)
 {
-	return c >= #'\xFE80' /* UNLINK_MAP_RANGE[0] */ && c <= #'\xFEF4' /* UNLINK_MAP_RANGE[1] */ || shape_arabic_is_lam_alef_char(c);
+	return c >= #'\xFE80' /* UNLINK_MAP_RANGE[0] */ && c <= #'\xFEF4' /* UNLINK_MAP_RANGE[1] */ || global.shape_arabic_is_lam_alef_char(c);
 };
 
 global.shape_arabic_is_linkable_before = function(c)
 {
-	if (!shape_arabic_in_link_range(c))
+	if (!global.shape_arabic_in_link_range(c))
 	{
 		return false;
 	}
-	var placement = CHAR_LINK_TYPE[c - #'\x0621' /* LINK_MAP_RANGE[0] */];
+	var placement = global.CHAR_LINK_TYPE[c - #'\x0621' /* LINK_MAP_RANGE[0] */];
 	return placement == 1 /* BEFORE */ || placement == 2 /* DUAL */ || placement == 3 /* CAUSING */;
 };
 
 global.shape_arabic_is_linkable_after = function(c)
 {
-	if (!shape_arabic_in_link_range(c))
+	if (!global.shape_arabic_in_link_range(c))
 	{
 		return false;
 	}
-	var placement = CHAR_LINK_TYPE[c - #'\x0621' /* LINK_MAP_RANGE[0] */];
+	var placement = global.CHAR_LINK_TYPE[c - #'\x0621' /* LINK_MAP_RANGE[0] */];
 	return placement == 2 /* DUAL */ || placement == 3 /* CAUSING */;
 };
 
 global.shape_arabic_get_char_link_type = function(c)
 {
-	if (!shape_arabic_in_link_range(c))
+	if (!global.shape_arabic_in_link_range(c))
 	{
 		return 0 /* NONE */;
 	}
-	return CHAR_LINK_TYPE[c - #'\x0621' /* LINK_MAP_RANGE[0] */];
+	return global.CHAR_LINK_TYPE[c - #'\x0621' /* LINK_MAP_RANGE[0] */];
 };
 
 global.shape_arabic_link_char = function(c, type)
 {
-	if (!shape_arabic_in_link_range(c))
+	if (!global.shape_arabic_in_link_range(c))
 	{
 		return c;
 	}
 	var indexLookupKey = c - #'\x0621' /* LINK_MAP_RANGE[0] */;
-	switch(CHAR_LINK_TYPE[indexLookupKey])
+	switch(global.CHAR_LINK_TYPE[indexLookupKey])
 	{
 		case 1: /* BEFORE */
-			return LINK_MAP[indexLookupKey] + type % 2;
+			return global.LINK_MAP[indexLookupKey] + type % 2;
 		case 2: /* DUAL */
-			return LINK_MAP[indexLookupKey] + type;
+			return global.LINK_MAP[indexLookupKey] + type;
 		case 0: /* NONE */
-			return LINK_MAP[indexLookupKey];
+			return global.LINK_MAP[indexLookupKey];
 		case 3: /* CAUSING */
 		default:
 			return c;
@@ -1148,29 +1148,29 @@ global.shape_arabic_link_char = function(c, type)
 
 global.shape_arabic_link_lam_alef = function(c, type)
 {
-	if (!shape_arabic_is_alef_char(c))
+	if (!global.shape_arabic_is_alef_char(c))
 	{
 		return c;
 	}
-	return LAMALEF_LINK_MAP[c - #'\x0622' /* LAMALEF_LINK_MAP_RANGE[0] */] + type % 2;
+	return global.LAMALEF_LINK_MAP[c - #'\x0622' /* LAMALEF_LINK_MAP_RANGE[0] */] + type % 2;
 };
 
 global.shape_arabic_unlink_char = function(c)
 {
-	if (!shape_arabic_in_unlink_range(c))
+	if (!global.shape_arabic_in_unlink_range(c))
 	{
 		return c;
 	}
-	return UNLINK_MAP[c - #'\xFE80' /* UNLINK_MAP_RANGE[0] */];
+	return global.UNLINK_MAP[c - #'\xFE80' /* UNLINK_MAP_RANGE[0] */];
 };
 
 global.shape_arabic_unlink_lam_alef = function(c)
 {
-	if (!shape_arabic_is_lam_alef_char(c))
+	if (!global.shape_arabic_is_lam_alef_char(c))
 	{
 		return c;
 	}
-	return LAMALEF_UNLINK_MAP[c - #'\xFEF5' /* LAMALEF_UNLINK_MAP_RANGE[0] */];
+	return global.LAMALEF_UNLINK_MAP[c - #'\xFEF5' /* LAMALEF_UNLINK_MAP_RANGE[0] */];
 };
 
 global.internal_shape_arabic_linkage_temp = [];
@@ -1187,7 +1187,7 @@ global.internal_shape_arabic = function(in_split_text, out_split_text, should_sp
 	for (var i = 0; i < in_split_text.length; i += 1)
 	{
 		var c = #(in_split_text[i]);
-		if (shape_arabic_get_char_link_type(c) === 3 /* CAUSING */)
+		if (global.shape_arabic_get_char_link_type(c) === 3 /* CAUSING */)
 		{
 			res.add($(c));
 			type2 = 3 /* MEDIAL */;
@@ -1195,30 +1195,30 @@ global.internal_shape_arabic = function(in_split_text, out_split_text, should_sp
 		}
 		var j = i + 1;
 		var cj = #(in_split_text[j]);
-		for (; j < in_split_text.length - 1 && shape_arabic_is_transparent_char(cj); j += 1)
+		for (; j < in_split_text.length - 1 && global.shape_arabic_is_transparent_char(cj); j += 1)
 		{
 			cj = #(in_split_text[j]);
 		}
 		type1 = type2 === 2 /* INITIAL */ || type2 === 3 /* MEDIAL */ ? 1 /* FINAL */ : 0 /* ISOLATED */;
 		if (j < in_split_text.length)
 		{
-			if (shape_arabic_is_lam_char(c) && shape_arabic_is_alef_char(cj))
+			if (global.shape_arabic_is_lam_char(c) && global.shape_arabic_is_alef_char(cj))
 			{
-				res.add($(shape_arabic_link_lam_alef(cj, type1)));
+				res.add($(global.shape_arabic_link_lam_alef(cj, type1)));
 				type2 = type1;
 				i = j;
 				continue;
 			}
-			if (shape_arabic_is_linkable_after(c) && shape_arabic_is_linkable_before(cj))
+			if (global.shape_arabic_is_linkable_after(c) && global.shape_arabic_is_linkable_before(cj))
 			{
 				type1 |= 2 /* INITIAL */;
 			}
 		}
 		{
-			res.add($(shape_arabic_link_char(c, type1)));
-			if (should_split_by_linkage && (type1 === 1 /* FINAL */ || type1 === 0 /* ISOLATED */))
+			res.add($(global.shape_arabic_link_char(c, type1)));
+			if (global.should_split_by_linkage && (type1 === 1 /* FINAL */ || type1 === 0 /* ISOLATED */))
 			{
-				if (res.count === 1 && shape_arabic_is_transparent_char(#(res[0])) && out_split_text.count - 1 >= 0)
+				if (res.count === 1 && global.shape_arabic_is_transparent_char(#(res[0])) && out_split_text.count - 1 >= 0)
 				{
 					out_split_text[out_split_text.count - 1] += res[0];
 				}
@@ -1233,7 +1233,7 @@ global.internal_shape_arabic = function(in_split_text, out_split_text, should_sp
 	}
 	if (should_split_by_linkage && res.count > 0)
 	{
-		if (res.count === 1 && shape_arabic_is_transparent_char(#(res[0])) && out_split_text.count - 1 >= 0)
+		if (res.count === 1 && global.shape_arabic_is_transparent_char(#(res[0])) && out_split_text.count - 1 >= 0)
 		{
 			out_split_text[out_split_text.count - 1] += res[0];
 		}
@@ -1255,7 +1255,7 @@ global.shape_arabic = function(text, should_split_by_linkage=false)
 	}
 	var out_split_text = global.shape_arabic_array_temp;
 	out_split_text.clear();
-	internal_shape_arabic(text, out_split_text, should_split_by_linkage);
+	global.internal_shape_arabic(text, out_split_text, should_split_by_linkage);
 	if (should_split_by_linkage)
 	{
 		return out_split_text;
@@ -1271,14 +1271,14 @@ global.internal_unshape_arabic = function(in_split_text, out_split_text)
 	for (var i = 0; i < in_split_text.length; i++)
 	{
 		var isBground = #(in_split_text[i]);
-		if (shape_arabic_is_lam_alef_char(isBground))
+		if (global.shape_arabic_is_lam_alef_char(isBground))
 		{
 			out_split_text.add('\x0644' /* LAM_CHAR */);
-			out_split_text.add($(shape_arabic_unlink_lam_alef(isBground)));
+			out_split_text.add($(global.shape_arabic_unlink_lam_alef(isBground)));
 		}
 		else
 		{
-			out_split_text.add($(shape_arabic_unlink_char(isBground)));
+			out_split_text.add($(global.shape_arabic_unlink_char(isBground)));
 		}
 	}
 };
@@ -1293,16 +1293,16 @@ global.unshape_arabic = function(text)
 	}
 	var out_split_text = global.unshape_arabic_array_temp;
 	out_split_text.clear();
-	var end_pos = internal_unshape_arabic(text, out_split_text);
+	var end_pos = global.internal_unshape_arabic(text, out_split_text);
 	return out_split_text.join("");
 };
 
 global.dmt = function(args*)
 {
-	Debug.message(args.join(", ")+": "+Scripts.getTraceString());
+	global.Debug.message(args.join(", ")+": "+global.Scripts.getTraceString());
 };
 @if(DEBUG==1)
-global._dm = Debug.message;
+global._dm = global.Debug.message;
 @endif
 @if(DEBUG!=1)
 global._dm = function() {};
@@ -1312,16 +1312,16 @@ global._dm = function() {};
 if (typeof global.imageTagLayerType == "undefined")
 {
 	global.imageTagLayerType	= %[
-		opaque:		%[type:ltOpaque],
-		rect:		%[type:ltOpaque],
-		addalpha:	%[type:ltAddAlpha],
-		add:		%[type:ltAdditive],
-		sub:		%[type:ltSubtractive],
-		mul:		%[type:ltMultiplicative],
-		dodge:		%[type:ltDodge],
-		darken:		%[type:ltDarken],
-		lighten:	%[type:ltLighten],
-		screen:		%[type:ltScreen],
+		opaque:		%[type:global.ltOpaque],
+		rect:		%[type:global.ltOpaque],
+		addalpha:	%[type:global.ltAddAlpha],
+		add:		%[type:global.ltAdditive],
+		sub:		%[type:global.ltSubtractive],
+		mul:		%[type:global.ltMultiplicative],
+		dodge:		%[type:global.ltDodge],
+		darken:		%[type:global.ltDarken],
+		lighten:	%[type:global.ltLighten],
+		screen:		%[type:global.ltScreen],
 	];
 }
 
@@ -1383,11 +1383,11 @@ if(typeof global.Plugins.cxdec != "undefined" && typeof global.Plugins.cxdec.emb
 		if((opt = emb[i]) == "" || (ep=opt.indexOf("=")) < 0) continue;
 		tag = opt.substr(0,ep);
 		val = opt.substr(ep+1);
-		now = System.getArgument("-"+tag);
+		now = global.System.getArgument("-"+tag);
 		if(now != (val!))
 		{
-			System.inform(@"不正なオプションです: ${tag}");
-			System.exit();
+			global.System.inform(@"不正なオプションです: ${tag}");
+			global.System.exit();
 		}
 	}
 }
@@ -1402,11 +1402,11 @@ global.getClassName = function( obj )
 	var tmp = [];
 	var ret = [];
 	if( typeof obj == "Object" ){
-		ret = Scripts.getClassNames(obj);
+		ret = global.Scripts.getClassNames(obj);
 		if( ret instanceof "Array" ){
 			tmp.assign( ret );
 
-			//for( var i=0; i<tmp.count; i++ )	dm("class: [" + i + "] = " + tmp[i]);
+			//for( var i=0; i<tmp.count; i++ )	global.dm("class: [" + i + "] = " + tmp[i]);
 			if( tmp.count > 0 )
 				return tmp[0];
 		}
@@ -1423,12 +1423,12 @@ global.getLayerInfo = function()
 		{
 			{
 				var c = children[i];
-				if(c.parent == kag.primaryLayer && c.name == "Menuitem[pool]")
+				if(c.parent == global.kag.primaryLayer && c.name == "Menuitem[pool]")
 					continue;
 				if(children[i] instanceof "MessageCharLayer")
 					continue;
 				text	+= indent + (c.visible ? "■" : "□")+" "+c.name+(typeof c.layerID != "undefined" ? "/"+c.layerID : "")+
-					(typeof c.storage != "undefined" ? " <"+Storages.extractStorageName(c.storage)+">" : "")+
+					(typeof c.storage != "undefined" ? " <"+global.Storages.extractStorageName(c.storage)+">" : "")+
 					"["+c.type+"]"+
 //					"["+(isbase ? ._effect +"/in:"+.childEffect : (typeof ._effect != "undefined" ? (._effect != "" ? ._effect : (typeof .parent.childEffect != "undefined" ? .parent.childEffect : "")): ""))+"]"+
 					" ("+c.left+", "+c.top+(typeof c.realLeft != "undefined" ? "/"+c.realLeft+","+c.realTop+"/"+c.realImageLeft+","+c.realImageTop : "")+")-"+
@@ -1444,35 +1444,35 @@ global.getLayerInfo = function()
 		}
 		return text;
 	};
-	return func(kag.primaryLayer.children, "", func);
+	return func(global.kag.primaryLayer.children, "", func);
 };
 global.sharelogdir = "file://192.168.101.232/exchange/WoHエラーログ/";
 global.saveLogToExchange = function()
 {
-	if(Storages.isExistentStorage(System.exePath+"savedata/NoSendExchange.txt"))
+	if(global.Storages.isExistentStorage(global.System.exePath+"savedata/NoSendExchange.txt"))
 	{
-		dm("saveLogToExchange処理は savedata/NoSendExchange.txt が存在するため中断しました。");
+		global.dm("saveLogToExchange処理は savedata/NoSendExchange.txt が存在するため中断しました。");
 		return;
 	}
 
 	var	logfn	= "krkr.console.log";
-	var	date	= new Date();
+	var	date	= new global.Date();
 	var	datestr;
 	{
 		var d = date;
 		datestr	= "%02d%02d%02d-%02d%02d%02d".sprintf(d.getYear() % 100, d.getMonth()+1, d.getDate(), d.getHours(), d.getMinutes(), d.getSeconds());
 	}
-	var	linfo	= getLayerInfo();
-	dm(linfo);	//	レイヤー構成をログ
+	var	linfo	= global.getLayerInfo();
+	global.dm(linfo);	//	レイヤー構成をログ
 	var	savefn	= datestr+".bmp";
-	var	savedir	= System.dataPath + "excpdata/";
-	Storages.createDirectory(savedir) if !Storages.isExistentDirectory(savedir);
-	kag.saveBookMarkToFile(savedir+savefn);	//	セーブ可能ならデータを保存する
+	var	savedir	= global.System.dataPath + "excpdata/";
+	global.Storages.createDirectory(savedir) if !global.Storages.isExistentDirectory(savedir);
+	global.kag.saveBookMarkToFile(savedir+savefn);	//	セーブ可能ならデータを保存する
 	var	copied	= false;
-	if(Storages.isExistentDirectory(sharelogdir))
+	if(global.Storages.isExistentDirectory(global.sharelogdir))
 	{
-		Storages.exportFile(System.dataPath+logfn, sharelogdir+datestr+"."+logfn);
-		Storages.exportFile(savedir+savefn, sharelogdir+savefn);
+		global.Storages.exportFile(global.System.dataPath+logfn, global.sharelogdir+datestr+"."+logfn);
+		global.Storages.exportFile(savedir+savefn, global.sharelogdir+savefn);
 		copied	= true;
 	}
 
@@ -1485,15 +1485,15 @@ global.saveLogToExchange = function()
 	text	+= "error log : "+datestr+"."+logfn+"\r\n";
 	text	+= "save data : "+savefn+"\r\n";
 	text	+= "layer info: \r\n" + linfo;
-	Clipboard.asText	= text;
+	global.Clipboard.asText	= text;
 	var	lines	= [ text ];
-	lines.save(System.dataPath+"lasterrorinfo.txt");
+	lines.save(global.System.dataPath+"lasterrorinfo.txt");
 	var	msg	= "現在の情報をクリップボードへコピーしました。\n問題の発生を伝えるときに、この情報も渡してください。\n(念の為 savedata/lasterrorinfo.txt にも同じ情報を記録しています)";
 	msg	+= "(対応するエラーログ・セーブデータも提出してください)" if !copied;
-	System.inform(msg);
+	global.System.inform(msg);
 };
 
-Layer.setFontFace	= function(face, height=font.height, italic=font.italic)
+global.Layer.setFontFace	= function(face, height=this.font.height, italic=this.font.italic)
 {
 @if(0)
 	if (typeof(global.load_prerendered_fonts) === "Object")
@@ -1501,30 +1501,30 @@ Layer.setFontFace	= function(face, height=font.height, italic=font.italic)
 		global.load_prerendered_fonts(sf.language);
 	}
 @endif
-	var	fh	= Math.abs(font.height);
-	var	nh	= Math.abs(height);
+	var	fh	= global.Math.abs(this.font.height);
+	var	nh	= global.Math.abs(height);
 	fh |= 0;
 	nh |= 0;
-//	dm(name+": "+font.face+" !== "+face+" || "+fh+" !== "+nh+" || "+font.italic+" !== "+italic);
-	if(font.face != face || fh != nh || font.italic != italic)
+//	global.dm(name+": "+this.font.face+" !== "+face+" || "+fh+" !== "+nh+" || "+this.font.italic+" !== "+italic);
+	if(this.font.face != face || fh != nh || this.font.italic != italic)
 	{
 @if(0)
 		global.Layer.getFontList();
 @endif
-		font.height	= height;
-		font.italic	= italic;
-		//dm(" font.face = " + font.face + " / face = " + face);
-		font.face = face if face !== void && face != "";
+		this.font.height	= height;
+		this.font.italic	= italic;
+		//global.dm(" this.font.face = " + this.font.face + " / face = " + face);
+		this.font.face = face if face !== void && face != "";
 @if(0)
 		var	loaded	= loadedBitmapFonts[font.face], st;
 		if(loaded !== void && (st = loaded[nh]) !== void)
 		{
 			st	+= fontItalicSuffix if italic;
 			st	+= fontFileExt;
-			if(Storages.isExistentStorage(st))
+			if(global.Storages.isExistentStorage(st))
 				font.mapPrerenderedFont(st);
 //			else
-//				dm(name+".setFontFace: "+st+" is not found.");
+//				global.dm(name+".setFontFace: "+st+" is not found.");
 		}
 @endif
 		return true;
@@ -1544,7 +1544,7 @@ global.strftime = function(sFormat, date)
 {
 	if ((typeof(date) !== "Object") || !(date instanceof "Date"))
 	{
-		date = new Date();
+		date = new global.Date();
 	}
 	var nDay = date.getDay();
 	var nDate = date.getDate();
@@ -1562,13 +1562,13 @@ global.strftime = function(sFormat, date)
 	{
 		var nDay = date.getDay();
 		var nDate = date.getDate();
-		var target = new Date(date);
+		var target = new global.Date(date);
 		target.setDate(nDate - ((nDay+6)%7) + 3);
 		return target;
 	};
 	var zeroPad = function(nNum, nPad)
 	{
-		return (((Math.pow(10, nPad) | 0) + nNum) + '').substring(1);
+		return (((global.Math.pow(10, nPad) | 0) + nNum) + '').substring(1);
 	};
 	var match_tbl = %[
 		'%a' => aDays[nDay].substring(0,3),
@@ -1578,7 +1578,7 @@ global.strftime = function(sFormat, date)
 @if(0)
 		'%c' => date.toUTCString(),
 @endif
-		'%C' => Math.floor(nYear/100),
+		'%C' => global.Math.floor(nYear/100),
 		'%d' => zeroPad(nDate, 2),
 		'%e' => nDate,
 @if(0)
@@ -1596,7 +1596,7 @@ global.strftime = function(sFormat, date)
 		'%M' => zeroPad(date.getMinutes(), 2),
 		'%p' => ((nHour<12) ? 'AM' : 'PM'),
 		'%P' => ((nHour<12) ? 'am' : 'pm'),
-		'%s' => Math.round(date.getTime()/1000),
+		'%s' => global.Math.round(date.getTime()/1000),
 		'%S' => zeroPad(date.getSeconds(), 2),
 		'%u' => ((nDay !== 0) ? nDay : 7),
 @if(0)
@@ -1606,7 +1606,7 @@ global.strftime = function(sFormat, date)
 			target.setMonth(0, 1);
 			var nJan1 = target.getDay();
 			if (nJan1!==4) target.setMonth(0, 1 + ((4-nJan1)+7)%7);
-			return zeroPad(1 + Math.ceil((n1stThu-target)/604800000), 2);
+			return zeroPad(1 + global.Math.ceil((n1stThu-target)/604800000), 2);
 		})(),
 @endif
 		'%w' => nDay,

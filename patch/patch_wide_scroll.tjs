@@ -1,70 +1,70 @@
 ﻿@if(!WIDE_MODE)
-kag.tagHandlers.initscroll = function(mp) {
+global.kag.tagHandlers.initscroll = function(mp) {
 	return 0;
 };
 
-kag.tagHandlers.dispscroll = function(mp) {
+global.kag.tagHandlers.dispscroll = function(mp) {
 	return 0;
 };
 @endif
 
 @if(WIDE_MODE)
-kag.tagHandlers.initscroll = function(mp) {
+global.kag.tagHandlers.initscroll = function(mp) {
 	// Parameters: from, to, time
 	mp.time = -1;
-	return tagHandlers.dispscroll(mp);
-} incontextof kag;
+	return this.tagHandlers.dispscroll(mp);
+} incontextof global.kag;
 
-kag.tagHandlers.dispscroll = function(mp) {
+global.kag.tagHandlers.dispscroll = function(mp) {
 	// Parameters: from, to, time
-	originalscrollYOffset = void;
+	this.originalscrollYOffset = void;
 	var moveTime = (mp.time != 0)? mp.time : 600;
 	// TODO dunno what's the difference between "from" and "to" - they are almost always given the same value - need to test a scene where this is not the case.
 	var yOffset = +mp.from;
 
-	if (scrollYOffset == yOffset) {
+	if (this.scrollYOffset == yOffset) {
 		return 0;
 	}
 
 	// TODO time=-1 is a patch when being called from initscroll
-	if ((!wideScreen && !isCropped) || mp.time == -1) {
-		updateScrollPosition(,yOffset);
+	if ((!this.wideScreen && !global.isCropped) || mp.time == -1) {
+		this.updateScrollPosition(,yOffset);
 		return 0;
 	}
 
 	//var waitMoveTag = %["tagname" => "wm", "canskip" => 1];
 	//conductor.pendings.insert(0, waitMoveTag);
 	var moveTagParams = %["layer" => "primaryLayer", "time" => moveTime, "bg" => true, "textoff" => 1, "path" => "(0,"+("" + yOffset)+",255)"];
-	return tagHandlers.move(moveTagParams);
-} incontextof kag;
+	return this.tagHandlers.move(moveTagParams);
+} incontextof global.kag;
 
-kag.updateScrollPosition = function(x, y) {
-	scrollXOffset = x if x !== void;
-	scrollYOffset = y if y !== void;
+global.kag.updateScrollPosition = function(x, y) {
+	this.scrollXOffset = x if x !== void;
+	this.scrollYOffset = y if y !== void;
 
-	if (!wideScreen && !isCropped) return;
+	if (!this.wideScreen && !global.isCropped) return;
 
-	updateScrollRecursively(this.primaryLayer, scrollXOffset, scrollYOffset);
-} incontextof kag;
+	this.updateScrollRecursively(this.primaryLayer, this.scrollXOffset, this.scrollYOffset);
+} incontextof global.kag;
 
-kag.scrollDown = function() {
-	originalscrollYOffset = scrollYOffset if originalscrollYOffset === void;
-	updateScrollPosition(,Math.min(scrollYOffset+scrollYOffsetSpeed, scrollYOffsetMax));
-} incontextof kag;
+global.kag.scrollDown = function() {
+	this.originalscrollYOffset = this.scrollYOffset if this.originalscrollYOffset === void;
+	this.updateScrollPosition(,global.Math.min(this.scrollYOffset+this.scrollYOffsetSpeed, this.scrollYOffsetMax));
+} incontextof global.kag;
 
-kag.scrollUp = function() {
-	originalscrollYOffset = scrollYOffset if originalscrollYOffset === void;
-	updateScrollPosition(,Math.max(scrollYOffset-scrollYOffsetSpeed, scrollYOffsetMin));
-} incontextof kag;
+global.kag.scrollUp = function() {
+	this.originalscrollYOffset = this.scrollYOffset if this.originalscrollYOffset === void;
+	this.updateScrollPosition(,global.Math.max(this.scrollYOffset-this.scrollYOffsetSpeed, this.scrollYOffsetMin));
+} incontextof global.kag;
 
-kag.scrollReset = function() {
-	if (originalscrollYOffset !== void) {
-		updateScrollPosition(,originalscrollYOffset);
-		originalscrollYOffset = void;
+global.kag.scrollReset = function() {
+	if (this.originalscrollYOffset !== void) {
+		this.updateScrollPosition(,this.originalscrollYOffset);
+		this.originalscrollYOffset = void;
 	}
-} incontextof kag;
+} incontextof global.kag;
 
-kag.updateScrollRecursively = function(layer, x, y) {
+global.kag.updateScrollRecursively = function(layer, x, y) {
 	if (layer.isbg) {
 		if (layer.parent === this.primaryLayer) {
 			layer.topScroll = -y;
@@ -75,10 +75,10 @@ kag.updateScrollRecursively = function(layer, x, y) {
 	} else {
 		layer.topScroll = y;
 	}
-} incontextof kag;
+} incontextof global.kag;
 
 
-class LinearMoverBackground extends LinearMoverEx
+class LinearMoverBackground extends global.LinearMoverEx
 {
 	function LinearMoverBackground()
 	{
@@ -87,7 +87,7 @@ class LinearMoverBackground extends LinearMoverEx
 
 	function updateData(a, b)
 	{
-		kag.updateScrollPosition(a, b);
+		global.kag.updateScrollPosition(a, b);
 	}
 }
 @endif

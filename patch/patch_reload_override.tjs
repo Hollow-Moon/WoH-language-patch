@@ -1,6 +1,6 @@
 ﻿
-global.KAGWindow_patch_reload_original = KAGWindow;
-class KAGWindow_patch_reload_override extends KAGWindow_patch_reload_original
+global.KAGWindow_patch_reload_original = global.KAGWindow;
+class KAGWindow_patch_reload_override extends global.KAGWindow_patch_reload_original
 {
 	function KAGWindow_patch_reload_override()
 	{
@@ -9,7 +9,7 @@ class KAGWindow_patch_reload_override extends KAGWindow_patch_reload_original
 
 	function KAGWindow()
 	{
-		KAGWindow_patch_reload_override(...);
+		this.KAGWindow_patch_reload_override(...);
 	}
 
 @if(GAME_WOHN)
@@ -37,7 +37,7 @@ class KAGWindow_patch_reload_override extends KAGWindow_patch_reload_original
 		{
 			this.isFirstProcess = false;
 			this.has_title_menu = true;
-			closeTitleMenu();
+			global.closeTitleMenu();
 			this.setConductorToMain();
 			this.conductor.inProcessing = false;
 			this.conductor.interupted = false;
@@ -47,10 +47,10 @@ class KAGWindow_patch_reload_override extends KAGWindow_patch_reload_original
 		}
 @endif
 @if(GAME_FATE||GAME_FHAT||GAME_WOHN)
-		saveBookMark(1000, true);
+		this.saveBookMark(1000, true);
 @endif
 @if(!GAME_FATE&&!GAME_FHAT&&!GAME_WOHN)
-		saveBookMark(1000, false);
+		this.saveBookMark(1000, false);
 @endif
 	}
 
@@ -109,10 +109,10 @@ class KAGWindow_patch_reload_override extends KAGWindow_patch_reload_original
 			return;
 		}
 		tf.load_no = 1000;
-		process("call.ks", "*load");
+		global.process("call.ks", "*load");
 @endif
 @if(!GAME_WOHN)
-		loadBookMark(1000);
+		this.loadBookMark(1000);
 @endif
 	}
 
@@ -122,4 +122,4 @@ class KAGWindow_patch_reload_override extends KAGWindow_patch_reload_original
 		this.reload_scenario_execute();
 	}
 }
-global.KAGWindow = KAGWindow_patch_reload_override;
+global.KAGWindow = global.KAGWindow_patch_reload_override;

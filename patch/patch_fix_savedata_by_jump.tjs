@@ -1,6 +1,6 @@
 ﻿
-global.KAGWindow_patch_fix_savedata_by_jump_original = KAGWindow;
-class KAGWindow_patch_fix_savedata_by_jump_override extends KAGWindow_patch_fix_savedata_by_jump_original
+global.KAGWindow_patch_fix_savedata_by_jump_original = global.KAGWindow;
+class KAGWindow_patch_fix_savedata_by_jump_override extends global.KAGWindow_patch_fix_savedata_by_jump_original
 {
 	function KAGWindow_patch_fix_savedata_by_jump_override()
 	{
@@ -9,7 +9,7 @@ class KAGWindow_patch_fix_savedata_by_jump_override extends KAGWindow_patch_fix_
 
 	function KAGWindow()
 	{
-		KAGWindow_patch_fix_savedata_by_jump_override(...);
+		this.KAGWindow_patch_fix_savedata_by_jump_override(...);
 	}
 
 	function internalStoreFlags(f)
@@ -21,38 +21,38 @@ class KAGWindow_patch_fix_savedata_by_jump_override extends KAGWindow_patch_fix_
 
 	function restoreFlags()
 	{
-		if (this.sflags.savedataRepair || (pcflags.patch_version === void || (pcflags.patch_version.join("|") !== global.PatchVersion.join("|"))))
+		if (this.sflags.savedataRepair || (this.pcflags.patch_version === void || (this.pcflags.patch_version.join("|") !== global.PatchVersion.join("|"))))
 		{
-			(Dictionary.assignStruct incontextof flags)(pflags);
+			(global.Dictionary.assignStruct incontextof this.flags)(this.pflags);
 			
 			var save_testmode = global.testmode;
 			global.testmode = true;
-			var scenario = pcflags.mainConductor.storageShortName;
+			var scenario = this.pcflags.mainConductor.storageShortName;
 			var flowfile = void;
 			var flowid = void;
 @if(GAME_FATE||GAME_FHAT)
-			if (typeof(pcflags.current_id) === "Integer" && typeof(pcflags.current_flowfile) === "String")
+			if (typeof(this.pcflags.current_id) === "Integer" && typeof(this.pcflags.current_flowfile) === "String")
 			{
 				scenario = void;
-				flowid = pcflags.current_id;
-				flowfile = pcflags.current_flowfile;
+				flowid = this.pcflags.current_id;
+				flowfile = this.pcflags.current_flowfile;
 			}
 @endif
 @if(GAME_WOHN)
-			var wanted_scriptno = pcflags.scriptno - 1;
-			if (typeof(pcflags.scriptno) === "Integer" && typeof(pcflags.scripts) === "Object" && pcflags.scripts.count > wanted_scriptno && pcflags.scripts[wanted_scriptno] !== "teatime.ks")
+			var wanted_scriptno = this.pcflags.scriptno - 1;
+			if (typeof(this.pcflags.scriptno) === "Integer" && typeof(this.pcflags.scripts) === "Object" && this.pcflags.scripts.count > wanted_scriptno && this.pcflags.scripts[wanted_scriptno] !== "teatime.ks")
 			{
-				scenario = pcflags.scripts[wanted_scriptno];
+				scenario = this.pcflags.scripts[wanted_scriptno];
 			}
-			else if (typeof(pcflags.chart_storage) === "String" && typeof(pcflags.chart_current) === "Integer")
+			else if (typeof(this.pcflags.chart_storage) === "String" && typeof(this.pcflags.chart_current) === "Integer")
 			{
 				scenario = void;
-				flowfile = pcflags.chart_storage;
-				flowid = pcflags.chart_current;
+				flowfile = this.pcflags.chart_storage;
+				flowid = this.pcflags.chart_current;
 			}
-			if (typeof(pflags.av_no) === "Integer" && typeof(pflags.av_storage) === "Object" && pflags.av_storage.count > pflags.av_no)
+			if (typeof(this.pflags.av_no) === "Integer" && typeof(this.pflags.av_storage) === "Object" && this.pflags.av_storage.count > this.pflags.av_no)
 			{
-				global.startArchiveWithScenario(pflags.av_storage[pflags.av_no]);
+				global.startArchiveWithScenario(this.pflags.av_storage[this.pflags.av_no]);
 			}
 			else
 @endif
@@ -63,7 +63,7 @@ class KAGWindow_patch_fix_savedata_by_jump_override extends KAGWindow_patch_fix_
 			if (typeof(scenario) === "String")
 @endif
 			{
-				this.set_skip(, pcflags.mainConductor.curLabel);
+				this.set_skip(, this.pcflags.mainConductor.curLabel);
 			}
 @if(!GAME_WOHN)
 			this.do_immediate_skip();

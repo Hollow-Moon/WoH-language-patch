@@ -12,17 +12,17 @@ global._mt = function(text)
 global.settingsDomain = "settings";
 global.__s = function(text, context)
 {
-	return _x(text, context, settingsDomain);
+	return global._x(text, context, global.settingsDomain);
 } incontextof global;
 
 global.__si = function(text, context)
 {
-	return (__s("" + text, context)) | 0;
+	return (global.__s("" + text, context)) | 0;
 } incontextof global;
 
 global.__sb = function(text, context)
 {
-	return __si(text, context) == true;
+	return global.__si(text, context) == true;
 } incontextof global;
 
 global.__st = function(text, context)
@@ -32,28 +32,28 @@ global.__st = function(text, context)
 
 global.__sti = function(text, context)
 {
-	return (__st(text, context)) | 0;
+	return (global.__st(text, context)) | 0;
 } incontextof global;
 
 global.loadMOs = function(language)
 {
-	removeAllMO();
-	var translation_mo_path = find_file_in_language_paths("Translation.mo", language);
+	global.removeAllMO();
+	var translation_mo_path = global.find_file_in_language_paths("Translation.mo", language);
 	if (typeof(translation_mo_path) === "String")
 	{
-		loadMoFile(translation_mo_path);
+		global.loadMoFile(translation_mo_path);
 	}
-	var settings_mo_path = find_file_in_language_paths("Settings.mo", language);
+	var settings_mo_path = global.find_file_in_language_paths("Settings.mo", language);
 	if (typeof(settings_mo_path) === "String")
 	{
-		loadMoFile(settings_mo_path, settingsDomain);
+		global.loadMoFile(settings_mo_path, global.settingsDomain);
 	}
 };
 
 global.refreshMenuString = function(kag, menu)
 {
 	if (typeof(menu.originalCaption) === "String") {
-		menu.caption = __(menu.originalCaption);
+		menu.caption = global.__(menu.originalCaption);
 	}
 	if (typeof(menu.captionArg) !== "undefined") {
 		menu.caption = menu.caption.sprintf(menu.captionArg);
@@ -61,7 +61,7 @@ global.refreshMenuString = function(kag, menu)
 
 	var children = menu.children;
 	for (var i = 0, internal_forloop_count = children.count; i < internal_forloop_count; i += 1)
-		refreshMenuString(kag, children[i]);
+		global.refreshMenuString(kag, children[i]);
 @if(ZOOM_WINDOW)
 	kag.refreshExSystemMenu();
 @endif
@@ -69,7 +69,7 @@ global.refreshMenuString = function(kag, menu)
 
 global.refreshStringWithLanguage = function(kag, language)
 {
-	loadMOs(language);
+	global.loadMOs(language);
 
 	var patch_info_url = __s("https://example.com/", "patch_info_url");
 	if (patch_info_url !== "https://example.com/")
@@ -83,7 +83,7 @@ global.refreshStringWithLanguage = function(kag, language)
 	}
 	if (typeof(kag) === "Object")
 	{
-		refreshMenuString(kag, kag.menu);
+		global.refreshMenuString(kag, kag.menu);
 		if (typeof(kag.hintlayer) === "Object")
 		{
 			invalidate kag.hintlayer;
@@ -123,7 +123,7 @@ global.load_fonts = function(language)
 		global.Font.rasterizer = raster_to_use;
 	}
 @endif
-	if (loaded_language_fonts.contains(language))
+	if (global.loaded_language_fonts.contains(language))
 	{
 		return;
 	}
@@ -141,10 +141,10 @@ global.load_fonts = function(language)
 		rasterizers.add(0);
 	}
 @endif
-	var fontFiles = getFontFiles(language);
+	var fontFiles = global.getFontFiles(language);
 	for (var i = 0, internal_forloop_count = fontFiles.count; i < internal_forloop_count; i += 1)
 	{
-		var font_file_path = find_file_in_language_paths(fontFiles[i], language);
+		var font_file_path = global.find_file_in_language_paths(fontFiles[i], language);
 		if (typeof(font_file_path) === "String")
 		{
 			if (typeof(global.Font) === "Object" && typeof(global.Font.addFont) === "Object")
@@ -167,30 +167,30 @@ global.load_fonts = function(language)
 					var result = global.Font.addFont(font_file_path);
 					if (typeof(result) === "Object" && result.count > 0)
 					{
-						Debug.message(("Successfully added font \"%s\" from file \"%s\"").sprintf(result[0], font_file_path));
+						global.Debug.message(("Successfully added font \"%s\" from file \"%s\"").sprintf(result[0], font_file_path));
 					}
 					else
 					{
-						Debug.message(("Failed to add font file \"%s\"").sprintf(fontFiles[i]));
+						global.Debug.message(("Failed to add font file \"%s\"").sprintf(fontFiles[i]));
 					}
 				}
 			}
-			else if (typeof(System.addFont) === "Object")
+			else if (typeof(global.System.addFont) === "Object")
 			{
-				var result = System.addFont(font_file_path, true);
+				var result = global.System.addFont(font_file_path, true);
 				if (typeof(result) === "Integer" && result > 0)
 				{
-					Debug.message(("Successfully added font \"%s\"").sprintf(fontFiles[i]));
+					global.Debug.message(("Successfully added font \"%s\"").sprintf(fontFiles[i]));
 				}
 				else
 				{
-					Debug.message(("Failed to add font file \"%s\"").sprintf(fontFiles[i]));
+					global.Debug.message(("Failed to add font file \"%s\"").sprintf(fontFiles[i]));
 				}
 			}
 		}
 		else
 		{
-			dm(("warning: font %s does not exist").sprintf(fontFiles[i]));
+			global.dm(("warning: font %s does not exist").sprintf(fontFiles[i]));
 		}
 	}
 @if(!FREETYPE_FONT)
@@ -200,31 +200,31 @@ global.load_fonts = function(language)
 	}
 @endif
 
-	loaded_language_fonts.add(language);
+	global.loaded_language_fonts.add(language);
 };
 
 global.loaded_language_prerendered_fonts = [];
 global.load_prerendered_fonts = function(language)
 {
-	if (loaded_language_prerendered_fonts.contains(language)) {
+	if (global.loaded_language_prerendered_fonts.contains(language)) {
 		return;
 	}
 
 	if (typeof(global.bitmapFonts) === "Object")
 	{
-		var prerenderedFontFiles = getPrerenderedFontFiles(language);
+		var prerenderedFontFiles = global.getPrerenderedFontFiles(language);
 		for (var i = 0, internal_forloop_count = prerenderedFontFiles.count; i < internal_forloop_count; i += 2)
 		{
-			var prerendered_font_file_path = find_file_in_language_paths(prerenderedFontFiles[i + 1], language);
+			var prerendered_font_file_path = global.find_file_in_language_paths(prerenderedFontFiles[i + 1], language);
 			if (typeof(prerendered_font_file_path) === "String")
 			{
-				dm(("Adding prerendered font %s").sprintf(prerenderedFontFiles[i]));
+				global.dm(("Adding prerendered font %s").sprintf(prerenderedFontFiles[i]));
 				global.bitmapFonts.push(prerenderedFontFiles[i]);
 				global.bitmapFonts.push(prerendered_font_file_path);
 			}
 			else
 			{
-				dm(("warning: prerendered font %s does not exist").sprintf(prerenderedFontFiles[i]));
+				global.dm(("warning: prerendered font %s does not exist").sprintf(prerenderedFontFiles[i]));
 			}
 		}
 		for (var i = 0, internal_forloop_count = global.bitmapFonts.count; i < internal_forloop_count; i += 2)
@@ -233,13 +233,13 @@ global.load_prerendered_fonts = function(language)
 		}
 	}
 
-	loaded_language_prerendered_fonts.add(language);
+	global.loaded_language_prerendered_fonts.add(language);
 };
 
 
 global.setFontWithLanguage = function(language, kag=global.kag)
 {
-	load_fonts(language);
+	global.load_fonts(language);
 
 	{
 		var w = kag;
@@ -282,7 +282,7 @@ global.setFontWithLanguage = function(language, kag=global.kag)
 	}
 
 	/// History ///
-	var hf = kag.chDefaultFace !== void && get_historyFont(kag)[kag.chDefaultFace] !== void ? get_historyFont(kag)[kag.chDefaultFace] : get_historyFontDefault(kag);
+	var hf = kag.chDefaultFace !== void && global.get_historyFont(kag)[kag.chDefaultFace] !== void ? global.get_historyFont(kag)[kag.chDefaultFace] : global.get_historyFontDefault(kag);
 
 	if (typeof(kag.historyLayer) === "Object")
 	{
@@ -361,7 +361,7 @@ global.chara2displayname = %[];
 global.imagesFolderName = "images";
 global.subbedVideosFlagName = "subbedVideos";
 global.videosFolderName = "videos";
-global.japanese_patch_name = devMode? "Japanese" : mainPatchName;
+global.japanese_patch_name = global.devMode? "Japanese" : global.mainPatchName;
 global.japaneseLanguageLoaded = false;
 global.languageSearchPathFile = "LanguageSearchpath.ksc";
 global.languageSearchPath = [];
@@ -403,25 +403,25 @@ global.find_file_in_language_paths = function(filename, language = void, exts = 
 	{
 		return false;
 	}
-	if (typeof(languagePatchPaths[language]) !== "Object")
+	if (typeof(global.languagePatchPaths[language]) !== "Object")
 	{
-		languagePatchPaths[language] = [];
+		global.languagePatchPaths[language] = [];
 	}
-	if (typeof(languageFileCache[language]) !== "Object")
+	if (typeof(global.languageFileCache[language]) !== "Object")
 	{
-		languageFileCache[language] = %[];
+		global.languageFileCache[language] = %[];
 	}
-	if (typeof(languageFilePathCache[language]) !== "Object")
+	if (typeof(global.languageFilePathCache[language]) !== "Object")
 	{
-		languageFilePathCache[language] = %[];
+		global.languageFilePathCache[language] = %[];
 	}
-	if (typeof(languageFileCache[language][filename]) === "Object")
+	if (typeof(global.languageFileCache[language][filename]) === "Object")
 	{
 		return true;
 	}
-	if (typeof(languageFilePathCache[language][filename]) === "String" || typeof(languageFilePathCache[language][filename]) === "Integer")
+	if (typeof(global.languageFilePathCache[language][filename]) === "String" || typeof(global.languageFilePathCache[language][filename]) === "Integer")
 	{
-		return languageFilePathCache[language][filename];
+		return global.languageFilePathCache[language][filename];
 	}
 	if (exts !== "" && typeof(exts) === "String")
 	{
@@ -436,7 +436,7 @@ global.find_file_in_language_paths = function(filename, language = void, exts = 
 		exts = [""];
 	}
 	var potential_path = false;
-	var languagePatchPaths_language = languagePatchPaths[language];
+	var languagePatchPaths_language = global.languagePatchPaths[language];
 	for (var j = 0, internal_forloop_count = exts.count; j < internal_forloop_count; j += 1)
 	{
 		for (var i = 0, internal_forloop_count = languagePatchPaths_language.count; i < internal_forloop_count; i += 1)
@@ -460,7 +460,7 @@ global.find_file_in_language_paths = function(filename, language = void, exts = 
 		}
 	}
 
-	languageFilePathCache[language][filename] = potential_path;
+	global.languageFilePathCache[language][filename] = potential_path;
 	return potential_path;
 };
 
@@ -472,7 +472,7 @@ global.Array.load = function(filename, mode='')
 	if (filename !== "first.ks")
 @endif
 	{
-		file_result = find_file_in_language_paths(filename);
+		file_result = global.find_file_in_language_paths(filename);
 	}
 	if (typeof(file_result) === "String")
 	{
@@ -497,7 +497,7 @@ global.Array.load = function(filename, mode='')
 			language_load = [];
 			this.load_patch_language_original(filename, mode);
 		}
-		language_load.assign(languageFileCache[global.kag.sflags.language][filename]);
+		language_load.assign(global.languageFileCache[global.kag.sflags.language][filename]);
 		if (language_load.count > 0 && language_load[language_load.count - 1] === "")
 		{
 			language_load.erase(language_load.count - 1);
@@ -518,14 +518,14 @@ global.Array.load = function(filename, mode='')
 global.Scripts.execStorage_patch_language_original = global.Scripts.execStorage;
 global.Scripts.execStorage = function(filename, mode='', context=global)
 {
-	var file_result = find_file_in_language_paths(filename);
+	var file_result = global.find_file_in_language_paths(filename);
 	if (typeof(file_result) === "String")
 	{
 		return global.Scripts.execStorage_patch_language_original(file_result, mode, context);
 	}
 	else if (typeof(file_result) === "Integer" && file_result === true)
 	{
-		return global.Scripts.exec(languageFileCache[global.kag.sflags.language][filename].join("\n"), filename, 0, context);
+		return global.Scripts.exec(global.languageFileCache[global.kag.sflags.language][filename].join("\n"), filename, 0, context);
 	}
 	else
 	{
@@ -536,14 +536,14 @@ global.Scripts.execStorage = function(filename, mode='', context=global)
 global.Scripts.evalStorage_patch_language_original = global.Scripts.evalStorage;
 global.Scripts.evalStorage = function(filename, mode='', context=global)
 {
-	var file_result = find_file_in_language_paths(filename);
+	var file_result = global.find_file_in_language_paths(filename);
 	if (typeof(file_result) === "String")
 	{
 		return global.Scripts.evalStorage_patch_language_original(file_result, mode, context);
 	}
 	else if (typeof(file_result) === "Integer" && file_result === true)
 	{
-		return global.Scripts.eval(languageFileCache[global.kag.sflags.language][filename].join("\n"), filename, 0, context);
+		return global.Scripts.eval(global.languageFileCache[global.kag.sflags.language][filename].join("\n"), filename, 0, context);
 	}
 	else
 	{
@@ -554,7 +554,7 @@ global.Scripts.evalStorage = function(filename, mode='', context=global)
 global.Storages.isExistentStorage_patch_language_original = global.Storages.isExistentStorage;
 global.Storages.isExistentStorage = function(filename)
 {
-	var file_result = find_file_in_language_paths(filename);
+	var file_result = global.find_file_in_language_paths(filename);
 	if (typeof(file_result) === "String")
 	{
 		return true;
@@ -572,7 +572,7 @@ global.Storages.isExistentStorage = function(filename)
 global.Storages.getPlacedPath_patch_language_original = global.Storages.getPlacedPath;
 global.Storages.getPlacedPath = function(filename, exts)
 {
-	var file_result = find_file_in_language_paths(filename, , exts);
+	var file_result = global.find_file_in_language_paths(filename, , exts);
 	if (typeof(file_result) === "String")
 	{
 		return file_result;
@@ -589,18 +589,18 @@ global.Storages.getPlacedPath = function(filename, exts)
 
 global.languagePatchName = function(language)
 {
-	return language == japaneseLanguage? japanese_patch_name : language_patch_prefix + language;
+	return language == global.japaneseLanguage? global.japanese_patch_name : global.language_patch_prefix + language;
 };
 
 global.languagePatchExists = function(language)
 {
-	if (language == japaneseLanguage) {
+	if (language == global.japaneseLanguage) {
 		return true;
 	}
-	if (devMode) {
-		return Storages.isExistentDirectory("../" + language + "/");
+	if (global.devMode) {
+		return global.Storages.isExistentDirectory("../" + language + "/");
 	}
-	return patchExists(languagePatchName(language));
+	return global.patchExists(global.languagePatchName(language));
 };
 
 global.language_paths_translate = function(paths)
@@ -613,148 +613,148 @@ global.language_paths_translate = function(paths)
 
 global.load_language_patch = function(language, kag)
 {
-	var languagePatchName = languagePatchName(language);
-	if (typeof(languagePatchPaths[language]) !== "Object")
+	var languagePatchName = global.languagePatchName(language);
+	if (typeof(global.languagePatchPaths[language]) !== "Object")
 	{
-		if (typeof(languagePatchPaths[language]) !== "Object")
+		if (typeof(global.languagePatchPaths[language]) !== "Object")
 		{
 			var patches_arr = [];
 
-			if (language != japaneseLanguage || !japaneseLanguageLoaded) {
+			if (language != global.japaneseLanguage || !global.japaneseLanguageLoaded) {
 				patches_arr.add([languagePatchName]);
-				if (devMode)
+				if (global.devMode)
 				{
 					patches_arr.add([languagePatchName, "", global.typemoon_repo_root + "common/"]);
 				}
 
-				patches_arr.add([languagePatchName, imagesFolderName]);
+				patches_arr.add([languagePatchName, global.imagesFolderName]);
 				if (typeof(kag) === "Object")
 				{
 @if(HD_MODE)
-					addHdPaths(patches_arr, languagePatchName, imagesFolderName) if kag.isHd;
+					addHdPaths(patches_arr, languagePatchName, global.imagesFolderName) if kag.isHd;
 @endif
-					patches_arr.add([languagePatchName, get_isHCensored(kag)? censoredHFolderName : uncensoredHFolderName]);
-					patches_arr.add([languagePatchName, get_isMatureCensored(kag)? censoredMatureFolderName: uncensoredMatureFolderName]);
-					patches_arr.add([languagePatchName, fullyCensoredFolderName]) if get_fullyCensored(kag);
-					patches_arr.add([languagePatchName, videosFolderName]) if kag.sflags[subbedVideosFlagName];
+					patches_arr.add([languagePatchName, global.get_isHCensored(kag)? global.censoredHFolderName : global.uncensoredHFolderName]);
+					patches_arr.add([languagePatchName, global.get_isMatureCensored(kag)? global.censoredMatureFolderName: global.uncensoredMatureFolderName]);
+					patches_arr.add([languagePatchName, global.fullyCensoredFolderName]) if global.get_fullyCensored(kag);
+					patches_arr.add([languagePatchName, global.videosFolderName]) if kag.sflags[global.subbedVideosFlagName];
 				}
 			}
 
-			languagePatchPaths[language] = load_patches(patches_arr, false);
-			global.language_paths_translate(languagePatchPaths[language]);
+			global.languagePatchPaths[language] = global.load_patches(patches_arr, false);
+			global.language_paths_translate(global.languagePatchPaths[language]);
 
-			var language_search_path = find_file_in_language_paths(languageSearchPathFile, language);
-			languageSearchPath = (typeof(language_search_path) === "String") ? Scripts.evalStorage(language_search_path) : [];
-			if (language != japaneseLanguage || !japaneseLanguageLoaded)
+			var language_search_path = global.find_file_in_language_paths(global.languageSearchPathFile, language);
+			global.languageSearchPath = (typeof(language_search_path) === "String") ? global.Scripts.evalStorage(language_search_path) : [];
+			if (language != global.japaneseLanguage || !global.japaneseLanguageLoaded)
 			{
-				for (var i = 0, internal_forloop_count = languageSearchPath.count; i < internal_forloop_count; i += 1)
+				for (var i = 0, internal_forloop_count = global.languageSearchPath.count; i < internal_forloop_count; i += 1)
 				{
-					patches_arr.add([languagePatchName, languageSearchPath[i]]);
+					patches_arr.add([languagePatchName, global.languageSearchPath[i]]);
 				}
 			}
 
-			if (language === japaneseLanguage && devMode)
+			if (language === global.japaneseLanguage && global.devMode)
 			{
-				load_patches(patches_arr, true);
-				languagePatchPaths[language] = [];
+				global.load_patches(patches_arr, true);
+				global.languagePatchPaths[language] = [];
 			}
 			else
 			{
-				languagePatchPaths[language] = load_patches(patches_arr, false);
-				global.language_paths_translate(languagePatchPaths[language]);
+				global.languagePatchPaths[language] = global.load_patches(patches_arr, false);
+				global.language_paths_translate(global.languagePatchPaths[language]);
 			}
 			invalidate patches_arr;
 			delete patches_arr;
 		}
 	}
 
-	refreshStringWithLanguage(kag, language);
-	loadLanguageDict(language);
-	load_fonts(language);
+	global.refreshStringWithLanguage(kag, language);
+	global.loadLanguageDict(language);
+	global.load_fonts(language);
 
-	var chara2displayname_dic_path = find_file_in_language_paths(chara2displaynamefile, language);
-	chara2displayname = (typeof(chara2displayname_dic_path) === "String") ? Scripts.evalStorage(chara2displayname_dic_path) : %[];
-	if (language == japaneseLanguage) {
-		japaneseLanguageLoaded = true;
+	var chara2displayname_dic_path = global.find_file_in_language_paths(global.chara2displaynamefile, language);
+	global.chara2displayname = (typeof(chara2displayname_dic_path) === "String") ? global.Scripts.evalStorage(chara2displayname_dic_path) : %[];
+	if (language == global.japaneseLanguage) {
+		global.japaneseLanguageLoaded = true;
 	}
 };
 
 global.unload_language_patch = function(language, kag)
 {
-	var languagePatchName = languagePatchName(language);
+	var languagePatchName = global.languagePatchName(language);
 	var patches_arr = [];
 
-	if (language != japaneseLanguage) {
+	if (language != global.japaneseLanguage) {
 @if(HD_MODE)
 		if (typeof(kag) === "Object")
 		{
-			addHdPaths(patches_arr, languagePatchName, imagesFolderName) if kag.isHd;
+			addHdPaths(patches_arr, languagePatchName, global.imagesFolderName) if kag.isHd;
 		}
 @endif
-		patches_arr.add([languagePatchName, imagesFolderName]);
+		patches_arr.add([languagePatchName, global.imagesFolderName]);
 		if (typeof(kag) === "Object")
 		{
-			patches_arr.add([languagePatchName, get_isHCensored(kag)? censoredHFolderName : uncensoredHFolderName]);
-			patches_arr.add([languagePatchName, get_isMatureCensored(kag)? censoredMatureFolderName: uncensoredMatureFolderName]);
-			patches_arr.add([languagePatchName, fullyCensoredFolderName]) if get_fullyCensored(kag);
-			patches_arr.add([languagePatchName, videosFolderName]) if kag.sflags[subbedVideosFlagName];
+			patches_arr.add([languagePatchName, global.get_isHCensored(kag)? global.censoredHFolderName : global.uncensoredHFolderName]);
+			patches_arr.add([languagePatchName, global.get_isMatureCensored(kag)? global.censoredMatureFolderName: global.uncensoredMatureFolderName]);
+			patches_arr.add([languagePatchName, global.fullyCensoredFolderName]) if global.get_fullyCensored(kag);
+			patches_arr.add([languagePatchName, global.videosFolderName]) if kag.sflags[global.subbedVideosFlagName];
 		}
 
-		for (var i = 0, internal_forloop_count = languageSearchPath.count; i < internal_forloop_count; i += 1) {
-			patches_arr.add([languagePatchName, languageSearchPath[i]]);
+		for (var i = 0, internal_forloop_count = global.languageSearchPath.count; i < internal_forloop_count; i += 1) {
+			patches_arr.add([languagePatchName, global.languageSearchPath[i]]);
 		}
 
 		patches_arr.add([languagePatchName]);
-		if (devMode)
+		if (global.devMode)
 		{
 			patches_arr.add([languagePatchName, "", global.typemoon_repo_root + "common/"]);
 		}
 	}
 
-	unload_patches(patches_arr);
+	global.unload_patches(patches_arr);
 	invalidate patches_arr;
 	delete patches_arr;
 
-	if (typeof(languagePatchPaths[language]) === "Object")
+	if (typeof(global.languagePatchPaths[language]) === "Object")
 	{
-		delete languagePatchPaths[language];
+		delete global.languagePatchPaths[language];
 	}
 
-	if (typeof(languageFileCache[language]) === "Object")
+	if (typeof(global.languageFileCache[language]) === "Object")
 	{
-		invalidate languageFileCache[language];
-		delete languageFileCache[language];
+		invalidate global.languageFileCache[language];
+		delete global.languageFileCache[language];
 	}
 
-	if (typeof(languageFilePathCache[language]) === "Object")
+	if (typeof(global.languageFilePathCache[language]) === "Object")
 	{
-		invalidate languageFilePathCache[language];
-		delete languageFilePathCache[language];
+		invalidate global.languageFilePathCache[language];
+		delete global.languageFilePathCache[language];
 	}
 
-	chara2displayname = %[];
+	global.chara2displayname = %[];
 };
 
 global.loadLanguageSettings = function()
 {
 	// system locale might be void on older windows systems (such as Windows XP), or systems other than windows (Android, Mac, etc.)
-	var systemLocale = System.readRegValue("HKEY_CURRENT_USER\\Control Panel\\International\\LocaleName");
+	var systemLocale = global.System.readRegValue("HKEY_CURRENT_USER\\Control Panel\\International\\LocaleName");
 	var found = 0;
-	for (var i = 0, internal_forloop_count = languages.count; i < internal_forloop_count; i += 1) {
-		var language = languages[i];
-		load_language_patch(language, void);
+	for (var i = 0, internal_forloop_count = global.languages.count; i < internal_forloop_count; i += 1) {
+		var language = global.languages[i];
+		global.load_language_patch(language, void);
 
 		var locale = __s("ja_JP", "locale");
 
 		if (locale == systemLocale) {
-			default_language = language;
+			global.default_language = language;
 			found = 2;
 		} else if (found == 0 && systemLocale !== void && locale.substr(0, 2) == systemLocale.substr(0, 2)) {
-			default_language = language;
+			global.default_language = language;
 			found = 1;
 		}
 
-		unload_language_patch(language, void);
+		global.unload_language_patch(language, void);
 	}
 };
 
@@ -765,21 +765,21 @@ global.koreanLanguage = "korean";
 global.frenchLanguage = "french";
 global.simplifiedChineseLanguage = "simplified_chinese";
 global.russianLanguage = "russian";
-global.languagesPatches = [englishLanguage, koreanLanguage, russianLanguage, frenchLanguage, simplifiedChineseLanguage];
+global.languagesPatches = [global.englishLanguage, global.koreanLanguage, global.russianLanguage, global.frenchLanguage, global.simplifiedChineseLanguage];
 
 global.loadLanguagesList = function()
 {
-	if (devMode || isKirikiroid) {
+	if (global.devMode || global.isKirikiroid) {
 		var patches_arr = [];
 		// It's important that Japanese is first.
-		var result = [japaneseLanguage];
-		for (var i = 0, internal_forloop_count = languagesPatches.count; i < internal_forloop_count; i += 1) {
-			if (languagePatchExists(languagesPatches[i])) {
-				patches_arr.add([language_patch_prefix + languagesPatches[i]]);
-				result.add(languagesPatches[i]);
+		var result = [global.japaneseLanguage];
+		for (var i = 0, internal_forloop_count = global.languagesPatches.count; i < internal_forloop_count; i += 1) {
+			if (global.languagePatchExists(global.languagesPatches[i])) {
+				patches_arr.add([global.language_patch_prefix + global.languagesPatches[i]]);
+				result.add(global.languagesPatches[i]);
 			}
 		}
-		unload_patches(patches_arr);
+		global.unload_patches(patches_arr);
 		invalidate patches_arr;
 		delete patches_arr;
 		return result;
@@ -787,9 +787,9 @@ global.loadLanguagesList = function()
 
 	var patches_arr = [];
 	var	files = global.paths_base_dirlist[global.paths_base[0]]["."];
-	var loadedLanguages = [japaneseLanguage];
-	var languageRegex = new RegExp("patch_%s(.*)\\.xp3".sprintf(language_patch_prefix));
-	var langugeFolderRegex = new RegExp("%s(.*)[\\/]".sprintf(language_patch_prefix));
+	var loadedLanguages = [global.japaneseLanguage];
+	var languageRegex = new global.RegExp("patch_%s(.*)\\.xp3".sprintf(global.language_patch_prefix));
+	var langugeFolderRegex = new global.RegExp("%s(.*)[\\/]".sprintf(global.language_patch_prefix));
 	for (var i = 0, internal_forloop_count = files.count; i < internal_forloop_count; i += 1) {
 		var	fn	= files[i].toLowerCase();
 
@@ -798,7 +798,7 @@ global.loadLanguagesList = function()
 		if (language_regex_match.count !== 0)
 		{
 			var languageName = language_regex_match[1];
-			patches_arr.add([language_patch_prefix + languageName]);
+			patches_arr.add([global.language_patch_prefix + languageName]);
 
 			if (!loadedLanguages.contains(languageName)) {
 				loadedLanguages.add(languageName); // In case there is a folder and an xp3 file, don't add twice.
@@ -807,7 +807,7 @@ global.loadLanguagesList = function()
 		else
 		{
 			var language_folder_regex_match = langugeFolderRegex.match(fn);
-			if (devMode2 && language_folder_regex_match.count !== 0) {
+			if (global.devMode2 && language_folder_regex_match.count !== 0) {
 				var languageName = language_folder_regex_match[1];
 
 				if (!loadedLanguages.contains(languageName)) {
@@ -817,27 +817,27 @@ global.loadLanguagesList = function()
 		}
 
 	}
-	//dm("Loaded languages: " + loadedLanguages.join(", "));
-	unload_patches(patches_arr);
+	//global.dm("Loaded languages: " + loadedLanguages.join(", "));
+	global.unload_patches(patches_arr);
 	invalidate patches_arr;
 	delete patches_arr;
 	return loadedLanguages;
 };
 
-global.language_patch_prefix = devMode? "" : "lang_";
+global.language_patch_prefix = global.devMode? "" : "lang_";
 global.languageMenuItemFormat = "language%sMenuItem";
 
 global.languages = [];
 
-global.default_language = japaneseLanguage;
+global.default_language = global.japaneseLanguage;
 global.languageSettings = %[];
 
 // For convenience
-global.get_currentLanguageSettings = function(kag=global.kag) { { return languageSettings[kag.sflags.language]; } };
-global.get_special_characters = function(kag=global.kag) { { return get_currentLanguageSettings(kag).special_characters !== void? get_currentLanguageSettings(kag).special_characters : %[]; } };
+global.get_currentLanguageSettings = function(kag=global.kag) { { return global.languageSettings[kag.sflags.language]; } };
+global.get_special_characters = function(kag=global.kag) { { return global.get_currentLanguageSettings(kag).special_characters !== void? global.get_currentLanguageSettings(kag).special_characters : %[]; } };
 global.get_default_history_font = function(kag=global.kag)
 {
-	var cur_langset = get_currentLanguageSettings(kag);
+	var cur_langset = global.get_currentLanguageSettings(kag);
 	if (cur_langset.history_default === void)
 	{
 		global.set_default_history_settings(global.get_currentLanguageSettings(kag));
@@ -846,21 +846,21 @@ global.get_default_history_font = function(kag=global.kag)
 };
 global.get_default_history_bold = function(kag=global.kag)
 {
-	var cur_langset = get_currentLanguageSettings(kag);
+	var cur_langset = global.get_currentLanguageSettings(kag);
 	if (cur_langset.history_default_bold === void)
 	{
 		global.set_default_history_settings(global.get_currentLanguageSettings(kag));
 	}
 	return cur_langset.history_default_bold;
 };
-global.get_historyFontDefault = function(kag=global.kag) { { return [ get_default_history_font(kag), get_default_history_bold(kag) ]; } };
-global.get_historyFont = function(kag=global.kag) { { return get_currentLanguageSettings(kag).history !== void? get_currentLanguageSettings(kag).history : %[]; } };
-global.get_fsncleaner_rescript_enabled = function(kag=global.kag) { { return !!(get_currentLanguageSettings(kag).fsncleaner_rescript_enabled); } };
-global.get_replace_jp_tilde_disabled = function(kag=global.kag) { { return !!(get_currentLanguageSettings(kag).replace_jp_tilde_disabled); } };
-global.get_replace_jp_whitespace_disabled = function(kag=global.kag) { { return !!(get_currentLanguageSettings(kag).replace_jp_whitespace_disabled); } };
-global.get_rtl_enabled = function(kag=global.kag) { { return !!(get_currentLanguageSettings(kag).rtl_enabled); } };
-global.get_arabic_shaping_enabled = function(kag=global.kag) { { return !!(get_currentLanguageSettings(kag).arabic_shaping_enabled); } };
-global.get_half_height_offset_hack = function(kag=global.kag) { { return !!(get_currentLanguageSettings(kag).half_height_offset_hack); } };
+global.get_historyFontDefault = function(kag=global.kag) { { return [ global.get_default_history_font(kag), global.get_default_history_bold(kag) ]; } };
+global.get_historyFont = function(kag=global.kag) { { return global.get_currentLanguageSettings(kag).history !== void? global.get_currentLanguageSettings(kag).history : %[]; } };
+global.get_fsncleaner_rescript_enabled = function(kag=global.kag) { { return !!(global.get_currentLanguageSettings(kag).fsncleaner_rescript_enabled); } };
+global.get_replace_jp_tilde_disabled = function(kag=global.kag) { { return !!(global.get_currentLanguageSettings(kag).replace_jp_tilde_disabled); } };
+global.get_replace_jp_whitespace_disabled = function(kag=global.kag) { { return !!(global.get_currentLanguageSettings(kag).replace_jp_whitespace_disabled); } };
+global.get_rtl_enabled = function(kag=global.kag) { { return !!(global.get_currentLanguageSettings(kag).rtl_enabled); } };
+global.get_arabic_shaping_enabled = function(kag=global.kag) { { return !!(global.get_currentLanguageSettings(kag).arabic_shaping_enabled); } };
+global.get_half_height_offset_hack = function(kag=global.kag) { { return !!(global.get_currentLanguageSettings(kag).half_height_offset_hack); } };
 
 
 global.get_default_font = function()
@@ -927,13 +927,13 @@ global.get_default_history_settings = function()
 
 global.getFontFiles = function(language)
 {
-	var fontFiles = languageSettings[language].fontFiles;
+	var fontFiles = global.languageSettings[language].fontFiles;
 	return (fontFiles !== void? fontFiles : []);
 };
 
 global.getPrerenderedFontFiles = function(language)
 {
-	var fontFiles = languageSettings[language].prerenderedFontFiles;
+	var fontFiles = global.languageSettings[language].prerenderedFontFiles;
 	return (fontFiles !== void? fontFiles : []);
 };
 
@@ -946,39 +946,39 @@ global.isChinese = function(kag=global.kag)
 
 global.isJapanese = function(kag=global.kag)
 {
-	return japaneseLanguage == kag.sflags.language.toLowerCase();
+	return global.japaneseLanguage == kag.sflags.language.toLowerCase();
 };
 
 global.isNoSpaceLanguage = function(kag=global.kag)
 {
-	return isJapanese(kag) || isChinese(kag);
+	return global.isJapanese(kag) || global.isChinese(kag);
 };
 
 global.initializeLanguage = function(kag=global.kag)
 {
 	if (kag.sflags.language === void || global.languages.find(kag.sflags.language) === -1) {
 		// language already loaded
-		kag.sflags.language = default_language;
+		kag.sflags.language = global.default_language;
 		kag.sflags.userFont = %[];
 	}
 
 	// Load/Reload language after kag is defined:
-	unload_language_patch(default_language, kag);
-	load_language_patch(kag.sflags.language, kag);
+	global.unload_language_patch(global.default_language, kag);
+	global.load_language_patch(kag.sflags.language, kag);
 	if (typeof(kag) === "Object")
 	{
-		(addLanguageMenu incontextof kag)();
-		kag[languageMenuItemFormat.sprintf(kag.sflags.language)].checked	= true;
+		(global.addLanguageMenu incontextof kag)();
+		kag[global.languageMenuItemFormat.sprintf(kag.sflags.language)].checked	= true;
 	}
 };
 
 global.addLanguageMenu = function()
 {
-	menu.insert(this.languageMenu = new KAGMenuItem(this, __t("言語(&Language)"), 0, void, false), patchMenuIndex);
-	for (var i = 0, internal_forloop_count = languages.count; i < internal_forloop_count; i += 1) {
-		var language = languages[i];
-		var languageMenuItemName = languageMenuItemFormat.sprintf(language);
-		this.languageMenu.add(this[languageMenuItemName] = new KAGMenuItem(this, languageSettings[language].menu_name, 1,
+	this.menu.insert(this.languageMenu = new global.KAGMenuItem(this, __t("言語(&Language)"), 0, void, false), global.patchMenuIndex);
+	for (var i = 0, internal_forloop_count = global.languages.count; i < internal_forloop_count; i += 1) {
+		var language = global.languages[i];
+		var languageMenuItemName = global.languageMenuItemFormat.sprintf(language);
+		this.languageMenu.add(this[languageMenuItemName] = new global.KAGMenuItem(this, global.languageSettings[language].menu_name, 1,
 		function (sender) { sender.owner.onLanguageMenuItemClick(sender, sender.language); }, false));
 		this[languageMenuItemName].language = language;
 	}
@@ -986,33 +986,33 @@ global.addLanguageMenu = function()
 
 global.loadLanguageDict = function(language)
 {
-	if (languageSettings[language] === void) {
-		var language_dic_path = find_file_in_language_paths("language.dic", language);
+	if (global.languageSettings[language] === void) {
+		var language_dic_path = global.find_file_in_language_paths("language.dic", language);
 		if (typeof(language_dic_path) === "String")
 		{
 			try
 			{
-				languageSettings[language] = Scripts.evalStorage(language_dic_path);
+				global.languageSettings[language] = global.Scripts.evalStorage(language_dic_path);
 			}
 			catch (e)
 			{
-				Debug.message("The syntax error is located in language.dic for " + language);
+				global.Debug.message("The syntax error is located in language.dic for " + language);
 				throw e;
 			}
 		}
 		else
 		{
-			languageSettings[language] = %[];
+			global.languageSettings[language] = %[];
 		}
 
-		var currentLanguageSettings = languageSettings[language];
+		var currentLanguageSettings = global.languageSettings[language];
 
 		currentLanguageSettings.menu_name = __s("日本語 - &Japanese", "language_menu_name");
 
 		if (typeof(currentLanguageSettings.files) === "Object")
 		{
-			languageFileCache[language] = %[];
-			(Dictionary.assignStruct incontextof languageFileCache[language])(currentLanguageSettings.files);
+			global.languageFileCache[language] = %[];
+			(global.Dictionary.assignStruct incontextof global.languageFileCache[language])(currentLanguageSettings.files);
 		}
 	}
 };
@@ -1037,29 +1037,29 @@ if (typeof(global.get_full_path_of_image) === "Object" && typeof(global.chop_ima
 
 global.initialize_language_early = function()
 {
-	global.languages = loadLanguagesList();
+	global.languages = global.loadLanguagesList();
 
 	// Initialize the Japanese language first.
-	load_language_patch(default_language, void);
+	global.load_language_patch(global.default_language, void);
 
-	loadLanguageSettings();
+	global.loadLanguageSettings();
 
 	// If we only have a single language patch, we most probably want the game to run in that language (regardless of locale).
-	if (languages.count == 2)
+	if (global.languages.count == 2)
 	{
-		default_language = languages[1];
+		global.default_language = global.languages[1];
 	}
 
 	// If the language has changed, reload into the new language.
-	if (default_language !== japaneseLanguage)
+	if (global.default_language !== global.japaneseLanguage)
 	{
-		unload_language_patch(japaneseLanguage, void);
-		load_language_patch(default_language, void);
+		global.unload_language_patch(global.japaneseLanguage, void);
+		global.load_language_patch(global.default_language, void);
 	}
 };
 
-global.Layer_patch_language_original = Layer;
-class Layer_patch_language_override extends Layer_patch_language_original
+global.Layer_patch_language_original = global.Layer;
+class Layer_patch_language_override extends global.Layer_patch_language_original
 {
 	property hint
 	{
@@ -1067,7 +1067,7 @@ class Layer_patch_language_override extends Layer_patch_language_original
 		{
 			if (typeof(v) === "String")
 			{
-				super.hint = __(v);
+				super.hint = global.__(v);
 			}
 			else
 			{
@@ -1084,13 +1084,13 @@ class Layer_patch_language_override extends Layer_patch_language_original
 
 	function Layer()
 	{
-		Layer_patch_language_override(...);
+		this.Layer_patch_language_override(...);
 	}
 }
-global.Layer = Layer_patch_language_override;
+global.Layer = global.Layer_patch_language_override;
 
-global.System_patch_language_original = System;
-class System_patch_language_override extends System_patch_language_original
+global.System_patch_language_original = global.System;
+class System_patch_language_override extends global.System_patch_language_original
 {
 	function System_patch_language_override()
 	{
@@ -1099,7 +1099,7 @@ class System_patch_language_override extends System_patch_language_original
 
 	function System()
 	{
-		System_patch_language_override(...);
+		this.System_patch_language_override(...);
 	}
 
 	property title
@@ -1109,7 +1109,7 @@ class System_patch_language_override extends System_patch_language_original
 			global.System.original_title = v;
 			if (typeof(v) === "String")
 			{
-				super.title = __(v);
+				super.title = global.__(v);
 			}
 			else
 			{
@@ -1130,20 +1130,20 @@ class System_patch_language_override extends System_patch_language_original
 	{
 		if (typeof(global.System.original_title) === "String")
 		{
-			super.title = __(global.System.original_title);
+			super.title = global.__(global.System.original_title);
 		}
 	}
 
 	function inform(text)
 	{
-		if (text === System.title + "はすでに起動しています")
+		if (text === global.System.title + "はすでに起動しています")
 		{
-			text = __("%sはすでに起動しています").sprintf(System.title);
+			text = __("%sはすでに起動しています").sprintf(global.System.title);
 		}
 		return super.inform(text);
 	}
 }
-global.System = System_patch_language_override;
+global.System = global.System_patch_language_override;
 
 global.pluralNames = %[
  "氷室と蒔寺" => 2,

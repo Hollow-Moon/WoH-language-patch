@@ -1,6 +1,6 @@
 ﻿
-global.Conductor_patch_skip_original = Conductor;
-class Conductor_patch_skip_override extends Conductor_patch_skip_original
+global.Conductor_patch_skip_original = global.Conductor;
+class Conductor_patch_skip_override extends global.Conductor_patch_skip_original
 {
 	function Conductor_patch_skip_override()
 	{
@@ -9,7 +9,7 @@ class Conductor_patch_skip_override extends Conductor_patch_skip_original
 
 	function Conductor()
 	{
-		Conductor_patch_skip_override(...);
+		this.Conductor_patch_skip_override(...);
 	}
 
 	function onTag(elm)
@@ -72,10 +72,10 @@ class Conductor_patch_skip_override extends Conductor_patch_skip_original
 		return super.onTag(...);
 	}
 }
-global.Conductor = Conductor_patch_skip_override;
+global.Conductor = global.Conductor_patch_skip_override;
 
-global.KAGWindow_patch_skip_original = KAGWindow;
-class KAGWindow_patch_skip_override extends KAGWindow_patch_skip_original
+global.KAGWindow_patch_skip_original = global.KAGWindow;
+class KAGWindow_patch_skip_override extends global.KAGWindow_patch_skip_original
 {
 	var jumpToLabel;
 	var jumpToScenario;
@@ -105,17 +105,17 @@ class KAGWindow_patch_skip_override extends KAGWindow_patch_skip_original
 	function KAGWindow_patch_skip_override(ismain, width, height)
 	{
 		super.KAGWindow(...);
-		if (isMain)
+		if (this.isMain)
 		{
-			this.jumpToLabel = System.getArgument('-jumplabel');
-			this.jumpToScenario = System.getArgument('-jumpscenario');
-			this.shouldSkipImmediate = System.getArgument('-skipimmediate');
+			this.jumpToLabel = global.System.getArgument('-jumplabel');
+			this.jumpToScenario = global.System.getArgument('-jumpscenario');
+			this.shouldSkipImmediate = global.System.getArgument('-skipimmediate');
 		}
 	}
 
 	function KAGWindow()
 	{
-		KAGWindow_patch_skip_override(...);
+		this.KAGWindow_patch_skip_override(...);
 	}
 
 	function set_skip(skipscenario, skiplabel, skipline)
@@ -223,9 +223,9 @@ class KAGWindow_patch_skip_override extends KAGWindow_patch_skip_original
 
 	function process(storage)
 	{
-		if ((typeof(this.jumpToScenario) === "String" || System.getArgument('-archiveopenscenario') !== void || System.getArgument('-flowchartopenbyscenario') !== void) && storage === "first.ks" && isMain)
+		if ((typeof(this.jumpToScenario) === "String" || global.System.getArgument('-archiveopenscenario') !== void || global.System.getArgument('-flowchartopenbyscenario') !== void) && storage === "first.ks" && this.isMain)
 		{
-			this.set_skip(System.getArgument('-skipscenario'), System.getArgument('-skiplabel'), System.getArgument('-skipline'));
+			this.set_skip(global.System.getArgument('-skipscenario'), global.System.getArgument('-skiplabel'), global.System.getArgument('-skipline'));
 			var ret = super.process((typeof(this.jumpToScenario) === "String") ? this.jumpToScenario : storage, (typeof(this.jumpToLabel) === "String") ? this.jumpToLabel : void, true, typeof(this.shouldSkipImmediate) === "String");
 			if (typeof(this.shouldSkipImmediate) === "String")
 			{
@@ -239,4 +239,4 @@ class KAGWindow_patch_skip_override extends KAGWindow_patch_skip_original
 		return super.process(...);
 	}
 }
-global.KAGWindow = KAGWindow_patch_skip_override;
+global.KAGWindow = global.KAGWindow_patch_skip_override;

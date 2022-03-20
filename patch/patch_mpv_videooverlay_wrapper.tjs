@@ -10,7 +10,7 @@
  * On Android, video files are stored in assets.
  */
 
-class VideoOverlayOwnerWindow extends Window
+class VideoOverlayOwnerWindow extends global.Window
 {
 	var parent;
 	function VideoOverlayOwnerWindow(parent)
@@ -21,7 +21,7 @@ class VideoOverlayOwnerWindow extends Window
 		// This window uses the most basic drawer
 		// drawDevice.preferredDrawer = global.Window.PassThroughDrawDevice.dtDrawDib;
 
-		this.borderStyle = bsNone;
+		this.borderStyle = global.bsNone;
 		this.innerSunken = false;
 		this.showScrollBars = false;
 		this.focusable = false;
@@ -31,7 +31,7 @@ class VideoOverlayOwnerWindow extends Window
 	{
 		if (typeof(this.parent) === "Object" && typeof(this.parent.onPrimaryClick) === "Object")
 		{
-			if (button === mbLeft)
+			if (button === global.mbLeft)
 			{
 				this.parent.onPrimaryClick();
 				if (typeof(this.parent.focusedLayer) === "Object")
@@ -53,7 +53,7 @@ class VideoOverlayOwnerWindow extends Window
 	{
 		if (typeof(this.parent) === "Object" && typeof(this.parent.onPrimaryClick) === "Object")
 		{
-			if (button === mbLeft)
+			if (button === global.mbLeft)
 			{
 				this.parent.onMouseUp(...);
 			}
@@ -75,10 +75,10 @@ class VideoOverlay
 	function VideoOverlay(owner)
 	{
 		this.owner_window = owner;
-		this.window = new VideoOverlayOwnerWindow(owner);
+		this.window = new global.VideoOverlayOwnerWindow(owner);
 		this.window.setSize(this.owner_window.innerWidth, this.owner_window.innerHeight);
 		this.setPos(0, 0);
-		var mp = new KrMpv();
+		var mp = new global.KrMpv();
 		this.mp = mp;
 		mp.set_property("wid", this.window.HWND + "");
 		mp.set_property("pause", "yes");
@@ -92,7 +92,7 @@ class VideoOverlay
 @if(0)
 		mp.enable_messages("debug");
 @endif
-		mp.set_wakeup_callback(this.patch_mpv_videooverlay_wrapper_wakeup, window);
+		mp.set_wakeup_callback(this.patch_mpv_videooverlay_wrapper_wakeup, this.window);
 		mp.initialize();
 @if(0)
 		mp.commandv("observe_property", "0", "pause");
@@ -127,7 +127,7 @@ class VideoOverlay
 			}
 			case "file-loaded":
 			{
-				if (this.mode === vomMFEVR)
+				if (this.mode === global.vomMFEVR)
 				{
 					this.onStatusChanged("ready");
 				}
@@ -148,7 +148,7 @@ class VideoOverlay
 			}
 			case "log-message":
 			{
-				Debug.message("krmpv: " + e.prefix + " " + e.text.replace(/\n$/, ""));
+				global.Debug.message("krmpv: " + e.prefix + " " + e.text.replace(/\n$/, ""));
 				break;
 			}
 			case "hook":
@@ -320,12 +320,12 @@ class VideoOverlay
 	 */
 	function open(storage)
 	{
-		var full_path = Storages.getPlacedPath(storage);
+		var full_path = global.Storages.getPlacedPath(storage);
 		var local = "";
 		var path_to_use = "krmpv://" + full_path;
 		try
 		{
-			local = Storages.getLocalName(full_path);
+			local = global.Storages.getLocalName(full_path);
 		}
 		catch (e) {}
 		if (local != "")
@@ -344,7 +344,7 @@ class VideoOverlay
 	function play()
 	{
 		this.mp.set_property("pause", "no");
-		if (this.mode !== vomMFEVR)
+		if (this.mode !== global.vomMFEVR)
 		{
 			this.onStatusChanged("play");
 		}
@@ -785,7 +785,7 @@ class VideoOverlay
 		setter( value ) {}
 	}
 @endif
-	var mode_ = vomMFEVR;
+	var mode_ = global.vomMFEVR;
 	/**
 	 * [Windows *] Specify overlay or layer drawing
 	 *

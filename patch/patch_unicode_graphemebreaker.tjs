@@ -16,7 +16,7 @@ global.grapheme_breaker_classes = [
 	"LVT",
 ];
 
-global.grapheme_breaker_class_trie = new UnicodeTrie(Scripts.evalStorage("patch_unicode_graphemebreak_data.ksc"));
+global.grapheme_breaker_class_trie = new global.UnicodeTrie(global.Scripts.evalStorage("patch_unicode_graphemebreak_data.ksc"));
 
 class GraphemeBreaker
 {
@@ -137,7 +137,7 @@ class GraphemeBreaker
 			return str.length;
 		}
 
-		var prev = global.grapheme_breaker_class_trie.get(GraphemeBreaker.codePointAt(str, index));
+		var prev = global.grapheme_breaker_class_trie.get(global.GraphemeBreaker.codePointAt(str, index));
 		for (var i = index + 1; i < str.length; i += 1)
 		{
 			// check for already processed low surrogates
@@ -148,8 +148,8 @@ class GraphemeBreaker
 				continue;
 			}
 
-			var next = global.grapheme_breaker_class_trie.get(GraphemeBreaker.codePointAt(str, i));
-			if (GraphemeBreaker.shouldBreak(prev, next))
+			var next = global.grapheme_breaker_class_trie.get(global.GraphemeBreaker.codePointAt(str, i));
+			if (global.GraphemeBreaker.shouldBreak(prev, next))
 			{
 				return i;
 			}
@@ -178,7 +178,7 @@ class GraphemeBreaker
 		}
 
 		index -= 1;
-		var next = global.grapheme_breaker_class_trie.get(GraphemeBreaker.codePointAt(str, index));
+		var next = global.grapheme_breaker_class_trie.get(global.GraphemeBreaker.codePointAt(str, index));
 		for (var i = index - 1; i >= 0; i -= 1)
 		{
 			// check for already processed high surrogates
@@ -189,8 +189,8 @@ class GraphemeBreaker
 				continue;
 			}
 
-			var prev = global.grapheme_breaker_class_trie.get(GraphemeBreaker.codePointAt(str, i));
-			if (GraphemeBreaker.shouldBreak(prev, next))
+			var prev = global.grapheme_breaker_class_trie.get(global.GraphemeBreaker.codePointAt(str, i));
+			if (global.GraphemeBreaker.shouldBreak(prev, next))
 			{
 				return i + 1;
 			}
@@ -209,7 +209,7 @@ class GraphemeBreaker
 		var res = [];
 		var index = 0;
 
-		while ((brk = GraphemeBreaker.nextBreak(str, index)) < str.length)
+		while ((brk = global.GraphemeBreaker.nextBreak(str, index)) < str.length)
 		{
 			res.add(str.substring(index, brk - index));
 			index = brk;
@@ -231,7 +231,7 @@ class GraphemeBreaker
 		var count = 0;
 		var index = 0;
 
-		while ((brk = GraphemeBreaker.nextBreak(str, index)) < str.length)
+		while ((brk = global.GraphemeBreaker.nextBreak(str, index)) < str.length)
 		{
 			index = brk;
 			count += 1;

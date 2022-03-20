@@ -1,6 +1,6 @@
 ﻿
-global.KAGWindow_patch_window_hook_original = KAGWindow;
-class KAGWindow_patch_window_hook_override extends KAGWindow_patch_window_hook_original
+global.KAGWindow_patch_window_hook_original = global.KAGWindow;
+class KAGWindow_patch_window_hook_override extends global.KAGWindow_patch_window_hook_original
 {
 	function KAGWindow_patch_window_hook_override()
 	{
@@ -9,13 +9,13 @@ class KAGWindow_patch_window_hook_override extends KAGWindow_patch_window_hook_o
 
 	function KAGWindow()
 	{
-		KAGWindow_patch_window_hook_override(...);
+		this.KAGWindow_patch_window_hook_override(...);
 	}
 	var hookMap = %[ keyDown:this.keyDownHook, leftClick:this.leftClickHook, rightClick:this.rightClickHook ];
 	function callHook(tag, *)
 	{
 		// 文字列を渡されたときはテーブルから参照
-		var array = (typeof tag == "String" && tag != "") ? hookMap[tag] : tag;
+		var array = (typeof tag == "String" && tag != "") ? this.hookMap[tag] : tag;
 		if (typeof array != "Object" || array.count <= 0) return false;
 
 		// 順番に呼び出し
@@ -33,15 +33,15 @@ class KAGWindow_patch_window_hook_override extends KAGWindow_patch_window_hook_o
 		var array = tag;
 		if (typeof tag == "String" && tag != "")
 		{
-			array = hookMap[tag];
-			array = hookMap[tag] = [] if (array === void);
+			array = this.hookMap[tag];
+			array = this.hookMap[tag] = [] if (array === void);
 		}
 		array.add(func) if (typeof array == "Object");
 	}
 	function removeHook(tag, func)
 	{
-		var array = (typeof tag == "String" && tag != "") ? hookMap[tag] : tag;
+		var array = (typeof tag == "String" && tag != "") ? this.hookMap[tag] : tag;
 		array.remove(func, true) if (typeof array == "Object");
 	}
 }
-global.KAGWindow = KAGWindow_patch_window_hook_override;
+global.KAGWindow = global.KAGWindow_patch_window_hook_override;

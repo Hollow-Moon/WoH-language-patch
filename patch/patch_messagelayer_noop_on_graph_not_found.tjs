@@ -1,6 +1,6 @@
 ﻿
-global.MessageLayer_patch_noop_on_graph_not_found_original = MessageLayer;
-class MessageLayer_patch_noop_on_graph_not_found_override extends MessageLayer_patch_noop_on_graph_not_found_original
+global.MessageLayer_patch_noop_on_graph_not_found_original = global.MessageLayer;
+class MessageLayer_patch_noop_on_graph_not_found_override extends global.MessageLayer_patch_noop_on_graph_not_found_original
 {
 	function MessageLayer_patch_noop_on_graph_not_found_override()
 	{
@@ -9,7 +9,7 @@ class MessageLayer_patch_noop_on_graph_not_found_override extends MessageLayer_p
 
 	function MessageLayer()
 	{
-		MessageLayer_patch_noop_on_graph_not_found_override(...);
+		this.MessageLayer_patch_noop_on_graph_not_found_override(...);
 	}
 
 	function putGraph(storage, key, ischar)
@@ -25,4 +25,4 @@ class MessageLayer_patch_noop_on_graph_not_found_override extends MessageLayer_p
 		return super.putGraph(...);
 	}
 }
-global.MessageLayer = MessageLayer_patch_noop_on_graph_not_found_override;
+global.MessageLayer = global.MessageLayer_patch_noop_on_graph_not_found_override;

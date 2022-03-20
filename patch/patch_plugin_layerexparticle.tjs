@@ -52,7 +52,7 @@ class Particle
 	}
 }
 
-class VectorParticle extends Particle
+class VectorParticle extends global.Particle
 {
 	var particle_speed_cos = 0.0;
 	var particle_speed_sin = 0.0;
@@ -75,7 +75,7 @@ class VectorParticle extends Particle
 	}
 }
 
-class RotateParticle extends Particle
+class RotateParticle extends global.Particle
 {
 	var particlecount_magic_double = 0.0;
 	var particle_rotateomega = 0.0;
@@ -99,7 +99,7 @@ class RotateParticle extends Particle
 	}
 }
 
-class AccelRotateParticle extends RotateParticle
+class AccelRotateParticle extends global.RotateParticle
 {
 	var particle_rotateomega_accel = 0.0;
 	var particle_rotateomegatime_accel = 0.0;
@@ -113,7 +113,7 @@ class AccelRotateParticle extends RotateParticle
 	}
 }
 
-class BlinkParticle extends Particle
+class BlinkParticle extends global.Particle
 {
 	var particle_blinktime = 0;
 	var particle_blinkcount = 0;
@@ -235,7 +235,7 @@ class ParticleManager
 	{
 		// Override this function.
 @if(0)
-		var res = new Particle();
+		var res = new global.Particle();
 		res.particleManager_owner = this;
 		return res;
 @endif
@@ -304,7 +304,7 @@ class ParticleManager
 			if (rez > 0)
 			{
 				// Infinite loop in original code
-				throw new Exception("This condition should not be reached!");
+				throw new global.Exception("This condition should not be reached!");
 			}
 		}
 		this.particleMaxCount = a1;
@@ -458,7 +458,7 @@ class ParticleManager
 	}
 }
 
-class VectorParticleManager extends ParticleManager
+class VectorParticleManager extends global.ParticleManager
 {
 	var particleAppearLeft = 0.0;
 	var particleAppearTop = 0.0;
@@ -538,13 +538,13 @@ class VectorParticleManager extends ParticleManager
 
 	function create_particle()
 	{
-		var res = new VectorParticle();
+		var res = new global.VectorParticle();
 		res.particleManager_owner = this;
 		return res;
 	}
 }
 
-class RotateParticleManager extends ParticleManager
+class RotateParticleManager extends global.ParticleManager
 {
 	var particleRotateCenterX = 0.0;
 	var particleRotateCenterY = 0.0;
@@ -621,13 +621,13 @@ class RotateParticleManager extends ParticleManager
 
 	function create_particle()
 	{
-		var res = new RotateParticle();
+		var res = new global.RotateParticle();
 		res.particleManager_owner = this;
 		return res;
 	}
 }
 
-class AccelRotateParticleManager extends RotateParticleManager
+class AccelRotateParticleManager extends global.RotateParticleManager
 {
 	var maxParticleRotateOmegaTime = 0.0;
 	var minParticleRotateOmegaTime = 0.0;
@@ -690,13 +690,13 @@ class AccelRotateParticleManager extends RotateParticleManager
 
 	function create_particle()
 	{
-		var res = new AccelRotateParticle();
+		var res = new global.AccelRotateParticle();
 		res.particleManager_owner = this;
 		return res;
 	}
 }
 
-class BlinkParticleManager extends ParticleManager
+class BlinkParticleManager extends global.ParticleManager
 {
 	var particleAppearLeft = 0.0;
 	var particleAppearTop = 0.0;
@@ -763,7 +763,7 @@ class BlinkParticleManager extends ParticleManager
 
 	function create_particle()
 	{
-		var res = new BlinkParticle();
+		var res = new global.BlinkParticle();
 		res.particleManager_owner = this;
 		return res;
 	}
@@ -798,17 +798,17 @@ class layerExParticle_impl
 			}
 			else
 			{
-				Debug.message("layerExParticle: particleImage に tag が存在しません。");
+				global.Debug.message("layerExParticle: particleImage に tag が存在しません。");
 				return;
 			}
 			if (ttag === void || ttag === null)
 			{
-				Debug.message("tag is void/null");
+				global.Debug.message("tag is void/null");
 				return;
 			}
 			if (typeof(ttag.divideArea) !== "Object" && typeof(ttag.divideArea) !== "String")
 			{
-				Debug.message("layerExParticle: particleImage に divideArea が存在しません。");
+				global.Debug.message("layerExParticle: particleImage に divideArea が存在しません。");
 				return;
 			}
 			if (typeof(ttag.divideArea) === "String")
@@ -831,12 +831,12 @@ class layerExParticle_impl
 			}
 			for (var i = 0; i < this.divideArea_arr.count; i += 1)
 			{
-				Debug.message(("layerExParticle: rect[%d] = { %d, %d, %d, %d }").sprintf(i, this.divideArea_arr[i][0], this.divideArea_arr[i][1], this.divideArea_arr[i][2], this.divideArea_arr[i][3]));
+				global.Debug.message(("layerExParticle: rect[%d] = { %d, %d, %d, %d }").sprintf(i, this.divideArea_arr[i][0], this.divideArea_arr[i][1], this.divideArea_arr[i][2], this.divideArea_arr[i][3]));
 			}
 			this.layerExParticle_particleManager.initializedParticle = this.divideArea_arr.count;
 			if (this.divideArea_arr.count === 0)
 			{
-				Debug.message("layerExParticle: particleImage に分割領域が一つも指定されていないため、パーティクルの描画が行えません。");
+				global.Debug.message("layerExParticle: particleImage に分割領域が一つも指定されていないため、パーティクルの描画が行えません。");
 			}
 			this.layerExParticle_particleImage = v;
 		}
@@ -1461,14 +1461,14 @@ global.layerExParticle_getLayerInfo = function()
 	this.particle_rect_count = 1;
 	// get imageWidth and imageHeight, but nothing is actually done with it?
 
-	Debug.message("layerExParticle: initialized");
+	global.Debug.message("layerExParticle: initialized");
 };
 
 global.Layer.initVectorParticle = function(a2, a3, a4, a5, a6, a7, a8)
 {
 	if (typeof(this.layerExParticle_particleManager) !== "Object")
 	{
-		this.layerExParticle_particleManager = new VectorParticleManager();
+		this.layerExParticle_particleManager = new global.VectorParticleManager();
 		this.layerExParticle_particleManager.init(a3, a2, a4, a5, a6, a7, a8);
 		this.layerExParticle_particleType = 1;
 		(global.layerExParticle_getLayerInfo incontextof this)();
@@ -1478,7 +1478,7 @@ global.Layer.initRotateParticle = function(a2, a3, a4, a5, a6)
 {
 	if (typeof(this.layerExParticle_particleManager) !== "Object")
 	{
-		this.layerExParticle_particleManager = new RotateParticleManager();
+		this.layerExParticle_particleManager = new global.RotateParticleManager();
 		this.layerExParticle_particleManager.init(a3, a2, a4, a5, a6);
 		this.layerExParticle_particleType = 2;
 		(global.layerExParticle_getLayerInfo incontextof this)();
@@ -1488,7 +1488,7 @@ global.Layer.initAccelRotateParticle = function(a2, a3, a4, a5, a6, a7, a8)
 {
 	if (typeof(this.layerExParticle_particleManager) !== "Object")
 	{
-		this.layerExParticle_particleManager = new AccelRotateParticleManager();
+		this.layerExParticle_particleManager = new global.AccelRotateParticleManager();
 		this.layerExParticle_particleManager.init(a3, a2, a4, a5, a6, a7, a8);
 		this.layerExParticle_particleType = 4;
 		(global.layerExParticle_getLayerInfo incontextof this)();
@@ -1498,7 +1498,7 @@ global.Layer.initBlinkParticle = function(a2, a3, a4, a5, a6, a7, a8)
 {
 	if (typeof(this.layerExParticle_particleManager) !== "Object")
 	{
-		this.layerExParticle_particleManager = new BlinkParticleManager();
+		this.layerExParticle_particleManager = new global.BlinkParticleManager();
 		this.layerExParticle_particleManager.init(a3, a2, a4, a5, a6, a7, a8);
 		this.layerExParticle_particleType = 3;
 		(global.layerExParticle_getLayerInfo incontextof this)();

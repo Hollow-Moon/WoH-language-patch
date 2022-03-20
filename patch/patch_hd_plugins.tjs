@@ -1,4 +1,4 @@
-﻿@if(HD_MODE)
+﻿@if(1)
 // filter.dll
 
 global.Noise_patch_hd_plugins_override = function(param)
@@ -21,8 +21,8 @@ global.Noise_patch_hd_plugins_override = function(param)
 };
 if (typeof(global.Noise) === "Object")
 {
-	global.Noise_patch_hd_plugins_original = Noise;
-	global.Noise = Noise_patch_hd_plugins_override;
+	global.Noise_patch_hd_plugins_original = global.Noise;
+	global.Noise = global.Noise_patch_hd_plugins_override;
 }
 
 global.Contrast_patch_hd_plugins_override = function(elm)
@@ -45,8 +45,8 @@ global.Contrast_patch_hd_plugins_override = function(elm)
 };
 if (typeof(global.Contrast) === "Object")
 {
-	global.Contrast_patch_hd_plugins_original = Contrast;
-	global.Contrast = Contrast_patch_hd_plugins_override;
+	global.Contrast_patch_hd_plugins_original = global.Contrast;
+	global.Contrast = global.Contrast_patch_hd_plugins_override;
 }
 
 global.initHaze_patch_hd_plugins_override = function(elm)
@@ -55,15 +55,15 @@ global.initHaze_patch_hd_plugins_override = function(elm)
 	var originalCenter = elm.center;
 	var originalLower = elm.lower;
 	var originalCycle = elm.cycle;
-	elm.upper = elm.upper * scaleFactor if elm.upper > 0;
+	elm.upper = elm.upper * global.scaleFactor if elm.upper > 0;
 	elm.center = elm.center * global.get_wideScaleFactor() if elm.center > 0;
-	elm.lower = elm.lower * scaleFactor if elm.lower > 0;
-	elm.cycle = elm.cycle / scaleFactor;
+	elm.lower = elm.lower * global.scaleFactor if elm.lower > 0;
+	elm.cycle = elm.cycle / global.scaleFactor;
 	for (var i=0; i < elm.waves.count; i++) {
-		elm.waves[i][2] *= scaleFactor;
+		elm.waves[i][2] *= global.scaleFactor;
 	}
 	for (var i=0; i < elm.lwaves.count; i++) {
-		elm.lwaves[i][2] *= scaleFactor;
+		elm.lwaves[i][2] *= global.scaleFactor;
 	}
 	var ie;
 	try
@@ -79,10 +79,10 @@ global.initHaze_patch_hd_plugins_override = function(elm)
 	elm.lower = originalLower;
 	elm.cycle = originalCycle;
 	for (var i=0; i < elm.waves.count; i++) {
-		elm.waves[i][2] /= scaleFactor;
+		elm.waves[i][2] /= global.scaleFactor;
 	}
 	for (var i=0; i < elm.lwaves.count; i++) {
-		elm.lwaves[i][2] /= scaleFactor;
+		elm.lwaves[i][2] /= global.scaleFactor;
 	}
 	if (ie !== void)
 	{
@@ -91,8 +91,8 @@ global.initHaze_patch_hd_plugins_override = function(elm)
 };
 if (typeof(global.initHaze) === "Object")
 {
-	global.initHaze_patch_hd_plugins_original = initHaze;
-	global.initHaze = initHaze_patch_hd_plugins_override;
+	global.initHaze_patch_hd_plugins_original = global.initHaze;
+	global.initHaze = global.initHaze_patch_hd_plugins_override;
 }
 
 global.doHaze_patch_hd_plugins_override = function(elm)
@@ -117,8 +117,8 @@ global.doHaze_patch_hd_plugins_override = function(elm)
 };
 if (typeof(global.doHaze) === "Object")
 {
-	global.doHaze_patch_hd_plugins_original = doHaze;
-	global.doHaze = doHaze_patch_hd_plugins_override;
+	global.doHaze_patch_hd_plugins_original = global.doHaze;
+	global.doHaze = global.doHaze_patch_hd_plugins_override;
 }
 
 // slideopen.dll
@@ -147,8 +147,8 @@ global.initSlideOpen_patch_hd_plugins_override = function(plugin)
 };
 if (typeof(global.initSlideOpen) === "Object")
 {
-	global.initSlideOpen_patch_hd_plugins_original = initSlideOpen;
-	global.initSlideOpen = initSlideOpen_patch_hd_plugins_override;
+	global.initSlideOpen_patch_hd_plugins_original = global.initSlideOpen;
+	global.initSlideOpen = global.initSlideOpen_patch_hd_plugins_override;
 }
 
 global.drawSlideOpen_patch_hd_plugins_override = function()
@@ -158,8 +158,8 @@ global.drawSlideOpen_patch_hd_plugins_override = function()
 };
 if (typeof(global.drawSlideOpen) === "Object")
 {
-	global.drawSlideOpen_patch_hd_plugins_original = drawSlideOpen;
-	global.drawSlideOpen = drawSlideOpen_patch_hd_plugins_override;
+	global.drawSlideOpen_patch_hd_plugins_original = global.drawSlideOpen;
+	global.drawSlideOpen = global.drawSlideOpen_patch_hd_plugins_override;
 }
 
 global.finishSlideOpen_patch_hd_plugins_override = function()
@@ -169,8 +169,8 @@ global.finishSlideOpen_patch_hd_plugins_override = function()
 };
 if (typeof(global.finishSlideOpen) === "Object")
 {
-	global.finishSlideOpen_patch_hd_plugins_original = finishSlideOpen;
-	global.finishSlideOpen = finishSlideOpen_patch_hd_plugins_override;
+	global.finishSlideOpen_patch_hd_plugins_original = global.finishSlideOpen;
+	global.finishSlideOpen = global.finishSlideOpen_patch_hd_plugins_override;
 }
 
 // drawer.dll
@@ -200,8 +200,8 @@ global.drawLine_patch_hd_plugins_override = function(layer, x0, y0, cx, cy, lc)
 };
 if (typeof(global.drawLine) === "Object")
 {
-	global.drawLine_patch_hd_plugins_original = drawLine;
-	global.drawLine = drawLine_patch_hd_plugins_override;
+	global.drawLine_patch_hd_plugins_original = global.drawLine;
+	global.drawLine = global.drawLine_patch_hd_plugins_override;
 }
 
 
@@ -230,8 +230,8 @@ global.drawAALine_patch_hd_plugins_override = function(layer, x0, y0, cx, cy, lc
 };
 if (typeof(global.drawAALine) === "Object")
 {
-	global.drawAALine_patch_hd_plugins_original = drawAALine;
-	global.drawAALine = drawAALine_patch_hd_plugins_override;
+	global.drawAALine_patch_hd_plugins_original = global.drawAALine;
+	global.drawAALine = global.drawAALine_patch_hd_plugins_override;
 }
 
 // LayerExFilter.dll
@@ -800,10 +800,10 @@ if (typeof(global.Layer.stretchCopyAA) === "Object")
 		var sheightOriginal = src.scaleInsideImageHeight(sheight);
 		var sleftOriginal = src.scaleInsideImageLeft(sleft, swidth, swidthOriginal);
 		var stopOriginal = src.scaleInsideImageTop(stop, sheight, sheightOriginal);
-		var widthOriginal = scaleInsideImageWidth(width);
-		var heightOriginal = scaleInsideImageHeight(height);
-		var leftOriginal = scaleInsideImageLeft(left, swidth, swidthOriginal);
-		var topOriginal = scaleInsideImageTop(top, sheight, sheightOriginal);
+		var widthOriginal = this.scaleInsideImageWidth(width);
+		var heightOriginal = this.scaleInsideImageHeight(height);
+		var leftOriginal = this.scaleInsideImageLeft(left, swidth, swidthOriginal);
+		var topOriginal = this.scaleInsideImageTop(top, sheight, sheightOriginal);
 
 		var ie;
 		try
@@ -835,10 +835,10 @@ if (typeof(global.Layer.shrinkCopy) === "Object")
 		var sheightOriginal = src.scaleInsideImageHeight(sheight);
 		var sleftOriginal = src.scaleInsideImageLeft(sleft, swidth, swidthOriginal);
 		var stopOriginal = src.scaleInsideImageTop(stop, sheight, sheightOriginal);
-		var widthOriginal = scaleInsideImageWidth(width);
-		var heightOriginal = scaleInsideImageHeight(height);
-		var leftOriginal = scaleInsideImageLeft(left, swidth, swidthOriginal);
-		var topOriginal = scaleInsideImageTop(top, sheight, sheightOriginal);
+		var widthOriginal = this.scaleInsideImageWidth(width);
+		var heightOriginal = this.scaleInsideImageHeight(height);
+		var leftOriginal = this.scaleInsideImageLeft(left, swidth, swidthOriginal);
+		var topOriginal = this.scaleInsideImageTop(top, sheight, sheightOriginal);
 
 		var ie;
 		try

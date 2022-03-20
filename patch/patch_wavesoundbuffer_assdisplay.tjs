@@ -1,5 +1,5 @@
 
-class SubtitleDisplayLayer extends Layer
+class SubtitleDisplayLayer extends global.Layer
 {
 	function SubtitleDisplayLayer()
 	{
@@ -28,26 +28,26 @@ class SubtitleDisplayLayer extends Layer
 	}
 }
 
-global.KAGWindow_patch_wavesoundbuffer_assdisplay_original = KAGWindow;
-class KAGWindow_patch_wavesoundbuffer_assdisplay_override extends KAGWindow_patch_wavesoundbuffer_assdisplay_original
+global.KAGWindow_patch_wavesoundbuffer_assdisplay_original = global.KAGWindow;
+class KAGWindow_patch_wavesoundbuffer_assdisplay_override extends global.KAGWindow_patch_wavesoundbuffer_assdisplay_original
 {
 	var subtitle_display_layer;
 	function KAGWindow_patch_wavesoundbuffer_assdisplay_override()
 	{
 		super.KAGWindow(...);
-		this.subtitle_display_layer = new SubtitleDisplayLayer(this, primaryLayer);
+		this.subtitle_display_layer = new global.SubtitleDisplayLayer(this, this.primaryLayer);
 	}
 
 	function KAGWindow()
 	{
-		KAGWindow_patch_wavesoundbuffer_assdisplay_override(...);
+		this.KAGWindow_patch_wavesoundbuffer_assdisplay_override(...);
 	}
 
 }
-global.KAGWindow = KAGWindow_patch_wavesoundbuffer_assdisplay_override;
+global.KAGWindow = global.KAGWindow_patch_wavesoundbuffer_assdisplay_override;
 
-global.KAGWaveSoundBuffer_patch_wavesoundbuffer_assdisplay_original = KAGWaveSoundBuffer;
-class KAGWaveSoundBuffer_patch_wavesoundbuffer_assdisplay_override extends KAGWaveSoundBuffer_patch_wavesoundbuffer_assdisplay_original
+global.KAGWaveSoundBuffer_patch_wavesoundbuffer_assdisplay_original = global.KAGWaveSoundBuffer;
+class KAGWaveSoundBuffer_patch_wavesoundbuffer_assdisplay_override extends global.KAGWaveSoundBuffer_patch_wavesoundbuffer_assdisplay_original
 {
 	var has_subtitle = false;
 	function KAGWaveSoundBuffer_patch_wavesoundbuffer_assdisplay_override()
@@ -57,7 +57,7 @@ class KAGWaveSoundBuffer_patch_wavesoundbuffer_assdisplay_override extends KAGWa
 
 	function KAGWaveSoundBuffer()
 	{
-		KAGWaveSoundBuffer_patch_wavesoundbuffer_assdisplay_override(...);
+		this.KAGWaveSoundBuffer_patch_wavesoundbuffer_assdisplay_override(...);
 	}
 
 	function open(storage)
@@ -67,14 +67,14 @@ class KAGWaveSoundBuffer_patch_wavesoundbuffer_assdisplay_override extends KAGWa
 		{
 			this.has_subtitle = false;
 			subtitle_display_layer.hide();
-			System.removeContinuousHandler(this.subtitle_display_continuous_handler);
+			global.System.removeContinuousHandler(this.subtitle_display_continuous_handler);
 		}
 		if (subtitle_display_layer.visible === false)
 		{
-			var ass_storage = Storages.chopStorageExt(Storages.extractStorageName(storage)) + ".ass";
-			if (Storages.isExistentStorage(ass_storage))
+			var ass_storage = global.Storages.chopStorageExt(global.Storages.extractStorageName(storage)) + ".ass";
+			if (global.Storages.isExistentStorage(ass_storage))
 			{
-				if (subtitle_display_layer.load_ass_track(Storages.getPlacedPath(ass_storage)))
+				if (subtitle_display_layer.load_ass_track(global.Storages.getPlacedPath(ass_storage)))
 				{
 					this.has_subtitle = true;
 					subtitle_display_layer.ass_set_frame_size_to_image_size();
@@ -92,7 +92,7 @@ class KAGWaveSoundBuffer_patch_wavesoundbuffer_assdisplay_override extends KAGWa
 		{
 			var subtitle_display_layer = this.owner.owner.subtitle_display_layer;
 			subtitle_display_layer.hide();
-			System.removeContinuousHandler(this.subtitle_display_continuous_handler);
+			global.System.removeContinuousHandler(this.subtitle_display_continuous_handler);
 		}
 		return super.stop(...);
 	}
@@ -104,7 +104,7 @@ class KAGWaveSoundBuffer_patch_wavesoundbuffer_assdisplay_override extends KAGWa
 			var subtitle_display_layer = this.owner.owner.subtitle_display_layer;
 			subtitle_display_layer.render_ass(this.position, true);
 			subtitle_display_layer.show();
-			System.addContinuousHandler(this.subtitle_display_continuous_handler);
+			global.System.addContinuousHandler(this.subtitle_display_continuous_handler);
 		}
 		return super.play(...);
 	}
@@ -128,12 +128,12 @@ class KAGWaveSoundBuffer_patch_wavesoundbuffer_assdisplay_override extends KAGWa
 			{
 				subtitle_display_layer.render_ass(this.position, true);
 				subtitle_display_layer.show();
-				System.addContinuousHandler(this.subtitle_display_continuous_handler);
+				global.System.addContinuousHandler(this.subtitle_display_continuous_handler);
 			}
 			else
 			{
 				subtitle_display_layer.hide();
-				System.removeContinuousHandler(this.subtitle_display_continuous_handler);
+				global.System.removeContinuousHandler(this.subtitle_display_continuous_handler);
 				if (status === "unload")
 				{
 					this.has_subtitle = false;
@@ -144,4 +144,4 @@ class KAGWaveSoundBuffer_patch_wavesoundbuffer_assdisplay_override extends KAGWa
 		return super.onStatusChanged(...);
 	}
 }
-global.KAGWaveSoundBuffer = KAGWaveSoundBuffer_patch_wavesoundbuffer_assdisplay_override;
+global.KAGWaveSoundBuffer = global.KAGWaveSoundBuffer_patch_wavesoundbuffer_assdisplay_override;

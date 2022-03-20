@@ -6,7 +6,7 @@ global.test_write_in_directory = function(test_directory)
 		return true;
 	}
 @endif
-	var test_file_contents = [("This test file can safely be deleted. Timestamp: %s").sprintf(System.getTickCount())];
+	var test_file_contents = [("This test file can safely be deleted. Timestamp: %s").sprintf(global.System.getTickCount())];
 	var test_file_path = test_directory + "/savechek.ksc";
 	try
 	{
@@ -16,19 +16,19 @@ global.test_write_in_directory = function(test_directory)
 	var test_file_size = 0;
 	try
 	{
-		test_file_size = Storages.fstat(test_file_path).size;
+		test_file_size = global.Storages.fstat(test_file_path).size;
 	}
 	catch {}
 	
 	// When TJS_TEXT_OUT_CRLF is defined, there will be a carriage return in the last log string.
 	// Use this information to adjust the size calculation
-	var has_carriage_return = ((typeof(global.Debug.getLastLog) !== "Object") || (Debug.getLastLog().indexOf("\r") !== -1)) ? 1 : 0;
+	var has_carriage_return = ((typeof(global.Debug.getLastLog) !== "Object") || (global.Debug.getLastLog().indexOf("\r") !== -1)) ? 1 : 0;
 	if (test_file_size === ((test_file_contents[0].length + 2 + has_carriage_return) * 2))
 	{
 		var delete_file_result = false;
 		try
 		{
-			delete_file_result = Storages.deleteFile(test_file_path);
+			delete_file_result = global.Storages.deleteFile(test_file_path);
 		}
 		catch {}
 		if (delete_file_result)
@@ -39,8 +39,8 @@ global.test_write_in_directory = function(test_directory)
 	return false;
 };
 
-global.KAGWindow_patch_savedatalocation_override_original = KAGWindow;
-class KAGWindow_patch_savedatalocation_override_override extends KAGWindow_patch_savedatalocation_override_original
+global.KAGWindow_patch_savedatalocation_override_original = global.KAGWindow;
+class KAGWindow_patch_savedatalocation_override_override extends global.KAGWindow_patch_savedatalocation_override_original
 {
 	var wanted_save_data_location;
 	var save_data_applock;
@@ -48,7 +48,7 @@ class KAGWindow_patch_savedatalocation_override_override extends KAGWindow_patch
 	var disable_system_save_data_write;
 	function get_or_prompt_save_data_location()
 	{
-		this.disable_system_save_data_write = System.getArgument('-disablesystemsavedatawrite') !== void;
+		this.disable_system_save_data_write = global.System.getArgument('-disablesystemsavedatawrite') !== void;
 		if (this.disable_system_save_data_write)
 		{
 			this.readOnlyMode = true;
@@ -76,7 +76,7 @@ class KAGWindow_patch_savedatalocation_override_override extends KAGWindow_patch
 				var test_save_data_location = this.wanted_save_data_location;
 				try
 				{
-					if (Storages.isExistentStorage(configconfigfile))
+					if (global.Storages.isExistentStorage(configconfigfile))
 					{
 						config = global.safeEvalStorage(configconfigfile);
 						//	設定済みの値を用いる
@@ -90,18 +90,18 @@ class KAGWindow_patch_savedatalocation_override_override extends KAGWindow_patch
 					if (test_save_data_location.indexOf(":") === -1)
 					{
 						test_paths.add(global.paths_base[0] + test_save_data_location);
-						test_paths.add(System.exePath + test_save_data_location);
-						if (typeof(System.personalPath) === "String")
+						test_paths.add(global.System.exePath + test_save_data_location);
+						if (typeof(global.System.personalPath) === "String")
 						{
-							test_paths.add(System.personalPath + test_save_data_location);
+							test_paths.add(global.System.personalPath + test_save_data_location);
 						}
-						if (typeof(System.dataPath) === "String")
+						if (typeof(global.System.dataPath) === "String")
 						{
-							test_paths.add(System.dataPath + test_save_data_location);
+							test_paths.add(global.System.dataPath + test_save_data_location);
 						}
-						if (typeof(System.appDataPath) === "String")
+						if (typeof(global.System.appDataPath) === "String")
 						{
-							test_paths.add(System.appDataPath + test_save_data_location);
+							test_paths.add(global.System.appDataPath + test_save_data_location);
 						}
 					}
 					else
@@ -110,7 +110,7 @@ class KAGWindow_patch_savedatalocation_override_override extends KAGWindow_patch
 					}
 					for (var i = 0, internal_forloop_count = test_paths.count; i < internal_forloop_count; i += 1)
 					{
-						if (Storages.isExistentDirectory(test_paths[i] + "/"))
+						if (global.Storages.isExistentDirectory(test_paths[i] + "/"))
 						{
 							if (this.disable_system_save_data_write)
 							{
@@ -120,7 +120,7 @@ class KAGWindow_patch_savedatalocation_override_override extends KAGWindow_patch
 							}
 							if (global.test_write_in_directory(test_paths[i]))
 							{
-								app_lock = System.createAppLock(test_paths[i].replace(/[^A-Za-z]/g, '_'));
+								app_lock = global.System.createAppLock(test_paths[i].replace(/[^A-Za-z]/g, '_'));
 								if (app_lock)
 								{
 									test_save_data_location = test_paths[i];
@@ -161,7 +161,7 @@ class KAGWindow_patch_savedatalocation_override_override extends KAGWindow_patch
 					strarr.add("Please close the offending process in order to use the selected directory.");
 					strarr.add("If the issue persists, please restart your system and try again.");
 				}
-				System.inform(strarr.join("\n"));
+				global.System.inform(strarr.join("\n"));
 			}
 			else
 			{
@@ -169,7 +169,7 @@ class KAGWindow_patch_savedatalocation_override_override extends KAGWindow_patch
 			}
 			if (this.disable_system_save_data_write)
 			{
-				throw new Exception("System save data write is disabled, but savedata folder is not existant");
+				throw new global.Exception("System save data write is disabled, but savedata folder is not existant");
 			}
 			{//	初回起動時
 				//	ユニークなフォルダ名を取得("Fate_Savedata"等)
@@ -185,15 +185,15 @@ class KAGWindow_patch_savedatalocation_override_override extends KAGWindow_patch
 				}
 
 				//	ディレクトリ選択ダイアログを開いて、指定してもらう
-		//		Debug.console.visible	= true;
+		//		global.Debug.console.visible	= true;
 				var	dir	= this.wanted_save_data_location;
 				dir	= dir.substr(0, dir.indexOf(savefolder));
 
 				var dirinfo = %[name: dir, title: __("セーブフォルダ(%s)の作成先を指定してください。\n(キャンセルした場合、インストールフォルダに作成します。)").sprintf(savefolder)];
 				var dirselected = false;
-				if (typeof(Storages.selectDirectory) === "Object")
+				if (typeof(global.Storages.selectDirectory) === "Object")
 				{
-					dirselected = Storages.selectDirectory(dirinfo);
+					dirselected = global.Storages.selectDirectory(dirinfo);
 				}
 				if (dirselected)
 				{
@@ -203,22 +203,22 @@ class KAGWindow_patch_savedatalocation_override_override extends KAGWindow_patch
 				{
 					var test_paths = [];
 					test_paths.add(global.paths_base[0]);
-					test_paths.add(System.exePath);
-					if (typeof(System.personalPath) === "String")
+					test_paths.add(global.System.exePath);
+					if (typeof(global.System.personalPath) === "String")
 					{
-						test_paths.add(System.personalPath);
+						test_paths.add(global.System.personalPath);
 					}
-					if (typeof(System.dataPath) === "String")
+					if (typeof(global.System.dataPath) === "String")
 					{
-						test_paths.add(System.dataPath);
+						test_paths.add(global.System.dataPath);
 					}
-					if (typeof(System.appDataPath) === "String")
+					if (typeof(global.System.appDataPath) === "String")
 					{
-						test_paths.add(System.appDataPath);
+						test_paths.add(global.System.appDataPath);
 					}
 					for (var i = 0, internal_forloop_count = test_paths.count; i < internal_forloop_count; i += 1)
 					{
-						if (Storages.isExistentDirectory(test_paths[i] + "/"))
+						if (global.Storages.isExistentDirectory(test_paths[i] + "/"))
 						{
 							if (global.test_write_in_directory(test_paths[i]))
 							{
@@ -228,19 +228,19 @@ class KAGWindow_patch_savedatalocation_override_override extends KAGWindow_patch
 						}
 					}
 				}
-				dir	= Storages.getFullPath(dir);
+				dir	= global.Storages.getFullPath(dir);
 
 				//	指定されたディレクトリ名を保存
 				config	= %[saveDataLocation:(dir+"/"+savefolder)];
 				try
 				{
-					if (!Storages.isExistentDirectory(config.saveDataLocation + "/"))
+					if (!global.Storages.isExistentDirectory(config.saveDataLocation + "/"))
 					{
-						Storages.createDirectory(config.saveDataLocation + "/");
+						global.Storages.createDirectory(config.saveDataLocation + "/");
 					}
 				}
 				catch (e) {}
-				(Dictionary.saveStruct incontextof config)(configconfigfile);
+				(global.Dictionary.saveStruct incontextof config)(configconfigfile);
 			}
 		}
 		if (app_lock)
@@ -272,7 +272,7 @@ class KAGWindow_patch_savedatalocation_override_override extends KAGWindow_patch
 		{
 			if (typeof(this.__saveDataLocation) !== "String")
 			{
-				wanted_save_data_location = v;
+				this.wanted_save_data_location = v;
 			}
 		}
 	}
@@ -284,7 +284,7 @@ class KAGWindow_patch_savedatalocation_override_override extends KAGWindow_patch
 
 	function KAGWindow()
 	{
-		KAGWindow_patch_savedatalocation_override_override(...);
+		this.KAGWindow_patch_savedatalocation_override_override(...);
 	}
 
 	function saveSystemVariables()
@@ -306,4 +306,4 @@ class KAGWindow_patch_savedatalocation_override_override extends KAGWindow_patch
 		return super.onCloseQuery(...);
 	}
 }
-global.KAGWindow = KAGWindow_patch_savedatalocation_override_override;
+global.KAGWindow = global.KAGWindow_patch_savedatalocation_override_override;

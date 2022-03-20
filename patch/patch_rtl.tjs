@@ -3,8 +3,8 @@
 // Vertical text is currently not supported.
 // ActingMessageLayer is currently not supported.
 
-global.Layer_patch_rtl_original = Layer;
-class Layer_patch_rtl_override extends Layer_patch_rtl_original
+global.Layer_patch_rtl_original = global.Layer;
+class Layer_patch_rtl_override extends global.Layer_patch_rtl_original
 {
 	function Layer_patch_rtl_override()
 	{
@@ -13,14 +13,14 @@ class Layer_patch_rtl_override extends Layer_patch_rtl_original
 
 	function Layer()
 	{
-		Layer_patch_rtl_override(...);
+		this.Layer_patch_rtl_override(...);
 	}
 
 	function operateRect(left, top, src, sleft, stop, swidth, sheight, mode, opacity)
 	{
 		if (this.name === "行描画用浮遊メッセージレイヤ" && global.get_rtl_enabled(typeof(global.kag) === "Object" ? global.kag : this.window))
 		{
-			left = parent.relinexpos - left;
+			left = this.parent.relinexpos - left;
 			left -= src.imageWidth;
 			return (global.Layer_patch_rtl_original.operateRect incontextof this)(left, top, src, sleft, stop, swidth, sheight, mode, opacity);
 		}
@@ -31,7 +31,7 @@ class Layer_patch_rtl_override extends Layer_patch_rtl_original
 	{
 		if ((this instanceof "ClickGlyphLayer") && global.get_rtl_enabled(typeof(global.kag) === "Object" ? global.kag : this.window))
 		{
-			left = parent.relinexpos - (parent.lineLayerPos);
+			left = this.parent.relinexpos - (this.parent.lineLayerPos);
 			left += this.imageWidth;
 			return (global.Layer_patch_rtl_original.setPos incontextof this)(left, top, width, height);
 		}
@@ -59,7 +59,7 @@ class Layer_patch_rtl_override extends Layer_patch_rtl_original
 		
 		if (this.name === "行描画用浮遊メッセージレイヤ")
 		{
-			left = parent.relinexpos - left;
+			left = this.parent.relinexpos - left;
 		}
 		else
 		{
@@ -69,4 +69,4 @@ class Layer_patch_rtl_override extends Layer_patch_rtl_original
 		return (global.Layer_patch_rtl_original.drawText incontextof this)(left, top, text, color, opacity, aa, slevel, scolor, swidth, sofsx, sofsy);
 	}
 }
-global.Layer = Layer_patch_rtl_override;
+global.Layer = global.Layer_patch_rtl_override;

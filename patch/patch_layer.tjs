@@ -112,8 +112,8 @@ global.layer_tagdata_replacement = %[];
 @endif
 
 // Layer 类覆盖
-global.Layer_patch_layer_original	= Layer;
-class Layer_patch_layer_override extends Layer_patch_layer_original
+global.Layer_patch_layer_original	= global.Layer;
+class Layer_patch_layer_override extends global.Layer_patch_layer_original
 {
 	var _font = void;
 	var fontWrapper = void;
@@ -122,7 +122,7 @@ class Layer_patch_layer_override extends Layer_patch_layer_original
 	{
 		getter
 		{
-			return fontWrapper;
+			return this.fontWrapper;
 		}
 	}
 
@@ -131,20 +131,20 @@ class Layer_patch_layer_override extends Layer_patch_layer_original
 		super.Layer(...);
 		// Can set default font here.
 		this._font = super.font;
-		this.fontWrapper = new FontWrapper(super.font, this);
+		this.fontWrapper = new global.FontWrapper(super.font, this);
 	}
 
 	// 覆盖Layer
 	function Layer()
 	{
-		Layer_patch_layer_override(...);
+		this.Layer_patch_layer_override(...);
 	}
 
 	property isPrimary
 	{
 		getter()
 		{
-			return this === window.primaryLayer || (typeof(window.fore) === "Object" && this === window.fore.base);
+			return this === this.window.primaryLayer || (typeof(this.window.fore) === "Object" && this === this.window.fore.base);
 		}
 	}
 
@@ -154,14 +154,14 @@ class Layer_patch_layer_override extends Layer_patch_layer_original
 	{
 		if (w > 65535 || w < 0 || h > 65535 || h < 0)
 		{
-			if (!large_image_warning)
+			if (!this.large_image_warning)
 			{
-				large_image_warning = true;
-				dm(("warning: Large resize attempt; w is %s and h is %s").sprintf(w, h));
-				var trace_string = Scripts.getTraceString();
+				this.large_image_warning = true;
+				global.dm(("warning: Large resize attempt; w is %s and h is %s").sprintf(w, h));
+				var trace_string = global.Scripts.getTraceString();
 				if (trace_string !== "")
 				{
-					dm("Trace: " + trace_string);
+					global.dm("Trace: " + trace_string);
 				}
 			}
 			return 0;
@@ -173,14 +173,14 @@ class Layer_patch_layer_override extends Layer_patch_layer_original
 	{
 		if (w > 65535 || w <= 0 || h > 65535 || h <= 0)
 		{
-			if (!large_image_warning)
+			if (!this.large_image_warning)
 			{
-				large_image_warning = true;
-				dm(("warning: Large resize attempt; w is %s and h is %s").sprintf(w, h));
-				var trace_string = Scripts.getTraceString();
+				this.large_image_warning = true;
+				global.dm(("warning: Large resize attempt; w is %s and h is %s").sprintf(w, h));
+				var trace_string = global.Scripts.getTraceString();
 				if (trace_string !== "")
 				{
-					dm("Trace: " + trace_string);
+					global.dm("Trace: " + trace_string);
 				}
 			}
 			return 0;
@@ -192,14 +192,14 @@ class Layer_patch_layer_override extends Layer_patch_layer_original
 	{
 		if (w > 65535 || w < 0 || h > 65535 || h < 0)
 		{
-			if (!large_image_warning)
+			if (!this.large_image_warning)
 			{
-				large_image_warning = true;
-				dm(("warning: Large resize attempt; w is %s and h is %s").sprintf(w, h));
-				var trace_string = Scripts.getTraceString();
+				this.large_image_warning = true;
+				global.dm(("warning: Large resize attempt; w is %s and h is %s").sprintf(w, h));
+				var trace_string = global.Scripts.getTraceString();
 				if (trace_string !== "")
 				{
-					dm("Trace: " + trace_string);
+					global.dm("Trace: " + trace_string);
 				}
 			}
 			return 0;
@@ -212,10 +212,10 @@ class Layer_patch_layer_override extends Layer_patch_layer_original
 		var file_name = global.get_full_path_of_image(storage);
 		if (file_name === "")
 		{
-			throw new Exception(("Image \"%s\" not found").sprintf(storage));
+			throw new global.Exception(("Image \"%s\" not found").sprintf(storage));
 		}
 		var res = super.loadImages(file_name, key);
-		var replacement_tagdata = global.layer_tagdata_replacement[Storages.chopStorageExt(Storages.extractStorageName(file_name))];
+		var replacement_tagdata = global.layer_tagdata_replacement[global.Storages.chopStorageExt(global.Storages.extractStorageName(file_name))];
 		if (replacement_tagdata !== void)
 		{
 			if (res === null)
@@ -281,10 +281,10 @@ class Layer_patch_layer_override extends Layer_patch_layer_original
 	}
 
 }
-global.Layer = Layer_patch_layer_override;
+global.Layer = global.Layer_patch_layer_override;
 
-global.Window_patch_layer_original	= Window;
-class Window_patch_layer_override extends Window_patch_layer_original
+global.Window_patch_layer_original	= global.Window;
+class Window_patch_layer_override extends global.Window_patch_layer_original
 {
 	function Window_patch_layer_override()
 	{
@@ -293,42 +293,42 @@ class Window_patch_layer_override extends Window_patch_layer_original
 
 	function Window()
 	{
-		Window_patch_layer_override(...);
+		this.Window_patch_layer_override(...);
 	}
 
 	var isActive = true;
 
 	function onActivate() {
-		isActive = true;
+		this.isActive = true;
 	}
 
 	function onDeactivate() {
-		isActive = false;
+		this.isActive = false;
 	}
 
 @if(kirikiriz)
 	function onMouseMove(x, y)
 	{
-		if (typeof this.fullScreened === "Integer" && fullScreened) {
-			var systemRatio = System.screenWidth / System.screenHeight;
+		if (typeof this.fullScreened === "Integer" && this.fullScreened) {
+			var systemRatio = global.System.screenWidth / global.System.screenHeight;
 @if(HD_MODE)
 			var wideRatio = this.wideRatio;
 @endif
 @if(!HD_MODE)
 			var wideRatio = 4/3;
 @endif
-			var h = systemRatio >= wideRatio? System.screenHeight : System.screenWidth*(1/wideRatio);
-			var screenTop = Math.ceil((h-System.screenHeight)/2);
+			var h = systemRatio >= wideRatio? global.System.screenHeight : global.System.screenWidth*(1/wideRatio);
+			var screenTop = global.Math.ceil((h-global.System.screenHeight)/2);
 			
 			if (y > screenTop) {
-				menu.visible = false;
+				this.menu.visible = false;
 			}
 			else if (y <= screenTop) {
-				menu.visible = true;
+				this.menu.visible = true;
 			}
 		}
 		super.onMouseMove(...);
 	}
 @endif
 }
-global.Window = Window_patch_layer_override;
+global.Window = global.Window_patch_layer_override;

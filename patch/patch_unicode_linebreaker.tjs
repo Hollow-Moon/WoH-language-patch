@@ -136,7 +136,7 @@ global.mapFirst = function(c)
 	}
 };
 
-global.classTrie = new UnicodeTrie(Scripts.evalStorage("patch_unicode_linebreak_data.ksc"));
+global.classTrie = new global.UnicodeTrie(global.Scripts.evalStorage("patch_unicode_linebreak_data.ksc"));
 
 class Break
 {
@@ -178,7 +178,7 @@ class LineBreaker
 	function nextCharClass()
 	{
 		var x = global.classTrie.get(this.nextCodePoint());
-		return mapClass(linebreaker_classes[x]);
+		return global.mapClass(global.linebreaker_classes[x]);
 	}
 
 	function getSimpleBreak()
@@ -205,7 +205,7 @@ class LineBreaker
 	{
 		// if not handled already, use the pair table
 		var shouldBreak = false;
-		switch (linebreaker_pair_table[linebreaker_classes.find(this.curClass)][linebreaker_classes.find(this.nextClass)])
+		switch (global.linebreaker_pair_table[global.linebreaker_classes.find(this.curClass)][global.linebreaker_classes.find(this.nextClass)])
 		{
 			case "DI_BRK": // Direct break
 				shouldBreak = true;
@@ -277,7 +277,7 @@ class LineBreaker
 		if (this.curClass == null)
 		{
 			var firstClass = this.nextCharClass();
-			this.curClass = mapFirst(firstClass);
+			this.curClass = global.mapFirst(firstClass);
 			this.nextClass = firstClass;
 			this.LB8a = (firstClass === "ZWJ");
 			this.LB30a = 0;
@@ -292,8 +292,8 @@ class LineBreaker
 			// explicit newline
 			if ((this.curClass === "BK") || ((this.curClass === "CR") && (this.nextClass !== "LF")))
 			{
-				this.curClass = mapFirst(mapClass(this.nextClass));
-				return new Break(this.lastPos, true);
+				this.curClass = global.mapFirst(global.mapClass(this.nextClass));
+				return new global.Break(this.lastPos, true);
 			}
 
 			var shouldBreak = this.getSimpleBreak();
@@ -308,14 +308,14 @@ class LineBreaker
 
 			if (shouldBreak)
 			{
-				return new Break(this.lastPos);
+				return new global.Break(this.lastPos);
 			}
 		}
 
 		if (this.lastPos < this.str.length)
 		{
 			this.lastPos = this.str.length;
-			return new Break(this.str.length);
+			return new global.Break(this.str.length);
 		}
 		return null;
 	}

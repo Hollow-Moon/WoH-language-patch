@@ -1,6 +1,6 @@
 ﻿
-global.KAGWindow_patch_textruby_original = KAGWindow;
-class KAGWindow_patch_textruby_override extends KAGWindow_patch_textruby_original
+global.KAGWindow_patch_textruby_original = global.KAGWindow;
+class KAGWindow_patch_textruby_override extends global.KAGWindow_patch_textruby_original
 {
 	function KAGWindow_patch_textruby_override()
 	{
@@ -9,7 +9,7 @@ class KAGWindow_patch_textruby_override extends KAGWindow_patch_textruby_origina
 
 	function KAGWindow()
 	{
-		KAGWindow_patch_textruby_override(...);
+		this.KAGWindow_patch_textruby_override(...);
 	}
 
 	function getHandlers()
@@ -32,7 +32,7 @@ class KAGWindow_patch_textruby_override extends KAGWindow_patch_textruby_origina
 					}
 					for (var i = 0, internal_forloop_count = pendings_to_insert.count; i < internal_forloop_count; i += 1)
 					{
-						conductor.queueTag(i, pendings_to_insert[i]);
+						this.conductor.queueTag(i, pendings_to_insert[i]);
 					}
 					return 0;
 				}
@@ -42,4 +42,4 @@ class KAGWindow_patch_textruby_override extends KAGWindow_patch_textruby_origina
 		return handlers;
 	}
 }
-global.KAGWindow = KAGWindow_patch_textruby_override;
+global.KAGWindow = global.KAGWindow_patch_textruby_override;

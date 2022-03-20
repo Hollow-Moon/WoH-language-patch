@@ -1,6 +1,6 @@
 ﻿
 
-class MenuItemRootLayer extends Layer
+class MenuItemRootLayer extends global.Layer
 {
 	var menu;
 	var menu_active_height = 20;
@@ -30,7 +30,7 @@ class MenuItemRootLayer extends Layer
 			{
 				continue;
 			}
-			var child = new MenuItemChildLayer(this.window, this, this, children[i]);
+			var child = new global.MenuItemChildLayer(this.window, this, this, children[i]);
 			child.left = width;
 			if (child.height > height)
 			{
@@ -61,7 +61,7 @@ class MenuItemRootLayer extends Layer
 	}
 }
 
-class MenuItemListLayer extends Layer
+class MenuItemListLayer extends global.Layer
 {
 	var menu;
 	var last_list;
@@ -78,7 +78,7 @@ class MenuItemListLayer extends Layer
 			{
 				continue;
 			}
-			var child = new MenuItemChildLayer(this.window, this, this.parent, children[i]);
+			var child = new global.MenuItemChildLayer(this.window, this, this.parent, children[i]);
 			child.top = height;
 			if (child.width > width)
 			{
@@ -128,7 +128,7 @@ class MenuItemListLayer extends Layer
 	}
 }
 
-class MenuItemChildLayer extends Layer
+class MenuItemChildLayer extends global.Layer
 {
 	var menu;
 	
@@ -148,9 +148,9 @@ class MenuItemChildLayer extends Layer
 
 	function drawState(hovered=false)
 	{
-		this.face = dfOpaque;
+		this.face = global.dfOpaque;
 		this.fillRect(0, 0, this.imageWidth, this.imageHeight, 0x00000000 | (hovered ? 0xFF000080 : 0) | ((this.menu.checked && !(this.menu.radio)) ? 0xFF008000 : 0) | ((this.menu.checked && (this.menu.radio)) ? 0xFF800000 : 0));
-		this.face = dfAlpha;
+		this.face = global.dfAlpha;
 		var caption = this.menu.caption;
 		this.drawText(0, 0, caption, (this.menu.enabled ? 0xFFFFFF : 0x808080), 255, true);
 	}
@@ -171,7 +171,7 @@ class MenuItemChildLayer extends Layer
 		var children = this.menu.children;
 		if (children.count > 0)
 		{
-			this.parent.last_list = new MenuItemListLayer(this.window, this.root, this.menu);
+			this.parent.last_list = new global.MenuItemListLayer(this.window, this.root, this.menu);
 			if (this.parent.top === 0)
 			{
 				// show below
@@ -204,20 +204,20 @@ class MenuItemChildLayer extends Layer
 	}
 }
 
-global.KAGWindow_patch_menu_layer_original = KAGWindow;
-class KAGWindow_patch_menu_layer_override extends KAGWindow_patch_menu_layer_original
+global.KAGWindow_patch_menu_layer_original = global.KAGWindow;
+class KAGWindow_patch_menu_layer_override extends global.KAGWindow_patch_menu_layer_original
 {
 	var menu_layer;
 	function KAGWindow_patch_menu_layer_override()
 	{
 		super.KAGWindow(...);
 
-		this.menu_layer = new MenuItemRootLayer(this, primaryLayer);
+		this.menu_layer = new global.MenuItemRootLayer(this, this.primaryLayer);
 	}
 
 	function KAGWindow()
 	{
-		KAGWindow_patch_menu_layer_override(...);
+		this.KAGWindow_patch_menu_layer_override(...);
 	}
 
 	function onMouseMove(x, y, shift)
@@ -234,5 +234,5 @@ class KAGWindow_patch_menu_layer_override extends KAGWindow_patch_menu_layer_ori
 	}
 
 }
-global.KAGWindow = KAGWindow_patch_menu_layer_override;
+global.KAGWindow = global.KAGWindow_patch_menu_layer_override;
 

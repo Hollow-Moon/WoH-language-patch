@@ -1,6 +1,6 @@
 ﻿
-global.HistoryLayer_patch_align_original = HistoryLayer;
-class HistoryLayer_patch_align_override extends HistoryLayer_patch_align_original
+global.HistoryLayer_patch_align_original = global.HistoryLayer;
+class HistoryLayer_patch_align_override extends global.HistoryLayer_patch_align_original
 {
 	function HistoryLayer_patch_align_override()
 	{
@@ -9,11 +9,11 @@ class HistoryLayer_patch_align_override extends HistoryLayer_patch_align_origina
 
 	function HistoryLayer()
 	{
-		HistoryLayer_patch_align_override(...);
+		this.HistoryLayer_patch_align_override(...);
 	}
 
 	function locateAlign(anchor, text, offsetText="", offsetTextDirection=0) {
-		var right = relinePos;
+		var right = this.relinePos;
 		var x = void;
 		var anchorValue = 0;
 		if (anchor == "right") {
@@ -23,16 +23,16 @@ class HistoryLayer_patch_align_override extends HistoryLayer_patch_align_origina
 		} else if (("" + (+anchor)) == anchor) {
 			anchorValue = +anchor;
 		}
-		x = (right - font.getTextWidth(text)) * anchorValue + font.getTextWidth(offsetText)*offsetTextDirection;
-		lineStart[dataPage][dataPos] = x;
-		limitPos = limitPos_org - x;
-		relinePos = relinePos_org - x;
+		x = (right - this.font.getTextWidth(text)) * anchorValue + this.font.getTextWidth(offsetText)*offsetTextDirection;
+		this.lineStart[this.dataPage][this.dataPos] = x;
+		this.limitPos = this.limitPos_org - x;
+		this.relinePos = this.relinePos_org - x;
 	}
 }
-global.HistoryLayer = HistoryLayer_patch_align_override;
+global.HistoryLayer = global.HistoryLayer_patch_align_override;
 
-global.MessageLayer_patch_align_original = MessageLayer;
-class MessageLayer_patch_align_override extends MessageLayer_patch_align_original
+global.MessageLayer_patch_align_original = global.MessageLayer;
+class MessageLayer_patch_align_override extends global.MessageLayer_patch_align_original
 {
 	function MessageLayer_patch_align_override()
 	{
@@ -41,12 +41,12 @@ class MessageLayer_patch_align_override extends MessageLayer_patch_align_origina
 
 	function MessageLayer()
 	{
-		MessageLayer_patch_align_override(...);
+		this.MessageLayer_patch_align_override(...);
 	}
 
 	function locateAlign(anchor, text, offsetText="", offsetTextDirection=0)
 	{
-		var right = relinexpos - marginL;
+		var right = this.relinexpos - this.marginL;
 		var x = void;
 		var anchorValue = 0;
 		if (anchor == "right") {
@@ -57,26 +57,26 @@ class MessageLayer_patch_align_override extends MessageLayer_patch_align_origina
 			anchorValue = +anchor;
 		}
 @if(!MESSAGELAYER_USECHARLAYER)
-		x = (right - lineLayer.font.getTextWidth(text)) * anchorValue + lineLayer.font.getTextWidth(offsetText)*offsetTextDirection;
+		x = (right - this.lineLayer.font.getTextWidth(text)) * anchorValue + this.lineLayer.font.getTextWidth(offsetText)*offsetTextDirection;
 @endif
 @if(MESSAGELAYER_USECHARLAYER)
-		x = (right - getChWidth(text)[1]) * anchorValue + getChWidth(offsetText)[1]*offsetTextDirection;
+		x = (right - this.getChWidth(text)[1]) * anchorValue + this.getChWidth(offsetText)[1]*offsetTextDirection;
 @endif
-		locate(x, void);
+		this.locate(x, void);
 	}
 
 	function locateAlignImage(anchor, imageWidth, y)
 	{
-		var right = window.scWidth - marginL;
-		var anchorValue = getAnchorValue(anchor);
+		var right = this.window.scWidth - this.marginL;
+		var anchorValue = global.getAnchorValue(anchor);
 		var x = (right - imageWidth) * anchorValue;
-		locate(x, y);
+		this.locate(x, y);
 	}
 }
-global.MessageLayer = MessageLayer_patch_align_override;
+global.MessageLayer = global.MessageLayer_patch_align_override;
 
-global.KAGWindow_patch_align_original = KAGWindow;
-class KAGWindow_patch_align_override extends KAGWindow_patch_align_original
+global.KAGWindow_patch_align_original = global.KAGWindow;
+class KAGWindow_patch_align_override extends global.KAGWindow_patch_align_original
 {
 	function KAGWindow_patch_align_override()
 	{
@@ -85,7 +85,7 @@ class KAGWindow_patch_align_override extends KAGWindow_patch_align_original
 
 	function KAGWindow()
 	{
-		KAGWindow_patch_align_override(...);
+		this.KAGWindow_patch_align_override(...);
 	}
 
 	function getHandlers()
@@ -93,9 +93,9 @@ class KAGWindow_patch_align_override extends KAGWindow_patch_align_original
 		var handlers = super.getHandlers();
 		handlers.locatealign = function(elm)
 		{
-			historyLayer.locateAlign(elm.anchor, elm.textForLength, elm.offsetText, elm.offsetTextDirection);
-			if(currentWithBack) current.comp.locateAlign(elm.anchor, elm.textForLength, elm.offsetText, elm.offsetTextDirection);
-			current.locateAlign(elm.anchor, elm.textForLength, elm.offsetText, elm.offsetTextDirection);
+			this.historyLayer.locateAlign(elm.anchor, elm.textForLength, elm.offsetText, elm.offsetTextDirection);
+			if(this.currentWithBack) this.current.comp.locateAlign(elm.anchor, elm.textForLength, elm.offsetText, elm.offsetTextDirection);
+			this.current.locateAlign(elm.anchor, elm.textForLength, elm.offsetText, elm.offsetTextDirection);
 			return 0;
 		} incontextof this;
 		handlers.align = function(elm)
@@ -113,46 +113,46 @@ class KAGWindow_patch_align_override extends KAGWindow_patch_align_original
 				rubyTag.pos    = elm.rubypos    if elm.rubypos    !== void;
 				rubyTag.char   = elm.rubychar   if elm.rubychar   !== void;
 				rubyTag.offset = elm.rubyoffset if elm.rubyoffset !== void;
-				conductor.queueTag(0, rubyTag);
+				this.conductor.queueTag(0, rubyTag);
 			}
 			if (elm.text !== void) {
-				textToAlign = conductor.cleanLine(textToAlign);
-				if (textToAlign.indexOf(conductor.dash_character) !== -1 || textToAlign.indexOf(conductor.block_character) !== -1)
+				textToAlign = this.conductor.cleanLine(textToAlign);
+				if (textToAlign.indexOf(this.conductor.dash_character) !== -1 || textToAlign.indexOf(this.conductor.block_character) !== -1)
 				{
 					var tag_index = 0;
 					for (var i = 0, internal_forloop_count = textToAlign.length; i < internal_forloop_count; i += 1) {
 						var character = textToAlign[i];
 						var line_tag = %[tagname:"line", len:0];
 						var block_tag = %[tagname:"block", len:0];
-						while (character == conductor.dash_character) {
+						while (character == this.conductor.dash_character) {
 							i++;
 							line_tag.len++;
 							character = textToAlign[i];
 						}
-						while (character == conductor.block_character) {
+						while (character == this.conductor.block_character) {
 							i++;
 							block_tag.len++;
 							character = textToAlign[i];
 						}
 						if (line_tag.len > 0 || block_tag.len > 0) {
 							if (line_tag.len > 0) {
-								conductor.queueTag(tag_index, line_tag);
+								this.conductor.queueTag(tag_index, line_tag);
 								i--;
 							}
 							if (block_tag.len > 0) {
-								conductor.queueTag(tag_index, block_tag);
+								this.conductor.queueTag(tag_index, block_tag);
 								i--;
 							}
 						} else {
 							var chTag = %[tagname:"ch", text:textToAlign[i]];
-							conductor.queueTag(tag_index, chTag);
+							this.conductor.queueTag(tag_index, chTag);
 						}
 						tag_index++;
 					}
 				}
 				else
 				{
-					conductor.queueText(textToAlign, elm);
+					this.conductor.queueText(textToAlign, elm);
 				}
 			}
 			if (elm.indent) {
@@ -161,16 +161,16 @@ class KAGWindow_patch_align_override extends KAGWindow_patch_align_original
 				if (elm.indentoffset !== void) {
 					indentOffset = elm.indentoffset;
 				}
-				conductor.queueTag(indentOffset, indentTag);
+				this.conductor.queueTag(indentOffset, indentTag);
 			}
 			if (elm.anchor !== void) {
 				if(elm.rubychar != void && ("" + (+elm.rubychar)) != elm.rubychar) {
 					textForLength = elm.rubychar;
 				}
-				textForLength = conductor.cleanLine(textForLength);
-				offsetText = conductor.cleanLine(offsetText);
+				textForLength = this.conductor.cleanLine(textForLength);
+				offsetText = this.conductor.cleanLine(offsetText);
 				var locatealignTag = %[tagname:"locatealign", anchor:elm.anchor, textForLength:textForLength, offsetText:offsetText, offsetTextDirection:offsetTextDirection];
-				conductor.queueTag(0, locatealignTag);
+				this.conductor.queueTag(0, locatealignTag);
 			}
 			return 0;
 		} incontextof this;
@@ -178,4 +178,4 @@ class KAGWindow_patch_align_override extends KAGWindow_patch_align_original
 	}
 
 }
-global.KAGWindow = KAGWindow_patch_align_override;
+global.KAGWindow = global.KAGWindow_patch_align_override;

@@ -32,8 +32,8 @@ global.isSpecialTag = %[
 ];
 @endif
 
-global.BaseConductor_patch_conductor_woh_override_original = BaseConductor;
-class BaseConductor_patch_conductor_woh_override_override extends BaseConductor_patch_conductor_woh_override_original
+global.BaseConductor_patch_conductor_woh_override_original = global.BaseConductor;
+class BaseConductor_patch_conductor_woh_override_override extends global.BaseConductor_patch_conductor_woh_override_original
 {
 @if(GAME_WOHN)
 	var autoCache = false; // 自動キャッシュの有効/無効
@@ -44,7 +44,7 @@ class BaseConductor_patch_conductor_woh_override_override extends BaseConductor_
 	}
 	function BaseConductor()
 	{
-		BaseConductor_patch_conductor_woh_override_override(...);
+		this.BaseConductor_patch_conductor_woh_override_override(...);
 	}
 
 	function onTag(obj)
@@ -209,21 +209,21 @@ class BaseConductor_patch_conductor_woh_override_override extends BaseConductor_
 	function store()
 	{
 		var	dic	= super.store(...);
-		dic.autoCache	= autoCache;
+		dic.autoCache	= this.autoCache;
 		return dic;
 	}
 
 	function restore(dic)
 	{
 		super.restore(...);
-		autoCache	= dic.autoCache;
+		this.autoCache	= dic.autoCache;
 	}
 
 }
-global.BaseConductor = BaseConductor_patch_conductor_woh_override_override;
+global.BaseConductor = global.BaseConductor_patch_conductor_woh_override_override;
 
-global.Conductor_patch_conductor_woh_override_original = Conductor;
-class Conductor_patch_conductor_woh_override_override extends Conductor_patch_conductor_woh_override_original
+global.Conductor_patch_conductor_woh_override_original = global.Conductor;
+class Conductor_patch_conductor_woh_override_override extends global.Conductor_patch_conductor_woh_override_original
 {
 	function Conductor_patch_conductor_woh_override_override()
 	{
@@ -234,7 +234,7 @@ class Conductor_patch_conductor_woh_override_override extends Conductor_patch_co
 	}
 	function Conductor()
 	{
-		Conductor_patch_conductor_woh_override_override(...);
+		this.Conductor_patch_conductor_woh_override_override(...);
 	}
 
 	function waitWithTimeOut(until, timeout)
@@ -362,7 +362,7 @@ class Conductor_patch_conductor_woh_override_override extends Conductor_patch_co
 	}
 @endif
 }
-global.Conductor = Conductor_patch_conductor_woh_override_override;
+global.Conductor = global.Conductor_patch_conductor_woh_override_override;
 
 
 @if(GAME_WOHN)

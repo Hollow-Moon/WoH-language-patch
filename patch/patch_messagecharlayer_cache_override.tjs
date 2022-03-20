@@ -1,6 +1,6 @@
 ﻿
-global.MessageLayer_patch_messagecharlayer_cache_override_original = MessageLayer;
-class MessageLayer_patch_messagecharlayer_cache_override_override extends MessageLayer_patch_messagecharlayer_cache_override_original
+global.MessageLayer_patch_messagecharlayer_cache_override_original = global.MessageLayer;
+class MessageLayer_patch_messagecharlayer_cache_override_override extends global.MessageLayer_patch_messagecharlayer_cache_override_original
 {
 	function MessageLayer_patch_messagecharlayer_cache_override_override()
 	{
@@ -37,7 +37,7 @@ class MessageLayer_patch_messagecharlayer_cache_override_override extends Messag
 
 	function MessageLayer()
 	{
-		MessageLayer_patch_messagecharlayer_cache_override_override(...);
+		this.MessageLayer_patch_messagecharlayer_cache_override_override(...);
 	}
 
 	var knownCharLayersByFont = %[]; // Character layer cache.
@@ -325,14 +325,14 @@ class MessageLayer_patch_messagecharlayer_cache_override_override extends Messag
 		{
 			if (ruby)
 			{
-				this.fontParams.push(fontFace, fontAngle, rubyBold, italic, rubySize, rubyAntialiased, rubyChColor, rubyEdgeColor, rubyShadowColor, max, min);
+				this.fontParams.push(this.fontFace, this.fontAngle, this.rubyBold, italic, this.rubySize, this.rubyAntialiased, this.rubyChColor, this.rubyEdgeColor, this.rubyShadowColor, max, min);
 			}
 			else
 			{
-				this.fontParams.push(fontFace, fontAngle, bold, italic, fontSize, antialiased, chColor, edgeColor, shadowColor);
+				this.fontParams.push(this.fontFace, this.fontAngle, this.bold, italic, this.fontSize, this.antialiased, this.chColor, this.edgeColor, this.shadowColor);
 			}
 		}
-		this.fontParams.push(edgeEmphasis, edgeExtent, shadowOffsetX, shadowOffsetY, vertical);
+		this.fontParams.push(this.edgeEmphasis, this.edgeExtent, this.shadowOffsetX, this.shadowOffsetY, this.vertical);
 		var joined_font_params = this.fontParams.join("|");
 		if (font_params_valid && this.fontParamsStr === "")
 		{
@@ -392,12 +392,12 @@ class MessageLayer_patch_messagecharlayer_cache_override_override extends Messag
 			{
 				if(ischar)
 				{
-					if(edge)
-						l.drawGraphWithEdge(ch, key, chColor, edgeEmphasis, edgeColor, edgeExtent);
-					else if(shadow)
-						l.drawGraphWithShadow(ch, key, chColor, shadowColor, shadowOffsetX, shadowOffsetY);
+					if(this.edge)
+						l.drawGraphWithEdge(ch, key, this.chColor, this.edgeEmphasis, this.edgeColor, this.edgeExtent);
+					else if(this.shadow)
+						l.drawGraphWithShadow(ch, key, this.chColor, this.shadowColor, this.shadowOffsetX, this.shadowOffsetY);
 					else
-						l.drawGraph(ch, key, chColor);
+						l.drawGraph(ch, key, this.chColor);
 				}
 				else
 				{
@@ -408,27 +408,27 @@ class MessageLayer_patch_messagecharlayer_cache_override_override extends Messag
 			{
 				if (ruby)
 				{
-					l.setFont(fontFace, fontAngle, rubyBold, italic, rubySize);
-					if(edge)
-						l.drawTextWithEdge(ch, rubyChColor, rubyAntialiased, edgeEmphasis, rubyEdgeColor, edgeExtent, vertical, max, min);
-					else if(shadow)
-						l.drawTextWithShadow(ch, rubyChColor, rubyAntialiased, rubyShadowColor, shadowOffsetX, shadowOffsetY, vertical, max, min);
+					l.setFont(this.fontFace, this.fontAngle, this.rubyBold, italic, this.rubySize);
+					if(this.edge)
+						l.drawTextWithEdge(ch, this.rubyChColor, this.rubyAntialiased, this.edgeEmphasis, this.rubyEdgeColor, this.edgeExtent, this.vertical, max, min);
+					else if(this.shadow)
+						l.drawTextWithShadow(ch, this.rubyChColor, this.rubyAntialiased, this.rubyShadowColor, this.shadowOffsetX, this.shadowOffsetY, this.vertical, max, min);
 					else
-						l.drawText(ch, rubyChColor, rubyAntialiased, vertical, max, min);
+						l.drawText(ch, this.rubyChColor, this.rubyAntialiased, this.vertical, max, min);
 				}
 				else
 				{
-					l.setFont(fontFace, fontAngle, bold, italic, fontSize);
-					if(edge)
-						l.drawTextWithEdge(ch, chColor, antialiased, edgeEmphasis, edgeColor, edgeExtent, vertical);
-					else if(shadow)
-						l.drawTextWithShadow(ch, chColor, antialiased, shadowColor, shadowOffsetX, shadowOffsetY, vertical);
+					l.setFont(this.fontFace, this.fontAngle, this.bold, italic, this.fontSize);
+					if(this.edge)
+						l.drawTextWithEdge(ch, this.chColor, this.antialiased, this.edgeEmphasis, this.edgeColor, this.edgeExtent, this.vertical);
+					else if(this.shadow)
+						l.drawTextWithShadow(ch, this.chColor, this.antialiased, this.shadowColor, this.shadowOffsetX, this.shadowOffsetY, this.vertical);
 					else
-						l.drawText(ch, chColor, antialiased, vertical);
+						l.drawText(ch, this.chColor, this.antialiased, this.vertical);
 				}
 			}
 		}
-		var charlayer = createNewCharLayer();
+		var charlayer = this.createNewCharLayer();
 		charlayer.assignImages(this.tmpCharLayer);
 		if (cache)
 		{
@@ -450,4 +450,4 @@ class MessageLayer_patch_messagecharlayer_cache_override_override extends Messag
 		}
 	}
 }
-global.MessageLayer = MessageLayer_patch_messagecharlayer_cache_override_override;
+global.MessageLayer = global.MessageLayer_patch_messagecharlayer_cache_override_override;

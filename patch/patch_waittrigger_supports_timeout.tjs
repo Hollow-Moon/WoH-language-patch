@@ -1,6 +1,6 @@
 ﻿
-global.KAGWindow_patch_waittrigger_supports_timeout_original = KAGWindow;
-class KAGWindow_patch_waittrigger_supports_timeout_override extends KAGWindow_patch_waittrigger_supports_timeout_original
+global.KAGWindow_patch_waittrigger_supports_timeout_original = global.KAGWindow;
+class KAGWindow_patch_waittrigger_supports_timeout_override extends global.KAGWindow_patch_waittrigger_supports_timeout_original
 {
 	function KAGWindow_patch_waittrigger_supports_timeout_override()
 	{
@@ -9,7 +9,7 @@ class KAGWindow_patch_waittrigger_supports_timeout_override extends KAGWindow_pa
 
 	function KAGWindow()
 	{
-		KAGWindow_patch_waittrigger_supports_timeout_override(...);
+		this.KAGWindow_patch_waittrigger_supports_timeout_override(...);
 	}
 
 	function waitTrigger(elm)
@@ -24,19 +24,19 @@ class KAGWindow_patch_waittrigger_supports_timeout_override extends KAGWindow_pa
 				return 0;
 			}
 		}
-		if((elm.canskip !== void && +elm.canskip) && clickSkipEnabled)
+		if((elm.canskip !== void && +elm.canskip) && this.clickSkipEnabled)
 		{
 			// スキップできる場合
-			if(skipMode)
+			if(this.skipMode)
 			{
 				// スキップ動作中
-				if(elm.onskip !== void) Scripts.eval(elm.onskip);
+				if(elm.onskip !== void) global.Scripts.eval(elm.onskip);
 				return 0; // すぐに返る
 			}
 			var waitdict = %[
 				click : function(arg)
 				{
-					if(arg !== void) Scripts.eval(arg);
+					if(arg !== void) global.Scripts.eval(arg);
 				} incontextof this,
 				click_arg : elm.onskip,
 				elm.name => function
@@ -45,11 +45,11 @@ class KAGWindow_patch_waittrigger_supports_timeout_override extends KAGWindow_pa
 			];
 			if (time !== void)
 			{
-				conductor.waitWithTimeOut(waitdict, time);
+				this.conductor.waitWithTimeOut(waitdict, time);
 			}
 			else
 			{
-				conductor.wait(waitdict);
+				this.conductor.wait(waitdict);
 			}
 		}
 		else
@@ -61,14 +61,14 @@ class KAGWindow_patch_waittrigger_supports_timeout_override extends KAGWindow_pa
 			];
 			if (time !== void)
 			{
-				conductor.waitWithTimeOut(waitdict, time);
+				this.conductor.waitWithTimeOut(waitdict, time);
 			}
 			else
 			{
-				conductor.wait(waitdict);
+				this.conductor.wait(waitdict);
 			}
 		}
 		return -2;
 	}
 }
-global.KAGWindow = KAGWindow_patch_waittrigger_supports_timeout_override;
+global.KAGWindow = global.KAGWindow_patch_waittrigger_supports_timeout_override;

@@ -7,18 +7,18 @@
 		msg_components.add("Please follow the proper installation instructions on the project webpage.");
 		msg_components.add(("Support forum thread: %s").sprintf(global.PatchInfoURL));
 		var msg = msg_components.join("\n");
-		System.inform(msg);
+		global.System.inform(msg);
 
 @if(!KIRIKIROID)
 		if ((typeof(global.devMode) === "Integer" ? !global.devMode : true) && (typeof(global.devMode2) === "Integer" ? !global.devMode2 : true))
 		{
-			if (System.getArgument('-openpatchinfourlonerror') !== "no" && typeof(global.PatchInfoURL) === "String")
+			if (global.System.getArgument('-openpatchinfourlonerror') !== "no" && typeof(global.PatchInfoURL) === "String")
 			{
-				System.shellExecute(global.PatchInfoURL);
+				global.System.shellExecute(global.PatchInfoURL);
 			}
 		}
 
-		System.exit(127);
+		global.System.exit(127);
 @endif
 	}
 }

@@ -1,6 +1,6 @@
 ﻿
-global.Window_hint_original = Window;
-class Window_hint_override extends Window_hint_original
+global.Window_hint_original = global.Window;
+class Window_hint_override extends global.Window_hint_original
 {
 	function Window_hint_override()
 	{
@@ -9,21 +9,21 @@ class Window_hint_override extends Window_hint_original
 
 	function Window()
 	{
-		Window_hint_override(...);
+		this.Window_hint_override(...);
 	}
 
 	var hintlayer = void;
 
 	function initHintLayer()
 	{
-		hintlayer = new Layer(this, primaryLayer);
+		this.hintlayer = new global.Layer(this, this.primaryLayer);
 		{
-			var l = hintlayer;
+			var l = this.hintlayer;
 			l.visible = false;
 			l.ignoreHintSensing = true;
 			l.hitThreshold = 256;
 			if (["Integer", "Real"].find(typeof(this.innerHeightScale)) !== -1) {
-				l.font.height = Math.ceil(9 / Math.min(1, innerHeightScale)); // upscale font when using window size < x1.0
+				l.font.height = global.Math.ceil(9 / global.Math.min(1, this.innerHeightScale)); // upscale font when using window size < x1.0
 			} else {
 				l.font.height = 9;
 			}
@@ -44,8 +44,8 @@ class Window_hint_override extends Window_hint_original
 
 	function onHintChanged(text, x, y, isshow)
 	{
-		if (hintlayer === void) {
-			initHintLayer();
+		if (this.hintlayer === void) {
+			this.initHintLayer();
 		}
 		if (isshow) {
 			var lines = text.split("\n");
@@ -56,16 +56,16 @@ class Window_hint_override extends Window_hint_original
 				}
 			}
 
-			var fontHeight = hintlayer.font.height;
-			var w = hintlayer.font.getTextWidth(lines[longestLineIndex]) + hintHorizontalPadding * 2;
-			var h = fontHeight * lines.count + hintLineSpacing * (lines.count-1) + hintVerticalPadding * 2;
-			hintlayer.setImageSize(w, h);
-			hintlayer.setSizeToImageSize();
+			var fontHeight = this.hintlayer.font.height;
+			var w = this.hintlayer.font.getTextWidth(lines[longestLineIndex]) + this.hintHorizontalPadding * 2;
+			var h = fontHeight * lines.count + this.hintLineSpacing * (lines.count-1) + this.hintVerticalPadding * 2;
+			this.hintlayer.setImageSize(w, h);
+			this.hintlayer.setSizeToImageSize();
 
 @if(HD_MODE)
 			if (typeof this.fullScreened === "Integer" && fullScreened) {
-				var windowToScreenRatio = (innerHeight*scaleFactor) / System.screenHeight;
-				x -= (System.screenWidth - (innerWidth*global.get_wideScaleFactor() / windowToScreenRatio)) / 2;
+				var windowToScreenRatio = (this.innerHeight*scaleFactor) / System.screenHeight;
+				x -= (System.screenWidth - (this.innerWidth*global.get_wideScaleFactor() / windowToScreenRatio)) / 2;
 				x *= windowToScreenRatio;
 				y *= windowToScreenRatio;
 			}
@@ -76,38 +76,38 @@ class Window_hint_override extends Window_hint_original
 @if(ZOOM_WINDOW)
 			if (["Integer", "Real"].find(typeof(this.innerHeightScale)) !== -1)
 			{
-				x /= innerWidthScale;
-				y /= innerHeightScale;
-				if ((x+w) > innerWidth/innerWidthScale) { x = innerWidth/innerWidthScale - w; }
-				if ((y+mouseCursorSize+h) > innerHeight/innerHeightScale) { y = innerHeight/innerHeightScale - h - mouseCursorSize/innerHeightScale; }
-				hintlayer.setPos(x, y + mouseCursorSize/innerHeightScale);
+				x /= this.innerWidthScale;
+				y /= this.innerHeightScale;
+				if ((x+w) > this.innerWidth/this.innerWidthScale) { x = this.innerWidth/this.innerWidthScale - w; }
+				if ((y+this.mouseCursorSize+h) > this.innerHeight/this.innerHeightScale) { y = this.innerHeight/this.innerHeightScale - h - this.mouseCursorSize/this.innerHeightScale; }
+				this.hintlayer.setPos(x, y + this.mouseCursorSize/this.innerHeightScale);
 			}
 			else
 @endif
 			{
-				if ((x+w) > innerWidth) { x = innerWidth - w; }
-				if ((y+mouseCursorSize+h) > innerHeight) { y = innerHeight - h - mouseCursorSize; }
-				hintlayer.setPos(x, y + mouseCursorSize);
+				if ((x+w) > this.innerWidth) { x = this.innerWidth - w; }
+				if ((y+this.mouseCursorSize+h) > this.innerHeight) { y = this.innerHeight - h - this.mouseCursorSize; }
+				this.hintlayer.setPos(x, y + this.mouseCursorSize);
 			}
 
-			hintlayer.fillRect(0, 0, w, h, 0);
-			hintlayer.colorRect(0, 0, w, h, clInfoBk, 196);
+			this.hintlayer.fillRect(0, 0, w, h, 0);
+			this.hintlayer.colorRect(0, 0, w, h, global.clInfoBk, 196);
 
-			hintlayer.colorRect(0,   0,   1, h, tooltipBorderColor);
-			hintlayer.colorRect(0,   0,   w, 1, tooltipBorderColor);
-			hintlayer.colorRect(w-1, 0,   1, h, tooltipBorderColor);
-			hintlayer.colorRect(0,   h-1, w, 1, tooltipBorderColor);
+			this.hintlayer.colorRect(0,   0,   1, h, this.tooltipBorderColor);
+			this.hintlayer.colorRect(0,   0,   w, 1, this.tooltipBorderColor);
+			this.hintlayer.colorRect(w-1, 0,   1, h, this.tooltipBorderColor);
+			this.hintlayer.colorRect(0,   h-1, w, 1, this.tooltipBorderColor);
 
-			var lineY = hintVerticalPadding;
+			var lineY = this.hintVerticalPadding;
 			for (var i = 0, internal_forloop_count = lines.count; i < internal_forloop_count; i += 1) {
-				hintlayer.drawText(hintHorizontalPadding, lineY, lines[i], clInfoText, 220);
-				lineY += fontHeight + hintLineSpacing;
+				this.hintlayer.drawText(this.hintHorizontalPadding, lineY, lines[i], global.clInfoText, 220);
+				lineY += fontHeight + this.hintLineSpacing;
 			}
-			hintlayer.visible = true;
-			hintlayer.bringToFront();
+			this.hintlayer.visible = true;
+			this.hintlayer.bringToFront();
 		} else {
-			hintlayer.visible = false;
+			this.hintlayer.visible = false;
 		}
 	}
 }
-global.Window = Window_hint_override;
+global.Window = global.Window_hint_override;

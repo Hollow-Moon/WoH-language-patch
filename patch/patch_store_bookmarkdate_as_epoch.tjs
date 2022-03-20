@@ -1,6 +1,6 @@
 ﻿
-global.KAGWindow_patch_store_bookmarkdate_as_epoch_original = KAGWindow;
-class KAGWindow_patch_store_bookmarkdate_as_epoch_override extends KAGWindow_patch_store_bookmarkdate_as_epoch_original
+global.KAGWindow_patch_store_bookmarkdate_as_epoch_original = global.KAGWindow;
+class KAGWindow_patch_store_bookmarkdate_as_epoch_override extends global.KAGWindow_patch_store_bookmarkdate_as_epoch_original
 {
 	function KAGWindow_patch_store_bookmarkdate_as_epoch_override()
 	{
@@ -9,14 +9,14 @@ class KAGWindow_patch_store_bookmarkdate_as_epoch_override extends KAGWindow_pat
 
 	function KAGWindow()
 	{
-		KAGWindow_patch_store_bookmarkdate_as_epoch_override(...);
+		this.KAGWindow_patch_store_bookmarkdate_as_epoch_override(...);
 	}
 
 	var bookMarkEpochDates = [];
 
 	function getFormatDate(datetime)
 	{
-		var date = new Date();
+		var date = new global.Date();
 		date.setTime(datetime);
 		date = global.strftime(__("%Y/%m/%d %H:%M:%S"), date);
 		return date;
@@ -45,7 +45,7 @@ class KAGWindow_patch_store_bookmarkdate_as_epoch_override extends KAGWindow_pat
 
 	function getBookMarkInfoFromData(dic, num)
 	{
-		if (num < numBookMarks)
+		if (num < this.numBookMarks)
 		{
 			this.bookMarkEpochDates[num] = dic.storeTime;
 		}

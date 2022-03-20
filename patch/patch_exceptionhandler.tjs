@@ -27,15 +27,15 @@ global.print_exception = function(e, interim_trace)
 {
 	var exception_message = global.get_exception_message(e);
 	var trace_string = global.get_trace_string(e);
-	dm("Exception: " + exception_message);
+	global.dm("Exception: " + exception_message);
 	if (trace_string !== "")
 	{
-		dm("Trace: " + trace_string);
+		global.dm("Trace: " + trace_string);
 	}
 	if (typeof(interim_trace) === "String")
 	{
-		dm(("The above exception is only for %s.").sprintf(interim_trace));
-		dm("The correct exception you need to submit is located further back.");
+		global.dm(("The above exception is only for %s.").sprintf(interim_trace));
+		global.dm("The correct exception you need to submit is located further back.");
 	}
 };
 
@@ -56,8 +56,8 @@ global.get_exception_files = function()
 	}
 	else
 	{
-		logpath = System.exePath;
-		logname = Storages.extractStorageName(System.exeName) + ".console.log";
+		logpath = global.System.exePath;
+		logname = global.Storages.extractStorageName(global.System.exeName) + ".console.log";
 	}
 	if (typeof(global.System) === "Object" && typeof(global.System.dataPath) === "String")
 	{
@@ -65,17 +65,17 @@ global.get_exception_files = function()
 	}
 	else
 	{
-		hwexceptpath = System.exePath;
+		hwexceptpath = global.System.exePath;
 	}
 	if (logpath !== "")
 	{
 		logpath += "/";
-		logpath = Storages.getFullPath(logpath);
+		logpath = global.Storages.getFullPath(logpath);
 	}
 	if (hwexceptpath !== "")
 	{
 		hwexceptpath += "/";
-		hwexceptpath = Storages.getFullPath(hwexceptpath);
+		hwexceptpath = global.Storages.getFullPath(hwexceptpath);
 	}
 
 	// Move the old log to another location
@@ -83,19 +83,19 @@ global.get_exception_files = function()
 	{
 		if (logpath !== "")
 		{
-			if (typeof(Storages.isExistentStorageNoSearchNoNormalize) === "Object")
+			if (typeof(global.Storages.isExistentStorageNoSearchNoNormalize) === "Object")
 			{
-				if (Storages.isExistentStorageNoSearchNoNormalize(logpath + logname))
+				if (global.Storages.isExistentStorageNoSearchNoNormalize(logpath + logname))
 				{
-					if (typeof(Storages.getTime) === "Object")
+					if (typeof(global.Storages.getTime) === "Object")
 					{
-						var logtime = Storages.getTime(logpath + logname);
+						var logtime = global.Storages.getTime(logpath + logname);
 						if (typeof(logtime) === "Object")
 						{
 							var date = logtime.mtime;
-							if (typeof(Storages.moveFile) === "Object")
+							if (typeof(global.Storages.moveFile) === "Object")
 							{
-								Storages.moveFile(logpath + logname, logpath + ("krkr-%04d%02d%02d%02d%02d%02d.console.log").sprintf(date.getYear(), date.getMonth(), date.getDay(), date.getHours(), date.getMinutes(), date.getSeconds()));
+								global.Storages.moveFile(logpath + logname, logpath + ("krkr-%04d%02d%02d%02d%02d%02d.console.log").sprintf(date.getYear(), date.getMonth(), date.getDay(), date.getHours(), date.getMinutes(), date.getSeconds()));
 							}
 						}
 					}
@@ -105,11 +105,11 @@ global.get_exception_files = function()
 	}
 	catch (e)
 	{
-		print_exception(e, "moving the log file");
+		global.print_exception(e, "moving the log file");
 	}
 
 	//	時刻取得
-	var date = new Date();
+	var date = new global.Date();
 	var now;
 	{
 		var d = date;
@@ -129,57 +129,57 @@ global.get_exception_files = function()
 	}
 	catch (e)
 	{
-		print_exception(e, "retrieving the savedata location");
+		global.print_exception(e, "retrieving the savedata location");
 	}
 	if (typeof(saveDataLocation) === "String")
 	{
 		var success = true;
 		dir	= saveDataLocation;
-		if (!endsWith("/", dir)) {
+		if (!global.endsWith("/", dir)) {
 			dir += "/";
 		}
 		if (success) try
 		{
-			Storages.createDirectory(dir) if !Storages.isExistentDirectory(dir);
+			global.Storages.createDirectory(dir) if !global.Storages.isExistentDirectory(dir);
 		}
 		catch (e)
 		{
 			success = false;
-			print_exception(e, "creating the log directory");
+			global.print_exception(e, "creating the log directory");
 		}
 
 		//	exceptedディレクトリの存在チェックと作成
 		dir	+= "excepted/";
 		if (success) try
 		{
-			Storages.createDirectory(dir) if !Storages.isExistentDirectory(dir);
+			global.Storages.createDirectory(dir) if !global.Storages.isExistentDirectory(dir);
 		}
 		catch (e)
 		{
 			success = false;	//	致命的エラー
-			print_exception(e, "creating the log directory");
+			global.print_exception(e, "creating the log directory");
 		}
 
 		//	今回のディレクトリ名決定して、作成する
 		dir	+= now + "/";
 		if (success) try
 		{
-			Storages.createDirectory(dir) if !Storages.isExistentDirectory(dir);
+			global.Storages.createDirectory(dir) if !global.Storages.isExistentDirectory(dir);
 		}
 		catch (e)
 		{
 			success = false;
-			print_exception(e, "creating the log directory");
+			global.print_exception(e, "creating the log directory");
 		}
 		dir_unarchived = dir + "unarchived/";
 		if (success) try
 		{
-			Storages.createDirectory(dir_unarchived) if !Storages.isExistentDirectory(dir_unarchived);
+			global.Storages.createDirectory(dir_unarchived) if !global.Storages.isExistentDirectory(dir_unarchived);
 		}
 		catch (e)
 		{
 			success = false;
-			print_exception(e, "creating the unarchived log directory");
+			global.print_exception(e, "creating the unarchived log directory");
 		}
 
 		if (success) try
@@ -192,14 +192,14 @@ global.get_exception_files = function()
 					global.System.setArgument("-forcelog", "yes");
 				}
 				global.Debug.logLocation = dir_unarchived;
-				Debug.startLogToFile(true);
-				if (Storages.isExistentStorage(dir_unarchived + logname))
+				global.Debug.startLogToFile(true);
+				if (global.Storages.isExistentStorage(dir_unarchived + logname))
 				{
 					exception_files.add(dir_unarchived + logname);
 				}
 				if (!global.forceLog)
 				{
-					var arcdelim = System.getArgument("-arcdelim");
+					var arcdelim = global.System.getArgument("-arcdelim");
 					if (!arcdelim)
 					{
 						arcdelim = ">";
@@ -208,56 +208,56 @@ global.get_exception_files = function()
 					global.Debug.logLocation = "__this_path_should_be_fake__" + arcdelim;
 				}
 			}
-			else if (logpath !== "" && Storages.isExistentStorage(logpath + logname))
+			else if (logpath !== "" && global.Storages.isExistentStorage(logpath + logname))
 			{
-				if (typeof(Storages.exportFile) === "Object")
+				if (typeof(global.Storages.exportFile) === "Object")
 				{
-					Debug.startLogToFile(true);
+					global.Debug.startLogToFile(true);
 					var log_file = dir_unarchived + "krkr.console.log";
-					Storages.exportFile(logpath + logname, log_file);
+					global.Storages.exportFile(logpath + logname, log_file);
 					exception_files.add(log_file);
 				}
 			}
 @endif
 @if(KIRIKIROID)
-			Debug.startLogToFile();
+			global.Debug.startLogToFile();
 @endif
 		}
 		catch (e)
 		{
-			print_exception(e, "copying the log file");
+			global.print_exception(e, "copying the log file");
 		}
 
 		if (success) try
 		{
-			if (Storages.isExistentStorage(hwexceptpath + hwexceptname))
+			if (global.Storages.isExistentStorage(hwexceptpath + hwexceptname))
 			{
-				if (typeof(Storages.moveFile) === "Object")
+				if (typeof(global.Storages.moveFile) === "Object")
 				{
 					var hwexcept_file = dir_unarchived + "hwexcept.log";
-					Storages.moveFile(hwexceptpath + hwexceptname, hwexcept_file);
+					global.Storages.moveFile(hwexceptpath + hwexceptname, hwexcept_file);
 					exception_files.add(hwexcept_file);
 				}
 			}
 		}
 		catch (e)
 		{
-			print_exception(e, "moving the log file");
+			global.print_exception(e, "moving the log file");
 		}
 
 		if (success) try
 		{
-			if (typeof(Debug.getLastLog) === "Object")
+			if (typeof(global.Debug.getLastLog) === "Object")
 			{
 				var last_log_file = dir_unarchived + "last_log.console.log";
-				var arr = [Debug.getLastLog()];
+				var arr = [global.Debug.getLastLog()];
 				arr.save(last_log_file, "z");
 				exception_files.add(last_log_file);
 			}
 		}
 		catch (e)
 		{
-			print_exception(e, "saving the last lines of the log file");
+			global.print_exception(e, "saving the last lines of the log file");
 		}
 
 		if (success && typeof(global.kag.dataName) === "String")
@@ -279,13 +279,13 @@ global.get_exception_files = function()
 				var ticketfile;
 				if (typeof(global.TicketFileName) === "String")
 				{
-					ticketfile = TicketFileName + CurrentTicketNo + ".bmp";
+					ticketfile = global.TicketFileName + global.CurrentTicketNo + ".bmp";
 				}
 				if (typeof(global.makeTicketFile) === "String")
 				{
 					var ticket_file = dir_unarchived + ticketfile;
 					global.makeTicketFile(ticket_file);
-					if (Storages.isExistentStorage(ticket_file))
+					if (global.Storages.isExistentStorage(ticket_file))
 					{
 						exception_files.add(ticket_file);
 					}
@@ -293,7 +293,7 @@ global.get_exception_files = function()
 			}
 			catch (e)
 			{
-				print_exception(e, "creating the ticket file");
+				global.print_exception(e, "creating the ticket file");
 			}
 			try
 			{
@@ -301,7 +301,7 @@ global.get_exception_files = function()
 				{
 					var save_file = dir_unarchived + "data.kdt";
 					global.kag.saveBookMarkToFile(save_file);
-					if (Storages.isExistentStorage(save_file))
+					if (global.Storages.isExistentStorage(save_file))
 					{
 						exception_files.add(save_file);
 					}
@@ -309,25 +309,25 @@ global.get_exception_files = function()
 			}
 			catch (e)
 			{
-				print_exception(e, "saving the bookmark file");
+				global.print_exception(e, "saving the bookmark file");
 			}
 			try
 			{
 				global.kag.saveSystemVariables();
 				var excepted_data_sc = dir_unarchived + "excepteddata" + "sc.ksd";
-				if (Storages.isExistentStorage(excepted_data_sc))
+				if (global.Storages.isExistentStorage(excepted_data_sc))
 				{
 					exception_files.add(excepted_data_sc);
 				}
 				var excepted_data_su = dir_unarchived + "excepteddata" + "su.ksd";
-				if (Storages.isExistentStorage(excepted_data_su))
+				if (global.Storages.isExistentStorage(excepted_data_su))
 				{
 					exception_files.add(excepted_data_su);
 				}
 			}
 			catch (e)
 			{
-				print_exception(e, "saving the system variable file");
+				global.print_exception(e, "saving the system variable file");
 			}
 @if(0)
 			if (typeof(last_savedata_mode) === "String")
@@ -344,13 +344,13 @@ global.get_exception_files = function()
 			{
 				var structure = global.paths_base_dirlist;
 				var filename = dir_unarchived + "paths_base_dirlist.ksc";
-				(Dictionary.saveStruct incontextof structure)(filename, "z");
+				(global.Dictionary.saveStruct incontextof structure)(filename, "z");
 				exception_files.add(filename);
 			}
 		}
 		catch (e)
 		{
-			print_exception(e, "saving the directory listing");
+			global.print_exception(e, "saving the directory listing");
 		}
 
 		if (success) try
@@ -359,13 +359,13 @@ global.get_exception_files = function()
 			{
 				var structure = global.paths_base_dirlistex;
 				var filename = dir_unarchived + "paths_base_dirlistex.ksc";
-				(Dictionary.saveStruct incontextof structure)(filename, "z");
+				(global.Dictionary.saveStruct incontextof structure)(filename, "z");
 				exception_files.add(filename);
 			}
 		}
 		catch (e)
 		{
-			print_exception(e, "saving the extended directory listing");
+			global.print_exception(e, "saving the extended directory listing");
 		}
 
 		if (success) try
@@ -374,13 +374,13 @@ global.get_exception_files = function()
 			{
 				var structure = global.System.getDxDiag();
 				var filename = dir_unarchived + "dxdiag.ksc";
-				(Dictionary.saveStruct incontextof structure)(filename, "z");
+				(global.Dictionary.saveStruct incontextof structure)(filename, "z");
 				exception_files.add(filename);
 			}
 		}
 		catch (e)
 		{
-			print_exception(e, "saving the DxDiag information");
+			global.print_exception(e, "saving the DxDiag information");
 		}
 	}
 
@@ -388,7 +388,7 @@ global.get_exception_files = function()
 	{
 		var exception_archive = dir + "exception.zip";
 		// 1: overwrite
-		var zip = new Zip();
+		var zip = new global.Zip();
 		var success = true;
 		zip.open(exception_archive, 1);
 		for (var i = 0, internal_forloop_count = exception_files.count; i < internal_forloop_count; i += 1)
@@ -408,14 +408,14 @@ global.get_exception_files = function()
 			{
 				var file = exception_files[i];
 				// Deletion may not succeed because file handles are leaking
-				if (!Storages.deleteFile(file))
+				if (!global.Storages.deleteFile(file))
 				{
 					delete_unarchived_success = false;
 				}
 			}
 			if (delete_unarchived_success)
 			{
-				Storages.removeDirectory(dir_unarchived);
+				global.Storages.removeDirectory(dir_unarchived);
 			}
 			exception_files.clear();
 			exception_files.add(exception_archive);
@@ -423,7 +423,7 @@ global.get_exception_files = function()
 	}
 	catch (e)
 	{
-		print_exception(e, "archiving the exception files");
+		global.print_exception(e, "archiving the exception files");
 	}
 
 	return exception_files;
@@ -434,13 +434,13 @@ global.save_troubleshooting_data_and_open_folder_location = function()
 	var exception_files = global.get_exception_files();
 	if (exception_files.count > 0)
 	{
-		var dir = Storages.extractStoragePath(exception_files[0]);
+		var dir = global.Storages.extractStoragePath(exception_files[0]);
 		if (typeof(dir) === "String" && dir !== "")
 		{
-			var localpath = Storages.getLocalName(dir);
+			var localpath = global.Storages.getLocalName(dir);
 			if (localpath !== "")
 			{
-				System.shellExecute(("\"%s\"").sprintf(localpath));
+				global.System.shellExecute(("\"%s\"").sprintf(localpath));
 			}
 		}
 	}
@@ -452,7 +452,7 @@ global.save_troubleshooting_data_and_open_folder_location = function()
 /		作成して、状態を保存する
 /----------------------------------------------------------------------------*/
 global.exceptionOccured	= false;	//	例外が発生したか？
-System.exceptionHandler = function(e)
+global.System.exceptionHandler = function(e)
 {
 	var print_exception = global.print_exception;
 	print_exception(e);
@@ -477,8 +477,8 @@ System.exceptionHandler = function(e)
 @endif
 
 	//	イベント停止
-	var ed	= System.eventDisabled;
-	System.eventDisabled	= true;
+	var ed	= global.System.eventDisabled;
+	global.System.eventDisabled	= true;
 	var msg_components = [];
 
 	if (exception_files.count > 0)
@@ -542,7 +542,7 @@ System.exceptionHandler = function(e)
 					win.saveBookMark(no);
 					saved	= true;
 					msg_components.add(__("現在の状況をクイックセーブの%s番目に保存しました。").sprintf(i));
-					msg_components.add(__("セーブデータのファイル名は、\n「%s」\nとなります。").sprintf(Storages.getLocalName(Storages.getFullPath(win.getBookMarkFileNameAtNum(no)))));
+					msg_components.add(__("セーブデータのファイル名は、\n「%s」\nとなります。").sprintf(global.Storages.getLocalName(global.Storages.getFullPath(win.getBookMarkFileNameAtNum(no)))));
 					break;
 				}
 			}
@@ -559,7 +559,7 @@ System.exceptionHandler = function(e)
 						var pos = global.kag.sflags.convertSaveNoToFileNo[no];
 						saved	= true;
 						msg_components.add(__("現在の状況をセーブメニューの「%sページ %s行 %s列目」に保存しました。").sprintf(pos\20+1, pos%20\5+1, pos%5+1));
-						msg_components.add(__("セーブデータのファイル名は、\n「%s」\nとなります。").sprintf(Storages.getLocalName(Storages.getFullPath(win.getBookMarkFileNameAtNum(no)))));
+						msg_components.add(__("セーブデータのファイル名は、\n「%s」\nとなります。").sprintf(global.Storages.getLocalName(global.Storages.getFullPath(win.getBookMarkFileNameAtNum(no)))));
 						break;
 					}
 				}
@@ -584,43 +584,43 @@ System.exceptionHandler = function(e)
 		msg_components.add(__("Pキーでタイトルへ戻るか、通常の手順で終了してください。"));
 	}
 
-	if (System.getArgument('-noshowexceptiondialog') === void)
+	if (global.System.getArgument('-noshowexceptiondialog') === void)
 	{
-		System.inform(msg_components.join("\n"));
+		global.System.inform(msg_components.join("\n"));
 	}
 
 	//	イベント再開
-	System.eventDisabled	= ed;
-	exceptionOccured	= true;	//	例外が発生しているので、終了時点での確認→データ保存を行わない
+	global.System.eventDisabled	= ed;
+	global.exceptionOccured	= true;	//	例外が発生しているので、終了時点での確認→データ保存を行わない
 
 @if(!KIRIKIROID)
-	if (!global.devMode && !global.devMode2 || (System.getArgument('-openlogdironerror') !== void || System.getArgument('-openpatchinfourlonerror') !== void))
+	if (!global.devMode && !global.devMode2 || (global.System.getArgument('-openlogdironerror') !== void || global.System.getArgument('-openpatchinfourlonerror') !== void))
 	{
-		if (System.getArgument('-openlogdironerror') !== "no" && !exception_information_in_clipboard)
+		if (global.System.getArgument('-openlogdironerror') !== "no" && !exception_information_in_clipboard)
 		{
 			if (exception_files.count > 0)
 			{
-				var dir = Storages.extractStoragePath(exception_files[0]);
+				var dir = global.Storages.extractStoragePath(exception_files[0]);
 				if (typeof(dir) === "String" && dir !== "")
 				{
-					var localpath = Storages.getLocalName(dir);
+					var localpath = global.Storages.getLocalName(dir);
 					if (localpath !== "")
 					{
-						System.shellExecute(("\"%s\"").sprintf(localpath));
+						global.System.shellExecute(("\"%s\"").sprintf(localpath));
 					}
 				}
 			}
 		}
 
-		if (System.getArgument('-openpatchinfourlonerror') !== "no" && typeof(global.PatchInfoURL) === "String")
+		if (global.System.getArgument('-openpatchinfourlonerror') !== "no" && typeof(global.PatchInfoURL) === "String")
 		{
-			System.shellExecute(global.PatchInfoURL);
+			global.System.shellExecute(global.PatchInfoURL);
 		}
 	}
 
-	if ((typeof(global.kag) !== "Object") || (typeof(global.kag) === "Object" && !isvalid(global.kag)) || (typeof(global.kag) === "Object" && isvalid(global.kag) && typeof(global.kag.visible) !== "Integer") || (typeof(global.kag) === "Object" && isvalid(global.kag) && typeof(global.kag.visible) === "Integer" && global.kag.visible === false) || System.getArgument('-quitonexception') !== void)
+	if ((typeof(global.kag) !== "Object") || (typeof(global.kag) === "Object" && !isvalid(global.kag)) || (typeof(global.kag) === "Object" && isvalid(global.kag) && typeof(global.kag.visible) !== "Integer") || (typeof(global.kag) === "Object" && isvalid(global.kag) && typeof(global.kag.visible) === "Integer" && global.kag.visible === false) || global.System.getArgument('-quitonexception') !== void)
 	{
-		System.exit(127);
+		global.System.exit(127);
 	}
 @endif
 

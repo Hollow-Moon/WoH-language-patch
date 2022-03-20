@@ -1,6 +1,6 @@
 ﻿
-global.KAGWindow_patch_fix_scflags_bookmark_info_original = KAGWindow;
-class KAGWindow_patch_fix_scflags_bookmark_info_override extends KAGWindow_patch_fix_scflags_bookmark_info_original
+global.KAGWindow_patch_fix_scflags_bookmark_info_original = global.KAGWindow;
+class KAGWindow_patch_fix_scflags_bookmark_info_override extends global.KAGWindow_patch_fix_scflags_bookmark_info_original
 {
 	function KAGWindow_patch_fix_scflags_bookmark_info_override()
 	{
@@ -9,7 +9,7 @@ class KAGWindow_patch_fix_scflags_bookmark_info_override extends KAGWindow_patch
 
 	function KAGWindow()
 	{
-		KAGWindow_patch_fix_scflags_bookmark_info_override(...);
+		this.KAGWindow_patch_fix_scflags_bookmark_info_override(...);
 	}
 
 	var patch_fix_scflags_bookmark_info_initialized = false;
@@ -24,13 +24,13 @@ class KAGWindow_patch_fix_scflags_bookmark_info_override extends KAGWindow_patch
 			this.patch_fix_scflags_bookmark_info_initialized = true;
 			this.patch_fix_scflags_bookmark_info_processing = true;
 			var made_changes = false;
-			if (typeof(Storages.dirlist) === "Object")
+			if (typeof(global.Storages.dirlist) === "Object")
 			{
-				var storages = Storages.dirlist(saveDataLocation + "/");
+				var storages = global.Storages.dirlist(this.saveDataLocation + "/");
 				for (var i = 0; i < storages.count; i += 1)
 				{
 					var file = storages[i];
-					if (file.substring(0, dataName.length) === dataName)
+					if (file.substring(0, this.dataName.length) === this.dataName)
 					{
 						var matches = this.patch_fix_scflags_bookmark_info_regex.match(file);
 						if (matches.count > 0)
@@ -40,9 +40,9 @@ class KAGWindow_patch_fix_scflags_bookmark_info_override extends KAGWindow_patch
 							{
 								try
 								{
-									var fn = saveDataLocation + "/" + file;
+									var fn = this.saveDataLocation + "/" + file;
 									var modestr = "";
-									if (saveThumbnail)
+									if (this.saveThumbnail)
 									{
 @if(!HD_COMPATIBLE_SAVES)
 										modestr += "o" + this.calcThumbnailSize().size;
@@ -57,10 +57,10 @@ class KAGWindow_patch_fix_scflags_bookmark_info_override extends KAGWindow_patch
 								}
 								catch (e)
 								{
-									Debug.message("Something went wrong while attempting to read " + file);
+									global.Debug.message("Something went wrong while attempting to read " + file);
 									if (typeof(e) === "Object" && typeof(e.message) === "String")
 									{
-										Debug.message("Exception: " + e.message);
+										global.Debug.message("Exception: " + e.message);
 									}
 								}
 							}

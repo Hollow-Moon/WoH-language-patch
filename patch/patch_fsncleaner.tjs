@@ -97,18 +97,18 @@
 		if (dest_notechnical.count !== translated_lines.count)
 		{
 @if(DEBUG_FSNCLEANER)
-			Debug.message("Dest:");
+			global.Debug.message("Dest:");
 			for (var i = 0; i < dest_notechnical.count; i += 1)
 			{
 				Debug.message(dest_notechnical[i]);
 			}
-			Debug.message("Src:");
+			global.Debug.message("Src:");
 			for (var i = 0; i < translated_lines.count; i += 1)
 			{
-				Debug.message(translated_lines[i]);
+				global.Debug.message(translated_lines[i]);
 			}
 @endif
-			throw new Exception("Line count doesn't match while attempting to clean!");
+			throw new global.Exception("Line count doesn't match while attempting to clean!");
 		}
 		// ReplaceText
 		for (var i = 0, internal_forloop_count_i = dest.count, j = 0, internal_forloop_count_j = translated_lines.count; (i < internal_forloop_count_i && j < internal_forloop_count_j); i += 1)

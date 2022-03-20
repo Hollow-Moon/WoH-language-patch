@@ -14,56 +14,56 @@ global.domains = %[];
 
 global.contextDelimiter = "\x04"; // EOT
 
-global.__ = function(text, domain=defaultDomain)
+global.__ = function(text, domain=global.defaultDomain)
 {
-	return _x(text,,domain);
+	return global._x(text,,domain);
 } incontextof global;
 
-global._x = function(text, context=defaultContext, domain=defaultDomain)
+global._x = function(text, context=global.defaultContext, domain=global.defaultDomain)
 {
-	var dict = domains[domain];
+	var dict = global.domains[domain];
 	if (dict === void) {
 		return text;
 	}
-	var result = dict[context + contextDelimiter + text];
+	var result = dict[context + global.contextDelimiter + text];
 	if (result === void) {
 		return text;
 	}
 	return result;
 } incontextof global;
 
-global._n = function(textSingle, textPlural, pluralNumber, domain=defaultDomain)
+global._n = function(textSingle, textPlural, pluralNumber, domain=global.defaultDomain)
 {
-	if (pluralExpressions === void) {
+	if (global.pluralExpressions === void) {
 		return textSingle;
 	}
 
 	global.n = pluralNumber; // Input for eval expression
 	global.plural = void; // Output for eval expression
-	Scripts.eval(pluralExpressions[1]);
+	global.Scripts.eval(global.pluralExpressions[1]);
 
-	var dict = domains[domain];
+	var dict = global.domains[domain];
 	if (dict === void) {
-		return plural == 0? textSingle : textPlural;
+		return global.plural == 0? textSingle : textPlural;
 	}
-	var result = dict[defaultContext + contextDelimiter + textSingle + contextDelimiter + textPlural];
+	var result = dict[global.defaultContext + global.contextDelimiter + textSingle + global.contextDelimiter + textPlural];
 	if (result === void) {
-		return plural == 0? textSingle : textPlural;
+		return global.plural == 0? textSingle : textPlural;
 	}
-	return result[plural];
+	return result[global.plural];
 } incontextof global;
 
 global.removeAllMO = function()
 {
-	(Dictionary.clear incontextof domains)();
-	pluralExpressions = void;
+	(global.Dictionary.clear incontextof global.domains)();
+	global.pluralExpressions = void;
 };
 
-global.loadMoFile = function(moFile, domain=defaultDomain)
+global.loadMoFile = function(moFile, domain=global.defaultDomain)
 {
-	var poFile = Storages.chopStorageExt(moFile) + ".po";
+	var poFile = global.Storages.chopStorageExt(moFile) + ".po";
 
-	if (!Storages.isExistentStorage(poFile)) {
+	if (!global.Storages.isExistentStorage(poFile)) {
 		return;
 	}
 
@@ -71,46 +71,46 @@ global.loadMoFile = function(moFile, domain=defaultDomain)
 
 	var dict = %[];
 
-	var context=defaultContext;
+	var context = global.defaultContext;
 	var currentId;
 	var currentIdPlural;
 
 	for (var i = 0, internal_forloop_count = lines.count; i < internal_forloop_count; i += 1) {
-		if (isEntry(msgctxt, lines, i)) {
-			var tmp = readEntry(msgctxt, lines, i);
+		if (global.isEntry(global.msgctxt, lines, i)) {
+			var tmp = global.readEntry(global.msgctxt, lines, i);
 			context = tmp[0];
 			i += tmp[1];
 		}
-		else if (isEntry(msgidPlural, lines, i)) {
-			var tmp = readEntry(msgidPlural, lines, i);
+		else if (global.isEntry(global.msgidPlural, lines, i)) {
+			var tmp = global.readEntry(global.msgidPlural, lines, i);
 			currentIdPlural = tmp[0];
 			i += tmp[1];
 		}
-		else if (isEntry(msgid, lines, i)) {
-			var tmp = readEntry(msgid, lines, i);
+		else if (global.isEntry(global.msgid, lines, i)) {
+			var tmp = global.readEntry(global.msgid, lines, i);
 			currentId = tmp[0];
 			i += tmp[1];
 		}
-		else if (isEntry(msgstrPlural, lines, i)) {
+		else if (global.isEntry(global.msgstrPlural, lines, i)) {
 			var text = [];
 			var j=0;
-			var msgstrPluralIndex = msgstrPlural + ("" + j) + "]";
-			while (isEntry(msgstrPluralIndex, lines, i)) {
-				var tmp = readEntry(msgstrPluralIndex, lines, i);
+			var msgstrPluralIndex = global.msgstrPlural + ("" + j) + "]";
+			while (global.isEntry(msgstrPluralIndex, lines, i)) {
+				var tmp = global.readEntry(msgstrPluralIndex, lines, i);
 				text.add(tmp[0]);
 				i += tmp[1] + 1;
 				j += 1;
-				msgstrPluralIndex = msgstrPlural + ("" + j) + "]";
+				msgstrPluralIndex = global.msgstrPlural + ("" + j) + "]";
 			}
 			i -= 1;
 
-			dict[context + contextDelimiter + currentId + contextDelimiter + currentIdPlural] = text;
-			context = defaultContext;
+			dict[context + global.contextDelimiter + currentId + global.contextDelimiter + currentIdPlural] = text;
+			context = global.defaultContext;
 			currentId = void;
 			currentIdPlural = void;
 		}
-		else if (isEntry(msgstr, lines, i)) {
-			var tmp = readEntry(msgstr, lines, i);
+		else if (global.isEntry(global.msgstr, lines, i)) {
+			var tmp = global.readEntry(global.msgstr, lines, i);
 			var text = tmp[0];
 			i += tmp[1];
 
@@ -119,15 +119,15 @@ global.loadMoFile = function(moFile, domain=defaultDomain)
 				text = currentId;
 			}
 
-			dict[context + contextDelimiter + currentId] = text;
-			context = defaultContext;
+			dict[context + global.contextDelimiter + currentId] = text;
+			context = global.defaultContext;
 			currentId = void;
 		}
 	}
 
-	domains[domain] = dict;
-	readPluralForms(dict[context + contextDelimiter + ""]);
-	dict[context + contextDelimiter + ""] = void;
+	global.domains[domain] = dict;
+	global.readPluralForms(dict[context + global.contextDelimiter + ""]);
+	dict[context + global.contextDelimiter + ""] = void;
 };
 
 
@@ -155,8 +155,8 @@ global.readPluralForms = function(text)
 {
 	var lines = text.split("\n");
 	for (var i = 0, internal_forloop_count = lines.count; i < internal_forloop_count; i += 1) {
-		if (lines[i].substr(0, pluralForms.length) == pluralForms) {
-			pluralExpressions = lines[i].substr(pluralForms.length + 2, lines[i].length - (pluralForms.length + 2)).split(";");
+		if (lines[i].substr(0, global.pluralForms.length) == global.pluralForms) {
+			global.pluralExpressions = lines[i].substr(global.pluralForms.length + 2, lines[i].length - (global.pluralForms.length + 2)).split(";");
 			break;
 		}
 	}

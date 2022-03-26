@@ -15,6 +15,12 @@ class VideoOverlay_patch_hd_layer_override extends global.VideoOverlay_patch_hd_
 	{
 		getter
 		{
+@if(1)
+			if (typeof(this.mp) === "Object")
+			{
+				return super.width;
+			}
+@endif
 @if(SCALE_USING_FLOATING_POINT)
 			return super.width / global.get_wideScaleFactor();
 @endif
@@ -28,6 +34,12 @@ class VideoOverlay_patch_hd_layer_override extends global.VideoOverlay_patch_hd_
 	{
 		getter
 		{
+@if(1)
+			if (typeof(this.mp) === "Object")
+			{
+				return super.height;
+			}
+@endif
 @if(SCALE_USING_FLOATING_POINT)
 			return super.height / global.scaleFactor;
 @endif
@@ -65,6 +77,12 @@ class VideoOverlay_patch_hd_layer_override extends global.VideoOverlay_patch_hd_
 
 	function setBounds(left, top, width, height)
 	{
+@if(1)
+		if (typeof(this.mp) === "Object")
+		{
+			return super.setBounds(left, top, width, height);
+		}
+@endif
 		return super.setBounds(left*global.get_wideScaleFactor(), top*global.scaleFactor, width*global.get_wideScaleFactor(), height*global.scaleFactor);
 	}
 }

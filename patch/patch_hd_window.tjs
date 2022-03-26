@@ -16,6 +16,8 @@ class Window_patch_hd_layer_override extends global.Window_patch_hd_layer_origin
 	var scrollYOffsetMin = 0;
 	var scrollYOffsetMax = 150;
 
+	var absoluteMode = 0;
+
 	property transformedScrollXOffset { getter { return this.scrollXOffset; } }
 
 	// Under normal conditions result=-scrollYOffset, but this transformation considers different scale/wide factors.
@@ -128,38 +130,161 @@ class Window_patch_hd_layer_override extends global.Window_patch_hd_layer_origin
 
 	property left
 	{
-		getter { return this.isMainWindow? super.left : this._left; }
-		setter(v) { this._left = v; super.left = this.scaleLeft(v); }
+		getter
+		{
+			if (this.absoluteMode)
+			{
+				return super.left;
+			}
+			return this.isMainWindow? super.left : this._left;
+		}
+		setter(v)
+		{
+			if (this.absoluteMode)
+			{
+				this._left = this.unscaleLeft(v);
+				super.left = v;
+			}
+			else
+			{
+				this._left = v;
+				super.left = this.scaleLeft(v);
+			}
+		}
 	}
 
 	property top
 	{
-		getter { return this.isMainWindow? super.top : this._top; }
-		setter(v) { this._top = v; super.top = this.scaleTop(v); }
+		getter
+		{
+			if (this.absoluteMode)
+			{
+				return super.top;
+			}
+			return this.isMainWindow? super.top : this._top;
+		}
+		setter(v)
+		{
+			if (this.absoluteMode)
+			{
+				this._top = this.unscaleTop(v);
+				super.top = v;
+			}
+			else
+			{
+				this._top = v;
+				super.top = this.scaleTop(v);
+			}
+		}
 	}
 
 	property width
 	{
-		getter { return this._width; }
-		setter(v) { this._width = v; super.width = this.scaleWidth(v); }
+		getter
+		{
+			if (this.absoluteMode)
+			{
+				return super.width;
+			}
+			return this._width;
+		}
+		setter(v)
+		{
+			if (this.absoluteMode)
+			{
+				this._width = this.unscaleWidth(v);
+				super.width = v;
+			}
+			else
+			{
+				this._width = v;
+				super.width = this.scaleWidth(v);
+			}
+		}
 	}
 
 	property height
 	{
-		getter { return this._height; }
-		setter(v) { this._height = v; super.height = this.scaleHeight(v); }
+		getter
+		{
+			if (this.absoluteMode)
+			{
+				return super.height;
+			}
+			return this._height;
+		}
+		setter(v)
+		{
+			if (this.absoluteMode)
+			{
+				this._height = this.unscaleHeight(v);
+				super.height = v;
+			}
+			else
+			{
+				this._height = v;
+				super.height = this.scaleHeight(v);
+			}
+		}
 	}
 
 	property innerWidth
 	{
-		getter { return this._innerWidth; }
-		setter(v) { this._innerWidth = v; super.innerWidth = this.scaleWidth(v); }
+		getter
+		{
+			if (this.absoluteMode)
+			{
+				return super.innerWidth;
+			}
+			if (typeof(this._resizeSnapshot) === "Object")
+			{
+				return this.unscaleWidth(this.innerWidthOriginal);
+			}
+			return this._innerWidth;
+		}
+		setter(v)
+		{
+			if (this.absoluteMode)
+			{
+				this._innerWidth = this.unscaleWidth(v);
+				super.innerWidth = v;
+			}
+			else
+			{
+				this._innerWidth = v;
+				super.innerWidth = this.scaleWidth(v);
+			}
+
+		}
 	}
 
 	property innerHeight
 	{
-		getter { return this._innerHeight; }
-		setter(v) { this._innerHeight = v; super.innerHeight = this.scaleHeight(v); }
+		getter
+		{
+			if (this.absoluteMode)
+			{
+				return super.innerHeight;
+			}
+			if (typeof(this._resizeSnapshot) === "Object")
+			{
+				return this.unscaleHeight(this.innerHeightOriginal);
+			}
+			return this._innerHeight;
+		}
+		setter(v)
+		{
+			if (this.absoluteMode)
+			{
+				this._innerHeight = this.unscaleHeight(v);
+				super.innerHeight = v;
+			}
+			else
+			{
+				this._innerHeight = v;
+				super.innerHeight = this.scaleHeight(v);
+			}
+		}
 	}
 
 	property widthOriginal
@@ -209,12 +334,24 @@ class Window_patch_hd_layer_override extends global.Window_patch_hd_layer_origin
         return global.Window.mainWindow.left + global.scalePosition(left-global.Window.mainWindow.left, this._width, super.width, global.Window.mainWindow.width, global.Window.mainWindow.widthOriginal);
     }
 
+	function unscaleLeft(left)
+    {
+    	// XXX: stubbed
+        return left;
+    }
+
 	function scaleTop(top)
 	{
 		if (this.isMainWindow) {
 			return top;
 		}
 		return global.Window.mainWindow.top + global.scalePosition(top-global.Window.mainWindow.top, this._height, super.height, global.Window.mainWindow.height, global.Window.mainWindow.heightOriginal);
+	}
+
+	function unscaleTop(top)
+	{
+		// XXX: stubbed
+		return top;
 	}
 
 	function scaleWidth(w)
@@ -239,20 +376,41 @@ class Window_patch_hd_layer_override extends global.Window_patch_hd_layer_origin
 
 	function setPos(left, top)
 	{
-		if (this.isMainWindow) {
+		if (this.isMainWindow)
+		{
 			super.setPos(left, top);
-		} else {
-			this._left = left;
-			this._top = top;
-			super.setPos(this.scaleLeft(left), this.scaleTop(top));
+		}
+		else
+		{
+			if (this.absoluteMode)
+			{
+				this._left = this.unscaleLeft(left);
+				this._top = this.unscaleTop(top);
+				super.setPos(left, top);
+			}
+			else
+			{
+				this._left = left;
+				this._top = top;
+				super.setPos(this.scaleLeft(left), this.scaleTop(top));
+			}
 		}
 	}
 
 	function setSize(width, height)
 	{
-		this._width = width;
-		this._height = height;
-		super.setSize(this.scaleWidth(width), this.scaleHeight(height));
+		if (this.absoluteMode)
+		{
+			this._width = this.unscaleWidth(width);
+			this._height = this.unscaleHeight(height);
+			super.setSize(width, height);
+		}
+		else
+		{
+			this._width = width;
+			this._height = height;
+			super.setSize(this.scaleWidth(width), this.scaleHeight(height));
+		}
 
 		this._innerWidth = this.unscaleWidth(this.innerWidthOriginal);
 		this._innerHeight = this.unscaleHeight(this.innerHeightOriginal);
@@ -260,9 +418,18 @@ class Window_patch_hd_layer_override extends global.Window_patch_hd_layer_origin
 
 	function setInnerSize(innerWidth, innerHeight)
 	{
-		this._innerWidth = innerWidth;
-		this._innerHeight = innerHeight;
-		super.setInnerSize(this.scaleWidth(innerWidth), this.scaleHeight(innerHeight));
+		if (this.absoluteMode)
+		{
+			this._innerWidth = this.unscaleWidth(innerWidth);
+			this._innerHeight = this.unscaleHeight(innerHeight);
+			super.setInnerSize(innerWidth, innerHeight);
+		}
+		else
+		{
+			this._innerWidth = innerWidth;
+			this._innerHeight = innerHeight;
+			super.setInnerSize(this.scaleWidth(innerWidth), this.scaleHeight(innerHeight));
+		}
 
 		this._width = this.unscaleWidth(this.widthOriginal);
 		this._height = this.unscaleHeight(this.heightOriginal);

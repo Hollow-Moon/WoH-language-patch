@@ -574,13 +574,24 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 	property tempZoomed    { getter { return _zoomNumer !== void; } }
 	function setZoom(numer, denom, resize = true) {
 		if (super.fullScreen) return;
+		if (typeof(this.absoluteMode) === "Integer")
+		{
+			this.absoluteMode += 1;
+		}
 		_zoomNumer = _zoomDenom = void;
 		var zn = super.zoomNumer;
 		var zd = super.zoomDenom;
 		super.setZoom(numer, denom);
 		var z = zoomNumer / zoomDenom;
-		var w = pxWidth  * z;
-		var h = pxHeight * z;
+		var pxWidth_abs = pxWidth;
+		var pxHeight_abs = pxHeight;
+		if (typeof(this.absoluteMode) === "Integer")
+		{
+			pxWidth_abs = this.scaleWidth(pxWidth_abs);
+			pxHeight_abs = this.scaleHeight(pxHeight_abs);
+		}
+		var w = pxWidth_abs  * z;
+		var h = pxHeight_abs * z;
 		if (resize) {
 			setInnerSize(w, h);
 			resetPrimaryPos();
@@ -593,6 +604,10 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 @if(GAME_WOHN)
 		callHook("afterChangeWindowSize");
 @endif
+		if (typeof(this.absoluteMode) === "Integer")
+		{
+			this.absoluteMode -= 1;
+		}
 	}
 
 	var menuBarMode = 1; // 0:固定・変更不可，1:固定・変更可（menuBarState準拠）
@@ -902,19 +917,36 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 	function onHide()     { _minimized = true;  }
 	function onShow()     { _minimized = false; }
 
+	var in_limit_size = 0;
 	function limitSize(mon)
 	{
+		if (this.in_limit_size)
+		{
+			return true;
+		}
 		var	szchg	= false;
+		this.in_limit_size += 1;
 		if(!fullScreen && typeof(System.getMonitorInfo) === "Object")
 		{
+			if (typeof(this.absoluteMode) === "Integer")
+			{
+				this.absoluteMode += 1;
+			}
 			mon	= System.getMonitorInfo(true, this) if mon == void;
 			var	ml	= mon.work.x, mt = mon.work.y;
 			var	mw	= mon.work.w, mh = mon.work.h;
+			var width = this.width;
+			var height = this.height;
+			var innerWidth = this.innerWidth;
+			var innerHeight = this.innerHeight;
 			if(mw < width)
 			{
 				var rate = innerHeight / innerWidth;
 				width	= mw;
 				innerHeight	= int(rate * innerWidth);
+				// Avoid infinite resize back-and-forth loop by decreasing if somehow got into loop
+				width -= this._limitSizeCounter + 1;
+				innerHeight -= this._limitSizeCounter + 1;
 				szchg	= true;
 			}
 			if(mh < height)
@@ -922,37 +954,86 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 				var rate = innerWidth / innerHeight;
 				height	= mh;
 				innerWidth	= int(rate * innerHeight);
+				// Avoid infinite resize back-and-forth loop by decreasing if somehow got into loop
+				width -= this._limitSizeCounter + 1;
+				innerHeight -= this._limitSizeCounter + 1;
 				szchg	= true;
 			}
+			if (szchg)
+			{
+				// Order is important, inner size is set before size
+				this.setInnerSize(innerWidth, innerHeight);
+				this.setSize(width, height);
+			}
+			var poschg = false;
+			var left = this.left;
+			var top = this.top;
 			if(left < ml)
+			{
 				left	= ml;
+				poschg = true;
+			}
 			else if(left + width > ml + mw)
+			{
 				left	= ml + mw - width;
+				poschg = true;
+			}
 			if(top < mt)
+			{
 				top	= mt;
+				poschg = true;
+			}
 			else if(top + height > mt + mh)
+			{
 				top	= mt + mh - height;
+				poschg = true;
+			}
+			if (poschg)
+			{
+				this.setPos(left, top);
+			}
+			if (typeof(this.absoluteMode) === "Integer")
+			{
+				this.absoluteMode -= 1;
+			}
 		}
+		this.in_limit_size -= 1;
 		return szchg;
 	}
 
 	var _lastInnerSize;
 	var _onResizeProcess = true;
+	var _limitSizeCounter = 0;
 @if(ZOOM_WINDOW_ENABLE_ONRESIZE)
 	function onResize() {
-		if (trackTempMenuShowing) return super.onResize();
-@if(GAME_WOHN)
+		if (trackTempMenuShowing)
+		{
+			return super.onResize();
+		}
 		if(limitSize())
+		{
+			this._limitSizeCounter += 1;
 			return;
-@endif
+		}
 //		dm("onResize", innerWidth, innerHeight);
 		if (!_minimized && _onResizeProcess && _resizeSnapshot === void)
 		{
+			if (typeof(this.absoluteMode) === "Integer")
+			{
+				this.absoluteMode += 1;
+			}
 			_onResizeProcess = false;
-			var numer = innerWidth, denom = pxWidth;
+			var pxWidth_abs = pxWidth;
+			var pxHeight_abs = pxHeight;
+			if (typeof(this.absoluteMode) === "Integer")
+			{
+				pxWidth_abs = this.scaleWidth(pxWidth_abs);
+				pxHeight_abs = this.scaleHeight(pxHeight_abs);
+			}
+			var numer = innerWidth, denom = pxWidth_abs;
 			var max = (typeof this.maximized === "Integer") ? maximized : false;
 			if (max) {
-				var vert = (innerWidth/innerHeight > pxWidth/pxHeight);
+				var vert = (innerWidth/innerHeight > pxWidth_abs/pxHeight_abs);
 				var zoom = System.getArgument("-fszoom");
 				if (!pseudoFullScreened) {
 					var mz = System.getArgument("-maximizezoom");
@@ -970,8 +1051,8 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 						denom = 100;
 					} else {
 						per = 100 if (per > 100);
-						var iw = innerWidth, ih = innerHeight;
-						var pw =    pxWidth, ph =    pxHeight;
+						var iw =  innerWidth, ih =  innerHeight;
+						var pw = pxWidth_abs, ph = pxHeight_abs;
 						if (vert) iw <-> ih, pw <-> ph;
 						numer = (int)(iw + (ih - iw) * per / 100);
 						denom = (int)(pw + (ph - pw) * per / 100);
@@ -979,12 +1060,17 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 					vert = false;
 					break;
 				}
-				if (vert) numer = innerHeight, denom = pxHeight;
+				if (vert) numer = innerHeight, denom = pxHeight_abs;
 			}
 			setZoom(numer, denom, !max);
+			if (typeof(this.absoluteMode) === "Integer")
+			{
+				this.absoluteMode -= 1;
+			}
 			callResizeHook();
 			_onResizeProcess = true;
 		}
+		this._limitSizeCounter = 0;
 		return super.onResize();
 	}
 @endif
@@ -1006,6 +1092,10 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 		}
 	}
 	function onResizing(rect) {
+		if (typeof(this.absoluteMode) === "Integer")
+		{
+			this.absoluteMode += 1;
+		}
 		if (_resizeSnapshot === void) onMoveSizeBegin();
 		if (!windowResizeable) {
 			with (_resizeSnapshot.window) {
@@ -1014,7 +1104,18 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 				rect.w = .w;
 				rect.h = .h;
 			}
+			if (typeof(this.absoluteMode) === "Integer")
+			{
+				this.absoluteMode -= 1;
+			}
 			return true;
+		}
+		var pxWidth_abs = pxWidth;
+		var pxHeight_abs = pxHeight;
+		if (typeof(this.absoluteMode) === "Integer")
+		{
+			pxWidth_abs = this.scaleWidth(pxWidth_abs);
+			pxHeight_abs = this.scaleHeight(pxHeight_abs);
 		}
 		var w, h, dw, dh, cw, ch;
 		with (_resizeSnapshot) dw=.dw, dh=.dh, cw=.cw, ch=.ch;
@@ -1025,13 +1126,13 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 			switch (.type) {
 			case 1: case 2: sel = true;  break;
 			case 3: case 6: sel = false; break;
-			default: sel = (w / h) > (pxWidth / pxHeight); break;
+			default: sel = (w / h) > (pxWidth_abs / pxHeight_abs); break;
 			}
-			if (sel) h = w * pxHeight \ pxWidth;
-			else     w = h * pxWidth  \ pxHeight;
-			if (w < pxWidth\4) {
-				w = pxWidth\4;
-				h = w * pxHeight \ pxWidth;
+			if (sel) h = w * pxHeight_abs \ pxWidth_abs;
+			else     w = h * pxWidth_abs  \ pxHeight_abs;
+			if (w < pxWidth_abs\4) {
+				w = pxWidth_abs\4;
+				h = w * pxHeight_abs \ pxWidth_abs;
 			}
 			w += dw;
 			h += dh;
@@ -1044,16 +1145,32 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 			};
 			var x = repos(.type,   .x, .w, w, true);
 			var y = repos(.type\3, .y, .h, h, false);
-			if (.x == x && .y == y && .w == w && .h == h) return false;
+			if (.x == x && .y == y && .w == w && .h == h)
+			{
+				if (typeof(this.absoluteMode) === "Integer")
+				{
+					this.absoluteMode -= 1;
+				}
+				return false;
+			}
 			.x = x;
 			.y = y;
 			.w = w;
 			.h = h;
 		}
+		if (typeof(this.absoluteMode) === "Integer")
+		{
+			this.absoluteMode -= 1;
+		}
 		return true;
 	}
 	var _resizeSnapshot = void;
 	function onMoveSizeBegin() {
+		this._limitSizeCounter = 0;
+		if (typeof(this.absoluteMode) === "Integer")
+		{
+			this.absoluteMode += 1;
+		}
 		_resizeSnapshot = %[
 		window:		 getWindowRect(),
 		client:		 getClientRect(),
@@ -1064,11 +1181,14 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 			.dw = .window.w  - .innerWidth;
 			.dh = .window.h - .innerHeight;
 		}
+		if (typeof(this.absoluteMode) === "Integer")
+		{
+			this.absoluteMode -= 1;
+		}
 	}
 	function onMoveSizeEnd() {
-@if(GAME_WOHN)
+		this._limitSizeCounter = 0;
 		limitSize();
-@endif
 		if(_resizeSnapshot !== void)
 			setZoom(innerWidth, pxWidth);
 //		dm("onResizeEnd/zoomed", innerWidth, innerHeight);

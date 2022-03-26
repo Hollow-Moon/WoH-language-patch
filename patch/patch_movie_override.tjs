@@ -1,10 +1,4 @@
 ﻿
-@if(kirikiriz)
-global.versionTmp = global.System.versionString.split(".");
-global.isNewMovieKrkrz = global.versionTmp.count >=2 && global.versionTmp[0] >=1 && global.versionTmp[1] >=4;
-delete global.versionTmp;
-@endif
-
 global.Movie_patch_movie_override_original = global.Movie;
 class Movie_patch_movie_override_override extends global.Movie_patch_movie_override_original
 {
@@ -58,18 +52,16 @@ class Movie_patch_movie_override_override extends global.Movie_patch_movie_overr
 
 	function onStatusChanged(status)
 	{
-@if(kirikiriz)
-		if (global.isNewMovieKrkrz && this.mode == global.vomMFEVR && this.status == "ready")
+		if (typeof(this.mode) === "Integer" && this.mode == global.vomMFEVR && status == "ready")
 		{
 			this._onOpen();
 		}
-		else if (this.lastStatus == "ready" && this.status == "play")
+		else if (this.lastStatus == "ready" && status == "play")
 		{
 			this.lastStatus = status; // TODO kinda duplicate, but the assignment is needed before the callback.
 			this.onPlay();
 		}
 		else
-@endif
 		{
 			super.onStatusChanged(status);
 		}
@@ -86,8 +78,7 @@ class Movie_patch_movie_override_override extends global.Movie_patch_movie_overr
 		this.owner.saveSystemVariables();
 		this.storageName = storage;
 
-@if(kirikiriz)
-		if (global.isNewMovieKrkrz)
+		if (typeof(this.mode) === "Integer")
 		{
 			if (typeof(this.mp) === "Object")
 			{
@@ -110,33 +101,34 @@ class Movie_patch_movie_override_override extends global.Movie_patch_movie_overr
 				{
 					this.mode = global.vomOverlay;
 				}
+				var videosubsystem = global.System.getArgument("-videosubsystem");
+				if (videosubsystem)
+				{
+					if (videosubsystem == "mediafoundation")
+					{
+						this.mode = global.vomMFEVR;
+					}
+					else if (videosubsystem == "overlay")
+					{
+						this.mode = global.vomOverlay;
+					}
+					else if (videosubsystem == "layer")
+					{
+						this.mode = global.vomLayer;
+					}
+					else if (videosubsystem == "mixer")
+					{
+						this.mode = global.vomMixer;
+					}
+				}
 			}
-
 		}
-		var videosubsystem = this.System.getArgument("-videosubsystem");
-		if (videosubsystem) {
-			if (videosubsystem == "mediafoundation") {
-				this.mode = global.vomMFEVR;
-			}
-			else if (videosubsystem == "overlay") {
-				this.mode = global.vomOverlay;
-			}
-			else if (videosubsystem == "layer") {
-				this.mode = global.vomLayer;
-			}
-			else if (videosubsystem == "mixer") {
-				this.mode = global.vomMixer;
-			}
-		}
-@endif
 
 		// open オーバーライド
 		try
 		{
 			super.open(storage);
-@if(kirikiriz)
-			if (!global.isNewMovieKrkrz || this.mode != global.vomMFEVR)
-@endif
+			if (typeof(this.mode) !== "Integer" || this.mode != global.vomMFEVR)
 			{
 				this._onOpen();
 			}

@@ -12,7 +12,7 @@ global.play_movie_resize = function(video, kag=global.kag, window=global.kag)
 			// 1) can't stop movie if clicking out of the "square" (non-wide) area.
 			// 2) First time opening playing the movie it is offsetted by 10 px down (probably due to window.height having the wrong value)
 			//    It fixes itself when stopping and replaying the movie (in which case window.height displays the correct value).
-			if (global.isNewMovieKrkrz && video.mode == global.vomMFEVR)
+			if (typeof(video.mode) === "Integer" && video.mode == global.vomMFEVR)
 			{
 				var videoRatio = videoSize[0] / videoSize[1];
 				

@@ -348,6 +348,46 @@ class Conductor_patch_messagelayer_prelayout_override extends global.Conductor_p
 		}
 		return super.onTag(...);
 	}
+
+	function conductor_prelayout_clear()
+	{
+		this.pendings_prelayout.clear();
+		if (typeof(this.owner) === "Object" && typeof(this.owner.current) === "Object" && isvalid(this.owner.current))
+		{
+			this.owner.current.prelayoutClear();
+		}
+	}
+
+	function clear()
+	{
+		this.conductor_prelayout_clear();
+		return super.clear(...);
+	}
+
+	function assign()
+	{
+		this.conductor_prelayout_clear();
+		return super.assign(...);
+	}
+
+	function restore()
+	{
+		var ret = super.restore(...);
+		this.conductor_prelayout_clear();
+		return ret;
+	}
+
+	function loadScenario()
+	{
+		this.conductor_prelayout_clear();
+		return super.loadScenario(...);
+	}
+
+	function goToLabel()
+	{
+		this.conductor_prelayout_clear();
+		return super.goToLabel(...);
+	}
 }
 global.Conductor = global.Conductor_patch_messagelayer_prelayout_override;
 
@@ -410,6 +450,21 @@ class MessageLayer_patch_messagelayer_prelayout_override extends global.MessageL
 
 	var prelayout_charlayers = [];
 	var prelayout_last_queued_time = void;
+
+	function prelayoutClear()
+	{
+		if (this.in_prelayout_mode)
+		{
+			this.prelayout_charlayers.clear();
+			this.prelayout_last_queued_time = void;
+			this.in_prelayout_mode = false;
+			this.in_prelayout_exec_mode = false;
+			this.prelayout_currentLine = 0;
+			this.prelayout_currentColumn = 0;
+			this.prelayout_x = 0;
+			this.prelayout_y = 0;
+		}
+	}
 
 	function prelayoutPrepareCharLayer(charlayer)
 	{

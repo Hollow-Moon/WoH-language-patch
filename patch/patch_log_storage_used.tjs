@@ -1,0 +1,104 @@
+﻿
+global.log_storage_used = [];
+
+global.do_log_storage_used = function(storage)
+{
+	storage += "";
+	if (storage === "")
+	{
+		return;
+	}
+
+	var log_storage_used = global.log_storage_used;
+	if (log_storage_used.find(storage) === -1)
+	{
+		log_storage_used.add(storage);
+	}
+};
+
+global.do_print_log_storage_used = function()
+{
+	var log_storage_used = global.log_storage_used;
+	for (var i = 0; i < log_storage_used.count; i += 1)
+	{
+		Debug.message("S: " + log_storage_used[i]);
+	}
+};
+
+global.Window_patch_log_storage_used_original	= global.Window;
+class Window_patch_log_storage_used_override extends global.Window_patch_log_storage_used_original
+{
+	function Window_patch_log_storage_used_override()
+	{
+		super.Window(...);
+	}
+
+	function Window()
+	{
+		this.Window_patch_log_storage_used_override(...);
+	}
+
+	function onCloseQuery(actual_close)
+	{
+		if (this instanceof "KAGWindow" && this.isMain && actual_close)
+		{
+			global.do_print_log_storage_used();
+		}
+		return super.onCloseQuery(...);
+	}
+}
+global.Window = global.Window_patch_log_storage_used_override;
+
+global.WaveSoundBuffer_patch_log_storage_used_original = global.WaveSoundBuffer;
+class WaveSoundBuffer_patch_log_storage_used_override extends global.WaveSoundBuffer_patch_log_storage_used_original
+{
+	function WaveSoundBuffer_patch_log_storage_used_override()
+	{
+		super.WaveSoundBuffer(...);
+	}
+
+	function WaveSoundBuffer()
+	{
+		this.WaveSoundBuffer_patch_log_storage_used_override(...);
+	}
+
+	function open(storage)
+	{
+		global.do_log_storage_used(storage);
+		return super.open(...);
+	}
+}
+global.WaveSoundBuffer = global.WaveSoundBuffer_patch_log_storage_used_override;
+
+global.Layer_patch_log_storage_used_original = global.Layer;
+class Layer_patch_log_storage_used_override extends global.Layer_patch_log_storage_used_original
+{
+	function Layer_patch_log_storage_used_override()
+	{
+		super.Layer(...);
+	}
+
+	function Layer()
+	{
+		this.Layer_patch_log_storage_used_override(...);
+	}
+
+	function loadImages(storage, key)
+	{
+		global.do_log_storage_used(storage);
+		return super.loadImages(...);
+	}
+
+	function beginTransition(name, withchildren, transsrc, options)
+	{
+		if (typeof(options) === "Object" && options !== null)
+		{
+			if (typeof(options.rule) === "String")
+			{
+				global.do_log_storage_used(options.rule);
+			}
+		}
+		return super.beginTransition(...);
+	}
+}
+global.Layer = global.Layer_patch_log_storage_used_override;

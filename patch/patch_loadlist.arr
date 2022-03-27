@@ -95,6 +95,7 @@
 	["patch_gpu_layer.tjs", , [["BitmapLayerTreeOwner", , "==="], ["Canvas", , "==="]],, "USE_GPU_LAYER"],
 	["patch_mpv_videooverlay_wrapper.tjs", , [["KrMpv", , "==="]]],
 	"patch_font_wrapper.tjs",
+	["patch_log_storage_used.tjs", ,,, "USE_LOG_STORAGE_USED"],
 	"patch_layer.tjs",
 	["patch_movie.tjs", ,,, "GAME_FATE||GAME_FHAT"],
 	["patch_hd_functions.tjs", ,,, "HD_MODE"],

@@ -2036,10 +2036,13 @@ class MessageLayer extends KAGLayer
 		}
 @endif
 @if(MESSAGELAYER_USECHARLAYER)
+@if(0)
 		if(vertical)
 			condition = x - ((lineSize - lineSpacing) << 1) <= marginL;
 		else
 			condition = y + ((lineSize + lineSpacing) << 1) >= imageHeight - marginB;
+@endif
+		condition = false;
 
 		// 改行したら、直前に表示した文字はクリア
 		lastCh	= "";
@@ -2073,11 +2076,13 @@ class MessageLayer extends KAGLayer
 				x = marginL + indentxpos;
 			}
 
+@if(!MESSAGELAYER_USECHARLAYER)
 			var condition;
 			if(vertical)
 				condition= x - lineSize*2 <= marginL;
 			else
 				condition= y + lineSize*2 >= imageHeight-marginB;
+@endif
 
 			if(condition)
 			{

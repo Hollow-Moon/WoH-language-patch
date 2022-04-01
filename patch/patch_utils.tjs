@@ -1629,3 +1629,10 @@ global.strftime = function(sFormat, date)
 	};
 	return fmt_regex.replace(sFormat, match_tbl_func incontextof match_tbl);
 };
+
+global.escape_regexp_exp = /[-\/\\^$*+?.()|[\]{}]/g;
+
+global.escape_regexp = function(str)
+{
+	return global.escape_regexp_exp.replace(str, function(mtch) { return "\\" + mtch[0]; });
+};

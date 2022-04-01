@@ -1,0 +1,415 @@
+﻿
+{
+	global.sample_taginfo = [
+@if(0)
+		%[ // matches with 「[line3]問おう。貴方が、私のマスターか」
+			scenario: "プロローグ1日目.ks",
+			label: "*page2",
+			match_count: %[
+				r: 5,
+			],
+			match_properties: %[
+				tagname: "ch",
+			],
+			inject_pre: [
+				%[
+					tagname: "say",
+					storage: "prg01_sav_0000",
+				]
+			],
+		],
+		%[ // matches with 「召喚に従い参上した。
+			scenario: "プロローグ1日目.ks",
+			label: "*page3",
+			match_count: %[
+				r: 5,
+			],
+			match_properties: %[
+				tagname: "ch",
+			],
+			inject_pre: [
+				%[
+					tagname: "say",
+					storage: "prg01_sav_0010",
+				]
+			],
+		],
+		%[ // matches with 　これより我が剣は貴方と共にあり、貴方の運命は私と共にある。[line3]ここに、契約は完了した」
+			scenario: "プロローグ1日目.ks",
+			label: "*page3",
+			match_count: %[
+				r: 6,
+			],
+			match_properties: %[
+				tagname: "ch",
+			],
+			inject_pre: [
+				%[
+					tagname: "say",
+					storage: "prg01_sav_0020",
+				]
+			],
+		],
+@endif
+	];
+}
+
+global.Conductor_patch_tag_stream_mutate_original = global.Conductor;
+class Conductor_patch_tag_stream_mutate_override extends global.Conductor_patch_tag_stream_mutate_original
+{
+	var tagstream_tagnames_count_dict;
+	var tagstream_last_label;
+	var tagstream_last_scenario;
+	function Conductor_patch_tag_stream_mutate_override()
+	{
+		this.tagstream_tagnames_count_dict = %[];
+		super.Conductor(...);
+		this.getPreprocessChCallbacks().insert(0, this.preprocess_ch_callback_tag_stream_mutate);
+		this.tagstream_all_data.assignStruct(global.sample_taginfo);
+	}
+
+	function Conductor()
+	{
+		this.Conductor_patch_tag_stream_mutate_override(...);
+	}
+
+	function onTag(elm)
+	{
+		var tn;
+		if (typeof(elm.tagname) === "String" && elm.tagname !== "")
+		{
+			tn = elm.tagname;
+		}
+		var should_increment_dict = true;
+		if (typeof(elm.patch_tag_stream_mutate_should_increment_dict) === "Integer")
+		{
+			should_increment_dict = elm.patch_tag_stream_mutate_should_increment_dict | 0;
+		}
+		if (typeof(tn) === "String" && should_increment_dict)
+		{
+			var tagstream_tagnames_count_dict = this.tagstream_tagnames_count_dict;
+			if (typeof(tagstream_tagnames_count_dict[tn]) !== "Integer")
+			{
+				tagstream_tagnames_count_dict[tn] = 0;
+			}
+			tagstream_tagnames_count_dict[tn] += 1;
+		}
+		if (this.tag_stream_mutate_process_tag(elm))
+		{
+			return 0;
+		}
+		return super.onTag(...);
+	}
+
+	function tag_stream_mutate_process_tag(elm)
+	{
+		if (elm.tag_stream_mutate_no_process !== void)
+		{
+			return false;
+		}
+		var tagstream_label_data = this.tagstream_label_data;
+		var tagstream_tagnames_count_dict = this.tagstream_tagnames_count_dict;
+		var inject_pre_all = [];
+		var inject_post_all = [];
+		var should_insert_self = true;
+		for (var i = 0; i < tagstream_label_data.count; i += 1)
+		{
+			var tagdata = tagstream_label_data[i];
+			var is_matching = true;
+			if (tagdata.has_processed)
+			{
+				continue;
+			}
+			if (is_matching)
+			{
+				if (typeof(tagdata.match_count) === "Object")
+				{
+					var match_count_arr = [];
+					match_count_arr.assign(tagdata.match_count);
+					for (var ii = 0; ii < match_count_arr.count; ii += 2)
+					{
+						var key = match_count_arr[ii];
+						var value = match_count_arr[ii + 1];
+						if (tagstream_tagnames_count_dict[key] !== value)
+						{
+							is_matching = false;
+							break;
+						}
+					}
+				}
+			}
+			if (is_matching)
+			{
+				if (typeof(tagdata.match_properties) === "Object")
+				{
+					var match_properties_arr = [];
+					match_properties_arr.assign(tagdata.match_properties);
+					for (var ii = 0; ii < match_properties_arr.count; ii += 2)
+					{
+						var key = match_properties_arr[ii];
+						var value = match_properties_arr[ii + 1];
+						if (elm[key] !== value)
+						{
+							is_matching = false;
+							break;
+						}
+					}
+				}
+			}
+			if (is_matching)
+			{
+				tagdata.has_processed = true;
+				if (typeof(tagdata.inject_pre) === "Object")
+				{
+					var inject_pre = tagdata.inject_pre;
+					for (var ii = 0; ii < inject_pre.count; ii += 1)
+					{
+						inject_pre_all.add(inject_pre[ii]);
+					}
+				}
+				if (typeof(tagdata.inject_post) === "Object")
+				{
+					var inject_post = tagdata.inject_post;
+					for (var ii = 0; ii < inject_post.count; ii += 1)
+					{
+						inject_post_all.insert(0, inject_post[ii]);
+					}
+				}
+				if (typeof(tagdata.insert_self) === "Integer")
+				{
+					should_insert_self = tagdata.insert_self;
+				}
+			}
+		}
+		if (inject_pre_all.count > 0 || inject_post_all.count > 0)
+		{
+			for (var i = inject_post_all.count - 1; i >= 0; i -= 1)
+			{
+				var tag = inject_post_all[i];
+				var new_tag = %[];
+				(global.Dictionary.assign incontextof new_tag)(tag);
+				new_tag.tag_stream_mutate_no_process = true;
+				this.pendings.insert(0, new_tag);
+			}
+			if (should_insert_self)
+			{
+				elm.tag_stream_mutate_no_process = true;
+				this.pendings.insert(0, elm);
+			}
+			for (var i = inject_pre_all.count - 1; i >= 0; i -= 1)
+			{
+				var tag = inject_pre_all[i];
+				var new_tag = %[];
+				(global.Dictionary.assign incontextof new_tag)(tag);
+				new_tag.tag_stream_mutate_no_process = true;
+				this.pendings.insert(0, new_tag);
+			}
+@if(0)
+			var tag_ls = [];
+			for (var i = 0; i < this.pendings.count; i += 1)
+			{
+				tag_ls.add(this.pendings[i].tagname);
+			}
+			Debug.message("Pending queue " + tag_ls.join(","));
+@endif
+			return true;
+		}
+		return false;
+	}
+
+	function preprocess_ch_callback_tag_stream_mutate(text, conductor, elm)
+	{
+		if (elm.tag_stream_mutate_no_process !== void)
+		{
+			return text;
+		}
+		var tagstream_label_data = this.tagstream_label_data;
+		var tagstream_tagnames_count_dict = this.tagstream_tagnames_count_dict;
+		var inject_pre_all = [];
+		var inject_post_all = [];
+		var should_insert_self = true;
+		for (var i = 0; i < tagstream_label_data.count; i += 1)
+		{
+			var tagdata = tagstream_label_data[i];
+			var is_matching = true;
+			if (tagdata.has_processed)
+			{
+				continue;
+			}
+			if (is_matching)
+			{
+				if (typeof(tagdata.match_count) === "Object")
+				{
+					var match_count_arr = [];
+					match_count_arr.assign(tagdata.match_count);
+					for (var ii = 0; ii < match_count_arr.count; ii += 2)
+					{
+						var key = match_count_arr[ii];
+						var value = match_count_arr[ii + 1];
+						if (tagstream_tagnames_count_dict[key] !== value)
+						{
+							is_matching = false;
+							break;
+						}
+					}
+				}
+			}
+			if (is_matching)
+			{
+				if (typeof(tagdata.match_properties) === "Object")
+				{
+					var match_properties_arr = [];
+					match_properties_arr.assign(tagdata.match_properties);
+					for (var ii = 0; ii < match_properties_arr.count; ii += 2)
+					{
+						var key = match_properties_arr[ii];
+						var value = match_properties_arr[ii + 1];
+						if (elm[key] !== value)
+						{
+							is_matching = false;
+							break;
+						}
+					}
+				}
+			}
+			if (is_matching)
+			{
+				if (typeof(tagdata.replace_text) === "Object")
+				{
+					var replace_text_arr = [];
+					replace_text_arr.assign(tagdata.replace_text);
+					for (var ii = 0; ii < replace_text_arr.count; ii += 2)
+					{
+						var key = replace_text_arr[ii];
+						var value = replace_text_arr[ii + 1];
+						var re = new global.RegExp(global.escape_regexp(key), "g");
+						text = re.replace(text, value);
+					}
+				}
+			}
+		}
+		return text;
+	}
+
+	var tagstream_prepared_scenario;
+	var tagstream_prepared_label;
+	var tagstream_all_data = [];
+	var tagstream_scenario_data = [];
+	var tagstream_label_data = [];
+	function tag_stream_mutate_prepare()
+	{
+		var tagstream_all_data = this.tagstream_all_data;
+		var tagstream_scenario_data = this.tagstream_scenario_data;
+		var tagstream_label_data = this.tagstream_label_data;
+		if (this.tagstream_last_scenario !== this.tagstream_prepared_scenario)
+		{
+			this.tagstream_prepared_scenario = this.tagstream_last_scenario;
+			var scenario = this.tagstream_prepared_scenario;
+			tagstream_scenario_data.clear();
+			tagstream_label_data.clear();
+
+			for (var i = 0; i < tagstream_all_data.count; i += 1)
+			{
+				var tagdata = tagstream_all_data[i];
+				if (typeof(tagdata) === "Object")
+				{
+					if (scenario == tagdata.scenario)
+					{
+						tagstream_scenario_data.add(tagdata);
+					}
+				}
+			}
+		}
+		if (this.tagstream_last_label !== this.tagstream_prepared_label)
+		{
+			this.tagstream_prepared_label = this.tagstream_last_label;
+			tagstream_label_data.clear();
+
+			var label = this.tagstream_prepared_label;
+			for (var i = 0; i < tagstream_scenario_data.count; i += 1)
+			{
+				var tagdata = tagstream_scenario_data[i];
+				if (typeof(tagdata) === "Object")
+				{
+					if (label == tagdata.label)
+					{
+						tagstream_label_data.add(tagdata);
+					}
+				}
+			}
+		}
+	}
+
+	function clear_last_known_tagstream_info()
+	{
+		(global.Dictionary.clear incontextof this.tagstream_tagnames_count_dict)();
+	}
+
+@if(0)
+	function onScenarioLoad(name)
+	{
+		var ret = super.onScenarioLoad(...);
+		return ret;
+	}
+@endif
+
+	function onScenarioLoaded(name)
+	{
+		this.clear_last_known_tagstream_info();
+		this.tagstream_last_scenario = name;
+		this.tag_stream_mutate_prepare();
+		var ret = super.onScenarioLoaded(...);
+		return ret;
+	}
+
+	function onLabel(label, page)
+	{
+		this.clear_last_known_tagstream_info();
+		this.tagstream_last_label = label;
+		this.tag_stream_mutate_prepare();
+		var ret = super.onLabel(...);
+		return ret;
+	}
+
+@if(0)
+	function onJump(elm)
+	{
+		var ret = super.onJump(...);
+		return ret;
+	}
+@endif
+
+@if(0)
+	function onCall(elm)
+	{
+		var ret = super.onCall(...);
+		return ret;
+	}
+@endif
+
+@if(0)
+	function onReturn(elm)
+	{
+		var ret = super.onReturn(...);
+		return ret;
+	}
+@endif
+
+@if(0)
+	function onAfterReturn()
+	{
+		var ret = super.onAfterReturn(...);
+		return ret;
+	}
+@endif
+
+@if(0)
+	function onScript(script, scriptname, lineofs)
+	{
+		var ret = super.onScript(...);
+		return ret;
+	}
+@endif
+
+}
+global.Conductor = global.Conductor_patch_tag_stream_mutate_override;

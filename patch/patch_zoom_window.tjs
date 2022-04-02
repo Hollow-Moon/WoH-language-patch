@@ -350,6 +350,7 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 
 		scflags.menuBarState = menuBarState;
 		scflags.windowResizeable = windowResizeable;
+		scflags.limitWindowSize = limitWindowSize;
 		scflags.windowMaximized  = false;
 		var rect;
 		if (typeof this.maximized === "Integer" && maximized) {
@@ -920,6 +921,11 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 	var in_limit_size = 0;
 	function limitSize(mon)
 	{
+		// A maximized window by definition is sized so that the window borders and title menu are outside of the screen
+		// So don't limit the size to desktop if the window is maximized.
+		if (this.maximized == true || limitWindowSize == false)
+			return false;
+
 		if (this.in_limit_size)
 		{
 			return true;
@@ -939,26 +945,33 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 			var height = this.height;
 			var innerWidth = this.innerWidth;
 			var innerHeight = this.innerHeight;
+
+			var hBorders = width - innerWidth;
+			var vBorders = height - innerHeight;
+			var innerRatio = innerWidth / innerHeight;
+
 			if(mw < width)
 			{
-				var rate = innerHeight / innerWidth;
 				width	= mw;
-				innerHeight	= int(rate * innerWidth);
-				// Avoid infinite resize back-and-forth loop by decreasing if somehow got into loop
-				width -= this._limitSizeCounter + 1;
-				innerHeight -= this._limitSizeCounter + 1;
+				innerWidth = width - hBorders;
+				innerHeight = int((innerWidth / innerRatio) + 0.5);
+				height = innerHeight + vBorders;
+
 				szchg	= true;
 			}
+
+			// If height is still outside of the working area 'mh' at this point,
+			//   recalculate all values based on height.
 			if(mh < height)
 			{
-				var rate = innerWidth / innerHeight;
 				height	= mh;
-				innerWidth	= int(rate * innerHeight);
-				// Avoid infinite resize back-and-forth loop by decreasing if somehow got into loop
-				width -= this._limitSizeCounter + 1;
-				innerHeight -= this._limitSizeCounter + 1;
+				innerHeight = height - vBorders;
+				innerWidth = int((innerHeight * innerRatio) + 0.5);
+				width = innerWidth + hBorders;
+
 				szchg	= true;
 			}
+
 			if (szchg)
 			{
 				// Order is important, inner size is set before size
@@ -1091,6 +1104,13 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 			callHook("afterChangeWindowResizeable");
 		}
 	}
+	var _limitWindowSize = true;
+	property limitWindowSize {
+		getter { return _limitWindowSize; }
+		setter(v) {
+			_limitWindowSize = v;
+		}
+	}
 	function onResizing(rect) {
 		if (typeof(this.absoluteMode) === "Integer")
 		{
@@ -1200,6 +1220,7 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 //		dm("callResizeHook");
 		callHook("onWindowResizeHook", this, innerWidth, innerHeight);
 		updateWindowSizeChecked(fullScreen ? 0 : innerWidth);
+		updateLimitWindowSizeMenuItem();
 	}
 	function onDisplayChanged() {
 //		dm("callDisplayChanged");
@@ -1257,6 +1278,19 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 		if(typeof this.windowResizeableMenuItem === "Object")
 			this.windowResizeableMenuItem.checked = !windowResizeable;
 	}
+
+	function onLimitWindowSizeMenuItemClick(sender)
+	{
+	limitWindowSize = !limitWindowSize;
+	updateLimitWindowSizeMenuItem();
+	if (limitWindowSize == true)
+		limitSize();
+	}
+	function updateLimitWindowSizeMenuItem()
+	{
+	if(typeof this.limitWindowSizeMenuItem === "Object")
+		this.limitWindowSizeMenuItem.checked = limitWindowSize;
+	}
 @endif
 
 	function setSystemStateFromSystemVariables()
@@ -1264,6 +1298,7 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 		super.setSystemStateFromSystemVariables();
 @if(ZOOM_WINDOW)
 		windowResizeable = scflags.windowResizeable !== void ? scflags.windowResizeable : false;
+		limitWindowSize = scflags.limitWindowSize !== void ? scflags.limitWindowSize : true;
 @endif
 @if(ZOOM_WINDOW)
 		changeMenuBarState(scflags.menuBarState !== void ? scflags.menuBarState : defaultMenuBarState);

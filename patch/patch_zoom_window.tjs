@@ -591,8 +591,8 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 			pxWidth_abs = this.scaleWidth(pxWidth_abs);
 			pxHeight_abs = this.scaleHeight(pxHeight_abs);
 		}
-		var w = pxWidth_abs  * z;
-		var h = pxHeight_abs * z;
+		var w = global.Math.round(pxWidth_abs * z) | 0;
+		var h = global.Math.round(pxHeight_abs * z) | 0;
 		if (resize) {
 			setInnerSize(w, h);
 			resetPrimaryPos();

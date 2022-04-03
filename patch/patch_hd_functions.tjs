@@ -59,14 +59,6 @@ global.scaleSize = function(v, scale)
 
 global.unscaleSize = function(v, scale)
 {
-@if(SCALE_USING_FLOATING_POINT)
-    v /= scale;
-@endif
-@if(!SCALE_USING_FLOATING_POINT)
-    v \= scale;
-@endif
-@if(SCALE_ROUND_TOWARDS_NEAREST)
-    v = global.Math.round(v) | 0;
-@endif
-    return v;
+    // round() seems to give correct unscaled results both for scaled values that were floored and for ones that were rounded.
+    return global.Math.round(v/scale) | 0;
 };

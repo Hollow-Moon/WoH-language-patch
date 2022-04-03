@@ -790,26 +790,20 @@ global.addWindowSizeMenu = function(displayMenu)
 		displayMenu.add(this.windowSizeMenu = new global.KAGMenuItem(this, __t("ウィンドウ内部のサイズ指定(&S)"), 0, void, false));
 
 @if(GAME_WOHN)
+			this.windowSizeMenu.add(this.window640MenuItem = new global.KAGMenuItem(this, "640x360", 1,
+				function(sender) { sender.owner.onWindowSizeMenuItemClick(,640); }, false));
+
+			this.windowSizeMenu.add(this.window800MenuItem = new global.KAGMenuItem(this, "800x450", 1,
+				function(sender) { sender.owner.onWindowSizeMenuItemClick(,800); }, false));
+
+
+
 			this.windowSizeMenu.add(this.window1024MenuItem = new global.KAGMenuItem(this, "1024x576", 1,
 				function(sender) { sender.owner.onWindowSizeMenuItemClick(,1024); }, false));
 			this.window1024MenuItem.is_default_size = true;
-@endif
-@if(GAME_FATE||GAME_FHAT)
-@if(!HD_MODE)
-			this.windowSizeMenu.add(this.window800MenuItem = new global.KAGMenuItem(this, "800x600", 1,
-				function(sender) { sender.owner.onWindowSizeMenuItemClick(,800); }, false));
-			this.window800MenuItem.is_default_size = true;
-@endif
-@if(HD_MODE)
-			this.windowSizeMenu.add(this.window800MenuItem = new global.KAGMenuItem(this, "1.00x", 1,
-				function(sender) { sender.owner.onWindowSizeMenuItemClick(,800); }, false));
-			this.window800MenuItem.is_default_size = true;
-@endif
-@endif
 
-			this.windowSizeMenu.add(new global.MenuItem(this, "-"));
 
-@if(GAME_WOHN)
+
 			this.windowSizeMenu.add(this.window1280MenuItem = new global.KAGMenuItem(this, "1280x720", 1,
 				function(sender) { sender.owner.onWindowSizeMenuItemClick(,1280); }, false));
 
@@ -821,15 +815,26 @@ global.addWindowSizeMenu = function(displayMenu)
 
 			this.windowSizeMenu.add(this.window1920MenuItem = new global.KAGMenuItem(this, "1920x1080", 1,
 				function(sender) { sender.owner.onWindowSizeMenuItemClick(,1920); }, false));
-
-			this.windowSizeMenu.add(this.window640MenuItem = new global.KAGMenuItem(this, "640x360", 1,
-				function(sender) { sender.owner.onWindowSizeMenuItemClick(,640); }, false));
-
-			this.windowSizeMenu.add(this.window800MenuItem = new global.KAGMenuItem(this, "800x450", 1,
-				function(sender) { sender.owner.onWindowSizeMenuItemClick(,800); }, false));
 @endif
 @if(GAME_FATE||GAME_FHAT)
 @if(!HD_MODE)
+			this.windowSizeMenu.add(this.window200MenuItem = new global.KAGMenuItem(this, "200x150", 1,
+				function(sender) { sender.owner.onWindowSizeMenuItemClick(,200); }, false));
+
+			this.windowSizeMenu.add(this.window400MenuItem = new global.KAGMenuItem(this, "400x300", 1,
+				function(sender) { sender.owner.onWindowSizeMenuItemClick(,400); }, false));
+
+			this.windowSizeMenu.add(this.window640MenuItem = new global.KAGMenuItem(this, "640x480", 1,
+				function(sender) { sender.owner.onWindowSizeMenuItemClick(,640); }, false));
+
+
+
+			this.windowSizeMenu.add(this.window800MenuItem = new global.KAGMenuItem(this, "800x600", 1,
+				function(sender) { sender.owner.onWindowSizeMenuItemClick(,800); }, false));
+			this.window800MenuItem.is_default_size = true;
+
+
+
 			this.windowSizeMenu.add(this.window1024MenuItem = new global.KAGMenuItem(this, "1024x768", 1,
 				function(sender) { sender.owner.onWindowSizeMenuItemClick(,1024); }, false));
 
@@ -838,11 +843,26 @@ global.addWindowSizeMenu = function(displayMenu)
 
 			this.windowSizeMenu.add(this.window1440MenuItem = new global.KAGMenuItem(this, "1440x1080", 1,
 				function(sender) { sender.owner.onWindowSizeMenuItemClick(,1440); }, false));
-
-			this.windowSizeMenu.add(this.window640MenuItem = new global.KAGMenuItem(this, "640x480", 1,
-				function(sender) { sender.owner.onWindowSizeMenuItemClick(,640); }, false));
 @endif
 @if(HD_MODE)
+
+			this.windowSizeMenu.add(this.window200MenuItem = new global.KAGMenuItem(this, "0.25x", 1,
+				function(sender) { sender.owner.onWindowSizeMenuItemClick(,200); }, false));
+
+			this.windowSizeMenu.add(this.window400MenuItem = new global.KAGMenuItem(this, "0.50x", 1,
+				function(sender) { sender.owner.onWindowSizeMenuItemClick(,400); }, false));
+
+			this.windowSizeMenu.add(this.window640MenuItem = new global.KAGMenuItem(this, "0.80x", 1,
+				function(sender) { sender.owner.onWindowSizeMenuItemClick(,640); }, false));
+
+
+
+			this.windowSizeMenu.add(this.window800MenuItem = new global.KAGMenuItem(this, "1.00x", 1,
+				function(sender) { sender.owner.onWindowSizeMenuItemClick(,800); }, false));
+			this.window800MenuItem.is_default_size = true;
+
+
+
 			this.windowSizeMenu.add(this.window1024MenuItem = new global.KAGMenuItem(this, "1.28x", 1,
 				function(sender) { sender.owner.onWindowSizeMenuItemClick(,1024); }, false));
 
@@ -852,8 +872,6 @@ global.addWindowSizeMenu = function(displayMenu)
 			this.windowSizeMenu.add(this.window1440MenuItem = new global.KAGMenuItem(this, "1.80x", 1,
 				function(sender) { sender.owner.onWindowSizeMenuItemClick(,1440); }, false));
 
-			this.windowSizeMenu.add(this.window640MenuItem = new global.KAGMenuItem(this, "0.80x", 1,
-				function(sender) { sender.owner.onWindowSizeMenuItemClick(,640); }, false));
 @endif
 @endif
 

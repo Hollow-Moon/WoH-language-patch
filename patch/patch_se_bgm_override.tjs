@@ -1,0 +1,72 @@
+﻿
+global.mutate_tag_audio_storage = function(elm)
+{
+	var storage = elm.storage;
+	var file_name = global.get_full_path_of_audio(storage);
+	if (file_name === "")
+	{
+		throw new global.Exception(("Audio \"%s\" not found").sprintf(storage));
+	}
+	elm.storage = file_name;
+};
+
+global.SESoundBuffer_patch_se_bgm_original = global.SESoundBuffer;
+class SESoundBuffer_patch_se_bgm_override extends global.SESoundBuffer_patch_se_bgm_original
+{
+	function SESoundBuffer_patch_se_bgm_override()
+	{
+		super.SESoundBuffer(...);
+	}
+
+	function SESoundBuffer()
+	{
+		this.SESoundBuffer_patch_se_bgm_override(...);
+	}
+
+	function play(elm)
+	{
+		global.mutate_tag_audio_storage(elm);
+		return super.play(...);
+	}
+}
+global.SESoundBuffer = global.SESoundBuffer_patch_se_bgm_override;
+
+global.BGM_patch_se_bgm_original = global.BGM;
+class BGM_patch_se_bgm_override extends global.BGM_patch_se_bgm_original
+{
+	function BGM_patch_se_bgm_override()
+	{
+		super.BGM(...);
+	}
+
+	function BGM()
+	{
+		this.BGM_patch_se_bgm_override(...);
+	}
+
+	function play(elm)
+	{
+		global.mutate_tag_audio_storage(elm);
+		return super.play(...);
+	}
+
+	function fadeIn(elm)
+	{
+		global.mutate_tag_audio_storage(elm);
+		return super.fadeIn(...);
+	}
+
+	function exchange(elm)
+	{
+		global.mutate_tag_audio_storage(elm);
+		return super.exchange(...);
+	}
+
+	// in Override.tjs
+	function playOverlap(elm)
+	{
+		global.mutate_tag_audio_storage(elm);
+		return super.playOverlap(...);
+	}
+}
+global.BGM = global.BGM_patch_se_bgm_override;

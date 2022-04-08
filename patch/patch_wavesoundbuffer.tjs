@@ -1,0 +1,121 @@
+
+global.audio_extensions = [".opus", ".ogg", ".at9", ".wav", ".tcw"];
+
+{
+	if (global.isKirikiroid)
+	{
+		global.audio_extensions.remove(".at9");
+	}
+}
+
+global.chop_audio_extension = function(storage)
+{
+	var audio_extensions = global.audio_extensions;
+
+	if (audio_extensions.find(global.Storages.extractStorageExt(storage)) === -1)
+	{
+		var file_name_no_ext = storage;
+		var file_name_len = storage.length;
+
+		for (var i = 0, internal_forloop_count = audio_extensions.count; i < internal_forloop_count; i += 1)
+		{
+			var file_name_ext_pos = file_name_no_ext.indexOf(audio_extensions[i]);
+			if ((file_name_ext_pos !== -1) && (file_name_ext_pos + audio_extensions[i].length === file_name_len))
+			{
+				file_name_no_ext = file_name_no_ext.substring(0, file_name_ext_pos);
+				break;
+			}
+		}
+		return file_name_no_ext;
+	}
+
+
+	return storage;
+};
+
+global.get_file_name_of_audio_with_extension_that_exists = function(storage)
+{
+	var audio_extensions = global.audio_extensions;
+
+	if (audio_extensions.find(global.Storages.extractStorageExt(storage)) === -1)
+	{
+		var file_name_no_ext = storage;
+		var file_name_len = storage.length;
+
+		for (var i = 0, internal_forloop_count = audio_extensions.count; i < internal_forloop_count; i += 1)
+		{
+			var file_name_ext_pos = file_name_no_ext.indexOf(audio_extensions[i]);
+			if ((file_name_ext_pos !== -1) && (file_name_ext_pos + audio_extensions[i].length === file_name_len))
+			{
+				file_name_no_ext = file_name_no_ext.substring(0, file_name_ext_pos);
+				break;
+			}
+		}
+		for (var i = 0, internal_forloop_count = audio_extensions.count; i < internal_forloop_count; i += 1)
+		{
+			var fn = file_name_no_ext + audio_extensions[i];
+			if (global.Storages.isExistentStorage(fn))
+			{
+				return fn;
+			}
+		}
+	}
+
+
+	return storage;
+};
+
+global.check_if_audio_exists = function(storage)
+{
+	return global.Storages.isExistentStorage(global.get_file_name_of_audio_with_extension_that_exists(storage));
+};
+
+global.get_full_path_of_audio = function(storage)
+{
+	var path = global.get_file_name_of_audio_with_extension_that_exists(storage);
+	if (path === void)
+	{
+		return "";
+	}
+	return global.Storages.getPlacedPath(path);
+};
+
+global.Storages.isExistentSound = function(storage)
+{
+	return global.check_if_audio_exists(storage);
+};
+
+global.isExistentSound = function(storage)
+{
+	return global.check_if_audio_exists(storage);
+};
+
+global.getExistSoundName = function(storage)
+{
+	return global.get_full_path_of_audio(storage);
+};
+
+global.WaveSoundBuffer_patch_wavesoundbuffer_original = global.WaveSoundBuffer;
+class WaveSoundBuffer_patch_wavesoundbuffer_override extends global.WaveSoundBuffer_patch_wavesoundbuffer_original
+{
+	function WaveSoundBuffer_patch_wavesoundbuffer_override()
+	{
+		super.WaveSoundBuffer(...);
+	}
+
+	function WaveSoundBuffer()
+	{
+		this.WaveSoundBuffer_patch_wavesoundbuffer_override(...);
+	}
+
+	function open(storage)
+	{
+		var file_name = global.get_full_path_of_audio(storage);
+		if (file_name === "")
+		{
+			throw new global.Exception(("Audio \"%s\" not found").sprintf(storage));
+		}
+		return super.open(file_name);
+	}
+}
+global.WaveSoundBuffer = global.WaveSoundBuffer_patch_wavesoundbuffer_override;

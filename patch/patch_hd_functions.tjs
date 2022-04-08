@@ -16,14 +16,12 @@
             v *= (parentScaledSize - scaledSize) / (parentSize - size);
         }
     }
-@if(SCALE_ROUND_TOWARDS_NEAREST)
-    v = global.Math.round(v);
-@endif
-    return v | 0;
+	return global.Math.round(v) | 0;
 };
 
 // Equivalently to scalePosition(), which calculates the scaled left/top coordinate,
 // scalePosition2() calculates the scaled right/bottom coordinate.
+// Currently used by fillRect_patch_hd_layer() and colorRect_patch_hd_layer()
 global.scalePosition2 = function(v, size, scaledSize, parentSize, parentScaledSize, align=0)
 {
     if (size >= parentSize) {
@@ -42,10 +40,7 @@ global.scalePosition2 = function(v, size, scaledSize, parentSize, parentScaledSi
             v = ((parentScaledSize - scaledSize) / (parentSize - size)) * v   + (((parentSize * scaledSize) - (parentScaledSize * size)) / (parentSize - size));
         }
     }
-@if(SCALE_ROUND_TOWARDS_NEAREST)
-    v = global.Math.round(v);
-@endif
-    return v | 0;
+	return global.Math.round(v) | 0;
 };
 
 global.scaleSize = function(v, scale)
@@ -59,6 +54,10 @@ global.scaleSize = function(v, scale)
 
 global.unscaleSize = function(v, scale)
 {
-    // round() seems to give correct unscaled results both for scaled values that were floored and for ones that were rounded.
+@if(!SCALE_ROUND_TOWARDS_NEAREST)
+    return global.Math.ceil(v/scale) | 0;
+@endif
+@if(SCALE_ROUND_TOWARDS_NEAREST)
     return global.Math.round(v/scale) | 0;
+@endif
 };

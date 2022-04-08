@@ -416,6 +416,12 @@ global.MessageLayer_config = function() {
 ;defaultEdge = true;  // deffont タグの edge 属性に相当
 @endif
 
+// ◆ 禁則文字
+;wwFollowing = __s("%),:;]}｡｣ﾞﾟ。，、．：；゛゜ヽヾゝゞ々’”）〕］｝〉》」』】°′″℃¢％‰", "line_breaking_characters_following_message"); // 行頭禁則文字
+;wwFollowingWeak = __s("!.?､･ｧｨｩｪｫｬｭｮｯｰ・？！ーぁぃぅぇぉっゃゅょゎァィゥェォッャュョヮヵヶ", "line_breaking_characters_following_weak_message"); // 行頭(弱)禁則文字
+;wwLeading = __s("\\$([{｢‘“（〔［｛〈《「『【￥＄£", "line_breaking_characters_leading_message"); // 行末禁則文字
+
+;wwFollowing += wwFollowingWeak;
 
 };
 
@@ -502,6 +508,13 @@ global.HistoryLayer_config = function() {
 // (縦書きモードでは下端の文字数であると解釈されます)
 ;marginRCh = 1;
 @endif
+
+// ◆ 禁則文字
+;wwFollowing = __s("%),:;]}｡｣ﾞﾟ。，、．：；゛゜ヽヾゝゞ々’”）〕］｝〉》」』】°′″℃¢％‰", "line_breaking_characters_following_history"); // 行頭禁則文字
+;wwFollowingWeak = __s("!.?､･ｧｨｩｪｫｬｭｮｯｰ・？！ーぁぃぅぇぉっゃゅょゎァィゥェォッャュョヮヵヶ", "line_breaking_characters_following_weak_history"); // 行頭(弱)禁則文字
+;wwLeading = __s("\\$([{｢‘“（〔［｛〈《「『【￥＄£", "line_breaking_characters_leading_history"); // 行末禁則文字
+
+;wwFollowing += wwFollowingWeak;
 
 };
 

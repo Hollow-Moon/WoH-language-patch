@@ -73,7 +73,6 @@ class SESoundBuffer extends WaveSoundBuffer
 		if(!Storages.isExistentStorage(storage))
 		{
 			var test;
-@if(!GAME_FATE&&!GAME_FHAT)
 			if(test = storage + ".wav", Storages.isExistentStorage(test))
 				storage = test;
 			else if(test = storage + ".ogg", Storages.isExistentStorage(test))
@@ -83,13 +82,6 @@ class SESoundBuffer extends WaveSoundBuffer
 			else if(test = storage + ".tcw", Storages.isExistentStorage(test))
 				storage = test;
 			else
-@endif
-@if(GAME_FATE||GAME_FHAT)
-			test = isExistentSound(storage);
-			if (typeof(test) === "String" && test != "")
-				storage = test;
-			else
-@endif
 				found = false;
 		}
 		if(!found)

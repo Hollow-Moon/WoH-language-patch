@@ -1155,10 +1155,11 @@ class KAGWindow_patch_wordwrap_override extends global.KAGWindow_patch_wordwrap_
 		}
 		var ml_needsreline = this.current.needsReline(wcacheentry);
 		var hl_needsreline = this.historyLayer.needsReline(wcacheentry);
-		if (ml_needsreline && hl_needsreline)
+		if (ml_needsreline || hl_needsreline)
 		{
 			ttext = "\n" + (is_empty_space ? "" : ttext);
 		}
+@if(0)
 		else if (hl_needsreline && !ml_needsreline)
 		{
 			elm.requeue = false;
@@ -1187,6 +1188,7 @@ class KAGWindow_patch_wordwrap_override extends global.KAGWindow_patch_wordwrap_
 			conductor.queueReline(elm, true, false);
 			return "";
 		}
+@endif
 
 		if (!should_append_break_tags)
 		{

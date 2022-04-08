@@ -9,6 +9,8 @@ class MessageLayer_patch_messagecharlayer_cache_override_override extends global
 		this.mcrc_fontAngle = this.fontAngle;
 		this.mcrc_bold = this.bold;
 		this.mcrc_fontItalic = this.fontItalic;
+		this.mcrc_fontStrikeout = this.fontStrikeout;
+		this.mcrc_fontUnderline = this.fontUnderline;
 		this.mcrc_fontSize = this.fontSize;
 		this.mcrc_antialiased = this.antialiased;
 		this.mcrc_chColor = this.chColor;
@@ -23,6 +25,8 @@ class MessageLayer_patch_messagecharlayer_cache_override_override extends global
 		&this.fontAngle = &this.mcrc_prop_fontAngle;
 		&this.bold = &this.mcrc_prop_bold;
 		&this.fontItalic = &this.mcrc_prop_fontItalic;
+		&this.fontStrikeout = &this.mcrc_prop_fontStrikeout;
+		&this.fontUnderline = &this.mcrc_prop_fontUnderline;
 		&this.fontSize = &this.mcrc_prop_fontSize;
 		&this.antialiased = &this.mcrc_prop_antialiased;
 		&this.chColor = &this.mcrc_prop_chColor;
@@ -136,6 +140,38 @@ class MessageLayer_patch_messagecharlayer_cache_override_override extends global
 			{
 				this.fontParamsStr = "";
 				this.mcrc_fontItalic = v;
+			}
+		}
+	}
+	var mcrc_fontStrikeout;
+	property mcrc_prop_fontStrikeout
+	{
+		getter
+		{
+			return this.mcrc_fontStrikeout;
+		}
+		setter (v)
+		{
+			if (this.mcrc_fontStrikeout !== v)
+			{
+				this.fontParamsStr = "";
+				this.mcrc_fontStrikeout = v;
+			}
+		}
+	}
+	var mcrc_fontUnderline;
+	property mcrc_prop_fontUnderline
+	{
+		getter
+		{
+			return this.mcrc_fontUnderline;
+		}
+		setter (v)
+		{
+			if (this.mcrc_fontUnderline !== v)
+			{
+				this.fontParamsStr = "";
+				this.mcrc_fontUnderline = v;
 			}
 		}
 	}
@@ -300,10 +336,10 @@ class MessageLayer_patch_messagecharlayer_cache_override_override extends global
 		}
 	}
 
-	function getFontParamsAsString(ruby=false, graph=false, italic, ischar=false, key, max, min)
+	function getFontParamsAsString(ruby=false, graph=false, italic, strikeout, underline, ischar=false, key, max, min)
 	{
 		var font_params_valid = true;
-		if (italic !== this.fontItalic)
+		if (italic !== this.fontItalic || strikeout !== this.fontStrikeout || underline !== this.fontUnderline)
 		{
 			font_params_valid = false;
 			// invalidate cache
@@ -325,11 +361,11 @@ class MessageLayer_patch_messagecharlayer_cache_override_override extends global
 		{
 			if (ruby)
 			{
-				this.fontParams.push(this.fontFace, this.fontAngle, this.rubyBold, italic, this.rubySize, this.rubyAntialiased, this.rubyChColor, this.rubyEdgeColor, this.rubyShadowColor, max, min);
+				this.fontParams.push(this.fontFace, this.fontAngle, this.rubyBold, italic, strikeout, underline, this.rubySize, this.rubyAntialiased, this.rubyChColor, this.rubyEdgeColor, this.rubyShadowColor, max, min);
 			}
 			else
 			{
-				this.fontParams.push(this.fontFace, this.fontAngle, this.bold, italic, this.fontSize, this.antialiased, this.chColor, this.edgeColor, this.shadowColor);
+				this.fontParams.push(this.fontFace, this.fontAngle, this.bold, italic, strikeout, underline, this.fontSize, this.antialiased, this.chColor, this.edgeColor, this.shadowColor);
 			}
 		}
 		this.fontParams.push(this.edgeEmphasis, this.edgeExtent, this.shadowOffsetX, this.shadowOffsetY, this.vertical);
@@ -340,10 +376,10 @@ class MessageLayer_patch_messagecharlayer_cache_override_override extends global
 		}
 		return joined_font_params;
 	}
-	function getKnownCharLayers(ruby=false, graph=false, italic, ischar=false, key, max, min)
+	function getKnownCharLayers(ruby=false, graph=false, italic, strikeout, underline, ischar=false, key, max, min)
 	{
 		var font_params_valid = true;
-		if (italic !== this.fontItalic)
+		if (italic !== this.fontItalic || strikeout !== this.fontStrikeout || underline !== this.fontUnderline)
 		{
 			font_params_valid = false;
 			// invalidate cache
@@ -356,7 +392,7 @@ class MessageLayer_patch_messagecharlayer_cache_override_override extends global
 		{
 			return this.knownCharLayers;
 		}
-		var fontParamsAsString = this.getFontParamsAsString(ruby, graph, italic, ischar, key, max, min);
+		var fontParamsAsString = this.getFontParamsAsString(ruby, graph, italic, strikeout, underline, ischar, key, max, min);
 		var known_char_layers = this.knownCharLayersByFont[fontParamsAsString];
 		if (known_char_layers === void)
 		{
@@ -370,13 +406,13 @@ class MessageLayer_patch_messagecharlayer_cache_override_override extends global
 		return known_char_layers;
 	}
 
-	function cacheCharLayerFromCh(layer, ch, ruby=false, graph=false, italic, ischar=false, key, max, min, cache=true)
+	function cacheCharLayerFromCh(layer, ch, ruby=false, graph=false, italic, strikeout, underline, ischar=false, key, max, min, cache=true)
 	{
 		if (ch === "" || ch === void)
 		{
 			return;
 		}
-		var knownCharLayers = this.getKnownCharLayers(ruby, graph, italic, ischar, key, max, min);
+		var knownCharLayers = this.getKnownCharLayers(ruby, graph, italic, strikeout, underline, ischar, key, max, min);
 		if (knownCharLayers[ch] !== void)
 		{
 			if (layer !== void)
@@ -408,7 +444,7 @@ class MessageLayer_patch_messagecharlayer_cache_override_override extends global
 			{
 				if (ruby)
 				{
-					l.setFont(this.fontFace, this.fontAngle, this.rubyBold, italic, this.rubySize);
+					l.setFont(this.fontFace, this.fontAngle, this.rubyBold, italic, strikeout, underline, this.rubySize);
 					if(this.edge)
 						l.drawTextWithEdge(ch, this.rubyChColor, this.rubyAntialiased, this.edgeEmphasis, this.rubyEdgeColor, this.edgeExtent, this.vertical, max, min);
 					else if(this.shadow)
@@ -418,7 +454,7 @@ class MessageLayer_patch_messagecharlayer_cache_override_override extends global
 				}
 				else
 				{
-					l.setFont(this.fontFace, this.fontAngle, this.bold, italic, this.fontSize);
+					l.setFont(this.fontFace, this.fontAngle, this.bold, italic, strikeout, underline, this.fontSize);
 					if(this.edge)
 						l.drawTextWithEdge(ch, this.chColor, this.antialiased, this.edgeEmphasis, this.edgeColor, this.edgeExtent, this.vertical);
 					else if(this.shadow)
@@ -446,7 +482,7 @@ class MessageLayer_patch_messagecharlayer_cache_override_override extends global
 		for (var i = 0, internal_forloop_count = text.length; i < internal_forloop_count; i += 1)
 		{
 			var ch = text[i];
-			this.cacheCharLayerFromCh(void, ch, false, false, italic);
+			this.cacheCharLayerFromCh(void, ch, false, false, italic, false, false);
 		}
 	}
 }

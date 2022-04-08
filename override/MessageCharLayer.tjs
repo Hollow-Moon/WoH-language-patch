@@ -128,7 +128,7 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 			lastParams.assign(.lastParams);
 			lastFontParams.assign(.lastFontParams);
 			curFontParams.clear();
-			setFont(.curFontParams[0], .curFontParams[1], .curFontParams[2], .curFontParams[3], .curFontParams[4]);
+			setFont(.curFontParams[0], .curFontParams[1], .curFontParams[2], .curFontParams[3], .curFontParams[4], .curFontParams[5], .curFontParams[6]);
 			redraw();
 			// Place the setPos call here because the redraw call sets position to (0,0)
 			this.setPos(.left, .top);
@@ -157,7 +157,7 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 		}
 	}
 
-	function setFont(face, angle, bold, italic, size)
+	function setFont(face, angle, bold, italic, strikeout, underline, size)
 	{
 		if (size < 0)
 		{
@@ -175,16 +175,11 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 				font_changed = true;
 				.angle	= angle;
 			}
-			if (.bold != bold)
-			{
-				font_changed = true;
-				.bold	= bold;
-			}
-			font_changed = setFontFace((angle == 2700 ? "@" : "") +face, - size, italic) || font_changed;
+			font_changed = setFontFace((angle == 2700 ? "@" : "") +face, - size, bold, italic, strikeout, underline) || font_changed;
 			if (font_changed)
 			{
 				this.curFontParams.clear();
-				this.curFontParams.push(.face, .angle, .bold, .italic, .height, ea);
+				this.curFontParams.push(.face, .angle, .bold, .italic, .strikeout, .underline, .height, ea);
 			}
 		}
 	}
@@ -363,7 +358,7 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 			{
 				.angle	= font.angle;
 				.bold	= font.bold;
-				tmp.setFontFace(font.face, font.height, font.italic);
+				tmp.setFontFace(font.face, font.height, font.bold, font.italic, font.strikeout, font.underline);
 				w	= .getTextWidth(ch);
 				h	= .getTextHeight(ch);
 			}
@@ -389,7 +384,7 @@ class MessageCharLayer extends KAGLayer // 演出を行なうなら、AffineLaye
 			{
 				.angle	= font.angle;
 				.bold	= font.bold;
-				tmp.setFontFace(font.face, font.height, font.italic);
+				tmp.setFontFace(font.face, font.height, font.bold, font.italic, font.strikeout, font.underline);
 				w	= .getTextWidth(ch);
 				h	= .getTextHeight(ch);
 			}

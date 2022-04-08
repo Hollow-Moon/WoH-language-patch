@@ -1493,7 +1493,7 @@ global.saveLogToExchange = function()
 	global.System.inform(msg);
 };
 
-global.Layer.setFontFace	= function(face, height=this.font.height, italic=this.font.italic)
+global.Layer.setFontFace	= function(face, height=this.font.height, bold=this.font.bold, italic=this.font.italic, strikeout=this.font.strikeout, underline=this.font.underline)
 {
 @if(0)
 	if (typeof(global.load_prerendered_fonts) === "Object")
@@ -1506,13 +1506,16 @@ global.Layer.setFontFace	= function(face, height=this.font.height, italic=this.f
 	fh |= 0;
 	nh |= 0;
 //	global.dm(name+": "+this.font.face+" !== "+face+" || "+fh+" !== "+nh+" || "+this.font.italic+" !== "+italic);
-	if(this.font.face != face || fh != nh || this.font.italic != italic)
+	if(this.font.face != face || fh != nh || this.font.bold != bold || this.font.italic != italic || this.font.strikeout != strikeout || this.font.underline != underline)
 	{
 @if(0)
 		global.Layer.getFontList();
 @endif
 		this.font.height	= height;
+		this.font.bold	= bold;
 		this.font.italic	= italic;
+		this.font.strikeout	= strikeout;
+		this.font.underline	= underline;
 		//global.dm(" this.font.face = " + this.font.face + " / face = " + face);
 		this.font.face = face if face !== void && face != "";
 @if(0)

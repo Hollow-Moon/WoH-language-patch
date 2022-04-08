@@ -366,6 +366,8 @@ class MessageLayer extends KAGLayer
 	/*CS*/var currentColumn = 0; // 現在のカラム
 	/*C*/var fontAngle; // フォントの向き
 	/*C*/var fontItalic; // イタリックで描画するか
+	/*C*/var fontStrikeout;
+	/*C*/var fontUnderline;
 	/*C*/var lineOriginX; // 現在の行の先頭位置
 	/*C*/var lineOriginY;
 
@@ -1098,10 +1100,14 @@ class MessageLayer extends KAGLayer
 @if(!MESSAGELAYER_USECHARLAYER)
 		lineLayer.font.bold = bold = defaultBold;
 		lineLayer.font.italic=false;
+		lineLayer.font.strikeout=false;
+		lineLayer.font.underline=false;
 @endif
 @if(MESSAGELAYER_USECHARLAYER)
 		bold = defaultBold;
 		fontItalic = false;
+		fontStrikeout = false;
+		fontUnderline = false;
 @endif
 		_fontSize = defaultFontSize;
 		antialiased = defaultAntialiased;
@@ -1244,6 +1250,36 @@ class MessageLayer extends KAGLayer
 @endif
 @if(MESSAGELAYER_USECHARLAYER)
 			fontItalic = +elm.italic;
+@endif
+
+		if(elm.strikeout == 'default')
+@if(!MESSAGELAYER_USECHARLAYER)
+			lineLayer.font.strikeout = false;
+@endif
+@if(MESSAGELAYER_USECHARLAYER)
+			fontStrikeout = false;
+@endif
+		else if(elm.strikeout !== void)
+@if(!MESSAGELAYER_USECHARLAYER)
+			lineLayer.font.strikeout = +elm.strikeout;
+@endif
+@if(MESSAGELAYER_USECHARLAYER)
+			fontStrikeout = +elm.strikeout;
+@endif
+
+		if(elm.underline == 'default')
+@if(!MESSAGELAYER_USECHARLAYER)
+			lineLayer.font.underline = false;
+@endif
+@if(MESSAGELAYER_USECHARLAYER)
+			fontUnderline = false;
+@endif
+		else if(elm.underline !== void)
+@if(!MESSAGELAYER_USECHARLAYER)
+			lineLayer.font.underline = +elm.underline;
+@endif
+@if(MESSAGELAYER_USECHARLAYER)
+			fontUnderline = +elm.underline;
 @endif
 
 		if(elm.size == 'default')
@@ -2270,7 +2306,7 @@ class MessageLayer extends KAGLayer
 		var this_charlayer;
 		with(this_charlayer = getCharLayer(currentLine, currentColumn))
 		{
-			this.cacheCharLayerFromCh(this_charlayer, ch, false, false, fontItalic);
+			this.cacheCharLayerFromCh(this_charlayer, ch, false, false, this.fontItalic, this.fontStrikeout, this.fontUnderline);
 			.name	= "[%2d][%2d]: %s(%s)".sprintf(currentLine, currentColumn, ch, .group);
 			this_charlayer.currentLine = currentLine;
 			this_charlayer.currentColumn = currentColumn;
@@ -2463,7 +2499,7 @@ class MessageLayer extends KAGLayer
 				min = int(max * 0.50);
 				max = int(max * 2.00);
 			}
-			this.cacheCharLayerFromCh(this_rubylayer, text, true, false, fontItalic, false, 0, max, min);
+			this.cacheCharLayerFromCh(this_rubylayer, text, true, false, this.fontItalic, this.fontStrikeout, this.fontUnderline, false, 0, max, min);
 			.name		= "[%2d][%2d]: ルビ = %s(%s)".sprintf(currentLine, currentColumn, text, .group);
 			var	pos	= getRubyPos(line, stcol, edcol, rubyLayers[line][edcol], offset, align);
 			.charcnt	= edcol - stcol;
@@ -2599,7 +2635,7 @@ class MessageLayer extends KAGLayer
 		var this_charlayer;
 		with(this_charlayer = getCharLayer(currentLine, currentColumn))
 		{
-			this.cacheCharLayerFromCh(this_charlayer, storage, false, true, false, ischar, key);
+			this.cacheCharLayerFromCh(this_charlayer, storage, false, true, false, false, false, ischar, key);
 			this_charlayer.currentLine = currentLine;
 			this_charlayer.currentColumn = currentColumn;
 
@@ -3074,6 +3110,8 @@ class MessageLayer extends KAGLayer
 		of.angle = lf.angle;
 		of.bold = lf.bold;
 		of.italic = lf.italic;
+		of.strikeout = lf.strikeout;
+		of.underline = lf.underline;
 		of.height = lf.height;
 		object.linkNum = numLinks;
 		object.text = Scripts.eval(elm.name);
@@ -3964,7 +4002,7 @@ class MessageLayer extends KAGLayer
 			{
 				.hasImage = true;
 			}
-			.setFont(fontFace, fontAngle, bold, fontItalic, fontSize);
+			.setFont(this.fontFace, this.fontAngle, this.bold, this.fontItalic, this.fontStrikeout, this.fontUnderline, this.fontSize);
 			var	cw	= get_ch_width_ret_cache[0], tw = .font.getTextWidth(text), w;
 			if (return_tw_only)
 			{
@@ -3996,7 +4034,7 @@ class MessageLayer extends KAGLayer
 			{
 				.hasImage = true;
 			}
-			.setFont(fontFace, fontAngle, rubyBold, fontItalic, rubySize);
+			.setFont(this.fontFace, this.fontAngle, this.rubyBold, this.fontItalic, this.fontStrikeout, this.fontUnderline, this.rubySize);
 			var	rw	= [], tw = .font.getTextWidth(text), w;
 			for (var i = 0, internal_forloop_count = text.length; i < internal_forloop_count; i += 1)
 			{
@@ -4244,6 +4282,8 @@ class MessageLayer extends KAGLayer
 			tf.angle = sf.angle;
 			tf.bold = sf.bold;
 			tf.italic = sf.italic;
+			tf.underline = sf.underline;
+			tf.strikeout = sf.strikeout;
 			tf.height = sf.height;
 		}
 @endif
@@ -4383,6 +4423,8 @@ class MessageLayer extends KAGLayer
 		currentColumn = src.currentColumn;
 		fontAngle = src.fontAngle;
 		fontItalic = src.fontItalic;
+		fontStrikeout = src.fontStrikeout;
+		fontUnderline = src.fontUnderline;
 @endif
 		sizeChanged = src.sizeChanged;
 		nextClearFlag = src.nextClearFlag;

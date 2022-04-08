@@ -877,37 +877,54 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 		this.updateMessageLayerMobile();
 @endif
 
-		var taginfo = (global.Layer_patch_hd_layer_original.loadImages incontextof this)(this.imageStorage+storageExt, key);
+		var image_basename_full = this.imageStorage + storageExt;
+		var taginfo = void;
 
-@if(GAME_FATE||GAME_FHAT)
-		// Mainly used for 藤02a腕b(中) and 藤02g腕b(中) since the HD version's width is larger than expected because of redundant transparent padding, but there might be other cases so the condition is generic.
-		if (this.isCharacterLayer && !this.isbg) {
-			var w = this.scaleWidth(this._imageWidth);
-			var h = this.scaleHeight(this._imageHeight);
-			var leftDiff = (this.imageWidthOriginal - w) \ 2;
-			if (leftDiff > 0) {
-				var tmp = new global.Layer(this.window, this);
-				(global.Layer_patch_hd_layer_original.loadImages incontextof tmp)(this.imageStorage+storageExt, key);
+		var image_path_full = global.get_full_path_of_image(image_basename_full);
 
-				try
-				{
-					this.absoluteMode += 1;
-					this.fillRect_patch_hd_layer(0, 0, w, h, 0x00000000);
-					this.operateRect_patch_hd_layer(0, 0, tmp, leftDiff, 0, w, h);
-					this.absoluteMode -= 1;
-				}
-				catch(e)
-				{
-					this.absoluteMode -= 1;
-					throw e;
-				}
-
-				(global.Layer_patch_hd_layer_original.setImageSize incontextof this)(w, h);
-
-				invalidate tmp;
-			}
+		if (image_path_full === "")
+		{
+			global.Debug.message("Warning: Image not found " + image_basename_full);
+			var w = this._imageWidth;
+			var h = this._imageHeight;
+			this.setImageSize_patch_hd_layer(w, h);
+			this.fillRect_patch_hd_layer(0, 0, w, h, 0xff00ff);
 		}
+		else
+		{
+			taginfo = (global.Layer_patch_hd_layer_original.loadImages incontextof this)(image_path_full, key);
+@if(GAME_FATE||GAME_FHAT)
+			// Mainly used for 藤02a腕b(中) and 藤02g腕b(中) since the HD version's width is larger than expected because of redundant transparent padding, but there might be other cases so the condition is generic.
+			if (this.isCharacterLayer && !this.isbg) {
+				var w = this.scaleWidth(this._imageWidth);
+				var h = this.scaleHeight(this._imageHeight);
+				var leftDiff = (this.imageWidthOriginal - w) \ 2;
+				if (leftDiff > 0) {
+					var tmp = new global.Layer(this.window, this);
+					(global.Layer_patch_hd_layer_original.loadImages incontextof tmp)(image_path_full, key);
+
+					try
+					{
+						this.absoluteMode += 1;
+						this.fillRect_patch_hd_layer(0, 0, w, h, 0x00000000);
+						this.operateRect_patch_hd_layer(0, 0, tmp, leftDiff, 0, w, h);
+						this.absoluteMode -= 1;
+					}
+					catch(e)
+					{
+						this.absoluteMode -= 1;
+						throw e;
+					}
+
+					(global.Layer_patch_hd_layer_original.setImageSize incontextof this)(w, h);
+
+					invalidate tmp;
+				}
+			}
 @endif
+		}
+
+
 
 		this.upscale();
 		this.updateSize();

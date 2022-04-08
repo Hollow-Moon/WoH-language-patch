@@ -386,6 +386,7 @@ class KAGCensorMenuItem extends global.KAGMenuItem
 		var matureFlag = new global.GameFlag(this.owner, this.owner.sflags, global.matureFlagName, true);
 		var matureCensorFlag = global.inverseFlag(matureFlag);
 		var decensorFlag = new global.GameFlag(this.owner, this.owner.sflags, global.decensoredFlagName, false);
+		var decensorConfigFlag = new global.GameFlag(this.owner, this.owner.sflags, global.decensorConfigFlagName, "bellandy_anonymous");
 
 		var hCensorFlagComposite = new global.CompositeAndFlag([global.inverseFlag(hFlag), global.inverseFlag(decensorFlag)]);
 		var hFlagComposite = new global.CompositeAndFlag([hFlag, global.inverseFlag(decensorFlag)]);
@@ -415,6 +416,20 @@ class KAGCensorMenuItem extends global.KAGMenuItem
 		this.add(this.matureMenuItem = new global.KAGFlagFolderMenuItem(this.owner, __t("成人向けコンテンツを検閲する(&M)"),, matureCensorFlag, global.maturePatchName, global.censoredMatureFolderName, global.uncensoredMatureFolderName));
 		this.matureMenuItem.beforeCallback = this.beforeCallback;
 		this.matureMenuItem.afterCallback = this.afterCallback;
+
+		(this.addSeperationLine incontextof this.owner)(this);
+
+		this.add(this.decensorConfig = new global.KAGMenuItem(this.owner, "Decensor &artist", 0, void, false));
+		this.decensorConfig.add(this.decensorConfigBellandyAnonymous = new global.KAGFlagMenuItem(this.owner, "Bellandy + Anonymous", 1, decensorConfigFlag, "bellandy_anonymous", true));
+		this.decensorConfigBellandyAnonymous.afterCallback = function(sender) { global.updateDecensorConfig(this.owner); };
+		this.decensorConfig.add(this.decensorConfigBellandy = new global.KAGFlagMenuItem(this.owner, "Bellandy", 1, decensorConfigFlag, "bellandy", true));
+		this.decensorConfigBellandy.afterCallback = function(sender) { global.updateDecensorConfig(this.owner); };
+		this.decensorConfig.add(this.decensorConfigBishopcruzAnonymous = new global.KAGFlagMenuItem(this.owner, "BishopCruz + Anonymous", 1, decensorConfigFlag, "bishopcruz_anonymous", true));
+		this.decensorConfigBishopcruzAnonymous.afterCallback = function(sender) { global.updateDecensorConfig(this.owner); };
+		this.decensorConfig.add(this.decensorConfigBishopcruz = new global.KAGFlagMenuItem(this.owner, "BishopCruz", 1, decensorConfigFlag, "bishopcruz", true));
+		this.decensorConfigBishopcruz.afterCallback = function(sender) { global.updateDecensorConfig(this.owner); };
+		this.decensorConfig.add(this.decensorConfigMixed = new global.KAGFlagMenuItem(this.owner, "Mixed", 1, decensorConfigFlag, "mixed", true));
+		this.decensorConfigMixed.afterCallback = function(sender) { global.updateDecensorConfig(this.owner); };
 
 		this.updateCurrentState();
 	}

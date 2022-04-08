@@ -18,12 +18,14 @@ global.hFlagName = "ghentai";
 global.hCensoredFlagName = "censored";
 global.matureFlagName = "gmature";
 global.decensoredFlagName = "decensor";
+global.decensorConfigFlagName = "decensorConfig";
 
 global.get_hPatchExists = function() { { return global.patchExists(global.hPatchName); } };
 global.get_isHCensored = function(kag=global.kag) { { return kag.sflags[global.hCensoredFlagName] !== void? kag.sflags[global.hCensoredFlagName] : !kag.sflags[global.hFlagName]; } }; // RN uses hFlagName while HA uses hCensoredFlagName
 global.get_isMatureCensored = function(kag=global.kag) { { return !kag.sflags[global.matureFlagName]; } };
 global.get_fullyCensored = function(kag=global.kag) { { return global.get_isHCensored(kag) && global.get_isMatureCensored(kag); } };
 global.get_isDecensored = function(kag=global.kag) { { return kag.sflags[global.decensoredFlagName]; } };
+global.get_decensorConfig = function(kag=global.kag) { { return kag.sflags[global.decensorConfigFlagName]; } };
 
 // Folder names
 global.fullyCensoredFolderName = "censored";
@@ -61,36 +63,37 @@ global.isHScene = function(kag=global.kag)
 	return split.length >= 2 && split[1].length == 3;
 };
 
+
+global.decensorTypes = [void, "bishopcruz", "Bellandy", "original"];
+global.decensorConfigFileName = "decensorConfig.dic";
+
 global.updateDecensorConfig = function(kag=global.kag)
 {
-	var decensor_types = [void, "bishopcruz", "Bellandy", "original"];
-	var decensor_config_file_name = "decensor_config.dic";
-
-	var decensor_config;
-	var custom_decensor_config_file_path = global.paths_base[0] + decensor_config_file_name;
-	if (global.Storages.isExistentStorage(custom_decensor_config_file_path))
+	var decensorConfig;
+	var customDecensorConfigFilePath = global.paths_base[0] + decensorConfigFileName;
+	if (global.Storages.isExistentStorage(customDecensorConfigFilePath))
 	{
-		decensor_config = global.Scripts.evalStorage(custom_decensor_config_file_path);
+		decensorConfig = global.Scripts.evalStorage(customDecensorConfigFilePath);
 	}
-	else if (global.Storages.isExistentStorage(decensor_config_file_name))
+	else if (global.Storages.isExistentStorage(decensorConfigFileName))
 	{
-		decensor_config = global.Scripts.evalStorage(decensor_config_file_name);
+		decensorConfig = global.Scripts.evalStorage(decensorConfigFileName);
 	}
 
-	if (decensor_config === void) {
+	if (decensorConfig === void) {
 		return;
 	}
 
 	var decensoredImages = [];
-	decensoredImages.assign(decensor_config);
+	decensoredImages.assign(decensorConfig);
 
 	for (var i = 0, internal_forloop_count = decensoredImages.count; i < internal_forloop_count; i += 2)
 	{
-		var currentDecensorType = decensor_types[+decensor_config[decensoredImages[i]]];
+		var currentDecensorType = decensorTypes[global.getDecensorOption(decensoredImages[i], decensorConfig, kag)];
 
-		for (var j = 1, internal_forloop_count = decensor_types.count; j < internal_forloop_count; j += 1)
+		for (var j = 1, internal_forloop_count = decensorTypes.count; j < internal_forloop_count; j += 1)
 		{
-			var decensor_type = decensor_types[j];
+			var decensor_type = decensorTypes[j];
 			var decensorInnerPath = "/" + decensoredImages[i] + "/" + decensor_type;
 			var decensorFullPath = global.decensoredFolderName + decensorInnerPath;
 
@@ -143,4 +146,38 @@ global.updateDecensorConfig = function(kag=global.kag)
 		}
 	}
 	invalidate decensoredImages;
+};
+
+global.anonymousDecensorImages = ["ah06c", "ah07d"];
+
+global.getDecensorOption = function(imageName, decensorConfig, kag=global.kag) {
+	var decensorConfigOption = global.get_decensorConfig(kag);
+
+	if (decensorConfigOption == "mixed") {
+		return +decensorConfig[decensoredImages[i]];
+	}
+
+	if (decensorConfigOption == "bellandy_anonymous") {
+		if (anonymousDecensorImages.contains(imageName)) {
+			return 3;
+		}
+		return 2;
+	}
+
+	if (decensorConfigOption == "bellandy") {
+		return 2;
+	}
+
+	if (decensorConfigOption == "bishopcruz_anonymous") {
+		if (anonymousDecensorImages.contains(imageName)) {
+			return 3;
+		}
+		return 1;
+	}
+
+	if (decensorConfigOption == "bishopcruz") {
+		return 1;
+	}
+
+	return 0;
 };

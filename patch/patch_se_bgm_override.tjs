@@ -2,6 +2,10 @@
 global.mutate_tag_audio_storage = function(elm)
 {
 	var storage = elm.storage;
+	if (storage === void || storage === "")
+	{
+		return;
+	}
 	var file_name = global.get_full_path_of_audio(storage);
 	if (file_name === "")
 	{

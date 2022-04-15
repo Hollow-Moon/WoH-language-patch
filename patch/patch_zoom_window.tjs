@@ -1132,13 +1132,15 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 		}
 		var pxWidth_abs = pxWidth;
 		var pxHeight_abs = pxHeight;
+		var wideRatio = pxWidth_abs / pxHeight_abs;
 		if (typeof(this.absoluteMode) === "Integer")
 		{
 			pxWidth_abs = this.scaleWidth(pxWidth_abs);
 			pxHeight_abs = this.scaleHeight(pxHeight_abs);
+			wideRatio = this.wideRatio;
 		}
-		var w, h, dw, dh, cw, ch;
-		with (_resizeSnapshot) dw=.dw, dh=.dh, cw=.cw, ch=.ch;
+		var w, h, dw, dh;
+		with (_resizeSnapshot) dw=.dw, dh=.dh;
 		with (rect) {
 			w = .w - dw;
 			h = .h - dh;
@@ -1146,14 +1148,24 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 			switch (.type) {
 			case 1: case 2: sel = true;  break;
 			case 3: case 6: sel = false; break;
-			default: sel = (w / h) > (pxWidth_abs / pxHeight_abs); break;
+			default: sel = (w / h) > wideRatio; break;
 			}
-			if (sel) h = w * pxHeight_abs \ pxWidth_abs;
-			else     w = h * pxWidth_abs  \ pxHeight_abs;
+@if(!SCALE_ROUND_TOWARDS_NEAREST)
+			if (sel) h = (w / wideRatio) | 0;
+			else     w = (h * wideRatio) | 0;
 			if (w < pxWidth_abs\4) {
 				w = pxWidth_abs\4;
-				h = w * pxHeight_abs \ pxWidth_abs;
+				h = (w / wideRatio) | 0;
 			}
+@endif
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+			if (sel) h = global.Math.round(w / wideRatio) | 0;
+			else     w = global.Math.round(h * wideRatio) | 0;
+			if (w < pxWidth_abs\4) {
+				w = pxWidth_abs\4;
+				h = global.Math.round(w / wideRatio) | 0;
+			}
+@endif
 			w += dw;
 			h += dh;
 			const repos = function(type, p, o, n, sel) {

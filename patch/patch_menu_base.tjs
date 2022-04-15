@@ -31,6 +31,46 @@ global.getPatchMenuIndex = function(kag)
 	return global.patchMenuIndex;
 };
 
+global.fps_limit_values = [
+	-1,
+	0,
+	"-",
+	144,
+	120,
+	90,
+	75,
+	60,
+	45,
+	30,
+	15,
+];
+
+global.fps_limit_shortcuts = %[
+	"144" => "1&44",
+	"120" => "1&20",
+	"90" => "&90",
+	"75" => "&75",
+	"60" => "&60",
+	"45" => "4&5",
+	"30" => "&30",
+	"15" => "&15",
+];
+
+global.thread_limit_values = [
+	1,
+	0,
+	"-",
+	2,
+	4,
+	8,
+];
+
+global.thread_limit_shortcuts = %[
+	"2" => "&2",
+	"4" => "&4",
+	"8" => "&8",
+];
+
 class GameFlag
 {
 	var owner;
@@ -984,27 +1024,49 @@ global.addGraphicUsageMenu = function(displayMenu)
 	displayMenu.add(new global.MenuItem(this, "-"));
 
 	displayMenu.add(this.fpsLimitMenuItem = new global.KAGMenuItem(this, __t("最大フレームレート(&M)"), 0, void, false));
-	this.fpsLimitMenuItem.add(this.fpsLimitVsyncMenuItem = new global.KAGFlagMenuItem(this, __t("垂直同期待ち(&V)"), 1, fpsLimitFlag, "-1"));
-	this.fpsLimitMenuItem.add(this.fpsLimit00MenuItem = new global.KAGFlagMenuItem(this, __t("制限なし(&N)"), 1, fpsLimitFlag, "0"));
-	this.fpsLimitMenuItem.add(this.fpsLimit144MenuItem = new global.KAGFlagMenuItem(this,  __t("1&44フレーム/秒"),   1, fpsLimitFlag, "144"));
-	this.fpsLimitMenuItem.add(this.fpsLimit120MenuItem = new global.KAGFlagMenuItem(this,  __t("1&20フレーム/秒"),   1, fpsLimitFlag, "120"));
-	this.fpsLimitMenuItem.add(this.fpsLimit90MenuItem = new global.KAGFlagMenuItem(this,   __t("&90フレーム/秒"),    1, fpsLimitFlag, "90"));
-	this.fpsLimitMenuItem.add(this.fpsLimit75MenuItem = new global.KAGFlagMenuItem(this,   __t("&75フレーム/秒"),    1, fpsLimitFlag, "75"));
-	this.fpsLimitMenuItem.add(this.fpsLimit60MenuItem = new global.KAGFlagMenuItem(this,   __t("&60フレーム/秒"),    1, fpsLimitFlag, "60"));
-	this.fpsLimitMenuItem.add(this.fpsLimit45MenuItem = new global.KAGFlagMenuItem(this,   __t("4&5フレーム/秒"),    1, fpsLimitFlag, "45"));
-	this.fpsLimitMenuItem.add(this.fpsLimit30MenuItem = new global.KAGFlagMenuItem(this,   __t("&30フレーム/秒"),    1, fpsLimitFlag, "30"));
-	this.fpsLimitMenuItem.add(this.fpsLimit15MenuItem = new global.KAGFlagMenuItem(this,   __t("&15フレーム/秒"),    1, fpsLimitFlag, "15"));
-	this.fpsLimitVsyncMenuItem.afterCallback = fpsLimitCallback;
-	this.fpsLimit00MenuItem.afterCallback = fpsLimitCallback;
-	this.fpsLimit144MenuItem.afterCallback = fpsLimitCallback;
-	this.fpsLimit120MenuItem.afterCallback = fpsLimitCallback;
-	this.fpsLimit90MenuItem.afterCallback = fpsLimitCallback;
-	this.fpsLimit75MenuItem.afterCallback = fpsLimitCallback;
-	this.fpsLimit60MenuItem.afterCallback = fpsLimitCallback;
-	this.fpsLimit45MenuItem.afterCallback = fpsLimitCallback;
-	this.fpsLimit30MenuItem.afterCallback = fpsLimitCallback;
-	this.fpsLimit15MenuItem.afterCallback = fpsLimitCallback;
-	fpsLimitCallback(this.fpsLimitVsyncMenuItem);
+	var fps_limit_values = global.fps_limit_values;
+	var fps_limit_shortcuts = global.fps_limit_shortcuts;
+	for (var i = 0; i < fps_limit_values.count; i += 1)
+	{
+		var fps_limit_value = fps_limit_values[i];
+		if (fps_limit_value === void)
+		{
+			continue;
+		}
+		fps_limit_value += "";
+		if (fps_limit_value === "-")
+		{
+			this.fpsLimitMenuItem.add(new global.MenuItem(this, "-"));
+			continue;
+		}
+		var fps_limit_shortcut = fps_limit_shortcuts[fps_limit_value];
+		if (fps_limit_shortcut === void)
+		{
+			fps_limit_shortcut = fps_limit_value;
+		}
+		var fps_limit_text = __t("%sフレーム/秒");
+		var fpsLimitMenuItemName = "fpsLimit%sMenuItem".sprintf(fps_limit_value);
+		if (fps_limit_value === "-1")
+		{
+			fps_limit_text = __t("垂直同期待ち(&V)");
+			fpsLimitMenuItemName = "fpsLimitVsyncMenuItem";
+		}
+		else if (fps_limit_value === "0")
+		{
+			fps_limit_text = __t("制限なし(&N)");
+			fpsLimitMenuItemName = "fpsLimit00MenuItem";
+		}
+		this.fpsLimitMenuItem.add(this[fpsLimitMenuItemName] = new global.KAGFlagMenuItem(this, fps_limit_text, 1, fpsLimitFlag, fps_limit_value));
+		if (fps_limit_text.indexOf("%") !== -1)
+		{
+			this[fpsLimitMenuItemName].captionArg = fps_limit_shortcut;
+		}
+		this[fpsLimitMenuItemName].afterCallback = fpsLimitCallback;
+	}
+	if (typeof(this.fpsLimitVsyncMenuItem) === "Object")
+	{
+		fpsLimitCallback(this.fpsLimitVsyncMenuItem);
+	}
 
 	if (typeof(global.System.drawThreadNum) === "Integer")
 	{
@@ -1014,18 +1076,47 @@ global.addGraphicUsageMenu = function(displayMenu)
 		};
 
 		displayMenu.add(this.multiThreadDrawMenuItem = new global.KAGMenuItem(this, __t("描画スレッド分割数(&N)"), 0, void, false));
-		this.multiThreadDrawMenuItem.add(this.multiThreadDraw1MenuItem = new global.KAGFlagMenuItem(this, __t("無効：スレッド分割しない(&D)"), 1, multiThreadDrawFlag, 1));
-		this.multiThreadDrawMenuItem.add(this.multiThreadDraw0MenuItem = new global.KAGFlagMenuItem(this, __t("自動：プロセッサ数で分割(&A)"), 1, multiThreadDrawFlag, 0));
-		this.multiThreadDrawMenuItem.add(new global.MenuItem(this, "-"));
-		this.multiThreadDrawMenuItem.add(this.multiThreadDraw2MenuItem = new global.KAGFlagMenuItem(this, __t("&2スレッド"), 1, multiThreadDrawFlag, 2));
-		this.multiThreadDrawMenuItem.add(this.multiThreadDraw4MenuItem = new global.KAGFlagMenuItem(this, __t("&4スレッド"), 1, multiThreadDrawFlag, 4));
-		this.multiThreadDrawMenuItem.add(this.multiThreadDraw8MenuItem = new global.KAGFlagMenuItem(this, __t("&8スレッド"), 1, multiThreadDrawFlag, 8));
-		this.multiThreadDraw1MenuItem.afterCallback = multiThreadDrawCallback;
-		this.multiThreadDraw0MenuItem.afterCallback = multiThreadDrawCallback;
-		this.multiThreadDraw2MenuItem.afterCallback = multiThreadDrawCallback;
-		this.multiThreadDraw4MenuItem.afterCallback = multiThreadDrawCallback;
-		this.multiThreadDraw8MenuItem.afterCallback = multiThreadDrawCallback;
-		multiThreadDrawCallback(this.multiThreadDraw1MenuItem);
+		var thread_limit_values = global.thread_limit_values;
+		var thread_limit_shortcuts = global.thread_limit_shortcuts;
+		for (var i = 0; i < thread_limit_values.count; i += 1)
+		{
+			var thread_limit_value = thread_limit_values[i];
+			if (thread_limit_value === void)
+			{
+				continue;
+			}
+			if (thread_limit_value === "-")
+			{
+				this.multiThreadDrawMenuItem.add(new global.MenuItem(this, "-"));
+				continue;
+			}
+			var x = "" + thread_limit_value;
+			var thread_limit_shortcut = thread_limit_shortcuts[x];
+			if (thread_limit_shortcut === void)
+			{
+				thread_limit_shortcut = x;
+			}
+			var thread_limit_text = __t("%sスレッド");
+			var threadLimitMenuItemName = "multiThreadDraw%dMenuItem".sprintf(thread_limit_value);
+			if (thread_limit_value === 1)
+			{
+				thread_limit_text = __t("無効：スレッド分割しない(&D)");
+			}
+			else if (thread_limit_value === 0)
+			{
+				thread_limit_text = __t("自動：プロセッサ数で分割(&A)");
+			}
+			this.multiThreadDrawMenuItem.add(this[threadLimitMenuItemName] = new global.KAGFlagMenuItem(this, thread_limit_text, 1, multiThreadDrawFlag, thread_limit_value));
+			if (thread_limit_text.indexOf("%") !== -1)
+			{
+				this[threadLimitMenuItemName].captionArg = thread_limit_shortcut;
+			}
+			this[threadLimitMenuItemName].afterCallback = multiThreadDrawCallback;
+		}
+		if (typeof(this.multiThreadDraw1MenuItem) === "Object")
+		{
+			multiThreadDrawCallback(this.multiThreadDraw1MenuItem);
+		}
 	}
 };
 

@@ -2150,7 +2150,10 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 
 	function onMouseDown_patch_hd_layer_override(x, y, button, shift)
 	{
-		this.onMouseDown_patch_hd_layer_original(this.scaleCursorLeft(x), this.scaleCursorTop(y), button, shift);
+		if (this.isbg)
+			this.onMouseDown_patch_hd_layer_original(this.scaleCursorLeft(x), this.scaleCursorTop(y), button, shift);
+		else
+			this.onMouseDown_patch_hd_layer_original(this.scaleCursorLeft(x) * global.wideFactor, this.scaleCursorTop(y), button, shift);
 	}
 
 	property onMouseDown_patch_hd_layer_property_shim

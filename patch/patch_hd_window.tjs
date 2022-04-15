@@ -361,7 +361,14 @@ class Window_patch_hd_layer_override extends global.Window_patch_hd_layer_origin
 
 	function unscaleWidth(w)
 	{
-		return global.unscaleSize(w, global.get_wideScaleFactor());
+		// unscaleSize() outputs float to offer higher precision to whoever needs it. (Font kerning in HD relies on it!).
+		// For window size handling we need rounding to prevent unintended downsizing cascades.
+@if(!SCALE_ROUND_TOWARDS_NEAREST)
+		return global.Math.ceil(global.unscaleSize(w, global.get_wideScaleFactor())) | 0;
+@endif
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+		return global.Math.round(global.unscaleSize(w, global.get_wideScaleFactor())) | 0;
+@endif
 	}
 
 	function scaleHeight(h)
@@ -370,6 +377,24 @@ class Window_patch_hd_layer_override extends global.Window_patch_hd_layer_origin
 	}
 
 	function unscaleHeight(h)
+	{
+		// unscaleSize() outputs float to offer higher precision to whoever needs it. (Font kerning in HD relies on it!).
+		// For window size handling we need rounding to prevent unintended downsizing cascades.
+@if(!SCALE_ROUND_TOWARDS_NEAREST)
+		return global.Math.ceil(global.unscaleSize(h, global.scaleFactor)) | 0;
+@endif
+@if(SCALE_ROUND_TOWARDS_NEAREST)
+		return global.Math.round(global.unscaleSize(h, global.scaleFactor)) | 0;
+@endif
+	}
+
+	// The float variety of these functions is used in patch_font_wrapper_hd.tjs
+	function unscaleWidthFloat(w)
+	{
+		return global.unscaleSize(w, global.get_wideScaleFactor());
+	}
+
+	function unscaleHeightFloat(h)
 	{
 		return global.unscaleSize(h, global.scaleFactor);
 	}

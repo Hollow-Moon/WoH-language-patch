@@ -9,7 +9,7 @@
 	{
 		getter
 		{
-			return this.layer.window.unscaleHeight(super.height);
+			return this.layer.window.unscaleHeightFloat(super.height);
 		}
 		setter(v)
 		{
@@ -19,13 +19,13 @@
 
 	function getTextHeight()
 	{
-		return this.layer.window.unscaleHeight(super.getTextHeight(...));
+		return this.layer.window.unscaleHeightFloat(super.getTextHeight(...));
 	}
 
 	function getTextWidth()
 	{
 		var factor = this.layer.stretch? global.wideFactor : 1;
-		return this.layer.window.unscaleHeight(super.getTextWidth(...)) / factor;
+		return this.layer.window.unscaleHeightFloat(super.getTextWidth(...)) / factor;
 	}
 
 	function getGlyphDrawRect()
@@ -35,27 +35,27 @@
 			return;
 		}
 		var rect = super.getGlyphDrawRect(...);
-		rect.setSize(this.layer.window.unscaleHeight(rect.width), this.layer.window.unscaleHeight(rect.height));
+		rect.setSize(this.layer.window.unscaleHeightFloat(rect.width), this.layer.window.unscaleHeightFloat(rect.height));
 		return rect;
 	}
 
 	function getEscWidthX()
 	{
-		return this.layer.window.unscaleHeight(super.getEscWidthX(...));
+		return this.layer.window.unscaleHeightFloat(super.getEscWidthX(...));
 	}
 
 	function getEscWidthY()
 	{
-		return this.layer.window.unscaleHeight(super.getEscWidthY(...));
+		return this.layer.window.unscaleHeightFloat(super.getEscWidthY(...));
 	}
 
 	function getEscHeightX()
 	{
-		return this.layer.window.unscaleHeight(super.getEscHeightX(...));
+		return this.layer.window.unscaleHeightFloat(super.getEscHeightX(...));
 	}
 
 	function getEscHeightY()
 	{
-		return this.layer.window.unscaleHeight(super.getEscHeightY(...));
+		return this.layer.window.unscaleHeightFloat(super.getEscHeightY(...));
 	}
 }

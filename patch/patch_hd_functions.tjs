@@ -54,10 +54,7 @@ global.scaleSize = function(v, scale)
 
 global.unscaleSize = function(v, scale)
 {
-@if(!SCALE_ROUND_TOWARDS_NEAREST)
-    return global.Math.ceil(v/scale) | 0;
-@endif
-@if(SCALE_ROUND_TOWARDS_NEAREST)
-    return global.Math.round(v/scale) | 0;
-@endif
+// Some consumers will need float (e.g. font kerning).
+// So output float and round in consumer, where needed (e.g. window sizing).
+return v/scale;
 };

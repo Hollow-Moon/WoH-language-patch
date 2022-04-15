@@ -89,7 +89,7 @@ global.updateDecensorConfig = function(kag=global.kag)
 
 	for (var i = 0, internal_forloop_count = decensoredImages.count; i < internal_forloop_count; i += 2)
 	{
-		var currentDecensorType = global.decensorTypes[global.getDecensorOption(decensoredImages[i], decensorConfig, kag)];
+		var currentDecensorType = global.decensorTypes[global.getDecensorOption(decensoredImages[i], decensorConfig, kag, +decensorConfig[decensoredImages[i]])];
 
 		for (var j = 1, internal_forloop_count = global.decensorTypes.count; j < internal_forloop_count; j += 1)
 		{
@@ -150,11 +150,11 @@ global.updateDecensorConfig = function(kag=global.kag)
 
 global.anonymousDecensorImages = ["ah06c", "ah07d"];
 
-global.getDecensorOption = function(imageName, decensorConfig, kag=global.kag) {
+global.getDecensorOption = function(imageName, decensorConfig, kag=global.kag, mixedDecensorOption) {
 	var decensorConfigOption = global.get_decensorConfig(kag);
 
 	if (decensorConfigOption == "mixed") {
-		return +decensorConfig[decensoredImages[i]];
+		return mixedDecensorOption;
 	}
 
 	if (decensorConfigOption == "bellandy_anonymous") {

@@ -483,39 +483,39 @@ global.System.exceptionHandler = function(e)
 
 	if (exception_files.count > 0)
 	{
-		msg_components.add(__("このダイアログボックスのスクリーンショットは送信しないでください。"));
-		msg_components.add(__("次のファイルには、保存データと例外情報が含まれています："));
+		msg_components.add(global.__("このダイアログボックスのスクリーンショットは送信しないでください。"));
+		msg_components.add(global.__("次のファイルには、保存データと例外情報が含まれています："));
 		for (var i = 0, internal_forloop_count = exception_files.count; i < internal_forloop_count; i += 1)
 		{
-			msg_components.add(__("     ・%s").sprintf(exception_files[i]));
+			msg_components.add(global.__("     ・%s").sprintf(exception_files[i]));
 		}
-		msg_components.add(__("※情報が不十分ですと回答できませんので、必ずファイル・情報をご提供ください。"));
+		msg_components.add(global.__("※情報が不十分ですと回答できませんので、必ずファイル・情報をご提供ください。"));
 		if (exception_information_in_clipboard)
 		{
-			msg_components.add(__("上記のファイルの内容はクリップボードに配置されているので、サポートフォーラムのスレッドに貼り付けてください。"));
+			msg_components.add(global.__("上記のファイルの内容はクリップボードに配置されているので、サポートフォーラムのスレッドに貼り付けてください。"));
 		}
 	}
 	if (!(e instanceof "ConductorException"))
 	{
-		msg_components.add(__("アンチウィルスソフトその他の常駐アプリケーションを終了してゲームを再起動することでエラーを回避できる可能性があります。"));
+		msg_components.add(global.__("アンチウィルスソフトその他の常駐アプリケーションを終了してゲームを再起動することでエラーを回避できる可能性があります。"));
 	}
-	msg_components.add(__("上記のファイルを添えて、いつどのようにエラーが発生したかを説明したサポート掲示板にご連絡ください。"));
-	msg_components.add(__("サポート掲示板: %s").sprintf(global.PatchInfoURL));
+	msg_components.add(global.__("上記のファイルを添えて、いつどのようにエラーが発生したかを説明したサポート掲示板にご連絡ください。"));
+	msg_components.add(global.__("サポート掲示板: %s").sprintf(global.PatchInfoURL));
 	msg_components.add("--------------------------------------------------------------------------------");
 	if (e instanceof "ConductorException")
 	{
-		msg_components.add(__("下記のスクリプトエラーが発生しました。"));
+		msg_components.add(global.__("下記のスクリプトエラーが発生しました。"));
 	}
 	else
 	{
-		msg_components.add(__("下記の例外が発生しました。"));
+		msg_components.add(global.__("下記の例外が発生しました。"));
 	}
 	msg_components.add("--------------------------------------------------------------------------------");
 	msg_components.add(exception_message);
 	msg_components.add("--------------------------------------------------------------------------------");
 	if (trace_string !== "")
 	{
-		msg_components.add(__("-- trace --"));
+		msg_components.add(global.__("-- trace --"));
 		msg_components.add(trace_string);
 	}
 
@@ -541,8 +541,8 @@ global.System.exceptionHandler = function(e)
 					win.bookMarkNames[no]	= key+win.getBookMarkPageName(no);
 					win.saveBookMark(no);
 					saved	= true;
-					msg_components.add(__("現在の状況をクイックセーブの%s番目に保存しました。").sprintf(i));
-					msg_components.add(__("セーブデータのファイル名は、\n「%s」\nとなります。").sprintf(global.Storages.getLocalName(global.Storages.getFullPath(win.getBookMarkFileNameAtNum(no)))));
+					msg_components.add(global.__("現在の状況をクイックセーブの%s番目に保存しました。").sprintf(i));
+					msg_components.add(global.__("セーブデータのファイル名は、\n「%s」\nとなります。").sprintf(global.Storages.getLocalName(global.Storages.getFullPath(win.getBookMarkFileNameAtNum(no)))));
 					break;
 				}
 			}
@@ -554,20 +554,20 @@ global.System.exceptionHandler = function(e)
 					if(win.getBookMarkDate(no)=="")
 					{
 						//	通常のセーブ領域に保存
-						win.scflags.bookMarkComments[no]	= __("例外からの復帰用データ");
+						win.scflags.bookMarkComments[no]	= global.__("例外からの復帰用データ");
 						win.saveBookMark(no);
 						var pos = global.kag.sflags.convertSaveNoToFileNo[no];
 						saved	= true;
-						msg_components.add(__("現在の状況をセーブメニューの「%sページ %s行 %s列目」に保存しました。").sprintf(pos\20+1, pos%20\5+1, pos%5+1));
-						msg_components.add(__("セーブデータのファイル名は、\n「%s」\nとなります。").sprintf(global.Storages.getLocalName(global.Storages.getFullPath(win.getBookMarkFileNameAtNum(no)))));
+						msg_components.add(global.__("現在の状況をセーブメニューの「%sページ %s行 %s列目」に保存しました。").sprintf(pos\20+1, pos%20\5+1, pos%5+1));
+						msg_components.add(global.__("セーブデータのファイル名は、\n「%s」\nとなります。").sprintf(global.Storages.getLocalName(global.Storages.getFullPath(win.getBookMarkFileNameAtNum(no)))));
 						break;
 					}
 				}
 				if(!saved)
 				{
 					//	セーブデータが一杯なので、保存先を選んでもらう
-					msg_components.add(__("セーブデータに空きがありません。"));
-					msg_components.add(__("セーブメニューを開きますので、適当な場所に保存してください。"));
+					msg_components.add(global.__("セーブデータに空きがありません。"));
+					msg_components.add(global.__("セーブメニューを開きますので、適当な場所に保存してください。"));
 					global.shortcut_object.show("save");	//	セーブメニューを開く
 				}
 			}
@@ -581,7 +581,7 @@ global.System.exceptionHandler = function(e)
 	if (e instanceof "ConductorException")
 	{
 		msg_components.add("--------------------------------------------------------------------------------");
-		msg_components.add(__("Pキーでタイトルへ戻るか、通常の手順で終了してください。"));
+		msg_components.add(global.__("Pキーでタイトルへ戻るか、通常の手順で終了してください。"));
 	}
 
 	if (global.System.getArgument('-noshowexceptiondialog') === void)

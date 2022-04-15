@@ -10,7 +10,7 @@ global.TVP_RGBA2COLOR = function(r, g, b, a)
     return (((a)<<24) + (((r)<<16) + ((g)<<8) + (b)));
 };
 
-class WindowShimBitmapLayerTreeOwner extends BitmapLayerTreeOwner
+class WindowShimBitmapLayerTreeOwner extends global.BitmapLayerTreeOwner
 {
 	var window = void;
 	var texture = void;
@@ -40,36 +40,36 @@ class WindowShimBitmapLayerTreeOwner extends BitmapLayerTreeOwner
 		}
 		else
 		{
-			Debug.message("no primary layer");
+			global.Debug.message("no primary layer");
 			return;
 		}
-		if (texture === void)
+		if (this.texture === void)
 		{
-			texture = new Offscreen(this.width, this.height);
-			texture.copyRect(0, 0, this.bitmap, 0, 0, this.width, this.height);
+			this.texture = new global.Offscreen(this.width, this.height);
+			this.texture.copyRect(0, 0, this.bitmap, 0, 0, this.width, this.height);
 			this.clearDirtyRect();
 		}
 		else
 		{
-			if (texture.width != this.width || texture.height != this.height)
+			if (this.texture.width != this.width || this.texture.height != this.height)
 			{
-				invalidate texture;
-				texture = new Offscreen(this.width, this.height);
-				texture.copyRect(0, 0, this.bitmap, 0, 0, this.width, this.height);
+				invalidate this.texture;
+				this.texture = new global.Offscreen(this.width, this.height);
+				this.texture.copyRect(0, 0, this.bitmap, 0, 0, this.width, this.height);
 				this.clearDirtyRect();
 			}
 			else
 			{
 				if (this.isUpdated)
 				{
-					texture.copyRect(0, 0, this.bitmap, 0, 0, this.width, this.height);
+					this.texture.copyRect(0, 0, this.bitmap, 0, 0, this.width, this.height);
 					//var rect = this.dirtyRect;
-					//texture.copyRect(rect.left, rect.top, this.bitmap, rect);
+					//this.texture.copyRect(rect.left, rect.top, this.bitmap, rect);
 					//this.clearDirtyRect();
 				}
 			}
 		}
-		return texture;
+		return this.texture;
 	}
 
 	function draw()
@@ -80,13 +80,13 @@ class WindowShimBitmapLayerTreeOwner extends BitmapLayerTreeOwner
 		canvas.renderTarget = void;
 		if (typeof(canvas.clipRect) !== "Object")
 		{
-			canvas.clipRect = new Rect(0, 0, canvas.width, canvas.height);
+			canvas.clipRect = new global.Rect(0, 0, canvas.width, canvas.height);
 		}
 		canvas.enableClipRect = false;
 		canvas.fill(canvas.width, canvas.height, 0x00FFFFFF);
 		canvas.clearColor = 0x00000000;
 		canvas.clear();
-		canvas.blendMode = bmOpaque;
+		canvas.blendMode = global.bmOpaque;
 		canvas.a_opacity = 1.0;
 
 		canvas.save();
@@ -382,14 +382,14 @@ class WindowShimBitmapLayerTreeOwner extends BitmapLayerTreeOwner
 	}
 }
 
-global.Window_patch_gpu_layer_original = Window;
-class Window_patch_gpu_layer_override extends Window_patch_gpu_layer_original
+global.Window_patch_gpu_layer_original = global.Window;
+class Window_patch_gpu_layer_override extends global.Window_patch_gpu_layer_original
 {
 	var bitmap_layer_tree_owner = void;
 	function Window_patch_gpu_layer_override()
 	{
 		{
-			bitmap_layer_tree_owner = new WindowShimBitmapLayerTreeOwner(this);
+			this.bitmap_layer_tree_owner = new global.WindowShimBitmapLayerTreeOwner(this);
 		}
 		super.Window(...);
 	}
@@ -429,7 +429,7 @@ class Window_patch_gpu_layer_override extends Window_patch_gpu_layer_original
 
 	function Window()
 	{
-		Window_patch_gpu_layer_override(...);
+		this.Window_patch_gpu_layer_override(...);
 	}
 
 	function onDraw()
@@ -447,7 +447,7 @@ class Window_patch_gpu_layer_override extends Window_patch_gpu_layer_original
 	{
 		if (typeof(this.canvas) === "Object" && this.canvas !== null && typeof(this.bitmap_layer_tree_owner) === "Object")
 		{
-			bitmap_layer_tree_owner.fireMouseDown(x, y, button, shift);
+			this.bitmap_layer_tree_owner.fireMouseDown(x, y, button, shift);
 		}
 		return super.onMouseDown(...);
 	}
@@ -456,8 +456,8 @@ class Window_patch_gpu_layer_override extends Window_patch_gpu_layer_original
 	{
 		if (typeof(this.canvas) === "Object" && this.canvas !== null && typeof(this.bitmap_layer_tree_owner) === "Object")
 		{
-			bitmap_layer_tree_owner.fireClick(x, y);
-			bitmap_layer_tree_owner.fireMouseUp(x, y, button, shift);
+			this.bitmap_layer_tree_owner.fireClick(x, y);
+			this.bitmap_layer_tree_owner.fireMouseUp(x, y, button, shift);
 		}
 		return super.onMouseUp(...);
 	}
@@ -466,7 +466,7 @@ class Window_patch_gpu_layer_override extends Window_patch_gpu_layer_original
 	{
 		if (typeof(this.canvas) === "Object" && this.canvas !== null && typeof(this.bitmap_layer_tree_owner) === "Object")
 		{
-			bitmap_layer_tree_owner.fireMouseMove(x, y, shift);
+			this.bitmap_layer_tree_owner.fireMouseMove(x, y, shift);
 		}
 		return super.onMouseMove(...);
 	}
@@ -475,7 +475,7 @@ class Window_patch_gpu_layer_override extends Window_patch_gpu_layer_original
 	{
 		if (typeof(this.canvas) === "Object" && this.canvas !== null && typeof(this.bitmap_layer_tree_owner) === "Object")
 		{
-			bitmap_layer_tree_owner.fireMouseWheel(shift, delta, x, y);
+			this.bitmap_layer_tree_owner.fireMouseWheel(shift, delta, x, y);
 		}
 		return super.onMouseWheel(...);
 	}
@@ -484,7 +484,7 @@ class Window_patch_gpu_layer_override extends Window_patch_gpu_layer_original
 	{
 		if (typeof(this.canvas) === "Object" && this.canvas !== null && typeof(this.bitmap_layer_tree_owner) === "Object")
 		{
-			bitmap_layer_tree_owner.fireMouseOutOfWindow();
+			this.bitmap_layer_tree_owner.fireMouseOutOfWindow();
 		}
 		return super.onMouseLeave(...);
 	}
@@ -493,7 +493,7 @@ class Window_patch_gpu_layer_override extends Window_patch_gpu_layer_original
 	{
 		if (typeof(this.canvas) === "Object" && this.canvas !== null && typeof(this.bitmap_layer_tree_owner) === "Object")
 		{
-			bitmap_layer_tree_owner.fireKeyDown(key, shift);
+			this.bitmap_layer_tree_owner.fireKeyDown(key, shift);
 		}
 		return super.onKeyDown(...);
 	}
@@ -502,7 +502,7 @@ class Window_patch_gpu_layer_override extends Window_patch_gpu_layer_original
 	{
 		if (typeof(this.canvas) === "Object" && this.canvas !== null && typeof(this.bitmap_layer_tree_owner) === "Object")
 		{
-			bitmap_layer_tree_owner.fireKeyPress(key);
+			this.bitmap_layer_tree_owner.fireKeyPress(key);
 		}
 		return super.onKeyPress(...);	
 	}
@@ -511,15 +511,15 @@ class Window_patch_gpu_layer_override extends Window_patch_gpu_layer_original
 	{
 		if (typeof(this.canvas) === "Object" && this.canvas !== null && typeof(this.bitmap_layer_tree_owner) === "Object")
 		{
-			bitmap_layer_tree_owner.fireKeyUp(key, shift);
+			this.bitmap_layer_tree_owner.fireKeyUp(key, shift);
 		}
 		return super.onKeyUp(...);
 	}
 }
-global.Window = Window_patch_gpu_layer_override;
+global.Window = global.Window_patch_gpu_layer_override;
 
-global.Layer_patch_gpu_layer_original = Layer;
-class Layer_patch_gpu_layer_override extends Layer_patch_gpu_layer_original
+global.Layer_patch_gpu_layer_original = global.Layer;
+class Layer_patch_gpu_layer_override extends global.Layer_patch_gpu_layer_original
 {
 	var orig_window = void;
 	property window
@@ -545,7 +545,7 @@ class Layer_patch_gpu_layer_override extends Layer_patch_gpu_layer_original
 
 	function Layer()
 	{
-		Layer_patch_gpu_layer_override(...);
+		this.Layer_patch_gpu_layer_override(...);
 	}
 
 @if(0)
@@ -753,11 +753,11 @@ class Layer_patch_gpu_layer_override extends Layer_patch_gpu_layer_original
 	var texture = void;
 	function get_texture()
 	{
-		var bitmap = new Bitmap();
+		var bitmap = new global.Bitmap();
 		this.copyToBitmapFromMainImage(bitmap);
 		if (this.texture === void)
 		{
-			this.texture = new Offscreen(super.imageWidth, super.imageHeight);
+			this.texture = new global.Offscreen(super.imageWidth, super.imageHeight);
 			this.texture.copyRect(0, 0, bitmap, 0, 0, super.imageWidth, super.imageHeight);
 		}
 		else
@@ -765,7 +765,7 @@ class Layer_patch_gpu_layer_override extends Layer_patch_gpu_layer_original
 			if (this.texture.width != super.imageWidth || this.texture.height != super.imageHeight)
 			{
 				invalidate this.texture;
-				this.texture = new Offscreen(super.imageWidth, super.imageHeight);
+				this.texture = new global.Offscreen(super.imageWidth, super.imageHeight);
 				this.texture.copyRect(0, 0, bitmap, 0, 0, super.imageWidth, super.imageHeight);
 			}
 			else
@@ -841,31 +841,31 @@ class Layer_patch_gpu_layer_override extends Layer_patch_gpu_layer_original
 			var texture = this.get_texture();
 			switch (super.type)
 			{
-				case ltAlpha:
+				case global.ltAlpha:
 				{
-					canvas.blendMode = bmAlpha;
+					canvas.blendMode = global.bmAlpha;
 					break;
 				}
-				case ltAddAlpha:
+				case global.ltAddAlpha:
 				{
-					canvas.blendMode = bmAddWithAlpha;
+					canvas.blendMode = global.bmAddWithAlpha;
 					break;
 				}
-				case ltAdditive:
+				case global.ltAdditive:
 				{
-					canvas.blendMode = bmAdd;
+					canvas.blendMode = global.bmAdd;
 					break;
 				}
-				case ltCoverRect:
-				case ltOpaque:
+				case global.ltCoverRect:
+				case global.ltOpaque:
 				{
-					canvas.blendMode = bmOpaque;
+					canvas.blendMode = global.bmOpaque;
 					break;
 				}
 				default:
 				{
 					// TODO: fix alpha
-					canvas.blendMode = bmAlpha;
+					canvas.blendMode = global.bmAlpha;
 					break;
 				}
 			}
@@ -920,7 +920,7 @@ class Layer_patch_gpu_layer_override extends Layer_patch_gpu_layer_original
 
 	function callOnPaint_updated(v)
 	{
-		var call_on_paint_list = window.bitmap_layer_tree_owner.call_on_paint_list;
+		var call_on_paint_list = this.window.bitmap_layer_tree_owner.call_on_paint_list;
 		if (v)
 		{
 			if (call_on_paint_list.find(this) === -1)
@@ -979,4 +979,4 @@ class Layer_patch_gpu_layer_override extends Layer_patch_gpu_layer_original
 @endif
 	}
 }
-global.Layer = Layer_patch_gpu_layer_override;
+global.Layer = global.Layer_patch_gpu_layer_override;

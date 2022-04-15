@@ -432,13 +432,13 @@ class KAGCensorMenuItem extends global.KAGMenuItem
 		var hFlagComposite = new global.CompositeAndFlag([hFlag, global.inverseFlag(decensorFlag)]);
 		var decensorFlagComposite = new global.CompositeAndFlag([hFlag, decensorFlag]);
 
-		this.add(this.hCensoredMenuItem = new global.KAGFlagFolderMenuItem(this.owner, __t("&Hコンテンツを検閲する"), 1, hCensorFlagComposite, global.hCensorPatchName, global.censoredHFolderName));
+		this.add(this.hCensoredMenuItem = new global.KAGFlagFolderMenuItem(this.owner, global.__t("&Hコンテンツを検閲する"), 1, hCensorFlagComposite, global.hCensorPatchName, global.censoredHFolderName));
 		this.hCensoredMenuItem.beforeCallback = this.beforeCallback;
 		this.hCensoredMenuItem.afterCallback = this.afterCallback;
-		this.add(this.hUncensoredMenuItem = new global.KAGFlagFolderMenuItem(this.owner, __t("Hコンテンツを検閲しない(&U)"), 1, hFlagComposite, global.hPatchName, global.uncensoredHFolderName));
+		this.add(this.hUncensoredMenuItem = new global.KAGFlagFolderMenuItem(this.owner, global.__t("Hコンテンツを検閲しない(&U)"), 1, hFlagComposite, global.hPatchName, global.uncensoredHFolderName));
 		this.hUncensoredMenuItem.beforeCallback = this.beforeCallback;
 		this.hUncensoredMenuItem.afterCallback = this.afterCallback;
-		this.add(this.hDecensoredMenuItem = new global.KAGFlagFolderMenuItem(this.owner, __t("Hコンテンツを強制的に無検閲する(&D)"), 1, decensorFlagComposite,
+		this.add(this.hDecensoredMenuItem = new global.KAGFlagFolderMenuItem(this.owner, global.__t("Hコンテンツを強制的に無検閲する(&D)"), 1, decensorFlagComposite,
 @if(GAME_FATE)
 		[global.hPatchName, global.decensoredPatchName], [global.uncensoredHFolderName, global.decensoredFolderName]));
 @endif
@@ -453,7 +453,7 @@ class KAGCensorMenuItem extends global.KAGMenuItem
 
 		(this.addSeperationLine incontextof this.owner)(this);
 
-		this.add(this.matureMenuItem = new global.KAGFlagFolderMenuItem(this.owner, __t("成人向けコンテンツを検閲する(&M)"),, matureCensorFlag, global.maturePatchName, global.censoredMatureFolderName, global.uncensoredMatureFolderName));
+		this.add(this.matureMenuItem = new global.KAGFlagFolderMenuItem(this.owner, global.__t("成人向けコンテンツを検閲する(&M)"),, matureCensorFlag, global.maturePatchName, global.censoredMatureFolderName, global.uncensoredMatureFolderName));
 		this.matureMenuItem.beforeCallback = this.beforeCallback;
 		this.matureMenuItem.afterCallback = this.afterCallback;
 
@@ -568,16 +568,16 @@ class KAGMessageWindowMenuItem extends global.KAGMenuItem
 	function addChildren()
 	{
 		this.mobileBreakGlyphsFlag = new global.GameFlag(this.owner, this.owner.sflags, global.mobileBreakGlyphsFlagName, false);
-		this.add(this.mobileBreakGlyphsMenuItem = new global.KAGFlagFolderMenuItem(this.owner, __t("携帯用テキスト画面(&B)"),, this.mobileBreakGlyphsFlag, global.mobileBreakGlyphsPatchName, global.mobileBreakGlyphsFolderName,,,true));
+		this.add(this.mobileBreakGlyphsMenuItem = new global.KAGFlagFolderMenuItem(this.owner, global.__t("携帯用テキスト画面(&B)"),, this.mobileBreakGlyphsFlag, global.mobileBreakGlyphsPatchName, global.mobileBreakGlyphsFolderName,,,true));
 		this.mobileBreakGlyphsMenuItem.restartCondition = this.mobileBreakGlyphsMenuItem.onlyScenarioRestartCondition;
 
 		this.mobileWindowFlag = new global.GameFlag(this.owner, this.owner.sflags, global.mobileWindowFlagName, false);
-		this.add(this.mobileMessageWindowMenuItem = new global.KAGFlagFolderMenuItem(this.owner, __t("携帯端末用カーソル(&M)"),, this.mobileWindowFlag, global.mobileWindowPatchName, global.mobileWindowFolderName,,,true));
+		this.add(this.mobileMessageWindowMenuItem = new global.KAGFlagFolderMenuItem(this.owner, global.__t("携帯端末用カーソル(&M)"),, this.mobileWindowFlag, global.mobileWindowPatchName, global.mobileWindowFolderName,,,true));
 		this.mobileMessageWindowMenuItem.restartCondition = this.mobileMessageWindowMenuItem.onlyScenarioRestartCondition;
 		this.mobileMessageWindowMenuItem.afterCallback = this.afterCallback;
 
 		this.wideWindowFlag = new global.GameFlag(this.owner, this.owner.sflags, global.wideWindowFlagName, true);
-		this.add(this.wideMessageWindowMenuItem = new global.KAGFlagFolderMenuItem(this.owner, __t("ワイドモードで4:3のメッセージウィンドウ(&W)"),, global.inverseFlag(this.wideWindowFlag), global.wideWindowPatchName,, global.wideWindowFolderName,,true));
+		this.add(this.wideMessageWindowMenuItem = new global.KAGFlagFolderMenuItem(this.owner, global.__t("ワイドモードで4:3のメッセージウィンドウ(&W)"),, global.inverseFlag(this.wideWindowFlag), global.wideWindowPatchName,, global.wideWindowFolderName,,true));
 		this.wideMessageWindowMenuItem.restartCondition = this.wideMessageWindowMenuItem.onlyScenarioRestartCondition;
 		this.wideMessageWindowMenuItem.afterCallback = this.afterCallback;
 		this.wideMessageWindowMenuItem.evaluateFlag = function(sender) { return sender.defaultEvaluateFlag(sender) || !this.owner.wideScreen; };
@@ -684,8 +684,8 @@ global.addEnableDisableRestartMenuFunctions = function()
 
 global.addPatchMenu = function()
 {
-	this.menu.insert(this.patchMenu = new global.KAGMenuItem(this, __t("パッチ(&P)"), 0, void, false), global.getPatchMenuIndex(this));
-	(global.addCensorMenu incontextof this)(this.patchMenu, __t("検閲(&C)"));
+	this.menu.insert(this.patchMenu = new global.KAGMenuItem(this, global.__t("パッチ(&P)"), 0, void, false), global.getPatchMenuIndex(this));
+	(global.addCensorMenu incontextof this)(this.patchMenu, global.__t("検閲(&C)"));
 	(global.addVoiceMenu incontextof this)(this.patchMenu);
 	(global.addVitaMenu incontextof this)(this.patchMenu);
 	(global.addGalleryMenu incontextof this)(this.patchMenu);
@@ -739,15 +739,15 @@ global.addDevelopmentMenu = function()
 
 global.addConductorVerbosityMenu = function()
 {
-	this.debugMenu.add(this.debugLevelNoneMenuItem = new global.KAGMenuItem(this, __t("デバッグレベル:なし"), 2,
+	this.debugMenu.add(this.debugLevelNoneMenuItem = new global.KAGMenuItem(this, global.__t("デバッグレベル:なし"), 2,
 		this.onDebugLevelNoneMenuItemClick, false));
 	this.debugLevelNoneMenuItem.checked = this.debugLevel === global.tkdlNone;
 
-	this.debugMenu.add(this.debugLevelSimpleMenuItem = new global.KAGMenuItem(this, __t("デバッグレベル:シンプル"), 2,
+	this.debugMenu.add(this.debugLevelSimpleMenuItem = new global.KAGMenuItem(this, global.__t("デバッグレベル:シンプル"), 2,
 		this.onDebugLevelSimpleMenuItemClick, false));
 	this.debugLevelSimpleMenuItem.checked = this.debugLevel === global.tkdlSimple;
 
-	this.debugMenu.add(this.debugLevelVerboseMenuItem = new global.KAGMenuItem(this, __t("デバッグレベル:詳細"), 2,
+	this.debugMenu.add(this.debugLevelVerboseMenuItem = new global.KAGMenuItem(this, global.__t("デバッグレベル:詳細"), 2,
 		this.onDebugLevelVerboseMenuItemClick, false));
 	this.debugLevelVerboseMenuItem.checked = this.debugLevel === global.tkdlVerbose;
 
@@ -763,15 +763,15 @@ global.addVoiceMenu = function(patchMenu)
 	var customVoiceReplayFlag = new global.GameFlag(this, this.sflags, "customVoiceReplay", false);
 	var disableStopVoiceWithClickFlag = new global.GameFlag(this, this.scflags, "disableStopVoiceWithClick", false);
 
-	patchMenu.add(this.voiceMenuItem = new global.KAGMenuItem(this, __t("ボイス(&V)"), 0, void, false));
-	this.voiceMenuItem.add(this.playUnmatchedVoicesMenuItem = new global.KAGFlagMenuItem(this, __t("不一緻なボイスを再生する(&M)"),, unmatchedVoiceFlag));
-	this.voiceMenuItem.add(this.playUnusedVoicesMenuItem = new global.KAGFlagMenuItem(this, __t("未使用ボイスを再生する(&U)"),, playUnusedVoicesFlag));
-	this.voiceMenuItem.add(this.customWaitvoiceMenuItem = new global.KAGFlagMenuItem(this, __t("あつらえのWait-Voiceタグを使用する(&W)"),, customWaitvoiceFlag));
+	patchMenu.add(this.voiceMenuItem = new global.KAGMenuItem(this, global.__t("ボイス(&V)"), 0, void, false));
+	this.voiceMenuItem.add(this.playUnmatchedVoicesMenuItem = new global.KAGFlagMenuItem(this, global.__t("不一緻なボイスを再生する(&M)"),, unmatchedVoiceFlag));
+	this.voiceMenuItem.add(this.playUnusedVoicesMenuItem = new global.KAGFlagMenuItem(this, global.__t("未使用ボイスを再生する(&U)"),, playUnusedVoicesFlag));
+	this.voiceMenuItem.add(this.customWaitvoiceMenuItem = new global.KAGFlagMenuItem(this, global.__t("あつらえのWait-Voiceタグを使用する(&W)"),, customWaitvoiceFlag));
 @if(FADE_BGM_WITH_VOICE==1)
-	this.voiceMenuItem.add(this.fadeBgmWithVoiceMenuItem = new global.KAGFlagMenuItem(this, __t("ボイス再生中に&BGM音量を下げる"),, fadeBgmWithVoiceFlag));
+	this.voiceMenuItem.add(this.fadeBgmWithVoiceMenuItem = new global.KAGFlagMenuItem(this, global.__t("ボイス再生中に&BGM音量を下げる"),, fadeBgmWithVoiceFlag));
 @endif
-	this.voiceMenuItem.add(this.customVoiceReplayIconsMenuItem = new global.KAGFlagMenuItem(this, __t("あつらえのボイス再生アイコンを使用する(&R)"),, customVoiceReplayFlag));
-	this.voiceMenuItem.add(this.disableStopVoiceWithClickMenuItem = new global.KAGFlagMenuItem(this, __t("クリックすると現在のボイスが停止しません(&V)"),, disableStopVoiceWithClickFlag));
+	this.voiceMenuItem.add(this.customVoiceReplayIconsMenuItem = new global.KAGFlagMenuItem(this, global.__t("あつらえのボイス再生アイコンを使用する(&R)"),, customVoiceReplayFlag));
+	this.voiceMenuItem.add(this.disableStopVoiceWithClickMenuItem = new global.KAGFlagMenuItem(this, global.__t("クリックすると現在のボイスが停止しません(&V)"),, disableStopVoiceWithClickFlag));
 
 	(global.addVoiceMenuItems incontextof this)(this.voiceMenuItem);
 };
@@ -782,12 +782,12 @@ global.addVitaMenu = function(patchMenu)
 	var vitaMovieMenuFlag = new global.GameFlag(this, this.sflags, "movieMenuPatch", global.get_opPatchExists(this));
 	var vitaAboutFlag = new global.GameFlag(this, this.sflags, "aboutPatch", global.get_vitaPatchExists(this));
 
-	patchMenu.add(this.vitaMenuItem = new global.KAGMenuItem(this, __t("&Vitaコンテンツ"), 0, void, false));
-	this.vitaMenuItem.add(this.vitaOPMenuItem = new global.KAGFlagMenuItem(this, __t("Vitaの&OPをゲーム中に再生する"),, playVitaOpFlag));
+	patchMenu.add(this.vitaMenuItem = new global.KAGMenuItem(this, global.__t("&Vitaコンテンツ"), 0, void, false));
+	this.vitaMenuItem.add(this.vitaOPMenuItem = new global.KAGFlagMenuItem(this, global.__t("Vitaの&OPをゲーム中に再生する"),, playVitaOpFlag));
 	this.vitaOPMenuItem.disableIfPatchDoesntExist(global.opPatchName);
-	this.vitaMenuItem.add(this.vitaMovieMenuItem = new global.KAGFlagFolderMenuItem(this, __t("Vitaのムービーメニュ(&M)"),, vitaMovieMenuFlag, global.opPatchName, "override",, false));
+	this.vitaMenuItem.add(this.vitaMovieMenuItem = new global.KAGFlagFolderMenuItem(this, global.__t("Vitaのムービーメニュ(&M)"),, vitaMovieMenuFlag, global.opPatchName, "override",, false));
 	this.vitaMovieMenuItem.disableIfPatchDoesntExist(global.opPatchName);
-	this.vitaMenuItem.add(this.vitaAboutMenuItem = new global.KAGFlagMenuItem(this, __t("Vitaの「このスフとについて」ページ(&A)"),, vitaAboutFlag));
+	this.vitaMenuItem.add(this.vitaAboutMenuItem = new global.KAGFlagMenuItem(this, global.__t("Vitaの「このスフとについて」ページ(&A)"),, vitaAboutFlag));
 
 	(global.addVitaMenuItems incontextof this)(this.vitaMenuItem);
 };
@@ -798,10 +798,10 @@ global.addMovieMenu = function(patchMenu)
 	var skipMoviesFlag = new global.GameFlag(this, this.sflags, "skipMovies", false);
 	var forceMpvPlaybackFlag = new global.GameFlag(this, this.sflags, "forceMpvPlayback", false);
 
-	patchMenu.add(this.movieMenuItem = new global.KAGMenuItem(this, __t("ムービー(&M)"), 0, void, false));
-	this.movieMenuItem.add(this.subbedVideosMenuItem = new global.KAGFlagFolderMenuItem(this, __t("ムービー再生中に字幕を表示する(&S)"),, subbedVideosFlag,,global.videosFolderName));
-	this.movieMenuItem.add(this.skipMoviesMenuItem = new global.KAGFlagMenuItem(this, __t("ゲーム中にムービーをスキップする(&K)"),,skipMoviesFlag));
-	this.movieMenuItem.add(this.forceMpvPlaybackMenuItem = new global.KAGFlagMenuItem(this, __t("mpvを使用して強制的に動画を再生する"),,forceMpvPlaybackFlag));
+	patchMenu.add(this.movieMenuItem = new global.KAGMenuItem(this, global.__t("ムービー(&M)"), 0, void, false));
+	this.movieMenuItem.add(this.subbedVideosMenuItem = new global.KAGFlagFolderMenuItem(this, global.__t("ムービー再生中に字幕を表示する(&S)"),, subbedVideosFlag,,global.videosFolderName));
+	this.movieMenuItem.add(this.skipMoviesMenuItem = new global.KAGFlagMenuItem(this, global.__t("ゲーム中にムービーをスキップする(&K)"),,skipMoviesFlag));
+	this.movieMenuItem.add(this.forceMpvPlaybackMenuItem = new global.KAGFlagMenuItem(this, global.__t("mpvを使用して強制的に動画を再生する"),,forceMpvPlaybackFlag));
 	this.forceMpvPlaybackMenuItem.enabled = (typeof(global.playVideoMPV) === "Object");
 };
 
@@ -811,13 +811,13 @@ global.addOptionsMenu = function(patchMenu)
 	var showLogoFlag = new global.GameFlag(this, this.sflags, "showLogo", true);
 	var savedataRepairFlag = new global.GameFlag(this, this.sflags, "savedataRepair", false);
 
-	patchMenu.add(this.patchOptionsMenuItem = new global.KAGMenuItem(this, __t("設定(&O)"), 0, void, false));
-	this.patchOptionsMenuItem.add(this.historyTitleMenuItem = new global.KAGFlagMenuItem(this, __t("メッセージ歴史でシーンのタイトルを表示する(&H)"),, historyTitleFlag));
-	this.patchOptionsMenuItem.add(this.engineConfigurationItem = new global.KAGMenuItem(this, __t("エンジン構成ダイアログを開く"), 1, function() { global.showEngineConfigureDialog(); },false));
-	this.patchOptionsMenuItem.add(this.openSavedataDirMenuItem = new global.KAGMenuItem(this, __t("保存データディレクトリを開く"), 1, function(sender) { global.open_savedata_dir(sender.owner); },false));
-	this.patchOptionsMenuItem.add(this.saveTroubleshootingDataAndOpenFolderLocationMenuItem = new global.KAGMenuItem(this, __t("トラブルシューティングデータを保存する"), 1, function() { global.save_troubleshooting_data_and_open_folder_location(); },false));
-	this.patchOptionsMenuItem.add(this.showLogoMenuItem = new global.KAGFlagMenuItem(this, __t("起動時にTYPE-MOONロゴを表示"),, showLogoFlag));
-	this.patchOptionsMenuItem.add(this.savedataRepairMenuItem = new global.KAGFlagMenuItem(this, __t("修復保存データモードを有効にする"),, savedataRepairFlag));
+	patchMenu.add(this.patchOptionsMenuItem = new global.KAGMenuItem(this, global.__t("設定(&O)"), 0, void, false));
+	this.patchOptionsMenuItem.add(this.historyTitleMenuItem = new global.KAGFlagMenuItem(this, global.__t("メッセージ歴史でシーンのタイトルを表示する(&H)"),, historyTitleFlag));
+	this.patchOptionsMenuItem.add(this.engineConfigurationItem = new global.KAGMenuItem(this, global.__t("エンジン構成ダイアログを開く"), 1, function() { global.showEngineConfigureDialog(); },false));
+	this.patchOptionsMenuItem.add(this.openSavedataDirMenuItem = new global.KAGMenuItem(this, global.__t("保存データディレクトリを開く"), 1, function(sender) { global.open_savedata_dir(sender.owner); },false));
+	this.patchOptionsMenuItem.add(this.saveTroubleshootingDataAndOpenFolderLocationMenuItem = new global.KAGMenuItem(this, global.__t("トラブルシューティングデータを保存する"), 1, function() { global.save_troubleshooting_data_and_open_folder_location(); },false));
+	this.patchOptionsMenuItem.add(this.showLogoMenuItem = new global.KAGFlagMenuItem(this, global.__t("起動時にTYPE-MOONロゴを表示"),, showLogoFlag));
+	this.patchOptionsMenuItem.add(this.savedataRepairMenuItem = new global.KAGFlagMenuItem(this, global.__t("修復保存データモードを有効にする"),, savedataRepairFlag));
 
 	(global.addOptionsMenuItems incontextof this)(this.patchOptionsMenuItem);
 };
@@ -826,15 +826,15 @@ global.addFullScreenMenu = function(displayMenu)
 {
 	displayMenu.add(new global.MenuItem(this, "-"));
 
-	displayMenu.add(this.fullscreenMenu = new global.KAGMenuItem(this, __t("フルスクリーン時の拡大表示(&M)"), 0, void, false));
+	displayMenu.add(this.fullscreenMenu = new global.KAGMenuItem(this, global.__t("フルスクリーン時の拡大表示(&M)"), 0, void, false));
 
-		this.fullscreenMenu.add(this.innerMagnifyMenuItem = new global.KAGMenuItem(this, __t("モニタ内にフィットさせる(&I)"), 1,
+		this.fullscreenMenu.add(this.innerMagnifyMenuItem = new global.KAGMenuItem(this, global.__t("モニタ内にフィットさせる(&I)"), 1,
 			this.onInnerMagnifyMenuItemClick, false));
 
-		this.fullscreenMenu.add(this.outerMagnifyMenuItem = new global.KAGMenuItem(this, __t("モニタいっぱいに拡大する(&O)"), 1,
+		this.fullscreenMenu.add(this.outerMagnifyMenuItem = new global.KAGMenuItem(this, global.__t("モニタいっぱいに拡大する(&O)"), 1,
 			this.onOuterMagnifyMenuItemClick, false));
 
-		this.fullscreenMenu.add(this.noneMagnifyMenuItem = new global.KAGMenuItem(this, __t("拡大しない(&N)"), 1,
+		this.fullscreenMenu.add(this.noneMagnifyMenuItem = new global.KAGMenuItem(this, global.__t("拡大しない(&N)"), 1,
 			this.onNoneMagnifyMenuItemClick, false));
 };
 
@@ -842,7 +842,7 @@ global.addWindowSizeMenu = function(displayMenu)
 {
 	displayMenu.add(new global.MenuItem(this, "-"));
 
-		displayMenu.add(this.windowSizeMenu = new global.KAGMenuItem(this, __t("ウィンドウ内部のサイズ指定(&S)"), 0, void, false));
+		displayMenu.add(this.windowSizeMenu = new global.KAGMenuItem(this, global.__t("ウィンドウ内部のサイズ指定(&S)"), 0, void, false));
 
 @if(GAME_WOHN)
 			this.windowSizeMenu.add(this.window640MenuItem = new global.KAGMenuItem(this, "640x360", 1,
@@ -932,23 +932,23 @@ global.addWindowSizeMenu = function(displayMenu)
 
 			this.windowSizeMenu.add(new global.MenuItem(this, "-"));
 
-			this.windowSizeMenu.add(this.windowResizeableMenuItem = new global.KAGMenuItem(this, __t("サイズを固定する"), 0,
+			this.windowSizeMenu.add(this.windowResizeableMenuItem = new global.KAGMenuItem(this, global.__t("サイズを固定する"), 0,
 				function(sender) { sender.owner.onWindowSizeMenuItemClick(,0); }, false));
 
-			this.windowSizeMenu.add(this.limitWindowSizeMenuItem = new global.KAGMenuItem(this, __t("画面サイズに限る"), 0,
+			this.windowSizeMenu.add(this.limitWindowSizeMenuItem = new global.KAGMenuItem(this, global.__t("画面サイズに限る"), 0,
 				function(sender) { sender.owner.onLimitWindowSizeMenuItemClick(); }, false));
 };
 
 global.addHdMenu = function(displayMenu)
 {
-	var wideResolutions = %[ __t("ワイド(16:9)(&W)") => global.standardWideRatio];
+	var wideResolutions = %[ global.__t("ワイド(16:9)(&W)") => global.standardWideRatio];
 
 	displayMenu.add(new global.MenuItem(this, "-"));
 
-	displayMenu.add(this.qualityMenu = new global.KAGMenuItem(this, __t("画質(&Q)"), 0, void, false));
+	displayMenu.add(this.qualityMenu = new global.KAGMenuItem(this, global.__t("画質(&Q)"), 0, void, false));
 	this.qualityMenu.enabled = false;
 
-		this.qualityMenu.add(this.lqMenuItem = new global.KAGMenuItem(this, __t("低い(&L)"), 1,
+		this.qualityMenu.add(this.lqMenuItem = new global.KAGMenuItem(this, global.__t("低い(&L)"), 1,
 			function(sender) { global.onQualityMenuItemClick(sender); }, false));
 		this.lqMenuItem.checked = true if this.hdScaleFactor === 1;
 		this.lqMenuItem.scaleFactor = 1;
@@ -956,7 +956,7 @@ global.addHdMenu = function(displayMenu)
 		
 		for (var i=0; i<global.scaleFactors.count; i++) {
 			var hqMenuItemName = "hq%.1fMenuItem".sprintf(global.scaleFactors[i]).replace(/\./g, "_");
-			this.qualityMenu.add(this[hqMenuItemName] = new global.KAGMenuItem(this, __t("高いx%.1f(&H)"), 1,
+			this.qualityMenu.add(this[hqMenuItemName] = new global.KAGMenuItem(this, global.__t("高いx%.1f(&H)"), 1,
 				function(sender) { global.onQualityMenuItemClick(sender); }, false));
 			this[hqMenuItemName].scaleFactor = global.scaleFactors[i];
 			this[hqMenuItemName].captionArg = this[hqMenuItemName].scaleFactor;
@@ -964,14 +964,14 @@ global.addHdMenu = function(displayMenu)
 			this[hqMenuItemName].checked = true if this.hdScaleFactor === global.scaleFactors[i];
 		}
 
-	displayMenu.add(this.wideMenu = new global.KAGMenuItem(this, __t("アスペクト比(&A)"), 0, void, false));
+	displayMenu.add(this.wideMenu = new global.KAGMenuItem(this, global.__t("アスペクト比(&A)"), 0, void, false));
 	this.wideMenu.enabled = false;
 
-		this.wideMenu.add(this.notWideMenuItem = new global.KAGMenuItem(this, __t("基準(4:3)(&S)"), 1,
+		this.wideMenu.add(this.notWideMenuItem = new global.KAGMenuItem(this, global.__t("基準(4:3)(&S)"), 1,
 			function(sender) { global.onWideMenuItemClick(sender,'standard'); }, false));
 		this.notWideMenuItem.checked = true if !this.wideScreen;
 
-		this.wideMenu.add(this.wideMenuItem = new global.KAGMenuItem(this, __t("デスクトップと同じ(&M)"), 1,
+		this.wideMenu.add(this.wideMenuItem = new global.KAGMenuItem(this, global.__t("デスクトップと同じ(&M)"), 1,
 			function(sender) { global.onWideMenuItemClick(sender,'wide'); }, false));
 		this.wideMenuItem.checked = true if this.wideScreen && this.isAutoWide;
 
@@ -1023,7 +1023,7 @@ global.addGraphicUsageMenu = function(displayMenu)
 
 	displayMenu.add(new global.MenuItem(this, "-"));
 
-	displayMenu.add(this.fpsLimitMenuItem = new global.KAGMenuItem(this, __t("最大フレームレート(&M)"), 0, void, false));
+	displayMenu.add(this.fpsLimitMenuItem = new global.KAGMenuItem(this, global.__t("最大フレームレート(&M)"), 0, void, false));
 	var fps_limit_values = global.fps_limit_values;
 	var fps_limit_shortcuts = global.fps_limit_shortcuts;
 	for (var i = 0; i < fps_limit_values.count; i += 1)
@@ -1044,16 +1044,16 @@ global.addGraphicUsageMenu = function(displayMenu)
 		{
 			fps_limit_shortcut = fps_limit_value;
 		}
-		var fps_limit_text = __t("%sフレーム/秒");
+		var fps_limit_text = global.__t("%sフレーム/秒");
 		var fpsLimitMenuItemName = "fpsLimit%sMenuItem".sprintf(fps_limit_value);
 		if (fps_limit_value === "-1")
 		{
-			fps_limit_text = __t("垂直同期待ち(&V)");
+			fps_limit_text = global.__t("垂直同期待ち(&V)");
 			fpsLimitMenuItemName = "fpsLimitVsyncMenuItem";
 		}
 		else if (fps_limit_value === "0")
 		{
-			fps_limit_text = __t("制限なし(&N)");
+			fps_limit_text = global.__t("制限なし(&N)");
 			fpsLimitMenuItemName = "fpsLimit00MenuItem";
 		}
 		this.fpsLimitMenuItem.add(this[fpsLimitMenuItemName] = new global.KAGFlagMenuItem(this, fps_limit_text, 1, fpsLimitFlag, fps_limit_value));
@@ -1075,7 +1075,7 @@ global.addGraphicUsageMenu = function(displayMenu)
 			global.System.drawThreadNum = sender.flag.value;
 		};
 
-		displayMenu.add(this.multiThreadDrawMenuItem = new global.KAGMenuItem(this, __t("描画スレッド分割数(&N)"), 0, void, false));
+		displayMenu.add(this.multiThreadDrawMenuItem = new global.KAGMenuItem(this, global.__t("描画スレッド分割数(&N)"), 0, void, false));
 		var thread_limit_values = global.thread_limit_values;
 		var thread_limit_shortcuts = global.thread_limit_shortcuts;
 		for (var i = 0; i < thread_limit_values.count; i += 1)
@@ -1096,15 +1096,15 @@ global.addGraphicUsageMenu = function(displayMenu)
 			{
 				thread_limit_shortcut = x;
 			}
-			var thread_limit_text = __t("%sスレッド");
+			var thread_limit_text = global.__t("%sスレッド");
 			var threadLimitMenuItemName = "multiThreadDraw%dMenuItem".sprintf(thread_limit_value);
 			if (thread_limit_value === 1)
 			{
-				thread_limit_text = __t("無効：スレッド分割しない(&D)");
+				thread_limit_text = global.__t("無効：スレッド分割しない(&D)");
 			}
 			else if (thread_limit_value === 0)
 			{
-				thread_limit_text = __t("自動：プロセッサ数で分割(&A)");
+				thread_limit_text = global.__t("自動：プロセッサ数で分割(&A)");
 			}
 			this.multiThreadDrawMenuItem.add(this[threadLimitMenuItemName] = new global.KAGFlagMenuItem(this, thread_limit_text, 1, multiThreadDrawFlag, thread_limit_value));
 			if (thread_limit_text.indexOf("%") !== -1)
@@ -1122,5 +1122,5 @@ global.addGraphicUsageMenu = function(displayMenu)
 
 global.addMessageWindowMenu = function(patchMenu)
 {
-	patchMenu.add(this.messageWindowMenuItem = new global.KAGMessageWindowMenuItem(this, __t("メッセージウィンドウ(&M)"), 0, void, false));
+	patchMenu.add(this.messageWindowMenuItem = new global.KAGMessageWindowMenuItem(this, global.__t("メッセージウィンドウ(&M)"), 0, void, false));
 };

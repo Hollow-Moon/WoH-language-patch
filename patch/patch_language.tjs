@@ -71,7 +71,7 @@ global.refreshStringWithLanguage = function(kag, language)
 {
 	global.loadMOs(language);
 
-	var patch_info_url = __s("https://example.com/", "patch_info_url");
+	var patch_info_url = global.__s("https://example.com/", "patch_info_url");
 	if (patch_info_url !== "https://example.com/")
 	{
 		global.PatchInfoURL = patch_info_url;
@@ -744,7 +744,7 @@ global.loadLanguageSettings = function()
 		var language = global.languages[i];
 		global.load_language_patch(language, void);
 
-		var locale = __s("ja_JP", "locale");
+		var locale = global.__s("ja_JP", "locale");
 
 		if (locale == systemLocale) {
 			global.default_language = language;
@@ -974,7 +974,7 @@ global.initializeLanguage = function(kag=global.kag)
 
 global.addLanguageMenu = function()
 {
-	this.menu.insert(this.languageMenu = new global.KAGMenuItem(this, __t("言語(&Language)"), 0, void, false), global.patchMenuIndex);
+	this.menu.insert(this.languageMenu = new global.KAGMenuItem(this, global.__t("言語(&Language)"), 0, void, false), global.patchMenuIndex);
 	for (var i = 0, internal_forloop_count = global.languages.count; i < internal_forloop_count; i += 1) {
 		var language = global.languages[i];
 		var languageMenuItemName = global.languageMenuItemFormat.sprintf(language);
@@ -1007,7 +1007,7 @@ global.loadLanguageDict = function(language)
 
 		var currentLanguageSettings = global.languageSettings[language];
 
-		currentLanguageSettings.menu_name = __s("日本語 - &Japanese", "language_menu_name");
+		currentLanguageSettings.menu_name = global.__s("日本語 - &Japanese", "language_menu_name");
 
 		if (typeof(currentLanguageSettings.files) === "Object")
 		{
@@ -1138,7 +1138,7 @@ class System_patch_language_override extends global.System_patch_language_origin
 	{
 		if (text === global.System.title + "はすでに起動しています")
 		{
-			text = __("%sはすでに起動しています").sprintf(global.System.title);
+			text = global.__("%sはすでに起動しています").sprintf(global.System.title);
 		}
 		return super.inform(text);
 	}

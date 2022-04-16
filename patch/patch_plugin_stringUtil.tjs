@@ -127,5 +127,64 @@ global.parseKeyFrame = function(keyframe)
 	var keys = [];
 	keyframe.replace(global.parseKeyFrame_regex, (split_func incontextof keys));
 
+	if (keys.count === 0)
+	{
+		// Somehow we failed to parse it, try another way
+		return global.parseKeyFrame_alternate(keyframe);
+	}
+
+	return keys;
+};
+
+global.parseKeyFrame_alternate = function(keyframe)
+{
+	//	解析する必要がなければ、そのまま返す
+	if(typeof keyframe == "Object" && keyframe instanceof "Array")
+		return keyframe;
+
+//	var	keys	= keyframe.split("()",, true);	//	この方法でやると、要素部分に()が含まれているときに意図しない動作になる
+	if(keyframe[0] != "(")
+		throw new global.Exception("キーフレームが解析できません。: "+keyframe);
+	keyframe	= keyframe.substr(1);
+	var	keys	= [];
+	var	pos	= keyframe.indexOf(")(");
+	while(pos >= 0)
+	{
+		keys.add(keyframe.substr(0, pos));
+		keyframe	= keyframe.substr(pos+2);
+		pos	= keyframe.indexOf(")(");
+	}
+	if(keyframe[keyframe.length - 1] != ")")
+		throw new global.Exception("キーフレームの最後が不正です: "+keyframe);
+	keys.add(keyframe.substr(0, keyframe.length - 1));
+
+	for(var i=0; i<keys.count; i++)
+	{
+		var	key	= keys[i], j = 0;
+		var	array = keys[i] = [];
+		while(1)
+		{
+			var	pos_c	= key.indexOf(",");
+			var	pos_b	= key.indexOf("(");
+			if(pos_c < 0)
+			{
+				array[j]	+= key;
+				break;
+			}
+			else if(pos_b < 0 || pos_c < pos_b)
+			{
+				array[j]+= key.substr(0, pos_c);
+				key		= key.substr(pos_c + 1);
+				j++;
+			}
+			else
+			{
+				pos_b	= key.indexOf(")");
+				array[j]+= key.substr(0, pos_b+1);
+				key		= key.substr(pos_b + 1);
+			}
+		}
+		keys[i][0]	= +keys[i][0];
+	}
 	return keys;
 };

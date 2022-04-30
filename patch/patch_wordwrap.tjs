@@ -1167,40 +1167,48 @@ class KAGWindow_patch_wordwrap_override extends global.KAGWindow_patch_wordwrap_
 		}
 		var ml_needsreline = this.current.needsReline(wcacheentry);
 		var hl_needsreline = this.historyLayer.needsReline(wcacheentry);
-		if (ml_needsreline || hl_needsreline)
+		if (is_empty_space)
 		{
-			ttext = "\n" + (is_empty_space ? "" : ttext);
+			if (ml_needsreline || hl_needsreline)
+			{
+				ttext = "\n" + (is_empty_space ? "" : ttext);
+			}
 		}
-@if(0)
-		else if (hl_needsreline && !ml_needsreline)
+		else
 		{
-			elm.requeue = false;
-			if (should_append_break_tags)
+			if (ml_needsreline || hl_needsreline)
 			{
-				conductor.queueAppendMessageLayerRelatedTags(elm);
+				ttext = "\n" + (is_empty_space ? "" : ttext);
 			}
-			if (!is_empty_space)
+			else if (hl_needsreline && !ml_needsreline)
 			{
-				conductor.queueText(ttext, elm);
+				elm.requeue = false;
+				if (should_append_break_tags)
+				{
+					conductor.queueAppendMessageLayerRelatedTags(elm);
+				}
+				if (!is_empty_space)
+				{
+					conductor.queueText(ttext, elm);
+				}
+				conductor.queueReline(elm, false, true);
+				return "";
 			}
-			conductor.queueReline(elm, false, true);
-			return "";
+			else if (ml_needsreline && !hl_needsreline)
+			{
+				elm.requeue = false;
+				if (should_append_break_tags)
+				{
+					conductor.queueAppendMessageLayerRelatedTags(elm);
+				}
+				if (!is_empty_space)
+				{
+					conductor.queueText(ttext, elm);
+				}
+				conductor.queueReline(elm, true, false);
+				return "";
+			}
 		}
-		else if (ml_needsreline && !hl_needsreline)
-		{
-			elm.requeue = false;
-			if (should_append_break_tags)
-			{
-				conductor.queueAppendMessageLayerRelatedTags(elm);
-			}
-			if (!is_empty_space)
-			{
-				conductor.queueText(ttext, elm);
-			}
-			conductor.queueReline(elm, true, false);
-			return "";
-		}
-@endif
 
 		if (!should_append_break_tags)
 		{

@@ -60,11 +60,21 @@ global.get_file_name_of_image_with_extension_that_exists = function(storage)
 
 global.check_if_image_exists = function(storage)
 {
+	storage += "";
+	if (storage === "")
+	{
+		return false;
+	}
 	return global.Storages.isExistentStorage(global.get_file_name_of_image_with_extension_that_exists(storage));
 };
 
 global.get_full_path_of_image = function(storage)
 {
+	storage += "";
+	if (storage === "")
+	{
+		return "";
+	}
 	var path = global.get_file_name_of_image_with_extension_that_exists(storage);
 	if (path === void)
 	{

@@ -1909,6 +1909,14 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 		var widthOriginal = rightOriginal - leftOriginal;
 		var heightOriginal = bottomOriginal - topOriginal;
 
+		// if passed in values include the whole layer...
+		if (left == 0 && top == 0 && width == this.imageWidth && height == this.imageHeight)
+		{
+			// ...draw on the whole layer
+			widthOriginal = this.imageWidthOriginal;
+			heightOriginal = this.imageHeightOriginal;
+		}
+
 		var ie;
 		try
 		{
@@ -1955,6 +1963,14 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 
 		var widthOriginal = rightOriginal - leftOriginal;
 		var heightOriginal = bottomOriginal - topOriginal;
+
+		// if passed in values include the whole layer...
+		if (left == 0 && top == 0 && width == this.imageWidth && height == this.imageHeight)
+		{
+			// ...draw on the whole layer
+			widthOriginal = this.imageWidthOriginal;
+			heightOriginal = this.imageHeightOriginal;
+		}
 
 		var ie;
 		try

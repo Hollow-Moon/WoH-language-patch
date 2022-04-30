@@ -240,10 +240,18 @@ class MessageLayer_patch_wordwrap_override extends global.MessageLayer_patch_wor
 			}
 		}
 
+@if(MESSAGELAYER_USECHARLAYER)
 		if ((this.x + currentWordWidth) >= this.relinexpos && currentWordWidth < this.relinexpos)
 		{
 			return true;
 		}
+@endif
+@if(!MESSAGELAYER_USECHARLAYER)
+		if ((this.lineLayerOriginX + this.lineLayerLength + currentWordWidth) >= this.relinexpos && currentWordWidth < this.relinexpos)
+		{
+			return true;
+		}
+@endif
 		return false;
 	}
 }

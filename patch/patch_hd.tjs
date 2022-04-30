@@ -150,7 +150,8 @@ global.getHdPatchesArray = function(kag=global.kag)
 
 global.loadHdPatch = function(kag=global.kag)
 {
-	if (global.get_hdPatchName() === void) {
+	if (kag.isMain === false || global.get_hdPatchName() === void)
+	{
 		return;
 	}
 	
@@ -168,7 +169,8 @@ global.loadHdPatch = function(kag=global.kag)
 
 global.unloadHdPatch = function(kag=global.kag)
 {
-	if (global.get_hdPatchName() === void) {
+	if (kag.isMain === false || global.get_hdPatchName() === void)
+	{
 		return;
 	}
 
@@ -224,12 +226,18 @@ global.initializeWide = function(ratio)
 	}
 @endif
 
-	var patches_arr = global.getWidePatchesArray(this);
+	if (this.isMain !== false)
+	{
+		var patches_arr = global.getWidePatchesArray(this);
 
-	if (this.wideScreen) {
-		global.load_patches(patches_arr);
-	} else {
-		global.unload_patches(patches_arr);
+		if (this.wideScreen)
+		{
+			global.load_patches(patches_arr);
+		}
+		else
+		{
+			global.unload_patches(patches_arr);
+		}
 	}
 };
 

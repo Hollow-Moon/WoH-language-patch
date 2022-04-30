@@ -1265,15 +1265,14 @@ class KAGWindow extends Window
 	function onHelpAboutMenuItemClick(sender)
 	{
 		// 「このソフトについて」ウィンドウを表示
-@if(!GAME_FATE&&!GAME_FHAT&&!GAME_WOHN)
-		var win = new global.KAGWindow(false, aboutWidth, aboutHeight);
+@if(!GAME_FATE&&!GAME_FHAT)
+		var win = this.helpAboutWindow = new global.KAGWindow(false, aboutWidth, aboutHeight);
 @endif
 @if(GAME_FATE||GAME_FHAT)
-		var win = new global.KAGWindow(false, (sf.aboutPatch? vitaAboutWidth: aboutWidth), aboutHeight);
+		var win = this.helpAboutWindow = new global.KAGWindow(false, (sf.aboutPatch? vitaAboutWidth: aboutWidth), aboutHeight);
 		win.setInnerSize((sf.aboutPatch? vitaAboutWidth: aboutWidth), aboutHeight);
 @endif
 @if(GAME_WOHN)
-		var win = this.helpAboutWindow = new global.KAGWindow(false, aboutWidth, aboutHeight);
 		win.debugLevel = tkdlNone;
 		win.borderStyle = bsToolWindow;
 		win.setInnerSize(aboutWidth, aboutHeight);
@@ -1288,9 +1287,7 @@ class KAGWindow extends Window
 		invalidate win.rightClickMenuItem;
 @endif
 		invalidate win;
-@if(GAME_WOHN)
 		delete this.helpAboutWindow;
-@endif
 	}
 
 @if(GAME_WOHN)

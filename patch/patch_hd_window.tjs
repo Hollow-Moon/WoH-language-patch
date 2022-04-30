@@ -33,7 +33,7 @@ class Window_patch_hd_layer_override extends global.Window_patch_hd_layer_origin
 		return result;
 	} }
 
-	property widthScale { getter { return global.get_wideScaleFactor(); } }
+	property widthScale { getter { return this.isMainWindow? global.get_wideScaleFactor() : global.scaleFactor; } }
 	property heightScale { getter { return global.scaleFactor * (this.isMainWindow? global.cropFactor : 1); } }
 	property isMainWindow { getter { return this === global.Window.mainWindow; } }
 	property body { getter() { return this.fore; } }
@@ -356,7 +356,7 @@ class Window_patch_hd_layer_override extends global.Window_patch_hd_layer_origin
 
 	function scaleWidth(w)
 	{
-		return global.scaleSize(w, global.get_wideScaleFactor());
+		return global.scaleSize(w, this.widthScale);
 	}
 
 	function unscaleWidth(w)
@@ -364,10 +364,10 @@ class Window_patch_hd_layer_override extends global.Window_patch_hd_layer_origin
 		// unscaleSize() outputs float to offer higher precision to whoever needs it. (Font kerning in HD relies on it!).
 		// For window size handling we need rounding to prevent unintended downsizing cascades.
 @if(!SCALE_ROUND_TOWARDS_NEAREST)
-		return global.Math.ceil(global.unscaleSize(w, global.get_wideScaleFactor())) | 0;
+		return global.Math.ceil(global.unscaleSize(w, this.widthScale)) | 0;
 @endif
 @if(SCALE_ROUND_TOWARDS_NEAREST)
-		return global.Math.round(global.unscaleSize(w, global.get_wideScaleFactor())) | 0;
+		return global.Math.round(global.unscaleSize(w, this.widthScale)) | 0;
 @endif
 	}
 
@@ -391,7 +391,7 @@ class Window_patch_hd_layer_override extends global.Window_patch_hd_layer_origin
 	// The float variety of these functions is used in patch_font_wrapper_hd.tjs
 	function unscaleWidthFloat(w)
 	{
-		return global.unscaleSize(w, global.get_wideScaleFactor());
+		return global.unscaleSize(w, this.widthScale);
 	}
 
 	function unscaleHeightFloat(h)

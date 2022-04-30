@@ -160,7 +160,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 		var parentHeightOriginal = this.parent.isbg && !this.isbg? this.parent.heightForScaleOriginal / global.wideFactor : this.parent.heightForScaleOriginal;
 		var topScroll = this.window.wideScreen? this.topScroll : 0;
 
-        return global.scalePosition(y, this.heightForScale, this.heightForScaleOriginal, this.parent.heightForScale, parentHeightOriginal, this.verticalAlignment) + topScroll * global.get_wideScaleFactor();
+        return global.scalePosition(y, this.heightForScale, this.heightForScaleOriginal, this.parent.heightForScale, parentHeightOriginal, this.verticalAlignment) + topScroll * this.window.widthScale;
     }
 
 	function scaleImageLeft(x)
@@ -181,7 +181,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
     function unscaleCursorY(y)
     {
 		var topOffset = this.window.wideScreen? this.window.scrollYOffset : 0;
-        return this.window.unscaleHeight(y - topOffset * global.get_wideScaleFactor());
+        return this.window.unscaleHeight(y - topOffset * this.window.widthScale);
     }
 
 	function scaleCursorX(x)
@@ -192,7 +192,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 	function scaleCursorY(y)
 	{
 		var topOffset = this.window.wideScreen? this.window.scrollYOffset : 0;
-		return this.scaleHeight(y / global.wideFactor) + topOffset * global.get_wideScaleFactor();
+		return this.scaleHeight(y / global.wideFactor) + topOffset * this.window.widthScale;
 	}
 
 	function unscaleMouseX(x)
@@ -293,7 +293,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 	{
 		var topScroll = this.window.wideScreen? (this.isbg? this.window.scrollYOffset : 0) : 0;
 		var heightForScaleOriginal = this.isbg? this.heightForScaleOriginal / global.wideFactor : this.heightForScaleOriginal;
-		return global.scalePosition(y, h, hOriginal, this.heightForScale, heightForScaleOriginal, verticalAlignment) + topScroll * global.get_wideScaleFactor();
+		return global.scalePosition(y, h, hOriginal, this.heightForScale, heightForScaleOriginal, verticalAlignment) + topScroll * this.window.widthScale;
 	}
 
     property left

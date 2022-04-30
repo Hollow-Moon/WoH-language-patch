@@ -64,14 +64,14 @@ class Window_hint_override extends global.Window_hint_original
 
 @if(HD_MODE)
 			if (typeof this.fullScreened === "Integer" && fullScreened) {
-				var windowToScreenRatio = (this.innerHeight*scaleFactor) / System.screenHeight;
-				x -= (System.screenWidth - (this.innerWidth*global.get_wideScaleFactor() / windowToScreenRatio)) / 2;
+				var windowToScreenRatio = (this.innerHeight*this.heightScale) / System.screenHeight;
+				x -= (System.screenWidth - (this.innerWidth*this.widthScale / windowToScreenRatio)) / 2;
 				x *= windowToScreenRatio;
 				y *= windowToScreenRatio;
 			}
 
-			x /= global.get_wideScaleFactor();
-			y /= scaleFactor;
+			x /= this.widthScale;
+			y /= this.heightScale;
 @endif
 @if(ZOOM_WINDOW)
 			if (["Integer", "Real"].find(typeof(this.innerHeightScale)) !== -1)

@@ -148,7 +148,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 		if (this.absoluteMode || this.parent == null) {
 			return x;
 		}
-        return global.scalePosition(x, this.widthForScale, this.widthForScaleOriginal, this.parent.widthForScale, this.parent.widthForScaleOriginal, this.horizontalAlignment) / (this.unstretchLeft? global.wideFactor : 1);
+        return global.scalePosition(x, this.widthForScale, this.widthForScaleOriginal, this.parent.widthForScale, this.parent.widthForScaleOriginal, this.horizontalAlignment) / (this.unstretchLeft? this.window.wideFactor : 1);
     }
 
     function scaleTop(y)
@@ -157,7 +157,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 			return y;
 		}
 
-		var parentHeightOriginal = this.parent.isbg && !this.isbg? this.parent.heightForScaleOriginal / global.wideFactor : this.parent.heightForScaleOriginal;
+		var parentHeightOriginal = this.parent.isbg && !this.isbg? this.parent.heightForScaleOriginal / this.window.wideFactor : this.parent.heightForScaleOriginal;
 		var topScroll = this.window.wideScreen? this.topScroll : 0;
 
         return global.scalePosition(y, this.heightForScale, this.heightForScaleOriginal, this.parent.heightForScale, parentHeightOriginal, this.verticalAlignment) + topScroll * this.window.widthScale;
@@ -192,7 +192,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 	function scaleCursorY(y)
 	{
 		var topOffset = this.window.wideScreen? this.window.scrollYOffset : 0;
-		return this.scaleHeight(y / global.wideFactor) + topOffset * this.window.widthScale;
+		return this.scaleHeight(y / this.window.wideFactor) + topOffset * this.window.widthScale;
 	}
 
 	function unscaleMouseX(x)
@@ -200,7 +200,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 		if (this.isbg) {
 			return this.window.unscaleWidth(x);
 		}
-		return this.window.unscaleWidth(x) * global.wideFactor;
+		return this.window.unscaleWidth(x) * this.window.wideFactor;
 	}
 
 	function unscaleMouseY(y)
@@ -292,7 +292,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 	function scaleInsideTop(y, h, hOriginal, verticalAlignment)
 	{
 		var topScroll = this.window.wideScreen? (this.isbg? this.window.scrollYOffset : 0) : 0;
-		var heightForScaleOriginal = this.isbg? this.heightForScaleOriginal / global.wideFactor : this.heightForScaleOriginal;
+		var heightForScaleOriginal = this.isbg? this.heightForScaleOriginal / this.window.wideFactor : this.heightForScaleOriginal;
 		return global.scalePosition(y, h, hOriginal, this.heightForScale, heightForScaleOriginal, verticalAlignment) + topScroll * this.window.widthScale;
 	}
 
@@ -878,7 +878,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 			this._imageHeight = global.imagesHdDict[imageKey]["height"];
 
 			if (global.messageLayerImages.contains(imageKey) && this.window.sflags.wideWindow) {
-				this._imageWidth = (this._imageWidth * global.wideFactor) | 0;
+				this._imageWidth = (this._imageWidth * this.window.wideFactor) | 0;
 			}
 
 			this._imageWidth *= this.numberOfImages;
@@ -1558,7 +1558,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 		this.updateBgFromSource(src, swidth, sheight);
 
 		if (this.isbg && src.isbg) {
-		 	top /= global.wideFactor;
+		 	top /= this.window.wideFactor;
 		}
 
 		// Pass through to operateRect if width/height are same

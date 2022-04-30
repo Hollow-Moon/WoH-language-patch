@@ -92,7 +92,11 @@ global.addHdPaths = function(patches_arr, patchName, folder="", innerPath="")
 			break;
 		}
 	}
-	var patchNameHd = patchName === global.mainPatchName || (global.devMode && global.devImageFolders.contains(patchName))? global.get_hdPatchName() : (patchName + global.get_hdPatchSuffix());
+	var patchNameHd = (patchName === global.mainPatchName || (global.devMode && global.devImageFolders.contains(patchName)))? global.get_hdPatchName() : (patchName + global.get_hdPatchSuffix());
+	if (patchNameHd === void)
+	{
+		return;
+	}
 	if (folder != "") {
 		patches_arr.add([patchNameHd, folder + innerPath]);
 	}

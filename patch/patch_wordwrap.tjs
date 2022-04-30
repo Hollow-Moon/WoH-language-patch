@@ -59,6 +59,10 @@ class HistoryLayer_patch_wordwrap_override extends global.HistoryLayer_patch_wor
 
 	function needsReline(elm)
 	{
+		if (typeof(this.window) === "Object" && typeof(this.window.historyWriteEnabled) === "Integer" && !(this.window.historyWriteEnabled))
+		{
+			return false;
+		}
 		var currentWordWidth = 0;
 		if (typeof(elm) === "Object")
 		{

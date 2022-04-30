@@ -597,6 +597,8 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 			setInnerSize(w, h);
 			resetPrimaryPos();
 		} else {
+			// This section is only called when window gets maximized.
+			z = h / pxHeight; // Fix possible crash from unneccessarily large textures in 4.0x mode
 			resetPrimaryPos(z, w, h);
 			_zoomNumer = zn;
 			_zoomDenom = zd;

@@ -536,15 +536,22 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 		// フック
 		callHook("afterChangeScreenMode");
 	}
-	function resetPrimaryPos(z = 0, w, h) {
+	function resetPrimaryPos(max = 0, w, h) {
 		if (typeof(_primaryLayer) === "Object")
 		{
 			with (_primaryLayer) {
-				if (z > 0) {
-					var x = (innerWidth  - w) / (z*2);
-					var y = (innerHeight - h) / (z*2);
-					w = Math.ceil(innerWidth  / z);
-					h = Math.ceil(innerHeight / z);
+				if (max) { // Maximized window
+					// z is the zoom factor between screen space and base resolution when touching the window borders from inside.
+					var z = w / (pxWidth * this.wideFactor);
+					if ((innerWidth / innerHeight) > (pxWidth * this.wideFactor / pxHeight))
+						z = h / pxHeight;
+
+					// Scale values from screen space to base resolution. They will be upscaled again by setPos and setSize for internal usage.
+					var x = (innerWidth  - w) / (z * 2);
+					var y = (innerHeight - h) / (z * 2 * this.wideFactor);					// isbg=1, so y will be handled by this.window.scaleWidth(), which will multiply in an unwanted wideFactor
+					var w = global.Math.ceil(innerWidth / (z * this.wideFactor));
+					var h = global.Math.ceil((innerHeight / (z * this.wideFactor)) - y);	// y substracted to make the viewport smaller than the clientRect, in order to add a black bar at the bottom in wide mode.
+
 					if (typeof(sysbase) === "Object")
 					{
 						sysbase.setPos(x, y);
@@ -553,13 +560,13 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 					.setImageSize(w, h);
 					.fillRect(0, 0, w, h, 0);
 					.setSize(w, h);
-				} else {
+				} else { // Normal window
 					if (typeof(sysbase) === "Object")
 					{
 						sysbase.setPos(0, 0);
 					}
 					.hasImage = false;
-					.setSize(pxWidth, pxHeight);
+					.setSize(pxWidth, pxHeight / this.wideFactor);	// isbg=1, so both coordinates will be handled by this.window.scaleWidth() -> fine for width, but height would be larger then the window frame in wide mode (paints even outside of client area)
 				}
 			}
 		}
@@ -598,7 +605,6 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 			resetPrimaryPos();
 		} else {
 			// This section is only called when window gets maximized.
-			z = h / pxHeight; // Fix possible crash from unneccessarily large textures in 4.0x mode
 			resetPrimaryPos(z, w, h);
 			_zoomNumer = zn;
 			_zoomDenom = zd;

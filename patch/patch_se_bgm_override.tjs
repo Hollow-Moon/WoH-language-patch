@@ -29,8 +29,21 @@ class SESoundBuffer_patch_se_bgm_override extends global.SESoundBuffer_patch_se_
 
 	function play(elm)
 	{
+		if (elm.storage !== void && elm.storage !== "")
+		{
+			elm.storage = global.chop_audio_extension(global.Storages.extractStorageName(elm.storage));
+		}
 		global.mutate_tag_audio_storage(elm);
-		return super.play(...);
+		var ret = super.play(...);
+		if (this.currentStorage !== void && this.currentStorage !== "")
+		{
+			this.currentStorage = global.chop_audio_extension(global.Storages.extractStorageName(this.currentStorage));
+		}
+		if (elm.storage !== void && elm.storage !== "")
+		{
+			elm.storage = global.chop_audio_extension(global.Storages.extractStorageName(elm.storage));
+		}
+		return ret;
 	}
 }
 global.SESoundBuffer = global.SESoundBuffer_patch_se_bgm_override;
@@ -50,27 +63,102 @@ class BGM_patch_se_bgm_override extends global.BGM_patch_se_bgm_original
 
 	function play(elm)
 	{
+		if (elm.storage !== void && elm.storage !== "")
+		{
+			elm.storage = global.chop_audio_extension(global.Storages.extractStorageName(elm.storage));
+		}
 		global.mutate_tag_audio_storage(elm);
-		return super.play(...);
+		var ret = super.play(...);
+		if (this.playingStorage !== void && this.playingStorage !== "")
+		{
+			this.playingStorage = global.chop_audio_extension(global.Storages.extractStorageName(this.playingStorage));
+		}
+		if (this.currentStorage !== void && this.currentStorage !== "")
+		{
+			this.currentStorage = global.chop_audio_extension(global.Storages.extractStorageName(this.currentStorage));
+		}
+		if (elm.storage !== void && elm.storage !== "")
+		{
+			elm.storage = global.chop_audio_extension(global.Storages.extractStorageName(elm.storage));
+		}
+		return ret;
 	}
 
 	function fadeIn(elm)
 	{
+		if (elm.storage !== void && elm.storage !== "")
+		{
+			elm.storage = global.chop_audio_extension(global.Storages.extractStorageName(elm.storage));
+		}
 		global.mutate_tag_audio_storage(elm);
-		return super.fadeIn(...);
+		var ret =  super.fadeIn(...);
+		if (this.playingStorage !== void && this.playingStorage !== "")
+		{
+			this.playingStorage = global.chop_audio_extension(global.Storages.extractStorageName(this.playingStorage));
+		}
+		if (this.currentStorage !== void && this.currentStorage !== "")
+		{
+			this.currentStorage = global.chop_audio_extension(global.Storages.extractStorageName(this.currentStorage));
+		}
+		if (elm.storage !== void && elm.storage !== "")
+		{
+			elm.storage = global.chop_audio_extension(global.Storages.extractStorageName(elm.storage));
+		}
+		return ret;
 	}
 
 	function exchange(elm)
 	{
+		if (this.playingStorage !== void && this.playingStorage !== "" && elm.storage !== void && elm.storage !== "")
+		{
+			if (global.chop_audio_extension(global.Storages.extractStorageName(elm.storage)) === this.playingStorage)
+			{
+				return;
+			}
+		}
+		if (elm.storage !== void && elm.storage !== "")
+		{
+			elm.storage = global.chop_audio_extension(global.Storages.extractStorageName(elm.storage));
+		}
 		global.mutate_tag_audio_storage(elm);
-		return super.exchange(...);
+		var ret = super.exchange(...);
+		if (this.playingStorage !== void && this.playingStorage !== "")
+		{
+			this.playingStorage = global.chop_audio_extension(global.Storages.extractStorageName(this.playingStorage));
+		}
+		if (this.currentStorage !== void && this.currentStorage !== "")
+		{
+			this.currentStorage = global.chop_audio_extension(global.Storages.extractStorageName(this.currentStorage));
+		}
+		if (elm.storage !== void && elm.storage !== "")
+		{
+			elm.storage = global.chop_audio_extension(global.Storages.extractStorageName(elm.storage));
+		}
+		return ret;
 	}
 
 	// in Override.tjs
 	function playOverlap(elm)
 	{
+		if (elm.storage !== void && elm.storage !== "")
+		{
+			elm.storage = global.chop_audio_extension(global.Storages.extractStorageName(elm.storage));
+		}
 		global.mutate_tag_audio_storage(elm);
-		return super.playOverlap(...);
+		var ret = super.playOverlap(...);
+		if (this.playingStorage !== void && this.playingStorage !== "")
+		{
+			this.playingStorage = global.chop_audio_extension(global.Storages.extractStorageName(this.playingStorage));
+		}
+		if (this.currentStorage !== void && this.currentStorage !== "")
+		{
+			this.currentStorage = global.chop_audio_extension(global.Storages.extractStorageName(this.currentStorage));
+		}
+		if (elm.storage !== void && elm.storage !== "")
+		{
+			elm.storage = global.chop_audio_extension(global.Storages.extractStorageName(elm.storage));
+		}
+		return ret;
 	}
 }
 global.BGM = global.BGM_patch_se_bgm_override;

@@ -39,6 +39,10 @@ class SESoundBuffer_patch_se_bgm_override extends global.SESoundBuffer_patch_se_
 		{
 			this.currentStorage = global.chop_audio_extension(global.Storages.extractStorageName(this.currentStorage));
 		}
+		if (typeof(this.playingStorage) === "String" && this.playingStorage !== "")
+		{
+			this.playingStorage = global.chop_audio_extension(global.Storages.extractStorageName(this.playingStorage));
+		}
 		if (elm.storage !== void && elm.storage !== "")
 		{
 			elm.storage = global.chop_audio_extension(global.Storages.extractStorageName(elm.storage));

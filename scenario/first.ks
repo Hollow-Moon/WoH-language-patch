@@ -36,6 +36,7 @@
 *titlemenu
 ;フラグをクリア
 @eval exp="(Dictionary.clear incontextof global.f)()"
+@call storage=call.ks target=*resetall
 @cancelautomode
 @if exp=!sf.normalTitle
 ; オープニングを見るまでのタイトルメニュー

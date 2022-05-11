@@ -1,19 +1,4 @@
 ﻿
-global.mutate_tag_audio_storage = function(elm)
-{
-	var storage = elm.storage;
-	if (storage === void || storage === "")
-	{
-		return;
-	}
-	var file_name = global.get_full_path_of_audio(storage);
-	if (file_name === "")
-	{
-		throw new global.Exception(("Audio \"%s\" not found").sprintf(storage));
-	}
-	elm.storage = file_name;
-};
-
 global.SESoundBuffer_patch_se_bgm_original = global.SESoundBuffer;
 class SESoundBuffer_patch_se_bgm_override extends global.SESoundBuffer_patch_se_bgm_original
 {
@@ -27,27 +12,61 @@ class SESoundBuffer_patch_se_bgm_override extends global.SESoundBuffer_patch_se_
 		this.SESoundBuffer_patch_se_bgm_override(...);
 	}
 
-	function play(elm)
+	function play(elm, resetvolume = true)
 	{
-		if (elm.storage !== void && elm.storage !== "")
+		// play オーバーライド
+		(global.WaveSoundBuffer.stop incontextof this)();
+		this.stopFade();
+@if(GAME_WOHN)
+		global.asyncCaller.cancel(this._onFadeCompleted);	//	予約されているフェード後の停止をキャンセル
+@endif
+		var storage = elm.storage;
+		var start = elm.start;
+		var found = true;
+@if(0)
+		if(!Storages.isExistentStorage(storage))
 		{
-			elm.storage = global.chop_audio_extension(global.Storages.extractStorageName(elm.storage));
+			var test;
+			if(test = storage + ".wav", Storages.isExistentStorage(test))
+				storage = test;
+			else if(test = storage + ".ogg", Storages.isExistentStorage(test))
+				storage = test;
+			else if(test = storage + ".opus", Storages.isExistentStorage(test))
+				storage = test;
+			else if(test = storage + ".tcw", Storages.isExistentStorage(test))
+				storage = test;
+			else
+				found = false;
 		}
-		global.mutate_tag_audio_storage(elm);
-		var ret = super.play(...);
-		if (this.currentStorage !== void && this.currentStorage !== "")
+@endif
+@if(1)
+		found = global.check_if_audio_exists(storage);
+@endif
+		if(!found)
+			throw new global.Exception(__("効果音 %s が見つかりません").sprintf(storage));
+		var loop = elm.loop === void ? false : +elm.loop;
+		this.looping = loop;
+		if(loop)
+			this.currentStorage = storage;
+		else
+			this.currentStorage = "";
+		try
 		{
-			this.currentStorage = global.chop_audio_extension(global.Storages.extractStorageName(this.currentStorage));
+			(global.WaveSoundBuffer.open incontextof this)(storage);
+			if(resetvolume) *(&(global.WaveSoundBuffer.volume) incontextof this) = currentVolume * 1000;
+			// 再生位置指定
+			if (start !== void &&
+				(*(&(global.WaveSoundBuffer.labels) incontextof this)) !== void &&
+				(start = (*(&(global.WaveSoundBuffer.labels) incontextof this))[start]) !== void &&
+				(start = start.samplePosition) !== void) {
+				*(&(global.WaveSoundBuffer.samplePosition) incontextof this) = start;
+			}
+			(global.WaveSoundBuffer.play incontextof this)();
 		}
-		if (typeof(this.playingStorage) === "String" && this.playingStorage !== "")
+		catch(e)
 		{
-			this.playingStorage = global.chop_audio_extension(global.Storages.extractStorageName(this.playingStorage));
+			global.Debug.message("効果音の再生に失敗しました(実行は続行できます) : " + e.message);
 		}
-		if (elm.storage !== void && elm.storage !== "")
-		{
-			elm.storage = global.chop_audio_extension(global.Storages.extractStorageName(elm.storage));
-		}
-		return ret;
 	}
 }
 global.SESoundBuffer = global.SESoundBuffer_patch_se_bgm_override;
@@ -65,104 +84,62 @@ class BGM_patch_se_bgm_override extends global.BGM_patch_se_bgm_original
 		this.BGM_patch_se_bgm_override(...);
 	}
 
-	function play(elm)
+	function playBuffer(buf, storage, loop, paused = false, start)
 	{
-		if (elm.storage !== void && elm.storage !== "")
-		{
-			elm.storage = global.chop_audio_extension(global.Storages.extractStorageName(elm.storage));
-		}
-		global.mutate_tag_audio_storage(elm);
-		var ret = super.play(...);
-		if (this.playingStorage !== void && this.playingStorage !== "")
-		{
-			this.playingStorage = global.chop_audio_extension(global.Storages.extractStorageName(this.playingStorage));
-		}
-		if (this.currentStorage !== void && this.currentStorage !== "")
-		{
-			this.currentStorage = global.chop_audio_extension(global.Storages.extractStorageName(this.currentStorage));
-		}
-		if (elm.storage !== void && elm.storage !== "")
-		{
-			elm.storage = global.chop_audio_extension(global.Storages.extractStorageName(elm.storage));
-		}
-		return ret;
-	}
+		// buf に対して演奏を開始させる
 
-	function fadeIn(elm)
-	{
-		if (elm.storage !== void && elm.storage !== "")
+		// 拡張子やドライブ文字が省略された場合、検索を行う
+		var found = true;
+@if(0)
+		var test;
+		if(!Storages.isExistentStorage(storage))
 		{
-			elm.storage = global.chop_audio_extension(global.Storages.extractStorageName(elm.storage));
+			if(test = storage + ".wav", Storages.isExistentStorage(test))
+				storage = test;
+			else if(test = storage + ".ogg", Storages.isExistentStorage(test))
+				storage = test;
+			else if(test = storage + ".opus", Storages.isExistentStorage(test))
+				storage = test;
+			else if(test = storage + ".tcw", Storages.isExistentStorage(test))
+				storage = test;
+			else
+				found = false;
 		}
-		global.mutate_tag_audio_storage(elm);
-		var ret =  super.fadeIn(...);
-		if (this.playingStorage !== void && this.playingStorage !== "")
-		{
-			this.playingStorage = global.chop_audio_extension(global.Storages.extractStorageName(this.playingStorage));
-		}
-		if (this.currentStorage !== void && this.currentStorage !== "")
-		{
-			this.currentStorage = global.chop_audio_extension(global.Storages.extractStorageName(this.currentStorage));
-		}
-		if (elm.storage !== void && elm.storage !== "")
-		{
-			elm.storage = global.chop_audio_extension(global.Storages.extractStorageName(elm.storage));
-		}
-		return ret;
-	}
+@endif
+@if(1)
+		found = global.check_if_audio_exists(storage);
+@endif
 
-	function exchange(elm)
-	{
-		if (this.playingStorage !== void && this.playingStorage !== "" && elm.storage !== void && elm.storage !== "")
+
+		if(this._enabled)
 		{
-			if (global.chop_audio_extension(global.Storages.extractStorageName(elm.storage)) === this.playingStorage)
+			if(!found)
 			{
+				global.Debug.message("BGM " + storage + " が見つかりません");
+				return;
+			}
+
+			try
+			{
+				buf.looping = loop; // 引数の "loop"
+				buf.open(storage);
+                // ごう追加 再生位置制御
+                if (start !== void &&
+                    buf.labels !== void &&
+                    (start = buf.labels[start]) !== void &&
+                    (start = start.samplePosition) !== void) {
+                    buf.samplePosition = start;
+                }
+                buf.paused = paused;
+				buf.play();
+			}
+			catch(e)
+			{
+				global.Debug.message("BGM " + storage +" を再生できません : " + e.message);
 				return;
 			}
 		}
-		if (elm.storage !== void && elm.storage !== "")
-		{
-			elm.storage = global.chop_audio_extension(global.Storages.extractStorageName(elm.storage));
-		}
-		global.mutate_tag_audio_storage(elm);
-		var ret = super.exchange(...);
-		if (this.playingStorage !== void && this.playingStorage !== "")
-		{
-			this.playingStorage = global.chop_audio_extension(global.Storages.extractStorageName(this.playingStorage));
-		}
-		if (this.currentStorage !== void && this.currentStorage !== "")
-		{
-			this.currentStorage = global.chop_audio_extension(global.Storages.extractStorageName(this.currentStorage));
-		}
-		if (elm.storage !== void && elm.storage !== "")
-		{
-			elm.storage = global.chop_audio_extension(global.Storages.extractStorageName(elm.storage));
-		}
-		return ret;
-	}
-
-	// in Override.tjs
-	function playOverlap(elm)
-	{
-		if (elm.storage !== void && elm.storage !== "")
-		{
-			elm.storage = global.chop_audio_extension(global.Storages.extractStorageName(elm.storage));
-		}
-		global.mutate_tag_audio_storage(elm);
-		var ret = super.playOverlap(...);
-		if (this.playingStorage !== void && this.playingStorage !== "")
-		{
-			this.playingStorage = global.chop_audio_extension(global.Storages.extractStorageName(this.playingStorage));
-		}
-		if (this.currentStorage !== void && this.currentStorage !== "")
-		{
-			this.currentStorage = global.chop_audio_extension(global.Storages.extractStorageName(this.currentStorage));
-		}
-		if (elm.storage !== void && elm.storage !== "")
-		{
-			elm.storage = global.chop_audio_extension(global.Storages.extractStorageName(elm.storage));
-		}
-		return ret;
+		this.currentBuffer = buf;
 	}
 }
 global.BGM = global.BGM_patch_se_bgm_override;

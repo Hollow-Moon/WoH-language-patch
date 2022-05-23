@@ -1,6 +1,4 @@
 ﻿
-global.particlecount_magic = 0;
-
 // TODO:
 // * Refactor inlined code into separate functions
 // * Fix update rect calculations
@@ -16,7 +14,6 @@ class Particle
 	var particle_angleomega = 0.0;
 	var particle_opacity = 0.0;
 	var particle_opacityvaridation = 0.0;
-	var ticks_stepped = 0;
 	var particlecount_magic_ = 0;
 	var particleManager_owner = null;
 	function reset(a2, a3, a4)
@@ -60,18 +57,16 @@ class VectorParticle extends global.Particle
 	var particle_accel_sin = 0.0;
 	function timestep(a2)
 	{
-		var v2 = a2 * 1.0;
-		var v4 = this.particle_magnifyvaridation;
 		this.ticks_stepped += a2;
-		this.particle_magnify = v4 * v2 + this.particle_magnify;
-		this.particle_angle = this.particle_angleomega * v2 + this.particle_angle;
-		this.particle_opacity = this.particle_opacityvaridation * v2 + this.particle_opacity;
-		var v5 = this.particle_accel_cos * v2;
-		var v6 = this.particle_accel_sin * v2;
-		this.particle_pos_left = v2 * v5 * 0.5 + this.particle_speed_cos * v2 + this.particle_pos_left;
-		this.particle_pos_top = 0.5 * (v2 * v6) + v2 * this.particle_speed_sin + this.particle_pos_top;
-		this.particle_speed_cos = v5 + this.particle_speed_cos;
-		this.particle_speed_sin = v6 + this.particle_speed_sin;
+		this.particle_magnify = this.particle_magnifyvaridation * a2 + this.particle_magnify;
+		this.particle_angle = this.particle_angleomega * a2 + this.particle_angle;
+		this.particle_opacity = this.particle_opacityvaridation * a2 + this.particle_opacity;
+		var v5 = this.particle_accel_cos * a2;
+		var v6 = this.particle_accel_sin * a2;
+		this.particle_pos_left = a2 * v5 * 0.5 + this.particle_speed_cos * a2 + this.particle_pos_left;
+		this.particle_pos_top = a2 * v6 * 0.5 + this.particle_speed_sin * a2 + this.particle_pos_top;
+		this.particle_speed_cos += v5;
+		this.particle_speed_sin += v6;
 	}
 }
 
@@ -83,19 +78,17 @@ class RotateParticle extends global.Particle
 	var particle_rotateradiusvaridation = 0.0;
 	function timestep(a2)
 	{
-		var v2 = a2 * 1.0;
-		var v4 = this.particle_magnifyvaridation * v2;
 		this.ticks_stepped += a2;
+		this.particle_magnify = this.particle_magnifyvaridation * a2 + this.particle_magnify;
+		this.particle_angle = this.particle_angleomega * a2 + this.particle_angle;
+		this.particle_opacity = this.particle_opacityvaridation * a2 + this.particle_opacity;
+		var particlecount_magic_double = this.particle_rotateomega * a2 + this.particlecount_magic_double;
+		this.particlecount_magic_double = particlecount_magic_double;
+		var particle_rotateradius = this.particle_rotateradiusvaridation * a2 + this.particle_rotateradius;
+		this.particle_rotateradius = particle_rotateradius;
 		var v5 = this.particleManager_owner;
-		this.particle_magnify = v4 + this.particle_magnify;
-		this.particle_angle = this.particle_angleomega * v2 + this.particle_angle;
-		this.particle_opacity = this.particle_opacityvaridation * v2 + this.particle_opacity;
-		var v7 = this.particle_rotateomega * v2 + this.particlecount_magic_double;
-		this.particlecount_magic_double = v7;
-		var v6 = v2 * this.particle_rotateradiusvaridation + this.particle_rotateradius;
-		this.particle_rotateradius = v6;
-		this.particle_pos_left = global.Math.cos(v7) * v6 + v5.particleRotateCenterX;
-		this.particle_pos_top = v5.particleRotateCenterY - global.Math.sin(v7) * v6;
+		this.particle_pos_left = v5.particleRotateCenterX + global.Math.cos(particlecount_magic_double) * particle_rotateradius;
+		this.particle_pos_top = v5.particleRotateCenterY - global.Math.sin(particlecount_magic_double) * particle_rotateradius;
 	}
 }
 
@@ -106,10 +99,10 @@ class AccelRotateParticle extends global.RotateParticle
 	function timestep(a2)
 	{
 		super.timestep(a2);
-		var v3 = (a2 * 1.0) * this.particle_rotateomegatime_accel + this.particle_rotateomega;
-		this.particle_rotateomega = v3;
-		if ( v3 > this.particle_rotateomega_accel )
-			this.particle_rotateomega = this.particle_rotateomega_accel;
+		var particle_rotateomega = this.particle_rotateomegatime_accel * a2 + this.particle_rotateomega;
+		if ( particle_rotateomega > this.particle_rotateomega_accel )
+			particle_rotateomega = this.particle_rotateomega_accel;
+		this.particle_rotateomega = particle_rotateomega;
 	}
 }
 
@@ -119,25 +112,23 @@ class BlinkParticle extends global.Particle
 	var particle_blinkcount = 0;
 	function timestep(a2)
 	{
-		var v2 = a2 * 1.0;
-		var v3 = this.particle_magnifyvaridation;
 		this.ticks_stepped += a2;
-		this.particle_magnify = v3 * v2 + this.particle_magnify;
-		this.particle_angle = this.particle_angleomega * v2 + this.particle_angle;
-		var v4 = v2 * this.particle_opacityvaridation + this.particle_opacity;
-		this.particle_opacity = v4;
-		if ( v4 < 0.0 )
+		this.particle_magnify = this.particle_magnifyvaridation * a2 + this.particle_magnify;
+		this.particle_angle = this.particle_angleomega * a2 + this.particle_angle;
+		var particle_opacity = this.particle_opacityvaridation * a2 + this.particle_opacity;
+		this.particle_opacity = particle_opacity;
+		if ( particle_opacity < 0.0 )
 		{
 			this.particle_blinkcount -= 1;
 			this.particle_opacityvaridation = this.particle_opacityvaridation * -1.0;
 			this.particle_opacity = 0.0;
 			return;
 		}
-		var v6 = (this.particle_blinktime & 0xffffffff) * 1.0;
-		if (v6 < v4 || v6 == v4)
+		var particle_blinktime = (this.particle_blinktime | 0) * 1.0;
+		if (particle_blinktime < particle_opacity || particle_blinktime == particle_opacity)
 		{
 			this.particle_opacityvaridation = this.particle_opacityvaridation * -1.0;
-			this.particle_opacity = v6;
+			this.particle_opacity = particle_blinktime;
 		}
 	}
 }
@@ -173,20 +164,20 @@ class ParticleManager
 	var objthis = null;
 	var particleInitializer = null;
 	var initializedParticle = 0;
-	function init(a2, a3, a4)
+	function init(particle_start_count_in, particle_max_count_in, particle_generate_rate_in)
 	{
-		this.particleGenerateRate = a4;
+		this.particleGenerateRate = particle_generate_rate_in;
 		this.particleGenerateRate_total = 0.0;
 		this.particleMaxCount = 0;
 		this.particle_objects = [];
 		this.particleCount = 0;
 		this.particleMaxCount_allocated = 0;
 		this.particleInitializer = null;
-		if ( a3 < a2 )
+		if ( particle_max_count_in < particle_start_count_in )
 		{
-			a2 = a3;
+			particle_start_count_in = particle_max_count_in;
 		}
-		this.particleStartCount = a2;
+		this.particleStartCount = particle_start_count_in;
 		this.maxParticleAngle = 0.0;
 		this.minParticleAngle = 0.0;
 		this.diffParticleAngle = 0.0 - 0.0;
@@ -246,7 +237,7 @@ class ParticleManager
 		var i = 0;
 		if ( this.particleMaxCount_allocated > 0 )
 		{
-			for ( i = 0; i < this.particleMaxCount_allocated && this.particle_objects[i] != null && this.particle_objects[i].ticks_stepped < 0; i += 1 )
+			for ( i = 0; (i < this.particleMaxCount_allocated) && (this.particle_objects[i] != null) && (this.particle_objects[i].ticks_stepped >= 0); i += 1 )
 			{
 			}
 			if ( i >= this.particleMaxCount_allocated )
@@ -256,8 +247,7 @@ class ParticleManager
 				this.particle_objects[i] = this.create_particle();
 			}
 			this.reset(this.particle_objects[i]);
-			global.particlecount_magic = (2100005341 * global.particlecount_magic + 1) & 0xffffffff;
-			this.particle_objects[i].particlecount_magic_ = (((global.particlecount_magic & 0xffffffff) * 1.0) * 2.328306436538696e-10 * ((this.initializedParticle & 0xffffffff) * 1.0) ) & 0xffffffff;
+			this.particle_objects[i].particlecount_magic_ = (global.Math.random() * ((this.initializedParticle & 0xffffffff) * 1.0) ) & 0xffffffff;
 			this.particleCount += 1;
 		}
 	}
@@ -333,10 +323,10 @@ class ParticleManager
 		{
 			if (v5 <= -1.0)
 			{
-				var v8 = v5 & 0xffffffff;
+				var v8 = v5 | 0;
 				var v9 = this.particleCount;
-				this.particleGenerateRate_total = v5 - ((v5 & 0xffffffff) * 1.0);
-				if (v9 + (v5 & 0xffffffff) < 0)
+				this.particleGenerateRate_total = v5 - ((v5 | 0) * 1.0);
+				if (v9 + (v5 | 0) < 0)
 				{
 					v8 = -v9;
 				}
@@ -373,10 +363,10 @@ class ParticleManager
 		}
 		else
 		{
-			var v6 = v5 & 0xffffffff;
+			var v6 = v5 | 0;
 			var v7 = this.particleMaxCount - this.particleCount;
-			this.particleGenerateRate_total = v5 - ((v5 & 0xffffffff) * 1.0);
-			if ((v5 & 0xffffffff) > v7)
+			this.particleGenerateRate_total = v5 - ((v5 | 0) * 1.0);
+			if ((v5 | 0) > v7)
 			{
 				v6 = v7;
 			}
@@ -436,25 +426,17 @@ class ParticleManager
 	}
 	function reset(a2)
 	{
-		var v3 = (2100005341 * (2100005341 * global.particlecount_magic + 1) + 1) & 0xffffffff;
-		a2.particle_magnify = (((2100005341 * global.particlecount_magic + 1) & 0xffffffff) * 1.0) * 2.328306436538696e-10 * this.diffParticleMagnify + this.minParticleMagnify;
-		a2.particle_magnifyvaridation = ((v3 & 0xffffffff) * 1.0) * 2.328306436538696e-10 * this.diffParticleMagnifyVaridation + this.minParticleMagnifyVaridation;
-		var v8 = (2100005341 * v3 + 1) & 0xffffffff;
-		
-		a2.particle_angle = ((v8 & 0xffffffff) * 1.0) * 2.328306436538696e-10 * this.diffParticleAngle + this.minParticleAngle;
-		var v4 = (2100005341 * v8 + 1) & 0xffffffff;
-		a2.particle_angleomega = ((v4 & 0xffffffff) * 1.0) * 2.328306436538696e-10 * this.diffParticleAngleOmega + this.minParticleAngleOmega;
-		var v5 = v4;
+		a2.particle_magnify = global.Math.random() * this.diffParticleMagnify + this.minParticleMagnify;
+		a2.particle_magnifyvaridation = global.Math.random() * this.diffParticleMagnifyVaridation + this.minParticleMagnifyVaridation;
+		a2.particle_angle = global.Math.random() * this.diffParticleAngle + this.minParticleAngle;
+		a2.particle_angleomega = global.Math.random() * this.diffParticleAngleOmega + this.minParticleAngleOmega;
 		if ( this.rotateReverse )
 		{
-			v5 = (2100005341 * v4 + 1) & 0xffffffff;
-			var v6 = (((v5 & 0xffffffff) * 1.0) * 2.328306436538696e-10 <= 0.5) ? 1.0 : -1.0;
-			a2.particle_angleomega = v6 * a2.particle_angleomega;
+			var v6 = (global.Math.random() <= 0.5) ? 1.0 : -1.0;
+			a2.particle_angleomega *= v6;
 		}
-		var v9 = (2100005341 * v5 + 1) & 0xffffffff;
-		a2.particle_opacity = ((v9 & 0xffffffff) * 1.0) * 2.328306436538696e-10 * this.diffParticleOpacity + this.minParticleOpacity;
-		global.particlecount_magic = (2100005341 * v9 + 1) & 0xffffffff;
-		a2.particle_opacityvaridation = 2.328306436538696e-10 * ((global.particlecount_magic & 0xffffffff) * 1.0) * this.diffParticleOpacityVaridation + this.minParticleOpacityVaridation;
+		a2.particle_opacity = global.Math.random() * this.diffParticleOpacity + this.minParticleOpacity;
+		a2.particle_opacityvaridation = global.Math.random() * this.diffParticleOpacityVaridation + this.minParticleOpacityVaridation;
 	}
 }
 
@@ -477,9 +459,9 @@ class VectorParticleManager extends global.ParticleManager
 	var minParticleVectorRotate = 0.0;
 	var diffParticleVectorRotate = 0.0;
 
-	function init(a1, a2, a4, a5, a6, a7, a8)
+	function init(particle_start_count_in, particle_max_count_in, particle_generate_rate_in, a5, a6, a7, a8)
 	{
-		super.init(a1, a2, a4);
+		super.init(particle_start_count_in, particle_max_count_in, particle_generate_rate_in);
 		this.particleAppearLeft = a5;
 		this.particleAppearTop = a6;
 		this.particleAppearWidth = a7;
@@ -496,11 +478,12 @@ class VectorParticleManager extends global.ParticleManager
 		this.maxParticleVectorRotate = 0.0;
 		this.minParticleVectorRotate = 0.0;
 		this.diffParticleVectorRotate = 0.0 - 0.0;
-		super.resize_particle_count(a1);
+		super.resize_particle_count(particle_start_count_in);
 	}
 
 	function reset(a2)
 	{
+		super.reset(a2);
 		if ( this.particleInitializer !== null )
 		{
 			var v13 = this.particleInitializer;
@@ -515,25 +498,19 @@ class VectorParticleManager extends global.ParticleManager
 		}
 		else
 		{
-			var v3 = (2100005341 * (2100005341 * global.particlecount_magic + 1) + 1) & 0xffffffff;
-			var v23 = (((2100005341 * global.particlecount_magic + 1) & 0xffffffff) * 1.0) * 2.328306436538696e-10 * this.diffParticleVectorAngle + this.minParticleVectorAngle;
-			var v21 = 2.328306436538696e-10 * ((v3 * 0xffffffff) * 1.0) * this.diffParticleSpeed + this.minParticleSpeed;
-			var v4 = (2100005341 * v3 + 1) & 0xffffffff;
-			var v5 = ((v4 & 0xffffffff) * 1.0) * 2.328306436538696e-10 * this.diffParticleVectorRotate + this.minParticleVectorRotate;
-			var v6 = (2100005341 * v4 + 1) & 0xffffffff;
-			var v22 = 2.328306436538696e-10 * ((v6 & 0xffffffff) * 1.0) * this.diffParticalAccel + this.minParticleAccel;
-			global.particlecount_magic = 2100005341 * (1820084425 * v6 + 2100005342) + 1;
-			var v8 = ((global.particlecount_magic & 0xffffffff) * 1.0) * 2.328306436538696e-10;
+			var v23 = global.Math.random() * this.diffParticleVectorAngle + this.minParticleVectorAngle;
+			var v21 = global.Math.random() * this.diffParticleSpeed + this.minParticleSpeed;
+			var v5 = global.Math.random() * this.diffParticleVectorRotate + this.minParticleVectorRotate;
+			var v22 = global.Math.random() * this.diffParticalAccel + this.minParticleAccel;
 			a2.ticks_stepped = 0;
-			a2.particle_pos_left = this.particleAppearWidth * v8 + this.particleAppearLeft;
-			a2.particle_pos_top = this.particleAppearHeight * v8 + this.particleAppearTop;
-			a2.particle_opacity = v8 * this.diffParticleOpacity + this.minParticleOpacity;
+			a2.particle_pos_left = global.Math.random() * this.particleAppearWidth + this.particleAppearLeft;
+			a2.particle_pos_top = global.Math.random() * this.particleAppearHeight + this.particleAppearTop;
+			a2.particle_opacity = global.Math.random() * this.diffParticleOpacity + this.minParticleOpacity;
 			a2.particle_speed_cos = global.Math.cos(v23) * v21;
 			a2.particle_speed_sin = -(global.Math.sin(v23) * v21);
 			a2.particle_accel_cos = global.Math.cos(v5) * v22;
 			a2.particle_accel_sin = -(global.Math.sin(v5) * v22);
 		}
-		super.reset(a2);
 	}
 
 	function create_particle()
@@ -559,11 +536,11 @@ class RotateParticleManager extends global.ParticleManager
 	var diffParticleRotateOmega = 0.0;
 	var particleRotateReverse = 0;
 
-	function init(a1, a2, a4, a5, a6)
+	function init(particle_start_count_in, particle_max_count_in, particle_generate_rate_in, particle_rotate_center_x_in, particle_rotate_center_y_in)
 	{
-		super.init(a1, a2, a4);
-		this.particleRotateCenterX = a5;
-		this.particleRotateCenterY = a6;
+		super.init(particle_start_count_in, particle_max_count_in, particle_generate_rate_in);
+		this.particleRotateCenterX = particle_rotate_center_x_in;
+		this.particleRotateCenterY = particle_rotate_center_y_in;
 		this.maxParticleRotateRadius = 1024.0;
 		this.minParticleRotateRadius = 0.0;
 		this.diffParticleRotateRadius = 1024.0 - 0.0;
@@ -574,11 +551,12 @@ class RotateParticleManager extends global.ParticleManager
 		this.minParticleRotateOmega = 0.0;
 		this.diffParticleRotateOmega = 0.006283185307179587 - 0.0;
 		this.particleRotateReverse = 0;
-		super.resize_particle_count(a1);
+		super.resize_particle_count(particle_start_count_in);
 	}
 
 	function reset(a2)
 	{
+		super.reset(a2);
 		if ( this.particleInitializer !== null )
 		{
 			var v13 = this.particleInitializer;
@@ -593,30 +571,20 @@ class RotateParticleManager extends global.ParticleManager
 		}
 		else
 		{
-			var v3 = (((2100005341 * global.particlecount_magic + 1) & 0xffffffff) * 1.0) * 2.328306436538696e-10 * 6.283185307179586;
-			var v4 = (2100005341 * (2100005341 * global.particlecount_magic + 1) + 1) & 0xffffffff;
-			var v5 = ((v4 & 0xffffffff) * 1.0) * 2.328306436538696e-10 * this.diffParticleRotateOmega + this.minParticleRotateOmega;
+			var v5 = global.Math.random() * this.diffParticleRotateOmega + this.minParticleRotateOmega;
 			if ( this.particleRotateReverse )
 			{
-				v4 = (2100005341 * v4 + 1) & 0xffffffff;
-				var v6 = (((v4 & 0xffffffff) * 1.0) * 2.328306436538696e-10 <= 0.5) ? 1.0 : -1.0;
-				v5 = v5 * v6;
+				v5 *= (global.Math.random() <= 0.5) ? 1.0 : -1.0;
 			}
-			var v7 = (((2100005341 * v4 + 1) & 0xffffffff) * 1.0) * 2.328306436538696e-10 * this.diffParticleRotateRadiusVaridation + this.minParticleRotateRadiusVaridation;
-			var v8 = (2100005341 * (2100005341 * v4 + 1) + 1) & 0xffffffff;
-			var v9 = ((v8 & 0xffffffff) * 1.0) * 2.328306436538696e-10 * this.diffParticleRotateRadius + this.minParticleRotateRadius;
-			global.particlecount_magic = (2100005341 * v8 + 1) & 0xffffffff;
-			var v11 = 2.328306436538696e-10 * ((global.particlecount_magic & 0xffffffff) * 1.0) * this.diffParticleOpacity + this.minParticleOpacity;
 			a2.ticks_stepped = 0;
 			a2.particle_pos_left = 0.0;
 			a2.particle_pos_top = 0.0;
-			a2.particle_opacity = v11;
-			a2.particlecount_magic_double = v3;
+			a2.particle_opacity = global.Math.random() * this.diffParticleOpacity + this.minParticleOpacity;
+			a2.particlecount_magic_double = global.Math.random() * 6.283185307179586;
 			a2.particle_rotateomega = v5;
-			a2.particle_rotateradius = v9;
-			a2.particle_rotateradiusvaridation = v7;
+			a2.particle_rotateradius = global.Math.random() * this.diffParticleRotateRadius + this.minParticleRotateRadius;
+			a2.particle_rotateradiusvaridation = global.Math.random() * this.diffParticleRotateRadiusVaridation + this.minParticleRotateRadiusVaridation;
 		}
-		super.reset(a2);
 	}
 
 	function create_particle()
@@ -633,17 +601,18 @@ class AccelRotateParticleManager extends global.RotateParticleManager
 	var minParticleRotateOmegaTime = 0.0;
 	var diffParticleRotateOmegaTime = 0.0;
 
-	function init(a1, a2, a4, a5, a6, a7, a8)
+	function init(particle_start_count_in, particle_max_count_in, particle_generate_rate_in, particle_rotate_center_x_in, particle_rotate_center_y_in, a7, a8)
 	{
-		super.init(a1, a2, a4, a5, a6);
+		super.init(particle_start_count_in, particle_max_count_in, particle_generate_rate_in, particle_rotate_center_x_in, particle_rotate_center_y_in);
 		this.maxParticleRotateOmegaTime = 2000.0;
 		this.minParticleRotateOmegaTime = 1000.0;
 		this.diffParticleRotateOmegaTime = 1000.0;
-		super.resize_particle_count(a1);
+		super.resize_particle_count(particle_start_count_in);
 	}
 
 	function reset(a2)
 	{
+		super.reset(a2);
 		if ( this.particleInitializer !== null )
 		{
 			var v15 = this.particleInitializer;
@@ -659,33 +628,21 @@ class AccelRotateParticleManager extends global.RotateParticleManager
 		}
 		else
 		{
-			var v3 = (((2100005341 * global.particlecount_magic + 1) & 0xffffffff) * 1.0) * 2.328306436538696e-10 * 6.283185307179586;
-			var v4 = (2100005341 * (2100005341 * global.particlecount_magic + 1) + 1) & 0xffffffff;
-			var v5 = ((v4 & 0xffffffff) & 1.0) * 2.328306436538696e-10 * this.diffParticleRotateOmega + this.minParticleRotateOmega;
+			var v5 = global.Math.random() * this.diffParticleRotateOmega + this.minParticleRotateOmega;
 			if ( this.particleRotateReverse )
 			{
-				v4 = 2100005341 * v4 + 1;
-				var v6 = (((v4 & 0xffffffff) * 1.0) * 2.328306436538696e-10 <= 0.5) ? 1.0 : -1.0;
-				v5 = v5 * v6;
+				v5 *= (global.Math.random() <= 0.5) ? 1.0 : -1.0;
 			}
-			var v7 = (2100005341 * (2100005341 * v4 + 1) + 1) & 0xffffffff;
-			var v8 = v5 / ((((2100005341 * v4 + 1) & 0xffffffff) * 1.0) * 2.328306436538696e-10 * this.diffParticleRotateOmegaTime + this.minParticleRotateOmegaTime);
-			var v9 = ((v7 & 0xffffffff) * 1.0) * 2.328306436538696e-10 * this.diffParticleRotateRadiusVaridation + this.minParticleRotateRadiusVaridation;
-			var v10 = (2100005341 * v7 + 1) & 0xffffffff;
-			var v11 = ((v10 & 0xffffffff) * 1.0) * 2.328306436538696e-10 * this.diffParticleRotateRadius + this.minParticleRotateRadius;
-			global.particlecount_magic = (2100005341 * v10 + 1) & 0xffffffff;
-			var v13 = 2.328306436538696e-10 * ((global.particlecount_magic & 0xffffffff) * 1.0) * this.diffParticleOpacity + this.minParticleOpacity;
 			a2.ticks_stepped = 0;
 			a2.particle_pos_left = 0.0;
 			a2.particle_pos_top = 0.0;
-			a2.particle_opacity = v13;
-			a2.particlecount_magic_double = v3;
-			a2.particle_rotateradius = v11;
-			a2.particle_rotateradiusvaridation = v9;
+			a2.particle_opacity = global.Math.random() * this.diffParticleOpacity + this.minParticleOpacity;
+			a2.particlecount_magic_double = global.Math.random() * 6.283185307179586;
+			a2.particle_rotateradius = global.Math.random() * this.diffParticleRotateRadius + this.minParticleRotateRadius;
+			a2.particle_rotateradiusvaridation = global.Math.random() * this.diffParticleRotateRadiusVaridation + this.minParticleRotateRadiusVaridation;
 			a2.particle_rotateomega_accel = v5;
-			a2.particle_rotateomegatime_accel = v8;
+			a2.particle_rotateomegatime_accel = v5 / (global.Math.random() * this.diffParticleRotateOmegaTime + this.minParticleRotateOmegaTime);
 		}
-		super.reset(a2);
 	}
 
 	function create_particle()
@@ -709,9 +666,9 @@ class BlinkParticleManager extends global.ParticleManager
 	var minParticleBlinkCount = 0.0;
 	var diffParticleBlinkCount = 0.0;
 
-	function init(a1, a2, a4, a5, a6, a7, a8)
+	function init(particle_start_count_in, particle_max_count_in, particle_generate_rate_in, a5, a6, a7, a8)
 	{
-		super.init(a1, a2, a4);
+		super.init(particle_start_count_in, particle_max_count_in, particle_generate_rate_in);
 		this.particleAppearLeft = a5;
 		this.particleAppearTop = a6;
 		this.particleAppearWidth = a7;
@@ -725,7 +682,7 @@ class BlinkParticleManager extends global.ParticleManager
 		this.maxParticleBlinkCount = 1.0;
 		this.minParticleBlinkCount = 1.0;
 		this.diffParticleBlinkCount = 0.0;
-		super.resize_particle_count(a1);
+		super.resize_particle_count(particle_start_count_in);
 	}
 
 	function reset(a2)
@@ -737,24 +694,30 @@ class BlinkParticleManager extends global.ParticleManager
 			a2.ticks_stepped = 0;
 			a2.particle_pos_left = v11[0];
 			a2.particle_pos_top = v11[1];
+			a2.particle_magnify = 1.0;
+			a2.particle_magnifyvaridation = 0.0;
+			a2.particle_angle = 0.0;
+			a2.particle_angleomega = 0.0;
+			a2.particle_opacity = 0.0;
 			a2.particle_opacityvaridation = v11[3];
 			a2.particle_blinktime = v11[2] & 0xffffffff;
 			a2.particle_blinkcount = v11[4] & 0xffffffff;
 		}
 		else
 		{
-			var v3 = (((2100005341 * global.particlecount_magic + 1) & 0xffffffff) * 1.0) * 2.328306436538696e-10 * this.diffParticleBlinkTime + this.minParticleBlinkTime;
-			var v4 = (2100005341 * (2100005341 * global.particlecount_magic + 1) + 1) & 0xffffffff;
-			var v5 = ((v4 & 0xffffffff) * 1.0) * 2.328306436538696e-10 * this.diffParticleOpacity + this.minParticleOpacity;
-			var v6 = (2100005341 * v4 + 1) & 0xffffffff;
-			global.particlecount_magic = (1820084425 * v6 + 2100005342) & 0xffffffff;
-			var v7 = 2.328306436538696e-10 * (((1820084425 * v6 + 2100005342) & 0xffffffff) * 1.0);
-			var v8 = this.diffParticleBlinkCount * v7 + this.minParticleBlinkCount;
-			var v9 = ((v6 & 0xffffffff) * 1.0) * 2.328306436538696e-10 * this.particleAppearWidth + this.particleAppearLeft;
-			var v10 = v7 * this.particleAppearHeight + this.particleAppearTop;
+			var v3 = global.Math.random() * this.diffParticleBlinkTime + this.minParticleBlinkTime;
+			var v5 = global.Math.random() * this.diffParticleOpacity + this.minParticleOpacity;
+			var v8 = global.Math.random() * this.diffParticleBlinkCount + this.minParticleBlinkCount;
+			var v9 = global.Math.random() * this.particleAppearWidth + this.particleAppearLeft;
+			var v10 = global.Math.random() * this.particleAppearHeight + this.particleAppearTop;
 			a2.ticks_stepped = 0;
 			a2.particle_pos_left = v9;
 			a2.particle_pos_top = v10;
+			a2.particle_magnify = 1.0;
+			a2.particle_magnifyvaridation = 0.0;
+			a2.particle_angle = 0.0;
+			a2.particle_angleomega = 0.0;
+			a2.particle_opacity = 0.0;
 			a2.particle_blinktime = v5 & 0xffffffff;
 			a2.particle_blinkcount = v8 & 0xffffffff;
 			a2.particle_opacityvaridation = (v5 / v3) * 2;
@@ -1450,7 +1413,7 @@ class layerExParticle_impl
 
 global.layerExParticle_getLayerInfo = function()
 {
-	this.layerExParticle_operateMode = 2; // This is initialized in layerExParticle constructor, but let's move it here instead
+	this.layerExParticle_operateMode = global.omAlpha; // This is initialized in layerExParticle constructor, but let's move it here instead
 	this.layerExParticle_particleManager.objthis = this;
 	this.particle_rects = [];
 	this.particle_rect_count = 0;
@@ -1462,7 +1425,7 @@ global.layerExParticle_getLayerInfo = function()
 	// get imageWidth and imageHeight, but nothing is actually done with it?
 
 	global.Debug.message("layerExParticle: initialized");
-};
+} incontextof null;
 
 global.Layer.initVectorParticle = function(a2, a3, a4, a5, a6, a7, a8)
 {
@@ -1473,7 +1436,7 @@ global.Layer.initVectorParticle = function(a2, a3, a4, a5, a6, a7, a8)
 		this.layerExParticle_particleType = 1;
 		(global.layerExParticle_getLayerInfo incontextof this)();
 	}
-};
+} incontextof null;
 global.Layer.initRotateParticle = function(a2, a3, a4, a5, a6)
 {
 	if (typeof(this.layerExParticle_particleManager) !== "Object")
@@ -1483,7 +1446,7 @@ global.Layer.initRotateParticle = function(a2, a3, a4, a5, a6)
 		this.layerExParticle_particleType = 2;
 		(global.layerExParticle_getLayerInfo incontextof this)();
 	}
-};
+} incontextof null;
 global.Layer.initAccelRotateParticle = function(a2, a3, a4, a5, a6, a7, a8)
 {
 	if (typeof(this.layerExParticle_particleManager) !== "Object")
@@ -1493,7 +1456,7 @@ global.Layer.initAccelRotateParticle = function(a2, a3, a4, a5, a6, a7, a8)
 		this.layerExParticle_particleType = 4;
 		(global.layerExParticle_getLayerInfo incontextof this)();
 	}
-};
+} incontextof null;
 global.Layer.initBlinkParticle = function(a2, a3, a4, a5, a6, a7, a8)
 {
 	if (typeof(this.layerExParticle_particleManager) !== "Object")
@@ -1503,7 +1466,7 @@ global.Layer.initBlinkParticle = function(a2, a3, a4, a5, a6, a7, a8)
 		this.layerExParticle_particleType = 3;
 		(global.layerExParticle_getLayerInfo incontextof this)();
 	}
-};
+} incontextof null;
 global.Layer.uninitParticle = function()
 {
 	if (typeof(this.layerExParticle_particleManager) === "Object")
@@ -1519,7 +1482,7 @@ global.Layer.uninitParticle = function()
 	{
 		this.divideArea_arr = void;
 	}
-};
+} incontextof null;
 global.Layer.updateParticle = function(tick)
 {
 	this.layerExParticle_particleManager.timestep(tick);
@@ -1634,176 +1597,176 @@ global.Layer.updateParticle = function(tick)
 		this.particle_rect_count += 1;
 @endif
 	}
-};
+} incontextof null;
 global.Layer.assignParticle = function(obj)
 {
 	// Stubbed because of "invalid instance type" issue.
-};
+} incontextof null;
 global.ptVector = 1;
 global.ptRotate = 2;
 global.ptBlink = 3;
 global.ptAccelRotate = 4;
-global.Layer.initializedParticle = (&global.layerExParticle_impl.initializedParticle) incontextof null;
-global.Layer.particleImage = (&global.layerExParticle_impl.particleImage) incontextof null;
-global.Layer.operateMode = (&global.layerExParticle_impl.operateMode) incontextof null;
-global.Layer.particleStartCount = (&global.layerExParticle_impl.particleStartCount) incontextof null;
-global.Layer.particleMaxCount = (&global.layerExParticle_impl.particleMaxCount) incontextof null;
-global.Layer.particleGenerateRate = (&global.layerExParticle_impl.particleGenerateRate) incontextof null;
-global.Layer.particleCount = (&global.layerExParticle_impl.particleCount) incontextof null;
-global.Layer.particleType = (&global.layerExParticle_impl.particleType) incontextof null;
+global.Layer.initializedParticle = &(global.layerExParticle_impl.initializedParticle) incontextof null;
+global.Layer.particleImage = &(global.layerExParticle_impl.particleImage) incontextof null;
+global.Layer.operateMode = &(global.layerExParticle_impl.operateMode) incontextof null;
+global.Layer.particleStartCount = &(global.layerExParticle_impl.particleStartCount) incontextof null;
+global.Layer.particleMaxCount = &(global.layerExParticle_impl.particleMaxCount) incontextof null;
+global.Layer.particleGenerateRate = &(global.layerExParticle_impl.particleGenerateRate) incontextof null;
+global.Layer.particleCount = &(global.layerExParticle_impl.particleCount) incontextof null;
+global.Layer.particleType = &(global.layerExParticle_impl.particleType) incontextof null;
 global.Layer.setParticleAngle = function(a, b)
 {
 	this.layerExParticle_particleManager.maxParticleAngle = a;
 	this.layerExParticle_particleManager.minParticleAngle = b;
 	this.layerExParticle_particleManager.diffParticleAngle = a - b;
-};
+} incontextof null;
 global.Layer.setParticleAngleOmega = function(a, b)
 {
 	this.layerExParticle_particleManager.maxParticleAngleOmega = a;
 	this.layerExParticle_particleManager.minParticleAngleOmega = b;
 	this.layerExParticle_particleManager.diffParticleAngleOmega = a - b;
-};
-global.Layer.maxParticleAngle = (&global.layerExParticle_impl.maxParticleAngle) incontextof null;
-global.Layer.minParticleAngle = (&global.layerExParticle_impl.minParticleAngle) incontextof null;
-global.Layer.maxParticleAngleOmega = (&global.layerExParticle_impl.maxParticleAngleOmega) incontextof null;
-global.Layer.minParticleAngleOmega = (&global.layerExParticle_impl.minParticleAngleOmega) incontextof null;
-global.Layer.rotateReverse = (&global.layerExParticle_impl.rotateReverse) incontextof null;
+} incontextof null;
+global.Layer.maxParticleAngle = &(global.layerExParticle_impl.maxParticleAngle) incontextof null;
+global.Layer.minParticleAngle = &(global.layerExParticle_impl.minParticleAngle) incontextof null;
+global.Layer.maxParticleAngleOmega = &(global.layerExParticle_impl.maxParticleAngleOmega) incontextof null;
+global.Layer.minParticleAngleOmega = &(global.layerExParticle_impl.minParticleAngleOmega) incontextof null;
+global.Layer.rotateReverse = &(global.layerExParticle_impl.rotateReverse) incontextof null;
 global.Layer.setParticleMagnify = function(a, b)
 {
 	this.layerExParticle_particleManager.maxParticleMagnify = a;
 	this.layerExParticle_particleManager.minParticleMagnify = b;
 	this.layerExParticle_particleManager.diffParticleMagnify = a - b;
-};
-global.Layer.maxParticleMagnify = (&global.layerExParticle_impl.maxParticleMagnify) incontextof null;
-global.Layer.minParticleMagnify = (&global.layerExParticle_impl.minParticleMagnify) incontextof null;
+} incontextof null;
+global.Layer.maxParticleMagnify = &(global.layerExParticle_impl.maxParticleMagnify) incontextof null;
+global.Layer.minParticleMagnify = &(global.layerExParticle_impl.minParticleMagnify) incontextof null;
 global.Layer.setParticleMagnifyVaridation = function(a, b)
 {
 	this.layerExParticle_particleManager.maxParticleMagnifyVaridation = a;
 	this.layerExParticle_particleManager.minParticleMagnifyVaridation = b;
 	this.layerExParticle_particleManager.diffParticleMagnifyVaridation = a - b;
-};
-global.Layer.maxParticleMagnifyVaridation = (&global.layerExParticle_impl.maxParticleMagnifyVaridation) incontextof null;
-global.Layer.minParticleMagnifyVaridation = (&global.layerExParticle_impl.minParticleMagnifyVaridation) incontextof null;
+} incontextof null;
+global.Layer.maxParticleMagnifyVaridation = &(global.layerExParticle_impl.maxParticleMagnifyVaridation) incontextof null;
+global.Layer.minParticleMagnifyVaridation = &(global.layerExParticle_impl.minParticleMagnifyVaridation) incontextof null;
 global.Layer.setParticleOpacity = function(a, b)
 {
 	this.layerExParticle_particleManager.maxParticleOpacity = a;
 	this.layerExParticle_particleManager.minParticleOpacity = b;
 	this.layerExParticle_particleManager.diffParticleOpacity = a - b;
-};
-global.Layer.maxParticleOpacity = (&global.layerExParticle_impl.maxParticleOpacity) incontextof null;
-global.Layer.minParticleOpacity = (&global.layerExParticle_impl.minParticleOpacity) incontextof null;
+} incontextof null;
+global.Layer.maxParticleOpacity = &(global.layerExParticle_impl.maxParticleOpacity) incontextof null;
+global.Layer.minParticleOpacity = &(global.layerExParticle_impl.minParticleOpacity) incontextof null;
 global.Layer.setParticleOpacityVaridation = function(a, b)
 {
 	this.layerExParticle_particleManager.maxParticleOpacityVaridation = a;
 	this.layerExParticle_particleManager.minParticleOpacityVaridation = b;
 	this.layerExParticle_particleManager.diffParticleOpacityVaridation = a - b;
-};
-global.Layer.maxParticleOpacityVaridation = (&global.layerExParticle_impl.maxParticleOpacityVaridation) incontextof null;
-global.Layer.minParticleOpacityVaridation = (&global.layerExParticle_impl.minParticleOpacityVaridation) incontextof null;
+} incontextof null;
+global.Layer.maxParticleOpacityVaridation = &(global.layerExParticle_impl.maxParticleOpacityVaridation) incontextof null;
+global.Layer.minParticleOpacityVaridation = &(global.layerExParticle_impl.minParticleOpacityVaridation) incontextof null;
 global.Layer.setParticleAppearArea = function(a, b, c, d)
 {
 	this.layerExParticle_particleManager.particleAppearLeft = a;
 	this.layerExParticle_particleManager.particleAppearTop = b;
 	this.layerExParticle_particleManager.particleAppearWidth = c;
 	this.layerExParticle_particleManager.particleAppearHeight = d;
-};
-global.Layer.particleAppearLeft = (&global.layerExParticle_impl.particleAppearLeft) incontextof null;
-global.Layer.particleAppearTop = (&global.layerExParticle_impl.particleAppearTop) incontextof null;
-global.Layer.particleAppearWidth = (&global.layerExParticle_impl.particleAppearWidth) incontextof null;
-global.Layer.particleAppearHeight = (&global.layerExParticle_impl.particleAppearHeight) incontextof null;
+} incontextof null;
+global.Layer.particleAppearLeft = &(global.layerExParticle_impl.particleAppearLeft) incontextof null;
+global.Layer.particleAppearTop = &(global.layerExParticle_impl.particleAppearTop) incontextof null;
+global.Layer.particleAppearWidth = &(global.layerExParticle_impl.particleAppearWidth) incontextof null;
+global.Layer.particleAppearHeight = &(global.layerExParticle_impl.particleAppearHeight) incontextof null;
 global.Layer.setParticleSpeed = function(a, b)
 {
 	this.layerExParticle_particleManager.maxParticleSpeed = a;
 	this.layerExParticle_particleManager.minParticleSpeed = b;
 	this.layerExParticle_particleManager.diffParticleSpeed = a - b;
-};
-global.Layer.maxParticleSpeed = (&global.layerExParticle_impl.maxParticleSpeed) incontextof null;
-global.Layer.minParticleSpeed = (&global.layerExParticle_impl.minParticleSpeed) incontextof null;
+} incontextof null;
+global.Layer.maxParticleSpeed = &(global.layerExParticle_impl.maxParticleSpeed) incontextof null;
+global.Layer.minParticleSpeed = &(global.layerExParticle_impl.minParticleSpeed) incontextof null;
 global.Layer.setParticleAccel = function(a, b)
 {
 	this.layerExParticle_particleManager.maxParticleAccel = a;
 	this.layerExParticle_particleManager.minParticleAccel = b;
 	this.layerExParticle_particleManager.diffParticleAccel = a - b;
-};
-global.Layer.maxParticleAccel = (&global.layerExParticle_impl.maxParticleAccel) incontextof null;
-global.Layer.minParticleAccel = (&global.layerExParticle_impl.minParticleAccel) incontextof null;
+} incontextof null;
+global.Layer.maxParticleAccel = &(global.layerExParticle_impl.maxParticleAccel) incontextof null;
+global.Layer.minParticleAccel = &(global.layerExParticle_impl.minParticleAccel) incontextof null;
 global.Layer.setParticleVectorAngle = function(a, b)
 {
 	this.layerExParticle_particleManager.maxParticleVectorAngle = a;
 	this.layerExParticle_particleManager.minParticleVectorAngle = b;
 	this.layerExParticle_particleManager.diffParticleVectorAngle = a - b;
-};
-global.Layer.maxParticleVectorAngle = (&global.layerExParticle_impl.maxParticleVectorAngle) incontextof null;
-global.Layer.minParticleVectorAngle = (&global.layerExParticle_impl.minParticleVectorAngle) incontextof null;
+} incontextof null;
+global.Layer.maxParticleVectorAngle = &(global.layerExParticle_impl.maxParticleVectorAngle) incontextof null;
+global.Layer.minParticleVectorAngle = &(global.layerExParticle_impl.minParticleVectorAngle) incontextof null;
 global.Layer.setParticleVectorRotate = function(a, b)
 {
 	this.layerExParticle_particleManager.maxParticleVectorRotate = a;
 	this.layerExParticle_particleManager.minParticleVectorRotate = b;
 	this.layerExParticle_particleManager.diffParticleVectorRotate = a - b;
-};
-global.Layer.maxParticleVectorRotate = (&global.layerExParticle_impl.maxParticleVectorRotate) incontextof null;
-global.Layer.minParticleVectorRotate = (&global.layerExParticle_impl.minParticleVectorRotate) incontextof null;
+} incontextof null;
+global.Layer.maxParticleVectorRotate = &(global.layerExParticle_impl.maxParticleVectorRotate) incontextof null;
+global.Layer.minParticleVectorRotate = &(global.layerExParticle_impl.minParticleVectorRotate) incontextof null;
 global.Layer.setParticleRotateCenter = function(a, b)
 {
 	this.layerExParticle_particleManager.particleRotateCenterX = a;
 	this.layerExParticle_particleManager.particleRotateCenterY = b;
-};
-global.Layer.particleRotateCenterX = (&global.layerExParticle_impl.particleRotateCenterX) incontextof null;
-global.Layer.particleRotateCenterY = (&global.layerExParticle_impl.particleRotateCenterY) incontextof null;
+} incontextof null;
+global.Layer.particleRotateCenterX = &(global.layerExParticle_impl.particleRotateCenterX) incontextof null;
+global.Layer.particleRotateCenterY = &(global.layerExParticle_impl.particleRotateCenterY) incontextof null;
 global.Layer.setParticleRotateRadius = function(a, b)
 {
 	this.layerExParticle_particleManager.maxParticleRotateRadius = a;
 	this.layerExParticle_particleManager.minParticleRotateRadius = b;
 	this.layerExParticle_particleManager.diffParticleRotateRadius = a - b;
-};
-global.Layer.maxParticleRotateRadius = (&global.layerExParticle_impl.maxParticleRotateRadius) incontextof null;
-global.Layer.minParticleRotateRadius = (&global.layerExParticle_impl.minParticleRotateRadius) incontextof null;
+} incontextof null;
+global.Layer.maxParticleRotateRadius = &(global.layerExParticle_impl.maxParticleRotateRadius) incontextof null;
+global.Layer.minParticleRotateRadius = &(global.layerExParticle_impl.minParticleRotateRadius) incontextof null;
 global.Layer.setParticleRotateRadiusVaridation = function(a, b)
 {
 	this.layerExParticle_particleManager.maxParticleRotateRadiusVaridation = a;
 	this.layerExParticle_particleManager.minParticleRotateRadiusVaridation = b;
 	this.layerExParticle_particleManager.diffParticleRotateRadiusVaridation = a - b;
-};
-global.Layer.maxParticleRotateRadiusVaridation = (&global.layerExParticle_impl.maxParticleRotateRadiusVaridation) incontextof null;
-global.Layer.minParticleRotateRadiusVaridation = (&global.layerExParticle_impl.minParticleRotateRadiusVaridation) incontextof null;
+} incontextof null;
+global.Layer.maxParticleRotateRadiusVaridation = &(global.layerExParticle_impl.maxParticleRotateRadiusVaridation) incontextof null;
+global.Layer.minParticleRotateRadiusVaridation = &(global.layerExParticle_impl.minParticleRotateRadiusVaridation) incontextof null;
 global.Layer.setParticleRotateOmega = function(a, b)
 {
 	this.layerExParticle_particleManager.maxParticleRotateOmega = a;
 	this.layerExParticle_particleManager.minParticleRotateOmega = b;
 	this.layerExParticle_particleManager.diffParticleRotateOmega = a - b;
-};
-global.Layer.maxParticleRotateOmega = (&global.layerExParticle_impl.maxParticleRotateOmega) incontextof null;
-global.Layer.minParticleRotateOmega = (&global.layerExParticle_impl.minParticleRotateOmega) incontextof null;
+} incontextof null;
+global.Layer.maxParticleRotateOmega = &(global.layerExParticle_impl.maxParticleRotateOmega) incontextof null;
+global.Layer.minParticleRotateOmega = &(global.layerExParticle_impl.minParticleRotateOmega) incontextof null;
 global.Layer.setParticleRotateOmegaMax = function(a, b)
 {
 	this.layerExParticle_particleManager.maxParticleRotateOmegaMax = a;
 	this.layerExParticle_particleManager.minParticleRotateOmegaMax = b;
 	this.layerExParticle_particleManager.diffParticleRotateOmegaMax = a - b;
-};
-global.Layer.maxParticleRotateOmegaMax = (&global.layerExParticle_impl.maxParticleRotateOmegaMax) incontextof null;
-global.Layer.minParticleRotateOmegaMax = (&global.layerExParticle_impl.minParticleRotateOmegaMax) incontextof null;
+} incontextof null;
+global.Layer.maxParticleRotateOmegaMax = &(global.layerExParticle_impl.maxParticleRotateOmegaMax) incontextof null;
+global.Layer.minParticleRotateOmegaMax = &(global.layerExParticle_impl.minParticleRotateOmegaMax) incontextof null;
 global.Layer.setParticleRotateOmegaTime = function(a, b)
 {
 	this.layerExParticle_particleManager.maxParticleRotateOmegaTime = a;
 	this.layerExParticle_particleManager.minParticleRotateOmegaTime = b;
 	this.layerExParticle_particleManager.diffParticleRotateOmegaTime = a - b;
-};
-global.Layer.maxParticleRotateOmegaTime = (&global.layerExParticle_impl.maxParticleRotateOmegaTime) incontextof null;
-global.Layer.minParticleRotateOmegaTime = (&global.layerExParticle_impl.minParticleRotateOmegaTime) incontextof null;
+} incontextof null;
+global.Layer.maxParticleRotateOmegaTime = &(global.layerExParticle_impl.maxParticleRotateOmegaTime) incontextof null;
+global.Layer.minParticleRotateOmegaTime = &(global.layerExParticle_impl.minParticleRotateOmegaTime) incontextof null;
 global.Layer.setParticleBlinkTime = function(a, b)
 {
 	this.layerExParticle_particleManager.maxParticleBlinkTime = a;
 	this.layerExParticle_particleManager.minParticleBlinkTime = b;
 	this.layerExParticle_particleManager.diffParticleBlinkTime = a - b;
-};
-global.Layer.maxParticleBlinkTime = (&global.layerExParticle_impl.maxParticleBlinkTime) incontextof null;
-global.Layer.minParticleBlinkTime = (&global.layerExParticle_impl.minParticleBlinkTime) incontextof null;
+} incontextof null;
+global.Layer.maxParticleBlinkTime = &(global.layerExParticle_impl.maxParticleBlinkTime) incontextof null;
+global.Layer.minParticleBlinkTime = &(global.layerExParticle_impl.minParticleBlinkTime) incontextof null;
 global.Layer.setParticleBlinkCount = function(a, b)
 {
 	this.layerExParticle_particleManager.maxParticleBlinkCount = a;
 	this.layerExParticle_particleManager.minParticleBlinkCount = b;
 	this.layerExParticle_particleManager.diffParticleBlinkCount = a - b;
-};
-global.Layer.maxParticleBlinkCount = (&global.layerExParticle_impl.maxParticleBlinkCount) incontextof null;
-global.Layer.minParticleBlinkCount = (&global.layerExParticle_impl.minParticleBlinkCount) incontextof null;
-global.Layer.particleInitializer = (&global.layerExParticle_impl.particleInitializer) incontextof null;
+} incontextof null;
+global.Layer.maxParticleBlinkCount = &(global.layerExParticle_impl.maxParticleBlinkCount) incontextof null;
+global.Layer.minParticleBlinkCount = &(global.layerExParticle_impl.minParticleBlinkCount) incontextof null;
+global.Layer.particleInitializer = &(global.layerExParticle_impl.particleInitializer) incontextof null;

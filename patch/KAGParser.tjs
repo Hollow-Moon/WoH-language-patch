@@ -1863,7 +1863,11 @@ class __internal_KAGParser
 
 					if (vdelim !== 0)
 					{
-						this.curPos += 1;
+						// XXX: implement buffer overflow emulation on unbalanced quotes
+						if (this.curLineStr.length !== this.curPos)
+						{
+							this.curPos += 1;
+						}
 					}
 
 					// unescape ` character of value

@@ -26,7 +26,6 @@
 	["layerExAreaAverage.dll", , [["Layer.stretchCopyAA"]],, "GALLERY_DYNAMIC_THUMBNAIL"],
 	["clipboardEx.dll", ,,, "GAME_WOHN"],
 	["krprocesssuicide.dll", ,, true],
-	["tvpgl.dll", ,, true, "USE_TVPGL_FUNCTION_REPLACEMENTS"],
 	["krfreetype.dll", ,, true],
 	["kronigruma.dll", ,, true],
 	["layerExStretch.dll", ,, true, "USE_LAYER_IMAGEFUNCTION_REPLACEMENTS"],

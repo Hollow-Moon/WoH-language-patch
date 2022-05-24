@@ -186,9 +186,19 @@ global.initialize_patch = function()
 		}
 		if (optional !== 0)
 		{
-			if (!global.Storages.isExistentStorage(filename))
+			if (loadastype === ".dll")
 			{
-				continue;
+				if (global.get_full_path_of_plugin(filename) === "")
+				{
+					continue;
+				}
+			}
+			else
+			{
+				if (!global.Storages.isExistentStorage(filename))
+				{
+					continue;
+				}
 			}
 		}
 		if (tjs_expression !== "")

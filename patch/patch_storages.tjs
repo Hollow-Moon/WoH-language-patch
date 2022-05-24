@@ -32,23 +32,23 @@
 	};
 
 	// Stub out dirlist.dll so that outdated update archives don't get loaded.
-	global.Plugins.link_patch_storages_original = global.Plugins.link;
+	global.Plugins.link_patch_storages_nodirlist_original = global.Plugins.link;
 	global.Plugins.link = function(storage)
 	{
 		if (storage === "dirlist.dll")
 		{
 			return;
 		}
-		return global.Plugins.link_patch_storages_original(...);
+		return global.Plugins.link_patch_storages_nodirlist_original(...);
 	};
-	global.Plugins.unlink_patch_storages_original = global.Plugins.unlink;
+	global.Plugins.unlink_patch_storages_nodirlist_original = global.Plugins.unlink;
 	global.Plugins.unlink = function(storage)
 	{
 		if (storage === "dirlist.dll")
 		{
 			return;
 		}
-		return global.Plugins.unlink_patch_storages_original(...);
+		return global.Plugins.unlink_patch_storages_nodirlist_original(...);
 	};
 	global.getDirList = function(directory)
 	{
@@ -243,74 +243,27 @@
 	}
 	if ((typeof(global.Storages.dirlist) !== "Object") || (typeof(global.Storages.isExistentDirectory) !== "Object"))
 	{
-		var fstat_paths = [
-			"fstat.dll",
-@if(GAME_WOHN)
-			global.System.exePath + "content-data/plugin/fstat.dll",
-@endif
-		];
-		for (var i = 0, internal_forloop_count = fstat_paths.count; i < internal_forloop_count; i += 1)
-		{
-			var path = "" + fstat_paths[i];
-			if (path !== "" && global.Storages.isExistentStorage(path))
-			{
-				global.Plugins.link(path);
-				break;
-			}
-		}
+		global.Plugins.link("fstat.dll");
 	}
 	if ((typeof(global.Storages.mountXP3) !== "Object"))
 	{
-		var krxp3file_paths = [
-			"krxp3file.dll",
-@if(GAME_WOHN)
-			global.System.exePath + "content-data/plugin/krxp3file.dll",
-@endif
-		];
-		for (var i = 0, internal_forloop_count = krxp3file_paths.count; i < internal_forloop_count; i += 1)
+		if (global.get_full_path_of_plugin("krxp3file.dll") !== "")
 		{
-			var path = "" + krxp3file_paths[i];
-			if (path !== "" && global.Storages.isExistentStorage(path))
-			{
-				global.Plugins.link(path);
-				break;
-			}
+			global.Plugins.link("krxp3file.dll");
 		}
 	}
 	if ((typeof(global.Storages.mountSquashFs) !== "Object"))
 	{
-		var krsquashfs_paths = [
-			"krsquashfs.dll",
-@if(GAME_WOHN)
-			global.System.exePath + "content-data/plugin/krsquashfs.dll",
-@endif
-		];
-		for (var i = 0, internal_forloop_count = krsquashfs_paths.count; i < internal_forloop_count; i += 1)
+		if (global.get_full_path_of_plugin("krsquashfs.dll") !== "")
 		{
-			var path = "" + krsquashfs_paths[i];
-			if (path !== "" && global.Storages.isExistentStorage(path))
-			{
-				global.Plugins.link(path);
-				break;
-			}
+			global.Plugins.link("krsquashfs.dll");
 		}
 	}
 	if ((typeof(global.Storages.mountZIP) !== "Object"))
 	{
-		var krzipfile_paths = [
-			"krzipfile.dll",
-@if(GAME_WOHN)
-			global.System.exePath + "content-data/plugin/krzipfile.dll",
-@endif
-		];
-		for (var i = 0, internal_forloop_count = krzipfile_paths.count; i < internal_forloop_count; i += 1)
+		if (global.get_full_path_of_plugin("krzipfile.dll") !== "")
 		{
-			var path = "" + krzipfile_paths[i];
-			if (path !== "" && global.Storages.isExistentStorage(path))
-			{
-				global.Plugins.link(path);
-				break;
-			}
+			global.Plugins.link("krzipfile.dll");
 		}
 	}
 	{

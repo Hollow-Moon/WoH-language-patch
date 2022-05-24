@@ -258,6 +258,48 @@ function dmt(msg*) { Debug.message(msg.join(", ")+": "+Scripts.getTraceString())
 	}
 }
 
+{
+	global.plugin_postfix = "";
+	if (global.System.platformName.substring(0, 5) === "Win64" && global.System.exeBits === 64)
+	{
+		global.plugin_postfix = "_intel64";
+	}
+	global.get_full_path_of_plugin = function(storage)
+	{
+		if (storage.indexOf(":") === -1)
+		{
+			var plugin_name_mutated = storage;
+			plugin_name_mutated = plugin_name_mutated.substring(0, plugin_name_mutated.length - 4) + global.plugin_postfix + plugin_name_mutated.substring(plugin_name_mutated.length - 4, 4);
+			var plugin_paths = [
+				plugin_name_mutated,
+@if(GAME_WOHN)
+				global.System.exePath + "content-data/plugin/" + plugin_name_mutated,
+@endif
+			];
+			for (var i = 0, internal_forloop_count = plugin_paths.count; i < internal_forloop_count; i += 1)
+			{
+				var path = "" + plugin_paths[i];
+				if (path !== "" && global.Storages.isExistentStorage(path))
+				{
+					return path;
+				}
+			}
+		}
+		return "";
+	};
+	global.Plugins.link_patch_storages_original = global.Plugins.link;
+	global.Plugins.link = function(storage)
+	{
+		var storage_cur = storage;
+		var fullpath = global.get_full_path_of_plugin(storage);
+		if (fullpath !== "")
+		{
+			storage_cur = fullpath;
+		}
+		return global.Plugins.link_patch_storages_original(storage_cur);
+	};
+}
+
 @if(GAME_FHAT)
 var mainPatchName = devMode? "data" : "3";
 @endif

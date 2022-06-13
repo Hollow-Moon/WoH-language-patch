@@ -335,110 +335,117 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
     property left
 	{
 		getter { return this.absoluteMode? this.leftOriginal : this._left; }
-		setter(v) { this._left = v; this.leftOriginal = this.scaleLeft(v); }
+		setter(v) { v = +v; this._left = v; this.leftOriginal = this.scaleLeft(v); }
 	}
 
     property top
     {
         getter { return this.absoluteMode? this.topOriginal : this._top; }
-        setter(v) { this._top = v; this.topOriginal = this.scaleTop(v); }
+        setter(v) { v = +v; this._top = v; this.topOriginal = this.scaleTop(v); }
     }
 
 	property imageLeft
 	{
 		getter { return this.absoluteMode? this.imageLeftOriginal : this._imageLeft; }
-		setter(v) { this._imageLeft = v; this.imageLeftOriginal = this.scaleImageLeft(v); }
+		setter(v) { v = +v; this._imageLeft = v; this.imageLeftOriginal = this.scaleImageLeft(v); }
 	}
 
     property imageTop
     {
         getter { return this.absoluteMode? this.imageTopOriginal : this._imageTop; }
-        setter(v) { this._imageTop = v; this.imageTopOriginal = this.scaleImageTop(v); }
+        setter(v) { v = +v; this._imageTop = v; this.imageTopOriginal = this.scaleImageTop(v); }
     }
 
 	property clipLeft
 	{
 		getter { return this.absoluteMode? this.clipLeftOriginal : this._clipLeft; }
-		setter(v) { this._clipLeft = v; this.clipLeftOriginal = this.scaleInsideImageLeft(v, this._clipWidth, this.clipWidthOriginal); this.updateClipSize(); }
+		setter(v) { v = +v; this._clipLeft = v; this.clipLeftOriginal = this.scaleInsideImageLeft(v, this._clipWidth, this.clipWidthOriginal); this.updateClipSize(); }
 	}
 
     property clipTop
     {
         getter { return this.absoluteMode? this.clipTopOriginal : this._clipTop; }
-        setter(v) { this._clipTop = v; this.clipTopOriginal = this.scaleInsideImageTop(v, this._clipHeight, this.clipHeightOriginal); this.updateClipSize(); }
+        setter(v) { v = +v; this._clipTop = v; this.clipTopOriginal = this.scaleInsideImageTop(v, this._clipHeight, this.clipHeightOriginal); this.updateClipSize(); }
     }
 
     property attentionLeft
 	{
 		getter { return this.absoluteMode? this.attentionLeftOriginal : this._attentionLeft; }
-		setter(v) { this._attentionLeft = v; this.attentionLeftOriginal = this.scaleInsideImageWidth(v); }
+		setter(v) { v = +v; this._attentionLeft = v; this.attentionLeftOriginal = this.scaleInsideImageWidth(v); }
 	}
 
     property attentionTop
     {
         getter { return this.absoluteMode? this.attentionTopOriginal : this._attentionTop; }
-        setter(v) { this._attentionTop = v; this.attentionTopOriginal = this.scaleInsideImageHeight(v); }
+        setter(v) { v = +v; this._attentionTop = v; this.attentionTopOriginal = this.scaleInsideImageHeight(v); }
     }
 
     property cursorX
 	{
 		getter { return this.absoluteMode? this.cursorXOriginal : this.unscaleCursorX(this.cursorXOriginal); }
-		setter(v) { this.cursorXOriginal = this.scaleCursorX(v); }
+		setter(v) { v = +v; this.cursorXOriginal = this.scaleCursorX(v); }
 	}
 
     property cursorY
     {
         getter { return this.absoluteMode? this.cursorYOriginal : this.unscaleCursorY(this.cursorYOriginal); }
-        setter(v) { this.cursorYOriginal = this.scaleCursorY(v); }
+        setter(v) { v = +v; this.cursorYOriginal = this.scaleCursorY(v); }
     }
 
 	property width
 	{
 		getter { return this.absoluteMode? this.widthOriginal : this._width; }
-		setter(v) { this._width = v; this.widthOriginal = this.scaleWidth(v); this.updateImageSize(); this.left = this._left; }
+		setter(v) { v = +v; this._width = v; this.widthOriginal = this.scaleWidth(v); this.updateImageSize(); this.left = this._left; }
 	}
 
 	property height
 	{
 		getter { return this.absoluteMode? this.heightOriginal : this._height; }
-		setter(v) { this._height = v; this.heightOriginal = this.scaleHeight(v); this.updateImageSize(); this.top = this._top; }
+		setter(v) { v = +v; this._height = v; this.heightOriginal = this.scaleHeight(v); this.updateImageSize(); this.top = this._top; }
 	}
 
 	property imageWidth
 	{
 		getter { return this.absoluteMode? this.imageWidthOriginal : this._imageWidth; }
-		setter(v) { this._imageWidth = v; this.imageWidthOriginal = this.scaleImageWidth(v); this.updateSize(); }
+		setter(v) { v = +v; this._imageWidth = v; this.imageWidthOriginal = this.scaleImageWidth(v); this.updateSize(); }
 	}
 
 	property imageHeight
 	{
 		getter { return this.absoluteMode? this.imageHeightOriginal : this._imageHeight; }
-		setter(v) { this._imageHeight = v; this.imageHeightOriginal = this.scaleImageHeight(v); this.updateSize(); }
+		setter(v) { v = +v; this._imageHeight = v; this.imageHeightOriginal = this.scaleImageHeight(v); this.updateSize(); }
 	}
 
 	property clipWidth
 	{
 		getter { return this.absoluteMode? this.clipWidthOriginal : this._clipWidth; }
-		setter(v) { this._clipWidth = v; this.clipWidthOriginal = this.scaleInsideImageWidth(v); }
+		setter(v) { v = +v; this._clipWidth = v; this.clipWidthOriginal = this.scaleInsideImageWidth(v); }
 	}
 
 	property clipHeight
 	{
 		getter { return this.absoluteMode? this.clipHeightOriginal : this._clipHeight; }
-		setter(v) { this._clipHeight = v; this.clipHeightOriginal = this.scaleInsideImageHeight(v); }
+		setter(v) { v = +v; this._clipHeight = v; this.clipHeightOriginal = this.scaleInsideImageHeight(v); }
 	}
 
 	function setPos_patch_hd_layer(left, top, width, height)
 	{
+		left = +left;
+		top = +top;
+
 		this._left = left;
 		this._top = top;
 		var scaledWidth = width;
 		var scaledHeight = height;
 		if (width !== void) {
+			width = +width;
+
 			this._width = width;
 			scaledWidth = this.scaleWidth(width);
 		}
 		if (height !== void) {
+			height = +height;
+
 			this._height = height;
 			scaledHeight = this.scaleHeight(height);
 		}
@@ -456,6 +463,9 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 
 	function setImagePos_patch_hd_layer(imageLeft, imageTop)
 	{
+		imageLeft = +imageLeft;
+		imageTop = +imageTop;
+
 		this._imageLeft = imageLeft;
 		this._imageTop = imageTop;
 		(global.Layer_patch_hd_layer_original.setImagePos incontextof this)(this.scaleImageLeft(imageLeft), this.scaleImageTop(imageTop));
@@ -468,6 +478,9 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 	
 	function setAttentionPos_patch_hd_layer(attentionLeft, attentionTop)
 	{
+		attentionLeft = +attentionLeft;
+		attentionTop = +attentionTop;
+
 		this._attentionLeft = attentionLeft;
 		this._attentionTop = attentionTop;
 		(global.Layer_patch_hd_layer_original.setAttentionPos incontextof this)(this.scaleInsideImageWidth(attentionLeft), this.scaleInsideImageHeight(attentionTop));
@@ -485,6 +498,9 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 
 	function setImageSize_patch_hd_layer(imageWidth, imageHeight)
 	{
+		imageWidth = +imageWidth;
+		imageHeight = +imageHeight;
+
 		this._imageWidth = imageWidth;
 		this._imageHeight = imageHeight;
 		this.updateBg(imageWidth, imageHeight);
@@ -499,6 +515,11 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 	
 	function setClip_patch_hd_layer(clipLeft, clipTop, clipWidth, clipHeight)
 	{
+		clipLeft = +clipLeft;
+		clipTop = +clipTop;
+		clipWidth = +clipWidth;
+		clipHeight = +clipHeight;
+
 		this._clipLeft = clipLeft;
 		this._clipTop = clipTop;
 		this._clipWidth = clipWidth;
@@ -520,6 +541,9 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 	
 	function setSize_patch_hd_layer(width, height)
 	{
+		width = +width;
+		height = +height;
+
 		this._width = width;
 		this._height = height;
 		(global.Layer_patch_hd_layer_original.setSize incontextof this)(this.scaleWidth(width), this.scaleHeight(height));
@@ -636,6 +660,9 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 	}
 
 	function updateBg(w, h) {
+		w = +w;
+		h = +h;
+
 		if (!this.updateBgFromSize) {
 			return;
 		}
@@ -988,36 +1015,61 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 
 	function getMainPixel(x, y)
 	{
+		x = +x;
+		y = +y;
+
 		return (global.Layer_patch_hd_layer_original.getMainPixel incontextof this)(this.scaleInsideImageWidth(x), this.scaleInsideImageHeight(y));
 	}
 
 	function setMainPixel(x, y, color)
 	{
+		x = +x;
+		y = +y;
+
 		(global.Layer_patch_hd_layer_original.setMainPixel incontextof this)(this.scaleInsideImageWidth(x), this.scaleInsideImageHeight(y), color);
 	}
 
 	function getMaskPixel(x, y)
 	{
+		x = +x;
+		y = +y;
+
 		return (global.Layer_patch_hd_layer_original.getMaskPixel incontextof this)(this.scaleInsideImageWidth(x), this.scaleInsideImageHeight(y));
 	}
 
 	function setMaskPixel(x, y, value)
 	{
+		x = +x;
+		y = +y;
+		value = +value;
+
 		(global.Layer_patch_hd_layer_original.setMaskPixel incontextof this)(this.scaleInsideImageWidth(x), this.scaleInsideImageHeight(y), value);
 	}
 
 	function getProvincePixel(x, y)
 	{
+		x = +x;
+		y = +y;
+
 		return (global.Layer_patch_hd_layer_original.getProvincePixel incontextof this)(this.scaleInsideImageWidth(x), this.scaleInsideImageHeight(y));
 	}
 
 	function setProvincePixel(x, y, value)
 	{
+		x = +x;
+		y = +y;
+		value = +value;
+
 		(global.Layer_patch_hd_layer_original.setProvincePixel incontextof this)(this.scaleInsideImageWidth(x), this.scaleInsideImageHeight(y), value);
 	}
 
 	function getLayerAt(x, y, exclude_self, get_disabled)
 	{
+		x = +x;
+		y = +y;
+		exclude_self = !!exclude_self;
+		get_disabled = !!get_disabled;
+
 		return (global.Layer_patch_hd_layer_original.getLayerAt incontextof this)(this.scaleInsideImageWidth(x), this.scaleInsideImageHeight(y), exclude_self, get_disabled);
 	}
 
@@ -1093,6 +1145,8 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 		if (this.isThumbnail) {
 			return;
 		}
+		swidth = +swidth;
+		sheight = +sheight;
 		// When copying a background image, set this this.layer to be background as well
 		if (src.isbg && src.imageWidth == swidth && src.imageHeight == sheight) {
 			this.isbg = src.isbg;
@@ -1314,6 +1368,10 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 		var top = args[1];
 		var width = args[2];
 		var height = args[3];
+		left = +left;
+		top = +top;
+		width = +width;
+		height = +height;
 
 		(global.Layer_patch_hd_layer_original.update incontextof this)(this.scaleLeft(left), this.scaleTop(top), this.scaleWidth(width), this.scaleHeight(height));
 	}
@@ -1332,6 +1390,15 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 	// Image functions.
 	function operateRect_patch_hd_layer(left, top, src, sleft, stop, swidth, sheight, mode, opacity)
 	{
+		left = +left;
+		top = +top;
+		sleft = +sleft;
+		stop = +stop;
+		swidth = +swidth;
+		sheight = +sheight;
+		mode = +mode;
+		opacity = +opacity;
+
 		if (!swidth || !sheight)
 		{
 			// Nothing to do.
@@ -1387,6 +1454,13 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 
 	function copyRect_patch_hd_layer(left, top, src, sleft, stop, swidth, sheight)
 	{
+		left = +left;
+		top = +top;
+		sleft = +sleft;
+		stop = +stop;
+		swidth = +swidth;
+		sheight = +sheight;
+
 		if (!swidth || !sheight)
 		{
 			// Nothing to do.
@@ -1590,6 +1664,19 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 
 	function operateStretch_patch_hd_layer(left, top, width, height, src, sleft, stop, swidth, sheight, mode, opacity, type, option)
 	{
+		left = +left;
+		top = +top;
+		width = +width;
+		height = +height;
+		sleft = +sleft;
+		stop = +stop;
+		swidth = +swidth;
+		sheight = +sheight;
+		mode = +mode;
+		opacity = +opacity;
+		type = +type;
+		option = +option;
+
 		if (!width || !height || !swidth || !sheight)
 		{
 			// Nothing to do.
@@ -1673,6 +1760,17 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 
 	function stretchCopy_patch_hd_layer(left, top, width, height, src, sleft, stop, swidth, sheight, type, option)
 	{
+		left = +left;
+		top = +top;
+		width = +width;
+		height = +height;
+		sleft = +sleft;
+		stop = +stop;
+		swidth = +swidth;
+		sheight = +sheight;
+		type = +type;
+		option = +option;
+
 		if (!width || !height || !swidth || !sheight)
 		{
 			// Nothing to do.
@@ -1752,6 +1850,13 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 
 	function piledCopy_patch_hd_layer(left, top, src, sleft, stop, swidth, sheight)
 	{
+		left = +left;
+		top = +top;
+		sleft = +sleft;
+		stop = +stop;
+		swidth = +swidth;
+		sheight = +sheight;
+
 		if (!swidth || !sheight)
 		{
 			// Nothing to do.
@@ -1799,6 +1904,20 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 
 	function affineCopy_patch_hd_layer(src, sx, sy, sw, sh, affine, a, b, c, d, tx, ty, type, clear)
 	{
+		sx = +sx;
+		sy = +sy;
+		sw = +sw;
+		sh = +sh;
+		affine = !!affine;
+		a = +a;
+		b = +b;
+		c = +c;
+		d = +d;
+		tx = +tx;
+		ty = +ty;
+		type = +type;
+		clear = !!clear;
+
 		// Optimization for 1x size.
 		if (!this.window.isHd && !this.window.wideScreen)
 		{
@@ -1845,6 +1964,21 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 
 	function operateAffine_patch_hd_layer(src, sx, sy, sw, sh, affine, a, b, c, d, tx, ty, mode, opa, type)
 	{
+		sx = +sx;
+		sy = +sy;
+		sw = +sw;
+		sh = +sh;
+		affine = !!affine;
+		a = +a;
+		b = +b;
+		c = +c;
+		d = +d;
+		tx = +tx;
+		ty = +ty;
+		mode = +mode;
+		opa = +opa;
+		type = +type;
+
 		// Optimization for 1x size.
 		if (!this.window.isHd && !this.window.wideScreen)
 		{
@@ -1892,6 +2026,9 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 
 	function doBoxBlur_patch_hd_layer(xblur=1, yblur=1)
 	{
+		xblur = +xblur;
+		yblur = +yblur;
+
 		// Optimization for 1x size.
 		if (!this.window.isHd && !this.window.wideScreen)
 		{
@@ -1932,6 +2069,12 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 
 	function fillRect_patch_hd_layer(left, top, width, height, color)
 	{
+		left = +left;
+		top = +top;
+		width = +width;
+		height = +height;
+		color = +color;
+
 		// Optimization for 1x size.
 		if (!this.window.isHd && !this.window.wideScreen)
 		{
@@ -1982,6 +2125,13 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 
 	function colorRect_patch_hd_layer(left, top, width, height, color, opacity)
 	{
+		left = +left;
+		top = +top;
+		width = +width;
+		height = +height;
+		color = +color;
+		opacity = +opacity;
+
 		if (!width || !height)
 		{
 			// Nothing to do.
@@ -2037,6 +2187,18 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 
 	function drawText_patch_hd_layer(left, top, text, color, opacity, aa, slevel, scolor, swidth, sofsx, sofsy)
 	{
+		left = +left;
+		top = +top;
+		text = "" + text;
+		color = +color;
+		opacity = +opacity;
+		aa = !!aa;
+		slevel = +slevel;
+		scolor = +scolor;
+		swidth = +swidth;
+		sofsx = +sofsx;
+		sofsy = +sofsy;
+
 		// Optimization for 1x size.
 		if (!this.window.isHd && !this.window.wideScreen)
 		{
@@ -2073,6 +2235,17 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 
 	function drawGlyph_patch_hd_layer(left, top, glyph, color, opacity, aa, slevel, scolor, swidth, sofsx, sofsy)
 	{
+		left = +left;
+		top = +top;
+		color = +color;
+		opacity = +opacity;
+		aa = !!aa;
+		slevel = +slevel;
+		scolor = +scolor;
+		swidth = +swidth;
+		sofsx = +sofsx;
+		sofsy = +sofsy;
+
 		// Optimization for 1x size.
 		if (!this.window.isHd && !this.window.wideScreen)
 		{

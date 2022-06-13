@@ -584,7 +584,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 			return;
 		}
 		if (this.isbg) {
-			if (this.parent === this.window.primaryLayer) {
+			if (this === this.window.primaryLayer) { // window.primaryLayer.isbg is always true
 				this.topScroll = -this.window.scrollYOffset;
 			} else {
 				this.topScroll = 0;
@@ -592,7 +592,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 			for (var i = 0; i < this.children.count; i++) {
 				this.children[i].updateTopScroll();
 			}
-		} else if (this.parent !== null && this.parent !== this.window.primaryLayer && this.parent.isbg) {
+		} else if (this.parent !== null && this.parent.isbg) {
 			this.topScroll = this.window.scrollYOffset;
 		} else {
 			this.topScroll = 0;

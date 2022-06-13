@@ -677,6 +677,10 @@ global.load_language_patch = function(language, kag)
 	if (language == global.japaneseLanguage) {
 		global.japaneseLanguageLoaded = true;
 	}
+
+	// Reload TextDrawer, which itself then reloads 'TextDrawerSettings.tjs',
+	// updating all translations in there in the process.
+	global.Scripts.execStorage("TextDrawer.tjs");
 };
 
 global.unload_language_patch = function(language, kag)

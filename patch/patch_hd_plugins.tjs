@@ -55,15 +55,17 @@ global.initHaze_patch_hd_plugins_override = function(elm)
 	var originalCenter = elm.center;
 	var originalLower = elm.lower;
 	var originalCycle = elm.cycle;
-	elm.upper = elm.upper * global.scaleFactor if elm.upper > 0;
-	elm.center = elm.center * global.get_wideScaleFactor() if elm.center > 0;
-	elm.lower = elm.lower * global.scaleFactor if elm.lower > 0;
-	elm.cycle = elm.cycle / global.scaleFactor;
+	var layer = elm.tmplayer;
+	elm.upper = layer.scaleHeight(elm.upper) if elm.upper > 0;
+	elm.center = layer.scaleHeight(elm.center) if elm.center > 0;
+	elm.lower = layer.scaleHeight(elm.lower) if elm.lower > 0;
+	var scaleFactor = elm.upper / originalUpper; // TODO not that pretty
+	elm.cycle = elm.cycle / scaleFactor;
 	for (var i=0; i < elm.waves.count; i++) {
-		elm.waves[i][2] *= global.scaleFactor;
+		elm.waves[i][2] = layer.scaleHeight(elm.waves[i][2]);
 	}
 	for (var i=0; i < elm.lwaves.count; i++) {
-		elm.lwaves[i][2] *= global.scaleFactor;
+		elm.lwaves[i][2] = layer.scaleHeight(elm.lwaves[i][2]);
 	}
 	var ie;
 	try
@@ -79,10 +81,10 @@ global.initHaze_patch_hd_plugins_override = function(elm)
 	elm.lower = originalLower;
 	elm.cycle = originalCycle;
 	for (var i=0; i < elm.waves.count; i++) {
-		elm.waves[i][2] /= global.scaleFactor;
+		elm.waves[i][2] /= scaleFactor;
 	}
 	for (var i=0; i < elm.lwaves.count; i++) {
-		elm.lwaves[i][2] /= global.scaleFactor;
+		elm.lwaves[i][2] /= scaleFactor;
 	}
 	if (ie !== void)
 	{

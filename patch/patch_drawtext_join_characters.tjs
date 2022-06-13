@@ -21,14 +21,8 @@ class Layer_patch_drawtext_join_characters_override extends global.Layer_patch_d
 			for (var i = 0, internal_forloop_count = text.length; i < internal_forloop_count; i += 1)
 			{
 				var character = text[i];
-@if(!HD_MODE)
 				var textwidth = this.font.getTextWidth(character);
 				var textheight = this.font.getTextHeight(character);
-@endif
-@if(HD_MODE)
-				var textwidth = scaleWidth(this.font.getTextWidth(character));
-				var textheight = scaleHeight(this.font.getTextHeight(character));
-@endif
 				var found_same_characters = 1;
 				if (("―■").indexOf(character) !== -1)
 				{
@@ -47,17 +41,30 @@ class Layer_patch_drawtext_join_characters_override extends global.Layer_patch_d
 				}
 				if (found_same_characters > 1)
 				{
+					textwidth = global.Math.ceil(textwidth);
+					textheight = global.Math.ceil(textheight);
+
 					var	tmp	= this.window.temporaryLayer_patch_drawtext_join_characters;
 					tmp.setImageSize(textwidth, textheight);
 					tmp.fillRect(0, 0, tmp.imageWidth, tmp.imageHeight, 0);
 					tmp.font.assign_font_properties(this.font);
-					var textwidth_half = textwidth / 2;
-					var textwidth_quarter = textwidth_half / 2;
-					var textwidth_middle_len = textwidth * (found_same_characters - 1);
 					tmp.drawText(0, 0, character, color, opacity, aa, slevel, scolor, swidth, sofsx, sofxy);
-					this.operateStretch(left + x + textwidth_quarter, top, textwidth_middle_len, textheight, tmp, textwidth_quarter, 0, textwidth_half, textheight, global.omAuto, 255, global.stLinear);
-					this.operateRect(left + x, top, tmp, 0, 0, textwidth_quarter, textheight, global.omAuto, 255);
-					this.operateRect(left + x + (textwidth_middle_len + textwidth_quarter), top, tmp, textwidth_middle_len + textwidth_quarter, 0, textwidth_quarter, textheight, global.omAuto, 255);
+
+					var frontPieceWidth = global.Math.ceil(textwidth / 2);
+					var endPieceWidth = textwidth - frontPieceWidth - 1;
+					var midPieceWidth = (textwidth * found_same_characters) - frontPieceWidth - endPieceWidth;
+
+					// Use a second temporary layer to combine the parts, so we can overlap the front/end parts with stretchCopy() without issue.
+					var	tmp2 = this.window.temporaryLayer_patch_drawtext_join_characters2;
+					tmp2.setImageSize(frontPieceWidth+midPieceWidth+endPieceWidth, textheight);
+					tmp2.fillRect(0, 0, tmp2.imageWidth, tmp2.imageHeight, 0);
+
+					tmp2.copyRect(0, 0, tmp, 0, 0, frontPieceWidth, textheight);
+					tmp2.copyRect(frontPieceWidth + midPieceWidth, 0, tmp, frontPieceWidth + 1, 0, endPieceWidth, textheight);
+					tmp2.stretchCopy(frontPieceWidth-1, 0, midPieceWidth+2, textheight, tmp, frontPieceWidth, 0, 1, textheight);
+					
+					this.operateRect(global.Math.round(left+x), top, tmp2, 0, 0, tmp2.imageWidth, tmp2.imageHeight, global.omAuto, 255);
+
 					i += found_same_characters - 1;
 					textwidth *= found_same_characters;
 				}
@@ -99,6 +106,20 @@ class Window_patch_drawtext_join_characters_override extends global.Window_patch
 				this.tempLayer_patch_drawtext_join_characters.name = "Temporary layer for joining text";
 			}
 			return this.tempLayer_patch_drawtext_join_characters;
+		}
+	}
+
+	var tempLayer_patch_drawtext_join_characters2 = void;
+	property temporaryLayer_patch_drawtext_join_characters2
+	{
+		getter
+		{
+			if (this.tempLayer_patch_drawtext_join_characters2 === void)
+			{
+				this.tempLayer_patch_drawtext_join_characters2 = new global.Layer(this, this.primaryLayer);
+				this.tempLayer_patch_drawtext_join_characters2.name = "Temporary layer for joining text 2";
+			}
+			return this.tempLayer_patch_drawtext_join_characters2;
 		}
 	}
 }

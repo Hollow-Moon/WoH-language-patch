@@ -182,14 +182,10 @@ class TextDrawer
 		layer.loadImages("ss_button_mask");
 		for (var i = 0, internal_forloop_count = global.statusButtonsSettings.count; i < internal_forloop_count; i += 1) {
 			global.statusButtonsSettings[i].dictionary = global.statusButtonsDictionary;
-			if(storage == "ss_宝具ボタン" && layer.window.sflags.language == "english") {
-				global.statusButtonsSettings[i].text.fontHeight = 15;
-				global.statusButtonsSettings[i].text.rightOffset = (global.statusButtonsImageWidth / global.statusButtonsNumber) * (global.statusButtonsNumber - (i+1)) + 15;
-			}
-			else
-			{
-				global.statusButtonsSettings[i].text.fontHeight = 18;
-				global.statusButtonsSettings[i].text.rightOffset = ((global.statusButtonsImageWidth / global.statusButtonsNumber) * (global.statusButtonsNumber - (i+1)) + 30) | 0;
+			if (storage == "ss_宝具ボタン" && layer.window.sflags.language == "english") {
+				global.statusButtonsSettings[i].title.fontHeight = 15;
+			} else {
+				global.statusButtonsSettings[i].title.fontHeight = 18;
 			}
 			this.drawCenteredEntry(layer, storage, global.statusButtonsSettings[i]);
 		}

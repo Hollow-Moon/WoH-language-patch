@@ -675,9 +675,6 @@ global.load_language_patch = function(language, kag)
 	var chara2displayname_dic_path = global.find_file_in_language_paths(global.chara2displaynamefile, language);
 	global.chara2displayname = (typeof(chara2displayname_dic_path) === "String") ? global.Scripts.evalStorage(chara2displayname_dic_path) : %[];
 
-	// Reload 'TextDrawerSettings.tjs', updating all translations in there in the process.
-	global.Scripts.execStorage("TextDrawerSettings.tjs");
-
 	if (language == global.japaneseLanguage) {
 		global.japaneseLanguageLoaded = true;
 	}

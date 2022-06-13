@@ -85,6 +85,9 @@ global.loadDictionaryIfExists = function(dictionaryName)
 	return void;
 };
 
+global.textDrawerSettingsFileName = "TextDrawerSettings.tjs";
+global.Scripts.execStorage(global.textDrawerSettingsFileName) if global.Storages.isExistentStorage(global.textDrawerSettingsFileName);
+
 class TextDrawer
 {
 	function drawPlayTime(layer, storage) {
@@ -92,6 +95,8 @@ class TextDrawer
 		var labels = global.Scripts.evalStorage("play_time.ksc");
 		var timeUnitsLeftOffsets = global.timeUnitsLeftOffsets;
 		var timeUnitsLeftOffsetsKeys = global.timeUnitsLeftOffsetsKeys;
+
+		global.playTimeSettings2 = global.getPlayTimeSettings2();
 		var playTimeSettings2 = global.playTimeSettings2;
 		for (var i = 0, internal_forloop_count = playTimeSettings2.count; i < internal_forloop_count; i += 1)
 		{
@@ -100,6 +105,7 @@ class TextDrawer
 			currentPlayTimeSettings2.title.leftOffset = global.__si(timeUnitsLeftOffsets[timeUnitsLeftOffsetsKey], timeUnitsLeftOffsetsKey);
 		}
 
+		global.playTimeSettings = global.getPlayTimeSettings();
 		global.playTimeSettings.dictionary = %["pt_base" => labels.playtime];
 		this.drawCenteredEntry(layer, storage, global.playTimeSettings);
 		for (var i = 0, internal_forloop_count = playTimeSettings2.count; i < internal_forloop_count; i += 1) {
@@ -110,25 +116,30 @@ class TextDrawer
 
 	function drawTigerDojoName(layer, storage, frameKey) {
 		// XXX: uses _x, so need to re-evaluate
+		global.tigerDojoSettings = global.getTigerDojoSettings();
 		global.tigerDojoSettings.dictionary = global.loadDictionaryIfExists("tiger_dojo_names.dic");
 		this.drawCenteredEntry(layer, storage, global.tigerDojoSettings, frameKey);
 	}
 
 	function drawSkills(layer, storage, name)
 	{
+		global.skillsTitleSettings = global.getSkillsTitleSettings();
 		global.skillsTitleSettings.title.content = name;
 		this.drawCenteredEntry(layer, storage, global.skillsTitleSettings);
 
+		global.skillsSettings = global.getSkillsSettings();
 		this.drawCenteredEntry(layer, storage, global.skillsSettings);
 	}
 
 	function drawWeaponsText(layer, storage)
 	{
+		global.weaponsTextSettings = global.getWeaponsTextSettings();
 		this.drawCenteredEntry(layer, storage, global.weaponsTextSettings);
 	}
 
 	function drawWeaponsTitle(layer, storage, name, ruby)
 	{
+		global.weaponsTitleSettings = global.getWeaponsTitleSettings();
 		if (ruby !== void) {
 			if (layer.window.sflags.language == "english") {
 				global.weaponsTitleSettings.title.content = name;
@@ -146,12 +157,14 @@ class TextDrawer
 
 	function drawWeaponsUser(layer, storage, name)
 	{
+		global.weaponsUserSettings = global.getWeaponsUserSettings();
 		global.weaponsUserSettings.text.content = name;
 		this.drawCenteredEntry(layer, storage, global.weaponsUserSettings);
 	}
 
 	function drawWeaponsName(layer, storage, name)
 	{
+		global.weaponsNameSettings = global.getWeaponsNameSettings();
 		for (var i = 0, internal_forloop_count = global.weaponsNameSettings.count; i < internal_forloop_count; i += 1) {
 			global.weaponsNameSettings[i].text.content = name;
 			this.drawCenteredEntry(layer, storage, global.weaponsNameSettings[i]);
@@ -159,32 +172,22 @@ class TextDrawer
 	}
 
 	function drawVoiceName(layer, storage, settings) {
-		if (global.sf.language == global.japaneseLanguage) {
-			if (storage == "voicename_イリヤ") {
-				settings.text.fontHeight = 15;
-			} else {
-				settings.text.fontHeight = 20; // should be the same as the settings in VoiceConfigLayer.tjs
-			}
-		}
 		this.drawCenteredEntry(layer, storage, settings);
 	}
 
 	function drawStatusButtons(layer, storage)
 	{
 		layer.loadImages("ss_button_mask");
+		global.statusButtonsSettings = global.getStatusButtonsSettings();
 		for (var i = 0, internal_forloop_count = global.statusButtonsSettings.count; i < internal_forloop_count; i += 1) {
 			global.statusButtonsSettings[i].dictionary = global.statusButtonsDictionary;
-			if (storage == "ss_宝具ボタン" && layer.window.sflags.language == "english") {
-				global.statusButtonsSettings[i].title.fontHeight = 15;
-			} else {
-				global.statusButtonsSettings[i].title.fontHeight = 18;
-			}
 			this.drawCenteredEntry(layer, storage, global.statusButtonsSettings[i]);
 		}
 	}
 
 	function drawNoblePhantasmSpecification(layer, storage)
 	{
+		global.noblePhantasmSpecificationSettings = global.getNoblePhantasmSpecificationSettings();
 		// XXX: uses _n, so need to re-evaulate
 		global.noblePhantasmSpecificationSettings.dictionary = global.loadDictionaryIfExists("status_noble_phantasm_specification.dic");
 		this.drawCenteredEntry(layer, storage, global.noblePhantasmSpecificationSettings);
@@ -192,12 +195,14 @@ class TextDrawer
 
 	function drawNoblePhantasmText(layer, storage)
 	{
+		global.noblePhantasmTextSettings = global.getNoblePhantasmTextSettings();
 		this.drawCenteredEntry(layer, storage, global.noblePhantasmTextSettings);
 	}
 
 	function drawNoblePhantasmButtons(layer, storage)
 	{
 		var noblePhantasmImageWidth = layer.imageWidth;
+		global.noblePhantasmButtonsSettings = global.getNoblePhantasmButtonsSettings();
 		for (var i = 0, internal_forloop_count = global.noblePhantasmButtonsSettings.count; i < internal_forloop_count; i += 1) {
 			{
 				var d = global.noblePhantasmButtonsSettings[i];
@@ -217,10 +222,12 @@ class TextDrawer
 
 	function drawDetails(layer, storage)
 	{
+		global.detailsSettings = global.getDetailsSettings();
 		this.drawCenteredEntry(layer, storage, global.detailsSettings);
 	}
 
 	function initializeStatusLabels(statusLabelLayers, layer) {
+		global.statusRankSettings = global.getStatusRankSettings();
 		if (statusLabelLayers[layer] == void) {
 			statusLabelLayers[layer] = [];
 			for (var i = 0, internal_forloop_count = global.statusRankSettings.count; i < internal_forloop_count; i += 1) {
@@ -264,30 +271,29 @@ class TextDrawer
 
 	function drawStatusLabels(layer, storage)
 	{
-		// XXX: uses _x, so need to re-evaulate
+		// XXX: uses _x, so need to re-evaluate
 		var labels = global.Scripts.evalStorage("status_labels.ksc");
+		global.statusLabelsSettings = global.getStatusLabelsSettings();
 		global.statusLabelsSettings.text.content = labels.labels.join("\n");
 		this.drawCenteredEntry(layer, storage, global.statusLabelsSettings);
+
+		global.classAbilitiesSettings = global.getClassAbilitiesSettings();
 		global.classAbilitiesSettings.title.content = labels.abilities;
 		this.drawCenteredEntry(layer, storage, global.classAbilitiesSettings);
 	}
 
 	function drawId(layer, storage) {
-		if (global.sf.language == global.japaneseLanguage) {
-			if (storage == "ss_マスターイリヤ") {
-				global.idSettings.text.fontHeight = 15;
-			} else {
-				global.idSettings.text.fontHeight = 18; // should be same as idSettings in TextDrawerSettings.tjs
-			}
-		}
-		this.drawCenteredEntry(layer, storage, global.idSettings);
+		var idSettings = global.getIdSettings();
+		this.drawCenteredEntry(layer, storage, idSettings);
 	}
 
 	function drawClassNameTitle(layer, storage) {
+		global.classNameTitleSettings = global.getClassNameTitleSettings();
 		this.drawCenteredEntry(layer, storage, global.classNameTitleSettings);
 	}
 
 	function drawClassName(layer, storage) {
+		global.classNameSettings = global.getClassNameSettings();
 		this.drawCenteredEntry(layer, storage, global.classNameSettings);
 	}
 
@@ -299,6 +305,7 @@ class TextDrawer
 
 	function drawExtraButtons(layer, storage)
 	{
+		global.extraMenuButtonsSettings = global.getExtraMenuButtonsSettings();
 		for (var i = 0, internal_forloop_count = global.extraMenuButtonsSettings.count; i < internal_forloop_count; i += 1) {
 			this.drawCenteredEntry(layer, storage, global.extraMenuButtonsSettings[i]);
 		}
@@ -530,6 +537,7 @@ class TextDrawer
 
 	function drawAbilities(layer, storage)
 	{
+		global.abilitiesSettings = global.getAbilitiesSettings();
 		var settings = global.abilitiesSettings;
 
 		{

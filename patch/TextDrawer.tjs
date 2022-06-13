@@ -38,7 +38,11 @@ class TextualSettings
 	var bottomOffset=0;
 	var fontHeight=14;
 	var fontFace;
-	var fontContext;
+	var fontFaceContext;
+	var fontHeightContext;
+	var fontBoldContext;
+	var fontItalicContext;
+	var topOffsetContext;
 	var fontBold = false;
 	var fontItalic = false;
 	var lineSpace=0;
@@ -517,22 +521,50 @@ class TextDrawer
 		{
 			var l = layer;
 			var maxHeight = textSettings.maxHeight != void? textSettings.maxHeight : l.imageHeight - textSettings.verticalOffset;
+			var topOffsetCustom;
+
+			if (textSettings.topOffsetContext != "") {
+				topOffsetCustom = global.__si(textSettings.topOffset, textSettings.topOffsetContext);
+			} else {
+				topOffsetCustom = textSettings.topOffset;
+			}
+
 			if (textSettings.verticalAlignment == "center") {
-				y = textSettings.topOffset+(maxHeight - textHeight)/2;
+				y = topOffsetCustom + (maxHeight - textHeight)/2;
 			} else if (textSettings.verticalAlignment == "top") {
-				y = textSettings.topOffset;
+				y = topOffsetCustom;
 			} else if (textSettings.verticalAlignment == "bottom") {
-				y = textSettings.topOffset + maxHeight - textHeight;
+				y = topOffsetCustom + maxHeight - textHeight;
 			}
 		}
 		return y;
 	}
 
 	function setFontFromSettings(font, textSettings) {
-		font.face = global.__s(textSettings.fontFace, textSettings.fontContext);
-		font.height = textSettings.fontHeight;
-		font.bold = textSettings.fontBold;
-		font.italic = textSettings.fontItalic;
+
+		if (textSettings.fontFaceContext != "") {
+			font.face = global.__s(textSettings.fontFace, textSettings.fontFaceContext);
+		} else {
+			font.face = textSettings.fontFace;
+		}
+
+		if (textSettings.fontHeightContext != "") {
+			font.height = global.__si(textSettings.fontHeight, textSettings.fontHeightContext);
+		} else {
+			font.height = textSettings.fontHeight;
+		}
+
+		if (textSettings.fontBoldContext != "") {
+			font.bold = global.__sb(textSettings.fontBold, textSettings.fontBoldContext);
+		} else {
+			font.bold = textSettings.fontBold;
+		}
+
+		if (textSettings.fontItalicContext != "") {
+			font.italic = global.__sb(textSettings.fontItalic, textSettings.fontItalicContext);
+		} else {
+			font.italic = textSettings.fontItalic;
+		}
 	}
 
 	function drawAbilities(layer, storage)

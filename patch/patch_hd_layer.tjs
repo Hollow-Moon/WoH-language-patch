@@ -1388,7 +1388,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 	}*/
 
 	// Image functions.
-	function operateRect_patch_hd_layer(left, top, src, sleft, stop, swidth, sheight, mode, opacity)
+	function operateRect_patch_hd_layer(left, top, src, sleft, stop, swidth, sheight, mode=global.omAuto, opacity=255)
 	{
 		left = +left;
 		top = +top;
@@ -1662,7 +1662,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 		return this.doGrayScale_patch_hd_layer(...);
 	}
 
-	function operateStretch_patch_hd_layer(left, top, width, height, src, sleft, stop, swidth, sheight, mode, opacity, type, option)
+	function operateStretch_patch_hd_layer(left, top, width, height, src, sleft, stop, swidth, sheight, mode=global.omAuto, opacity=255, type=global.stNearest, option=1)
 	{
 		left = +left;
 		top = +top;
@@ -1758,7 +1758,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 		return this.operateStretch_patch_hd_layer(...);
 	}
 
-	function stretchCopy_patch_hd_layer(left, top, width, height, src, sleft, stop, swidth, sheight, type, option)
+	function stretchCopy_patch_hd_layer(left, top, width, height, src, sleft, stop, swidth, sheight, type=global.stNearest, option=1)
 	{
 		left = +left;
 		top = +top;
@@ -1902,7 +1902,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 		return this.piledCopy_patch_hd_layer(...);
 	}
 
-	function affineCopy_patch_hd_layer(src, sx, sy, sw, sh, affine, a, b, c, d, tx, ty, type, clear)
+	function affineCopy_patch_hd_layer(src, sx, sy, sw, sh, affine, a, b, c, d, tx, ty, type=global.stNearest, clear=false)
 	{
 		sx = +sx;
 		sy = +sy;
@@ -1962,7 +1962,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 		return this.affineCopy_patch_hd_layer(...);
 	}
 
-	function operateAffine_patch_hd_layer(src, sx, sy, sw, sh, affine, a, b, c, d, tx, ty, mode, opa, type)
+	function operateAffine_patch_hd_layer(src, sx, sy, sw, sh, affine, a, b, c, d, tx, ty, mode=global.omAuto, opa=255, type=global.stNearest)
 	{
 		sx = +sx;
 		sy = +sy;
@@ -2123,7 +2123,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 		return this.fillRect_patch_hd_layer(...);
 	}
 
-	function colorRect_patch_hd_layer(left, top, width, height, color, opacity)
+	function colorRect_patch_hd_layer(left, top, width, height, color, opacity=255)
 	{
 		left = +left;
 		top = +top;
@@ -2185,7 +2185,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 		return this.colorRect_patch_hd_layer(...);
 	}
 
-	function drawText_patch_hd_layer(left, top, text, color, opacity, aa, slevel, scolor, swidth, sofsx, sofsy)
+	function drawText_patch_hd_layer(left, top, text, color, opacity=255, aa=true, slevel=0, scolor=0, swidth=0, sofsx=0, sofsy=0)
 	{
 		left = +left;
 		top = +top;
@@ -2233,7 +2233,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 		return this.drawText_patch_hd_layer(...);
 	}
 
-	function drawGlyph_patch_hd_layer(left, top, glyph, color, opacity, aa, slevel, scolor, swidth, sofsx, sofsy)
+	function drawGlyph_patch_hd_layer(left, top, glyph, color, opacity=255, aa=true, slevel=0, scolor=0, swidth=0, sofsx=0, sofsy=0)
 	{
 		left = +left;
 		top = +top;

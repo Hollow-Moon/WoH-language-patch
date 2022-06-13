@@ -420,6 +420,14 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 		getter { return super.fullScreen || pseudoFullScreened; }
 		setter(v) {
 			if (!fullScreen == !v) return;
+
+			// Prevent direct maximized->fullscreened transition. Go back to normal window mode instead; the user can fullscreen from there.
+			// (Todo: Find glitch free way for direct transition)
+			if (v && (typeof this.maximized === "Integer") && this.maximized) {
+				showRestore();
+				return;
+			}
+
 			if (typeof this.screenModeChangedTrigger !== "Object") {
 				add(   this.screenModeChangedTrigger = new AsyncTrigger(this, "screenModeChanged"));
 				with (      screenModeChangedTrigger) .cached = true, .mode = atmAtIdle, .trigged = false;
@@ -494,7 +502,15 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 				}
 				else
 				{
-					setZoom(origZoomNumer, origZoomDenom);
+					if (typeof this.maximized === "Integer" && this.maximized) {
+						// If fullscreen window additionally had the maximized flag, do a restore, then maximize again to fix positioning.
+						// (Todo: Find glitch free way for direct transition)
+						showRestore();
+						maximize();
+					}
+					else
+						setZoom(origZoomNumer, origZoomDenom);
+
 					trig.resetIcon = true;
 				}
 
@@ -506,10 +522,16 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 				}
 				_lastWindowSize = void;
 			}
+
+			// Only allow access to "Window Size" menu when not in fullscreen and not in maximized mode
 			if (typeof(this.windowSizeMenu) === "Object")
-			{
-				this.windowSizeMenu.enabled	= !fullScreen;	//	ウィンドウサイズの設定はウィンドウ表示のときのみ
-			}
+				{
+				if (typeof this.maximized === "Integer")
+					this.windowSizeMenu.enabled	= !fullScreen && !this.maximized;
+				else
+					this.windowSizeMenu.enabled	= !fullScreen;
+				}
+
 			if (trig !== void) with (trig) {
 				.trigged = true;
 				.trigger();
@@ -1246,6 +1268,15 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 		callHook("onWindowResizeHook", this, innerWidth, innerHeight);
 		updateWindowSizeChecked(fullScreen ? 0 : innerWidth);
 		updateLimitWindowSizeMenuItem();
+
+		// Only allow access to "Window Size" menu when not in fullscreen and not in maximized mode
+		if (typeof(this.windowSizeMenu) === "Object")
+			{
+			if (typeof this.maximized === "Integer")
+				this.windowSizeMenu.enabled	= !fullScreen && !this.maximized;
+			else
+				this.windowSizeMenu.enabled	= !fullScreen;
+			}
 
 		if (typeof(this.hintlayer) === "Object")
 		{

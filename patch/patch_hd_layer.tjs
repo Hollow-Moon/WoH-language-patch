@@ -218,10 +218,25 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 		}
     }
 
+	function unscaleWidth(w)
+    {
+		if (this.numberOfImages > 1) {
+			var imageWidthScaleFactor = this.imageWidthOriginal / this._imageWidth;
+			return (w / imageWidthScaleFactor) | 0;
+		} else {
+			return this.unscaleImageWidth(w);
+		}
+    }
+
     function scaleHeight(h)
     {
 		return this.scaleImageHeight(h);
     }
+
+	function unscaleHeight(h)
+	{
+		return this.unscaleImageHeight(h);
+	}
 
 	function scaleSingleImageWidth(singleImageWidth) {
 		if (this.isbg || this.stretch) {
@@ -230,10 +245,23 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 		return this.window.scaleHeight(singleImageWidth); // height on purpose
 	}
 
+	function unscaleSingleImageWidth(singleImageWidth) {
+		if (this.isbg || this.stretch) {
+			return this.window.unscaleWidth(singleImageWidth);
+		}
+		return this.window.unscaleHeight(singleImageWidth); // height on purpose
+	}
+
 	function scaleImageWidth(w)
 	{
 		var singleImageWidth = w / this.numberOfImages;
 		return this.scaleSingleImageWidth(singleImageWidth) * this.numberOfImages;
+	}
+
+	function unscaleImageWidth(w)
+	{
+		var singleImageWidth = w / this.numberOfImages;
+		return this.unscaleSingleImageWidth(singleImageWidth) * this.numberOfImages;
 	}
 
 	function scaleImageHeight(h)
@@ -242,6 +270,14 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 			return this.window.scaleWidth(h); // width on purpose
 		}
 		return this.window.scaleHeight(h);
+	}
+
+	function unscaleImageHeight(h)
+	{
+		if (this.isbg && !this.stretch) {
+			return this.window.unscaleWidth(h); // width on purpose
+		}
+		return this.window.unscaleHeight(h);
 	}
 
 	function scaleInsideImageWidth(w)

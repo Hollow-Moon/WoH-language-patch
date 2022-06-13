@@ -59,10 +59,9 @@ global.initHaze_patch_hd_plugins_override = function(elm)
 	elm.upper = layer.scaleHeight(elm.upper) if elm.upper > 0;
 	elm.center = layer.scaleHeight(elm.center) if elm.center > 0;
 	elm.lower = layer.scaleHeight(elm.lower) if elm.lower > 0;
-	var scaleFactor = elm.upper / originalUpper; // TODO not that pretty
-	elm.cycle = elm.cycle / scaleFactor;
+	elm.cycle = layer.unscaleHeight(elm.cycle);
 	for (var i=0; i < elm.waves.count; i++) {
-		elm.waves[i][2] = layer.scaleHeight(elm.waves[i][2]);
+		elm.waves[i][2] = layer.scaleWidth(elm.waves[i][2]);
 	}
 	for (var i=0; i < elm.lwaves.count; i++) {
 		elm.lwaves[i][2] = layer.scaleHeight(elm.lwaves[i][2]);
@@ -81,10 +80,10 @@ global.initHaze_patch_hd_plugins_override = function(elm)
 	elm.lower = originalLower;
 	elm.cycle = originalCycle;
 	for (var i=0; i < elm.waves.count; i++) {
-		elm.waves[i][2] /= scaleFactor;
+		elm.waves[i][2] = layer.unscaleWidth(elm.waves[i][2]);
 	}
 	for (var i=0; i < elm.lwaves.count; i++) {
-		elm.lwaves[i][2] /= scaleFactor;
+		elm.lwaves[i][2] = layer.unscaleHeight(elm.lwaves[i][2]);
 	}
 	if (ie !== void)
 	{

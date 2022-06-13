@@ -1132,11 +1132,16 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 			}
 			return;
 		}
+		var ie;
 		try
 		{
 			return (global.Layer_patch_hd_layer_original.beginTransition incontextof this)(...);
 		}
 		catch (e)
+		{
+			ie = e;
+		}
+		if (ie !== void)
 		{
 			var msg = "";
 			if (typeof(e) === "Object" && isvalid(e) && typeof(e.message) === "String")
@@ -2289,6 +2294,17 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 		setter(v) { this.onTouchRotate_patch_hd_layer_original = v; }
 	}
 
+	function onTransitionCompleted_patch_hd_layer_override(dest, src)
+	{
+		this.onTransitionCompleted_patch_hd_layer_original(dest, src);
+	}
+
+	property onTransitionCompleted_patch_hd_layer_property_shim
+	{
+		getter { return this.onTransitionCompleted_patch_hd_layer_override; }
+		setter(v) { this.onTransitionCompleted_patch_hd_layer_original = v; }
+	}
+
 	function patch_hd_layer_setup_event_shims()
 	{
 		if (typeof(this.onClick) === "Object")
@@ -2387,6 +2403,14 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 		{
 			this.onTouchRotate_patch_hd_layer_original = function() {};
 		}
+		if (typeof(this.onTransitionCompleted) === "Object")
+		{
+			this.onTransitionCompleted_patch_hd_layer_original = this.onTransitionCompleted;
+		}
+		else
+		{
+			this.onTransitionCompleted_patch_hd_layer_original = function() {};
+		}
 		&this.onClick = &this.onClick_patch_hd_layer_property_shim;
 		&this.onDoubleClick = &this.onDoubleClick_patch_hd_layer_property_shim;
 		&this.onMouseDown = &this.onMouseDown_patch_hd_layer_property_shim;
@@ -2399,6 +2423,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 		&this.onTouchMove = &this.onTouchMove_patch_hd_layer_property_shim;
 		&this.onTouchScaling = &this.onTouchScaling_patch_hd_layer_property_shim;
 		&this.onTouchRotate = &this.onTouchRotate_patch_hd_layer_property_shim;
+		&this.onTransitionCompleted = &this.onTransitionCompleted_patch_hd_layer_property_shim;
 	}
 }
 global.Layer = global.Layer_patch_hd_layer_override;

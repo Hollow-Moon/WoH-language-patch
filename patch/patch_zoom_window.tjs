@@ -1246,6 +1246,12 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 		callHook("onWindowResizeHook", this, innerWidth, innerHeight);
 		updateWindowSizeChecked(fullScreen ? 0 : innerWidth);
 		updateLimitWindowSizeMenuItem();
+
+		if (typeof(this.hintlayer) === "Object")
+		{
+			invalidate this.hintlayer;
+			this.hintlayer = void;
+		}
 	}
 	function onDisplayChanged() {
 //		dm("callDisplayChanged");
@@ -1275,11 +1281,6 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 @if(GAME_FATE||GAME_FHAT)
 			setInnerSize(w, (w * 3) \ 4);
 @endif
-		if (typeof(this.hintlayer) === "Object")
-		{
-			invalidate this.hintlayer;
-			this.hintlayer = void;
-		}
 	}
 
 @if(GAME_WOHN)

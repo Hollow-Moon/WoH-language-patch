@@ -22,11 +22,7 @@ class Window_hint_override extends global.Window_hint_original
 			l.visible = false;
 			l.ignoreHintSensing = true;
 			l.hitThreshold = 256;
-			if (["Integer", "Real"].find(typeof(this.innerHeightScale)) !== -1) {
-				l.font.height = global.Math.ceil(9 / global.Math.min(1, this.innerHeightScale)); // upscale font when using window size < x1.0
-			} else {
-				l.font.height = 9;
-			}
+			l.font.height = 9;
 			l.font.face = global.__s("MS UI Gothic", "hint_font_face");
 		}
 
@@ -56,39 +52,67 @@ class Window_hint_override extends global.Window_hint_original
 				}
 			}
 
-			var fontHeight = this.hintlayer.font.height;
+			// -----------------------------------------------------------------------------------------------
+			// Convert from screen space to base layer coordinates
+
+			var clientRect = this.getClientRect();
+			if (typeof this.fullScreened === "Integer" && this.fullScreened)
+				clientRect.h = global.System.screenHeight;	// clientRect.h can be bigger than screenHeight when fullScreened, with some black border at the bottom, for unknown reasons.
+
+			// Calculate the actually used (absolute) width/height the game content uses (so without black borders in fullscreen/maximized)
+			var pxWidth_abs = global.Math.floor(clientRect.h * this.pxWidth * this.wideFactor / this.pxHeight) | 0;
+			var pxHeight_abs = clientRect.h;
+			//var z = clientRect.h / this.pxHeight;
+			
+			// If neccessary, recalculate to fit from inside
+			if (pxWidth_abs > clientRect.w)
+				{
+				pxWidth_abs = clientRect.w;
+				pxHeight_abs = global.Math.floor(clientRect.w * this.pxHeight / (this.pxWidth * this.wideFactor)) | 0;
+				//z = clientRect.w / global.Math.floor(this.pxWidth * this.wideFactor);
+				}
+			
+			// Calculate the offset introduced by the black borders in fullScreened/maximized mode. In windowed mode, these will be 0, of course.
+			var widthOffsetAbs = (clientRect.w  - pxWidth_abs) / 2;
+			var heightOffsetAbs = (clientRect.h - pxHeight_abs) / 2;
+
+			var x = (x - widthOffsetAbs)  * this.pxWidth  / pxWidth_abs;
+			var y = (y - heightOffsetAbs) * this.pxHeight / pxHeight_abs;
+
+			// -----------------------------------------------------------------------------------------------
+			// Recalculate size of font and tip box
+
+			var fontSizeRatio = 1.0;
+
+			fontSizeRatio /= global.Math.min(1, pxHeight_abs/this.pxHeight);	// If the absolute window size on screen gets small, the fontSizeRatio will increase, leading to a bigger font
+
+			this.hintlayer.font.height = global.Math.ceil(9 * fontSizeRatio);	// "Ceil" because erring on the side of a bigger font is preferable
+
+			var fontHeight = this.hintlayer.font.height;						// Retrieve it again - it might have been modified while setting!
+
 			var w = this.hintlayer.font.getTextWidth(lines[longestLineIndex]) + this.hintHorizontalPadding * 2;
 			var h = fontHeight * lines.count + this.hintLineSpacing * (lines.count-1) + this.hintVerticalPadding * 2;
 			this.hintlayer.setImageSize(w, h);
 			this.hintlayer.setSizeToImageSize();
 
-@if(HD_MODE)
-			if (typeof this.fullScreened === "Integer" && fullScreened) {
-				var windowToScreenRatio = (this.innerHeight*this.heightScale) / System.screenHeight;
-				x -= (System.screenWidth - (this.innerWidth*this.widthScale / windowToScreenRatio)) / 2;
-				x *= windowToScreenRatio;
-				y *= windowToScreenRatio;
-			}
+			// -----------------------------------------------------------------------------------------------
+			// Position tip layer
 
-			x /= this.widthScale;
-			y /= this.heightScale;
-@endif
-@if(ZOOM_WINDOW)
-			if (["Integer", "Real"].find(typeof(this.innerHeightScale)) !== -1)
-			{
-				x /= this.innerWidthScale;
-				y /= this.innerHeightScale;
-				if ((x+w) > this.innerWidth/this.innerWidthScale) { x = this.innerWidth/this.innerWidthScale - w; }
-				if ((y+this.mouseCursorSize+h) > this.innerHeight/this.innerHeightScale) { y = this.innerHeight/this.innerHeightScale - h - this.mouseCursorSize/this.innerHeightScale; }
-				this.hintlayer.setPos(x, y + this.mouseCursorSize/this.innerHeightScale);
-			}
-			else
-@endif
-			{
-				if ((x+w) > this.innerWidth) { x = this.innerWidth - w; }
-				if ((y+this.mouseCursorSize+h) > this.innerHeight) { y = this.innerHeight - h - this.mouseCursorSize; }
-				this.hintlayer.setPos(x, y + this.mouseCursorSize);
-			}
+			var mouseCursorSizeAdjusted = this.mouseCursorSize * this.pxHeight / pxHeight_abs;
+			
+			if ((x + w) > this.pxWidth)
+				x = this.pxWidth - w;
+
+			var yTest = y + mouseCursorSizeAdjusted + h;
+
+			if ((y + mouseCursorSizeAdjusted + h) > this.pxHeight)
+				y = this.pxHeight - h - mouseCursorSizeAdjusted;
+
+			x = (x*this.wideFactor) * (this.pxWidth - w) / ((this.pxWidth * this.wideFactor) - w);	// Inverse discrete transform to compensate from offset that will be introduced during setPos()
+
+			this.hintlayer.setPos(x, y + mouseCursorSizeAdjusted);
+
+			// -----------------------------------------------------------------------------------------------
 
 			this.hintlayer.fillRect(0, 0, w, h, 0);
 			this.hintlayer.colorRect(0, 0, w, h, global.clInfoBk, 196);

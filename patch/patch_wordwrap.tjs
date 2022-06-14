@@ -918,67 +918,6 @@ class KAGWindow_patch_wordwrap_override extends global.KAGWindow_patch_wordwrap_
 	function getHandlers()
 	{
 		var handlers = super.getHandlers();
-@if(!PROCESS_WORD_WRAPPING_IN_CHUNKS)
-		handlers[this.nextWordTagName] = function(elm)
-		{
-			if (this.processNextWord(elm))
-			{
-				return this.showPageBreakAndClear();
-			}
-			return 0;
-		} incontextof this;
-		handlers.ch_patch_wordwrap_original = handlers.ch;
-		handlers.ch = function(elm)
-		{
-			// 文字表示
-			var acs = this.actualChSpeed;
-			if(this.updateBeforeCh)
-			{
-				if(acs) { this.updateBeforeCh--; return -5; } else { this.updateBeforeCh--; }
-			}
-
-			if (this.conductor.isNewLine()) {
-				this.onNewLine(elm);
-			}
-			else
-			{
-				if ((this.current.shouldReline(elm.text)) && #(elm.text) === 32 && !global.isJapanese())
-				{
-					return 0;
-				}
-			}
-@if(0)
-			this.replaceCharacters(elm);
-@endif
-			if(this.processWordWrapping(elm)) {
-				return this.showPageBreakAndClear();
-			}
-
-			var text = elm.text;
-			if(this.currentWithBack) this.current.comp.processCh(text);
-			if(this.current.processCh(text))
-			{
-				return this.showPageBreakAndClear();
-			}
-			if(this.historyWriteEnabled) this.historyLayer.store(text);
-
-@if(0)
-			this.processQuotesIndent(elm);
-@endif
-
-			if(this.autoWCEnabled)
-			{
-				// 自動ウェイト
-				var ind;
-				if((ind = this.autoWCChars.indexOf(text)) != -1)
-				{
-					return (acs * this.autoWCWaits[ind]) | 0;
-				}
-			}
-			return acs;
-		} incontextof this;
-@endif
-@if(PROCESS_WORD_WRAPPING_IN_CHUNKS)
 		handlers.ruby_patch_wordwrap_original = handlers.ruby;
 		handlers.ruby = function(elm)
 		{
@@ -1035,7 +974,6 @@ class KAGWindow_patch_wordwrap_override extends global.KAGWindow_patch_wordwrap_
 			}
 			return this.tagHandlers.ruby_patch_wordwrap_original(elm);
 		} incontextof this;
-@endif
 		return handlers;
 	}
 
@@ -1122,7 +1060,6 @@ class KAGWindow_patch_wordwrap_override extends global.KAGWindow_patch_wordwrap_
 		return -1;
 	}
 
-@if(PROCESS_WORD_WRAPPING_IN_CHUNKS)
 	function processWordWrappingChunkAtOnce(text, conductor, elm)
 	{
 		var word_wrap_break_position = this.getWordWrapBreakPosition(text);
@@ -1222,7 +1159,6 @@ class KAGWindow_patch_wordwrap_override extends global.KAGWindow_patch_wordwrap_
 
 		return ttext;
 	}
-@endif
 
 @if(0)
 	var quotesIndentedLeft = 1;

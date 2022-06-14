@@ -676,7 +676,7 @@ class Conductor_patch_conductor_override extends global.Conductor_patch_conducto
 		{
 			if (this.patch_conductor_scenario_manager_depth === void)
 			{
-				if (this.curStorage !== void && this.patch_conductor_utility_scenario_list.find(this.curStorage) !== -1)
+				if (this.curStorage !== void && this.patch_conductor_utility_scenario_list.find(this.curStorage.toLowerCase()) !== -1)
 				{
 					this.patch_conductor_scenario_manager_depth = this.callStackDepth;
 				}
@@ -713,9 +713,28 @@ class Conductor_patch_conductor_override extends global.Conductor_patch_conducto
 		return super.clearCallStack(...);
 	}
 
-	function restore()
+	function restore(dic)
 	{
 		this.patch_conductor_scenario_manager_depth = void;
+		if (dic !== void)
+		{
+			var val = dic.callStack;
+			if (val !== void)
+			{
+				var clo = val;
+				var count = clo.count;
+
+				for (var i = 0; i < count; i += 1)
+				{
+					var item = clo[i];
+					if (item !== void && typeof(item.storage) === "String" && this.patch_conductor_utility_scenario_list.find(item.storage.toLowerCase()) !== -1)
+					{
+						this.patch_conductor_scenario_manager_depth = i;
+						break;
+					}
+				}
+			}
+		}
 		return super.restore(...);
 	}
 }

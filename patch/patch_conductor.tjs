@@ -659,6 +659,65 @@ class Conductor_patch_conductor_override extends global.Conductor_patch_conducto
 		}
 		return joined_lines;
 	}
+
+	var patch_conductor_in_utility_scenario = false;
+	var patch_conductor_utility_scenario_list = [
+		"flowtrackerplugin.ks",
+		"tracerplugin.ks",
+	];
+
+	var patch_conductor_scenario_manager_depth = void;
+	var patch_conductor_entered_from_utility_scenario = void;
+
+	function onCall(dic)
+	{
+		this.patch_conductor_entered_from_utility_scenario = false;
+		if (dic !== void)
+		{
+			if (this.patch_conductor_scenario_manager_depth === void)
+			{
+				if (this.curStorage !== void && this.patch_conductor_utility_scenario_list.find(this.curStorage) !== -1)
+				{
+					this.patch_conductor_scenario_manager_depth = this.callStackDepth;
+				}
+			}
+			else if (this.callStackDepth >= this.patch_conductor_scenario_manager_depth + 1)
+			{
+				this.patch_conductor_in_utility_scenario = true;
+			}
+		}
+		return super.onCall(...);
+	}
+
+	function onReturn(dic)
+	{
+		this.patch_conductor_entered_from_utility_scenario = false;
+		if (dic !== void)
+		{
+			if (this.callStackDepth - 1 === this.patch_conductor_scenario_manager_depth)
+			{
+				this.patch_conductor_scenario_manager_depth = void;
+			}
+			else if (this.callStackDepth - 1 === this.patch_conductor_scenario_manager_depth + 1)
+			{
+				this.patch_conductor_entered_from_utility_scenario = true;
+				this.patch_conductor_in_utility_scenario = false;
+			}
+		}
+		return super.onReturn(...);
+	}
+
+	function clearCallStack()
+	{
+		this.patch_conductor_scenario_manager_depth = void;
+		return super.clearCallStack(...);
+	}
+
+	function restore()
+	{
+		this.patch_conductor_scenario_manager_depth = void;
+		return super.restore(...);
+	}
 }
 
 global.Conductor = global.Conductor_patch_conductor_override;

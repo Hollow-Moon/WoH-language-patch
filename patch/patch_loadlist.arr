@@ -191,7 +191,7 @@
 	"patch_store_bookmarkdate_as_epoch.tjs",
 	"patch_fix_scflags_bookmark_info.tjs",
 	["TextDrawer.tjs", ,,, "TEXT_DRAWER"],
-	["TextDrawerSettings.tjs", ,,, "TEXT_DRAWER"],
+	["TextDrawerSettings.tjs", ,, true, "TEXT_DRAWER"],
 	["patch_textdrawer_override.tjs", ,,, "TEXT_DRAWER"],
 	["patch_wavesoundbuffer_assdisplay.tjs", , [["Layer.load_ass_track", , "==="]]],
 	["patch_menu_layer.tjs", ,,, "USE_MENU_LAYER"],

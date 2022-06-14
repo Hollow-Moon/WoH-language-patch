@@ -299,8 +299,11 @@ class KAGWindow_patch_wordwrap_override extends global.KAGWindow_patch_wordwrap_
 				this.allocateMessageLayers(1);
 				global.reload_messagelayer_config(this);
 			}
-			this.setMessageLayerUserFont();
-			this.clearMessageLayers();
+			if (!this.conductor.patch_conductor_entered_from_utility_scenario)
+			{
+				this.setMessageLayerUserFont();
+				this.clearMessageLayers();
+			}
 			if (this.word_lines_scenario_changed || this.check_word_length_cache())
 			{
 				this.word_lines_scenario_changed = false;

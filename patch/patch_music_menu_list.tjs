@@ -1,0 +1,183 @@
+﻿
+
+global.MusicListFile	= "音楽一覧.txt";		//	"ファイル名\t一行目\t二行目\n"
+global.SEListFile		= "効果音一覧.txt";
+
+global.se_bgm_filelist = %[];
+global.se_bgm_fileparams = %[];
+
+global.list_and_filter_bgm_se = function(file, audio_type="")
+{
+	// TODO: speed this process up?
+	var list = [];
+	var lines = [].load(file);
+	for(var i=0; i<lines.count; i++)
+	{
+		var line = lines[i];
+		if(line != "" && line[0] != ";")
+		{
+			var params	= [].split("\t", line);
+			var choped_query	= global.Storages.chopStorageExt(params[0]);
+			var choped = choped_query;
+			if (audio_type != "" && audio_type != "original" && audio_type != "music" && audio_type != "se")
+			{
+				choped = ("%s_%s").sprintf(choped, audio_type);
+			}
+			if (global.isExistentSound(choped))
+			{
+				list.add(line);
+			}
+		}
+	}
+	return list;
+};
+
+
+global.get_filtered_bgm_se_by_flags = function(audio_type, flags)
+{
+	var music_menu_test_mode_enabled = typeof(global.musicMenuTestMode) === "Integer" && global.musicMenuTestMode;
+	var list = [];
+	var lines = global.se_bgm_filelist[audio_type];
+	if (lines === void)
+	{
+		throw new global.Exception("audio_type is invalid");
+	}
+	flags	= %[] if flags == void;
+	for (var i=0; i<lines.count; i++)
+	{
+		var line = lines[i];
+		if (line != "" && line[0] != ";")
+		{
+			var params	= [].split("\t", line);
+			var choped_query	= global.Storages.chopStorageExt(params[0]);
+			var choped = choped_query;
+			if (audio_type != "" && audio_type != "original" && audio_type != "music" && audio_type != "se")
+			{
+				choped = ("%s_%s").sprintf(choped, audio_type);
+			}
+			if ((music_menu_test_mode_enabled || flags[choped_query] > 0 || flags[params[0]] > 0))
+			{
+				//	再生されたことがあり、存在するものだけ表示される
+				if (params[1]=="")	//	タイトルが無ければファイル名
+				{
+					params[1]	= choped;
+				}
+				if (audio_type != "" && audio_type != "music" && audio_type != "se")
+				{
+					var ext = global.Storages.extractStorageExt(params[0]);
+					params[0] = ("%s_%s%s").sprintf(choped_query, audio_type, ext);
+				}
+				params[1] = global.__(params[1]);
+				list.add(params);
+			}
+		}
+	}
+	return list;
+};
+
+global.generate_initial_bgm_se_list = function()
+{
+	var se_bgm_filelist = global.se_bgm_filelist;
+@if(GAME_FHAT)
+	se_bgm_filelist["music"] = global.list_and_filter_bgm_se(global.MusicListFile);
+	se_bgm_filelist["se"] = global.list_and_filter_bgm_se(global.SEListFile);
+@endif
+@if(GAME_FATE)
+	//	ファイルリスト取得
+	var originalmusicfiles = global.list_and_filter_bgm_se(global.MusicListFile, "original");
+	se_bgm_filelist["original"] = originalmusicfiles;
+	se_bgm_filelist["music"] = originalmusicfiles;
+	se_bgm_filelist["vita"] = global.list_and_filter_bgm_se(global.MusicListFile, "vita");
+	se_bgm_filelist["ps2"] = global.list_and_filter_bgm_se(global.MusicListFile, "ps2");
+	se_bgm_filelist["classic"] = global.list_and_filter_bgm_se(global.MusicListFile, "classic");
+
+	se_bgm_filelist["se"] = global.list_and_filter_bgm_se(global.SEListFile);
+@endif
+};
+
+global.se_bgm_fileparams_cache_valid = false;
+
+global.played_music_flag = "playedMusic";
+global.played_se_flag = "playedSE";
+
+global.generate_filtered_bgm_se_list = function(kag=global.kag)
+{
+	var se_bgm_fileparams = global.se_bgm_fileparams;
+	if (global.se_bgm_fileparams_cache_valid)
+	{
+		return se_bgm_fileparams;
+	}
+	var se_bgm_filelist = global.se_bgm_filelist;
+	if (se_bgm_filelist["music"] === void)
+	{
+		global.generate_initial_bgm_se_list();
+	}
+	var flag_storage;
+@if(GAME_FHAT)
+	flag_storage = kag.tflags;
+@endif
+@if(GAME_FATE)
+	flag_storage = kag.sflags;
+@endif
+	var played_music_flag = global.played_music_flag;
+	var played_se_flag = global.played_se_flag;
+
+	var played_music_dict = flag_storage[played_music_flag];
+	var played_se_dict = flag_storage[played_se_flag];
+
+@if(GAME_FHAT)
+	se_bgm_fileparams["music"] = global.get_filtered_bgm_se_by_flags("music", played_music_dict);
+@endif
+@if(GAME_FATE)
+	//	ファイルリスト取得
+	var originalmusicfiles = global.get_filtered_bgm_se_by_flags("original", played_music_dict);
+	se_bgm_fileparams["original"] = originalmusicfiles;
+	se_bgm_fileparams["music"] = originalmusicfiles;
+	se_bgm_fileparams["vita"] = global.get_filtered_bgm_se_by_flags("vita", played_music_dict);
+	se_bgm_fileparams["ps2"] = global.get_filtered_bgm_se_by_flags("ps2", played_music_dict);
+	se_bgm_fileparams["classic"] = global.get_filtered_bgm_se_by_flags("classic", played_music_dict);
+@endif
+
+	se_bgm_fileparams["se"] = global.get_filtered_bgm_se_by_flags("se", played_se_dict);
+	global.se_bgm_fileparams_cache_valid = true;
+	return se_bgm_fileparams;
+};
+
+global.add_to_played_storage = function(kag=global.kag, audio_filename, audio_type)
+{
+	if (audio_filename === void || audio_filename === "")
+	{
+		return;
+	}
+	var flag_storage;
+@if(GAME_FHAT)
+	flag_storage = kag.tflags;
+@endif
+@if(GAME_FATE)
+	flag_storage = kag.sflags;
+@endif
+	var flag_name = "playedMusic";
+	if (audio_type === "music")
+	{
+		flag_name = global.played_music_flag;
+	}
+	if (audio_type === "se")
+	{
+		flag_name = global.played_se_flag;
+	}
+	var played_storage = flag_storage[flag_name];
+	if (played_storage === void)
+	{
+		return;
+		throw new global.Exception("Flag for audio not found");
+		flag_storage[flag_name] = %[];
+		played_storage = flag_storage[flag_name];
+	}
+	var played_storage_value = played_storage[audio_filename];
+	if (played_storage_value === void || played_storage_value === 0)
+	{
+		global.se_bgm_fileparams_cache_valid = false;
+	}
+	played_storage_value += 1;
+	played_storage[audio_filename] = played_storage_value;
+};

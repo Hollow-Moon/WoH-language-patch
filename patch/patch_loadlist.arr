@@ -190,6 +190,7 @@
 	"patch_reload_override.tjs",
 	"patch_store_bookmarkdate_as_epoch.tjs",
 	"patch_fix_scflags_bookmark_info.tjs",
+	["patch_music_menu_list.tjs", ,,, "GAME_FATE||GAME_FHAT"],
 	["TextDrawer.tjs", ,,, "TEXT_DRAWER"],
 	["TextDrawerSettings.tjs", ,, true, "TEXT_DRAWER"],
 	["patch_textdrawer_override.tjs", ,,, "TEXT_DRAWER"],

@@ -1027,12 +1027,34 @@ class KAGWindow_patch_wordwrap_override extends global.KAGWindow_patch_wordwrap_
 
 	function getWordWrapBreakPosition(text)
 	{
+		return this.getWordWrapBreakPositionUAX14(text);
+@if(0)
 		if (global.isChinese()) {
 			return this.getWordWrapBreakPositionChinese(text);
 		} else if (!global.isJapanese()) {
 			return this.getWordWrapBreakPositionSpace(text);
 		}
 		return -1;
+@endif
+	}
+
+	function getWordWrapBreakPositionUAX14(text)
+	{
+		var breaker = new global.LineBreaker(text);
+		var breaks = [];
+		var last = 0;
+		var bk = breaker.nextBreak();
+		if (!bk)
+		{
+			return -1;
+		}
+		var space_index = bk.position;
+		// To avoid infinite recursion, break after space position
+		if (space_index == 0)
+		{
+			return 1;
+		}
+		return space_index;
 	}
 
 	function getWordWrapBreakPositionSpace(text)

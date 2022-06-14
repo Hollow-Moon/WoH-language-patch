@@ -170,6 +170,8 @@
 	["patch_language_configvalues.tjs", ,,, "GAME_WOHN"],
 	"patch_conductor.tjs",
 	"patch_tag_stream_mutate.tjs",
+	"patch_unicode_trie.tjs",
+	"patch_unicode_linebreaker.tjs",
 	"patch_wordwrap.tjs",
 	["patch_messagelayer_prelayout.tjs", ,,, "MESSAGELAYER_USECHARLAYER"],
 	["patch_ost.tjs", ,,, "GAME_FATE"],

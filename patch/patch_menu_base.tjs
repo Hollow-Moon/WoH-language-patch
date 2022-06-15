@@ -807,6 +807,7 @@ global.addMovieMenu = function(patchMenu)
 	var movieQualityFlag = new global.GameFlag(this, this.sflags, "movieQuality", "high");
 
 	this.movieMenuItem.add(this.movieQualityMenuItem = new global.KAGMenuItem(this, global.__t("ムービーの品質(&Q)"), 0, void, false));
+	this.movieQualityMenuItem.add(this.movieQualityAutoMenuItem = new global.KAGFlagMenuItem(this, global.__t("自動(&A)"), 1, movieQualityFlag, "auto"));
 	this.movieQualityMenuItem.add(this.movieQualityHighMenuItem = new global.KAGFlagMenuItem(this, global.__t("高い(&H)"), 1, movieQualityFlag, "high"));
 	this.movieQualityMenuItem.add(this.movieQualityLowMenuItem = new global.KAGFlagMenuItem(this, global.__t("低い(&L)"), 1, movieQualityFlag, "low"));
 };

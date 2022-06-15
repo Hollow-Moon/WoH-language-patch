@@ -672,6 +672,20 @@ global.load_language_patch = function(language, kag)
 	global.loadLanguageDict(language);
 	global.load_fonts(language);
 
+	if (typeof(global.imagesHdOverrideDict) === "Object" && typeof(global.imagesHdOverrideName) === "String")
+	{
+		var imagesHdOverrideDict_path = global.find_file_in_language_paths(global.imagesHdOverrideName, language);
+		try
+		{
+			global.imagesHdOverrideDict = (typeof(imagesHdOverrideDict_path) === "String") ? global.Scripts.evalStorage(imagesHdOverrideDict_path) : %[];
+		}
+		catch (e)
+		{
+			global.Debug.message("Failed to read " + global.imagesHdOverrideName);
+			global.imagesHdOverrideDict = %[];
+		}
+	}
+
 	var chara2displayname_dic_path = global.find_file_in_language_paths(global.chara2displaynamefile, language);
 	global.chara2displayname = (typeof(chara2displayname_dic_path) === "String") ? global.Scripts.evalStorage(chara2displayname_dic_path) : %[];
 
@@ -734,6 +748,10 @@ global.unload_language_patch = function(language, kag)
 	}
 
 	global.chara2displayname = %[];
+	if (typeof(global.imagesHdOverrideDict) === "Object")
+	{
+		global.imagesHdOverrideDict = %[];
+	}
 };
 
 global.loadLanguageSettings = function()

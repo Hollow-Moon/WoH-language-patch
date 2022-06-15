@@ -1,4 +1,6 @@
 ﻿global.imagesHdDict = global.Scripts.evalStorage("images_hd.dic");
+global.imagesHdOverrideName = "images_hd_override.dic";
+global.imagesHdOverrideDict = %[];
 
 
 global.messageLayerImages = ["tw_ノーマル(薄い)", "tw_ノーマル(通常)", "tw_ノーマル(濃い)", "tw_たいがー(通常)", "tw_たいがー(模様)"];
@@ -917,11 +919,18 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 			this._imageHeight = 96;
 		} else {
 			var imageKey = global.Storages.extractStorageName(storageName);
-			if (global.imagesHdDict[imageKey] === void) {
-				throw new global.Exception("Missing image in images_hd.dic: " + storage);
+			var imageInfo;
+			imageInfo = global.imagesHdDict[imageKey];
+			if (imageInfo === void)
+			{
+				imageInfo = global.imagesHdOverrideDict[imageKey];
+				if (imageInfo === void)
+				{
+					throw new global.Exception("Missing image in images_hd.dic: " + storage);
+				}
 			}
 
-			if (global.imagesHdDict[imageKey]["hd_name"] !== void || global.imagesHdDict[imageKey]["number_of_images_hd"] !== void) {
+			if (imageInfo["hd_name"] !== void || imageInfo["number_of_images_hd"] !== void) {
 				var flag = true;
 				if (global.messageLayerImages.contains(imageKey)) {
 					flag = this.window.sflags.mobileWindow;
@@ -930,15 +939,15 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 				} else {
 					flag = this.window.isHd;
 				}
-				this.imageStorage = (global.imagesHdDict[imageKey]["hd_name"] !== void && flag)? global.imagesHdDict[imageKey]["hd_name"] : storageName;
-				this.numberOfImages = (global.imagesHdDict[imageKey]["number_of_images_hd"] !== void && flag)? global.imagesHdDict[imageKey]["number_of_images_hd"] : (global.imagesHdDict[imageKey]["number_of_images"] !== void? global.imagesHdDict[imageKey]["number_of_images"] : 1);
+				this.imageStorage = (imageInfo["hd_name"] !== void && flag) ? imageInfo["hd_name"] : storageName;
+				this.numberOfImages = (imageInfo["number_of_images_hd"] !== void && flag) ? imageInfo["number_of_images_hd"] : (imageInfo["number_of_images"] !== void ? imageInfo["number_of_images"] : 1);
 			} else {
 				this.imageStorage = storageName;
-				this.numberOfImages = global.imagesHdDict[imageKey]["number_of_images"] !== void? global.imagesHdDict[imageKey]["number_of_images"] : 1;
+				this.numberOfImages = imageInfo["number_of_images"] !== void ? imageInfo["number_of_images"] : 1;
 			}
 			
-			this._imageWidth = global.imagesHdDict[imageKey]["width"];
-			this._imageHeight = global.imagesHdDict[imageKey]["height"];
+			this._imageWidth = imageInfo["width"];
+			this._imageHeight = imageInfo["height"];
 
 			if (global.messageLayerImages.contains(imageKey) && this.window.sflags.wideWindow) {
 				this._imageWidth = (this._imageWidth * this.window.wideFactor) | 0;
@@ -946,7 +955,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 
 			this._imageWidth *= this.numberOfImages;
 			
-			this.isbg = global.imagesHdDict[imageKey]["bg"] !== void? global.imagesHdDict[imageKey]["bg"] : false;
+			this.isbg = imageInfo["bg"] !== void ? imageInfo["bg"] : false;
 		}
 
 @if(GAME_FATE||GAME_FHAT)

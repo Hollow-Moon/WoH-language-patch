@@ -1,10 +1,14 @@
 ﻿
+global.patch_hint_delay = 500;
+
 global.Window_hint_original = global.Window;
 class Window_hint_override extends global.Window_hint_original
 {
 	function Window_hint_override()
 	{
 		super.Window(...);
+
+		this.patch_hint_set_timer();
 	}
 
 	function Window()
@@ -13,6 +17,75 @@ class Window_hint_override extends global.Window_hint_original
 	}
 
 	var hintlayer = void;
+	var hinttimer = void;
+
+	var patch_hint_hintDelay = 500;
+	property hintDelay
+	{
+		getter
+		{
+			return this.patch_hint_hintDelay;
+		}
+		setter (v)
+		{
+			this.patch_hint_hintDelay = v | 0;
+			this.patch_hint_set_timer();
+		}
+	}
+
+	var patch_hint_last_x = 0;
+	var patch_hint_last_y = 0;
+	function patch_hint_on_timer()
+	{
+		this.hinttimer.enabled = false;
+		try
+		{
+			var primary_layer = this.primaryLayer;
+			var p = primary_layer.getLayerAt(primary_layer.cursorX, primary_layer.cursorY);
+			if (p === void || p === null)
+			{
+				return;
+			}
+			if (p.patch_hint_ignoreHintSensing)
+			{
+				return;
+			}
+			while (p.patch_hint_showParentHint)
+			{
+				var parent = p.parent;
+				if (parent === void || parent === null)
+				{
+					break;
+				}
+				p = parent;
+			}
+			if (p)
+			{
+				var hint = p.patch_hint_hint;
+				if (hint !== "")
+				{
+					this.onHintChanged(hint, this.patch_hint_last_x, this.patch_hint_last_y, true);
+				}
+			}
+			
+		}
+		catch (e)
+		{
+
+		}
+	}
+
+	function patch_hint_set_timer()
+	{
+		if (this.hinttimer === void)
+		{
+			this.hinttimer = new global.Timer(this, "patch_hint_on_timer");
+			this.hinttimer.capacity = 1;
+			this.hinttimer.mode = global.atmAtIdle;
+		}
+		this.hinttimer.enabled = false;
+		this.hinttimer.interval = this.patch_hint_hintDelay;
+	}
 
 	function initHintLayer()
 	{
@@ -38,6 +111,37 @@ class Window_hint_override extends global.Window_hint_original
 	var tooltipBorderColor = 0xffffe1;
 	var mouseCursorSize = 20;
 
+	function onMouseLeave()
+	{
+		this.hinttimer.enabled = false;
+		try
+		{
+			this.onHintChanged("", 0, 0, false);
+		}
+		catch (e)
+		{
+
+		}
+		return super.onMouseLeave(...);
+	}
+
+	function onMouseMove(x, y, shift)
+	{
+		this.hinttimer.enabled = false;
+		try
+		{
+			this.onHintChanged("", x, y, false);
+			this.patch_hint_last_x = x;
+			this.patch_hint_last_y = y;
+		}
+		catch (e)
+		{
+
+		}
+		this.hinttimer.enabled = true;
+		return super.onMouseMove(...);
+	}
+
 	function onHintChanged(text, x, y, isshow)
 	{
 		if (this.hintlayer === void) {
@@ -55,12 +159,39 @@ class Window_hint_override extends global.Window_hint_original
 			// -----------------------------------------------------------------------------------------------
 			// Convert from screen space to base layer coordinates
 
-			var clientRect = this.getClientRect();
+			var clientRect;
+			if (typeof(this.getClientRect) === "Object")
+			{
+				clientRect = this.getClientRect();
+			}
+			if (typeof(clientRect) !== "Object")
+			{
+				clientRect = %[];
+				clientRect.w = this.width;
+				clientRect.h = this.height;
+			}
+			
 			if (typeof this.fullScreened === "Integer" && this.fullScreened)
 				clientRect.h = global.System.screenHeight;	// clientRect.h can be bigger than screenHeight when fullScreened, with some black border at the bottom, for unknown reasons.
 
+			var pxWidth = this.scWidth;
+			if (typeof(this.pxWidth) === "Integer" || typeof(this.pxWidth) === "Real")
+			{
+				pxWidth = this.pxWidth;
+			}
+			var pxHeight = this.scHeight;
+			if (typeof(this.pxHeight) === "Integer" || typeof(this.pxHeight) === "Real")
+			{
+				pxHeight = this.pxHeight;
+			}
+			var wideFactor = 1;
+			if (typeof(this.wideFactor) === "Integer" || typeof(this.wideFactor) === "Real")
+			{
+				wideFactor = this.wideFactor;
+			}
+
 			// Calculate the actually used (absolute) width/height the game content uses (so without black borders in fullscreen/maximized)
-			var pxWidth_abs = global.Math.floor(clientRect.h * this.pxWidth * this.wideFactor / this.pxHeight) | 0;
+			var pxWidth_abs = global.Math.floor(clientRect.h * pxWidth * wideFactor / pxHeight) | 0;
 			var pxHeight_abs = clientRect.h;
 			//var z = clientRect.h / this.pxHeight;
 			
@@ -68,23 +199,23 @@ class Window_hint_override extends global.Window_hint_original
 			if (pxWidth_abs > clientRect.w)
 				{
 				pxWidth_abs = clientRect.w;
-				pxHeight_abs = global.Math.floor(clientRect.w * this.pxHeight / (this.pxWidth * this.wideFactor)) | 0;
-				//z = clientRect.w / global.Math.floor(this.pxWidth * this.wideFactor);
+				pxHeight_abs = global.Math.floor(clientRect.w * pxHeight / (pxWidth * wideFactor)) | 0;
+				//z = clientRect.w / global.Math.floor(pxWidth * wideFactor);
 				}
 			
 			// Calculate the offset introduced by the black borders in fullScreened/maximized mode. In windowed mode, these will be 0, of course.
 			var widthOffsetAbs = (clientRect.w  - pxWidth_abs) / 2;
 			var heightOffsetAbs = (clientRect.h - pxHeight_abs) / 2;
 
-			var x = (x - widthOffsetAbs)  * this.pxWidth  / pxWidth_abs;
-			var y = (y - heightOffsetAbs) * this.pxHeight / pxHeight_abs;
+			var x = (x - widthOffsetAbs)  * pxWidth  / pxWidth_abs;
+			var y = (y - heightOffsetAbs) * pxHeight / pxHeight_abs;
 
 			// -----------------------------------------------------------------------------------------------
 			// Recalculate size of font and tip box
 
 			var fontSizeRatio = 1.0;
 
-			fontSizeRatio /= global.Math.min(1, pxHeight_abs/this.pxHeight);	// If the absolute window size on screen gets small, the fontSizeRatio will increase, leading to a bigger font
+			fontSizeRatio /= global.Math.min(1, pxHeight_abs/pxHeight);	// If the absolute window size on screen gets small, the fontSizeRatio will increase, leading to a bigger font
 
 			this.hintlayer.font.height = global.Math.ceil(9 * fontSizeRatio);	// "Ceil" because erring on the side of a bigger font is preferable
 
@@ -98,17 +229,17 @@ class Window_hint_override extends global.Window_hint_original
 			// -----------------------------------------------------------------------------------------------
 			// Position tip layer
 
-			var mouseCursorSizeAdjusted = this.mouseCursorSize * this.pxHeight / pxHeight_abs;
+			var mouseCursorSizeAdjusted = this.mouseCursorSize * pxHeight / pxHeight_abs;
 			
-			if ((x + w) > this.pxWidth)
-				x = this.pxWidth - w;
+			if ((x + w) > pxWidth)
+				x = pxWidth - w;
 
 			var yTest = y + mouseCursorSizeAdjusted + h;
 
-			if ((y + mouseCursorSizeAdjusted + h) > this.pxHeight)
-				y = this.pxHeight - h - mouseCursorSizeAdjusted;
+			if ((y + mouseCursorSizeAdjusted + h) > pxHeight)
+				y = pxHeight - h - mouseCursorSizeAdjusted;
 
-			x = (x*this.wideFactor) * (this.pxWidth - w) / ((this.pxWidth * this.wideFactor) - w);	// Inverse discrete transform to compensate from offset that will be introduced during setPos()
+			x = (x*wideFactor) * (pxWidth - w) / ((pxWidth * wideFactor) - w);	// Inverse discrete transform to compensate from offset that will be introduced during setPos()
 
 			this.hintlayer.setPos(x, y + mouseCursorSizeAdjusted);
 
@@ -135,3 +266,62 @@ class Window_hint_override extends global.Window_hint_original
 	}
 }
 global.Window = global.Window_hint_override;
+
+
+global.Layer_hint_original = global.Layer;
+class Layer_hint_override extends global.Layer_hint_original
+{
+	function Layer_hint_override()
+	{
+		super.Layer(...);
+	}
+
+	function Layer()
+	{
+		this.Layer_hint_override(...);
+	}
+
+	var patch_hint_hint = "";
+	property hint
+	{
+		getter
+		{
+			return this.patch_hint_hint;
+		}
+		setter (v)
+		{
+			this.patch_hint_ignoreHintSensing = false;
+			this.patch_hint_showParentHint = false;
+			this.patch_hint_hint = "" + v;
+		}
+	}
+
+	var patch_hint_ignoreHintSensing = false;
+	property ignoreHintSensing
+	{
+		getter
+		{
+			return this.patch_hint_ignoreHintSensing;
+		}
+		setter (v)
+		{
+			this.patch_hint_ignoreHintSensing = !!v;
+		}
+	}
+
+	var patch_hint_showParentHint = true;
+	property showParentHint
+	{
+		getter
+		{
+			return this.patch_hint_showParentHint;
+		}
+		setter (v)
+		{
+			this.patch_hint_showParentHint = !!v;
+		}
+	}
+
+}
+global.Layer = global.Layer_hint_override;
+

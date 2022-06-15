@@ -1,0 +1,88 @@
+﻿
+global.movie_extensions = [".mkv", ".webm", ".mp4", ".mpg"];
+
+global.chop_movie_extension = function(storage)
+{
+	var movie_extensions = global.movie_extensions;
+
+	if (movie_extensions.find(global.Storages.extractStorageExt(storage)) === -1)
+	{
+		var file_name_no_ext = storage;
+		var file_name_len = storage.length;
+
+		for (var i = 0, internal_forloop_count = movie_extensions.count; i < internal_forloop_count; i += 1)
+		{
+			var file_name_ext_pos = file_name_no_ext.indexOf(movie_extensions[i]);
+			if ((file_name_ext_pos !== -1) && (file_name_ext_pos + movie_extensions[i].length === file_name_len))
+			{
+				file_name_no_ext = file_name_no_ext.substring(0, file_name_ext_pos);
+				break;
+			}
+		}
+		return file_name_no_ext;
+	}
+
+
+	return storage;
+};
+
+global.get_file_name_of_movie_with_extension_that_exists = function(storage)
+{
+	var movie_extensions = global.movie_extensions;
+
+	if (movie_extensions.find(global.Storages.extractStorageExt(storage)) === -1)
+	{
+		var file_name_no_ext = storage;
+		var file_name_len = storage.length;
+
+		for (var i = 0, internal_forloop_count = movie_extensions.count; i < internal_forloop_count; i += 1)
+		{
+			var file_name_ext_pos = file_name_no_ext.indexOf(movie_extensions[i]);
+			if ((file_name_ext_pos !== -1) && (file_name_ext_pos + movie_extensions[i].length === file_name_len))
+			{
+				file_name_no_ext = file_name_no_ext.substring(0, file_name_ext_pos);
+				break;
+			}
+		}
+		for (var i = 0, internal_forloop_count = movie_extensions.count; i < internal_forloop_count; i += 1)
+		{
+			var fn = file_name_no_ext + movie_extensions[i];
+			if (global.Storages.isExistentStorage(fn))
+			{
+				return fn;
+			}
+		}
+	}
+
+
+	return storage;
+};
+
+global.get_movie_transformed_name = function(kag=global.kag, storage)
+{
+	var storage_chopped = global.chop_movie_extension(storage);
+	var preferred_movie_quality = (typeof(kag.sflags) === "Object" && kag.sflags.movieQuality === "low") ? "low" : "high";
+	var preferred_movie_storage = [
+		("%s_%s").sprintf(storage_chopped, preferred_movie_quality),
+		storage_chopped,
+	];
+	for (var i = 0, internal_forloop_count = preferred_movie_storage.count; i < internal_forloop_count; i += 1)
+	{
+		var preferred_movie_storage_item = preferred_movie_storage[i];
+		if (preferred_movie_storage_item === void)
+		{
+			continue;
+		}
+		var preferred_movie_storage_item_transformed = global.get_file_name_of_movie_with_extension_that_exists(storage);
+		if (preferred_movie_storage_item_transformed !== preferred_movie_storage_item)
+		{
+			return preferred_movie_storage_item_transformed;
+		}
+	}
+};
+
+
+global.movie_is_existent = function(kag=global.kag, storage)
+{
+	return global.Storages.isExistentStorage(global.get_movie_transformed_name(kag, storage));
+};

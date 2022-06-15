@@ -184,6 +184,7 @@
 	"patch_kirikiroid_override.tjs",
 	["patch_hd_override.tjs", ,,, "HD_MODE"],
 	["patch_fade_bgm_with_voice_override.tjs", ,,, "FADE_BGM_WITH_VOICE"],
+	["patch_movie_quality.tjs", ,,, "GAME_FATE||GAME_FHAT"],
 	["patch_movie_override.tjs", ,,, "!GAME_WOHN"],
 	"patch_window_hook.tjs",
 	["patch_zoom_window.tjs", ,,, "ZOOM_WINDOW"],

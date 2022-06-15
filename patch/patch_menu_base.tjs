@@ -803,6 +803,12 @@ global.addMovieMenu = function(patchMenu)
 	this.movieMenuItem.add(this.skipMoviesMenuItem = new global.KAGFlagMenuItem(this, global.__t("ゲーム中にムービーをスキップする(&K)"),,skipMoviesFlag));
 	this.movieMenuItem.add(this.forceMpvPlaybackMenuItem = new global.KAGFlagMenuItem(this, global.__t("mpvを使用して強制的に動画を再生する"),,forceMpvPlaybackFlag));
 	this.forceMpvPlaybackMenuItem.enabled = (typeof(global.playVideoMPV) === "Object");
+
+	var movieQualityFlag = new global.GameFlag(this, this.sflags, "movieQuality", "high");
+
+	this.movieMenuItem.add(this.movieQualityMenuItem = new global.KAGMenuItem(this, global.__t("ムービーの品質(&Q)"), 0, void, false));
+	this.movieQualityMenuItem.add(this.movieQualityHighMenuItem = new global.KAGFlagMenuItem(this, global.__t("高い(&H)"), 1, movieQualityFlag, "high"));
+	this.movieQualityMenuItem.add(this.movieQualityLowMenuItem = new global.KAGFlagMenuItem(this, global.__t("低い(&L)"), 1, movieQualityFlag, "low"));
 };
 
 global.addOptionsMenu = function(patchMenu)

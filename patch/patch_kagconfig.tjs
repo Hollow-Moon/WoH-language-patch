@@ -269,6 +269,20 @@ bookMarkMenu.visible = restoreMenu.visible | storeMenu.visible;
 @endif
 @endif
 
+@if(GAME_FATE||GAME_FHAT)
+if(typeof this.systemMenu !== "undefined")
+{
+	var children = this.systemMenu.children;
+	for(var i = children.count - 1; i >= 0; i--)
+	{
+		var item = children[i];
+		if (item.caption == "-")
+		{
+			item.visible = false;
+		}
+	}
+}
+@endif
 };
 
 @if(GAME_FATE||GAME_FHAT)

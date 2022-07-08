@@ -229,8 +229,11 @@ class KAGFlagMenuItem extends global.KAGMenuItem
 		if (this.restart && flagValueChanged && this.restartCondition()) {
 			{
 				var w = this.owner;
-				w.extraConductor.clear(); // Fix code for AutoPath
-				w.onReloadScenarioMenuItemClick(sender);
+				if (typeof(w.extraConductor) === "Object")
+				{
+					w.extraConductor.clear(); // Fix code for AutoPath
+					w.onReloadScenarioMenuItemClick(sender);
+				}
 			}
 		}
 	}

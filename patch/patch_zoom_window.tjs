@@ -1307,10 +1307,10 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 		}
 		if(!fullScreen)
 @if(GAME_WOHN)
-			setInnerSize(w, (w * 9) \ 16);
+			setInnerSize(w, global.Math.round((w * 9) / 16) | 0);
 @endif
 @if(GAME_FATE||GAME_FHAT)
-			setInnerSize(w, (w * 3) \ 4);
+			setInnerSize(w, global.Math.round((w * 3) / 4) | 0);
 @endif
 	}
 

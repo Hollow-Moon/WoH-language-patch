@@ -1,143 +1,18 @@
 ﻿
-global.play_movie_resize = function(video, kag=global.kag, window=global.kag)
+global.setMovieToWindowSize = function(video, kag=global.kag, window=global.kag)
 {
-	var videoSize;
 	if(kag.fullScreened)
 	{
-		if(video.isWide)
-		{
-			videoSize = [video.originalWidth, video.originalHeight];
-@if(kirikiriz)
-			// TODO 2 bugs
-			// 1) can't stop movie if clicking out of the "square" (non-wide) area.
-			// 2) First time opening playing the movie it is offsetted by 10 px down (probably due to window.height having the wrong value)
-			//    It fixes itself when stopping and replaying the movie (in which case window.height displays the correct value).
-			if (typeof(video.mode) === "Integer" && video.mode == global.vomMFEVR)
-			{
-				var videoRatio = videoSize[0] / videoSize[1];
-				
-				var videoBoundsWidth;
-				var videoBoundsHeight;
-				if (global.get_systemRatio() > kag.wideRatio) {
-					videoBoundsHeight = kag.scHeight;
-					videoBoundsWidth = videoBoundsHeight * videoRatio;
-				} else {
-					videoBoundsWidth = kag.scWidth;
-					videoBoundsHeight = videoBoundsWidth / videoRatio;
-				}
-				var videoBoundsTop = (kag.scHeight - videoBoundsHeight) / 2;
-				var videoBoundsLeft = (kag.scWidth - videoBoundsWidth) / 2;
-
-				videoSize = [videoBoundsWidth, videoBoundsHeight];
-
-				video.setBounds(videoBoundsLeft, videoBoundsTop, videoBoundsWidth, videoBoundsHeight);
-			}
-			else
-@endif
-			{
-				window.fullScreen = false;
-				window.borderStyle = global.bsNone;
-@if(ZOOM_WINDOW)
-				kag.pxWidth = videoSize[0];
-				kag.pxHeight = videoSize[1];
-@endif
-				window.setInnerSize(videoSize[0], videoSize[1]);
-				video.setBounds(0, 0, videoSize[0], videoSize[1]);
-@if(ZOOM_WINDOW)
-				kag.addHook("afterChangeScreenMode", kag.fullScreenAfterChangeScreenMode);
-@endif
-@if(!ZOOM_WINDOW)
-				window.fullScreen = true;
-@endif
-			}
-		}
-		else
-		{
-			// No screen resizing. The game is already running at native resolution,
-			// and I assume the video overlay resolution is independent of the internal (resWidth x resHeight) engine.
-			video.setBounds(0, 0, kag.scWidth, kag.scHeight);
-		}
+		video.window.absoluteMode += 1;
+		video.setBounds(0, 0, global.System.screenWidth, global.System.screenHeight);
+		video.window.absoluteMode -= 1;
 	}
 	else
 	{
-		videoSize = [video.originalWidth, video.originalHeight];
-		if (videoSize[0] < window.innerWidth && videoSize[1] < window.innerHeight) {
-			videoSize = [window.innerWidth, window.innerHeight];
-		}
-		var windowExtraWidth = window.width - window.innerWidth;
-		var windowExtraHeight = window.height - window.innerHeight;
-		var windowSize = [videoSize[0]+windowExtraWidth, videoSize[1]+windowExtraHeight];
-
-@if(HD_MODE)
-		var desktopWidth = global.System.desktopWidth / global.get_wideScaleFactor();
-		var desktopHeight = global.System.desktopHeight / global.scaleFactor;
-@endif
-@if(!HD_MODE)
-		var desktopWidth = global.System.desktopWidth;
-		var desktopHeight = global.System.desktopHeight;
-@endif
-
-		// If too big, resize to fit desktop
-		if (windowSize[0] > desktopWidth || windowSize[1] > desktopHeight)
-		{
-			videoSize = global.calculateTouchFromInside(videoSize[0], videoSize[1], desktopWidth - windowExtraWidth, desktopHeight - windowExtraHeight);
-			windowSize = [videoSize[0]+windowExtraWidth, videoSize[1]+windowExtraHeight];
-		}
-
-@if(ZOOM_WINDOW)
-		kag._onResizeProcess = false;
-		kag._lastInnerSize = [kag.innerWidth, kag.innerHeight];
-@endif
-
-		kag.tagHandlers.setWindowPosForVideo(windowSize, [desktopWidth, desktopHeight]);
-
-		// 调整窗口大小
-@if(ZOOM_WINDOW)
-		kag.pxWidth = videoSize[0];
-		kag.pxHeight = videoSize[1];
-		window.setZoom(1, 1);
-@endif
-		window.setInnerSize(videoSize[0], videoSize[1]);
-		//window.fore.base.setSize(videoSize[0], videoSize[1]);
-
-		video.setBounds(0, 0, videoSize[0], videoSize[1]);
-	}
-	return videoSize;
-};
-
-global.stop_movie_resize = function(video, kag=global.kag, window=global.kag)
-{
-	if(kag.fullScreened)
-	{
-		window.fullScreen = false;
-		if (video.isWide)
-		{
-@if(ZOOM_WINDOW)
-			kag.pxWidth = 800;
-			kag.pxHeight = 600;
-@endif
-		}
-		window.borderStyle = global.bsSingle;
-		window.setInnerSize(800, 600);
-@if(ZOOM_WINDOW)
-		kag.addHook("afterChangeScreenMode", kag.fullScreenAfterChangeScreenMode);
-@endif
-@if(!ZOOM_WINDOW)
-		window.fullScreen = true;
-@endif
-	}
-	else if(!kag.fullScreened) // Windowed
-	{
-@if(!ZOOM_WINDOW)
-		window.setInnerSize(800, 600);
-@endif
-@if(ZOOM_WINDOW)
-		kag.pxWidth = 800;
-		kag.pxHeight = 600;
-		window.setInnerSize(kag._lastInnerSize[0], kag._lastInnerSize[1]);
-		kag.setZoom(kag.innerWidth, kag.pxWidth);
-		kag._lastInnerSize = void;
-@endif
+		var clientRect = kag.getClientRect();
+		video.window.absoluteMode += 1;
+		video.setBounds(0, 0, clientRect.w, clientRect.h);
+		video.window.absoluteMode -= 1;
 	}
 };
 

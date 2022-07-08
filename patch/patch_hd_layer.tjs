@@ -281,7 +281,12 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 
 	function scaleImageHeight(h)
 	{
-		if (this.isbg && !this.stretch) {
+		if (this.isbg
+			&& !this.stretch
+@if(!ZOOM_WINDOW)
+			&& this.parent !== null
+@endif
+			) {
 			return this.window.scaleWidth(h); // width on purpose
 		}
 		return this.window.scaleHeight(h);
@@ -289,7 +294,12 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 
 	function unscaleImageHeight(h)
 	{
-		if (this.isbg && !this.stretch) {
+		if (this.isbg
+			&& !this.stretch
+@if(!ZOOM_WINDOW)
+			&& this.parent !== null
+@endif
+			) {
 			return this.window.unscaleWidth(h); // width on purpose
 		}
 		return this.window.unscaleHeight(h);

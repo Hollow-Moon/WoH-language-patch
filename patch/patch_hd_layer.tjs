@@ -920,10 +920,10 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 		} else {
 			var imageKey = global.Storages.extractStorageName(storageName);
 			var imageInfo;
-			imageInfo = global.imagesHdDict[imageKey];
+			imageInfo = global.imagesHdOverrideDict[imageKey];
 			if (imageInfo === void)
 			{
-				imageInfo = global.imagesHdOverrideDict[imageKey];
+				imageInfo = global.imagesHdDict[imageKey];
 				if (imageInfo === void)
 				{
 					throw new global.Exception("Missing image in images_hd.dic: " + storage);

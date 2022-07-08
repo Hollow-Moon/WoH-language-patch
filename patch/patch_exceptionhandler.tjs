@@ -452,7 +452,7 @@ global.save_troubleshooting_data_and_open_folder_location = function()
 /		作成して、状態を保存する
 /----------------------------------------------------------------------------*/
 global.exceptionOccured	= false;	//	例外が発生したか？
-global.System.exceptionHandler = function(e)
+global.exception_handler_closure = function(e)
 {
 	var print_exception = global.print_exception;
 	print_exception(e);
@@ -626,3 +626,63 @@ global.System.exceptionHandler = function(e)
 
 	return true;	//	停止
 };
+
+global.System.exceptionHandler = global.exception_handler_closure;
+
+// Only called when an unhandled exception occurs and no debugger is attached
+global.unhandled_exception_filter_closure = function(exception_struct)
+{
+	// Wrap global access, just in case global object heap got corrupted...
+	try
+	{
+		// Attempt to avoid SEH stack overflow
+		if (global.exceptionOccured)
+		{
+			global.System.exit(127);
+		}
+	}
+	catch (e)
+	{
+	}
+	try
+	{
+		global.exceptionOccured	= true;
+		global.System.eventDisabled	= true;
+	}
+	catch (e)
+	{
+	}
+	try
+	{
+		var should_open_patch_info_url_on_error = true;
+		try
+		{
+			should_open_patch_info_url_on_error = global.System.getArgument('-openpatchinfourlonerror') !== "no";
+		}
+		catch (e)
+		{
+		}
+		if (should_open_patch_info_url_on_error && typeof(global.PatchInfoURL) === "String")
+		{
+			global.System.shellExecute(global.PatchInfoURL);
+		}
+	}
+	catch (e)
+	{
+	}
+	try
+	{
+		global.System.exit(127);
+	}
+	catch (e)
+	{
+	}
+	return 0x0; // EXCEPTION_CONTINUE_SEARCH
+};
+
+{
+	if (typeof(global.System.setUnhandledExceptionFilter) === "Object")
+	{
+		global.System.setUnhandledExceptionFilter(global.unhandled_exception_filter_closure);
+	}
+}

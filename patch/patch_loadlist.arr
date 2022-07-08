@@ -117,6 +117,7 @@
 	["i18n.tjs", , [["__"]]],
 	"patch_language.tjs",
 	"patch_fsncleaner.tjs",
+	["krunhandledexception.dll", , [["System.setUnhandledExceptionFilter"]], true],
 	"patch_exceptionhandler.tjs",
 	"patch_menu_base.tjs",
 	"patch_menu.tjs",

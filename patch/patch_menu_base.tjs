@@ -435,30 +435,30 @@ class KAGCensorMenuItem extends global.KAGMenuItem
 		var hFlagComposite = new global.CompositeAndFlag([ecchiFlag, hFlag, global.inverseFlag(decensorFlag)]);
 		var decensorFlagComposite = new global.CompositeAndFlag([ecchiFlag, hFlag, decensorFlag]);
 
-		this.add(this.matureMenuItem = new global.KAGFlagFolderMenuItem(this.owner, global.__t("成人向けコンテンツを検閲しない(&M)"),, matureFlagComposite, global.maturePatchName, global.censoredMatureFolderName, global.uncensoredMatureFolderName));
+		this.add(this.matureMenuItem = new global.KAGFlagFolderMenuItem(this.owner, global.__t("成人向けコンテンツを検閲しない(&M)"),, matureFlagComposite, global.maturePatchName, global.censoredMatureFolderName, global.uncensoredMatureFolderName,,true));
 		this.matureMenuItem.beforeCallback = this.beforeCallback;
 		this.matureMenuItem.afterCallback = this.afterCallback;
 
 		(this.addSeperationLine incontextof this.owner)(this);
 
-		this.add(this.hCensoredMenuItem = new global.KAGFlagFolderMenuItem(this.owner, global.__t("エッチとエロを検閲する(&N)"), 1, hCensorFlagComposite, global.hCensorPatchName, global.censoredHFolderName));
+		this.add(this.hCensoredMenuItem = new global.KAGFlagFolderMenuItem(this.owner, global.__t("エッチとエロを検閲する(&N)"), 1, hCensorFlagComposite, global.hCensorPatchName, global.censoredHFolderName,,,true));
 		this.hCensoredMenuItem.beforeCallback = this.beforeCallback;
 		this.hCensoredMenuItem.afterCallback = this.afterCallback;
 
-		this.add(this.ecchiUncensoredMenuItem = new global.KAGFlagFolderMenuItem(this.owner, global.__t("エッチを検閲しない(&E)"), 1, ecchiAllowFlagComposite, global.ecchiPatchName, global.uncensoredEcchiFolderName));
+		this.add(this.ecchiUncensoredMenuItem = new global.KAGFlagFolderMenuItem(this.owner, global.__t("エッチを検閲しない(&E)"), 1, ecchiAllowFlagComposite, global.ecchiPatchName, global.uncensoredEcchiFolderName,,,true));
 		this.ecchiUncensoredMenuItem.beforeCallback = this.beforeCallback;
 		this.ecchiUncensoredMenuItem.afterCallback = this.afterCallback;
 
-		this.add(this.hUncensoredMenuItem = new global.KAGFlagFolderMenuItem(this.owner, global.__t("エッチとエロを検閲しない(&H)"), 1, hFlagComposite, [global.ecchiPatchName, global.hPatchName], [global.uncensoredEcchiFolderName, global.uncensoredHFolderName]));
+		this.add(this.hUncensoredMenuItem = new global.KAGFlagFolderMenuItem(this.owner, global.__t("エッチとエロを検閲しない(&H)"), 1, hFlagComposite, [global.ecchiPatchName, global.hPatchName], [global.uncensoredEcchiFolderName, global.uncensoredHFolderName],,,true));
 		this.hUncensoredMenuItem.beforeCallback = this.beforeCallback;
 		this.hUncensoredMenuItem.afterCallback = this.afterCallback;
 
 		this.add(this.hDecensoredMenuItem = new global.KAGFlagFolderMenuItem(this.owner, global.__t("エッチとエロを強制的に無検閲する(&D)"), 1, decensorFlagComposite,
 @if(GAME_FATE)
-		[global.ecchiPatchName, global.hPatchName, global.decensoredPatchName], [global.uncensoredEcchiFolderName, global.uncensoredHFolderName, global.decensoredFolderName]));
+		[global.ecchiPatchName, global.hPatchName, global.decensoredPatchName], [global.uncensoredEcchiFolderName, global.uncensoredHFolderName, global.decensoredFolderName],,,true));
 @endif
 @if(GAME_FHAT)
-		global.decensoredPatchName, global.decensoredFolderName));
+		global.decensoredPatchName, global.decensoredFolderName,,,true));
 @endif
 @if(!GAME_FATE&&!GAME_FHAT)
 		[], []));

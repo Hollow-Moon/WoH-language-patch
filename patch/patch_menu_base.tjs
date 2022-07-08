@@ -447,20 +447,24 @@ class KAGCensorMenuItem extends global.KAGMenuItem
 		var decensorFlagComposite = new global.CompositeAndFlag([ecchiFlag, hFlag, decensorFlag]);
 
 		this.add(this.matureMenuItem = new global.KAGFlagFolderMenuItem(this.owner, global.__t("成人向けコンテンツを検閲しない(&M)"),, matureFlagComposite, global.maturePatchName, global.censoredMatureFolderName, global.uncensoredMatureFolderName,,true));
+		this.matureMenuItem.restartCondition = this.matureMenuItem.onlyScenarioRestartCondition;
 		this.matureMenuItem.beforeCallback = this.beforeCallback;
 		this.matureMenuItem.afterCallback = this.afterCallback;
 
 		(this.addSeperationLine incontextof this.owner)(this);
 
 		this.add(this.hCensoredMenuItem = new global.KAGFlagFolderMenuItem(this.owner, global.__t("エッチとエロを検閲する(&N)"), 1, hCensorFlagComposite, global.hCensorPatchName, global.censoredHFolderName,,,true));
+		this.hCensoredMenuItem.restartCondition = this.hCensoredMenuItem.onlyScenarioRestartCondition;
 		this.hCensoredMenuItem.beforeCallback = this.beforeCallback;
 		this.hCensoredMenuItem.afterCallback = this.afterCallback;
 
 		this.add(this.ecchiUncensoredMenuItem = new global.KAGFlagFolderMenuItem(this.owner, global.__t("エッチを検閲しない(&E)"), 1, ecchiAllowFlagComposite, global.ecchiPatchName, global.uncensoredEcchiFolderName,,,true));
+		this.ecchiUncensoredMenuItem.restartCondition = this.ecchiUncensoredMenuItem.onlyScenarioRestartCondition;
 		this.ecchiUncensoredMenuItem.beforeCallback = this.beforeCallback;
 		this.ecchiUncensoredMenuItem.afterCallback = this.afterCallback;
 
 		this.add(this.hUncensoredMenuItem = new global.KAGFlagFolderMenuItem(this.owner, global.__t("エッチとエロを検閲しない(&H)"), 1, hFlagComposite, [global.ecchiPatchName, global.hPatchName], [global.uncensoredEcchiFolderName, global.uncensoredHFolderName],,,true));
+		this.hUncensoredMenuItem.restartCondition = this.hUncensoredMenuItem.onlyScenarioRestartCondition;
 		this.hUncensoredMenuItem.beforeCallback = this.beforeCallback;
 		this.hUncensoredMenuItem.afterCallback = this.afterCallback;
 
@@ -474,6 +478,7 @@ class KAGCensorMenuItem extends global.KAGMenuItem
 @if(!GAME_FATE&&!GAME_FHAT)
 		[], []));
 @endif
+		this.hDecensoredMenuItem.restartCondition = this.hDecensoredMenuItem.onlyScenarioRestartCondition;
 		this.hDecensoredMenuItem.beforeCallback = this.beforeCallback;
 		this.hDecensoredMenuItem.afterCallback = this.afterCallback;
 
@@ -481,15 +486,25 @@ class KAGCensorMenuItem extends global.KAGMenuItem
 		(this.addSeperationLine incontextof this.owner)(this);
 
 		this.add(this.decensorConfig = new global.KAGMenuItem(this.owner, __t("規制修正 絵師(&A)"), 0, void, false));
+
 		this.decensorConfig.add(this.decensorConfigBellandyAnonymous = new global.KAGFlagMenuItem(this.owner, "Bellandy + Anonymous", 1, decensorConfigFlag, "bellandy_anonymous", true));
+		this.decensorConfigBellandyAnonymous.restartCondition = this.decensorConfigBellandyAnonymous.onlyScenarioRestartCondition;
 		this.decensorConfigBellandyAnonymous.afterCallback = function(sender) { global.updateDecensorConfig(this.owner); };
+
 		this.decensorConfig.add(this.decensorConfigBellandy = new global.KAGFlagMenuItem(this.owner, "Bellandy", 1, decensorConfigFlag, "bellandy", true));
+		this.decensorConfigBellandy.restartCondition = this.decensorConfigBellandy.onlyScenarioRestartCondition;
 		this.decensorConfigBellandy.afterCallback = function(sender) { global.updateDecensorConfig(this.owner); };
+
 		this.decensorConfig.add(this.decensorConfigBishopcruzAnonymous = new global.KAGFlagMenuItem(this.owner, "BishopCruz + Anonymous", 1, decensorConfigFlag, "bishopcruz_anonymous", true));
+		this.decensorConfigBishopcruzAnonymous.restartCondition = this.decensorConfigBishopcruzAnonymous.onlyScenarioRestartCondition;
 		this.decensorConfigBishopcruzAnonymous.afterCallback = function(sender) { global.updateDecensorConfig(this.owner); };
+
 		this.decensorConfig.add(this.decensorConfigBishopcruz = new global.KAGFlagMenuItem(this.owner, "BishopCruz", 1, decensorConfigFlag, "bishopcruz", true));
+		this.decensorConfigBishopcruz.restartCondition = this.decensorConfigBishopcruz.onlyScenarioRestartCondition;
 		this.decensorConfigBishopcruz.afterCallback = function(sender) { global.updateDecensorConfig(this.owner); };
+
 		this.decensorConfig.add(this.decensorConfigMixed = new global.KAGFlagMenuItem(this.owner, __t("ミックス(&M)"), 1, decensorConfigFlag, "mixed", true));
+		this.decensorConfigMixed.restartCondition = this.decensorConfigMixed.onlyScenarioRestartCondition;
 		this.decensorConfigMixed.afterCallback = function(sender) { global.updateDecensorConfig(this.owner); };
 @endif
 		this.updateCurrentState();

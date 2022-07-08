@@ -1,0 +1,95 @@
+﻿
+global.OVERRIDE_CHAIN_ORIGINAL_SYM = function() {};
+
+class OVERRIDE_CHAIN_PASS_TO_NEXT_OBJ
+{
+	var arr;
+	function OVERRIDE_CHAIN_PASS_TO_NEXT_OBJ(arr)
+	{
+		this.arr = arr;
+	}
+}
+
+global.OVERRIDE_CHAIN_PASS_TO_NEXT = function()
+{
+	return new global.OVERRIDE_CHAIN_PASS_TO_NEXT_OBJ(...);
+};
+
+global.OVERRIDE_CHAIN_CONTINUE = function() {};
+
+{
+	global.override_chain_classes = %[];
+
+	global.get_override_chain = function(classname, method)
+	{
+		var override_chain_classes = global.override_chain_classes;
+		var override_chain_class = override_chain_classes[classname];
+		if (override_chain_class === void)
+		{
+			override_chain_class = %[];
+			override_chain_classes[classname] = override_chain_class;
+		}
+		var override_chain_methods = override_chain_class[method];
+		if (override_chain_methods === void)
+		{
+			override_chain_methods = [];
+			override_chain_methods.add(global.OVERRIDE_CHAIN_ORIGINAL_SYM);
+			override_chain_class[method] = override_chain_methods;
+		}
+		return override_chain_methods;
+	};
+
+	global.process_override_chain = function(classname, method, arguments, super_accessor)
+	{
+		var chain = global.get_override_chain(classname, method);
+		var orig_func = super_accessor(classname);
+		var proc_arguments = [];
+		var ret;
+		for (var i = 0; i < chain.count; i += 1)
+		{
+			var item = chain[i];
+			
+			if (item === global.OVERRIDE_CHAIN_ORIGINAL_SYM)
+			{
+				item = orig_func;
+			}
+			ret = item(*proc_arguments);
+			if (ret === global.OVERRIDE_CHAIN_CONTINUE)
+			{
+				continue;
+			}
+			if (typeof(ret) === "Object" && ret instanceof "OVERRIDE_CHAIN_PASS_TO_NEXT_OBJ")
+			{
+				proc_arguments.assign(ret.arr);
+				continue;
+			}
+		}
+		return ret;
+	};
+}
+
+// Sample class
+global.MessageLayer_patch_override_chain_original = global.MessageLayer;
+class MessageLayer_patch_override_chain_override extends global.MessageLayer_patch_override_chain_original
+{
+	function MessageLayer_patch_override_chain_override(arg*)
+	{
+		return global.process_override_chain("MessageLayer", "MessageLayer", [*arg], this.super_accessor);
+	}
+
+	function MessageLayer()
+	{
+		this.MessageLayer_patch_override_chain_override(...);
+	}
+
+	function super_accessor(arg)
+	{
+		return super[arg];
+	}
+
+	function putGraph(arg*)
+	{
+		return global.process_override_chain("MessageLayer", "putGraph", [*arg], this.super_accessor);
+	}
+}
+global.MessageLayer = global.MessageLayer_patch_override_chain_override;

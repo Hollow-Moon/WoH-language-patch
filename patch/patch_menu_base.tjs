@@ -446,7 +446,7 @@ class KAGCensorMenuItem extends global.KAGMenuItem
 		var hFlagComposite = new global.CompositeAndFlag([ecchiFlag, hFlag, global.inverseFlag(decensorFlag)]);
 		var decensorFlagComposite = new global.CompositeAndFlag([ecchiFlag, hFlag, decensorFlag]);
 
-		this.add(this.matureMenuItem = new global.KAGFlagFolderMenuItem(this.owner, global.__t("成人向けコンテンツを検閲しない(&M)"),, matureFlagComposite, global.maturePatchName, global.censoredMatureFolderName, global.uncensoredMatureFolderName,,true));
+		this.add(this.matureMenuItem = new global.KAGFlagFolderMenuItem(this.owner, global.__t("成人向けコンテンツを検閲しない(&M)"),, matureFlagComposite, global.maturePatchName, global.uncensoredMatureFolderName, global.censoredMatureFolderName,,true));
 		this.matureMenuItem.restartCondition = this.matureMenuItem.onlyScenarioRestartCondition;
 		this.matureMenuItem.beforeCallback = this.beforeCallback;
 		this.matureMenuItem.afterCallback = this.afterCallback;
@@ -526,7 +526,7 @@ class KAGCensorMenuItem extends global.KAGMenuItem
 		}
 
 		// Protect against invalid state (no item selected)
-		if (this.currentState !== 'Object')
+		if (typeof(this.currentState) !== 'Object')
 			this.currentState = this.hCensoredMenuItem;
 
 		this.loadCurrentState();

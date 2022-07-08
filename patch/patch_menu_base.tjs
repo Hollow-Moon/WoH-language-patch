@@ -868,9 +868,6 @@ global.addOptionsMenu = function(patchMenu)
 
 	patchMenu.add(this.patchOptionsMenuItem = new global.KAGMenuItem(this, global.__t("設定(&O)"), 0, void, false));
 
-	this.patchOptionsMenuItem.add(this.showLogoMenuItem = new global.KAGFlagMenuItem(this, global.__t("起動時にTYPE-MOONロゴを表示する"),, showLogoFlag));
-	this.patchOptionsMenuItem.add(this.showHoverTipsMenuItem = new global.KAGFlagMenuItem(this, global.__t("ツールチップを表示する"),, showHoverTipsFlag));
-	(global.addOptionsMenuItems incontextof this)(this.patchOptionsMenuItem);
 	(global.addGalleryMenu incontextof this)(this.patchOptionsMenuItem);
 	this.patchOptionsMenuItem.add(this.historyTitleMenuItem = new global.KAGFlagMenuItem(this, global.__t("メッセージ歴史でシーンのタイトルを表示する(&H)"),, historyTitleFlag));
 	this.patchOptionsMenuItem.add(this.customVoiceReplayIconsMenuItem = new global.KAGFlagMenuItem(this, global.__t("あつらえのボイス再生アイコンを使用する(&R)"),, customVoiceReplayFlag));
@@ -886,6 +883,10 @@ global.addOptionsMenu = function(patchMenu)
 	this.patchOptionsMenuItem.add(this.vitaAboutMenuItem = new global.KAGFlagMenuItem(this, global.__t("Vitaの「このスフとについて」ページ(&A)"),, vitaAboutFlag));
 	(global.addVitaMenuItems incontextof this)(this.patchOptionsMenuItem);
 
+	this.patchOptionsMenuItem.add(new global.MenuItem(this, "-"));
+	this.patchOptionsMenuItem.add(this.showLogoMenuItem = new global.KAGFlagMenuItem(this, global.__t("起動時にTYPE-MOONロゴを表示する"),, showLogoFlag));
+	this.patchOptionsMenuItem.add(this.showHoverTipsMenuItem = new global.KAGFlagMenuItem(this, global.__t("ツールチップを表示する"),, showHoverTipsFlag));
+	(global.addOptionsMenuItems incontextof this)(this.patchOptionsMenuItem);
 };
 
 global.addActionsMenu = function(patchMenu)

@@ -1079,11 +1079,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 		exclude_self = !!exclude_self;
 		get_disabled = !!get_disabled;
 
-		var topScroll = 0;
-		if (typeof(this.topScroll) === "Integer" || typeof(this.topScroll) === "Real")
-			topScroll = this.topScroll;
-
-		return (global.Layer_patch_hd_layer_original.getLayerAt incontextof this)(this.scaleInsideImageWidth(x), this.scaleInsideImageHeight(y-topScroll), exclude_self, get_disabled);
+		return (global.Layer_patch_hd_layer_original.getLayerAt incontextof this)(this.scaleInsideLeft(x), this.scaleInsideTop(y), exclude_self, get_disabled);
 	}
 
 	function upscale()

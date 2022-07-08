@@ -41,7 +41,14 @@ class Window_hint_override extends global.Window_hint_original
 		try
 		{
 			var primary_layer = this.primaryLayer;
-			var p = primary_layer.getLayerAt(primary_layer.cursorX, primary_layer.cursorY);
+
+			var wideFactor = 1;
+			if (typeof(this.wideFactor) === "Integer" || typeof(this.wideFactor) === "Real")
+			{
+				wideFactor = this.wideFactor;
+			}
+
+			var p = primary_layer.getLayerAt(primary_layer.cursorX, primary_layer.cursorY/wideFactor);
 			if (p === void || p === null)
 			{
 				return;

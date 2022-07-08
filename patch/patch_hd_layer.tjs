@@ -21,6 +21,19 @@ global.bottomImages = [ // TODO remove after testing
 	"cs29アンリマユ崩壊(04手前岩盤・右)"
 ];
 
+global.getImageInfo = function(imageKey) {
+	var imageInfo = global.imagesHdOverrideDict[imageKey];
+	if (imageInfo === void)
+	{
+		imageInfo = global.imagesHdDict[imageKey];
+		if (imageInfo === void)
+		{
+			throw new global.Exception("Missing image in images_hd.dic: " + storage);
+		}
+	}
+
+	return imageInfo;
+};
 
 global.Layer_patch_hd_layer_original	= global.Layer;
 class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
@@ -919,17 +932,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 			this._imageHeight = 96;
 		} else {
 			var imageKey = global.Storages.extractStorageName(storageName);
-			var imageInfo;
-			imageInfo = global.imagesHdOverrideDict[imageKey];
-			if (imageInfo === void)
-			{
-				imageInfo = global.imagesHdDict[imageKey];
-				if (imageInfo === void)
-				{
-					throw new global.Exception("Missing image in images_hd.dic: " + storage);
-				}
-			}
-
+			var imageInfo = global.getImageInfo(imageKey);
 			if (imageInfo["hd_name"] !== void || imageInfo["number_of_images_hd"] !== void) {
 				var flag = true;
 				if (global.messageLayerImages.contains(imageKey)) {

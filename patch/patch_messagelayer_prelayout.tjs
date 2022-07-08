@@ -453,8 +453,20 @@ class MessageLayer_patch_messagelayer_prelayout_override extends global.MessageL
 
 	function prelayoutClear()
 	{
-		if (this.in_prelayout_mode)
+		if (this.in_prelayout_mode || this.in_prelayout_exec_mode)
 		{
+			for (var i = 0; i < this.prelayout_charlayers.count; i += 1)
+			{
+				var charlayer = this.prelayout_charlayers[i];
+				if (!(isvalid(charlayer)))
+				{
+					// pass
+				}
+				else if (charlayer instanceof "MessageCharLayer")
+				{
+					this.removeCharLayer(charlayer.currentLine, charlayer.currentColumn);
+				}
+			}
 			this.prelayout_charlayers.clear();
 			this.prelayout_last_queued_time = void;
 			this.in_prelayout_mode = false;
@@ -733,6 +745,13 @@ class MessageLayer_patch_messagelayer_prelayout_override extends global.MessageL
 			else
 				return 0;
 		}
+	}
+
+	function clearLayer()
+	{
+		this.prelayoutClear();
+		var ret = super.clearLayer(...);
+		return ret;
 	}
 
 

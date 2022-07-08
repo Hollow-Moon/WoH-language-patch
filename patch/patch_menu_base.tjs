@@ -713,8 +713,6 @@ global.addPatchMenu = function()
 	this.menu.insert(this.patchMenu = new global.KAGMenuItem(this, global.__t("パッチ(&P)"), 0, void, false), global.getPatchMenuIndex(this));
 	(global.addCensorMenu incontextof this)(this.patchMenu, global.__t("検閲(&C)"));
 	(global.addVoiceMenu incontextof this)(this.patchMenu);
-	(global.addVitaMenu incontextof this)(this.patchMenu);
-	(global.addGalleryMenu incontextof this)(this.patchMenu);
 	(global.addMovieMenu incontextof this)(this.patchMenu);
 
 	(global.addDevelopmentMenu incontextof this)();
@@ -730,15 +728,14 @@ global.addPatchMenu = function()
 	(global.addHdMenu incontextof this)(this.displayMenu);
 @endif
 	(global.addGraphicUsageMenu incontextof this)(this.displayMenu);
-@if(HD_MODE)
-	(global.addMessageWindowMenu incontextof this)(this.patchMenu);
-@endif
 
 	(global.addOptionsMenu incontextof this)(this.patchMenu);
 	(global.addPatchMenuItems incontextof this)(this.patchMenu);
 @if(GAME_FATE||GAME_FHAT)
 	(global.addMovieContentMenu incontextof this)(this.patchMenu);
 @endif
+	this.patchMenu.add(new global.MenuItem(this, "-"));
+	(global.addActionsMenu incontextof this)(this.patchMenu);
 	(global.addEnableDisableRestartMenuFunctions incontextof this)();
 };
 
@@ -778,8 +775,6 @@ global.addConductorVerbosityMenu = function()
 	this.debugMenu.add(this.debugLevelVerboseMenuItem = new global.KAGMenuItem(this, global.__t("デバッグレベル:詳細"), 2,
 		this.onDebugLevelVerboseMenuItemClick, false));
 	this.debugLevelVerboseMenuItem.checked = this.debugLevel === global.tkdlVerbose;
-
-	this.debugMenu.add(new global.MenuItem(this, "-"));
 };
 
 global.addMovieContentMenu = function(patchMenu)
@@ -795,7 +790,7 @@ global.addMovieContentMenu = function(patchMenu)
 
 	var movieContentFlag = new global.GameFlag(this, this.sflags, "gmovie", global.get_opPatchExists(this) ? "mixed" : flagDefault);
 	// Todo: Set sflags.gmovie and menu state to realta when no OP patch exists
-	patchMenu.insert(this.movieContentMenuItem = new global.KAGMenuItem(this, global.__t("ムービーコンテンツ"), 0, void, false), 2);
+	patchMenu.insert(this.movieContentMenuItem = new global.KAGMenuItem(this, global.__t("ムービーコンテンツ"), 0, void, false), insertIndex);
 	this.movieContentMenuItem.add(this.classicMovieContentMenuItem = new global.KAGFlagMenuItem(this,   global.__t("クラシック(&C)"),    1, movieContentFlag, "classic"));
 @if(GAME_FATE)
 	this.classicMovieContentMenuItem.disableIfPatchDoesntExist(global.opPatchName);
@@ -815,7 +810,6 @@ global.addVoiceMenu = function(patchMenu)
 	var playUnusedVoicesFlag = new global.GameFlag(this, this.sflags, "unusedVoices", true);
 	var customWaitvoiceFlag = new global.GameFlag(this, this.sflags, "customWaitvoice", true);
 	var fadeBgmWithVoiceFlag = new global.GameFlag(this, this.scflags, "fadeBgmWithVoice", false);
-	var customVoiceReplayFlag = new global.GameFlag(this, this.sflags, "customVoiceReplay", false);
 	var disableStopVoiceWithClickFlag = new global.GameFlag(this, this.scflags, "disableStopVoiceWithClick", false);
 
 	patchMenu.add(this.voiceMenuItem = new global.KAGMenuItem(this, global.__t("ボイス(&V)"), 0, void, false));
@@ -825,23 +819,9 @@ global.addVoiceMenu = function(patchMenu)
 @if(FADE_BGM_WITH_VOICE==1)
 	this.voiceMenuItem.add(this.fadeBgmWithVoiceMenuItem = new global.KAGFlagMenuItem(this, global.__t("ボイス再生中に&BGM音量を下げる"),, fadeBgmWithVoiceFlag));
 @endif
-	this.voiceMenuItem.add(this.customVoiceReplayIconsMenuItem = new global.KAGFlagMenuItem(this, global.__t("あつらえのボイス再生アイコンを使用する(&R)"),, customVoiceReplayFlag));
 	this.voiceMenuItem.add(this.disableStopVoiceWithClickMenuItem = new global.KAGFlagMenuItem(this, global.__t("クリックすると現在のボイスが停止しません(&V)"),, disableStopVoiceWithClickFlag));
 
 	(global.addVoiceMenuItems incontextof this)(this.voiceMenuItem);
-};
-
-global.addVitaMenu = function(patchMenu)
-{
-	var vitaMovieMenuFlag = new global.GameFlag(this, this.sflags, "movieMenuPatch", global.get_opPatchExists(this));
-	var vitaAboutFlag = new global.GameFlag(this, this.sflags, "aboutPatch", global.get_vitaPatchExists(this));
-
-	patchMenu.add(this.vitaMenuItem = new global.KAGMenuItem(this, global.__t("&Vitaコンテンツ"), 0, void, false));
-	this.vitaMenuItem.add(this.vitaMovieMenuItem = new global.KAGFlagFolderMenuItem(this, global.__t("Vitaのムービーメニュ(&M)"),, vitaMovieMenuFlag, global.opPatchName, "override",, false));
-	this.vitaMovieMenuItem.disableIfPatchDoesntExist(global.opPatchName);
-	this.vitaMenuItem.add(this.vitaAboutMenuItem = new global.KAGFlagMenuItem(this, global.__t("Vitaの「このスフとについて」ページ(&A)"),, vitaAboutFlag));
-
-	(global.addVitaMenuItems incontextof this)(this.vitaMenuItem);
 };
 
 global.addMovieMenu = function(patchMenu)
@@ -866,17 +846,40 @@ global.addOptionsMenu = function(patchMenu)
 {
 	var historyTitleFlag = new global.GameFlag(this, this.sflags, "historyTitle", false);
 	var showLogoFlag = new global.GameFlag(this, this.sflags, "showLogo", true);
-	var savedataRepairFlag = new global.GameFlag(this, this.sflags, "savedataRepair", false);
+	var customVoiceReplayFlag = new global.GameFlag(this, this.sflags, "customVoiceReplay", false);
+	var vitaMovieMenuFlag = new global.GameFlag(this, this.sflags, "movieMenuPatch", global.get_opPatchExists(this));
+	var vitaAboutFlag = new global.GameFlag(this, this.sflags, "aboutPatch", global.get_vitaPatchExists(this));
 
 	patchMenu.add(this.patchOptionsMenuItem = new global.KAGMenuItem(this, global.__t("設定(&O)"), 0, void, false));
-	this.patchOptionsMenuItem.add(this.historyTitleMenuItem = new global.KAGFlagMenuItem(this, global.__t("メッセージ歴史でシーンのタイトルを表示する(&H)"),, historyTitleFlag));
-	this.patchOptionsMenuItem.add(this.engineConfigurationItem = new global.KAGMenuItem(this, global.__t("エンジン構成ダイアログを開く"), 1, function() { global.showEngineConfigureDialog(); },false));
-	this.patchOptionsMenuItem.add(this.openSavedataDirMenuItem = new global.KAGMenuItem(this, global.__t("保存データディレクトリを開く"), 1, function(sender) { global.open_savedata_dir(sender.owner); },false));
-	this.patchOptionsMenuItem.add(this.saveTroubleshootingDataAndOpenFolderLocationMenuItem = new global.KAGMenuItem(this, global.__t("トラブルシューティングデータを保存する"), 1, function() { global.save_troubleshooting_data_and_open_folder_location(); },false));
-	this.patchOptionsMenuItem.add(this.showLogoMenuItem = new global.KAGFlagMenuItem(this, global.__t("起動時にTYPE-MOONロゴを表示"),, showLogoFlag));
-	this.patchOptionsMenuItem.add(this.savedataRepairMenuItem = new global.KAGFlagMenuItem(this, global.__t("修復保存データモードを有効にする"),, savedataRepairFlag));
 
+	this.patchOptionsMenuItem.add(this.showLogoMenuItem = new global.KAGFlagMenuItem(this, global.__t("起動時にTYPE-MOONロゴを表示"),, showLogoFlag));
 	(global.addOptionsMenuItems incontextof this)(this.patchOptionsMenuItem);
+	(global.addGalleryMenu incontextof this)(this.patchOptionsMenuItem);
+	this.patchOptionsMenuItem.add(this.historyTitleMenuItem = new global.KAGFlagMenuItem(this, global.__t("メッセージ歴史でシーンのタイトルを表示する(&H)"),, historyTitleFlag));
+	this.patchOptionsMenuItem.add(this.customVoiceReplayIconsMenuItem = new global.KAGFlagMenuItem(this, global.__t("あつらえのボイス再生アイコンを使用する(&R)"),, customVoiceReplayFlag));
+	this.patchOptionsMenuItem.add(new global.MenuItem(this, "-"));
+
+@if(HD_MODE)
+	(global.addMessageWindowMenu incontextof this)(this.patchOptionsMenuItem);
+	this.patchOptionsMenuItem.add(new global.MenuItem(this, "-"));
+@endif
+
+	this.patchOptionsMenuItem.add(this.vitaMovieMenuItem = new global.KAGFlagFolderMenuItem(this, global.__t("Vitaのムービーメニュ(&M)"),, vitaMovieMenuFlag, global.opPatchName, "override",, false));
+	this.vitaMovieMenuItem.disableIfPatchDoesntExist(global.opPatchName);
+	this.patchOptionsMenuItem.add(this.vitaAboutMenuItem = new global.KAGFlagMenuItem(this, global.__t("Vitaの「このスフとについて」ページ(&A)"),, vitaAboutFlag));
+	(global.addVitaMenuItems incontextof this)(this.patchOptionsMenuItem);
+
+};
+
+global.addActionsMenu = function(patchMenu)
+{
+	var savedataRepairFlag = new global.GameFlag(this, this.sflags, "savedataRepair", false);
+
+	patchMenu.add(this.patchActionsMenuItem = new global.KAGMenuItem(this, global.__t("ツール"), 0, void, false));
+	this.patchActionsMenuItem.add(this.engineConfigurationItem = new global.KAGMenuItem(this, global.__t("エンジン構成ダイアログを開く"), 1, function() { global.showEngineConfigureDialog(); },false));
+	this.patchActionsMenuItem.add(this.openSavedataDirMenuItem = new global.KAGMenuItem(this, global.__t("保存データディレクトリを開く"), 1, function(sender) { global.open_savedata_dir(sender.owner); },false));
+	this.patchActionsMenuItem.add(this.saveTroubleshootingDataAndOpenFolderLocationMenuItem = new global.KAGMenuItem(this, global.__t("トラブルシューティングデータを保存する"), 1, function() { global.save_troubleshooting_data_and_open_folder_location(); },false));
+	this.patchActionsMenuItem.add(this.savedataRepairMenuItem = new global.KAGFlagMenuItem(this, global.__t("修復保存データモードを有効にする"),, savedataRepairFlag));
 };
 
 global.addFullScreenMenu = function(displayMenu)

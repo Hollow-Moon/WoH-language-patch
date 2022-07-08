@@ -17,16 +17,14 @@ class Layer_patch_textdrawer_override_override extends global.Layer_patch_textdr
 	function Layer_patch_textdrawer_override_override()
 	{
 		super.Layer(...);
-		if (this instanceof "CharacterVoiceConfigLayer")
+		if ((typeof(global.getVoiceNameSettings) === "Object") && (this instanceof "CharacterVoiceConfigLayer"))
 		{
 			this.voiceNameSettings = global.getVoiceNameSettings();
 		}
-@if(GAME_FHAT)
-		if (this instanceof "WallPaperMenuLayer")
+		if ((typeof(global.getwallpapersNamesSettings) === "Object") && (this instanceof "WallPaperMenuLayer"))
 		{
 			this.wallpapersNamesSettings = global.getwallpapersNamesSettings();
 		}
-@endif
 	}
 
 	function Layer()

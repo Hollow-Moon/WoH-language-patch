@@ -17,7 +17,15 @@ global.wideMobileWindowFolderName = "window-wide-mobile";
 
 global.get_opPatchExists = function() { { return global.patchExists(global.opPatchName); } };
 global.get_movieMenuPatch = function(kag=global.kag) { { return global.get_opPatchExists() && typeof(kag) === "Object" && typeof(kag.sflags) === "Object" && typeof(kag.sflags.movieMenuPatch) === "Integer" && kag.sflags.movieMenuPatch; } };
-global.get_playVitaOp = function(kag=global.kag) { { return global.get_opPatchExists() && typeof(kag) === "Object" && typeof(kag.sflags) === "Object" && typeof(kag.sflags.playVitaOp) === "Integer" && kag.sflags.playVitaOp; } };
+@if(GAME_FATE)
+global.get_playRealtaOp = function(kag=global.kag) { { return typeof(kag) === "Object" && typeof(kag.sflags) === "Object" && typeof(kag.sflags.gmovie) === "String" && (kag.sflags.gmovie=="realta"); } };
+global.get_playClassicOp = function(kag=global.kag) { { return global.get_opPatchExists() && typeof(kag) === "Object" && typeof(kag.sflags) === "Object" && typeof(kag.sflags.gmovie) === "String" && (kag.sflags.gmovie=="classic"); } };
+@endif
+@if(GAME_FHAT)
+global.get_playRealtaOp = function(kag=global.kag) { { return false; } };
+global.get_playClassicOp = function(kag=global.kag) { { return typeof(kag) === "Object" && typeof(kag.sflags) === "Object" && typeof(kag.sflags.gmovie) === "String" && (kag.sflags.gmovie=="classic"); } };
+@endif
+global.get_playVitaOp = function(kag=global.kag) { { return global.get_opPatchExists() && typeof(kag) === "Object" && typeof(kag.sflags) === "Object" && typeof(kag.sflags.gmovie) === "String" && (kag.sflags.gmovie=="vita"); } };
 
 global.patchMenuIndex = -1;
 global.getPatchMenuIndex = function(kag)
@@ -728,7 +736,9 @@ global.addPatchMenu = function()
 
 	(global.addOptionsMenu incontextof this)(this.patchMenu);
 	(global.addPatchMenuItems incontextof this)(this.patchMenu);
-
+@if(GAME_FATE||GAME_FHAT)
+	(global.addMovieContentMenu incontextof this)(this.patchMenu);
+@endif
 	(global.addEnableDisableRestartMenuFunctions incontextof this)();
 };
 
@@ -772,6 +782,33 @@ global.addConductorVerbosityMenu = function()
 	this.debugMenu.add(new global.MenuItem(this, "-"));
 };
 
+global.addMovieContentMenu = function(patchMenu)
+{
+@if(GAME_FATE)
+	var flagDefault = "realta";
+	var insertIndex = 2;
+@endif
+@if(GAME_FHAT)
+	var flagDefault = "classic";
+	var insertIndex = 1;
+@endif
+
+	var movieContentFlag = new global.GameFlag(this, this.sflags, "gmovie", global.get_opPatchExists(this) ? "mixed" : flagDefault);
+	// Todo: Set sflags.gmovie and menu state to realta when no OP patch exists
+	patchMenu.insert(this.movieContentMenuItem = new global.KAGMenuItem(this, global.__t("ムービーコンテンツ"), 0, void, false), 2);
+	this.movieContentMenuItem.add(this.classicMovieContentMenuItem = new global.KAGFlagMenuItem(this,   global.__t("クラシック(&C)"),    1, movieContentFlag, "classic"));
+@if(GAME_FATE)
+	this.classicMovieContentMenuItem.disableIfPatchDoesntExist(global.opPatchName);
+	this.movieContentMenuItem.add(this.ps2MovieContentMenuItem = new global.KAGFlagMenuItem(this, global.__t("&Réalta Nua"), 1, movieContentFlag, "realta"));
+@endif
+	this.movieContentMenuItem.add(this.vitaMovieContentMenuItem = new global.KAGFlagMenuItem(this, global.__t("&Vita"), 1, movieContentFlag, "vita"));
+	this.vitaMovieContentMenuItem.disableIfPatchDoesntExist(global.opPatchName);
+	this.movieContentMenuItem.add(this.mixedMovieContentMenuItem = new global.KAGFlagMenuItem(this,   global.__t("ミックス(&M)"),    1, movieContentFlag, "mixed"));
+	this.mixedMovieContentMenuItem.disableIfPatchDoesntExist(global.opPatchName);
+	this.movieContentMenuItem.add(new global.MenuItem(this, "-"));
+	this.movieContentMenuItem.add(this.classicMovieContentMenuItem = new global.KAGFlagMenuItem(this,   global.__t("ゲーム中にムービーをスキップする(&K)"),    1, movieContentFlag, "skip"));
+};
+
 global.addVoiceMenu = function(patchMenu)
 {
 	var unmatchedVoiceFlag = new global.GameFlag(this, this.sflags, "playUnmatchedVoices", true);
@@ -796,13 +833,10 @@ global.addVoiceMenu = function(patchMenu)
 
 global.addVitaMenu = function(patchMenu)
 {
-	var playVitaOpFlag = new global.GameFlag(this, this.sflags, "playVitaOp", global.get_opPatchExists(this));
 	var vitaMovieMenuFlag = new global.GameFlag(this, this.sflags, "movieMenuPatch", global.get_opPatchExists(this));
 	var vitaAboutFlag = new global.GameFlag(this, this.sflags, "aboutPatch", global.get_vitaPatchExists(this));
 
 	patchMenu.add(this.vitaMenuItem = new global.KAGMenuItem(this, global.__t("&Vitaコンテンツ"), 0, void, false));
-	this.vitaMenuItem.add(this.vitaOPMenuItem = new global.KAGFlagMenuItem(this, global.__t("Vitaの&OPをゲーム中に再生する"),, playVitaOpFlag));
-	this.vitaOPMenuItem.disableIfPatchDoesntExist(global.opPatchName);
 	this.vitaMenuItem.add(this.vitaMovieMenuItem = new global.KAGFlagFolderMenuItem(this, global.__t("Vitaのムービーメニュ(&M)"),, vitaMovieMenuFlag, global.opPatchName, "override",, false));
 	this.vitaMovieMenuItem.disableIfPatchDoesntExist(global.opPatchName);
 	this.vitaMenuItem.add(this.vitaAboutMenuItem = new global.KAGFlagMenuItem(this, global.__t("Vitaの「このスフとについて」ページ(&A)"),, vitaAboutFlag));
@@ -813,12 +847,10 @@ global.addVitaMenu = function(patchMenu)
 global.addMovieMenu = function(patchMenu)
 {
 	var subbedVideosFlag = new global.GameFlag(this, this.sflags, global.subbedVideosFlagName, true);
-	var skipMoviesFlag = new global.GameFlag(this, this.sflags, "skipMovies", false);
 	var forceMpvPlaybackFlag = new global.GameFlag(this, this.sflags, "forceMpvPlayback", false);
 
 	patchMenu.add(this.movieMenuItem = new global.KAGMenuItem(this, global.__t("ムービー(&M)"), 0, void, false));
 	this.movieMenuItem.add(this.subbedVideosMenuItem = new global.KAGFlagFolderMenuItem(this, global.__t("ムービー再生中に字幕を表示する(&S)"),, subbedVideosFlag,,global.videosFolderName));
-	this.movieMenuItem.add(this.skipMoviesMenuItem = new global.KAGFlagMenuItem(this, global.__t("ゲーム中にムービーをスキップする(&K)"),,skipMoviesFlag));
 	this.movieMenuItem.add(this.forceMpvPlaybackMenuItem = new global.KAGFlagMenuItem(this, global.__t("mpvを使用して強制的に動画を再生する"),,forceMpvPlaybackFlag));
 	this.forceMpvPlaybackMenuItem.enabled = (typeof(global.playVideoMPV) === "Object");
 

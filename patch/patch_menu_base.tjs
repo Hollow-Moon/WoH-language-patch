@@ -535,7 +535,7 @@ class KAGCensorMenuItem extends global.KAGMenuItem
 	function beforeCallback(sender)
 	{
 		if (sender == this.hCensoredMenuItem && global.isHScene()) {
-			global.System.inform("Cannot turn off H-scenes during an H-scene. Try changing the settings again after the scene, or from the main menu.");
+			global.System.inform(global.__("Hシーン中はHシーンをオフにできません。 シーンの後で、またはメインメニューから設定をもう一度変更してみてください。"));
 			return false;
 		}
 
@@ -809,7 +809,7 @@ global.addMovieContentMenu = function(patchMenu)
 	this.movieContentMenuItem.add(this.classicMovieContentMenuItem = new global.KAGFlagMenuItem(this,   global.__t("クラシック(&C)"),    1, movieContentFlag, "classic"));
 @if(GAME_FATE)
 	this.classicMovieContentMenuItem.disableIfPatchDoesntExist(global.opPatchName);
-	this.movieContentMenuItem.add(this.ps2MovieContentMenuItem = new global.KAGFlagMenuItem(this, global.__t("&Réalta Nua"), 1, movieContentFlag, "realta"));
+	this.movieContentMenuItem.add(this.ps2MovieContentMenuItem = new global.KAGFlagMenuItem(this, global.__t("レアルタ・ヌア(&R)"), 1, movieContentFlag, "realta"));
 @endif
 	this.movieContentMenuItem.add(this.vitaMovieContentMenuItem = new global.KAGFlagMenuItem(this, global.__t("&Vita"), 1, movieContentFlag, "vita"));
 	this.vitaMovieContentMenuItem.disableIfPatchDoesntExist(global.opPatchName);

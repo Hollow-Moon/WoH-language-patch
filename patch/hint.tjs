@@ -40,6 +40,10 @@ class Window_hint_override extends global.Window_hint_original
 		this.hinttimer.enabled = false;
 		try
 		{
+			if (typeof(this.focusedLayer) !== "Object" || this.focusedLayer === null)
+			{
+				return;
+			}
 			var primary_layer = this.primaryLayer;
 			var p = primary_layer.getLayerAt(primary_layer.cursorX, primary_layer.cursorY);
 			if (p === void || p === null)
@@ -89,20 +93,23 @@ class Window_hint_override extends global.Window_hint_original
 
 	function initHintLayer()
 	{
-		this.hintlayer = new global.Layer(this, this.primaryLayer);
+		if (typeof(this.focusedLayer) === "Object" && this.focusedLayer !== null)
 		{
-			var l = this.hintlayer;
-			l.visible = false;
-			l.ignoreHintSensing = true;
-			l.hitThreshold = 256;
-			l.font.height = 9;
-			l.font.face = global.__s("MS UI Gothic", "hint_font_face");
-		}
+			this.hintlayer = new global.Layer(this, this.primaryLayer);
+			{
+				var l = this.hintlayer;
+				l.visible = false;
+				l.ignoreHintSensing = true;
+				l.hitThreshold = 256;
+				l.font.height = 9;
+				l.font.face = global.__s("MS UI Gothic", "hint_font_face");
+			}
 
-		// hintDelay = 500; // default
-		// hintDelay = 0; // immediate
-		// hintDelay = -1; // never
-		// hintDelay = 1000; // slow
+			// hintDelay = 500; // default
+			// hintDelay = 0; // immediate
+			// hintDelay = -1; // never
+			// hintDelay = 1000; // slow
+		}
 	}
 
 	var hintHorizontalPadding = 4;
@@ -144,8 +151,13 @@ class Window_hint_override extends global.Window_hint_original
 
 	function onHintChanged(text, x, y, isshow)
 	{
-		if (this.hintlayer === void) {
+		if (this.hintlayer === void)
+		{
 			this.initHintLayer();
+		}
+		if (this.hintlayer === void)
+		{
+			return;
 		}
 		if (isshow) {
 			var lines = text.split("\n");

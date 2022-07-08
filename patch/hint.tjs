@@ -215,9 +215,15 @@ class Window_hint_override extends global.Window_hint_original
 				//z = clientRect.w / global.Math.floor(pxWidth * wideFactor);
 				}
 			
-			// Calculate the offset introduced by the black borders in fullScreened/maximized mode. In windowed mode, these will be 0, of course.
-			var widthOffsetAbs = (clientRect.w  - pxWidth_abs) / 2;
-			var heightOffsetAbs = (clientRect.h - pxHeight_abs) / 2;
+			// Calculate the offset introduced by the black borders in maximized mode.
+			var widthOffsetAbs = 0;
+			var heightOffsetAbs = 0;
+			
+			if (typeof this.maximized === "Integer" && maximized)
+			{
+				widthOffsetAbs = (clientRect.w  - pxWidth_abs) / 2;
+				heightOffsetAbs = (clientRect.h - pxHeight_abs) / 2;
+			}
 
 			var x = (x - widthOffsetAbs)  * pxWidth  / pxWidth_abs;
 			var y = (y - heightOffsetAbs) * pxHeight / pxHeight_abs;

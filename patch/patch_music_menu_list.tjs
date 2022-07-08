@@ -125,14 +125,11 @@ global.generate_filtered_bgm_se_list = function(kag=global.kag)
 	var played_music_dict = flag_storage[played_music_flag];
 	var played_se_dict = flag_storage[played_se_flag];
 
-@if(GAME_FHAT)
 	se_bgm_fileparams["music"] = global.get_filtered_bgm_se_by_flags("music", played_music_dict);
-@endif
+
 @if(GAME_FATE)
 	//	ファイルリスト取得
-	var originalmusicfiles = global.get_filtered_bgm_se_by_flags("original", played_music_dict);
-	se_bgm_fileparams["original"] = originalmusicfiles;
-	se_bgm_fileparams["music"] = originalmusicfiles;
+	se_bgm_fileparams["original"] = global.get_filtered_bgm_se_by_flags("original", played_music_dict);
 	se_bgm_fileparams["vita"] = global.get_filtered_bgm_se_by_flags("vita", played_music_dict);
 	se_bgm_fileparams["ps2"] = global.get_filtered_bgm_se_by_flags("ps2", played_music_dict);
 	se_bgm_fileparams["classic"] = global.get_filtered_bgm_se_by_flags("classic", played_music_dict);

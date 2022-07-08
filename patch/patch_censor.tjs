@@ -1,21 +1,24 @@
 ﻿// Patch names
-global.vitaAssetsPatchName = global.devMode? "ImagesVita" : "vita"; // not the best place to decalre the vita patch name but we need it at this stage
+global.vitaAssetsPatchName = global.devMode? "ImagesVita" : "vita"; // not the best place to declare the vita patch name but we need it at this stage
 @if(GAME_FATE)
 global.hPatchName = "h";
 global.hCensorPatchName = global.mainPatchName;
 global.maturePatchName = global.devMode? "ImagesPatch" : global.mainPatchName;
+global.ecchiPatchName = "h";
 global.decensoredPatchName = "h";
 @endif
 @if(GAME_FHAT)
 global.hPatchName = global.mainPatchName;
 global.hCensorPatchName = global.vitaAssetsPatchName;
 global.maturePatchName = global.vitaAssetsPatchName;
+global.ecchiPatchName = global.mainPatchName;
 global.decensoredPatchName = "decensor";
 @endif
 
 // Flag names
 global.hFlagName = "ghentai";
 global.hCensoredFlagName = "censored";
+global.ecchiFlagName = "gecchi";
 global.matureFlagName = "gmature";
 global.decensoredFlagName = "decensor";
 global.decensorConfigFlagName = "decensorConfig";
@@ -23,7 +26,8 @@ global.decensorConfigFlagName = "decensorConfig";
 global.get_hPatchExists = function() { { return global.patchExists(global.hPatchName); } };
 global.get_isHCensored = function(kag=global.kag) { { return kag.sflags[global.hCensoredFlagName] !== void? kag.sflags[global.hCensoredFlagName] : !kag.sflags[global.hFlagName]; } }; // RN uses hFlagName while HA uses hCensoredFlagName
 global.get_isMatureCensored = function(kag=global.kag) { { return !kag.sflags[global.matureFlagName]; } };
-global.get_fullyCensored = function(kag=global.kag) { { return global.get_isHCensored(kag) && global.get_isMatureCensored(kag); } };
+global.get_isEcchiCensored = function(kag=global.kag) { { return !kag.sflags[global.ecchiFlagName]; } };
+global.get_fullyCensored = function(kag=global.kag) { { return global.get_isHCensored(kag) && global.get_isMatureCensored(kag) && global.get_isEcchiCensored(kag); } };
 global.get_isDecensored = function(kag=global.kag) { { return kag.sflags[global.decensoredFlagName]; } };
 global.get_decensorConfig = function(kag=global.kag) { { return kag.sflags[global.decensorConfigFlagName]; } };
 
@@ -32,9 +36,11 @@ global.fullyCensoredFolderName = "censored";
 
 global.censoredHFolderName = "censored_h";
 global.censoredMatureFolderName = "censored_mature";
+global.censoredEcchiFolderName = "censored_ecchi";
 
 global.uncensoredHFolderName = "h";
 global.uncensoredMatureFolderName = "mature";
+global.uncensoredEcchiFolderName = "ecchi";
 
 global.decensoredFolderName = "decensored";
 

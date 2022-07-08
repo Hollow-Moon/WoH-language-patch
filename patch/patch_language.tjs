@@ -635,6 +635,7 @@ global.load_language_patch = function(language, kag)
 @endif
 					patches_arr.add([languagePatchName, global.get_isHCensored(kag)? global.censoredHFolderName : global.uncensoredHFolderName]);
 					patches_arr.add([languagePatchName, global.get_isMatureCensored(kag)? global.censoredMatureFolderName: global.uncensoredMatureFolderName]);
+					patches_arr.add([languagePatchName, global.get_isEcchiCensored(kag)? global.censoredEcchiFolderName: global.uncensoredEcchiFolderName]);
 					patches_arr.add([languagePatchName, global.fullyCensoredFolderName]) if global.get_fullyCensored(kag);
 					patches_arr.add([languagePatchName, global.videosFolderName]) if kag.sflags[global.subbedVideosFlagName];
 				}
@@ -711,6 +712,7 @@ global.unload_language_patch = function(language, kag)
 		{
 			patches_arr.add([languagePatchName, global.get_isHCensored(kag)? global.censoredHFolderName : global.uncensoredHFolderName]);
 			patches_arr.add([languagePatchName, global.get_isMatureCensored(kag)? global.censoredMatureFolderName: global.uncensoredMatureFolderName]);
+			patches_arr.add([languagePatchName, global.get_isEcchiCensored(kag)? global.censoredEcchiFolderName: global.uncensoredEcchiFolderName]);
 			patches_arr.add([languagePatchName, global.fullyCensoredFolderName]) if global.get_fullyCensored(kag);
 			patches_arr.add([languagePatchName, global.videosFolderName]) if kag.sflags[global.subbedVideosFlagName];
 		}

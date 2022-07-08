@@ -425,20 +425,28 @@ class KAGCensorMenuItem extends global.KAGMenuItem
 	{
 		var matureFlag = new global.GameFlag(this.owner, this.owner.sflags, global.matureFlagName, true);
 		var matureCensorFlag = global.inverseFlag(matureFlag);
+		var ecchiFlag = new global.GameFlag(this.owner, this.owner.sflags, global.ecchiFlagName, false);
 		var decensorFlag = new global.GameFlag(this.owner, this.owner.sflags, global.decensoredFlagName, false);
 		var decensorConfigFlag = new global.GameFlag(this.owner, this.owner.sflags, global.decensorConfigFlagName, "bellandy_anonymous");
 
-		var hCensorFlagComposite = new global.CompositeAndFlag([global.inverseFlag(hFlag), global.inverseFlag(decensorFlag)]);
-		var hFlagComposite = new global.CompositeAndFlag([hFlag, global.inverseFlag(decensorFlag)]);
-		var decensorFlagComposite = new global.CompositeAndFlag([hFlag, decensorFlag]);
+		var hCensorFlagComposite = new global.CompositeAndFlag([global.inverseFlag(ecchiFlag), global.inverseFlag(hFlag), global.inverseFlag(decensorFlag)]);
+		var ecchiAllowFlagComposite = new global.CompositeAndFlag([ecchiFlag, global.inverseFlag(hFlag), global.inverseFlag(decensorFlag)]);
+		var hFlagComposite = new global.CompositeAndFlag([ecchiFlag, hFlag, global.inverseFlag(decensorFlag)]);
+		var decensorFlagComposite = new global.CompositeAndFlag([ecchiFlag, hFlag, decensorFlag]);
 
-		this.add(this.hCensoredMenuItem = new global.KAGFlagFolderMenuItem(this.owner, global.__t("&Hコンテンツを検閲する"), 1, hCensorFlagComposite, global.hCensorPatchName, global.censoredHFolderName));
+		this.add(this.hCensoredMenuItem = new global.KAGFlagFolderMenuItem(this.owner, global.__t("エッチとエロを検閲する(&N)"), 1, hCensorFlagComposite, global.hCensorPatchName, global.censoredHFolderName));
 		this.hCensoredMenuItem.beforeCallback = this.beforeCallback;
 		this.hCensoredMenuItem.afterCallback = this.afterCallback;
-		this.add(this.hUncensoredMenuItem = new global.KAGFlagFolderMenuItem(this.owner, global.__t("Hコンテンツを検閲しない(&U)"), 1, hFlagComposite, global.hPatchName, global.uncensoredHFolderName));
+
+		this.add(this.ecchiUncensoredMenuItem = new global.KAGFlagFolderMenuItem(this.owner, global.__t("エッチを検閲しない(&E)"), 1, ecchiAllowFlagComposite, global.ecchiPatchName, global.uncensoredEcchiFolderName));
+		this.ecchiUncensoredMenuItem.beforeCallback = this.beforeCallback;
+		this.ecchiUncensoredMenuItem.afterCallback = this.afterCallback;
+
+		this.add(this.hUncensoredMenuItem = new global.KAGFlagFolderMenuItem(this.owner, global.__t("エッチとエロを検閲しない(&H)"), 1, hFlagComposite, global.hPatchName, global.uncensoredHFolderName));
 		this.hUncensoredMenuItem.beforeCallback = this.beforeCallback;
 		this.hUncensoredMenuItem.afterCallback = this.afterCallback;
-		this.add(this.hDecensoredMenuItem = new global.KAGFlagFolderMenuItem(this.owner, global.__t("Hコンテンツを強制的に無検閲する(&D)"), 1, decensorFlagComposite,
+
+		this.add(this.hDecensoredMenuItem = new global.KAGFlagFolderMenuItem(this.owner, global.__t("エッチとエロを強制的に無検閲する(&D)"), 1, decensorFlagComposite,
 @if(GAME_FATE)
 		[global.hPatchName, global.decensoredPatchName], [global.uncensoredHFolderName, global.decensoredFolderName]));
 @endif
@@ -481,13 +489,18 @@ class KAGCensorMenuItem extends global.KAGMenuItem
 
 	function updateCurrentState()
 	{
-		var items = [this.hCensoredMenuItem, this.hUncensoredMenuItem, this.hDecensoredMenuItem];
+		var items = [this.hCensoredMenuItem, this.ecchiUncensoredMenuItem, this.hUncensoredMenuItem, this.hDecensoredMenuItem];
 		for (var i = 0, internal_forloop_count = items.count; i < internal_forloop_count; i += 1) {
 			if (items[i].checked) {
 				this.currentState = items[i];
 				break;
 			}
 		}
+
+		// Protect against invalid state (no item selected)
+		if (this.currentState !== 'Object')
+			this.currentState = this.hCensoredMenuItem;
+
 		this.loadCurrentState();
 	}
 

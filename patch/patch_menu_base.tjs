@@ -423,8 +423,7 @@ class KAGCensorMenuItem extends global.KAGMenuItem
 
 	function addChildren(hFlag)
 	{
-		var matureFlag = new global.GameFlag(this.owner, this.owner.sflags, global.matureFlagName, true);
-		var matureCensorFlag = global.inverseFlag(matureFlag);
+		var matureFlag = new global.GameFlag(this.owner, this.owner.sflags, global.matureFlagName, false);
 		var ecchiFlag = new global.GameFlag(this.owner, this.owner.sflags, global.ecchiFlagName, false);
 		var decensorFlag = new global.GameFlag(this.owner, this.owner.sflags, global.decensoredFlagName, false);
 		var decensorConfigFlag = new global.GameFlag(this.owner, this.owner.sflags, global.decensorConfigFlagName, "bellandy_anonymous");
@@ -433,6 +432,12 @@ class KAGCensorMenuItem extends global.KAGMenuItem
 		var ecchiAllowFlagComposite = new global.CompositeAndFlag([ecchiFlag, global.inverseFlag(hFlag), global.inverseFlag(decensorFlag)]);
 		var hFlagComposite = new global.CompositeAndFlag([ecchiFlag, hFlag, global.inverseFlag(decensorFlag)]);
 		var decensorFlagComposite = new global.CompositeAndFlag([ecchiFlag, hFlag, decensorFlag]);
+
+		this.add(this.matureMenuItem = new global.KAGFlagFolderMenuItem(this.owner, global.__t("成人向けコンテンツを検閲しない(&M)"),, matureFlag, global.maturePatchName, global.censoredMatureFolderName, global.uncensoredMatureFolderName));
+		this.matureMenuItem.beforeCallback = this.beforeCallback;
+		this.matureMenuItem.afterCallback = this.afterCallback;
+
+		(this.addSeperationLine incontextof this.owner)(this);
 
 		this.add(this.hCensoredMenuItem = new global.KAGFlagFolderMenuItem(this.owner, global.__t("エッチとエロを検閲する(&N)"), 1, hCensorFlagComposite, global.hCensorPatchName, global.censoredHFolderName));
 		this.hCensoredMenuItem.beforeCallback = this.beforeCallback;
@@ -458,12 +463,6 @@ class KAGCensorMenuItem extends global.KAGMenuItem
 @endif
 		this.hDecensoredMenuItem.beforeCallback = this.beforeCallback;
 		this.hDecensoredMenuItem.afterCallback = this.afterCallback;
-
-		(this.addSeperationLine incontextof this.owner)(this);
-
-		this.add(this.matureMenuItem = new global.KAGFlagFolderMenuItem(this.owner, global.__t("成人向けコンテンツを検閲する(&M)"),, matureCensorFlag, global.maturePatchName, global.censoredMatureFolderName, global.uncensoredMatureFolderName));
-		this.matureMenuItem.beforeCallback = this.beforeCallback;
-		this.matureMenuItem.afterCallback = this.afterCallback;
 
 		(this.addSeperationLine incontextof this.owner)(this);
 

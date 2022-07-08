@@ -75,8 +75,11 @@ global.get_filtered_bgm_se_by_flags = function(audio_type, flags)
 	return list;
 };
 
-global.generate_initial_bgm_se_list = function()
+global.generate_bgm_se_list = function()
 {
+	if (se_bgm_filelist["music"] !== void) {
+		return se_bgm_filelist;
+	}
 	var se_bgm_filelist = global.se_bgm_filelist;
 @if(GAME_FHAT)
 	se_bgm_filelist["music"] = global.list_and_filter_bgm_se(global.MusicListFile);
@@ -93,6 +96,7 @@ global.generate_initial_bgm_se_list = function()
 
 	se_bgm_filelist["se"] = global.list_and_filter_bgm_se(global.SEListFile);
 @endif
+	return se_bgm_filelist;
 };
 
 global.se_bgm_fileparams_cache_valid = false;
@@ -107,11 +111,7 @@ global.generate_filtered_bgm_se_list = function(kag=global.kag)
 	{
 		return se_bgm_fileparams;
 	}
-	var se_bgm_filelist = global.se_bgm_filelist;
-	if (se_bgm_filelist["music"] === void)
-	{
-		global.generate_initial_bgm_se_list();
-	}
+	var se_bgm_filelist = global.generate_bgm_se_list();
 	var flag_storage;
 @if(GAME_FHAT)
 	flag_storage = kag.tflags;

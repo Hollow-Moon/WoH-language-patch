@@ -424,16 +424,18 @@ class KAGCensorMenuItem extends global.KAGMenuItem
 	function addChildren(hFlag)
 	{
 		var matureFlag = new global.GameFlag(this.owner, this.owner.sflags, global.matureFlagName, false);
+		var ecchitextFlag = new global.GameFlag(this.owner, this.owner.sflags, global.ecchitextFlagname, matureFlag.value);
 		var ecchiFlag = new global.GameFlag(this.owner, this.owner.sflags, global.ecchiFlagName, false);
 		var decensorFlag = new global.GameFlag(this.owner, this.owner.sflags, global.decensoredFlagName, false);
 		var decensorConfigFlag = new global.GameFlag(this.owner, this.owner.sflags, global.decensorConfigFlagName, "bellandy_anonymous");
 
+		var matureFlagComposite = new global.CompositeAndFlag([matureFlag, ecchitextFlag]);
 		var hCensorFlagComposite = new global.CompositeAndFlag([global.inverseFlag(ecchiFlag), global.inverseFlag(hFlag), global.inverseFlag(decensorFlag)]);
 		var ecchiAllowFlagComposite = new global.CompositeAndFlag([ecchiFlag, global.inverseFlag(hFlag), global.inverseFlag(decensorFlag)]);
 		var hFlagComposite = new global.CompositeAndFlag([ecchiFlag, hFlag, global.inverseFlag(decensorFlag)]);
 		var decensorFlagComposite = new global.CompositeAndFlag([ecchiFlag, hFlag, decensorFlag]);
 
-		this.add(this.matureMenuItem = new global.KAGFlagFolderMenuItem(this.owner, global.__t("成人向けコンテンツを検閲しない(&M)"),, matureFlag, global.maturePatchName, global.censoredMatureFolderName, global.uncensoredMatureFolderName));
+		this.add(this.matureMenuItem = new global.KAGFlagFolderMenuItem(this.owner, global.__t("成人向けコンテンツを検閲しない(&M)"),, matureFlagComposite, global.maturePatchName, global.censoredMatureFolderName, global.uncensoredMatureFolderName));
 		this.matureMenuItem.beforeCallback = this.beforeCallback;
 		this.matureMenuItem.afterCallback = this.afterCallback;
 
@@ -464,6 +466,7 @@ class KAGCensorMenuItem extends global.KAGMenuItem
 		this.hDecensoredMenuItem.beforeCallback = this.beforeCallback;
 		this.hDecensoredMenuItem.afterCallback = this.afterCallback;
 
+@if(GAME_FATE)
 		(this.addSeperationLine incontextof this.owner)(this);
 
 		this.add(this.decensorConfig = new global.KAGMenuItem(this.owner, __t("規制修正 絵師(&A)"), 0, void, false));
@@ -477,7 +480,7 @@ class KAGCensorMenuItem extends global.KAGMenuItem
 		this.decensorConfigBishopcruz.afterCallback = function(sender) { global.updateDecensorConfig(this.owner); };
 		this.decensorConfig.add(this.decensorConfigMixed = new global.KAGFlagMenuItem(this.owner, __t("ミックス(&M)"), 1, decensorConfigFlag, "mixed", true));
 		this.decensorConfigMixed.afterCallback = function(sender) { global.updateDecensorConfig(this.owner); };
-
+@endif
 		this.updateCurrentState();
 	}
 

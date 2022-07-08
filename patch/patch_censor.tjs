@@ -19,6 +19,7 @@ global.decensoredPatchName = "decensor";
 global.hFlagName = "ghentai";
 global.hCensoredFlagName = "censored";
 global.ecchiFlagName = "gecchi";
+global.ecchitextFlagname = "gecchitext";
 global.matureFlagName = "gmature";
 global.decensoredFlagName = "decensor";
 global.decensorConfigFlagName = "decensorConfig";
@@ -26,8 +27,9 @@ global.decensorConfigFlagName = "decensorConfig";
 global.get_hPatchExists = function() { { return global.patchExists(global.hPatchName); } };
 global.get_isHCensored = function(kag=global.kag) { { return kag.sflags[global.hCensoredFlagName] !== void? kag.sflags[global.hCensoredFlagName] : !kag.sflags[global.hFlagName]; } }; // RN uses hFlagName while HA uses hCensoredFlagName
 global.get_isMatureCensored = function(kag=global.kag) { { return !kag.sflags[global.matureFlagName]; } };
+global.get_isEcchiTextCensored = function(kag=global.kag) { { return !kag.sflags[global.ecchitextFlagname]; } };
 global.get_isEcchiCensored = function(kag=global.kag) { { return !kag.sflags[global.ecchiFlagName]; } };
-global.get_fullyCensored = function(kag=global.kag) { { return global.get_isHCensored(kag) && global.get_isMatureCensored(kag) && global.get_isEcchiCensored(kag); } };
+global.get_fullyCensored = function(kag=global.kag) { { return global.get_isHCensored(kag) && global.get_isMatureCensored(kag) && global.get_isEcchiTextCensored(kag) && global.get_isEcchiCensored(kag); } };
 global.get_isDecensored = function(kag=global.kag) { { return kag.sflags[global.decensoredFlagName]; } };
 global.get_decensorConfig = function(kag=global.kag) { { return kag.sflags[global.decensorConfigFlagName]; } };
 

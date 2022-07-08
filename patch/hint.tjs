@@ -160,6 +160,9 @@ class Window_hint_override extends global.Window_hint_original
 			return;
 		}
 		if (isshow) {
+			if (kag.sflags["showHoverTips"] == 0)
+				return;
+
 			var lines = text.split("\n");
 			var longestLineIndex = 0;
 			for (var i = 1, internal_forloop_count = lines.count; i < internal_forloop_count; i += 1) {

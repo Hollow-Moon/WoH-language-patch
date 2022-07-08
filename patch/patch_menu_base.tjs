@@ -861,13 +861,15 @@ global.addOptionsMenu = function(patchMenu)
 {
 	var historyTitleFlag = new global.GameFlag(this, this.sflags, "historyTitle", false);
 	var showLogoFlag = new global.GameFlag(this, this.sflags, "showLogo", true);
+	var showHoverTipsFlag = new global.GameFlag(this, this.sflags, "showHoverTips", true);
 	var customVoiceReplayFlag = new global.GameFlag(this, this.sflags, "customVoiceReplay", false);
 	var vitaMovieMenuFlag = new global.GameFlag(this, this.sflags, "movieMenuPatch", global.get_opPatchExists(this));
 	var vitaAboutFlag = new global.GameFlag(this, this.sflags, "aboutPatch", global.get_vitaPatchExists(this));
 
 	patchMenu.add(this.patchOptionsMenuItem = new global.KAGMenuItem(this, global.__t("設定(&O)"), 0, void, false));
 
-	this.patchOptionsMenuItem.add(this.showLogoMenuItem = new global.KAGFlagMenuItem(this, global.__t("起動時にTYPE-MOONロゴを表示"),, showLogoFlag));
+	this.patchOptionsMenuItem.add(this.showLogoMenuItem = new global.KAGFlagMenuItem(this, global.__t("起動時にTYPE-MOONロゴを表示する"),, showLogoFlag));
+	this.patchOptionsMenuItem.add(this.showHoverTipsMenuItem = new global.KAGFlagMenuItem(this, global.__t("ツールチップを表示する"),, showHoverTipsFlag));
 	(global.addOptionsMenuItems incontextof this)(this.patchOptionsMenuItem);
 	(global.addGalleryMenu incontextof this)(this.patchOptionsMenuItem);
 	this.patchOptionsMenuItem.add(this.historyTitleMenuItem = new global.KAGFlagMenuItem(this, global.__t("メッセージ歴史でシーンのタイトルを表示する(&H)"),, historyTitleFlag));

@@ -157,6 +157,10 @@ class KAGWindow_patch_skip_override extends global.KAGWindow_patch_skip_original
 	{
 		if (this.isSkippingToTarget !== void)
 		{
+			if (typeof(this.historyLayer) === "Object")
+			{
+				this.historyLayer.clear();
+			}
 			return 0;
 		}
 		return super.showPageBreak(...);
@@ -191,6 +195,33 @@ class KAGWindow_patch_skip_override extends global.KAGWindow_patch_skip_original
 				return 0;
 			}
 			return this.tagHandlers.r_patch_skip_original(elm);
+		} incontextof this;
+		handlers.hr_patch_skip_original = handlers.hr;
+		handlers.hr = function(elm)
+		{
+			if (this.isSkippingToTarget !== void)
+			{
+				return 0;
+			}
+			return this.tagHandlers.hr_patch_skip_original(elm);
+		} incontextof this;
+		handlers.graph_patch_skip_original = handlers.graph;
+		handlers.graph = function(elm)
+		{
+			if (this.isSkippingToTarget !== void)
+			{
+				return 0;
+			}
+			return this.tagHandlers.graph_patch_skip_original(elm);
+		} incontextof this;
+		handlers.ruby_patch_skip_original = handlers.ruby;
+		handlers.ruby = function(elm)
+		{
+			if (this.isSkippingToTarget !== void)
+			{
+				return 0;
+			}
+			return this.tagHandlers.ruby_patch_skip_original(elm);
 		} incontextof this;
 		handlers.patch_skip_break = function(elm)
 		{

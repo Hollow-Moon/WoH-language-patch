@@ -493,6 +493,18 @@ class Conductor_patch_conductor_override extends global.Conductor_patch_conducto
 			}
 			return;
 		}
+		if (typeof(text) === "String")
+		{
+			var index = text.length;
+			var brk;
+			while ((brk = global.GraphemeBreaker.previousBreak(text, index)) > 0)
+			{
+				this.patch_conductor_do_ch_tag_insert(text.substring(brk, index - brk), elm);
+				index = brk;
+			}
+			this.patch_conductor_do_ch_tag_insert(text.substring(0, index), elm);
+			return;
+		}
 		for (var i = text_sz - 1; i >= 0; i -= 1)
 		{
 			this.patch_conductor_do_ch_tag_insert(text[i], elm);

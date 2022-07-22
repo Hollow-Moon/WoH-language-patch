@@ -55,7 +55,7 @@ for (var i=0; i<global.scaleFactors.count; i++) {
 }
 
 global.get_widePatchName = function() { { return global.devMode? "ImagesPatch" : global.mainPatchName; } };
-global.ruleWideFolderName = "rule-wide";
+global.wideFolderName = "wide";
 
 global.hdScaleFactorFlagName = "hdScaleFactor";
 global.wideScreenFlagName = "wideScreen";
@@ -131,7 +131,7 @@ global.getHdPatchesArray = function(kag=global.kag)
 	global.addHdPaths(patches_arr, global.opPatchName) if global.get_opPatchExists();
 	if (typeof(kag) === "Object")
 	{
-		global.addHdPaths(patches_arr, global.get_widePatchName(), global.ruleWideFolderName) if kag.scflags[global.wideScreenFlagName];
+		global.addHdPaths(patches_arr, global.get_widePatchName(), global.wideFolderName) if kag.scflags[global.wideScreenFlagName];
 
 		global.addHdPaths(patches_arr, global.mobileBreakGlyphsPatchName, global.mobileBreakGlyphsFolderName) if kag.sflags[global.mobileBreakGlyphsFlagName];
 		global.addHdPaths(patches_arr, global.mobileWindowPatchName, global.mobileWindowFolderName) if kag.sflags[global.mobileWindowFlagName];
@@ -199,12 +199,12 @@ global.initializeQuality = function(scale)
 
 global.getWidePatchesArray = function(kag=global.kag)
 {
-	var patches_arr = [[global.get_widePatchName(), global.ruleWideFolderName]];
+	var patches_arr = [[global.get_widePatchName(), global.wideFolderName]];
 	patches_arr.add([global.wideWindowPatchName, global.wideWindowFolderName]) if kag.sflags[global.wideWindowFlagName];
 	patches_arr.add([global.wideMobileWindowPatchName, global.wideMobileWindowFolderName]) if kag.sflags[global.wideWindowFlagName] && kag.sflags[global.mobileWindowFlagName];
 @if(HD_MODE)
 	if (kag.isHd) {
-		addHdPaths(patches_arr, global.get_widePatchName(), global.ruleWideFolderName);
+		addHdPaths(patches_arr, global.get_widePatchName(), global.wideFolderName);
 		addHdPaths(patches_arr, global.wideWindowPatchName, global.wideWindowFolderName) if kag.sflags[global.wideWindowFlagName];
 		addHdPaths(patches_arr, global.wideMobileWindowPatchName, global.wideMobileWindowFolderName) if kag.sflags[global.wideWindowFlagName] && kag.sflags[global.mobileWindowFlagName];
 	}

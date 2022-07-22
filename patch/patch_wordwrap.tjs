@@ -1116,15 +1116,11 @@ class KAGWindow_patch_wordwrap_override extends global.KAGWindow_patch_wordwrap_
 			}
 			ttext = text.substr(0, word_wrap_break_position);
 		}
-		var is_empty_space = ttext === " ";
 @if(0)
-		var wcacheentry = word_length_cache[ttext];
-		var ll_len = this.current.lineLayer.font.getTextWidth(ttext);
-		if (typeof(wcacheentry) === "Object" && (wcacheentry.mllength !== ll_len))
-		{
-			Debug.message("ww x " + wcacheentry.mllength + " " + ll_len);
-		}
-@endif	
+		global.Debug.message("Before cut: " + text + "$");
+		global.Debug.message("After cut: " + ttext + "$");
+@endif
+		var is_empty_space = ttext === " ";
 		var word_length_cache = this.word_length_cache;
 		var word_lines_needed = this.word_lines_needed;
 		var wcacheentry = word_length_cache[ttext];
@@ -1138,6 +1134,18 @@ class KAGWindow_patch_wordwrap_override extends global.KAGWindow_patch_wordwrap_
 			this.generate_word_wrapping_list(conductor, false);
 			wcacheentry = word_length_cache[ttext];
 		}
+@if(0)
+		var ll_len = this.current.lineLayer.font.getTextWidth(ttext);
+		if (typeof(wcacheentry) === "Object")
+		{
+			if (wcacheentry.mllength !== ll_len)
+			{
+				global.Debug.message("ww x " + wcacheentry.mllength + " " + ll_len);
+			}
+			global.Debug.message("ML length: " + wcacheentry.mllength);
+		}
+		global.Debug.message("LL length: " + ll_len);
+@endif
 		var ml_needsreline = this.current.needsReline(wcacheentry);
 		var hl_needsreline = this.historyLayer.needsReline(wcacheentry);
 		if (is_empty_space)

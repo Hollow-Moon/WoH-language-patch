@@ -280,6 +280,7 @@ class KAGWindow_patch_savedatalocation_override_override extends global.KAGWindo
 			{
 				return this.__saveDataLocation;
 			}
+@if(!KIRIKIROID)
 			if (this.isMain)
 			{
 				this.__saveDataLocation = (this.get_or_prompt_save_data_location incontextof this)();
@@ -289,6 +290,7 @@ class KAGWindow_patch_savedatalocation_override_override extends global.KAGWindo
 				}
 				return this.__saveDataLocation;
 			}
+@endif
 			return global.System.exePath + "savedata";
 		}
 		setter (v)

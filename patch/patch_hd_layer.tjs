@@ -42,6 +42,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 @if(WIDE_MODE)
 	var _isbg = false; // bg images are scaled to be larger than the window
 	var updateBgFromSize = true; // auto update bg from layer size
+	var shouldUpdateBgFromSource = true; // auto update bg from layer operations
 	var _stretch = void; // used to stretch the message window (optional)
 	var _topScroll = 0; // used to position the layer according to the scroll
 	var unstretchLeft = false;
@@ -264,7 +265,6 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 	function scaleImageHeight(h)
 	{
 		if (this.isbg
-			&& !this.stretch
 @if(!ZOOM_WINDOW)
 			&& this.parent !== null
 @endif
@@ -277,7 +277,6 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 	function unscaleImageHeight(h)
 	{
 		if (this.isbg
-			&& !this.stretch
 @if(!ZOOM_WINDOW)
 			&& this.parent !== null
 @endif
@@ -667,15 +666,34 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 	}
 
 	function updateBg(w, h) {
-		w = +w;
-		h = +h;
-
 		if (!this.updateBgFromSize) {
 			return;
 		}
+		w = +w;
+		h = +h;
 		if (!this.isYesNoLayer && !this.isMessageLayer && !this.isHistoryLayer) {
 			this.isbg |= w == global.originalResWidth && h == global.originalResHeight;
 		}
+	}
+
+	function updateBgFromSource(src, swidth, sheight)
+	{
+		if (this.isThumbnail) {
+			return;
+		}
+		if (!this.shouldUpdateBgFromSource) {
+			return;
+		}
+		swidth = +swidth;
+		sheight = +sheight;
+		// When copying a background image, set this this.layer to be background as well
+		if (src.isbg && src.imageWidth == swidth && src.imageHeight == sheight) {
+			this.isbg = src.isbg;
+			if (src.imageWidth > this.imageWidth && src.imageHeight > this.imageHeight) {
+				this.setSize_patch_hd_layer(src.imageWidth, src.imageHeight);
+			}
+		}
+		this.stretch |= src._stretch;
 	}
 
 	property hasImage
@@ -1129,23 +1147,6 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 		}
 
 		invalidate tmp;
-	}
-
-	function updateBgFromSource(src, swidth, sheight)
-	{
-		if (this.isThumbnail) {
-			return;
-		}
-		swidth = +swidth;
-		sheight = +sheight;
-		// When copying a background image, set this this.layer to be background as well
-		if (src.isbg && src.imageWidth == swidth && src.imageHeight == sheight) {
-			this.isbg = src.isbg;
-			if (src.imageWidth > this.imageWidth && src.imageHeight > this.imageHeight) {
-				this.setSize_patch_hd_layer(src.imageWidth, src.imageHeight);
-			}
-		}
-		this.stretch |= src._stretch;
 	}
 
 	function assignImages(src)

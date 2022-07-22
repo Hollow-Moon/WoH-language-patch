@@ -63,11 +63,9 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 	var unstretchLeft = false;
 @endif
 
-	var isMask = false;
 	var isThumbnail = false;
 	var isTicketThumbnail = false;
 
-	var _isFixedPosition = void;
 	var _horizontalAlignment = 0.5;
 	var _verticalAlignment = 0;
 	var _imageHorizontalAlignment = 0;
@@ -842,19 +840,6 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 	property isPushButtonLayer { getter {
 		return this instanceof "PushButtonLayer";
 	} }
-
-	property isFixedPosition {
-		getter {
-			if (this._isFixedPosition !== void) {
-				return this._isFixedPosition;
-			}
-			// Only message this.layer and not its children.
-			return this.isCharacterLayer || this instanceof "MessageLayer" || this.isHistoryLayer || this.isGameMenuLayer || this.isShortcutBaseLayer || this.isPopupLayer || this.isCinescoLayer || this.isDateTitleLayer || this.isFlowChartLayer || this.isFlagListLayer || this.isYesNoLayer || this.isSceneDetailLayer || this.isPushButtonLayer;
-		}
-		setter(v) {
-			this._isFixedPosition = v;
-		}
-	}
 
 	property isSysBase {
 		getter {

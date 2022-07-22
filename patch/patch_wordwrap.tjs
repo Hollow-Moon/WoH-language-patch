@@ -1097,6 +1097,17 @@ class KAGWindow_patch_wordwrap_override extends global.KAGWindow_patch_wordwrap_
 		}
 		if (word_wrap_break_position > 0)
 		{
+			// Cut before the space
+			var check_if_space = text.substr(word_wrap_break_position - 1, 1);
+			if (check_if_space === " ")
+			{
+				// Ensure that cutting the space won't result in empty string
+				var check_ttext = text.substr(0, word_wrap_break_position - 1);
+				if (check_ttext !== "")
+				{
+					word_wrap_break_position -= 1;
+				}
+			}
 			var cut_text = text.substr(word_wrap_break_position);
 			if (cut_text.length > 0)
 			{

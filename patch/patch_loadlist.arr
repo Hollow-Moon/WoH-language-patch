@@ -196,6 +196,7 @@
 	["patch_fix_call_stack.tjs", ,,, "GAME_FATE||GAME_FHAT"],
 	"patch_fix_savedata_by_jump.tjs",
 	"patch_align.tjs",
+	"patch_doublecolumn.tjs",
 	"patch_skip.tjs",
 	"patch_messagelayer_noop_on_graph_not_found.tjs",
 	"patch_waittrigger_supports_timeout.tjs",

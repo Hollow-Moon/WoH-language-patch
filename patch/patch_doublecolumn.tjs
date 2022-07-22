@@ -1,0 +1,238 @@
+﻿
+global.KAGWindow_patch_doublecolumn_original = global.KAGWindow;
+class KAGWindow_patch_doublecolumn_override extends global.KAGWindow_patch_doublecolumn_original
+{
+	function KAGWindow_patch_doublecolumn_override()
+	{
+		super.KAGWindow(...);
+	}
+
+	function KAGWindow()
+	{
+		this.KAGWindow_patch_doublecolumn_override(...);
+	}
+
+	function getHandlers()
+	{
+		var handlers = super.getHandlers();
+		/*
+		 *	2行同時表示する裏技(横書き専用)
+		 *	in	: upper	上の行に表示する文字列
+		 *		: lower	下の行に表示する文字列
+		 */
+		handlers.doublecolumn = function(elm)
+		{
+			// 二行同時に書くコマンド用のサブルーチン(from doublecolumn)
+			{
+				var ml_charlayer = void;
+				var invalidate_wordcache = false;
+				if (typeof(this.current.getCharLayer) === "Object")
+				{
+					var ml = this.current;
+					ml_charlayer = ml.tmpCharLayer;
+					ml_charlayer.setFont(ml.fontFace, ml.fontAngle, ml.bold, ml.fontItalic, ml.fontSize);
+				}
+				var mlf = void;
+				if (typeof(this.current.lineLayer) === "Object")
+				{
+					mlf = this.current.lineLayer.font;
+				}
+				else if (ml_charlayer !== void)
+				{
+					if (!ml_charlayer.hasImage)
+					{
+						ml_charlayer.hasImage = true;
+					}
+					mlf = ml_charlayer.font;
+				}
+				var lf = mlf;
+				elm.maxwidth = kag.current.relinexpos - kag.current.x if elm.maxwidth === void;
+
+				var tf_uppers	= isNoSpaceLanguage()? [].split("/,", elm.upper) : wordWrapSplit(elm.upper, elm.maxwidth, lf);
+				var tf_lowers	= isNoSpaceLanguage()? [].split("/,", elm.lower) : wordWrapSplit(elm.lower, elm.maxwidth, lf);
+				var tf_lcount	= tf_uppers.count > tf_lowers.count ? tf_uppers.count : tf_lowers.count;
+				var tf_offsetline	= tf_uppers.count;
+				var tf_lindex	= 0;
+				var history_layer = this.historyLayer;
+				var tf_pos		= history_layer.dataPos;
+				var tf_hist		= history_layer.data[history_layer.dataPage];
+				var tf_histFont = history_layer.historyFontSize[history_layer.dataPage];
+				var tag_queue = [];
+				var message_layer = this.current;
+
+				var message_layer_x = message_layer.x;
+				var message_layer_y = message_layer.y;
+				var message_layer_line_layer_font = mlf;
+				var last_history_state = this.historyWriteEnabled;
+				{
+					var temp_tag = %[];
+					temp_tag.tagname = "history";
+					temp_tag.output = false;
+					tag_queue.add(temp_tag);
+				}
+				// 行のループ
+				do // label: doublecolumn_lloop
+				{
+					var tf_uline = tf_uppers.count > tf_lindex ? tf_uppers[tf_lindex] : '';
+					var tf_lline = tf_lowers.count > tf_lindex ? tf_lowers[tf_lindex] : '';
+					var tf_cindex = 0;
+					var tf_length = tf_uline.length > tf_lline.length ? tf_uline.length : tf_lline.length;
+					var tf_lwidth = 0;
+					// 桁(文字)のループ
+					do // label: doublecolumn_cloop
+					{
+						// 二行に文字を描画する
+						var tf_uc = tf_cindex < tf_uline.length ? tf_uline[tf_cindex] : '';
+						var tf_lc = tf_cindex < tf_lline.length ? tf_lline[tf_cindex] : '';
+						
+						var tf_lastleft = message_layer_x - message_layer.marginL;
+						var tf_lasttop = message_layer_y - message_layer.marginT;
+						if (isNoSpaceLanguage())
+						{
+							{
+								var temp_tag = %[];
+								temp_tag.tagname = "locate";
+								message_layer_x = tf_lastleft + message_layer.marginL;
+								temp_tag.x = message_layer_x - message_layer.marginL;
+								message_layer_y += (message_layer.fontSize + message_layer.lineSpacing) * tf_offsetline;
+								temp_tag.y = message_layer_y - message_layer.marginT;
+								tag_queue.add(temp_tag);
+							}
+						}
+						else
+						{
+							{
+								var temp_tag = %[];
+								temp_tag.tagname = "locate";
+								message_layer_x = tf_lwidth + message_layer.marginL;
+								temp_tag.x = message_layer_x - message_layer.marginL;
+								message_layer_y += (message_layer.fontSize + message_layer.lineSpacing) * tf_offsetline;
+								temp_tag.y = message_layer_y - message_layer.marginT;
+								tag_queue.add(temp_tag);
+							}
+						}
+						// 上の文字を書く必要がなければ、下を通常の文字表示
+						if (tf_uc == '')
+						{
+							{
+								tag_queue.add(tf_lc);
+								message_layer_x += message_layer_line_layer_font.getTextWidth(tf_lc);
+							}
+							tf_lwidth += lf.getTextWidth(tf_lc) + message_layer.pitch;
+							{
+								var temp_tag = %[];
+								temp_tag.tagname = "locate";
+								message_layer_x = (tf_lastleft + message_layer.fontSize + message_layer.pitch) + message_layer.marginL;
+								temp_tag.x = message_layer_x - message_layer.marginL;
+								message_layer_y = tf_lasttop + message_layer.marginT;
+								temp_tag.y = message_layer_y - message_layer.marginT;
+								tag_queue.add(temp_tag);
+							}
+						}
+						// 必要があれば、上を通常の表示で下を描画だけ
+						if (tf_uc != '')
+						{
+							{
+								var temp_tag = %[];
+								temp_tag.tagname = "nowait";
+								tag_queue.add(temp_tag);
+							}
+							{
+								tag_queue.add(tf_lc);
+								message_layer_x += message_layer_line_layer_font.getTextWidth(tf_lc);
+							}
+							{
+								var temp_tag = %[];
+								temp_tag.tagname = "endnowait";
+								tag_queue.add(temp_tag);
+							}
+							tf_lwidth += lf.getTextWidth(tf_lc) + message_layer.pitch;
+							{
+								var temp_tag = %[];
+								temp_tag.tagname = "locate";
+								message_layer_x = tf_lastleft + message_layer.marginL;
+								temp_tag.x = message_layer_x - message_layer.marginL;
+								message_layer_y = tf_lasttop + message_layer.marginT;
+								temp_tag.y = message_layer_y - message_layer.marginT;
+								tag_queue.add(temp_tag);
+							}
+							{
+								tag_queue.add(tf_uc);
+								message_layer_x += message_layer_line_layer_font.getTextWidth(tf_uc);
+							}
+						}
+						// 文字があれば上に戻る
+						tf_cindex++;
+					}
+					while (tf_cindex < tf_length);
+					{
+						tag_queue.add("\n");
+					}
+					message_layer_y += (message_layer.fontSize + message_layer.lineSpacing);
+					// 行があれば上に戻る
+					tf_lwidth = 0;
+					tf_lindex++;
+				}
+				while (tf_lindex < tf_lcount);
+				// 下の行の改行を入れる
+				for (var tf_i = tf_uppers.count + tf_lowers.count; tf_i > tf_lcount; tf_i--)
+				{
+					dm('ret');
+					{
+						tag_queue.add("\n");
+					}
+				}
+				{
+					var temp_tag = %[];
+					temp_tag.tagname = "history";
+					temp_tag.output = last_history_state;
+					tag_queue.add(temp_tag);
+				}
+@if(GAME_FHAT)
+				// クリック待ち(→次がpgだったりするので、自動的には入れない)
+				{
+					var temp_tag = %[];
+					temp_tag.tagname = "l";
+					tag_queue.insert(0, temp_tag);
+				}
+@endif
+				for (var i = tag_queue.count - 1; i >= 0; i -= 1)
+				{
+					var ret2 = tag_queue[i];
+					if (typeof(ret2) === "Object")
+					{
+						ret2.__patch_conductor_storage = elm.__patch_conductor_storage;
+						ret2.__patch_conductor_line = elm.__patch_conductor_line;
+						this.conductor.queueTag(0, ret2);
+					}
+					else if (typeof(ret2) === "String")
+					{
+						this.conductor.queueText(ret2, elm);
+					}
+				}
+
+				// 履歴情報を正しくする
+				for(var tf_i=0; tf_i<tf_uppers.count; tf_i++) {
+					tf_hist[tf_pos] = tf_uppers[tf_i], dm((tf_pos)+": "+tf_hist[tf_pos]);
+					tf_histFont[tf_pos] = [];
+					for(var tf_j=0; tf_j<tf_uppers[tf_i].length; tf_j++) {
+						tf_histFont[tf_pos].add(lf.height);
+					}
+					tf_pos++;
+				}
+				for(var tf_i=0; tf_i<tf_lowers.count; tf_i++) {
+					tf_hist[tf_pos] = tf_lowers[tf_i], dm((tf_pos)+": "+tf_hist[tf_pos]);
+					tf_histFont[tf_pos] = [];
+					for(var tf_j=0; tf_j<tf_lowers[tf_i].length; tf_j++) {
+						tf_histFont[tf_pos].add(lf.height);
+					}
+					tf_pos++;
+				}
+				kag.historyLayer.dataPos = tf_pos;
+			}
+			return 0;
+		} incontextof this;
+		return handlers;
+	}
+}
+global.KAGWindow = global.KAGWindow_patch_doublecolumn_override;

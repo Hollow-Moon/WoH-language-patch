@@ -20,12 +20,10 @@ global.kag.tagHandlers.dispscroll = function(mp) {
 	this.originalscrollYOffset = void;
 	var moveTime = (mp.time != 0)? mp.time : 600;
 
-	// The meaning of "from" and "to" is somewhat counter-intuitive since they reference the distance between the bottom end of the image and the bottom end of the window.
+	// The "from" parameter represents the distance between the bottom end of the image and the bottom end of the window.
 	// So, the value is 0 when the bottom end of the image is touching the bottom end of the client area (e.g. completely scrolled down).
-	// The value is 150 when the top end of the image is touching the top end of the client area (e.g. completely scolled up). 150 is the maximum scroll possible in 16:9.
-	// This is because the actual offset is 200 (150*wideFactor) with vertically 600 px visible of a total of 800.
-	//    @dispscroll from=150 time=5000 to=0
-	// ...means to scroll from the very top of the image to the very bottom of the image within 5s.
+	// The value is 150 when the top end of the image is touching the top end of the client area (e.g. completely scolled up).
+	// The "to" parameter does nothing. The background always start scrolling from the position previously set to the value specified in "from".
 
 	var yOffset = +mp.from;
 

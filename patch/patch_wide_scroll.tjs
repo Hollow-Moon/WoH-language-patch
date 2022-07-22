@@ -34,11 +34,16 @@ global.kag.tagHandlers.dispscroll = function(mp) {
 		return 0;
 	}
 
+	var pendingIndex = 0;
 	if (this.scrollYOffset != yFrom) {
-		this.conductor.pendings.insert(0, %[tagname: "move", layer: "primaryLayer", time: moveTime, bg: true, textoff: 1, path: "(0,"+("" + yFrom)+",255)"]);
+		var firstMoveTime = yFrom != yTo? 300 : moveTime;
+		this.conductor.pendings.insert(pendingIndex++, %[tagname: "move", layer: "primaryLayer", time: firstMoveTime, bg: true, textoff: 1, path: "(0,"+("" + yFrom)+",255)"]);
 	}
 	if (yFrom != yTo) {
-		this.conductor.pendings.insert(1, %[tagname: "move", layer: "primaryLayer", time: moveTime, bg: true, textoff: 1, path: "(0,"+("" + yTo)+",255)"]);
+		if (pendingIndex > 0) {
+			this.conductor.pendings.insert(pendingIndex++, %[tagname: "wm", canskip: 1]);
+		}
+		this.conductor.pendings.insert(pendingIndex, %[tagname: "move", layer: "primaryLayer", time: moveTime, bg: true, textoff: 1, path: "(0,"+("" + yTo)+",255)"]);
 	}
 	return 0;
 } incontextof global.kag;

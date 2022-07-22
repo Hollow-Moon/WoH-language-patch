@@ -88,13 +88,6 @@ class KAGWindow_patch_language_override_override extends global.KAGWindow_patch_
 
 	function patch_language_override_preprocess_ch(text, conductor, elm)
 	{
-		if (typeof(conductor.pendings_prelayout) !== "Object")
-		{
-			if (global.get_arabic_shaping_enabled((typeof(global.kag) === "Object") ? global.kag : this))
-			{
-				text = global.shape_arabic(text);
-			}
-		}
 		text = this.replace_characters_regex(text);
 		return text;
 	}

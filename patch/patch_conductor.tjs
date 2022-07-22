@@ -495,6 +495,19 @@ class Conductor_patch_conductor_override extends global.Conductor_patch_conducto
 		}
 		if (typeof(text) === "String")
 		{
+			if (global.get_arabic_shaping_enabled((typeof(global.kag) === "Object") ? global.kag : this))
+			{
+				text = global.shape_arabic(text, true);
+				for (var i = text_sz - 1; i >= 0; i -= 1)
+				{
+					var text_chr = text[i];
+					if (typeof(text_chr) === "String")
+					{
+						this.patch_conductor_do_ch_tag_insert(text_chr, elm);
+					}
+				}
+				return;
+			}
 			var index = text.length;
 			var brk;
 			while ((brk = global.GraphemeBreaker.previousBreak(text, index)) > 0)

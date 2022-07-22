@@ -46,13 +46,16 @@ class KAGWindow_patch_savedatalocation_override_override extends global.KAGWindo
 	var save_data_applock;
 	var __saveDataLocation;
 	var disable_system_save_data_write;
+
 	function get_or_prompt_save_data_location()
 	{
 		this.disable_system_save_data_write = global.System.getArgument('-disablesystemsavedatawrite') !== void;
+
 		if (this.disable_system_save_data_write)
 		{
 			this.readOnlyMode = true;
 		}
+
 		if (typeof(this.save_data_applock) === "Integer")
 		{
 			if (this.save_data_applock && typeof(global.System.releaseAppLock) === "Object")
@@ -61,12 +64,14 @@ class KAGWindow_patch_savedatalocation_override_override extends global.KAGWindo
 			}
 			this.save_data_applock = void;
 		}
+
 		var saveDataLocation;
 		var app_lock;
 		//	セーブディレクトリの位置をユーザーが任意に指定できるようにする
-		var	configconfigfile	= global.paths_base[0]+"config.ksc";
+		var	configconfigfile = global.paths_base[0]+"config.ksc";
 		var	config;
 		var triedonce = false;
+
 		while (true)
 		{
 			var failed_used_by_another_process = false;
@@ -74,6 +79,7 @@ class KAGWindow_patch_savedatalocation_override_override extends global.KAGWindo
 			{
 				var success = false;
 				var test_save_data_location = this.wanted_save_data_location;
+
 				try
 				{
 					if (global.Storages.isExistentStorage(configconfigfile))
@@ -86,7 +92,9 @@ class KAGWindow_patch_savedatalocation_override_override extends global.KAGWindo
 						}
 						//	config.saveDataLocation == void なら、デフォルトの値を使用する
 					}
+
 					var test_paths = [];
+
 					if (test_save_data_location.indexOf(":") === -1)
 					{
 						test_paths.add(global.paths_base[0] + test_save_data_location);
@@ -108,6 +116,7 @@ class KAGWindow_patch_savedatalocation_override_override extends global.KAGWindo
 					{
 						test_paths.add(test_save_data_location);
 					}
+
 					for (var i = 0, internal_forloop_count = test_paths.count; i < internal_forloop_count; i += 1)
 					{
 						if (global.Storages.isExistentDirectory(test_paths[i] + "/"))
@@ -118,6 +127,7 @@ class KAGWindow_patch_savedatalocation_override_override extends global.KAGWindo
 								success = true;
 								break;
 							}
+
 							if (global.test_write_in_directory(test_paths[i]))
 							{
 								app_lock = global.System.createAppLock(test_paths[i].replace(/[^A-Za-z]/g, '_'));
@@ -140,12 +150,14 @@ class KAGWindow_patch_savedatalocation_override_override extends global.KAGWindo
 					}
 				}
 				catch (e) {}
+
 				if (success)
 				{
 					saveDataLocation = test_save_data_location;
 					break;
 				}
 			}
+
 			if (triedonce || failed_used_by_another_process)
 			{
 				var strarr = [];
@@ -167,10 +179,12 @@ class KAGWindow_patch_savedatalocation_override_override extends global.KAGWindo
 			{
 				triedonce = true;
 			}
+
 			if (this.disable_system_save_data_write)
 			{
 				throw new global.Exception("System save data write is disabled, but savedata folder is not existant");
 			}
+
 			{//	初回起動時
 				//	ユニークなフォルダ名を取得("Fate_Savedata"等)
 				var	savefolder	= this.wanted_save_data_location;
@@ -216,6 +230,7 @@ class KAGWindow_patch_savedatalocation_override_override extends global.KAGWindo
 					{
 						test_paths.add(global.System.appDataPath);
 					}
+
 					for (var i = 0, internal_forloop_count = test_paths.count; i < internal_forloop_count; i += 1)
 					{
 						if (global.Storages.isExistentDirectory(test_paths[i] + "/"))
@@ -228,27 +243,35 @@ class KAGWindow_patch_savedatalocation_override_override extends global.KAGWindo
 						}
 					}
 				}
-				dir	= global.Storages.getFullPath(dir);
 
+				var dirFullPath = global.Storages.getFullPath(dir);
 				//	指定されたディレクトリ名を保存
-				config	= %[saveDataLocation:(dir+"/"+savefolder)];
+				if (dir == global.System.exePath)
+					config	= %[saveDataLocation:(savefolder)];
+				else
+					config	= %[saveDataLocation:(dirFullPath + "/" + savefolder)];
+
 				try
 				{
-					if (!global.Storages.isExistentDirectory(config.saveDataLocation + "/"))
+					if (!global.Storages.isExistentDirectory(dirFullPath + "/" + savefolder + "/"))
 					{
-						global.Storages.createDirectory(config.saveDataLocation + "/");
+						global.Storages.createDirectory(dirFullPath + "/" + savefolder + "/");
 					}
 				}
 				catch (e) {}
+
 				(global.Dictionary.saveStruct incontextof config)(configconfigfile);
 			}
 		}
+
 		if (app_lock)
 		{
 			this.save_data_applock = app_lock;
 		}
+
 		return saveDataLocation;
 	}
+
 	property saveDataLocation
 	{
 		getter ()

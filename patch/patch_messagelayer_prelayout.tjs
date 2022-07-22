@@ -464,7 +464,10 @@ class MessageLayer_patch_messagelayer_prelayout_override extends global.MessageL
 				}
 				else if (charlayer instanceof "MessageCharLayer")
 				{
-					this.removeCharLayer(charlayer.currentLine, charlayer.currentColumn);
+					if ((typeof(charlayer.currentLine) === "Integer") && (typeof(charlayer.currentColumn) === "Integer"))
+					{
+						this.removeCharLayer(charlayer.currentLine, charlayer.currentColumn);
+					}
 				}
 			}
 			this.prelayout_charlayers.clear();

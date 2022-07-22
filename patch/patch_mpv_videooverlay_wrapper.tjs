@@ -106,7 +106,7 @@ class VideoOverlay
 	{
 		this.window = new global.VideoOverlayOwnerWindow(this.owner_window, this);
 		this.window.setSize(this.owner_window.innerWidth, this.owner_window.innerHeight);
-		this.window.visible = true;
+		this.set_window_visibility(true);
 		this.setPos(0, 0);
 		this.window.bringToFront();
 		this.window.stayOnTop = false;
@@ -141,6 +141,7 @@ class VideoOverlay
 @endif
 		mp._hook_add("on_load", 0, 0);
 		mp._hook_add("on_after_end_file", 0, 0);
+		mp._hook_add("on_load_fail", 0, 0);
 		this.handle_events();
 		if (typeof(global.System.breathe) === "Object")
 		{
@@ -156,6 +157,12 @@ class VideoOverlay
 	}
 
 	var first_time = true;
+
+	function set_window_visibility(b)
+	{
+		var window = this.window;
+		window.visible = b;
+	}
 
 	function handle_event(e)
 	{
@@ -222,7 +229,7 @@ class VideoOverlay
 				{
 					case "on_load":
 					{
-						window.visible = true;
+						this.set_window_visibility(true);
 						if (typeof(global.System.breathe) === "Object")
 						{
 							global.System.breathe();
@@ -231,10 +238,42 @@ class VideoOverlay
 					}
 					case "on_after_end_file":
 					{
-						window.visible = false;
-						if (typeof(global.System.breathe) === "Object")
+						if (window.visible)
 						{
-							global.System.breathe();
+							this.set_window_visibility(false);
+							if (typeof(global.System.breathe) === "Object")
+							{
+								global.System.breathe();
+							}
+						}
+						break;
+					}
+					case "on_load_fail":
+					{
+						if (window.visible)
+						{
+							for (var i = 0; i < 25; i += 1)
+							{
+								this.set_window_visibility(true);
+								if (typeof(global.System.breathe) === "Object")
+								{
+									global.System.breathe();
+								}
+								this.set_window_visibility(false);
+								if (typeof(global.System.breathe) === "Object")
+								{
+									global.System.breathe();
+								}
+							}
+						}
+						this.onStatusChanged("error");
+						if (window.visible)
+						{
+							this.set_window_visibility(false);
+							if (typeof(global.System.breathe) === "Object")
+							{
+								global.System.breathe();
+							}
 						}
 						break;
 					}
@@ -932,7 +971,7 @@ class VideoOverlay
 			{
 				return;
 			}
-			this.window.visible = !!value;
+			this.set_window_visibility(!!value);
 		}
 	}
 	/**

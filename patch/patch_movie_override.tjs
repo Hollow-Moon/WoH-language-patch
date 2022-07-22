@@ -61,6 +61,12 @@ class Movie_patch_movie_override_override extends global.Movie_patch_movie_overr
 			this.lastStatus = status; // TODO kinda duplicate, but the assignment is needed before the callback.
 			this.onPlay();
 		}
+		else if (status == "error")
+		{
+			status = "stop";
+			this.onPlay();
+			this.owner.onMovieStop(this.id);
+		}
 		else
 		{
 			super.onStatusChanged(status);

@@ -25,22 +25,22 @@ global.kag.tagHandlers.dispscroll = function(mp) {
 	// The value is 150 when the top end of the image is touching the top end of the client area (e.g. completely scolled up).
 	// The "to" parameter does nothing. The background always start scrolling from the position previously set to the value specified in "from".
 
-	var yOffset = +mp.from;
-
-	if (this.scrollYOffset == yOffset) {
-		return 0;
-	}
+	var yFrom = +mp.from;
+	var yTo = +mp.to;
 
 	// TODO time=-1 is a patch when being called from initscroll
 	if ((!this.wideScreen && !global.isCropped) || mp.time == -1) {
-		this.updateScrollPosition(,yOffset);
+		this.updateScrollPosition(,yTo);
 		return 0;
 	}
 
-	//var waitMoveTag = %["tagname" => "wm", "canskip" => 1];
-	//conductor.pendings.insert(0, waitMoveTag);
-	var moveTagParams = %["layer" => "primaryLayer", "time" => moveTime, "bg" => true, "textoff" => 1, "path" => "(0,"+("" + yOffset)+",255)"];
-	return this.tagHandlers.move(moveTagParams);
+	if (this.scrollYOffset != yFrom) {
+		this.conductor.pendings.insert(0, %[tagname: "move", layer: "primaryLayer", time: moveTime, bg: true, textoff: 1, path: "(0,"+("" + yFrom)+",255)"]);
+	}
+	if (yFrom != yTo) {
+		this.conductor.pendings.insert(1, %[tagname: "move", layer: "primaryLayer", time: moveTime, bg: true, textoff: 1, path: "(0,"+("" + yTo)+",255)"]);
+	}
+	return 0;
 } incontextof global.kag;
 
 global.kag.updateScrollPosition = function(x, y) {

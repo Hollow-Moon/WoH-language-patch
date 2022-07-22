@@ -132,6 +132,11 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 	property heightForScaleInside { getter { return this.hasImage && this._imageHeight != 32? this._imageHeight : (this._height != 32? this._height : global.originalResHeight);  }}
 	property heightForScaleInsideOriginal { getter { return this.hasImage && this._imageHeight != 32? this.imageHeightOriginal : (this.heightOriginal != 32? this.heightOriginal : this.window.scaleHeight(global.originalResHeight)); } }
 
+	function scaleTopScroll(topScroll)
+	{
+		return topScroll * this.window.widthScale;
+	}
+
 	function scaleLeft(x)
     {
 		if (this.absoluteMode || this.parent == null) {
@@ -149,7 +154,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 		var parentHeightOriginal = this.parent.isbg && !this.isbg? this.parent.heightForScaleOriginal / this.window.wideFactor : this.parent.heightForScaleOriginal;
 		var topScroll = this.window.wideScreen? this.topScroll : 0;
 
-        return global.scalePosition(y, this.heightForScale, this.heightForScaleOriginal, this.parent.heightForScale, parentHeightOriginal, this.verticalAlignment) + topScroll * this.window.widthScale;
+        return global.scalePosition(y, this.heightForScale, this.heightForScaleOriginal, this.parent.heightForScale, parentHeightOriginal, this.verticalAlignment) + this.scaleTopScroll(this.topScroll);
     }
 
 	function scaleImageLeft(x)
@@ -326,7 +331,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 	{
 		var topScroll = this.window.wideScreen? (this.isbg? this.window.scrollYOffset : 0) : 0;
 		var heightForScaleOriginal = this.isbg? this.heightForScaleOriginal / this.window.wideFactor : this.heightForScaleOriginal;
-		return global.scalePosition(y, h, hOriginal, this.heightForScale, heightForScaleOriginal, verticalAlignment) + topScroll * this.window.widthScale;
+		return global.scalePosition(y, h, hOriginal, this.heightForScale, heightForScaleOriginal, verticalAlignment) + this.scaleTopScroll(topScroll);
 	}
 
     property left

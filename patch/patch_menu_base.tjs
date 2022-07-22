@@ -300,34 +300,79 @@ class KAGFlagFolderMenuItem extends global.KAGFlagMenuItem
 	{
 		getter
 		{
-			if (this.patchNames.count > 1) {
+			if (this.patchNames === void)
+			{
+				return "";
+			}
+			if (this.patchNames.count > 1)
+			{
 				throw new global.Exception("Can't use patchName with more than one patch.");
+			}
+			if (this.patchNames.count === 0)
+			{
+				return "";
 			}
 			return this.patchNames[0];
 		}
 	}
 
-	function KAGFlagFolderMenuItem(window, name, group=0, flag, patchNames="", folderNames=void, inverseFolderNames=void, languageSpecific=true, restart=false)
+	function KAGFlagFolderMenuItem(window, name, group=0, flag, patchNames=void, folderNames=void, inverseFolderNames=void, languageSpecific=true, restart=false)
 	{
-		if (typeof patchNames === "String") {
+		if (patchNames === "")
+		{
+			patchNames = void;
+		}
+		if (folderNames === "")
+		{
+			folderNames = void;
+		}
+		if (inverseFolderNames === "")
+		{
+			inverseFolderNames = void;
+		}
+		if (typeof(patchNames) === "String")
+		{
 			patchNames = [patchNames];
 		}
 		this.patchNames = patchNames;
-		if (folderNames === void && inverseFolderNames === void) {
-			folderNames = "";
-		}
-		if (typeof folderNames === "String") {
+		if (typeof(folderNames) === "String")
+		{
 			folderNames = [folderNames];
 		}
-		if (typeof inverseFolderNames === "String") {
+		if (typeof(inverseFolderNames) === "String")
+		{
 			inverseFolderNames = [inverseFolderNames];
 		}
+@if(1)
+		if (typeof(patchNames) === "Object")
+		{
+			var patchNames_count = patchNames.count;
+			if (typeof(folderNames) === "Object")
+			{
+				if (patchNames_count !== folderNames.count)
+				{
+					throw new global.Exception("The count of patchNames is not the same as folderNames");
+				}
+			}
+			if (typeof(inverseFolderNames) === "Object")
+			{
+				if (patchNames_count !== inverseFolderNames.count)
+				{
+					throw new global.Exception("The count of patchNames is not the same as inverseFolderNames");
+				}
+			}
+		}
+@endif
 		this.folderNames = folderNames;
 		this.inverseFolderNames = inverseFolderNames;
 		this.languageSpecific = languageSpecific;
 		super.KAGFlagMenuItem(window, name, group, flag,, restart);
-		for (var i = 0, internal_forloop_count = patchNames.count; i < internal_forloop_count; i += 1) {
-			this.disableIfPatchDoesntExist(patchNames[i]);
+		if (patchNames !== void)
+		{
+			for (var i = 0, internal_forloop_count = patchNames.count; i < internal_forloop_count; i += 1)
+			{
+				this.disableIfPatchDoesntExist(patchNames[i]);
+			}
 		}
 	}
 
@@ -360,44 +405,75 @@ class KAGFlagFolderMenuItem extends global.KAGFlagMenuItem
 
 	function loadFolders(folderNames)
 	{
-		var patches_arr = [];
-		for (var i = 0, internal_forloop_count = this.patchNames.count; i < internal_forloop_count; i += 1) {
-			if (this.patchNames[i] !== void) {
-				//dm("loading: " + this.patchNames[i] + ">" + folderNames[i]);
-				patches_arr.add([this.patchNames[i], folderNames[i]]);
-@if(HD_MODE)
-				global.addHdPaths(patches_arr, this.patchNames[i], folderNames[i]) if this.owner.isHd;
+		var patchNames = this.patchNames;
+		if (patchNames !== void)
+		{
+			var patches_arr = [];
+			for (var i = 0, internal_forloop_count = patchNames.count; i < internal_forloop_count; i += 1)
+			{
+				if (patchNames[i] !== void)
+				{
+@if(0)
+					dm("loading: " + patchNames[i] + ">" + folderNames[i]);
 @endif
+					patches_arr.add([patchNames[i], folderNames[i]]);
+@if(HD_MODE)
+					if (this.owner.isHd)
+					{
+						global.addHdPaths(patches_arr, patchNames[i], folderNames[i]);
+					}
+@endif
+				}
+				if (this.languageSpecific)
+				{
+					patches_arr.add([global.languagePatchName(global.japaneseLanguage), folderNames[i]]);
+					if (this.owner.sflags.language !== void && this.owner.sflags.language !== global.japaneseLanguage)
+					{
+						patches_arr.add([global.languagePatchName(this.owner.sflags.language), folderNames[i]]);
+					}
+				}
 			}
-			if (this.languageSpecific) {
-				patches_arr.add([global.languagePatchName(global.japaneseLanguage), folderNames[i]]);
-				patches_arr.add([global.languagePatchName(this.owner.sflags.language), folderNames[i]]) if this.owner.sflags.language !== void && this.owner.sflags.language !== global.japaneseLanguage;
-			}
+			global.load_patches(patches_arr);
+			invalidate patches_arr;
+			delete patches_arr;
 		}
-		global.load_patches(patches_arr);
-		invalidate patches_arr;
-		delete patches_arr;
 	}
 
 	function unloadFolders(folderNames)
 	{
-		var patches_arr = [];
-		for (var i = 0, internal_forloop_count = this.patchNames.count; i < internal_forloop_count; i += 1) {
-			if (this.languageSpecific) {
-				patches_arr.add([global.languagePatchName(this.owner.sflags.language), folderNames[i]]) if this.owner.sflags.language !== void && this.owner.sflags.language !== global.japaneseLanguage;
-				patches_arr.add([global.languagePatchName(global.japaneseLanguage), folderNames[i]]);
-			}
-			if (this.patchNames[i] !== void) {
-				//dm("unloading: " + this.patchNames[i] + ">" + folderNames[i]);
-@if(HD_MODE)
-				global.addHdPaths(patches_arr, this.patchNames[i], folderNames[i]) if this.owner.isHd;
+		var patchNames = this.patchNames;
+		if (patchNames !== void)
+		{
+			var patches_arr = [];
+			for (var i = 0, internal_forloop_count = patchNames.count; i < internal_forloop_count; i += 1)
+			{
+				if (this.languageSpecific)
+				{
+					if (this.owner.sflags.language !== void && this.owner.sflags.language !== global.japaneseLanguage)
+					{
+						patches_arr.add([global.languagePatchName(this.owner.sflags.language), folderNames[i]]);
+					}
+					patches_arr.add([global.languagePatchName(global.japaneseLanguage), folderNames[i]]);
+				}
+				if (patchNames[i] !== void)
+				{
+@if(0)
+					dm("unloading: " + patchNames[i] + ">" + folderNames[i]);
 @endif
-				patches_arr.add([this.patchNames[i], folderNames[i]]);
+@if(HD_MODE)
+					if (this.owner.isHd)
+					{
+						global.addHdPaths(patches_arr, patchNames[i], folderNames[i]);
+					}
+@endif
+					patches_arr.add([patchNames[i], folderNames[i]]);
+				}
 			}
+			global.unload_patches(patches_arr);
+			invalidate patches_arr;
+			delete patches_arr;
 		}
-		global.unload_patches(patches_arr);
-		invalidate patches_arr;
-		delete patches_arr;
+
 	}
 
 	function loadAllFolders(firstTime=false)

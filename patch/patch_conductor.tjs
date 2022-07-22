@@ -422,6 +422,23 @@ class Conductor_patch_conductor_override extends global.Conductor_patch_conducto
 		this.pendings.insert(0, ret2);
 	}
 
+	function patch_conductor_do_ch_tag_insert(text, elm)
+	{
+		var ret2 = %[];
+		ret2.__patch_conductor_storage = elm.__patch_conductor_storage;
+		ret2.__patch_conductor_line = elm.__patch_conductor_line;
+		if (text == "\n")
+		{
+			ret2.tagname = "r";
+		}
+		else
+		{
+			ret2.tagname = "ch";
+			ret2.text = text;
+		}
+		this.pendings.insert(0, ret2);
+	}
+
 	function queueText(text, elm)
 	{
 		var text_sz = 0;
@@ -433,21 +450,52 @@ class Conductor_patch_conductor_override extends global.Conductor_patch_conducto
 		{
 			text_sz = text.length;
 		}
+		if ((typeof(text) === "String") && (text.length > 1) && (text.indexOf("―") !== -1 || text.indexOf("■") !== -1))
+		{
+			var text_tmp = [];
+			for (var i = 0, internal_forloop_count = text_sz; i < internal_forloop_count; i += 1)
+			{
+				var character = text[i];
+				var found_same_characters = 1;
+				if (("―■").indexOf(character) !== -1)
+				{
+					for (var j = i + 1, internal_forloop_count = text.length; j < internal_forloop_count; j += 1)
+					{
+						var character2 = text[j];
+						if (character2 === character)
+						{
+							found_same_characters += 1;
+						}
+						else
+						{
+							break;
+						}
+					}
+				}
+				if (found_same_characters > 1)
+				{
+					var str_joined = "";
+					for (var j = 0; j < found_same_characters; j += 1)
+					{
+						str_joined += character;
+					}
+					text_tmp.add(str_joined);
+					i += found_same_characters - 1;
+				}
+				else
+				{
+					text_tmp.add(character);
+				}
+			}
+			for (var i = text_tmp.count - 1; i >= 0; i -= 1)
+			{
+				this.patch_conductor_do_ch_tag_insert(text_tmp[i], elm);
+			}
+			return;
+		}
 		for (var i = text_sz - 1; i >= 0; i -= 1)
 		{
-			var ret2 = %[];
-			ret2.__patch_conductor_storage = elm.__patch_conductor_storage;
-			ret2.__patch_conductor_line = elm.__patch_conductor_line;
-			if (text[i] == "\n")
-			{
-				ret2.tagname = "r";
-			}
-			else
-			{
-				ret2.tagname = "ch";
-				ret2.text = text[i];
-			}
-			this.pendings.insert(0, ret2);
+			this.patch_conductor_do_ch_tag_insert(text[i], elm);
 		}
 	}
 

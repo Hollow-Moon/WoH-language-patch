@@ -12,7 +12,7 @@ class Layer_patch_drawtext_join_characters_override extends global.Layer_patch_d
 		this.Layer_patch_drawtext_join_characters_override(...);
 	}
 
-	function drawText(left, top, text, color, opacity, aa, slevel, scolor, swidth, sofsx, sofxy)
+	function drawText(left, top, text, color, opacity, aa, slevel, scolor, swidth, sofsx, sofsy)
 	{
 		text += "";
 		if ((text.length > 1) && (text.indexOf("―") !== -1 || text.indexOf("■") !== -1))
@@ -41,36 +41,43 @@ class Layer_patch_drawtext_join_characters_override extends global.Layer_patch_d
 				}
 				if (found_same_characters > 1)
 				{
-					textwidth = global.Math.ceil(textwidth);
-					textheight = global.Math.ceil(textheight);
+					// If font shadow is used, we need to leave additional room for them in our temp layer.
+					var shadowPaddingL = global.Math.max(0, swidth-sofsx);
+					var shadowPaddingR = global.Math.max(0, swidth+sofsx);
+					var shadowPaddingT = global.Math.max(0, swidth-sofsy);
+					var shadowPaddingB = global.Math.max(0, swidth+sofsy);
+
+					var textWidthShadowSingle = shadowPaddingL + global.Math.ceil(textwidth) + shadowPaddingR;
+					var textHeightShadow = shadowPaddingT + global.Math.ceil(textheight) + shadowPaddingB;
 
 					var	tmp	= this.window.temporaryLayer_patch_drawtext_join_characters;
-					tmp.setImageSize(textwidth, textheight);
+					tmp.setImageSize(textWidthShadowSingle, textHeightShadow);
 					tmp.fillRect(0, 0, tmp.imageWidth, tmp.imageHeight, 0);
+
 					tmp.font.assign_font_properties(this.font);
-					tmp.drawText(0, 0, character, color, opacity, aa, slevel, scolor, swidth, sofsx, sofxy);
+					tmp.drawText(shadowPaddingL, shadowPaddingT, character, color, opacity, aa, slevel, scolor, swidth, sofsx, sofsy);
 
-					var frontPieceWidth = global.Math.ceil(textwidth / 2);
-					var endPieceWidth = textwidth - frontPieceWidth - 1;
-					var midPieceWidth = (textwidth * found_same_characters) - frontPieceWidth - endPieceWidth;
+					var frontPieceWidth = shadowPaddingL + global.Math.ceil(textwidth / 2);
+					var endPieceWidth = textWidthShadowSingle - frontPieceWidth - 1;
+					var textWidthShadowFull = shadowPaddingL + global.Math.ceil(textwidth * found_same_characters) + shadowPaddingR;
 
-					// Use a second temporary layer to combine the parts, so we can overlap the front/end parts with stretchCopy() without issue.
+					// Use a second temporary layer to combine the parts, so we can overlap the front/end parts without glitches.
 					var	tmp2 = this.window.temporaryLayer_patch_drawtext_join_characters2;
-					tmp2.setImageSize(frontPieceWidth+midPieceWidth+endPieceWidth, textheight);
+					tmp2.setImageSize(textWidthShadowFull, textHeightShadow);
 					tmp2.fillRect(0, 0, tmp2.imageWidth, tmp2.imageHeight, 0);
 
-					tmp2.copyRect(0, 0, tmp, 0, 0, frontPieceWidth, textheight);
-					tmp2.copyRect(frontPieceWidth + midPieceWidth, 0, tmp, frontPieceWidth + 1, 0, endPieceWidth, textheight);
-					tmp2.stretchCopy(frontPieceWidth-1, 0, midPieceWidth+2, textheight, tmp, frontPieceWidth, 0, 1, textheight);
+					tmp2.stretchCopy(0, 0, textWidthShadowFull, textHeightShadow, tmp, frontPieceWidth, 0, 1, textHeightShadow);
+					tmp2.copyRect(0, 0, tmp, 0, 0, frontPieceWidth, textHeightShadow);
+					tmp2.copyRect(textWidthShadowFull - endPieceWidth, 0, tmp, frontPieceWidth + 1, 0, endPieceWidth, textHeightShadow);
 					
-					this.operateRect(global.Math.round(left+x), top, tmp2, 0, 0, tmp2.imageWidth, tmp2.imageHeight, global.omAuto, 255);
+					this.operateRect(global.Math.round(left+x-shadowPaddingL), top-shadowPaddingT, tmp2, 0, 0, tmp2.imageWidth, tmp2.imageHeight, global.omAuto, 255);
 
 					i += found_same_characters - 1;
 					textwidth *= found_same_characters;
 				}
 				else
 				{
-					super.drawText(left + x, top, character, color, opacity, aa, slevel, scolor, swidth, sofsx, sofxy);
+					super.drawText(left + x, top, character, color, opacity, aa, slevel, scolor, swidth, sofsx, sofsy);
 				}
 				x += textwidth;
 			}

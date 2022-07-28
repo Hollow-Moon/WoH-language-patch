@@ -641,7 +641,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 		this.resetClip();
 	}
 
-	function updateTopScroll() {
+	function updateTopScroll(scrollAll) {
 		if (!this.window.wideScreen) {
 			return;
 		}
@@ -652,10 +652,10 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 				this.topScroll = 0;
 			}
 			for (var i = 0; i < this.children.count; i++) {
-				this.children[i].updateTopScroll();
+				this.children[i].updateTopScroll(scrollAll);
 			}
 		} else if (this.parent !== null && this.parent.isbg) {
-			this.topScroll = this.window.scrollYOffset;
+			this.topScroll = scrollAll? this.topScroll : this.window.scrollYOffset;
 		} else {
 			this.topScroll = 0;
 		}

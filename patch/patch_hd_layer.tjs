@@ -926,19 +926,16 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 		} else {
 			var imageKey = global.Storages.extractStorageName(storageName);
 			var imageInfo = global.getImageInfo(imageKey);
-			if (imageInfo["hd_name"] !== void || imageInfo["number_of_images_hd"] !== void) {
-				var flag = true;
-				if (global.messageLayerImages.contains(imageKey)) {
-					flag = this.window.sflags.mobileWindow;
-				} else if (global.messageBreakImages.contains(imageKey)) {
-					flag = this.window.sflags.mobileBreakGlyphs;
-				} else {
-					flag = this.window.isHd;
-				}
-				this.imageStorage = (imageInfo["hd_name"] !== void && flag) ? imageInfo["hd_name"] : storageName;
-				this.numberOfImages = (imageInfo["number_of_images_hd"] !== void && flag) ? imageInfo["number_of_images_hd"] : (imageInfo["number_of_images"] !== void ? imageInfo["number_of_images"] : 1);
+
+			if (imageInfo["hd_name"] !== void && this.window.isHd) {
+				this.imageStorage = imageInfo["hd_name"];
 			} else {
 				this.imageStorage = storageName;
+			}
+
+			if (imageInfo["number_of_images_hd"] !== void && global.messageBreakImages.contains(imageKey)) {
+				this.numberOfImages = imageInfo["number_of_images_hd"];
+			} else {
 				this.numberOfImages = imageInfo["number_of_images"] !== void ? imageInfo["number_of_images"] : 1;
 			}
 			

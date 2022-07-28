@@ -1100,9 +1100,47 @@ global.addWindowSizeMenu = function(displayMenu)
 				function(sender) { sender.owner.onLimitWindowSizeMenuItemClick(); }, false));
 };
 
+
+global.getRatioName = function(wTemp,hTemp)
+{
+	var primeList = [29, 23, 19, 17, 13, 11, 7, 5, 3, 2];
+	var bFound = true;
+
+	while (bFound == true)
+	{
+		bFound = false;
+
+		for (var i = 0, internal_forloop_count = primeList.count; i < internal_forloop_count; i += 1)
+		{
+			var prime = primeList[i];
+
+			if ((wTemp % prime == 0) && (hTemp % prime == 0))
+			{
+				wTemp = global.Math.round(wTemp/prime) | 0;
+				hTemp = global.Math.round(hTemp/prime) | 0;
+				bFound = true;
+				break;
+			}
+
+			if (wTemp == 16)
+			{
+				break;
+			}
+		}
+	}
+
+	return wTemp+":"+hTemp;
+};
+
 global.addHdMenu = function(displayMenu)
 {
 	var wideResolutions = %[ global.__t("ワイド(16:9)(&W)") => global.standardWideRatio];
+
+	var wideDevResolutions = [];
+	if (global.devMode)
+	{
+		wideDevResolutions = [[1,1], [5,4], [16,10], [2,1], [21,9]];
+	}
 
 	displayMenu.add(new global.MenuItem(this, "-"));
 
@@ -1128,32 +1166,50 @@ global.addHdMenu = function(displayMenu)
 	displayMenu.add(this.wideMenu = new global.KAGMenuItem(this, global.__t("アスペクト比(&A)"), 0, void, false));
 	this.wideMenu.enabled = false;
 
-		this.wideMenu.add(this.notWideMenuItem = new global.KAGMenuItem(this, global.__t("基準(4:3)(&S)"), 1,
-			function(sender) { global.onWideMenuItemClick(sender,'standard'); }, false));
-		this.notWideMenuItem.checked = true if !this.wideScreen;
+	this.wideMenu.add(this.notWideMenuItem = new global.KAGMenuItem(this, global.__t("基準(4:3)(&S)"), 1,
+		function(sender) { global.onWideMenuItemClick(sender,'standard'); }, false));
+	this.notWideMenuItem.checked = true if !this.wideScreen;
 
-		this.wideMenu.add(this.wideMenuItem = new global.KAGMenuItem(this, global.__t("デスクトップと同じ(&M)"), 1,
-			function(sender) { global.onWideMenuItemClick(sender,'wide'); }, false));
-		this.wideMenuItem.checked = true if this.wideScreen && this.isAutoWide;
+	this.wideMenu.add(this.wideMenuItem = new global.KAGMenuItem(this, __t("デスクトップと同じ(&M) (%s)"), 1,
+		function(sender) { global.onWideMenuItemClick(sender,'wide'); }, false));
+	this.wideMenuItem.captionArg = [global.getRatioName(global.System.screenWidth, global.System.screenHeight)];
+	this.wideMenuItem.checked = true if this.wideScreen && this.isAutoWide;
 
-		var keys = [];
-		keys.assign(wideResolutions);
-		for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 2) {
-			var key = keys[i];
-			var ratio = wideResolutions[key];
-			var wideMenuItemName = "wideRatio"+key.replace(/[:&\() ]/g, "")+"MenuItem";
-			this.wideMenu.add(this[wideMenuItemName] = new global.KAGMenuItem(this, key, 1, function(sender) { global.onWideMenuItemClick(sender, sender.ratio); }));
-			this[wideMenuItemName].ratio = ratio;
-			if (global.floatEquals(this.wideRatio, ratio)) {
+	var keys = [];
+	keys.assign(wideResolutions);
+	for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 2) {
+		var key = keys[i];
+		var ratio = wideResolutions[key];
+		var wideMenuItemName = "wideRatio"+key.replace(/[:&\() ]/g, "")+"MenuItem";
+		this.wideMenu.add(this[wideMenuItemName] = new global.KAGMenuItem(this, key, 1, function(sender) { global.onWideMenuItemClick(sender, sender.ratio); }));
+		this[wideMenuItemName].ratio = ratio;
+		if (global.floatEquals(this.wideRatio, ratio)) {
+			this[wideMenuItemName].checked = true;
+		}
+	}
+	invalidate keys;
+
+@if(CROP_MODE)
+	this.wideMenu.add(this.wideCroppedMenuItem = new global.KAGMenuItem(this, "Wide (&cropped)", 1,
+		function(sender) { global.onWideMenuItemClick(sender,'standard',true); }, false));
+@endif
+
+	if (global.devMode) {
+		this.wideMenu.add(new global.MenuItem(this, "-"));
+
+		for (var i = 0, internal_forloop_count = wideDevResolutions.count; i < internal_forloop_count; i += 1) {
+			var wMarker = wideDevResolutions[i][0];
+			var hMarker = wideDevResolutions[i][1];
+			var wideMenuItemName = "wideRatio" + wMarker + hMarker + "MenuItem";
+
+			this.wideMenu.add(this[wideMenuItemName] = new global.KAGMenuItem(this, __t("デバッグ (%d:%d)"), 1, function(sender) { global.onWideMenuItemClick(sender, sender.ratio); }));
+			this[wideMenuItemName].captionArg = [wMarker, hMarker];
+			this[wideMenuItemName].ratio = wMarker/hMarker;
+			if (global.floatEquals(this.wideRatio, wMarker/hMarker)) {
 				this[wideMenuItemName].checked = true;
 			}
 		}
-		invalidate keys;
-
-@if(CROP_MODE)
-		this.wideMenu.add(this.wideCroppedMenuItem = new global.KAGMenuItem(this, "Wide (&cropped)", 1,
-			function(sender) { global.onWideMenuItemClick(sender,'standard',true); }, false));
-@endif
+	}
 };
 
 global.addGraphicUsageMenu = function(displayMenu)

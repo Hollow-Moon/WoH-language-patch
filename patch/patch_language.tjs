@@ -56,7 +56,11 @@ global.refreshMenuString = function(kag, menu)
 		menu.caption = global.__(menu.originalCaption);
 	}
 	if (typeof(menu.captionArg) !== "undefined") {
-		menu.caption = menu.caption.sprintf(menu.captionArg);
+		if (typeof(menu.captionArg) === "Object") {
+			menu.caption = menu.caption.sprintf(menu.captionArg*);
+		} else {
+			menu.caption = menu.caption.sprintf(menu.captionArg);
+		}
 	}
 
 	var children = menu.children;

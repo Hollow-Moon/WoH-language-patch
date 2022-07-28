@@ -42,6 +42,11 @@ global.kag.tagHandlers.dispscroll = function(mp) {
 	return 0;
 } incontextof global.kag;
 
+global.kag.tagHandlers.waitscroll = function(mp) {
+	if (!this.wideScreen && !global.isCropped) return 0;
+	return this.tagHandlers.wm(mp);
+} incontextof global.kag;
+
 global.kag.updateScrollPosition = function(x, y) {
 	this.scrollXOffset = x if x !== void;
 	this.scrollYOffset = y if y !== void;

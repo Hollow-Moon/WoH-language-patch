@@ -933,7 +933,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 				this.imageStorage = storageName;
 			}
 
-			if (imageInfo["number_of_images_hd"] !== void && global.messageBreakImages.contains(imageKey)) {
+			if (global.messageBreakImages.contains(imageKey) && this.window.sflags.mobileBreakGlyphs && imageInfo["number_of_images_hd"] !== void) {
 				this.numberOfImages = imageInfo["number_of_images_hd"];
 			} else {
 				this.numberOfImages = imageInfo["number_of_images"] !== void ? imageInfo["number_of_images"] : 1;

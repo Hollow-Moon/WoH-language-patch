@@ -933,18 +933,21 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 				this.imageStorage = storageName;
 			}
 
-			if (global.messageBreakImages.contains(imageKey) && this.window.sflags.mobileBreakGlyphs && imageInfo["number_of_images_hd"] !== void) {
-				this.numberOfImages = imageInfo["number_of_images_hd"];
+			if (imageInfo["number_of_images_mobile"] !== void && this.window.sflags.mobileBreakGlyphs) {
+				this.numberOfImages = imageInfo["number_of_images_mobile"];
 			} else {
 				this.numberOfImages = imageInfo["number_of_images"] !== void ? imageInfo["number_of_images"] : 1;
 			}
-			
-			this._imageWidth = imageInfo["width"];
-			this._imageHeight = imageInfo["height"];
 
-			if (global.messageLayerImages.contains(imageKey) && this.window.sflags.wideWindow) {
-				this._imageWidth = (this._imageWidth * this.window.wideFactor) | 0;
+			if (imageInfo["width_wide"] !== void && this.window.wideScreen) {
+				this._imageWidth = imageInfo["width_wide"];
+			} else if (imageInfo["width_wide_window"] !== void && this.window.sflags.wideWindow) {
+				this._imageWidth = imageInfo["width_wide_window"];
+			} else {
+				this._imageWidth = imageInfo["width"];
 			}
+
+			this._imageHeight = imageInfo["height"];
 
 			this._imageWidth *= this.numberOfImages;
 			

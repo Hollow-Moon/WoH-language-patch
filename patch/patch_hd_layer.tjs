@@ -939,10 +939,14 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 				this.numberOfImages = imageInfo["number_of_images"] !== void ? imageInfo["number_of_images"] : 1;
 			}
 
-			if (imageInfo["width_wide"] !== void && this.window.wideScreen) {
-				this._imageWidth = imageInfo["width_wide"];
-			} else if (imageInfo["width_wide_window"] !== void && this.window.sflags.wideWindow) {
-				this._imageWidth = imageInfo["width_wide_window"];
+			if (this.window.wideScreen) {
+				if (imageInfo["width_wide"] !== void) {
+					this._imageWidth = imageInfo["width_wide"];
+				} else if (imageInfo["width_wide_window"] !== void && this.window.sflags.wideWindow) {
+					this._imageWidth = imageInfo["width_wide_window"];
+				} else {
+					this._imageWidth = imageInfo["width"];
+				}
 			} else {
 				this._imageWidth = imageInfo["width"];
 			}

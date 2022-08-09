@@ -18,20 +18,10 @@ class Window_patch_hd_layer_override extends global.Window_patch_hd_layer_origin
 
 	var absoluteMode = 0;
 
-	property transformedScrollXOffset { getter { return this.scrollXOffset; } }
-
-	// Under normal conditions result=-scrollYOffset, but this transformation considers different scale/wide factors.
-	property transformedScrollYOffset { getter {
-		var scale = this.scrollYOffset / 150; // 0: image unchanged, 150: image scrolled all the way to the bottom.
-		var factor = this.wideScreen? global.wideFactor : global.cropFactor;
-@if(SCALE_USING_FLOATING_POINT)
-		var result = originalResHeight * (global.Math.abs(1 - factor)    ) * scale / global.wideFactor;
-@endif
-@if(!SCALE_USING_FLOATING_POINT)
-		var result = global.originalResHeight * (global.Math.abs(1 - factor) | 0) * scale \ global.wideFactor;
-@endif
-		return result;
-	} }
+	function scaleTopScroll(topScroll)
+	{
+		return this.innerHeight * (wideFactor - 1) * scaleFactor * topScroll / 150;
+	}
 
 	property widthScale { getter { return this.isMainWindow? global.get_wideScaleFactor() : global.scaleFactor; } }
 	property heightScale { getter { return global.scaleFactor * (this.isMainWindow? global.cropFactor : 1); } }

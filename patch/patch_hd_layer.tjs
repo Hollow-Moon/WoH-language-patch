@@ -132,11 +132,6 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 	property heightForScaleInside { getter { return this.hasImage && this._imageHeight != 32? this._imageHeight : (this._height != 32? this._height : global.originalResHeight);  }}
 	property heightForScaleInsideOriginal { getter { return this.hasImage && this._imageHeight != 32? this.imageHeightOriginal : (this.heightOriginal != 32? this.heightOriginal : this.window.scaleHeight(global.originalResHeight)); } }
 
-	function scaleTopScroll(topScroll)
-	{
-		return topScroll * this.window.widthScale;
-	}
-
 	function scaleLeft(x)
     {
 		if (this.absoluteMode || this.parent == null) {
@@ -154,7 +149,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 		var parentHeightOriginal = this.parent.isbg && !this.isbg? this.parent.heightForScaleOriginal / this.window.wideFactor : this.parent.heightForScaleOriginal;
 		var topScroll = this.window.wideScreen? this.topScroll : 0;
 
-        return global.scalePosition(y, this.heightForScale, this.heightForScaleOriginal, this.parent.heightForScale, parentHeightOriginal, this.verticalAlignment) + this.scaleTopScroll(this.topScroll);
+        return global.scalePosition(y, this.heightForScale, this.heightForScaleOriginal, this.parent.heightForScale, parentHeightOriginal, this.verticalAlignment) + this.window.scaleTopScroll(this.topScroll);
     }
 
 	function scaleImageLeft(x)
@@ -175,7 +170,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
     function unscaleCursorY(y)
     {
 		var topOffset = this.window.wideScreen? this.window.scrollYOffset : 0;
-        return this.window.unscaleHeight(y - topOffset * this.window.widthScale);
+        return this.window.unscaleHeight(y - this.window.scaleTopScroll(topOffset));
     }
 
 	function scaleCursorX(x)
@@ -186,7 +181,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 	function scaleCursorY(y)
 	{
 		var topOffset = this.window.wideScreen? this.window.scrollYOffset : 0;
-		return this.scaleHeight(y / this.window.wideFactor) + topOffset * this.window.widthScale;
+		return this.scaleHeight(y / this.window.wideFactor) + this.window.scaleTopScroll(topOffset);
 	}
 
 	function unscaleMouseX(x)
@@ -331,7 +326,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 	{
 		var topScroll = this.window.wideScreen? (this.isbg? this.window.scrollYOffset : 0) : 0;
 		var heightForScaleOriginal = this.isbg? this.heightForScaleOriginal / this.window.wideFactor : this.heightForScaleOriginal;
-		return global.scalePosition(y, h, hOriginal, this.heightForScale, heightForScaleOriginal, verticalAlignment) + this.scaleTopScroll(topScroll);
+		return global.scalePosition(y, h, hOriginal, this.heightForScale, heightForScaleOriginal, verticalAlignment) + this.window.scaleTopScroll(topScroll);
 	}
 
     property left

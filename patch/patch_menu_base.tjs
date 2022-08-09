@@ -1139,7 +1139,7 @@ global.addHdMenu = function(displayMenu)
 	var wideDevResolutions = [];
 	if (global.devMode)
 	{
-		wideDevResolutions = [[1,1], [5,4], [16,10], [2,1], [21,9]];
+		wideDevResolutions = [[1,1], [5,4], [16,10], [20,10], [21,9]];
 	}
 
 	displayMenu.add(new global.MenuItem(this, "-"));
@@ -1170,10 +1170,12 @@ global.addHdMenu = function(displayMenu)
 		function(sender) { global.onWideMenuItemClick(sender,'standard'); }, false));
 	this.notWideMenuItem.checked = true if !this.wideScreen;
 
-	this.wideMenu.add(this.wideMenuItem = new global.KAGMenuItem(this, __t("デスクトップと同じ(&M) (%s)"), 1,
-		function(sender) { global.onWideMenuItemClick(sender,'wide'); }, false));
-	this.wideMenuItem.captionArg = [global.getRatioName(global.System.screenWidth, global.System.screenHeight)];
-	this.wideMenuItem.checked = true if this.wideScreen && this.isAutoWide;
+	if (global.get_systemRatio() > global.cubicRatio && global.get_systemRatio() != global.standardWideRatio) {
+		this.wideMenu.add(this.wideMenuItem = new global.KAGMenuItem(this, __t("デスクトップと同じ(&M) (%s)"), 1,
+			function(sender) { global.onWideMenuItemClick(sender,'wide'); }, false));
+		this.wideMenuItem.captionArg = [global.getRatioName(global.System.screenWidth, global.System.screenHeight)];
+		this.wideMenuItem.checked = true if this.wideScreen && this.isAutoWide;
+	}
 
 	var keys = [];
 	keys.assign(wideResolutions);

@@ -1,0 +1,47 @@
+﻿
+global.KAGWindow_patch_taghandlers_override_original = global.KAGWindow;
+class KAGWindow_patch_taghandlers_override_override extends global.KAGWindow_patch_taghandlers_override_original
+{
+	function KAGWindow_patch_taghandlers_override_override()
+	{
+		super.KAGWindow(...);
+
+		global.add_kag_window_pre_init_tag_handlers(this);
+	}
+
+	function KAGWindow()
+	{
+		this.KAGWindow_patch_taghandlers_override_override(...);
+	}
+
+	function add_tag_handler(tag_name, tag_handler, override=false)
+	{
+		var tagHandlers = this.tagHandlers;
+		var macros = void;
+		if (typeof(this.mainConductor) === "Object" && typeof(this.mainConductor.macros) === "Object")
+		{
+			macros = this.mainConductor.macros;
+		}
+		if (macros === void)
+		{
+			throw new global.Exception("Could not retrieve macros");
+		}
+		if (!override && ((tagHandlers[tag_name] !== void) || (macros[tag_name] !== void)))
+		{
+			throw new global.Exception("Tag handler already exists");
+		}
+		if (typeof(tag_handler) === "String")
+		{
+			macros[tag_name] = tag_handler;
+		}
+		else if (typeof(tag_handler) === "Object")
+		{
+			tagHandlers[tag_name] = tag_handler incontextof this;
+		}
+		else
+		{
+			throw new global.Exception("Invalid type of tag handler");
+		}
+	}
+}
+global.KAGWindow = global.KAGWindow_patch_taghandlers_override_override;

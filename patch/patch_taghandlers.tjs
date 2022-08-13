@@ -1,0 +1,32 @@
+﻿
+global.pre_init_tag_handlers = %[];
+
+global.add_kag_window_tag_handler = function(tag_name, tag_handler, override=false)
+{
+	if (tag_name === "" || tag_name === void)
+	{
+		throw new global.Exception("Tag name is empty");
+	}
+	var pre_init_tag_handlers = global.pre_init_tag_handlers;
+	if (!override && (pre_init_tag_handlers[tag_name] !== void))
+	{
+		throw new global.Exception("Tag handler already exists");
+	}
+	pre_init_tag_handlers[tag_name] = tag_handler;
+
+	// TODO: add tag to other KAGWindow objects
+	if (typeof(global.kag) === "Object" && typeof(global.kag.add_tag_handler) === "Object")
+	{
+		return global.kag.add_tag_handler(tag_name, tag_handler, override);
+	}
+};
+
+global.add_kag_window_pre_init_tag_handlers = function(kag=global.kag)
+{
+	var tmp = [];
+	tmp.assign(global.pre_init_tag_handlers);
+	for (var i = 0; i < tmp.count; i += 2)
+	{
+		kag.add_tag_handler(tmp[i], tmp[i + 1]);
+	}
+};

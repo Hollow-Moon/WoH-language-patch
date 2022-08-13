@@ -1,26 +1,12 @@
 ﻿
-global.KAGWindow_patch_doublecolumn_original = global.KAGWindow;
-class KAGWindow_patch_doublecolumn_override extends global.KAGWindow_patch_doublecolumn_original
 {
-	function KAGWindow_patch_doublecolumn_override()
 	{
-		super.KAGWindow(...);
-	}
-
-	function KAGWindow()
-	{
-		this.KAGWindow_patch_doublecolumn_override(...);
-	}
-
-	function getHandlers()
-	{
-		var handlers = super.getHandlers();
 		/*
 		 *	2行同時表示する裏技(横書き専用)
 		 *	in	: upper	上の行に表示する文字列
 		 *		: lower	下の行に表示する文字列
 		 */
-		handlers.doublecolumn = function(elm)
+		global.add_kag_window_tag_handler("doublecolumn", function(elm)
 		{
 			// 二行同時に書くコマンド用のサブルーチン(from doublecolumn)
 			{
@@ -231,8 +217,6 @@ class KAGWindow_patch_doublecolumn_override extends global.KAGWindow_patch_doubl
 				kag.historyLayer.dataPos = tf_pos;
 			}
 			return 0;
-		} incontextof this;
-		return handlers;
+		});
 	}
 }
-global.KAGWindow = global.KAGWindow_patch_doublecolumn_override;

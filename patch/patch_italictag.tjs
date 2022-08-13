@@ -1,26 +1,10 @@
 ﻿
-global.KAGWindow_patch_italictag_original = global.KAGWindow;
-class KAGWindow_patch_italictag_override extends global.KAGWindow_patch_italictag_original
 {
-	function KAGWindow_patch_italictag_override()
-	{
-		super.KAGWindow(...);
-
-		{
-			var macros = this.mainConductor.macros;
-			macros["italic"] = "[font italic][macropop]";
-			macros["i"] = "[font italic][macropop]";
-			macros["/i"] = "[font italic=0][macropop]";
-			macros["strike"] = "[font strikeout][macropop]";
-			macros["/strike"] = "[font strikeout=0][macropop]";
-			macros["u"] = "[font underline][macropop]";
-			macros["/u"] = "[font underline=0][macropop]";
-		}
-	}
-
-	function KAGWindow()
-	{
-		this.KAGWindow_patch_italictag_override(...);
-	}
+	global.add_kag_window_tag_handler("italic", "[font italic][macropop]");
+	global.add_kag_window_tag_handler("i", "[font italic][macropop]");
+	global.add_kag_window_tag_handler("/i", "[font italic=0][macropop]");
+	global.add_kag_window_tag_handler("strike", "[font strikeout][macropop]");
+	global.add_kag_window_tag_handler("/strike", "[font strikeout=0][macropop]");
+	global.add_kag_window_tag_handler("u", "[font underline][macropop]");
+	global.add_kag_window_tag_handler("/u", "[font underline=0][macropop]");
 }
-global.KAGWindow = global.KAGWindow_patch_italictag_override;

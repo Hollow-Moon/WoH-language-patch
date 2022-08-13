@@ -62,23 +62,9 @@ class Conductor_patch_scenario_restrict_override extends global.Conductor_patch_
 }
 global.Conductor = global.Conductor_patch_scenario_restrict_override;
 
-global.KAGWindow_patch_scenario_restrict_original = global.KAGWindow;
-class KAGWindow_patch_scenario_restrict_override extends global.KAGWindow_patch_scenario_restrict_original
 {
-	function KAGWindow_patch_scenario_restrict_override()
 	{
-		super.KAGWindow(...);
-	}
-
-	function KAGWindow()
-	{
-		this.KAGWindow_patch_scenario_restrict_override(...);
-	}
-
-	function getHandlers()
-	{
-		var handlers = super.getHandlers();
-		handlers.restrict_scenario = function(elm)
+		global.add_kag_window_tag_handler("restrict_scenario", function(elm)
 		{
 			if (elm.storage !== void && elm.end !== void)
 			{
@@ -90,8 +76,6 @@ class KAGWindow_patch_scenario_restrict_override extends global.KAGWindow_patch_
 				this.conductor.reset_scenario_restrict();
 			}
 			return 0;
-		} incontextof this;
-		return handlers;
+		});
 	}
 }
-global.KAGWindow = global.KAGWindow_patch_scenario_restrict_override;

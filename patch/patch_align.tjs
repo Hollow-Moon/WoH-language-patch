@@ -75,30 +75,16 @@ class MessageLayer_patch_align_override extends global.MessageLayer_patch_align_
 }
 global.MessageLayer = global.MessageLayer_patch_align_override;
 
-global.KAGWindow_patch_align_original = global.KAGWindow;
-class KAGWindow_patch_align_override extends global.KAGWindow_patch_align_original
 {
-	function KAGWindow_patch_align_override()
 	{
-		super.KAGWindow(...);
-	}
-
-	function KAGWindow()
-	{
-		this.KAGWindow_patch_align_override(...);
-	}
-
-	function getHandlers()
-	{
-		var handlers = super.getHandlers();
-		handlers.locatealign = function(elm)
+		global.add_kag_window_tag_handler("locatealign", function(elm)
 		{
 			this.historyLayer.locateAlign(elm.anchor, elm.textForLength, elm.offsetText, elm.offsetTextDirection);
 			if(this.currentWithBack) this.current.comp.locateAlign(elm.anchor, elm.textForLength, elm.offsetText, elm.offsetTextDirection);
 			this.current.locateAlign(elm.anchor, elm.textForLength, elm.offsetText, elm.offsetTextDirection);
 			return 0;
-		} incontextof this;
-		handlers.align = function(elm)
+		});
+		global.add_kag_window_tag_handler("align", function(elm)
 		{
 			var textToAlign = elm.text;
 			var textForLength = textToAlign;
@@ -173,9 +159,6 @@ class KAGWindow_patch_align_override extends global.KAGWindow_patch_align_origin
 				this.conductor.queueTag(0, locatealignTag);
 			}
 			return 0;
-		} incontextof this;
-		return handlers;
+		});
 	}
-
 }
-global.KAGWindow = global.KAGWindow_patch_align_override;

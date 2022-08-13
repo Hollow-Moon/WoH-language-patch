@@ -1,21 +1,21 @@
 ﻿@if(!WIDE_MODE)
-global.kag.tagHandlers.initscroll = function(mp) {
+global.add_kag_window_tag_handler("initscroll", function(mp) {
 	return 0;
-};
+});
 
-global.kag.tagHandlers.dispscroll = function(mp) {
+global.add_kag_window_tag_handler("dispscroll", function(mp) {
 	return 0;
-};
+});
 @endif
 
 @if(WIDE_MODE)
-global.kag.tagHandlers.initscroll = function(mp) {
+global.add_kag_window_tag_handler("initscroll", function(mp) {
 	// Parameters: from, to, time
 	mp.time = -1;
 	return this.tagHandlers.dispscroll(mp);
-} incontextof global.kag;
+});
 
-global.kag.tagHandlers.dispscroll = function(mp) {
+global.add_kag_window_tag_handler("dispscroll", function(mp) {
 	// Parameters: from, to, time
 	this.originalscrollYOffset = void;
 	var moveTime = (mp.time != 0)? mp.time : 600;
@@ -41,12 +41,12 @@ global.kag.tagHandlers.dispscroll = function(mp) {
 		this.conductor.pendings.insert(pendingIndex, %[tagname: "move", layer: "primaryLayer", time: moveTime, bg: true, textoff: 1, path: "(0,"+("" + yTo)+",255)", all: scrollAll]);
 	}
 	return 0;
-} incontextof global.kag;
+});
 
-global.kag.tagHandlers.waitscroll = function(mp) {
+global.add_kag_window_tag_handler("waitscroll", function(mp) {
 	if (!this.wideScreen && !global.isCropped) return 0;
 	return this.tagHandlers.wm(mp);
-} incontextof global.kag;
+});
 
 global.kag.updateScrollPosition = function(x, y, scrollAll) {
 	this.scrollXOffset = x if x !== void;

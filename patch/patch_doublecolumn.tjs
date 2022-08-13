@@ -48,14 +48,8 @@
 
 				var message_layer_x = message_layer.x;
 				var message_layer_y = message_layer.y;
-				var message_layer_line_layer_font = mlf;
 				var last_history_state = this.historyWriteEnabled;
-				{
-					var temp_tag = %[];
-					temp_tag.tagname = "history";
-					temp_tag.output = false;
-					tag_queue.add(temp_tag);
-				}
+				tag_queue.add(%[tagname: "history", output: false]);
 				// 行のループ
 				do // label: doublecolumn_lloop
 				{
@@ -73,114 +67,67 @@
 						
 						var tf_lastleft = message_layer_x - message_layer.marginL;
 						var tf_lasttop = message_layer_y - message_layer.marginT;
-						if (isNoSpaceLanguage())
-						{
-							{
-								var temp_tag = %[];
-								temp_tag.tagname = "locate";
-								message_layer_x = tf_lastleft + message_layer.marginL;
-								temp_tag.x = message_layer_x - message_layer.marginL;
-								message_layer_y += (message_layer.fontSize + message_layer.lineSpacing) * tf_offsetline;
-								temp_tag.y = message_layer_y - message_layer.marginT;
-								tag_queue.add(temp_tag);
-							}
-						}
-						else
-						{
-							{
-								var temp_tag = %[];
-								temp_tag.tagname = "locate";
-								message_layer_x = tf_lwidth + message_layer.marginL;
-								temp_tag.x = message_layer_x - message_layer.marginL;
-								message_layer_y += (message_layer.fontSize + message_layer.lineSpacing) * tf_offsetline;
-								temp_tag.y = message_layer_y - message_layer.marginT;
-								tag_queue.add(temp_tag);
-							}
-						}
+	
+						message_layer_x = (isNoSpaceLanguage()? tf_lastleft : tf_lwidth) + message_layer.marginL;					
+						message_layer_y += (message_layer.fontSize + message_layer.lineSpacing) * tf_offsetline;
+						tag_queue.add(%[tagname: "locate", x: message_layer_x - message_layer.marginL, y: message_layer_y - message_layer.marginT]);
+							
 						// 上の文字を書く必要がなければ、下を通常の文字表示
 						if (tf_uc == '')
 						{
-							{
-								tag_queue.add(tf_lc);
-								message_layer_x += message_layer_line_layer_font.getTextWidth(tf_lc);
-							}
+							tag_queue.add(tf_lc);
+							message_layer_x += lf.getTextWidth(tf_lc);
+							
 							tf_lwidth += lf.getTextWidth(tf_lc) + message_layer.pitch;
-							{
-								var temp_tag = %[];
-								temp_tag.tagname = "locate";
-								message_layer_x = (tf_lastleft + message_layer.fontSize + message_layer.pitch) + message_layer.marginL;
-								temp_tag.x = message_layer_x - message_layer.marginL;
-								message_layer_y = tf_lasttop + message_layer.marginT;
-								temp_tag.y = message_layer_y - message_layer.marginT;
-								tag_queue.add(temp_tag);
-							}
+							
+							message_layer_x = (tf_lastleft + message_layer.fontSize + message_layer.pitch) + message_layer.marginL;	
+							message_layer_y = tf_lasttop + message_layer.marginT;
+							tag_queue.add(%[tagname: "locate", x: message_layer_x - message_layer.marginL, y: message_layer_y - message_layer.marginT]);
+							
 						}
 						// 必要があれば、上を通常の表示で下を描画だけ
 						if (tf_uc != '')
 						{
-							{
-								var temp_tag = %[];
-								temp_tag.tagname = "nowait";
-								tag_queue.add(temp_tag);
-							}
-							{
-								tag_queue.add(tf_lc);
-								message_layer_x += message_layer_line_layer_font.getTextWidth(tf_lc);
-							}
-							{
-								var temp_tag = %[];
-								temp_tag.tagname = "endnowait";
-								tag_queue.add(temp_tag);
-							}
+							tag_queue.add(%[tagname: "nowait"]);
+							
+							tag_queue.add(tf_lc);
+							message_layer_x += lf.getTextWidth(tf_lc);
+							
+							tag_queue.add(%[tagname: "endnowait"]);
+							
 							tf_lwidth += lf.getTextWidth(tf_lc) + message_layer.pitch;
-							{
-								var temp_tag = %[];
-								temp_tag.tagname = "locate";
-								message_layer_x = tf_lastleft + message_layer.marginL;
-								temp_tag.x = message_layer_x - message_layer.marginL;
-								message_layer_y = tf_lasttop + message_layer.marginT;
-								temp_tag.y = message_layer_y - message_layer.marginT;
-								tag_queue.add(temp_tag);
-							}
-							{
-								tag_queue.add(tf_uc);
-								message_layer_x += message_layer_line_layer_font.getTextWidth(tf_uc);
-							}
+							
+							message_layer_x = tf_lastleft + message_layer.marginL;	
+							message_layer_y = tf_lasttop + message_layer.marginT;
+							tag_queue.add(%[tagname: "locate", x: message_layer_x - message_layer.marginL, y: message_layer_y - message_layer.marginT]);
+							
+							tag_queue.add(tf_uc);
+							message_layer_x += lf.getTextWidth(tf_uc);
+							
 						}
 						// 文字があれば上に戻る
 						tf_cindex++;
-					}
-					while (tf_cindex < tf_length);
-					{
-						tag_queue.add("\n");
-					}
+					} while (tf_cindex < tf_length);
+					
+					tag_queue.add("\n");
+					
 					message_layer_y += (message_layer.fontSize + message_layer.lineSpacing);
 					// 行があれば上に戻る
 					tf_lwidth = 0;
 					tf_lindex++;
-				}
-				while (tf_lindex < tf_lcount);
+				} while (tf_lindex < tf_lcount);
 				// 下の行の改行を入れる
 				for (var tf_i = tf_uppers.count + tf_lowers.count; tf_i > tf_lcount; tf_i--)
 				{
 					dm('ret');
-					{
-						tag_queue.add("\n");
-					}
+					tag_queue.add("\n");
 				}
-				{
-					var temp_tag = %[];
-					temp_tag.tagname = "history";
-					temp_tag.output = last_history_state;
-					tag_queue.add(temp_tag);
-				}
+					
+				tag_queue.add(%[tagname: "history", output: last_history_state]);
+				
 @if(GAME_FHAT)
 				// クリック待ち(→次がpgだったりするので、自動的には入れない)
-				{
-					var temp_tag = %[];
-					temp_tag.tagname = "l";
-					tag_queue.insert(0, temp_tag);
-				}
+				tag_queue.insert(0, %[tagname: "l"]);
 @endif
 				for (var i = tag_queue.count - 1; i >= 0; i -= 1)
 				{

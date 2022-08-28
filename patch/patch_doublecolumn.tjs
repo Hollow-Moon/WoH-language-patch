@@ -50,20 +50,34 @@
 				var message_layer_y = message_layer.y;
 				var last_history_state = this.historyWriteEnabled;
 				tag_queue.add(%[tagname: "history", output: false]);
+
+				var do_insert_text = function(text, userdata)
+				{
+					userdata.insert(0, text);
+				};
+				var tf_uline_split = [];
+				var tf_lline_split = [];
+
 				// 行のループ
 				do // label: doublecolumn_lloop
 				{
 					var tf_uline = tf_uppers.count > tf_lindex ? tf_uppers[tf_lindex] : '';
 					var tf_lline = tf_lowers.count > tf_lindex ? tf_lowers[tf_lindex] : '';
+
+					tf_uline_split.clear();
+					tf_lline_split.clear();
+					global.split_text_by_grapheme(this, tf_uline, do_insert_text, tf_uline_split);
+					global.split_text_by_grapheme(this, tf_lline, do_insert_text, tf_lline_split);
+
 					var tf_cindex = 0;
-					var tf_length = tf_uline.length > tf_lline.length ? tf_uline.length : tf_lline.length;
+					var tf_length = tf_uline_split.count > tf_lline_split.count ? tf_uline_split.count : tf_lline_split.count;
 					var tf_lwidth = 0;
 					// 桁(文字)のループ
 					do // label: doublecolumn_cloop
 					{
 						// 二行に文字を描画する
-						var tf_uc = tf_cindex < tf_uline.length ? tf_uline[tf_cindex] : '';
-						var tf_lc = tf_cindex < tf_lline.length ? tf_lline[tf_cindex] : '';
+						var tf_uc = tf_cindex < tf_uline_split.count ? tf_uline_split[tf_cindex] : '';
+						var tf_lc = tf_cindex < tf_lline_split.count ? tf_lline_split[tf_cindex] : '';
 						
 						var tf_lastleft = message_layer_x - message_layer.marginL;
 						var tf_lasttop = message_layer_y - message_layer.marginT;

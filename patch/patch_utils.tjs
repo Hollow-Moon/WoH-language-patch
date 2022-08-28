@@ -1638,3 +1638,88 @@ global.escape_regexp = function(str)
 {
 	return global.escape_regexp_exp.replace(str, function(mtch) { return "\\" + mtch[0]; });
 };
+
+global.split_text_by_grapheme = function(kag=global.kag, text, cb, userdata)
+{
+	var text_sz = 0;
+	if (typeof(text) === "Object")
+	{
+		text_sz = text.count;
+	}
+	else
+	{
+		text_sz = text.length;
+	}
+	if ((typeof(text) === "String") && (text.length > 1) && (text.indexOf("―") !== -1 || text.indexOf("■") !== -1))
+	{
+		var text_tmp = [];
+		for (var i = 0, internal_forloop_count = text_sz; i < internal_forloop_count; i += 1)
+		{
+			var character = text[i];
+			var found_same_characters = 1;
+			if (("―■").indexOf(character) !== -1)
+			{
+				for (var j = i + 1, internal_forloop_count = text.length; j < internal_forloop_count; j += 1)
+				{
+					var character2 = text[j];
+					if (character2 === character)
+					{
+						found_same_characters += 1;
+					}
+					else
+					{
+						break;
+					}
+				}
+			}
+			if (found_same_characters > 1)
+			{
+				var str_joined = "";
+				for (var j = 0; j < found_same_characters; j += 1)
+				{
+					str_joined += character;
+				}
+				text_tmp.add(str_joined);
+				i += found_same_characters - 1;
+			}
+			else
+			{
+				text_tmp.add(character);
+			}
+		}
+		for (var i = text_tmp.count - 1; i >= 0; i -= 1)
+		{
+			cb(text_tmp[i], userdata);
+		}
+		return;
+	}
+	if (typeof(text) === "String")
+	{
+		if (global.get_arabic_shaping_enabled(kag))
+		{
+			text = global.shape_arabic(text, true);
+			for (var i = text_sz - 1; i >= 0; i -= 1)
+			{
+				var text_chr = text[i];
+				if (typeof(text_chr) === "String")
+				{
+					cb(text_chr, userdata);
+				}
+			}
+			return;
+		}
+		var index = text.length;
+		var brk;
+		while ((brk = global.GraphemeBreaker.previousBreak(text, index)) > 0)
+		{
+			cb(text.substring(brk, index - brk), userdata);
+			index = brk;
+		}
+		cb(text.substring(0, index), userdata);
+		return;
+	}
+	for (var i = text_sz - 1; i >= 0; i -= 1)
+	{
+		cb(text[i], userdata);
+	}
+};

@@ -1155,8 +1155,14 @@ global.addHdMenu = function(displayMenu)
 		
 		for (var i=0; i<global.scaleFactors.count; i++) {
 			var hqMenuItemName = "hq%.1fMenuItem".sprintf(global.scaleFactors[i]).replace(/\./g, "_");
-			this.qualityMenu.add(this[hqMenuItemName] = new global.KAGMenuItem(this, global.__t("高いx%.1f(&H)"), 1,
-				function(sender) { global.onQualityMenuItemClick(sender); }, false));
+
+			if (global.scaleFactors[i] <= 2.4) {
+				this.qualityMenu.add(this[hqMenuItemName] = new global.KAGMenuItem(this, global.__t("高いx%.1f(&H)"), 1, function(sender) { global.onQualityMenuItemClick(sender); }, false));
+			}
+			else {
+				this.qualityMenu.add(this[hqMenuItemName] = new global.KAGMenuItem(this, global.__t("高いx%.1f(&H) [不安定]"), 1, function(sender) { global.onQualityMenuItemClick(sender); }, false));
+			}
+
 			this[hqMenuItemName].scaleFactor = global.scaleFactors[i];
 			this[hqMenuItemName].captionArg = this[hqMenuItemName].scaleFactor;
 			this[hqMenuItemName].enabled = global.patchExists(global.hdPatchesNames[i]);

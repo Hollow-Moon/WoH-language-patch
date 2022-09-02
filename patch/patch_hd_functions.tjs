@@ -1,4 +1,4 @@
-﻿global.scalePosition = function(v, size, scaledSize, parentSize, parentScaledSize, align=0)
+﻿global.scalePosition = function(v, size, scaledSize, parentSize, parentScaledSize, align=0, positionScaleMode=0)
 {
     if (size >= parentSize) {
         v *= scaledSize / size;
@@ -6,14 +6,22 @@
             v += (parentScaledSize - scaledSize) * align;
         }
     } else {
-        if (v < 0) {
-            v *= scaledSize / size;
-        } else if (v > parentSize - size) {
-            var m = scaledSize / size;
-            var n = parentScaledSize - m * parentSize;
-            v = m * v + n;
-        } else {
-            v *= (parentScaledSize - scaledSize) / (parentSize - size);
+		// positionScaleMode
+		//	0: discrete transform
+		//	1: center point scaling (unscaled sprites will not touch sides but maintain relative position)
+		if (positionScaleMode == 1) {
+			v = ((v + size/2) * (parentScaledSize/parentSize)) - (scaledSize/2);
+		}
+		else {
+			if (v < 0) {
+				v *= scaledSize / size;
+			} else if (v > parentSize - size) {
+				var m = scaledSize / size;
+				var n = parentScaledSize - m * parentSize;
+				v = m * v + n;
+			} else {
+				v *= (parentScaledSize - scaledSize) / (parentSize - size);
+			}
         }
     }
 	return global.Math.round(v) | 0;
@@ -22,7 +30,7 @@
 // Equivalently to scalePosition(), which calculates the scaled left/top coordinate,
 // scalePosition2() calculates the scaled right/bottom coordinate.
 // Currently used by fillRect_patch_hd_layer() and colorRect_patch_hd_layer()
-global.scalePosition2 = function(v, size, scaledSize, parentSize, parentScaledSize, align=0)
+global.scalePosition2 = function(v, size, scaledSize, parentSize, parentScaledSize, align=0, positionScaleMode=0)
 {
     if (size >= parentSize) {
         v *= scaledSize / size;
@@ -30,16 +38,22 @@ global.scalePosition2 = function(v, size, scaledSize, parentSize, parentScaledSi
             v += (parentScaledSize - scaledSize) * align;
         }
     } else {
-        if (v < size) {
-            v *= scaledSize / size;
-        } else if (v > parentSize) {
-            var m = scaledSize / size;
-            var n = parentScaledSize - m * parentSize;
-            v = m * v + n;
-        } else {
-            v = ((parentScaledSize - scaledSize) / (parentSize - size)) * v   + (((parentSize * scaledSize) - (parentScaledSize * size)) / (parentSize - size));
-        }
-    }
+		if (positionScaleMode == 1) {
+			v = ((v - size/2) * (parentScaledSize/parentSize)) + (scaledSize/2);
+		}
+		else {
+			if (v < size) {
+				v *= scaledSize / size;
+			} else if (v > parentSize) {
+				var m = scaledSize / size;
+				var n = parentScaledSize - m * parentSize;
+				v = m * v + n;
+			} else {
+				v = ((parentScaledSize - scaledSize) / (parentSize - size)) * v   + (((parentSize * scaledSize) - (parentScaledSize * size)) / (parentSize - size));
+			}
+		}
+	}
+		
 	return global.Math.round(v) | 0;
 };
 

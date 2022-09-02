@@ -5,6 +5,9 @@ global.imagesHdOverrideDict = %[];
 global.messageLayerImages = ["tw_ノーマル(薄い)", "tw_ノーマル(通常)", "tw_ノーマル(濃い)", "tw_たいがー(通常)", "tw_たいがー(模様)"];
 global.messageBreakImages = ["linebreak_a", "pagebreak_a"];
 
+global.autoExtendFrames = ["tw_ノーマル(薄い)", "tw_ノーマル(通常)", "tw_ノーマル(濃い)", "tw_たいがー(通常)"]; // compared to messageLayerImages, this one does not include "tw_たいがー(模様)", which is too complex for extension and needs scaling.
+global.autoExtendImages = ["dt_line", "dt_line_green", "dt_lineblank"];
+
 global.getImageInfo = function(imageKey) {
 	var imageInfo = global.imagesHdOverrideDict[imageKey];
 	if (imageInfo === void)
@@ -909,6 +912,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 		storage = storage.toLowerCase();
 		var storageName = global.Storages.chopStorageExt(storage);
 		var storageExt = global.Storages.extractStorageExt(storage);
+		var autoExtend = false;
 
 		if (this.isThumbnail || global.endsWith("_thumb", storageName)) {
 			this.imageStorage = storageName;
@@ -942,6 +946,12 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 				} else {
 					this._imageWidth = imageInfo["width"];
 				}
+
+				if (global.autoExtendImages.contains(this.imageStorage)) {
+					autoExtend = true;
+				} else if (global.autoExtendFrames.contains(this.imageStorage) && this.window.sflags.wideWindow) {
+					autoExtend = true;
+				}
 			} else {
 				this._imageWidth = imageInfo["width"];
 			}
@@ -973,9 +983,26 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 		else
 		{
 			taginfo = (global.Layer_patch_hd_layer_original.loadImages incontextof this)(image_path_full, key);
+
 @if(GAME_FATE||GAME_FHAT)
+			if (autoExtend) {
+				var imageWidthBase = this._imageWidth;
+				var imageHeightBase = this._imageHeight; 
+				var windowWidth = this.window.scaleWidth(global.originalResWidth);	// GAME_FATE: originalResWidth = 800
+
+				if (this.imageHeightOriginal == this.scaleImageHeight(this._imageHeight)) { // only if height is correct size already
+					if (this.imageWidthOriginal < windowWidth) { // Loaded image too narrow for used aspect ratio -> extending
+						this.setImageSize_patch_hd_layer(global.originalResWidth*global.wideFactor, imageHeightBase);
+						this.copyRect_patch_hd_layer(this.imageWidth-imageWidthBase\2, 0, this, imageWidthBase\2, 0, imageWidthBase\2, imageHeightBase);
+						this.stretchCopy_patch_hd_layer(imageWidthBase\2, 0, this.imageWidth-imageWidthBase, imageHeightBase, this, imageWidthBase\2, 0, 1, imageHeightBase);
+					} else if (this.imageWidthOriginal > windowWidth) { // Loaded image too wide for used aspect ratio  -> cutting
+						this.copyRect_patch_hd_layer((global.originalResWidth*global.wideFactor)\2, 0, this, (imageWidthBase-(global.originalResWidth*global.wideFactor)\2), 0, (global.originalResWidth*global.wideFactor)\2, imageHeightBase);
+						this.setImageSize_patch_hd_layer(global.originalResWidth*global.wideFactor, imageHeightBase);
+					}
+				}
+			}
+			else if (this.isCharacterLayer && !this.isbg) {
 			// Mainly used for 藤02a腕b(中) and 藤02g腕b(中) since the HD version's width is larger than expected because of redundant transparent padding, but there might be other cases so the condition is generic.
-			if (this.isCharacterLayer && !this.isbg) {
 				var w = this.scaleWidth(this._imageWidth);
 				var h = this.scaleHeight(this._imageHeight);
 				var leftDiff = (this.imageWidthOriginal - w) \ 2;
@@ -1003,8 +1030,6 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 			}
 @endif
 		}
-
-
 
 		this.upscale();
 		this.updateSize();

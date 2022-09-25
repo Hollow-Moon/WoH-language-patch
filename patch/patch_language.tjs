@@ -813,8 +813,8 @@ global.loadLanguagesList = function()
 	var patches_arr = [];
 	var	files = global.paths_base_dirlist[global.paths_base[0]]["."];
 	var loadedLanguages = [global.japaneseLanguage];
-	var languageRegex = new global.RegExp("patch_%s(.*)\\.xp3".sprintf(global.language_patch_prefix));
-	var langugeFolderRegex = new global.RegExp("%s(.*)[\\/]".sprintf(global.language_patch_prefix));
+	var languageRegex = new global.RegExp("^patch_%s([a-z0-9\-]+)\\.xp3$".sprintf(global.language_patch_prefix));
+	var languageFolderRegex = new global.RegExp("^(patch_)?%s([a-z0-9\-]+)[\\/]+$".sprintf(global.language_patch_prefix));
 	for (var i = 0, internal_forloop_count = files.count; i < internal_forloop_count; i += 1) {
 		var	fn	= files[i].toLowerCase();
 
@@ -831,7 +831,7 @@ global.loadLanguagesList = function()
 		}
 		else
 		{
-			var language_folder_regex_match = langugeFolderRegex.match(fn);
+			var language_folder_regex_match = languageFolderRegex.match(fn);
 			if (global.devMode2 && language_folder_regex_match.count !== 0) {
 				var languageName = language_folder_regex_match[1];
 

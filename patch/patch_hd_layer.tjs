@@ -388,14 +388,14 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 
     property cursorX
 	{
-		getter { return this.absoluteMode? this.cursorXOriginal : this.unscaleCursorX(this.cursorXOriginal); }
-		setter(v) { v = +v; this.cursorXOriginal = this.scaleCursorX(v); }
+		getter { return this.absoluteMode? this.cursorXOriginal : this.unscaleWidth(this.cursorXOriginal); }
+		setter(v) { v = +v; this.cursorXOriginal = this.scaleWidth(v); }
 	}
 
     property cursorY
     {
-        getter { return this.absoluteMode? this.cursorYOriginal : this.unscaleCursorY(this.cursorYOriginal); }
-        setter(v) { v = +v; this.cursorYOriginal = this.scaleCursorY(v); }
+        getter { return this.absoluteMode? this.cursorYOriginal : this.unscaleHeight(this.cursorYOriginal); }
+		setter(v) { v = +v; this.cursorYOriginal = this.scaleHeight(v); }
     }
 
 	property width
@@ -499,7 +499,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 
 	function setCursorPos(cursorX, cursorY)
 	{
-		(global.Layer_patch_hd_layer_original.setCursorPos incontextof this)(this.scaleCursorX(cursorX), this.scaleCursorY(cursorY));
+		(global.Layer_patch_hd_layer_original.setCursorPos incontextof this)(this.scaleWidth(cursorX), this.scaleHeight(cursorY));
 	}
 
 	function setImageSize_patch_hd_layer(imageWidth, imageHeight)

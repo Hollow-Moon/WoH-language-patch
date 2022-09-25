@@ -173,13 +173,12 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 
     function unscaleCursorX(x)
     {
-        return this.window.unscaleWidth(x);
+        return this.unscaleWidth(x);
     }
 
     function unscaleCursorY(y)
     {
-		var topOffset = this.window.wideScreen? this.window.scrollYOffset : 0;
-        return this.window.unscaleHeight(y - this.window.scaleTopScroll(topOffset));
+        return this.unscaleHeight(y);
     }
 
 	function scaleCursorX(x)
@@ -189,8 +188,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 
 	function scaleCursorY(y)
 	{
-		var topOffset = this.window.wideScreen? this.window.scrollYOffset : 0;
-		return this.scaleHeight(y / this.window.wideFactor) + this.window.scaleTopScroll(topOffset);
+		return this.scaleHeight(y);
 	}
 
 	function unscaleMouseX(x)
@@ -388,14 +386,14 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 
     property cursorX
 	{
-		getter { return this.absoluteMode? this.cursorXOriginal : this.unscaleWidth(this.cursorXOriginal); }
-		setter(v) { v = +v; this.cursorXOriginal = this.scaleWidth(v); }
+		getter { return this.absoluteMode? this.cursorXOriginal : this.unscaleCursorX(this.cursorXOriginal); }
+		setter(v) { v = +v; this.cursorXOriginal = this.scaleCursorX(v); }
 	}
 
     property cursorY
     {
-        getter { return this.absoluteMode? this.cursorYOriginal : this.unscaleHeight(this.cursorYOriginal); }
-		setter(v) { v = +v; this.cursorYOriginal = this.scaleHeight(v); }
+        getter { return this.absoluteMode? this.cursorYOriginal : this.unscaleCursorY(this.cursorYOriginal); }
+		setter(v) { v = +v; this.cursorYOriginal = this.scaleCursorY(v); }
     }
 
 	property width
@@ -499,7 +497,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 
 	function setCursorPos(cursorX, cursorY)
 	{
-		(global.Layer_patch_hd_layer_original.setCursorPos incontextof this)(this.scaleWidth(cursorX), this.scaleHeight(cursorY));
+		(global.Layer_patch_hd_layer_original.setCursorPos incontextof this)(this.scaleCursorX(cursorX), this.scaleCursorY(cursorY));
 	}
 
 	function setImageSize_patch_hd_layer(imageWidth, imageHeight)

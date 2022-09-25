@@ -20,6 +20,7 @@
 	["krglhpng.dll", ,, true, "USE_IMAGELOADER_REPLACEMENTS"],
 	["krglhtlg.dll", ,, true, "USE_IMAGELOADER_REPLACEMENTS"],
 	["krglhwebp.dll", ,, true, "HD_MODE"],
+	["krglhjxl.dll", ,, true, "HD_MODE"],
 	["wuffmpeg.dll", ,,, "USE_WUFFMPEG"],
 	["wuvorbis.dll", ,,, "!USE_WUFFMPEG"],
 	["kropus.dll", ,, true, "!USE_WUFFMPEG"],

@@ -40,7 +40,7 @@ class Window_hint_override extends global.Window_hint_original
 		this.hinttimer.enabled = false;
 		try
 		{
-			if (typeof(this.focusedLayer) !== "Object" || this.focusedLayer === null)
+			if (this instanceof "VideoOverlayOwnerWindow" || typeof(this.primaryLayer) !== "Object" || this.primaryLayer === null)
 			{
 				return;
 			}
@@ -93,23 +93,25 @@ class Window_hint_override extends global.Window_hint_original
 
 	function initHintLayer()
 	{
-		if (typeof(this.focusedLayer) === "Object" && this.focusedLayer !== null)
+		if (this instanceof "VideoOverlayOwnerWindow" || typeof(this.primaryLayer) !== "Object" || this.primaryLayer === null)
 		{
-			this.hintlayer = new global.Layer(this, this.primaryLayer);
-			{
-				var l = this.hintlayer;
-				l.visible = false;
-				l.ignoreHintSensing = true;
-				l.hitThreshold = 256;
-				l.font.height = 9;
-				l.font.face = global.__s("MS UI Gothic", "hint_font_face");
-			}
-
-			// hintDelay = 500; // default
-			// hintDelay = 0; // immediate
-			// hintDelay = -1; // never
-			// hintDelay = 1000; // slow
+			return;
 		}
+
+		this.hintlayer = new global.Layer(this, this.primaryLayer);
+		{
+			var l = this.hintlayer;
+			l.visible = false;
+			l.ignoreHintSensing = true;
+			l.hitThreshold = 256;
+			l.font.height = 9;
+			l.font.face = global.__s("MS UI Gothic", "hint_font_face");
+		}
+
+		// hintDelay = 500; // default
+		// hintDelay = 0; // immediate
+		// hintDelay = -1; // never
+		// hintDelay = 1000; // slow
 	}
 
 	var hintHorizontalPadding = 4;

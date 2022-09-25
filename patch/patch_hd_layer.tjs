@@ -171,15 +171,16 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 		return global.scalePosition(y, this._height, this.heightOriginal, this._imageHeight, this.imageHeightOriginal, this.imageVerticalAlignment, this.positionScaleMode);
 	}
 
-    function unscaleCursorX(x)
-    {
-        return this.unscaleWidth(x);
+	function unscaleCursorX(x)
+	{
+		return this.unscaleWidth(x);
     }
 
-    function unscaleCursorY(y)
-    {
-        return this.unscaleHeight(y);
-    }
+	function unscaleCursorY(y)
+	{
+		var topScroll = this.window.wideScreen? (this.isbg? this.window.scrollYOffset : 0) : 0;
+		return this.window.unscaleHeight(y - this.window.scaleTopScroll(topScroll));
+	}
 
 	function scaleCursorX(x)
 	{
@@ -188,7 +189,8 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 
 	function scaleCursorY(y)
 	{
-		return this.scaleHeight(y);
+		var topScroll = this.window.wideScreen? (this.isbg? this.window.scrollYOffset : 0) : 0;
+		return this.window.scaleHeight(y) + this.window.scaleTopScroll(topScroll);
 	}
 
 	function unscaleMouseX(x)

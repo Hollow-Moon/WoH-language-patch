@@ -381,6 +381,16 @@ global.initializeHDPatch = function()
 	{
 		this.hdScaleFactor = +global.System.getArgument("-hdscalefactor");
 	}
+
+	for (var i=global.scaleFactors.count-1; i>=0; i--) {
+		if (global.scaleFactors[i] == this.hdScaleFactor) {
+			if (!global.patchExists(global.hdPatchesNames[i])) {
+				this.hdScaleFactor = 1;
+				break;
+			}
+		}
+	}
+
 	global.unloadAllHdPatches(this);
 	(global.initializeQuality incontextof this)(this.hdScaleFactor);
 	if (global.System.getArgument("-wideratio") !== void)

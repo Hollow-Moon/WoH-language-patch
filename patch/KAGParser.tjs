@@ -14,6 +14,7 @@
 */
 //---------------------------------------------------------------------------
 
+@if(1)
 global.TVPKAGNoLine = "Attempt to load scenario file %1 is empty";
 global.TVPKAGCannotOmmitFirstLabelName = "The first label name of the scenario file cannot be omitted";
 global.TVPInternalError = "Internal Error: at %1 line %2";
@@ -26,6 +27,21 @@ global.TVPKAGCallStackUnderflow = "The return tag does not correspond to the cal
 global.TVPKAGReturnLostSync = "The return location of return cannot be specified because the scenario file has changed";
 global.TVPKAGSpecifyKAGParser = "Please specify an object of KAGParser class";
 global.TVPUnknownMacroName = "Macro \"%s\" is not registered";
+@endif
+@if(0)
+global.TVPKAGNoLine = "読み込もうとしたシナリオファイル %1 は空です";
+global.TVPKAGCannotOmmitFirstLabelName = "シナリオファイルの最初のラベル名は省略できません";
+global.TVPInternalError = "内部エラーが発生しました: at %1 line %2";
+global.TVPKAGMalformedSaveData = "栞データが異常です。データが破損している可能性があります";
+global.TVPKAGLabelNotFound = "シナリオファイル %1 内にラベル %2 が見つかりません";
+global.TVPLabelOrScriptInMacro = "ラベルや iscript はマクロ中に記述できません";
+global.TVPKAGInlineScriptNotEnd = "[endscript] または @endscript が見つかりません";
+global.TVPKAGSyntaxError = "タグの文法エラーです。'[' や ']' の対応、\" と \" の対応、スペースの入れ忘れ、余分な改行、macro 〜 endmacro の対応、必要な属性の不足などを確認してください";
+global.TVPKAGCallStackUnderflow = "return タグが call タグと対応していません ( return タグが多い )";
+global.TVPKAGReturnLostSync = "シナリオファイルに変更があったため return の戻り先位置を特定できません";
+global.TVPKAGSpecifyKAGParser = "KAGParser クラスのオブジェクトを指定してください";
+global.TVPUnknownMacroName = "マクロ \"%1\" は登録されていません";
+@endif
 
 global.special_kag_tags = [
 	"if",
@@ -2059,7 +2075,13 @@ class KAGParser
 	 *
 	 * Build an object of class KAGParser.
 	 * @constructor
-	 */	
+	 */
+	/**
+	 * @summary KAGParser オブジェクトの構築
+	 *
+	 * KAGParser クラスのオブジェクトを構築します。
+	 * @constructor
+	 */
 	function KAGParser()
 	{
 		this.__internal_KAGParser_instance = new global.__internal_KAGParser();
@@ -2075,7 +2097,13 @@ class KAGParser
 	 *
 	 * Loads the specified scenario storage and sets the scenario loading position to the beginning of the storage.
 	 * @param {String} name - Specifies the scenario storage to load.
-	 */	
+	 */
+	/**
+	 * @summary シナリオの読み込み<
+	 *
+	 * 指定されたシナリオストレージを読み込み、シナリオ読み込み位置をストレージの先頭に設定します。
+	 * @param {String} name - 読み込むシナリオストレージを指定します。
+	 */
 	function loadScenario(name)
 	{
 		return this.__internal_KAGParser_instance.loadScenario(name);
@@ -2086,7 +2114,13 @@ class KAGParser
 	 *
 	 * Moves to the specified label in the loaded scenario storage.
 	 * @param {String} label - Specify the label name of the move destination.
-	 */	
+	 */
+	/**
+	 * @summary 指定ラベルへの移動
+	 *
+	 * 読み込まれているシナリオストレージの中で、指定されたラベルへ移動します。
+	 * @param {String} label - 移動先のラベル名を指定します。
+	 */
 	function goToLabel(label)
 	{
 		return this.__internal_KAGParser_instance.goToLabel(label);
@@ -2098,7 +2132,14 @@ class KAGParser
 	 * Moves to the specified label.
 	 * At that time, the current scenario storage read position is pushed onto the stack.
 	 * @param {String} label - Specify the label name of the move destination.
-	 */	
+	 */
+	/**
+	 * @summary 現在位置をスタックに積んでの、指定ラベルへの移動
+	 *
+	 * 指定されたラベルへ移動します。
+	 * その際、現在のシナリオストレージ読み込み位置をスタックに積みます。
+	 * @param {String} label - 移動先のラベル名を指定します。
+	 */
 	function callLabel(label)
 	{
 		return this.__internal_KAGParser_instance.callLabel(label);
@@ -2115,7 +2156,23 @@ class KAGParser
 	 * The processing for these tags is done automatically inside this met
 	 * Therefore, this method does not return any information about these tags.
 	 * @return {Dictionary} Tag information.
-	 */	
+	 * @see KAGParser.interrupt
+	 * @see KAGParser.resetInterrupt
+	 */
+	/**
+	 * @summary 次のタグを得る
+	 *
+	 * 次のタグを辞書配列で返します。(タグ内部にない)通常の文字は、ch タグと解釈されます。<r/>
+	 * interrupted 状態では、interrupt タグを返し、interrupted 状態を解除します。<r/>
+	 * ストレージの末尾では、void を返します。<r/>
+	 * タグの名前は、戻り値の辞書配列の tagname 要素に格納されています。<r/>
+	 * if, ignore, endif, endignore, emb, macro, endmacro, erasemacro, jump, call, return, iscript, endscript の各タグは組み込みタグです。
+	 * これらのタグに関する処理は、このメソッドの内部で自動的に行なわれます。
+	 * したがって、このメソッドはこれらのタグに関する情報を返しません。
+	 * @return {Dictionary} タグ情報の辞書配列
+	 * @see KAGParser.interrupt
+	 * @see KAGParser.resetInterrupt
+	 */
 	function getNextTag()
 	{
 		var res = this.__internal_KAGParser_instance.getNextTag();
@@ -2131,7 +2188,13 @@ class KAGParser
 	 *
 	 * Copies the contents of the KAGParser object specified in src.
 	 * @param {KAGParser} src - Specifies the KAGParser object to copy from.
-	 */	
+	 */
+	/**
+	 * @summary KAGParser オブジェクトのコピー
+	 *
+	 * コピー元の KAGParser オブジェクトを指定します。
+	 * @param {KAGParser} src - src で指定した KAGParser オブジェクトの内容をコピーします。
+	 */
 	function assign(src)
 	{
 		if (typeof(src) !== "Object" || (typeof(src) === "Object" && !(src instanceof "KAGParser")))
@@ -2145,7 +2208,12 @@ class KAGParser
 	 * @summary Clear object
 	 *
 	 * Clears the state of the object.
-	 */	
+	 */
+	/**
+	 * @summary オブジェクトのクリア
+	 *
+	 * オブジェクトの状態をクリアします。
+	 */
 	function clear()
 	{
 		return this.__internal_KAGParser_instance.clear();
@@ -2157,7 +2225,14 @@ class KAGParser
 	 * Writes the state of the object to a dictionary array.
 	 * @return {Dictionary} the state of an object
 	 * @see KAGParser.restore
-	 */	
+	 */
+	/**
+	 * @summary オブジェクトの状態を辞書配列に書き出す
+	 *
+	 * オブジェクトの状態を辞書配列に書き出します。
+	 * @return {Dictionary} オブジェクトの状態を表わす辞書配列
+	 * @see KAGParser.restore
+	 */
 	function store()
 	{
 		return this.__internal_KAGParser_instance.store();
@@ -2170,6 +2245,13 @@ class KAGParser
 	 * @param {Dictionary} dic - the state of the object to be restored
 	 * @see KAGParser.store
 	 */
+	/**
+	 * @summary 辞書配列からオブジェクトの状態を復元する
+	 *
+	 * dic で指定した辞書配列を元にして、KAGParser オブジェクトの状態を復元します。
+	 * @param {Dictionary} dic - 復元するオブジェクトの状態を表わす辞書配列
+	 * @see KAGParser.store
+	 */
 	function restore(dic)
 	{
 		return this.__internal_KAGParser_instance.restore(dic);
@@ -2179,6 +2261,11 @@ class KAGParser
 	 * @summary call tag clear the call stack
 	 *
 	 * call tag Clears the stack of call calls. Macro arguments are also cleared.
+	 */
+	/**
+	 * @summary call タグ呼び出しスタックのクリア
+	 *
+	 * call タグ呼び出しのスタックをクリアします。マクロ引数もクリアされます。
 	 */
 	function clearCallStack()
 	{
@@ -2192,6 +2279,13 @@ class KAGParser
 	 * @see KAGParser.resetInterrupt
 	 * @see KAGParser.getNextTag
 	 */
+	/**
+	 * @summary interrupted 状態にする
+	 *
+	 * interrupted 状態になります。この状態のときは、次の {@link KAGParser.getNextTag} メソッドの呼び出しでは interrupt タグが返されます。
+	 * @see KAGParser.resetInterrupt
+	 * @see KAGParser.getNextTag
+	 */
 	function interrupt()
 	{
 		return this.__internal_KAGParser_instance.interrupt();
@@ -2201,6 +2295,13 @@ class KAGParser
 	 * @summary Canceling the interrupted state
 	 *
 	 * Releases the interrupted state.
+	 * @see KAGParser.interrupt
+	 * @see KAGParser.getNextTag
+	 */
+	/**
+	 * @summary interrupted 状態の解除
+	 *
+	 * interrupted 状態を解除します。
 	 * @see KAGParser.interrupt
 	 * @see KAGParser.getNextTag
 	 */
@@ -2220,6 +2321,12 @@ class KAGParser
 	 * Indicates what line the current line is in storage.
 	 * @access r
 	 */
+	/**
+	 * @summary 現在行の行数
+	 *
+	 * 現在行がストレージ中で何行目かを表わします。
+	 * @access r
+	 */
 	property curLine
 	{
 		getter
@@ -2232,6 +2339,12 @@ class KAGParser
 	 * @summary The position of the character on the current line
 	 *
 	 * Indicates the current character number in the current line.
+	 * @access r
+	 */
+	/**
+	 * @summary 現在行における文字の位置
+	 *
+	 * 現在行の中で、今何文字目にあるかを表わします。
 	 * @access r
 	 */
 	property curPos
@@ -2248,6 +2361,12 @@ class KAGParser
 	 * Represents the string on the current line.
 	 * @access r
 	 */
+	/**
+	 * @summary 現在行の文字列
+	 *
+	 * 現在行の文字列を表わします。
+	 * @access r
+	 */
 	property curLineStr
 	{
 		getter
@@ -2262,6 +2381,14 @@ class KAGParser
 	 * Indicates whether to ignore line breaks.
 	 * If true, ignore line breaks.
 	 * If false, a line break will occur on the display at the position of the line break in the scenario. (KAG2 compatibility mode)
+	 * @access r/w
+	 */
+	/**
+	 * @summary 改行を無視するかどうか
+	 *
+	 * 改行を無視するかどうかを表わします。
+	 * 真ならば改行を無視します。
+	 * 偽ならば、シナリオ中の改行の位置で、表示上も改行します。(KAG2 互換モード)
 	 * @access r/w
 	 */
 	property ignoreCR
@@ -2283,6 +2410,15 @@ class KAGParser
 	 * If true, process newlines and special tags. The default is true.
 	 * What are special tags? If ignore endif endignore else elsif emb macro endmacro macropop erasemacro jump call return tags. If this property is false, you can get these tags as-is with getNextTag.
 	 * However, iscript~endscript is always processed.
+	 * @access r/w
+	 */
+	/**
+	 * @summary 特殊タグを処理するかどうか
+	 *
+	 * 特殊タグを処理するかどうかを表わします。
+	 * 真ならば改行を特殊タグを処理します。デフォルトは真です。
+	 * 特殊タグとは  if ignore endif endignore else elsif emb macro endmacro macropop erasemacro jump call return の各タグです。このプロパティが偽の場合、これらのタグはそのまま getNextTag で取得することができます。
+	 * ただし、iscript 〜 endscript は常に処理されます。
 	 * @access r/w
 	 */
 	property processSpecialTags
@@ -2310,6 +2446,19 @@ class KAGParser
 	 * The amount of debug messages displayed increases in the order of tkdlNone < tkdlSimple < tkdlVerbose.
 	 * @access r/w
 	 */
+	/**
+	 * @summary デバッグレベル
+	 *
+	 * デバッグレベルを表わします。
+	 * 設定可能な値は以下の通りです。
+	 *
+	 * tkdlNone
+	 * tkdlSimple
+	 * tkdlVerbose
+	 *
+	 * tkdlNone < tkdlSimple < tkdlVerbose の順に、表示されるデバッグメッセージの量が多くなります。
+	 * @access r/w
+	 */
 	property debugLevel
 	{
 		getter
@@ -2329,6 +2478,13 @@ class KAGParser
 	 * For example, hoge macros can be accessed with macros['hoge'].
 	 * @access r
 	 */
+	/**
+	 * @summary マクロの入った辞書配列
+	 *
+	 * マクロの入った辞書配列を表わします。
+	 * 例えば、hoge マクロには macros['hoge'] でアクセスできます。
+	 * @access r
+	 */
 	property macros
 	{
 		getter
@@ -2341,6 +2497,12 @@ class KAGParser
 	 * @summary Arguments of the currently running macro
 	 *
 	 * The argument of the currently executed macro is represented by a dictionary array.
+	 * @access r
+	 */
+	/**
+	 * @summary 現在実行されているマクロの引数
+	 *
+	 * 現在実行されているマクロの引数を、辞書配列で表わします。
 	 * @access r
 	 */
 	property macroParams
@@ -2365,6 +2527,12 @@ class KAGParser
 	 * call tag Represents the depth of the call stack.
 	 * @access r
 	 */
+	/**
+	 * @summary call タグ呼び出しスタックの深さ
+	 *
+	 * call タグ呼び出しスタックの深さを表わします。
+	 * @access r
+	 */
 	property callStackDepth
 	{
 		getter
@@ -2378,6 +2546,13 @@ class KAGParser
 	 *
 	 * Represents the current storage.
 	 * You can also set the value. In that case, the specified storage is read.
+	 * @access r/w
+	 */
+	/**
+	 * @summary 現在のストレージ
+	 *
+	 * 現在のストレージを表わします。
+	 * 値を設定することもできます。その場合は、指定されたストレージを読み込みます。
 	 * @access r/w
 	 */
 	property curStorage
@@ -2396,6 +2571,12 @@ class KAGParser
 	 * @summary Current label
 	 *
 	 * Represents the current label.
+	 * @access r
+	 */
+	/**
+	 * @summary 現在のラベル
+	 *
+	 * 現在のラベルを表わします。
 	 * @access r
 	 */
 	property curLabel

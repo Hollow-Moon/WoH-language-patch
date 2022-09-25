@@ -107,217 +107,229 @@ else
 
 global.initialize_patch = function()
 {
-	global.Debug.message("Reached top of initialize_patch.");
-
-	global.kag = void;
-	delete global.kag;
-	global.initialize_patch_entered = true;
-	global.dm = global.dm_old;
-	global.System.createAppLock = global.System.createAppLock_old;
-	global.Storages.addAutoPath = global.Storages.addAutoPath_old;
-	global.System.getArgument = global.System.getArgument_old;
-
-	if (typeof(global.initialize_patch_override) === "Object")
+	try
 	{
-		return global.initialize_patch_override();
-	}
+		global.Debug.message("Reached top of initialize_patch.");
 
-	global.dm("Loading patch_loadlist.arr...");
+		global.kag = void;
+		delete global.kag;
+		global.initialize_patch_entered = true;
+		global.dm = global.dm_old;
+		global.System.createAppLock = global.System.createAppLock_old;
+		global.Storages.addAutoPath = global.Storages.addAutoPath_old;
+		global.System.getArgument = global.System.getArgument_old;
 
-	var start = global.System.getTickCount();
-
-	var to_load = global.Scripts.evalStorage("patch_loadlist.arr");
-
-	global.dm("Loaded patch_loadlist.arr in " + (global.System.getTickCount() - start) + "ms.");
-
-	start = global.System.getTickCount();
-
-	var current_category = "";
-
-	for (var i = 0, internal_forloop_count = to_load.count; i < internal_forloop_count; i += 1)
-	{
-		var load = to_load[i];
-		var filename = "";
-		var loadastype = "";
-		var tjs_expression = "";
-		var optional = 0;
-		var preprocessor_expression = "";
-		var category = "";
-		if (typeof(load) === "String")
+		if (typeof(global.initialize_patch_override) === "Object")
 		{
-			filename = load;
+			return global.initialize_patch_override();
 		}
-		else if (typeof(load) === "Object")
+
+		global.dm("Loading patch_loadlist.arr...");
+
+		var start = global.System.getTickCount();
+
+		var to_load = global.Scripts.evalStorage("patch_loadlist.arr");
+
+		global.dm("Loaded patch_loadlist.arr in " + (global.System.getTickCount() - start) + "ms.");
+
+		start = global.System.getTickCount();
+
+		var current_category = "";
+
+		for (var i = 0, internal_forloop_count = to_load.count; i < internal_forloop_count; i += 1)
 		{
-			filename += load[0];
-			loadastype += load[1];
-			if (typeof(load[2]) === "Object" && load[2] instanceof "Array")
+			var load = to_load[i];
+			var filename = "";
+			var loadastype = "";
+			var tjs_expression = "";
+			var optional = 0;
+			var preprocessor_expression = "";
+			var category = "";
+			if (typeof(load) === "String")
 			{
-				var tjs_expression_array = [];
-				for (var j = 0, internal_forloop_count = load[2].count; j < internal_forloop_count; j += 1)
+				filename = load;
+			}
+			else if (typeof(load) === "Object")
+			{
+				filename += load[0];
+				loadastype += load[1];
+				if (typeof(load[2]) === "Object" && load[2] instanceof "Array")
 				{
-					var item = load[2][j];
-					tjs_expression_array.add(("typeof(global.%s) %s \"%s\"").sprintf(item[0], typeof(item[2]) === "String" ? item[2] : "!==", typeof(item[1]) === "String" ? item[1] : "Object"));
-				}
-				tjs_expression += tjs_expression_array.join("&&");
-			}
-			else
-			{
-				tjs_expression += load[2];
-			}
-			optional |= load[3];
-			preprocessor_expression += load[4];
-			category += load[5];
-		}
-		if (category !== "")
-		{
-			if (current_category !== "")
-			{
-				global.dm("Category " + current_category + " finished in " + (global.System.getTickCount() - start) + "ms.");
-			}
-			current_category = category;
-			global.dm("Category " + current_category + " loading...");
-			start = global.System.getTickCount();
-			continue;
-		}
-		if (loadastype === "")
-		{
-			loadastype = global.Storages.extractStorageExt(filename);
-		}
-		if (optional !== 0)
-		{
-			if (loadastype === ".dll")
-			{
-				if (global.get_full_path_of_plugin(filename) === "")
-				{
-					continue;
-				}
-			}
-			else
-			{
-				if (!global.Storages.isExistentStorage(filename))
-				{
-					continue;
-				}
-			}
-		}
-		if (tjs_expression !== "")
-		{
-			if (!global.Scripts.eval(tjs_expression))
-			{
-				continue;
-			}
-		}
-		if (preprocessor_expression !== "")
-		{
-			if (!global.Scripts.eval(("@if(%s)\ntrue\n@endif\n").sprintf(preprocessor_expression)))
-			{
-				continue;
-			}
-		}
-		if (filename !== "")
-		{
-			if (filename.charAt(filename.length - 1) === ";")
-			{
-				try
-				{
-					global.Scripts.exec(filename);
-					global.dm("The following executed: " + filename);
-				}
-				catch (e)
-				{
-					global.dm("The following failed to execute: " + filename);
-					var exception_message = "Unknown error";
-					if (typeof(e) === "Object" && isvalid(e))
+					var tjs_expression_array = [];
+					for (var j = 0, internal_forloop_count = load[2].count; j < internal_forloop_count; j += 1)
 					{
-						if (typeof(e.message) === "String")
+						var item = load[2][j];
+						tjs_expression_array.add(("typeof(global.%s) %s \"%s\"").sprintf(item[0], typeof(item[2]) === "String" ? item[2] : "!==", typeof(item[1]) === "String" ? item[1] : "Object"));
+					}
+					tjs_expression += tjs_expression_array.join("&&");
+				}
+				else
+				{
+					tjs_expression += load[2];
+				}
+				optional |= load[3];
+				preprocessor_expression += load[4];
+				category += load[5];
+			}
+			if (category !== "")
+			{
+				if (current_category !== "")
+				{
+					global.dm("Category " + current_category + " finished in " + (global.System.getTickCount() - start) + "ms.");
+				}
+				current_category = category;
+				global.dm("Category " + current_category + " loading...");
+				start = global.System.getTickCount();
+				continue;
+			}
+			if (loadastype === "")
+			{
+				loadastype = global.Storages.extractStorageExt(filename);
+			}
+			if (optional !== 0)
+			{
+				if (loadastype === ".dll")
+				{
+					if (global.get_full_path_of_plugin(filename) === "")
+					{
+						continue;
+					}
+				}
+				else
+				{
+					if (!global.Storages.isExistentStorage(filename))
+					{
+						continue;
+					}
+				}
+			}
+			if (tjs_expression !== "")
+			{
+				if (!global.Scripts.eval(tjs_expression))
+				{
+					continue;
+				}
+			}
+			if (preprocessor_expression !== "")
+			{
+				if (!global.Scripts.eval(("@if(%s)\ntrue\n@endif\n").sprintf(preprocessor_expression)))
+				{
+					continue;
+				}
+			}
+			if (filename !== "")
+			{
+				if (filename.charAt(filename.length - 1) === ";")
+				{
+					try
+					{
+						global.Scripts.exec(filename);
+						global.dm("The following executed: " + filename);
+					}
+					catch (e)
+					{
+						global.dm("The following failed to execute: " + filename);
+						var exception_message = "Unknown error";
+						if (typeof(e) === "Object" && isvalid(e))
 						{
-							exception_message = e.message;
+							if (typeof(e.message) === "String")
+							{
+								exception_message = e.message;
+							}
+							global.dm("Exception: " + exception_message);
 						}
-						global.dm("Exception: " + exception_message);
-					}
-					var trace_string = global.Scripts.getTraceString();
-					if (trace_string !== "")
-					{
-						global.dm("Trace: " + trace_string);
-					}
-					throw e;
-				}
-			}
-			else
-			{
-				var start = global.System.getTickCount();
-				global.dm("Loading " + filename);
-				try
-				{
-					if (loadastype === ".ks")
-					{
-						var old_level = global.kag.conductor.debugLevel;
-						global.kag.conductor.debugLevel = global.tkdlNone;
-						global.kag.process(filename, "", false, true, true);
-						global.kag.conductor.debugLevel = old_level;
-					}
-					else if (loadastype === ".dll")
-					{
-						global.Plugins.link(filename);
-					}
-					else if (loadastype === ".tjs")
-					{
-						global.Scripts.execStorage(filename);
+						var trace_string = global.Scripts.getTraceString();
+						if (trace_string !== "")
+						{
+							global.dm("Trace: " + trace_string);
+						}
+						throw e;
 					}
 				}
-				catch (e)
+				else
 				{
+					var start = global.System.getTickCount();
+					global.dm("Loading " + filename);
+					try
+					{
+						if (loadastype === ".ks")
+						{
+							var old_level = global.kag.conductor.debugLevel;
+							global.kag.conductor.debugLevel = global.tkdlNone;
+							global.kag.process(filename, "", false, true, true);
+							global.kag.conductor.debugLevel = old_level;
+						}
+						else if (loadastype === ".dll")
+						{
+							global.Plugins.link(filename);
+						}
+						else if (loadastype === ".tjs")
+						{
+							global.Scripts.execStorage(filename);
+						}
+					}
+					catch (e)
+					{
+						var end = global.System.getTickCount();
+						global.dm(filename + " failed to load in " + (end - start) + "ms");
+						var exception_message = "Unknown error";
+						if (typeof(e) === "Object" && isvalid(e))
+						{
+							if (typeof(e.message) === "String")
+							{
+								exception_message = e.message;
+							}
+							global.dm("Exception: " + exception_message);
+						}
+						var trace_string = global.Scripts.getTraceString();
+						if (trace_string !== "")
+						{
+							global.dm("Trace: " + trace_string);
+						}
+						global.dm("Full path: " + global.Storages.getPlacedPath(filename));
+						throw e;
+					}
 					var end = global.System.getTickCount();
-					global.dm(filename + " failed to load in " + (end - start) + "ms");
-					var exception_message = "Unknown error";
-					if (typeof(e) === "Object" && isvalid(e))
-					{
-						if (typeof(e.message) === "String")
-						{
-							exception_message = e.message;
-						}
-						global.dm("Exception: " + exception_message);
-					}
-					var trace_string = global.Scripts.getTraceString();
-					if (trace_string !== "")
-					{
-						global.dm("Trace: " + trace_string);
-					}
-					global.dm("Full path: " + global.Storages.getPlacedPath(filename));
-					throw e;
+					global.dm(filename + " was loaded in " + (end - start) + "ms");
 				}
-				var end = global.System.getTickCount();
-				global.dm(filename + " was loaded in " + (end - start) + "ms");
+			}
+
+		}
+
+		/*
+			コマンドラインパラメータとして -ovr が指定されていれば
+			そのパラメータを TJS 式として実行
+		*/
+		{
+			var ovr = global.System.getArgument("-ovr");
+			if (ovr !== void && ovr !== "yes")
+			{
+				global.Scripts.eval(ovr);
 			}
 		}
 
-	}
-
-	/*
-		コマンドラインパラメータとして -ovr が指定されていれば
-		そのパラメータを TJS 式として実行
-	*/
-	{
-		var ovr = global.System.getArgument("-ovr");
-		if (ovr !== void && ovr !== "yes")
+		if (global.System.getArgument('-testexecuteonly') === "true")
 		{
-			global.Scripts.eval(ovr);
+			global.System.terminate(0);
 		}
-	}
-
-	if (global.System.getArgument('-testexecuteonly') === "true")
-	{
-		global.System.terminate(0);
-	}
-	else
-	{
-		global.kag.process("first.ks", '', true, true);
-		if (!global.kag.fullScreen)
+		else
 		{
-			global.kag.visible = true;
+			global.kag.process("first.ks", '', true, true);
+			if (!global.kag.fullScreen)
+			{
+				global.kag.visible = true;
+			}
 		}
-	}
 
-	global.dm("Reached end of initialize_patch.");
+		global.dm("Reached end of initialize_patch.");
+	}
+	catch (e)
+	{
+		if (typeof(global.exception_handler_closure) === "Object")
+		{
+			global.exception_handler_closure(e);
+			return;
+		}
+		throw e;
+	}
 };

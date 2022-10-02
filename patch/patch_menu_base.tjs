@@ -325,10 +325,16 @@ class KAGFlagFolderMenuItem extends global.KAGFlagMenuItem
 
 	function KAGFlagFolderMenuItem(window, name, group=0, flag, patchNames=void, folderNames=void, inverseFolderNames=void, languageSpecific=true, restart=false)
 	{
+		// In non-dev mode, some patchNames will be empty strings (since global.mainPatchName will be an empty string):
+		// mobileBreakGlyphsPatchName, mobileWindowPatchName, wideWindowPatchName, wideMobileWindowPatchName, maturePatchName
+		// We can not just set patchNames to void in this case, since in non-dev mode this will prevent subfolders
+		// in patch.xp3 from being processed in loadFolders()/unloadFolders().
+		/*
 		if (patchNames === "")
 		{
 			patchNames = void;
 		}
+		*/
 		if (folderNames === "")
 		{
 			folderNames = void;
@@ -480,7 +486,6 @@ class KAGFlagFolderMenuItem extends global.KAGFlagMenuItem
 			invalidate patches_arr;
 			delete patches_arr;
 		}
-
 	}
 
 	function loadAllFolders(firstTime=false)

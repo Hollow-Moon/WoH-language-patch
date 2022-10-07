@@ -16,31 +16,36 @@ class KAGWindow_patch_store_bookmarkdate_as_epoch_override extends global.KAGWin
 
 	function getFormatDate(datetime)
 	{
-		var date = new global.Date();
-		date.setTime(datetime);
-		date = global.strftime(global.__("%Y/%m/%d %H:%M:%S"), date);
+		var date = global.strftime(global.__("%Y/%m/%d %H:%M:%S"), datetime);
 		return date;
 	}
 
 	function getBookMarkDate(num, formated=true)
 	{
-		var date = this.bookMarkEpochDates[num];
-		if (formated)
+		var epochDate = this.bookMarkEpochDates[num];
+		var date;
+
+		if (!formated)
 		{
-			if (date == void)
-			{
-				date = this.bookMarkDates[num];
-			}
-			if (date != void)
-			{
-				return this.getFormatDate(date);
-			}
-			else
-			{
-				return void;
-			}
+			return epochDate;
 		}
-		return date;
+
+		if (epochDate !== void)
+		{
+			date = new global.Date();
+			date.setTime(epochDate);
+			return this.getFormatDate(date);
+		}
+
+		var legacyDate = this.bookMarkDates[num];
+		var re = new global.RegExp("^(\\d{4})/(\\d{2})/(\\d{2}) (\\d{2}):(\\d{2})$");
+		var match = re.match(legacyDate);
+		if (match.count > 0)
+		{
+			date = new global.Date(legacyDate);
+			return this.getFormatDate(date);
+		}
+		return legacyDate;
 	}
 
 	function getBookMarkInfoFromData(dic, num)

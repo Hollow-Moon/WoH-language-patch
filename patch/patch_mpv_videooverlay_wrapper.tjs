@@ -128,6 +128,10 @@ class VideoOverlay
 		mp.set_property("reset-on-next-file", "pause");
 		mp.set_property("ontop", "yes");
 		mp.set_property("gpu-sw", "yes");
+		if (typeof(global.iswine) === "Integer" && global.iswine)
+		{
+			mp.set_property("gpu-api", "opengl");
+		}
 @if(0)
 		mp.enable_messages("debug");
 @endif

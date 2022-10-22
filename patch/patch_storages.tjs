@@ -345,6 +345,43 @@
 		}
 	}
 
+	// Gather Mark of the Web contents
+	global.paths_base_dirlist_zone_identifier = %[];
+	var paths_base_dirlist_zone_identifier = global.paths_base_dirlist_zone_identifier;
+
+	{
+		var dirlist_base_arr = [];
+		dirlist_base_arr.assign(paths_base_dirlist);
+		for (var i = 0; i < dirlist_base_arr.count; i += 2)
+		{
+			var dirlist_base_arr2 = [];
+			dirlist_base_arr2.assign(dirlist_base_arr[i + 1]);
+
+			var dirlist_base_arr2_key = %[];
+			paths_base_dirlist_zone_identifier[dirlist_base_arr[i]] = dirlist_base_arr2_key;
+
+			for (var j = 0; j < dirlist_base_arr2.count; j += 2)
+			{
+				var filelist_ex = %[];
+				dirlist_base_arr2_key[dirlist_base_arr2[j]] = filelist_ex;
+
+				var filelist = dirlist_base_arr2[j + 1];
+				for (var k = 0; k < filelist.count; k += 1)
+				{
+					var file = filelist[k];
+					var file_zone_identifier = file + ":zone.identifier";
+					if (global.Storages.isExistentStorage(file_zone_identifier))
+					{
+						var file_contents = [];
+						file_contents.load(file_zone_identifier);
+						filelist_ex[file] = file_contents;
+					}
+				}
+			}
+
+		}
+	}
+
 	if (typeof(global.Storages.dirlistEx) === "Object")
 	{
 		global.paths_base_dirlistex = %[];

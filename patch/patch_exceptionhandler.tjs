@@ -355,6 +355,21 @@ global.get_exception_files = function()
 
 		if (success) try
 		{
+			if (typeof(global.paths_base_dirlist_zone_identifier) === "Object")
+			{
+				var structure = global.paths_base_dirlist_zone_identifier;
+				var filename = dir_unarchived + "paths_base_dirlist_zone_identifier.ksc";
+				(global.Dictionary.saveStruct incontextof structure)(filename, "z");
+				exception_files.add(filename);
+			}
+		}
+		catch (e)
+		{
+			global.print_exception(e, "saving the Mark of the Web contents for each file");
+		}
+
+		if (success) try
+		{
 			if (typeof(global.paths_base_dirlistex) === "Object")
 			{
 				var structure = global.paths_base_dirlistex;

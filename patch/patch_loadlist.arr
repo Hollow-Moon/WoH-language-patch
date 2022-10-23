@@ -175,6 +175,7 @@
 	["CharacterLayer.override.tjs", ,,, "GAME_WOHN"],
 	["KAGWindow.override.tjs", ,,, "GAME_WOHN"],
 	["HistoryLayer.override.tjs", ,,, "GAME_WOHN"],
+	"patch_last_text_on_clipboard.tjs",
 	["patch_discord_rich_presence.tjs", , [["DiscordRPC", , "==="]],, "1"],
 	["patch_textruby.tjs", ,,, "GAME_FATE||GAME_FHAT"],
 	"patch_italictag.tjs",

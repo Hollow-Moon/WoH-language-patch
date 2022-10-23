@@ -954,6 +954,7 @@ global.addOptionsMenu = function(patchMenu)
 	var vitaMovieMenuFlag = new global.GameFlag(this, this.sflags, "movieMenuPatch", global.get_opPatchExists(this));
 	var vitaAboutFlag = new global.GameFlag(this, this.sflags, "aboutPatch", global.get_vitaPatchExists(this));
 	var moveMouseWithControllerFlag = new global.GameFlag(this, this.sflags, "moveMouseWithController", true);
+	var copyLastTextToClipboardFlag = new global.GameFlag(this, this.sflags, "copyLastTextToClipboard", false);
 
 	patchMenu.add(this.patchOptionsMenuItem = new global.KAGMenuItem(this, global.__t("設定(&O)"), 0, void, false));
 
@@ -976,6 +977,7 @@ global.addOptionsMenu = function(patchMenu)
 	this.patchOptionsMenuItem.add(this.showLogoMenuItem = new global.KAGFlagMenuItem(this, global.__t("起動時にTYPE-MOONロゴを表示する"),, showLogoFlag));
 	this.patchOptionsMenuItem.add(this.showHoverTipsMenuItem = new global.KAGFlagMenuItem(this, global.__t("ツールチップを表示する"),, showHoverTipsFlag));
 	this.patchOptionsMenuItem.add(this.moveMouseWithControllerMenuItem = new global.KAGFlagMenuItem(this, global.__t("コントローラーでマウスを動かす"),, moveMouseWithControllerFlag));
+	this.patchOptionsMenuItem.add(this.copyLastTextToClipboardMenuItem = new global.KAGFlagMenuItem(this, global.__t("最後のテキストをクリップボードにコピー"),, copyLastTextToClipboardFlag));
 	(global.addOptionsMenuItems incontextof this)(this.patchOptionsMenuItem);
 };
 

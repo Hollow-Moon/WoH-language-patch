@@ -1,0 +1,103 @@
+﻿
+global.KAGWindow_patch_last_text_on_clipboard_original = global.KAGWindow;
+class KAGWindow_patch_last_text_on_clipboard_override extends global.KAGWindow_patch_last_text_on_clipboard_original
+{
+	function KAGWindow_patch_last_text_on_clipboard_override()
+	{
+		super.KAGWindow(...);
+	}
+
+	function KAGWindow()
+	{
+		this.KAGWindow_patch_last_text_on_clipboard_override(...);
+	}
+
+	var patch_last_text_on_clipboard_currently_stored_text = "";
+
+	function patch_last_text_on_clipboard_deposit_text()
+	{
+		if (this.patch_last_text_on_clipboard_currently_stored_text !== "")
+		{
+			if (this.sflags.copyLastTextToClipboard)
+			{
+				if (typeof(global.Clipboard) === "Object")
+				{
+					var cb = global.Clipboard;
+					var at = &cb.asText;
+					if (typeof(at) === "Object")
+					{
+						try
+						{
+							*at = this.patch_last_text_on_clipboard_currently_stored_text;
+						}
+						catch (e)
+						{
+							/* pass */
+						}
+					}
+				}
+			}
+			this.patch_last_text_on_clipboard_currently_stored_text = "";
+		}
+	}
+
+	function patch_last_text_on_clipboard_append_text(text)
+	{
+		if (typeof(text) === "String")
+		{
+			this.patch_last_text_on_clipboard_currently_stored_text += text;		
+		}
+	}
+}
+global.KAGWindow = global.KAGWindow_patch_last_text_on_clipboard_override;
+
+
+global.MessageLayer_patch_last_text_on_clipboard_original = global.MessageLayer;
+class MessageLayer_patch_last_text_on_clipboard_override extends global.MessageLayer_patch_last_text_on_clipboard_original
+{
+	function MessageLayer_patch_last_text_on_clipboard_override()
+	{
+		super.MessageLayer(...);
+	}
+
+	function MessageLayer()
+	{
+		this.MessageLayer_patch_last_text_on_clipboard_override(...);
+	}
+
+	function showBreakGlyph()
+	{
+		var ret = super.showBreakGlyph(...);
+		if (typeof(this.window) === "Object" && this.window != null && typeof(this.window.patch_last_text_on_clipboard_deposit_text) === "Object")
+		{
+			this.window.patch_last_text_on_clipboard_deposit_text();
+		}
+		return ret;
+	}
+}
+global.MessageLayer = global.MessageLayer_patch_last_text_on_clipboard_override;
+
+global.HistoryLayer_patch_last_text_on_clipboard_original = global.HistoryLayer;
+class HistoryLayer_patch_last_text_on_clipboard_override extends global.HistoryLayer_patch_last_text_on_clipboard_original
+{
+	function HistoryLayer_patch_last_text_on_clipboard_override()
+	{
+		super.HistoryLayer(...);
+	}
+
+	function HistoryLayer()
+	{
+		this.HistoryLayer_patch_last_text_on_clipboard_override(...);
+	}
+
+	function store(ch)
+	{
+		var ret = super.store(...);
+		if (typeof(this.window) === "Object" && this.window != null && typeof(this.window.patch_last_text_on_clipboard_append_text) === "Object")
+		{
+			this.window.patch_last_text_on_clipboard_append_text(ch);
+		}
+		return ret;
+	}
+}
+global.HistoryLayer = global.HistoryLayer_patch_last_text_on_clipboard_override;

@@ -85,7 +85,13 @@ class SESoundBuffer extends WaveSoundBuffer
 				found = false;
 		}
 		if(!found)
+		{
+@if(0)
 			throw new Exception(__("効果音 %s が見つかりません").sprintf(storage));
+@endif
+			dm(__("効果音 %s が見つかりません").sprintf(storage));
+			return;
+		}
 		var loop = elm.loop === void ? false : +elm.loop;
 		looping = loop;
 		if(loop)

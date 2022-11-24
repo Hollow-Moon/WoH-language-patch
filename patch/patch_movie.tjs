@@ -3,16 +3,24 @@ global.setMovieToWindowSize = function(video, kag=global.kag, window=global.kag)
 {
 	if(kag.fullScreened)
 	{
+@if(HD_MODE)
 		video.window.absoluteMode += 1;
+@endif
 		video.setBounds(0, 0, global.System.screenWidth, global.System.screenHeight);
+@if(HD_MODE)
 		video.window.absoluteMode -= 1;
+@endif
 	}
 	else
 	{
 		var clientRect = kag.getClientRect();
+@if(HD_MODE)
 		video.window.absoluteMode += 1;
+@endif
 		video.setBounds(0, 0, clientRect.w, clientRect.h);
+@if(HD_MODE)
 		video.window.absoluteMode -= 1;
+@endif
 	}
 };
 

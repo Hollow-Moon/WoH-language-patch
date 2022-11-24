@@ -199,11 +199,9 @@ global.SetWindowControlMenu = function(win, min, max, res, cls)
 global.KAGWindow_patch_zoom_window_original = KAGWindow;
 class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_original
 {
-@if(ZOOM_WINDOW)
 	var exWidth, exHeight; // 拡張画面サイズ⇒sysbase/fore.base/back.baseレイヤサイズ
 	var pxWidth, pxHeight; // 現在のサイズ（sc～exまでの値）
 	var exEventEnabled = false;
-@endif
 
 	function KAGWindow_patch_zoom_window_override()
 	{
@@ -377,7 +375,6 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 		}
 	}
 
-@if(ZOOM_WINDOW)
 	//------------------------------------------ フルスクリーン・ズーム処理 --
 
 	property fullScreenMode { getter {
@@ -1294,9 +1291,7 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 		this.fullScreen = true;
 		this.removeHook("afterChangeScreenMode", fullScreenAfterChangeScreenMode);
 	}
-@endif
 
-@if(ZOOM_WINDOW)
 	function onWindowSizeMenuItemClick(sender, w)
 	{
 		if(!w)
@@ -1348,18 +1343,13 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 	if(typeof this.limitWindowSizeMenuItem === "Object")
 		this.limitWindowSizeMenuItem.checked = limitWindowSize;
 	}
-@endif
 
 	function setSystemStateFromSystemVariables()
 	{
 		super.setSystemStateFromSystemVariables();
-@if(ZOOM_WINDOW)
 		windowResizeable = scflags.windowResizeable !== void ? scflags.windowResizeable : false;
 		limitWindowSize = scflags.limitWindowSize !== void ? scflags.limitWindowSize : true;
-@endif
-@if(ZOOM_WINDOW)
 		changeMenuBarState(scflags.menuBarState !== void ? scflags.menuBarState : defaultMenuBarState);
-@endif
 	}
 
 @if(GAME_WOHN)

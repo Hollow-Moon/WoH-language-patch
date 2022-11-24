@@ -1,5 +1,7 @@
 ﻿
 global.image_extensions = [".jxl", ".webp", ".png", ".tlg", ".jpg", ".bmp"];
+global.scaleFactor = 1;
+global.wideFactor = 1;
 
 global.chop_image_extension = function(storage)
 {
@@ -297,6 +299,10 @@ global.Layer = global.Layer_patch_layer_override;
 global.Window_patch_layer_original	= global.Window;
 class Window_patch_layer_override extends global.Window_patch_layer_original
 {
+@if(!ZOOM_WINDOW)
+	var pxWidth, pxHeight;
+@endif
+
 	function Window_patch_layer_override()
 	{
 		super.Window(...);

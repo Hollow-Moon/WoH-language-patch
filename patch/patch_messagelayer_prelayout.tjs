@@ -1,6 +1,57 @@
 ﻿
 @set(PRELAYOUT_DEBUG=0)
 
+{
+	global.patch_messagelayer_prelayout_handle_conductor_event_tagname = "__patch_prelayout_handle_conductor_event";
+}
+
+{
+	global.add_kag_window_tag_handler(global.patch_messagelayer_prelayout_handle_conductor_event_tagname, function(elm)
+	{
+		if (elm.event_name === "ScenarioLoad")
+		{
+			this.onConductorScenarioLoad(elm.name);
+		}
+		else if (elm.event_name === "ScenarioLoaded")
+		{
+			this.onConductorScenarioLoaded(elm.name);
+		}
+		else if (elm.event_name === "Label")
+		{
+			this.onConductorLabel(elm.label, elm.page);
+		}
+		else if (elm.event_name === "Jump")
+		{
+			this.onConductorJump(elm.elm);
+		}
+		else if (elm.event_name === "Call")
+		{
+			this.onConductorCall(elm.elm);
+		}
+		else if (elm.event_name === "Return")
+		{
+			this.onConductorReturn(elm.elm);
+		}
+		else if (elm.event_name === "AfterReturn")
+		{
+			this.onConductorAfterReturn();
+		}
+		else if (elm.event_name === "Script")
+		{
+			this.onConductorScript(elm.script, elm.scriptname, elm.lineofs);
+		}
+		else if (elm.event_name === "UnknownTag")
+		{
+			this.onConductorUnknownTag(elm.arg_tagname, elm.elm);
+		}
+		else
+		{
+			throw new global.Exception("Unknown event_name");
+		}
+		return 0;
+	});
+}
+
 global.KAGWindow_patch_messagelayer_prelayout_original = global.KAGWindow;
 class KAGWindow_patch_messagelayer_prelayout_override extends global.KAGWindow_patch_messagelayer_prelayout_original
 {
@@ -206,6 +257,187 @@ class KAGWindow_patch_messagelayer_prelayout_override extends global.KAGWindow_p
 			ret2.tagname = "patch_messagelayer_prelayout_exec";
 			conductor.pendings.insert(0, ret2);
 		}
+	}
+
+	function onConductorScenarioLoad(name)
+	{
+		var ret = true;
+		if (this.current.in_prelayout_mode)
+		{
+			var tag_struct = %[];
+			tag_struct.tagname = global.patch_messagelayer_prelayout_handle_conductor_event_tagname;
+			tag_struct.event_name = "ScenarioLoad";
+			tag_struct.name = name;
+			this.conductor.queueTag(0, tag_struct);
+		}
+		else
+		{
+			ret = super.onConductorScenarioLoad(...);
+		}
+		return ret;
+	}
+
+	function onConductorScenarioLoaded(name)
+	{
+		var ret = true;
+		if (this.current.in_prelayout_mode)
+		{
+			var tag_struct = %[];
+			tag_struct.tagname = global.patch_messagelayer_prelayout_handle_conductor_event_tagname;
+			tag_struct.event_name = "ScenarioLoaded";
+			tag_struct.name = name;
+			this.conductor.queueTag(0, tag_struct);
+		}
+		else
+		{
+			ret = super.onConductorScenarioLoaded(...);
+		}
+		return ret;
+	}
+
+	function onConductorLabel(label, page)
+	{
+		var ret = true;
+		if (this.current.in_prelayout_mode)
+		{
+			var tag_struct = %[];
+			tag_struct.tagname = global.patch_messagelayer_prelayout_handle_conductor_event_tagname;
+			tag_struct.event_name = "Label";
+			tag_struct.label = label;
+			tag_struct.page = page;
+			this.conductor.queueTag(0, tag_struct);
+		}
+		else
+		{
+			ret = super.onConductorLabel(...);
+		}
+		return ret;
+	}
+
+	function onConductorJump(elm)
+	{
+		var ret = true;
+		if (this.current.in_prelayout_mode)
+		{
+			var tag_struct = %[];
+			tag_struct.tagname = global.patch_messagelayer_prelayout_handle_conductor_event_tagname;
+			tag_struct.event_name = "Jump";
+			{
+				var elm_clone = %[];
+				(global.Dictionary.assign incontextof elm_clone)(elm);
+				tag_struct.elm = elm_clone;
+			}
+			this.conductor.queueTag(0, tag_struct);
+		}
+		else
+		{
+			ret = super.onConductorJump(...);
+		}
+		return ret;
+	}
+
+	function onConductorCall(elm)
+	{
+		var ret = true;
+		if (this.current.in_prelayout_mode)
+		{
+			var tag_struct = %[];
+			tag_struct.tagname = global.patch_messagelayer_prelayout_handle_conductor_event_tagname;
+			tag_struct.event_name = "Call";
+			{
+				var elm_clone = %[];
+				(global.Dictionary.assign incontextof elm_clone)(elm);
+				tag_struct.elm = elm_clone;
+			}
+			this.conductor.queueTag(0, tag_struct);
+		}
+		else
+		{
+			ret = super.onConductorCall(...);
+		}
+		return ret;
+	}
+
+	function onConductorReturn(elm)
+	{
+		var ret = true;
+		if (this.current.in_prelayout_mode)
+		{
+			var tag_struct = %[];
+			tag_struct.tagname = global.patch_messagelayer_prelayout_handle_conductor_event_tagname;
+			tag_struct.event_name = "Return";
+			{
+				var elm_clone = %[];
+				(global.Dictionary.assign incontextof elm_clone)(elm);
+				tag_struct.elm = elm_clone;
+			}
+			this.conductor.queueTag(0, tag_struct);
+		}
+		else
+		{
+			ret = super.onConductorReturn(...);
+		}
+		return ret;
+	}
+
+	function onConductorAfterReturn()
+	{
+		var ret = true;
+		if (this.current.in_prelayout_mode)
+		{
+			var tag_struct = %[];
+			tag_struct.tagname = global.patch_messagelayer_prelayout_handle_conductor_event_tagname;
+			tag_struct.event_name = "AfterReturn";
+			this.conductor.queueTag(0, tag_struct);
+		}
+		else
+		{
+			ret = super.onConductorAfterReturn(...);
+		}
+		return ret;
+	}
+
+	function onConductorScript(script, scriptname, lineofs)
+	{
+		var ret = true;
+		if (this.current.in_prelayout_mode)
+		{
+			var tag_struct = %[];
+			tag_struct.tagname = global.patch_messagelayer_prelayout_handle_conductor_event_tagname;
+			tag_struct.event_name = "Script";
+			tag_struct.script = script;
+			tag_struct.scriptname = scriptname;
+			tag_struct.lineofs = lineofs;
+			this.conductor.queueTag(0, tag_struct);
+		}
+		else
+		{
+			ret = super.onConductorScript(...);
+		}
+		return ret;
+	}
+
+	function onConductorUnknownTag(tagname, elm)
+	{
+		var ret = 0;
+		if (this.current.in_prelayout_mode)
+		{
+			var tag_struct = %[];
+			tag_struct.tagname = global.patch_messagelayer_prelayout_handle_conductor_event_tagname;
+			tag_struct.event_name = "UnknownTag";
+			tag_struct.arg_tagname = tagname;
+			{
+				var elm_clone = %[];
+				(global.Dictionary.assign incontextof elm_clone)(elm);
+				tag_struct.elm = elm_clone;
+			}
+			this.conductor.queueTag(0, tag_struct);
+		}
+		else
+		{
+			ret = super.onConductorUnknownTag(...);
+		}
+		return ret;
 	}
 }
 global.KAGWindow = global.KAGWindow_patch_messagelayer_prelayout_override;
@@ -761,4 +993,3 @@ class MessageLayer_patch_messagelayer_prelayout_override extends global.MessageL
 
 }
 global.MessageLayer = global.MessageLayer_patch_messagelayer_prelayout_override;
-

@@ -300,6 +300,14 @@ class TextDrawer
 		this.drawCenteredEntry(layer, storage, settings);
 	}
 
+	function drawTitleMenuButtons(layer, storage)
+	{
+		global.titleMenuButtonsSettings = global.getTitleMenuButtonsSettings(storage);
+		for (var i = 0, internal_forloop_count = global.titleMenuButtonsSettings.count; i < internal_forloop_count; i += 1) {
+			this.drawCenteredEntry(layer, storage, global.titleMenuButtonsSettings[i]);
+		}
+	}
+
 	function drawExtraButtons(layer, storage)
 	{
 		global.extraMenuButtonsSettings = global.getExtraMenuButtonsSettings();

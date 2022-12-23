@@ -103,6 +103,13 @@ class Layer_patch_textdrawer_override_override extends global.Layer_patch_textdr
 				this.in_text_drawer = false;
 				return;
 			}
+			if (this instanceof "TitleMenuButtonLayer")
+			{
+				this.in_text_drawer = true;
+				this.getTextDrawer().drawTitleMenuButtons(this, storage);
+				this.in_text_drawer = false;
+				return;
+			}
 			if (this instanceof "ExButtonLayer")
 			{
 				this.in_text_drawer = true;

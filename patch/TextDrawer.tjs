@@ -40,6 +40,7 @@ class TextualSettings
 	var fontFace;
 	var fontBold = false;
 	var fontItalic = false;
+	var letterSpace=0;
 	var lineSpace=0;
 	var paragraphSpace=0;
 	var maxHeight;
@@ -478,10 +479,22 @@ class TextDrawer
 	}
 
 	function drawText(layer, x, y, text, settings) {
-		if (settings.glow) {
-			layer.drawText(x, y, text, settings.glowColor, settings.glowOpacity,, settings.glowStrength, settings.glowColor, settings.glowSize, 0, 0);
+		if (settings.letterSpace > 0) {
+			var currentX = x;
+			for (var i=0; i < text.length; i++) {
+				var character = text[i];
+				if (settings.glow) {
+					layer.drawText(currentX, y, character, settings.glowColor, settings.glowOpacity,, settings.glowStrength, settings.glowColor, settings.glowSize, 0, 0);
+				}
+				layer.drawText(currentX, y, character, settings.color, settings.opacity,,settings.shadowOpacity, settings.shadowColor, settings.shadowWidth, settings.shadowOffsetX, settings.shadowOffsetY);
+				currentX += layer.font.getTextWidth(character) + settings.letterSpace;
+			}
+		} else {
+			if (settings.glow) {
+				layer.drawText(x, y, text, settings.glowColor, settings.glowOpacity,, settings.glowStrength, settings.glowColor, settings.glowSize, 0, 0);
+			}
+			layer.drawText(x, y, text, settings.color, settings.opacity,,settings.shadowOpacity, settings.shadowColor, settings.shadowWidth, settings.shadowOffsetX, settings.shadowOffsetY);
 		}
-		layer.drawText(x, y, text, settings.color, settings.opacity,,settings.shadowOpacity, settings.shadowColor, settings.shadowWidth, settings.shadowOffsetX, settings.shadowOffsetY);
 	}
 
 	function getTextHeight(paragraphs, textSettings, font) {
@@ -498,13 +511,10 @@ class TextDrawer
 
 	function getXByAlignment(layer, textSettings, text) {
 		var x;
-		{
-			var l = layer;
-			if (textSettings.alignment == "center") {
-				x = textSettings.leftOffset+(l.imageWidth - textSettings.horizontalOffset - l.font.getTextWidth(text))/2;
-			} else if (textSettings.alignment == "left") {
-				x = textSettings.leftOffset;
-			}
+		if (textSettings.alignment == "center") {
+			x = textSettings.leftOffset+(layer.imageWidth - textSettings.horizontalOffset - layer.font.getTextWidth(text) - textSettings.letterSpace * (text.length - 1)) / 2;
+		} else if (textSettings.alignment == "left") {
+			x = textSettings.leftOffset;
 		}
 		return x;
 	}
@@ -562,7 +572,7 @@ class TextDrawer
 
 				this.setFontFromSettings(l.font, settings.title);
 
-				var titleX = settings.title.leftOffset + (longestTitleWidth - l.font.getTextWidth(title))/2;
+				var titleX = settings.title.leftOffset + (longestTitleWidth - l.font.getTextWidth(title) - settings.title.letterSpace * (title.length - 1)) / 2;
 				var titleY = i*(abilityHeight+settings.distanceBetweenEntries) + (abilityHeight-l.font.height)/2 + settings.abilityTopOffset*-(abilities.count-2);
 				l.drawText(titleX, titleY, title, settings.title.color,,, settings.title.shadowOpacity, settings.title.shadowColor, settings.title.shadowWidth, settings.title.shadowOffsetX, settings.title.shadowOffsetY);
 

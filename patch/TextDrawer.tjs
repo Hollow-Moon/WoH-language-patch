@@ -433,8 +433,7 @@ class TextDrawer
 					this.setFontFromSettings(l.font, settings.rubyTitle);
 					var titleX = this.getXByAlignment(layer, settings.rubyTitle, titleRuby);
 
-					this.drawTextGlow(settings.title, titleX, titleY, titleRuby, layer);
-					l.drawText(titleX, titleY, titleRuby, settings.title.color);
+					this.drawText(layer, titleX, titleY, titleRuby, settings.title);
 					titleY += l.font.height + settings.title.lineSpace;
 				}
 
@@ -466,29 +465,29 @@ class TextDrawer
 	}
 
 	function drawLines(layer, y, lines, textSettings) {
-		{
-			var l = layer;
-			for (var i = 0, internal_forloop_count = lines.count; i < internal_forloop_count; i += 1) {
-				var x = this.getXByAlignment(layer, textSettings, lines[i]);
-
-				this.drawTextGlow(textSettings, x, y, lines[i], layer);
-				l.drawText(x, y, lines[i], textSettings.color, textSettings.opacity,,textSettings.shadowOpacity, textSettings.shadowColor, textSettings.shadowWidth, textSettings.shadowOffsetX, textSettings.shadowOffsetY);
-				y += l.font.height;
-				if (i < lines.count-1) {
-					y += textSettings.lineSpace;
-				}
+		for (var i = 0, internal_forloop_count = lines.count; i < internal_forloop_count; i += 1) {
+			var x = this.getXByAlignment(layer, textSettings, lines[i]);
+			this.drawText(layer, x, y, lines[i], textSettings);
+			y += layer.font.height;
+			if (i < lines.count-1) {
+				y += textSettings.lineSpace;
 			}
 		}
+		
 		return y;
 	}
 
 	function drawTextGlow(textSettings, x, y, text, layer) {
-		{
-			var l = layer;
-			if (textSettings.glow) {
-				l.drawText(x, y, text, textSettings.glowColor, textSettings.glowOpacity,, textSettings.glowStrength, textSettings.glowColor, textSettings.glowSize, 0, 0);
-			}
+		if (textSettings.glow) {
+			layer.drawText(x, y, text, textSettings.glowColor, textSettings.glowOpacity,, textSettings.glowStrength, textSettings.glowColor, textSettings.glowSize, 0, 0);
 		}
+	}
+
+	function drawText(layer, x, y, text, settings) {
+		if (settings.glow) {
+			layer.drawText(x, y, text, settings.glowColor, settings.glowOpacity,, settings.glowStrength, settings.glowColor, settings.glowSize, 0, 0);
+		}
+		layer.drawText(x, y, text, settings.color, settings.opacity,,settings.shadowOpacity, settings.shadowColor, settings.shadowWidth, settings.shadowOffsetX, settings.shadowOffsetY);
 	}
 
 	function getTextHeight(paragraphs, textSettings, font) {

@@ -91,6 +91,10 @@ class KAGWindow_patch_messagelayer_prelayout_override extends global.KAGWindow_p
 	function patch_messagelayer_prelayout_preprocess_ch_completion(conductor, elm)
 	{
 		// Don't need to call recursively, already performing loop
+		if (!isvalid(this.current))
+		{
+			return;
+		}
 		if (this.current.in_prelayout_mode)
 		{
 			return;
@@ -262,7 +266,7 @@ class KAGWindow_patch_messagelayer_prelayout_override extends global.KAGWindow_p
 	function onConductorScenarioLoad(name)
 	{
 		var ret = true;
-		if (this.current.in_prelayout_mode)
+		if (isvalid(this.current) && this.current.in_prelayout_mode)
 		{
 			var tag_struct = %[];
 			tag_struct.tagname = global.patch_messagelayer_prelayout_handle_conductor_event_tagname;
@@ -280,7 +284,7 @@ class KAGWindow_patch_messagelayer_prelayout_override extends global.KAGWindow_p
 	function onConductorScenarioLoaded(name)
 	{
 		var ret = true;
-		if (this.current.in_prelayout_mode)
+		if (isvalid(this.current) && this.current.in_prelayout_mode)
 		{
 			var tag_struct = %[];
 			tag_struct.tagname = global.patch_messagelayer_prelayout_handle_conductor_event_tagname;
@@ -298,7 +302,7 @@ class KAGWindow_patch_messagelayer_prelayout_override extends global.KAGWindow_p
 	function onConductorLabel(label, page)
 	{
 		var ret = true;
-		if (this.current.in_prelayout_mode)
+		if (isvalid(this.current) && this.current.in_prelayout_mode)
 		{
 			var tag_struct = %[];
 			tag_struct.tagname = global.patch_messagelayer_prelayout_handle_conductor_event_tagname;
@@ -317,7 +321,7 @@ class KAGWindow_patch_messagelayer_prelayout_override extends global.KAGWindow_p
 	function onConductorJump(elm)
 	{
 		var ret = true;
-		if (this.current.in_prelayout_mode)
+		if (isvalid(this.current) && this.current.in_prelayout_mode)
 		{
 			var tag_struct = %[];
 			tag_struct.tagname = global.patch_messagelayer_prelayout_handle_conductor_event_tagname;
@@ -339,7 +343,7 @@ class KAGWindow_patch_messagelayer_prelayout_override extends global.KAGWindow_p
 	function onConductorCall(elm)
 	{
 		var ret = true;
-		if (this.current.in_prelayout_mode)
+		if (isvalid(this.current) && this.current.in_prelayout_mode)
 		{
 			var tag_struct = %[];
 			tag_struct.tagname = global.patch_messagelayer_prelayout_handle_conductor_event_tagname;
@@ -361,7 +365,7 @@ class KAGWindow_patch_messagelayer_prelayout_override extends global.KAGWindow_p
 	function onConductorReturn(elm)
 	{
 		var ret = true;
-		if (this.current.in_prelayout_mode)
+		if (isvalid(this.current) && this.current.in_prelayout_mode)
 		{
 			var tag_struct = %[];
 			tag_struct.tagname = global.patch_messagelayer_prelayout_handle_conductor_event_tagname;
@@ -383,7 +387,7 @@ class KAGWindow_patch_messagelayer_prelayout_override extends global.KAGWindow_p
 	function onConductorAfterReturn()
 	{
 		var ret = true;
-		if (this.current.in_prelayout_mode)
+		if (isvalid(this.current) && this.current.in_prelayout_mode)
 		{
 			var tag_struct = %[];
 			tag_struct.tagname = global.patch_messagelayer_prelayout_handle_conductor_event_tagname;
@@ -400,7 +404,7 @@ class KAGWindow_patch_messagelayer_prelayout_override extends global.KAGWindow_p
 	function onConductorScript(script, scriptname, lineofs)
 	{
 		var ret = true;
-		if (this.current.in_prelayout_mode)
+		if (isvalid(this.current) && this.current.in_prelayout_mode)
 		{
 			var tag_struct = %[];
 			tag_struct.tagname = global.patch_messagelayer_prelayout_handle_conductor_event_tagname;
@@ -420,7 +424,7 @@ class KAGWindow_patch_messagelayer_prelayout_override extends global.KAGWindow_p
 	function onConductorUnknownTag(tagname, elm)
 	{
 		var ret = 0;
-		if (this.current.in_prelayout_mode)
+		if (isvalid(this.current) && this.current.in_prelayout_mode)
 		{
 			var tag_struct = %[];
 			tag_struct.tagname = global.patch_messagelayer_prelayout_handle_conductor_event_tagname;

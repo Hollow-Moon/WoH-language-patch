@@ -237,10 +237,10 @@ class Window_hint_override extends global.Window_hint_original
 			// Recalculate size of font and tip box
 
 			var fontSizeRatio = 1.0;
+			var fontHeightBase = global.__si("9", "hint_fontHeightBase");
 
 			fontSizeRatio /= global.Math.min(1, pxHeight_abs/pxHeight);	// If the absolute window size on screen gets small, the fontSizeRatio will increase, leading to a bigger font
-
-			this.hintlayer.font.height = global.Math.ceil(9 * fontSizeRatio);	// "Ceil" because erring on the side of a bigger font is preferable
+			this.hintlayer.font.height = global.Math.ceil(fontHeightBase * fontSizeRatio);	// "Ceil" because erring on the side of a bigger font is preferable
 
 			var fontHeight = this.hintlayer.font.height;						// Retrieve it again - it might have been modified while setting!
 

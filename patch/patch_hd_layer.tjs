@@ -31,10 +31,10 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 	var _top = 0;
 	var _imageLeft = 0;
 	var _imageTop = 0;
-	var _width = 32;
-	var _height = 32;
-	var _imageWidth = 32;
-	var _imageHeight = 32;
+	var _width = void;
+	var _height = void;
+	var _imageWidth = void;
+	var _imageHeight = void;
 	var _clipLeft = 0;
 	var _clipTop = 0;
 	var _clipWidth = void;
@@ -122,10 +122,9 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 		this.Layer_patch_hd_layer_override(...);
 	}
 
-	// TODO find some other check than 32 (i.e. store some variable if setImageSize or LoadImages are called)
 	property widthForScale {
 		getter {
-			var w = this._width != 32? this._width : this._imageWidth;
+			var w = this._width !== void? this._width : this._imageWidth;
 			if (["Integer", "Real"].find(typeof(this.correctleft)) !== -1) {
 				w -= 2 * this.correctleft;
 			}
@@ -133,13 +132,13 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 		}
 	}
 	property widthForScaleOriginal { getter { return this.scaleWidth(this.widthForScale); } }
-	property heightForScale { getter { return this._height != 32? this._height : this._imageHeight;  }}
+	property heightForScale { getter { return this._height !== void? this._height : this._imageHeight;  }}
 	property heightForScaleOriginal { getter { return this.scaleHeight(this.heightForScale); } }
 
-	property widthForScaleInside { getter { return this.hasImage && this._imageWidth != 32? this._imageWidth : (this._width != 32? this._width : global.originalResWidth); } }
-	property widthForScaleInsideOriginal { getter { return this.hasImage && this._imageWidth != 32? this.imageWidthOriginal : (this.widthOriginal != 32? this.widthOriginal : this.window.scaleWidth(global.originalResWidth)); } }
-	property heightForScaleInside { getter { return this.hasImage && this._imageHeight != 32? this._imageHeight : (this._height != 32? this._height : global.originalResHeight);  }}
-	property heightForScaleInsideOriginal { getter { return this.hasImage && this._imageHeight != 32? this.imageHeightOriginal : (this.heightOriginal != 32? this.heightOriginal : this.window.scaleHeight(global.originalResHeight)); } }
+	property widthForScaleInside { getter { return this.hasImage && this._imageWidth !== void? this._imageWidth : (this._width !== void? this._width : global.originalResWidth); } }
+	property widthForScaleInsideOriginal { getter { return this.hasImage && this._imageWidth !== void? this.imageWidthOriginal : (this.widthOriginal !== void? this.widthOriginal : this.window.scaleWidth(global.originalResWidth)); } }
+	property heightForScaleInside { getter { return this.hasImage && this._imageHeight !== void? this._imageHeight : (this._height !== void? this._height : global.originalResHeight);  }}
+	property heightForScaleInsideOriginal { getter { return this.hasImage && this._imageHeight !== void? this.imageHeightOriginal : (this.heightOriginal !== void? this.heightOriginal : this.window.scaleHeight(global.originalResHeight)); } }
 
 	function scaleLeft(x)
     {

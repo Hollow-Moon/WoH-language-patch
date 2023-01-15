@@ -286,17 +286,21 @@ function dmt(msg*) { Debug.message(msg.join(", ")+": "+Scripts.getTraceString())
 		}
 		return "";
 	};
-	global.Plugins.link_patch_storages_original = global.Plugins.link;
-	global.Plugins.link = function(storage)
+	global.apply_plugins_link_override = function()
 	{
-		var storage_cur = storage;
-		var fullpath = global.get_full_path_of_plugin(storage);
-		if (fullpath !== "")
+		global.Plugins.link_patch_storages_original = global.Plugins.link;
+		global.Plugins.link = function(storage)
 		{
-			storage_cur = fullpath;
-		}
-		return global.Plugins.link_patch_storages_original(storage_cur);
+			var storage_cur = storage;
+			var fullpath = global.get_full_path_of_plugin(storage);
+			if (fullpath !== "")
+			{
+				storage_cur = fullpath;
+			}
+			return global.Plugins.link_patch_storages_original(storage_cur);
+		};
 	};
+	global.apply_plugins_link_override();
 }
 
 @if(GAME_FHAT)

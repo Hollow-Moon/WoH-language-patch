@@ -7,6 +7,7 @@
 	["try {Plugins.unlink('dirlist.dll');} catch {};", , [["getDirList", , "==="]]],
 	["krmemplugin.dll", , "typeof(global.Plugins.krmemplugin_is_ready)!=='Integer'", true, "USE_KRMEMPLUGIN"],
 	["global.Plugins.prepare_krmemplugin();", , "typeof(global.Plugins.krmemplugin_is_ready)==='Integer'&&!global.Plugins.krmemplugin_is_ready"],
+	["global.apply_plugins_link_override();", , "typeof(global.Plugins.krmemplugin_is_ready)==='Integer'&&global.Plugins.krmemplugin_is_ready"],
 	"patch_storages.tjs",
 	[,,,,, "initial native plugins"],
 	["cxdec.dll", ,, true, "GAME_FHAT"],

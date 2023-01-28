@@ -955,6 +955,7 @@ global.addOptionsMenu = function(patchMenu)
 	var vitaAboutFlag = new global.GameFlag(this, this.sflags, "aboutPatch", global.get_vitaPatchExists(this));
 	var moveMouseWithControllerFlag = new global.GameFlag(this, this.sflags, "moveMouseWithController", true);
 	var copyLastTextToClipboardFlag = new global.GameFlag(this, this.sflags, "copyLastTextToClipboard", false);
+	var reduceFullScreenFlashEffectsFlag = new global.GameFlag(this, this.sflags, "reduceFullScreenFlashEffects", false);
 
 	patchMenu.add(this.patchOptionsMenuItem = new global.KAGMenuItem(this, global.__t("設定(&O)"), 0, void, false));
 
@@ -978,6 +979,7 @@ global.addOptionsMenu = function(patchMenu)
 	this.patchOptionsMenuItem.add(this.showHoverTipsMenuItem = new global.KAGFlagMenuItem(this, global.__t("ツールチップを表示する"),, showHoverTipsFlag));
 	this.patchOptionsMenuItem.add(this.moveMouseWithControllerMenuItem = new global.KAGFlagMenuItem(this, global.__t("コントローラーでマウスを動かす"),, moveMouseWithControllerFlag));
 	this.patchOptionsMenuItem.add(this.copyLastTextToClipboardMenuItem = new global.KAGFlagMenuItem(this, global.__t("最後のテキストをクリップボードにコピー"),, copyLastTextToClipboardFlag));
+	this.patchOptionsMenuItem.add(this.reduceFullScreenFlashEffectsMenuItem = new global.KAGFlagMenuItem(this, global.__t("全画面フラッシュ効果を減らす"),, reduceFullScreenFlashEffectsFlag));
 	(global.addOptionsMenuItems incontextof this)(this.patchOptionsMenuItem);
 };
 

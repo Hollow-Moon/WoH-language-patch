@@ -36,6 +36,7 @@ class TextualSettings
 	var rightOffset=0;
 	var topOffset=0;
 	var bottomOffset=0;
+	var rubyOffset=0;
 	var fontHeight=14;
 	var fontFace;
 	var fontBold = false;
@@ -433,9 +434,14 @@ class TextDrawer
 				if (titleRuby !== void) {
 					this.setFontFromSettings(l.font, settings.rubyTitle);
 					var titleX = this.getXByAlignment(layer, settings.rubyTitle, titleRuby);
+					var letterSpaceTitle = settings.title.letterSpace;
 
-					this.drawText(layer, titleX, titleY, titleRuby, settings.title);
+					settings.title.letterSpace = settings.rubyTitle.letterSpace;
+
+					this.drawText(layer, titleX, titleY+settings.rubyTitle.rubyOffset, titleRuby, settings.title);
 					titleY += l.font.height + settings.title.lineSpace;
+
+					settings.title.letterSpace = letterSpaceTitle;
 				}
 
 				this.setFontFromSettings(l.font, settings.title);

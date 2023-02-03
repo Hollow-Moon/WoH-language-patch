@@ -414,13 +414,13 @@ class TextDrawer
 					titleText = titleItems[1];
 
 					this.setFontFromSettings(l.font, settings.rubyTitle);
-					textHeight += this.getTextHeight([[titleRuby]], settings.rubyTitle, l.font);
+					textHeight += this.getTextHeight([[titleRuby]], settings.rubyTitle, l.font) + settings.rubyTitle.rubyOffset;
 				} else if (settings.rubyTitle.content != "") {
 					titleRuby = settings.rubyTitle.content;
 					titleText = title;
 
 					this.setFontFromSettings(l.font, settings.rubyTitle);
-					textHeight += this.getTextHeight([[titleRuby]], settings.rubyTitle, l.font);
+					textHeight += this.getTextHeight([[titleRuby]], settings.rubyTitle, l.font) + settings.rubyTitle.rubyOffset;
 				} else {
 					titleText = title;
 				}
@@ -438,8 +438,8 @@ class TextDrawer
 
 					settings.title.letterSpace = settings.rubyTitle.letterSpace;
 
-					this.drawText(layer, titleX, titleY+settings.rubyTitle.rubyOffset, titleRuby, settings.title);
-					titleY += l.font.height + settings.title.lineSpace;
+					this.drawText(layer, titleX, titleY, titleRuby, settings.title);
+					titleY += l.font.height + settings.rubyTitle.rubyOffset + settings.title.lineSpace;
 
 					settings.title.letterSpace = letterSpaceTitle;
 				}

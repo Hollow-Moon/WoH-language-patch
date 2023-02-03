@@ -1183,6 +1183,7 @@ global.internal_shape_arabic = function(in_split_text, out_split_text, should_sp
 		res = global.internal_shape_arabic_linkage_temp;
 		res.clear();
 	}
+	var next_link = void;
 	for (var i = 0; i < in_split_text.length; i += 1)
 	{
 		var c = #(in_split_text[i]);
@@ -1192,30 +1193,37 @@ global.internal_shape_arabic = function(in_split_text, out_split_text, should_sp
 			type2 = 3 /* MEDIAL */;
 			continue;
 		}
-		var j = i + 1;
-		var cj = #(in_split_text[j]);
-		for (; j < in_split_text.length - 1 && global.shape_arabic_is_transparent_char(cj); j += 1)
+		if (i >= next_link)
 		{
-			cj = #(in_split_text[j]);
+			next_link = void;
 		}
-		type1 = type2 === 2 /* INITIAL */ || type2 === 3 /* MEDIAL */ ? 1 /* FINAL */ : 0 /* ISOLATED */;
-		if (j < in_split_text.length)
+		var j = i + 1;
+		for (; j < in_split_text.length - 1 && global.shape_arabic_is_transparent_char(#(in_split_text[j])); j += 1)
 		{
-			if (global.shape_arabic_is_lam_char(c) && global.shape_arabic_is_alef_char(cj))
+		}
+		var cj = #(in_split_text[j]);
+		if (next_link === void)
+		{
+			type1 = (type2 === 2 /* INITIAL */ || type2 === 3 /* MEDIAL */) ? 1 /* FINAL */ : 0 /* ISOLATED */;
+			if (j < in_split_text.length)
 			{
-				res.add($(global.shape_arabic_link_lam_alef(cj, type1)));
-				type2 = type1;
-				i = j;
-				continue;
-			}
-			if (global.shape_arabic_is_linkable_after(c) && global.shape_arabic_is_linkable_before(cj))
-			{
-				type1 |= 2 /* INITIAL */;
+				if (global.shape_arabic_is_lam_char(c) && global.shape_arabic_is_alef_char(cj))
+				{
+					res.add($(global.shape_arabic_link_lam_alef(cj, type1)));
+					type2 = type1;
+					i = j;
+					continue;
+				}
+				if (global.shape_arabic_is_linkable_after(c) && global.shape_arabic_is_linkable_before(cj))
+				{
+					type1 |= 2 /* INITIAL */;
+					next_link = j;
+				}
 			}
 		}
 		{
 			res.add($(global.shape_arabic_link_char(c, type1)));
-			if (should_split_by_linkage && (type1 === 1 /* FINAL */ || type1 === 0 /* ISOLATED */))
+			if (should_split_by_linkage && (type1 === 1 /* FINAL */ || type1 === 0 /* ISOLATED */) && (next_link === void || next_link <= i))
 			{
 				if (res.count === 1 && global.shape_arabic_is_transparent_char(#(res[0])) && out_split_text.count - 1 >= 0)
 				{

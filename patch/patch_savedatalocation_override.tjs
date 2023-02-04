@@ -169,11 +169,14 @@ class KAGWindow_patch_savedatalocation_override_override extends global.KAGWindo
 				}
 				if (failed_used_by_another_process)
 				{
-					strarr.add("The selected directory is locked for usage in another process.");
-					strarr.add("Please close the offending process in order to use the selected directory.");
-					strarr.add("If the issue persists, please restart your system and try again.");
+					strarr.add("This directory is already locked by another process, likely another instance of the game. Please use that instance.");
+					strarr.add("If no other instance of the game is active but you still got this message, please restart your system and try again.");
 				}
 				global.System.inform(strarr.join("\n"));
+
+				if (failed_read_only || failed_used_by_another_process) {
+					global.System.exit();
+				}
 			}
 			else
 			{

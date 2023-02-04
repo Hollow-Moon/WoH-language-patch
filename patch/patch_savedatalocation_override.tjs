@@ -161,16 +161,16 @@ class KAGWindow_patch_savedatalocation_override_override extends global.KAGWindo
 			if (triedonce || failed_used_by_another_process)
 			{
 				var strarr = [];
-				strarr.add(("The directory %s has been selected as the savedata folder, but it cannot be used.").sprintf(this.wanted_save_data_location));
+				strarr.add((global.__("「%s」ディレクトリはセーブデータフォルダーとして選択されていますが、使用ができません。")).sprintf(this.wanted_save_data_location));
 				if (failed_read_only)
 				{
-					strarr.add("A test file could not be written to the selected directory.");
-					strarr.add("Please check to make sure the directory is not read-only and that you have the correct permissions for that directory.");
+					strarr.add(global.__("\n選択したディレクトリにテストファイルを書き込むことができませんでした。"));
+					strarr.add(global.__("\nディレクトリが読み取り専用じゃありませんか、そのディレクトリに適切なパーミッションが持ていますかを確認してください。"));
 				}
 				if (failed_used_by_another_process)
 				{
-					strarr.add("This directory is already locked by another process, likely another instance of the game. Please use that instance.");
-					strarr.add("If no other instance of the game is active but you still got this message, please restart your system and try again.");
+					strarr.add(global.__("\nこのディレクトリはすでに他のプロセス、おそらくゲームの別のインスタンスによってロックされています。そのインスタンスを使用してください。"));
+					strarr.add(global.__("\nゲームの他のインスタンスがアクティブでないにかわらず、このメッセージが表示される場合は、システムを再起動してからもう一度試してください。"));
 				}
 				global.System.inform(strarr.join("\n"));
 

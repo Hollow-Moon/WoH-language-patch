@@ -2230,6 +2230,9 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 		sofsx = this.scaleInsideImageWidth(sofsx);
 		sofsy = this.scaleInsideImageHeight(sofsy);
 
+		// Compensate for thinning out effect of shadow/halo strength at larger resolutions.
+		slevel = slevel * Math.sqrt(global.scaleFactor);
+
 		var ie;
 		try
 		{

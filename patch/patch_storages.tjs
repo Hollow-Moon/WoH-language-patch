@@ -369,13 +369,20 @@
 				var filelist = dirlist_base_arr2[j + 1];
 				for (var k = 0; k < filelist.count; k += 1)
 				{
-					var file = filelist[k];
-					var file_zone_identifier = file + ":zone.identifier";
-					if (global.Storages.isExistentStorage(file_zone_identifier))
+					try
 					{
-						var file_contents = [];
-						file_contents.load(file_zone_identifier);
-						filelist_ex[file] = file_contents;
+						var file = filelist[k];
+						var file_zone_identifier = file + ":zone.identifier";
+						if (global.Storages.isExistentStorage(file_zone_identifier))
+						{
+							var file_contents = [];
+							file_contents.load(file_zone_identifier);
+							filelist_ex[file] = file_contents;
+						}
+					}
+					catch (e)
+					{
+						// pass
 					}
 				}
 			}

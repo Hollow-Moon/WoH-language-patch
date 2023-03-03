@@ -1379,7 +1379,12 @@ class MessageLayer extends KAGLayer
 @if(!GAME_FATE&&!GAME_FHAT)
 		defaultRubySize = +elm.rubysize if elm.rubysize !== void;
 @endif
+@if(GAME_FATE||GAME_FHAT)
+		defaultRubyOffset = __si(elm.rubyoffset, "defaultrubyoffset_%s".sprintf(elm.sizecontext !== void ? elm.sizecontext : elm.context)) if elm.rubyoffset !== void;
+@endif
+@if(!GAME_FATE&&!GAME_FHAT)
 		defaultRubyOffset = +elm.rubyoffset if elm.rubyoffset !== void;
+@endif
 @if(MESSAGELAYER_USECHARLAYER)
 		defaultRubyBold = +elm.rubybold if elm.rubybold !== void;
 @endif

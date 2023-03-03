@@ -93,14 +93,6 @@ global.MessageLayer = global.MessageLayer_patch_align_override;
 			offsetText = elm.offsettext if elm.offsettext !== void;
 			var offsetTextDirection = 0;
 			offsetTextDirection = elm.offsettextdirection if elm.offsettextdirection !== void;
-			if (elm.rubytext !== void) {
-				var rubyTag = %[tagname:"ruby", text:elm.rubytext];
-				rubyTag.o2o    = elm.rubyo2o    if elm.rubyo2o    !== void;
-				rubyTag.pos    = elm.rubypos    if elm.rubypos    !== void;
-				rubyTag.char   = elm.rubychar   if elm.rubychar   !== void;
-				rubyTag.offset = elm.rubyoffset if elm.rubyoffset !== void;
-				this.conductor.queueTag(0, rubyTag);
-			}
 			if (elm.text !== void) {
 				textToAlign = this.conductor.cleanLine(textToAlign);
 				if (textToAlign.indexOf(this.conductor.dash_character) !== -1 || textToAlign.indexOf(this.conductor.block_character) !== -1)
@@ -148,6 +140,18 @@ global.MessageLayer = global.MessageLayer_patch_align_override;
 					indentOffset = elm.indentoffset;
 				}
 				this.conductor.queueTag(indentOffset, indentTag);
+			}
+			if (elm.rubytext !== void) {
+				var rubyTag = %[tagname:"ruby", text:elm.rubytext];
+				rubyTag.o2o    = elm.rubyo2o    if elm.rubyo2o    !== void;
+				rubyTag.pos    = elm.rubypos    if elm.rubypos    !== void;
+				rubyTag.char   = elm.rubychar   if elm.rubychar   !== void;
+				rubyTag.offset = elm.rubyoffset if elm.c !== void;
+				var rubyOffset = 0;
+				if (elm.rubyoffset !== void) {
+					rubyOffset = elm.rubyoffset;
+				}
+				this.conductor.queueTag(rubyOffset, rubyTag);
 			}
 			if (elm.anchor !== void) {
 				if(elm.rubychar != void && ("" + (+elm.rubychar)) != elm.rubychar) {

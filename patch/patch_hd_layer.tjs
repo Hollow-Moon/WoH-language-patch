@@ -411,13 +411,13 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 
 	property imageWidth
 	{
-		getter { return this.absoluteMode? this.imageWidthOriginal : this._imageWidth; }
+		getter { return this.absoluteMode? this.imageWidthOriginal : (this._imageWidth === void? 32 : this._imageWidth); }
 		setter(v) { v = +v; this._imageWidth = v; this.imageWidthOriginal = this.scaleImageWidth(v); this.updateSize(); }
 	}
 
 	property imageHeight
 	{
-		getter { return this.absoluteMode? this.imageHeightOriginal : this._imageHeight; }
+		getter { return this.absoluteMode? this.imageHeightOriginal : (this._imageHeight === void? 32: this._imageHeight); }
 		setter(v) { v = +v; this._imageHeight = v; this.imageHeightOriginal = this.scaleImageHeight(v); this.updateSize(); }
 	}
 

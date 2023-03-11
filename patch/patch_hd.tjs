@@ -382,6 +382,10 @@ global.initializeHDPatch = function()
 		this.hdScaleFactor = +global.System.getArgument("-hdscalefactor");
 	}
 
+	if (this.hdScaleFactor > 2.4 && System.exeBits == 32) {
+		this.hdScaleFactor = 1;
+	}
+
 	for (var i=global.scaleFactors.count-1; i>=0; i--) {
 		if (global.scaleFactors[i] == this.hdScaleFactor) {
 			if (!global.patchExists(global.hdPatchesNames[i])) {

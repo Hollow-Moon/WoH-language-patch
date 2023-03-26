@@ -1,0 +1,344 @@
+﻿
+global.tokenize_hunex_scenario = function(str)
+{
+	var as = [];
+	as.split(new global.RegExp(";", "g"), str);
+	if (as.count > 0 && as[as.count - 1] === "")
+	{
+		as.erase(as.count - 1);
+	}
+	var re = new global.RegExp("^(.*)\\((.*)\\)$");
+	var re_comma = new global.RegExp(",", "g");
+	for (var i = 0; i < as.count; i += 1)
+	{
+		var v = as[i];
+		if (v === "")
+		{
+			as[i] = [];
+			continue;
+		}
+		if (v === "_KWRS)")
+		{
+			as[i] = ["_KWRS", []];
+			continue;
+		}
+		v = re.match(v);
+		if (v.count === 0)
+		{
+			throw new global.Exception("Invalid syntax when tokenizing script");
+		}
+		v.erase(0);
+		if (v[1] === "")
+		{
+			v[1] = [];
+		}
+		else
+		{
+			var v1 = [];
+			v1.split(re_comma, v[1]);
+			v[1] = v1;
+		}
+		as[i] = v;
+	}
+	return as;
+};
+
+{
+@if(0)
+	var base_src_dir = "dump_demo";
+	var base_dst_dir = "dump_demo_tokenized";
+	var ls = [
+		"00_TRIAL_1.bin",
+		"01_1_5.bin",
+		"02_TRIAL_2.bin",
+		"03_7_EX.bin",
+		"04_TRIAL_3.bin",
+		"05_A_0.bin",
+		"06_TRIAL_4.bin",
+		"07_1DOT5_3.bin",
+		"08_TRIAL_5.bin",
+		"09_1_1.bin",
+		"10_TRIAL_6.bin",
+		"11_OPENING.bin",
+		"12_TRIAL_7.bin",
+		"50_PV.bin",
+		"START_SCRIPT.bin",
+		"TEST_SCRIPT.bin"
+	];
+@endif
+	var base_src_dir = "dump";
+	var base_dst_dir = "dump_tokenized";
+@if(1)
+	var ls = [
+		"1DOT5_1.bin",
+		"1DOT5_2.bin",
+		"1DOT5_3.bin",
+		"1DOT5_4.bin",
+		"1_0.bin",
+		"1_1.bin",
+		"1_2.bin",
+		"1_3.bin",
+		"1_4.bin",
+		"1_5.bin",
+		"2_1.bin",
+		"2_2.bin",
+		"2_3.bin",
+		"2_4.bin",
+		"2_5.bin",
+		"3_1.bin",
+		"4_1.bin",
+		"4_2.bin",
+		"4_3.bin",
+		"4_4.bin",
+		"5A_1.bin",
+		"5A_10.bin",
+		"5A_11.bin",
+		"5A_12.bin",
+		"5A_2.bin",
+		"5A_3.bin",
+		"5A_4.bin",
+		"5A_5.bin",
+		"5A_6.bin",
+		"5A_7.bin",
+		"5A_8.bin",
+		"5A_9.bin",
+		"5B_1.bin",
+		"5B_10.bin",
+		"5B_11.bin",
+		"5B_12.bin",
+		"5B_13.bin",
+		"5B_14.bin",
+		"5B_15.bin",
+		"5B_16.bin",
+		"5B_2.bin",
+		"5B_3.bin",
+		"5B_4.bin",
+		"5B_5.bin",
+		"5B_6.bin",
+		"5B_7.bin",
+		"5B_8.bin",
+		"5B_9.bin",
+		"6_1.bin",
+		"6_2.bin",
+		"6_3.bin",
+		"6_4.bin",
+		"6_5.bin",
+		"6_6.bin",
+		"6_7.bin",
+		"6_8.bin",
+		"6_9.bin",
+		"7_1.bin",
+		"7_1B.bin",
+		"7_2.bin",
+		"7_3.bin",
+		"7_5.bin",
+		"7_6.bin",
+		"7_7.bin",
+		"7_8.bin",
+		"7_EX.bin",
+		"8DOT5.bin",
+		"8_1.bin",
+		"8_2.bin",
+		"8_3.bin",
+		"8_4.bin",
+		"8_5.bin",
+		"8_6.bin",
+		"8_EX.bin",
+		"9_0.bin",
+		"9_1.bin",
+		"9_2.bin",
+		"9_3.bin",
+		"9_3C.bin",
+		"9_4.bin",
+		"9_5.bin",
+		"9_6.bin",
+		"9_7.bin",
+		"9_8.bin",
+		"ARCHIVE.bin",
+		"A_0.bin",
+		"A_1.bin",
+		"A_2.bin",
+		"A_3.bin",
+		"A_4.bin",
+		"A_5.bin",
+		"A_6.bin",
+		"A_7.bin",
+		"A_8.bin",
+		"B_1.bin",
+		"B_2.bin",
+		"B_3.bin",
+		"B_4.bin",
+		"B_5.bin",
+		"B_6.bin",
+		"B_7.bin",
+		"B_8.bin",
+		"B_9.bin",
+		"C_0.bin",
+		"C_1.bin",
+		"C_10.bin",
+		"C_11.bin",
+		"C_12.bin",
+		"C_13.bin",
+		"C_14.bin",
+		"C_15.bin",
+		"C_2.bin",
+		"C_3.bin",
+		"C_4.bin",
+		"C_5.bin",
+		"C_5B.bin",
+		"C_5C.bin",
+		"C_6.bin",
+		"C_7.bin",
+		"C_8.bin",
+		"C_9.bin",
+		"D_1.bin",
+		"D_2.bin",
+		"D_3.bin",
+		"D_4.bin",
+		"D_5.bin",
+		"D_6.bin",
+		"D_7.bin",
+		"D_8.bin",
+		"D_9.bin",
+		"NZ1.bin",
+		"NZ2.bin",
+		"NZ3.bin",
+		"NZ4.bin",
+		"NZ5.bin",
+		"NZ6.bin",
+		"OPENING.bin",
+		"SP1.bin",
+		"STAFFROLL.bin",
+		"START_SCRIPT.bin",
+		"TEATIME1.bin",
+		"TEATIME2.bin",
+		"TEATIME3.bin",
+		"TEATIME4.bin",
+		"TEATIME5A.bin",
+		"TEATIME5B.bin",
+		"TEATIME6.bin",
+		"TEATIME7.bin",
+		"TEATIME8.bin",
+		"TEATIME9.bin",
+		"TEATIMEA.bin",
+		"TEATIMEB.bin",
+		"TEATIMEC.bin",
+		"TEST_SCRIPT.bin",
+		"WIK_B_1.bin",
+		"WIK_B_1_A.bin",
+		"WIK_B_1_B.bin",
+		"WIK_B_2.bin",
+		"WIK_B_3.bin",
+		"WIK_CHAP2START.bin",
+		"WIK_CHAP3START.bin",
+		"WIK_CHAP4START.bin",
+		"WIK_C_1.bin",
+		"WIK_C_2.bin",
+		"WIK_D_1.bin",
+		"WIK_D_2.bin",
+		"WIK_D_3.bin",
+		"WIK_D_A.bin",
+		"WIK_E.bin",
+		"WIK_FIN.bin",
+		"WIK_F_1.bin",
+		"WIK_F_2.bin",
+		"WIK_F_3.bin",
+		"WIK_F_A.bin",
+		"WIK_G_1.bin",
+		"WIK_G_2.bin",
+		"WIK_G_3.bin",
+		"WIK_G_A.bin",
+		"WIK_H_1.bin",
+		"WIK_H_2.bin",
+		"WIK_H_3.bin",
+		"WIK_H_A.bin",
+		"WIK_I.bin",
+		"WIK_J.bin",
+		"WIK_K.bin",
+		"WIK_L_1.bin",
+		"WIK_L_2.bin",
+		"WIK_M_1.bin",
+		"WIK_M_A.bin",
+		"WIK_NAP.bin",
+		"WIK_NOROOM.bin",
+		"WIK_N_1.bin",
+		"WIK_N_1_A.bin",
+		"WIK_N_2.bin",
+		"WIK_O.bin",
+		"WIK_P_1.bin",
+		"WIK_P_2.bin",
+		"WIK_Q_1.bin",
+		"WIK_Q_2.bin",
+		"WIK_Q_A.bin",
+		"WIK_ROBBY.bin",
+		"WIK_ROOM.bin",
+		"WIK_R_1.bin",
+		"WIK_R_2.bin",
+		"WIK_SELECT_A.bin",
+		"WIK_SELECT_B.bin",
+		"WIK_SELECT_C.bin",
+		"WIK_SELECT_D.bin",
+		"WIK_SELECT_E.bin",
+		"WIK_SELECT_F.bin",
+		"WIK_SELECT_G.bin",
+		"WIK_SELECT_H.bin",
+		"WIK_SELECT_I.bin",
+		"WIK_SELECT_J.bin",
+		"WIK_SELECT_K.bin",
+		"WIK_SELECT_L.bin",
+		"WIK_SELECT_M.bin",
+		"WIK_SELECT_N.bin",
+		"WIK_SELECT_O.bin",
+		"WIK_SELECT_P.bin",
+		"WIK_SELECT_Q.bin",
+		"WIK_SELECT_R.bin",
+		"WIK_SELECT_S.bin",
+		"WIK_SELECT_T.bin",
+		"WIK_SELECT_U.bin",
+		"WIK_SELECT_V.bin",
+		"WIK_SELECT_W.bin",
+		"WIK_SELECT_X.bin",
+		"WIK_SELECT_Y.bin",
+		"WIK_SELECT_Z.bin",
+		"WIK_S_1.bin",
+		"WIK_S_2.bin",
+		"WIK_S_3.bin",
+		"WIK_S_4.bin",
+		"WIK_S_5.bin",
+		"WIK_S_A.bin",
+		"WIK_TITLEIN.bin",
+		"WIK_T_1.bin",
+		"WIK_T_2.bin",
+		"WIK_U_1.bin",
+		"WIK_U_2.bin",
+		"WIK_V_1.bin",
+		"WIK_V_2.bin",
+		"WIK_WAKEUP.bin",
+		"WIK_WXYZ.bin",
+		"WIK_W_35.bin",
+		"WIK_X_2.bin",
+		"WIK_Y.bin",
+		"WIK_Z_3.bin"
+	];
+@endif
+	for (var i = 0; i < ls.count; i += 1)
+	{
+		var v = ls[i];
+		global.Debug.message(v);
+		var src_path = base_src_dir + "/" + v;
+		var ia = [];
+		ia.load(src_path);
+		var res;
+		try
+		{
+			res = global.tokenize_hunex_scenario(ia[0]);
+		}
+		catch (e)
+		{
+			global.Debug.message("Tokenized error");
+			continue;
+		}
+		var dst_path = base_dst_dir + "/" + v;
+		res.saveStruct(dst_path);
+	}
+}

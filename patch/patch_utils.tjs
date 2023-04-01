@@ -703,6 +703,19 @@ global.initial_scenario_load_ready = function()
 @endif
 	else if (global.System.getArgument("-flowchartopen") !== void || global.System.getArgument("-flowchartopenbyscenario") !== void)
 	{
+@if(GAME_FATE&&WIDE_MODE)
+	if (global.System.getArgument("-flowchartopenbyscenario") !== void) {
+		// Restore scrollYOffset that a scenes would inherit from the preceding scene during regular play.
+		// When a scene can be reached via multiple scenes with different final scroll states, the value closest to 75 was chosen.
+		var sceneInitScrollTargets = global.loadDictionaryIfExists("scene_init_scroll_targets.dic");
+		if (sceneInitScrollTargets !== void) {
+			var scrollTarget = sceneInitScrollTargets[global.System.getArgument("-flowchartopenbyscenario")];
+			if (scrollTarget !== void) {
+					global.kag.updateScrollPosition(,scrollTarget);
+				}
+			}
+		}
+@endif
 		global.open_scenario_using_scenario_tracker(global.kag, global.System.getArgument("-flowchartopenbyscenario"), global.System.getArgument("-flowchartopenbyid"), global.System.getArgument("-flowchartopen"));
 	}
 	if (global.System.getArgument("-fullscreen") !== void)

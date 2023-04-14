@@ -499,6 +499,11 @@ global.exception_handler_closure = function(e)
 	if (exception_files.count > 0)
 	{
 		msg_components.add(global.__("このダイアログボックスのスクリーンショットは送信しないでください。"));
+	}
+	msg_components.add(global.__("上記のファイルを添えて、いつどのようにエラーが発生したかを説明したサポート掲示板にご連絡ください。"));
+	msg_components.add(global.__("サポート掲示板: %s").sprintf(global.PatchInfoURL));
+	if (exception_files.count > 0)
+	{
 		msg_components.add(global.__("次のファイルには、保存データと例外情報が含まれています："));
 		for (var i = 0, internal_forloop_count = exception_files.count; i < internal_forloop_count; i += 1)
 		{
@@ -514,8 +519,6 @@ global.exception_handler_closure = function(e)
 	{
 		msg_components.add(global.__("アンチウィルスソフトその他の常駐アプリケーションを終了してゲームを再起動することでエラーを回避できる可能性があります。"));
 	}
-	msg_components.add(global.__("上記のファイルを添えて、いつどのようにエラーが発生したかを説明したサポート掲示板にご連絡ください。"));
-	msg_components.add(global.__("サポート掲示板: %s").sprintf(global.PatchInfoURL));
 	msg_components.add("--------------------------------------------------------------------------------");
 	if (e instanceof "ConductorException")
 	{

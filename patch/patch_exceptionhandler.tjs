@@ -295,12 +295,16 @@ global.get_exception_files = function()
 			{
 				global.print_exception(e, "creating the ticket file");
 			}
+			var save_saveThumbnail = false;
 			try
 			{
+				save_saveThumbnail = global.kag.saveThumbnail;
 				if (global.kag.storeEnabled)
 				{
 					var save_file = dir_unarchived + "data.kdt";
+					global.kag.saveThumbnail = false;
 					global.kag.saveBookMarkToFile(save_file);
+					global.kag.saveThumbnail = save_saveThumbnail;
 					if (global.Storages.isExistentStorage(save_file))
 					{
 						exception_files.add(save_file);
@@ -310,6 +314,14 @@ global.get_exception_files = function()
 			catch (e)
 			{
 				global.print_exception(e, "saving the bookmark file");
+				try
+				{
+					global.kag.saveThumbnail = save_saveThumbnail;
+				}
+				catch (e)
+				{
+					// pass
+				}
 			}
 			try
 			{

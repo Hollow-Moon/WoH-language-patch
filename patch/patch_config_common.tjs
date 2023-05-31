@@ -88,9 +88,6 @@ System.exceptionHandler = function(e)
 // Prevent premature exit after startup script execution but before main window is created
 global.System.exitOnNoWindowStartup = false;
 
-// Ensure patch version gets placed in the log
-Debug.notice(("Patch Description: %s").sprintf(global.PatchDescription));
-
 function dmt(msg*) { Debug.message(msg.join(", ")+": "+Scripts.getTraceString()); }
 
 // Default settings
@@ -221,6 +218,9 @@ function dmt(msg*) { Debug.message(msg.join(", ")+": "+Scripts.getTraceString())
 	}
 	global.PatchDescription = global.PatchDescription.replace(/%VERSION%/g, version_as_string);
 }
+
+// Ensure patch version gets placed in the log
+Debug.notice(("Patch Description: %s").sprintf(global.PatchDescription));
 
 {
 	var basepath = "";

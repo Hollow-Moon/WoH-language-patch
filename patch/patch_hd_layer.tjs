@@ -882,14 +882,22 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 			super.fillRect(0, 0, this.imageWidthOriginal, this.imageHeightOriginal, 0x000000);
 		}
 @endif
-		this.setPos_patch_hd_layer(_left_tmp, _top_tmp, _width_tmp, _height_tmp);
-		if (this.hasImageOriginal)
+		try
 		{
-			this.setImageSize_patch_hd_layer(_imageWidth_tmp, _imageHeight_tmp);
-			this.setImagePos_patch_hd_layer(_imageLeft_tmp, _imageTop_tmp);
-			this.setClip_patch_hd_layer(_clipLeft_tmp, _clipTop_tmp, _clipWidth_tmp, _clipHeight_tmp);
+			this.setPos_patch_hd_layer(_left_tmp, _top_tmp, _width_tmp, _height_tmp);
+			if (this.hasImageOriginal)
+			{
+				this.setImageSize_patch_hd_layer(_imageWidth_tmp, _imageHeight_tmp);
+				this.setImagePos_patch_hd_layer(_imageLeft_tmp, _imageTop_tmp);
+				this.setClip_patch_hd_layer(_clipLeft_tmp, _clipTop_tmp, _clipWidth_tmp, _clipHeight_tmp);
+			}
+			this.setAttentionPos_patch_hd_layer(_attentionLeft_tmp, _attentionTop_tmp);
 		}
-		this.setAttentionPos_patch_hd_layer(_attentionLeft_tmp, _attentionTop_tmp);
+		catch (e)
+		{
+			// pass
+		}
+
 		for (var i = 0, internal_forloop_count = this.children.count; i < internal_forloop_count; i += 1)
 		{
 			this.children[i].update_bounds_hd_layer();

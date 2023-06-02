@@ -24,6 +24,7 @@ class KAGWindow_patch_fix_scflags_bookmark_info_override extends global.KAGWindo
 			this.patch_fix_scflags_bookmark_info_initialized = true;
 			this.patch_fix_scflags_bookmark_info_processing = true;
 			var made_changes = false;
+			var bookmark_date_fixing_message_printed = false;
 			if (typeof(global.Storages.dirlist) === "Object")
 			{
 				var storages = global.Storages.dirlist(this.saveDataLocation + "/");
@@ -40,6 +41,11 @@ class KAGWindow_patch_fix_scflags_bookmark_info_override extends global.KAGWindo
 							{
 								try
 								{
+									if (!bookmark_date_fixing_message_printed)
+									{
+										bookmark_date_fixing_message_printed = true;
+										global.Debug.message("Fixing bookmark dates...");
+									}
 									var fn = this.saveDataLocation + "/" + file;
 									var modestr = "";
 									if (this.saveThumbnail)

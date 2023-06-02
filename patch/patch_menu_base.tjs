@@ -197,8 +197,20 @@ class CompositeAndFlag
 
 	function toggleValue()
 	{
-		for (var i = 0, internal_forloop_count = this.flags.count; i < internal_forloop_count; i += 1) {
-			this.flags[i].toggleValue();
+		var current_value = true;
+		for (var i = 0, internal_forloop_count = this.flags.count; i < internal_forloop_count; i += 1)
+		{
+			var flag = this.flags[i];
+			if (!flag.value)
+			{
+				current_value = false;
+				break;
+			}
+		}
+		for (var i = 0, internal_forloop_count = this.flags.count; i < internal_forloop_count; i += 1)
+		{
+			var flag = this.flags[i];
+			flag.value = !current_value;
 		}
 	}
 }

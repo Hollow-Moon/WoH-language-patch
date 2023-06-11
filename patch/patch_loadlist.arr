@@ -30,6 +30,7 @@
 	["shrinkCopy.dll", , [["Layer.shrinkCopy"]],, "GALLERY_DYNAMIC_THUMBNAIL"],
 	["layerExAreaAverage.dll", , [["Layer.stretchCopyAA"]],, "GALLERY_DYNAMIC_THUMBNAIL"],
 	["clipboardEx.dll", ,,, "GAME_WOHN"],
+	["clipboardExFixAsText.dll", ,, true],
 	["krprocesssuicide.dll", ,, true],
 	["krfreetype.dll", ,, true],
 	["kronigruma.dll", ,, true],

@@ -1,25 +1,35 @@
-﻿@if(!kirikiriz)
-//These functions are present only in a later version of kirikiri.
-global.Array.shift = function()
-{
-    var pos = 0;
-	var item = this[pos];
-	this.erase(pos);
-	return item;
-};
+﻿
+// These functions are present only in Kirikiri 2.29.2007.113 and later.
+// These functions were implemented in github.com/krkrz/krkr2 commit 1631a2cdf8ec36f966780d265bfb808a5b2dd9fa
 
-global.Array.unshift = function(item)
 {
-	this.insert(0,item);
-};
+	if (typeof(global.Array.shift) !== "Object")
+	{
+		global.Array.shift = function()
+		{
+			var pos = 0;
+			var item = this[pos];
+			this.erase(pos);
+			return item;
+		};
+	}
 
-global.Array.pop = function()
-{
-    var pos = count-1;
-    var item = this[pos];
-    this.erase(pos);
-    return item;
-};
+	if (typeof(global.Array.unshift) !== "Object")
+	{
+		global.Array.unshift = function(item)
+		{
+			this.insert(0, item);
+		};
+	}
 
-global.dmt = (msg*) { global.Debug.message(msg.join(", ")+": "+global.Scripts.getTraceString()); };
-@endif
+	if (typeof(global.Array.pop) !== "Object")
+	{
+		global.Array.pop = function()
+		{
+			var pos = count - 1;
+			var item = this[pos];
+			this.erase(pos);
+			return item;
+		};
+	}
+}

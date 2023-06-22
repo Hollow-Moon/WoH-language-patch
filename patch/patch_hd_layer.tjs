@@ -763,10 +763,11 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 	{
 		getter
 		{
-			if (this.isExButtonLayer) {
-				return global.stLinear;
+			if (this.isExButtonLayer)
+			{
+				return global.scale_type_exbuttonlayer;
 			}
-			return global.stCubic;
+			return void;
 		}
 	}
 
@@ -1144,12 +1145,14 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 		tmp.absoluteMode += 1;
 		(global.Layer_patch_hd_layer_original.setImageSize incontextof tmp)(scaledImageWidth, scaledImageHeight);
 
+		var scale_algorithm = this.scaleAlgorithm;
+
 		try
 		{
 			this.absoluteMode += 1;
 			for (var i = 0, internal_forloop_count = this.numberOfImages; i < internal_forloop_count; i += 1)
 			{
-				(global.Layer_patch_hd_layer_original.stretchCopy incontextof tmp)(scaledSingleImageWidth*i, 0, scaledSingleImageWidth, scaledImageHeight, this, singleImageWidth*i, 0, singleImageWidth, this.imageHeightOriginal, this.scaleAlgorithm);
+				global.perform_upscale_on_layer(tmp, scaledSingleImageWidth * i, 0, scaledSingleImageWidth, scaledImageHeight, this, singleImageWidth * i, 0, singleImageWidth, this.imageHeightOriginal, scale_algorithm);
 			}
 			this.absoluteMode -= 1;
 		}

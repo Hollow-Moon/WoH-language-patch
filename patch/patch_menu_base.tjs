@@ -1248,6 +1248,48 @@ global.addHdMenu = function(displayMenu)
 			}
 		}
 	}
+
+	if (typeof(global.scale_types_list) === "Object")
+	{
+		var upscaleMethodDefault = "stCubic";
+
+		var upscaleMethodFlag = new global.GameFlag(this, this.sflags, "upscalemethod", upscaleMethodDefault);
+
+		if (!global.has_scale_type(upscaleMethodFlag.value))
+		{
+			upscaleMethodFlag.value = upscaleMethodDefault;
+		}
+
+		var upscaleMethodCallback = function(sender)
+		{
+			global.set_scale_type(sender.flag.value);
+		};
+
+		displayMenu.add(this.upscaleMethodMenu = new global.KAGMenuItem(this, global.__t("拡大メソッド(&U)"), 0, void, false));
+		var upscaleMethodMenu = this.upscaleMethodMenu;
+		var scale_types_list = global.scale_types_list;
+		for (var i = 0; i < scale_types_list.count; i += 1)
+		{
+			var scale_type = scale_types_list[i];
+			if (scale_type === void)
+			{
+				continue;
+			}
+			if (scale_type === "-")
+			{
+				this.upscaleMethodMenu.add(new global.MenuItem(this, "-"));
+				continue;
+			}
+			var upscaleMethodMenuItemName = "upscaleMethod_%s_MenuItem".sprintf(scale_type[0]);
+			upscaleMethodMenu.add(this[upscaleMethodMenuItemName] = new global.KAGFlagMenuItem(this, scale_type[3], 1, upscaleMethodFlag, scale_type[0]));
+			this[upscaleMethodMenuItemName].afterCallback = upscaleMethodCallback;
+		}
+		if (typeof(this.upscaleMethod_stCubic_MenuItem) === "Object")
+		{
+			upscaleMethodCallback(this.upscaleMethod_stCubic_MenuItem);
+		}
+	}
+
 };
 
 global.addGraphicUsageMenu = function(displayMenu)

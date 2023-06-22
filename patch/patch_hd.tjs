@@ -71,6 +71,11 @@ global.devHdImageFolders = [];
 global.devHdImageFolders = ["BGImageHD", "FGImageHD", "ImageHD", "ImagesConfigHD", "ImagesPatchHD", "ImagesHanafudaHD", "RuleHD"];
 @endif
 
+global.scale_types_list = [];
+global.scale_types_dict = %[];
+global.scale_type_default = "stCubic";
+global.scale_type_exbuttonlayer = "stLinear";
+
 global.get_systemRatio = function() { { return global.System.screenWidth / global.System.screenHeight; } };
 
 global.get_inverseScaleFactor = function() { { return 1/global.scaleFactor; } };
@@ -373,6 +378,104 @@ global.updateResolution = function(mp)
 	this.isPossibleChangeScreen	= false if mp.changescreen === false;
 };
 
+global.initialize_scale_types = function()
+{
+	var scale_types_list = global.scale_types_list;
+	if (scale_types_list.count !== 0)
+	{
+		return;
+	}
+
+	var def_func = global.layer_stretch_copy_wrapper;
+	var x = function(ident, desc)
+	{
+		if (typeof(global[ident]) === "Integer")
+		{
+			scale_types_list.add([ident, global.layer_stretch_copy_wrapper, [global[ident]], desc]);
+		}
+	};
+	x(/* In Kirikiri 2 */ "stNearest", global.__t("最近傍点"));
+	x(/* In Kirikiri 2 */ "stFastLinear", global.__t("低精度の線形"));
+	x(/* In Kirikiri Z version >= 1.3 */ "stSemiFastLinear", global.__t("固定小数線形"));
+	x(/* In Kirikiri 2; Implementation changed in Kirikiri Z version >= 1.3 */ "stLinear", global.__t("線形"));
+	x(/* In Kirikiri Z version >= 1.3 */ "stFastCubic", global.__t("固定小数３次元"));
+	x(/* In Kirikiri 2; Implementation changed in Kirikiri Z version >= 1.3 */ "stCubic", global.__t("３次元"));
+	x(/* In Kirikiri Z version >= 1.3 */ "stFastLanczos2", global.__t("固定小数Lanczos 4x4"));
+	x(/* In Kirikiri Z version >= 1.3 */ "stLanczos2", global.__t("Lanczos 4x4"));
+	x(/* In Kirikiri Z version >= 1.3 */ "stFastLanczos3", global.__t("固定小数Lanczos 6x6"));
+	x(/* In Kirikiri Z version >= 1.3 */ "stLanczos3", global.__t("Lanczos 6x6"));
+	x(/* In Kirikiri Z version >= 1.3 */ "stFastSpline16", global.__t("固定小数スプライン4x4"));
+	x(/* In Kirikiri Z version >= 1.3 */ "stSpline16", global.__t("スプライン4x4"));
+	x(/* In Kirikiri Z version >= 1.3 */ "stFastSpline36", global.__t("固定小数スプライン6x6"));
+	x(/* In Kirikiri Z version >= 1.3 */ "stSpline36", global.__t("スプライン6x6"));
+@if(0)
+	x(/* In Kirikiri Z version >= 1.3; Downscale only */ "stFastAreaAvg", global.__t("固定小数面積平均縮小"));
+	x(/* In Kirikiri Z version >= 1.3; Downscale only */ "stAreaAvg", global.__t("面積平均縮小"));
+@endif
+	x(/* In Kirikiri Z version >= 1.3 */ "stFastGaussian", global.__t("固定小数ガウス4x4"));
+	x(/* In Kirikiri Z version >= 1.3 */ "stGaussian", global.__t("ガウス4x4"));
+	x(/* In Kirikiri Z version >= 1.3 */ "stFastBlackmanSinc", global.__t("固定小数Blackman-Sinc 8x8"));
+	x(/* In Kirikiri Z version >= 1.3 */ "stBlackmanSinc", global.__t("Blackman-Sinc 8x8"));
+
+	// Create dict for quick indexing
+	var scale_types_dict = global.scale_types_dict;
+	for (var i = 0; i < scale_types_list.count; i += 1)
+	{
+		var scale_type = scale_types_list[i];
+		if (scale_type === void)
+		{
+			continue;
+		}
+		if (scale_type === "-")
+		{
+			continue;
+		}
+		scale_types_dict[scale_type[0]] = scale_type;
+	}
+};
+
+global.has_scale_type = function(scale_type)
+{
+	var scale_types_dict = global.scale_types_dict;
+	return scale_types_dict[scale_type] !== void;
+};
+
+global.set_scale_type = function(scale_type)
+{
+	var wanted_scale_type = scale_type;
+	var scale_types_dict = global.scale_types_dict;
+	if (scale_types_dict[wanted_scale_type] === void)
+	{
+		wanted_scale_type = "stCubic";
+	}
+	global.scale_type_default = wanted_scale_type;
+};
+
+global.layer_stretch_copy_wrapper = function(dlayer, dleft, dtop, dwidth, dheight, slayer, sleft, stop, swidth, sheight, *)
+{
+	return (global.Layer_patch_hd_layer_original.stretchCopy incontextof dlayer)(dleft, dtop, dwidth, dheight, slayer, sleft, stop, swidth, sheight, *);
+};
+
+global.perform_upscale_on_layer = function(dlayer, dleft, dtop, dwidth, dheight, slayer, sleft, stop, swidth, sheight, scale_type)
+{
+	var scale_types_dict = global.scale_types_dict;
+	var x_scale_type = scale_type;
+	if (x_scale_type === void)
+	{
+		x_scale_type = global.scale_type_default;
+	}
+	if (x_scale_type === void)
+	{
+		return;
+	}
+	var x_scale_type_info = scale_types_dict[x_scale_type];
+	if (x_scale_type_info === void)
+	{
+		return;
+	}
+	var x_scale_type_args = x_scale_type_info[2];
+	return x_scale_type_info[1](dlayer, dleft, dtop, dwidth, dheight, slayer, sleft, stop, swidth, sheight, x_scale_type_args*);
+};
 
 global.initializeHDPatch = function()
 {
@@ -394,6 +497,8 @@ global.initializeHDPatch = function()
 			}
 		}
 	}
+
+	global.initialize_scale_types();
 
 	global.unloadAllHdPatches(this);
 	(global.initializeQuality incontextof this)(this.hdScaleFactor);

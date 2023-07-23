@@ -62,7 +62,7 @@ class Layer_patch_rtl_override extends global.Layer_patch_rtl_original
 				{
 					global.init_arabic_shaper_instance();
 				}
-				text = global.arabic_shaper_instance_ltr.shape(text);
+				text = global.arabic_presentation_tashkil_remap(global.arabic_shaper_instance_rtl.shape(text)).reverse();
 			}
 			// Don't reposition in text drawer
 			if (!avoid_reposition_cond)

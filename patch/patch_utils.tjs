@@ -1061,6 +1061,301 @@ global.to_codepoint_array = function(arr)
 	}
 };
 
+global.arabic_presentation_initial = [
+	0xFE8B,
+	0xFE91,
+	0xFE97,
+	0xFE9B,
+	0xFE9F,
+	0xFEA3,
+	0xFEA7,
+	0xFEB3,
+	0xFEB7,
+	0xFEBB,
+	0xFEBF,
+	0xFEC3,
+	0xFEC7,
+	0xFECB,
+	0xFECF,
+	0xFED3,
+	0xFED7,
+	0xFEDB,
+	0xFEDF,
+	0xFEE3,
+	0xFEE7,
+	0xFEEB,
+	0xFEF3
+];
+
+global.arabic_presentation_medial = [
+	0xFE71,
+	0xFE77,
+	0xFE79,
+	0xFE7B,
+	0xFE7D,
+	0xFE7F,
+	0xFE8C,
+	0xFE92,
+	0xFE98,
+	0xFE9C,
+	0xFEA0,
+	0xFEA4,
+	0xFEA8,
+	0xFEB4,
+	0xFEB8,
+	0xFEBC,
+	0xFEC0,
+	0xFEC4,
+	0xFEC8,
+	0xFECC,
+	0xFED0,
+	0xFED4,
+	0xFED8,
+	0xFEDC,
+	0xFEE0,
+	0xFEE4,
+	0xFEE8,
+	0xFEEC,
+	0xFEF4
+];
+
+global.arabic_presentation_final = [
+	0xFE82,
+	0xFE84,
+	0xFE86,
+	0xFE88,
+	0xFE8A,
+	0xFE8E,
+	0xFE90,
+	0xFE94,
+	0xFE96,
+	0xFE9A,
+	0xFE9E,
+	0xFEA2,
+	0xFEA6,
+	0xFEAA,
+	0xFEAC,
+	0xFEAE,
+	0xFEB0,
+	0xFEB2,
+	0xFEB6,
+	0xFEBA,
+	0xFEBE,
+	0xFEC2,
+	0xFEC6,
+	0xFECA,
+	0xFECE,
+	0xFED2,
+	0xFED6,
+	0xFEDA,
+	0xFEDE,
+	0xFEE2,
+	0xFEE6,
+	0xFEEA,
+	0xFEEE,
+	0xFEF0,
+	0xFEF2,
+	0xFEF6,
+	0xFEF8,
+	0xFEFA,
+	0xFEFC
+];
+
+global.arabic_presentation_isolated = [
+	0xFE70,
+	0xFE72,
+	0xFE74,
+	0xFE76,
+	0xFE78,
+	0xFE7A,
+	0xFE7C,
+	0xFE7E,
+	0xFE80,
+	0xFE81,
+	0xFE83,
+	0xFE85,
+	0xFE87,
+	0xFE89,
+	0xFE8D,
+	0xFE8F,
+	0xFE93,
+	0xFE95,
+	0xFE99,
+	0xFE9D,
+	0xFEA1,
+	0xFEA5,
+	0xFEA9,
+	0xFEAB,
+	0xFEAD,
+	0xFEAF,
+	0xFEB1,
+	0xFEB5,
+	0xFEB9,
+	0xFEBD,
+	0xFEC1,
+	0xFEC5,
+	0xFEC9,
+	0xFECD,
+	0xFED1,
+	0xFED5,
+	0xFED9,
+	0xFEDD,
+	0xFEE1,
+	0xFEE5,
+	0xFEE9,
+	0xFEED,
+	0xFEEF,
+	0xFEF1,
+	0xFEF5,
+	0xFEF7,
+	0xFEF9,
+	0xFEFB
+];
+
+// Workaround for Tashkil because FreeType doesn't render the variants in Presentation Block B properly
+global.arabic_presentation_tashkil_remap_dic = %[
+	"\xFE70" => "\x064B", // ARABIC FATHATAN ISOLATED FORM
+	"\xFE71" => "\x0640\x064B", // ARABIC TATWEEL WITH FATHATAN ABOVE
+	"\xFE72" => "\x064C", // ARABIC DAMMATAN ISOLATED FORM
+	"\xFE74" => "\x064D", // ARABIC KASRATAN ISOLATED FORM
+	"\xFE76" => "\x064E", // ARABIC FATHA ISOLATED FORM
+	"\xFE77" => "\x064E", // ARABIC FATHA MEDIAL FORM
+	"\xFE78" => "\x064F", // ARABIC DAMMA ISOLATED FORM
+	"\xFE79" => "\x064F", // ARABIC DAMMA MEDIAL FORM
+	"\xFE7A" => "\x0650", // ARABIC KASRA ISOLATED FORM
+	"\xFE7B" => "\x0650", // ARABIC KASRA MEDIAL FORM
+	"\xFE7C" => "\x0651", // ARABIC SHADDA ISOLATED FORM
+	"\xFE7D" => "\x0651", // ARABIC SHADDA MEDIAL FORM
+	"\xFE7E" => "\x0652", // ARABIC SUKUN ISOLATED FORM
+	"\xFE7F" => "\x0652", // ARABIC SUKUN MEDIAL FORM
+];
+
+global.arabic_presentation_tashkil_remap_array_temp = [];
+global.arabic_presentation_tashkil_remap = function(text)
+{
+	text += "";
+	if (text.length == 0)
+	{
+		return "";
+	}
+	var out_split_text = global.arabic_presentation_tashkil_remap_array_temp;
+	out_split_text.clear();
+	for (var i = 0; i < text.length; i += 1)
+	{
+		var repl = global.arabic_presentation_tashkil_remap_dic[text[i]];
+		if (repl !== void)
+		{
+			out_split_text.add(repl);
+		}
+		else
+		{
+			out_split_text.add(text[i]);
+		}
+	}
+	var res = out_split_text.join("");
+	out_split_text.clear();
+	return res;
+};
+
+global.internal_break_by_linkage_arabic_temp = [];
+global.internal_break_by_linkage_arabic = function(in_split_text, out_split_text)
+{
+	var cur_state = "";
+	var res = global.internal_break_by_linkage_arabic_temp;
+	res.clear();
+	for (var i = 0; i < in_split_text.length; i += 1)
+	{
+		var c = #(in_split_text[i]);
+		var is_initial = global.arabic_presentation_initial.find(c) !== -1;
+		var is_medial = global.arabic_presentation_medial.find(c) !== -1;
+		var is_final = global.arabic_presentation_final.find(c) !== -1;
+		var is_isolated = global.arabic_presentation_isolated.find(c) !== -1;
+		if (is_initial)
+		{
+			if (res.count > 0)
+			{
+				// flush
+				out_split_text.add(res.join(""));
+				res.clear();
+			}
+			cur_state = "initial";
+		}
+		else if (is_medial)
+		{
+			if (cur_state !== "initial" && cur_state !== "medial")
+			{
+				if (res.count > 0)
+				{
+					// flush
+					out_split_text.add(res.join(""));
+					res.clear();
+				}
+			}
+			cur_state = "medial";
+		}
+		else if (is_final)
+		{
+			if (cur_state === "final")
+			{
+				if (res.count > 0)
+				{
+					// flush
+					out_split_text.add(res.join(""));
+					res.clear();
+				}
+			}
+			cur_state = "final";
+		}
+		else if (is_isolated)
+		{
+			if (cur_state !== "initial" && cur_state !== "medial" && cur_state !== "final")
+			{
+				if (res.count > 0)
+				{
+					// flush
+					out_split_text.add(res.join(""));
+					res.clear();
+				}
+			}
+		}
+		else
+		{
+			if (cur_state === "final")
+			{
+				cur_state = "";
+				if (res.count > 0)
+				{
+					// flush
+					out_split_text.add(res.join(""));
+					res.clear();
+				}
+			}
+		}
+		res.add($(c));
+	}
+	if (res.count > 0)
+	{
+		// flush
+		out_split_text.add(res.join(""));
+		res.clear();
+	}
+};
+
+global.break_by_linkage_arabic_array_temp = [];
+global.break_by_linkage_arabic = function(text)
+{
+	text += "";
+	var out_split_text = global.break_by_linkage_arabic_array_temp;
+	out_split_text.clear();
+	if (text.length == 0)
+	{
+		return out_split_text;
+	}
+	global.internal_break_by_linkage_arabic(text, out_split_text);
+	return out_split_text;
+};
+
+
 global.dmt = function(args*)
 {
 	global.Debug.message(args.join(", ")+": "+global.Scripts.getTraceString());
@@ -1415,67 +1710,84 @@ global.split_text_by_grapheme = function(kag=global.kag, text, cb, userdata)
 	{
 		text_sz = text.length;
 	}
-	if ((typeof(text) === "String") && (text.length > 1) && (text.indexOf("―") !== -1 || text.indexOf("■") !== -1))
+	if ((typeof(text) === "String"))
 	{
-		var text_tmp = [];
-		for (var i = 0, internal_forloop_count = text_sz; i < internal_forloop_count; i += 1)
-		{
-			var character = text[i];
-			var found_same_characters = 1;
-			if (("―■").indexOf(character) !== -1)
-			{
-				for (var j = i + 1, internal_forloop_count = text.length; j < internal_forloop_count; j += 1)
-				{
-					var character2 = text[j];
-					if (character2 === character)
-					{
-						found_same_characters += 1;
-					}
-					else
-					{
-						break;
-					}
-				}
-			}
-			if (found_same_characters > 1)
-			{
-				var str_joined = "";
-				for (var j = 0; j < found_same_characters; j += 1)
-				{
-					str_joined += character;
-				}
-				text_tmp.add(str_joined);
-				i += found_same_characters - 1;
-			}
-			else
-			{
-				text_tmp.add(character);
-			}
-		}
-		for (var i = text_tmp.count - 1; i >= 0; i -= 1)
-		{
-			cb(text_tmp[i], userdata);
-		}
-		return;
-	}
-	if (typeof(text) === "String")
-	{
-		if (global.get_arabic_shaping_enabled(kag))
+		var arabic_shaping_enabled = global.get_arabic_shaping_enabled(kag);
+		if (arabic_shaping_enabled)
 		{
 			if (typeof(global.arabic_shaper_instance_ltr) !== "Object")
 			{
 				global.init_arabic_shaper_instance();
 			}
 			text = global.arabic_shaper_instance_rtl.shape(text);
+			text = global.break_by_linkage_arabic(text);
+			for (var i = text_sz - 1; i >= 0; i -= 1)
+			{
+				var text_chr = text[i];
+				if (typeof(text_chr) === "String")
+				{
+					cb(global.arabic_presentation_tashkil_remap(text_chr.reverse()), userdata);
+				}
+			}
+			return;
 		}
-		var index = text.length;
-		var brk;
-		while ((brk = global.GraphemeBreaker.previousBreak(text, index)) > 0)
+		if ((text.length > 1) && (text.indexOf("―") !== -1 || text.indexOf("■") !== -1))
 		{
-			cb(text.substring(brk, index - brk), userdata);
-			index = brk;
+			var text_tmp = [];
+			for (var i = 0, internal_forloop_count = text_sz; i < internal_forloop_count; i += 1)
+			{
+				var character = text[i];
+				var found_same_characters = 1;
+				if (("―■").indexOf(character) !== -1)
+				{
+					for (var j = i + 1, internal_forloop_count = text.length; j < internal_forloop_count; j += 1)
+					{
+						var character2 = text[j];
+						if (character2 === character)
+						{
+							found_same_characters += 1;
+						}
+						else
+						{
+							break;
+						}
+					}
+				}
+				if (found_same_characters > 1)
+				{
+					var str_joined = "";
+					for (var j = 0; j < found_same_characters; j += 1)
+					{
+						str_joined += character;
+					}
+					text_tmp.add(str_joined);
+					i += found_same_characters - 1;
+				}
+				else
+				{
+					text_tmp.add(character);
+				}
+			}
+			for (var i = text_tmp.count - 1; i >= 0; i -= 1)
+			{
+				cb(text_tmp[i], userdata);
+			}
 		}
-		cb(text.substring(0, index), userdata);
+		else
+		{
+			var index = text.length;
+			var brk;
+			while ((brk = global.GraphemeBreaker.previousBreak(text, index)) > 0)
+			{
+				var subtext = text.substring(brk, index - brk);
+				cb(subtext, userdata);
+				index = brk;
+			}
+			{
+				var subtext = text.substring(0, index);
+				cb(subtext, userdata);
+			}
+		}
 		return;
 	}
 	for (var i = text_sz - 1; i >= 0; i -= 1)

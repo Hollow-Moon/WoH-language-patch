@@ -1720,7 +1720,9 @@ global.split_text_by_grapheme = function(kag=global.kag, text, cb, userdata)
 				global.init_arabic_shaper_instance();
 			}
 			text = global.arabic_shaper_instance_rtl.shape(text);
-			text = global.break_by_linkage_arabic(text);
+			var bidi_str = global.Bidi.from_string(global.arabic_presentation_tashkil_remap(text), %["direction" => "RTL"]);
+			bidi_str.reorder_visually();
+			text = global.break_by_linkage_arabic(bidi_str.toString().reverse());
 			for (var i = text_sz - 1; i >= 0; i -= 1)
 			{
 				var text_chr = text[i];

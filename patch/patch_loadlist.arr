@@ -189,6 +189,8 @@
 	"patch_unicode_trie.tjs",
 	"patch_unicode_linebreaker.tjs",
 	"patch_unicode_graphemebreaker.tjs",
+	"patch_bidi.tjs",
+	"patch_arabic_shaping.tjs",
 	"patch_wordwrap.tjs",
 	["patch_messagelayer_prelayout.tjs", ,,, "MESSAGELAYER_USECHARLAYER"],
 	["patch_ost.tjs", ,,, "GAME_FATE"],

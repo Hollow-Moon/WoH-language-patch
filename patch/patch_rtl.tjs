@@ -3,6 +3,14 @@
 // Vertical text is currently not supported.
 // ActingMessageLayer is currently not supported.
 
+global.init_arabic_shaper_instance = function()
+{
+	var as = new global.ArabicShaping(0);
+	global.arabic_shaper_instance_rtl = new global.ArabicShaping(as.LETTERS_SHAPE | as.TEXT_DIRECTION_VISUAL_RTL | as.LENGTH_GROW_SHRINK);
+	global.arabic_shaper_instance_ltr = new global.ArabicShaping(as.LETTERS_SHAPE | as.TEXT_DIRECTION_VISUAL_LTR | as.LENGTH_GROW_SHRINK);
+};
+
+
 global.Layer_patch_rtl_original = global.Layer;
 class Layer_patch_rtl_override extends global.Layer_patch_rtl_original
 {
@@ -47,18 +55,21 @@ class Layer_patch_rtl_override extends global.Layer_patch_rtl_original
 		text += "";
 		if (global.get_arabic_shaping_enabled(typeof(global.kag) === "Object" ? global.kag : this.window))
 		{
-			if (this.name !== "行描画用浮遊メッセージレイヤ")
+			if (this.name !== "行描画用浮遊メッセージレイヤ") /* Message layer */
 			{
-				text = global.shape_arabic(text);
+				if (typeof(global.arabic_shaper_instance_ltr) !== "Object")
+				{
+					global.init_arabic_shaper_instance();
+				}
+				text = global.arabic_shaper_instance_ltr.shape(text);
 			}
 			if (global.get_half_height_offset_hack(typeof(global.kag) === "Object" ? global.kag : this.window))
 			{
 				top -= this.font.height \ 2;
 			}
 		}
-		text = text.reverse();
 		
-		if (this.name === "行描画用浮遊メッセージレイヤ")
+		if (this.name === "行描画用浮遊メッセージレイヤ") /* Message layer */
 		{
 			left = this.parent.relinexpos - left;
 		}

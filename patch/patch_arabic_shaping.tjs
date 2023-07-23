@@ -1,5 +1,20 @@
 ﻿// Mostly based on icu4j sources
 
+class ArabicShapingException extends global.Exception
+{
+    function ArabicShapingException(msg)
+    {
+        super.Exception(...);
+    }
+}
+
+class IllegalArgumentException extends global.Exception
+{
+    function IllegalArgumentException(msg)
+    {
+        super.Exception(...);
+    }
+}
 
 /**
  * Shape Arabic text on a character basis.
@@ -57,12 +72,17 @@ class ArabicShaping
      * into a range of text in the destination array, and return the number
      * of characters written.
      *
-     * @param source An array containing the input text
+     * @param source If string, the input text. The rest of the parameters don't need to be set
+     *   Otherwise: An array containing the input text
      * @param sourceStart The start of the range of text to convert
      * @param sourceLength The length of the range of text to convert
      * @param dest The destination array that will receive the result.
      *   It may be <code>NULL</code> only if  <code>destSize</code> is 0.
+     *   If this is the same as source, it can only be used if the Length
+     *   option does not grow or shrink the text.
+     *   If this is void, it will be set the same as source.
      * @param destStart The start of the range of the destination buffer to use.
+     *   If this is void, it will be set the same as sourceStart.
      * @param destSize The size (capacity) of the destination buffer.
      *   If <code>destSize</code> is 0, then no output is produced,
      *   but the necessary buffer size is returned ("preflighting").  This
@@ -71,98 +91,117 @@ class ArabicShaping
      *   following lamalef, this will not detect a lamalef without a
      *   corresponding space.  An error will be thrown when the actual
      *   conversion is attempted.
-     * @return The number of chars written to the destination buffer.
+     *   If this is void, it will be set the same as destSize.
+     * @return If source is String: the converted string
+     *   If source is not String: The number of chars written to the destination buffer.
      *   If an error occurs, then no output was written, or it may be
      *   incomplete.
      * @throws ArabicShapingException if the text cannot be converted according to the options.
      * @stable ICU 2.0
      */
 
-    function /* public int */ shape(/* char[] */ source, /* int */ sourceStart, /* int */ sourceLength, /* char[] */ dest, /* int */ destStart, /* int */ destSize) { // throws ArabicShapingException
+    function shape(source, sourceStart, sourceLength, dest, destStart, destSize) { // throws ArabicShapingException
+        var text = void;
+        if (typeof(source) === "String")
+        {
+            text = source;
+            source = [];
+            for (var i = 0; i < text.length; i += 1)
+            {
+                source.add(#(text[i]));
+            }
+            dest = source;
+            if (((this.options & this.LAMALEF_MASK) == this.LAMALEF_RESIZE) ||
+                ((this.options & this.LETTERS_MASK) == this.LETTERS_UNSHAPE)) {
+
+                dest = []; // max
+                for (var i = 0; i < source.count * 2; i += 1) {
+                    dest.add(0x0000);
+                }
+            }
+            sourceStart = 0;
+            destStart = 0;
+            sourceLength = source.count;
+            destSize = dest.count;
+        }
+        if (dest === void)
+        {
+            dest = source;
+        }
+        if (destStart === void)
+        {
+            destStart = sourceStart;
+        }
+        if (destSize === void)
+        {
+            destSize = sourceLength;
+        }
+        if (source === dest)
+        {
+            if ((this.options & this.LAMALEF_MASK) == this.LAMALEF_RESIZE) {
+                throw new global.ArabicShapingException("Cannot shape in place with length option resize.");
+            }
+        }
         if (source == null) {
-            throw new IllegalArgumentException("source can not be null");
+            throw new global.IllegalArgumentException("source can not be null");
         }
         if (sourceStart < 0 || sourceLength < 0 || sourceStart + sourceLength > source.length) {
-            throw new IllegalArgumentException("bad source start (" + sourceStart +
+            throw new global.IllegalArgumentException("bad source start (" + sourceStart +
                                                ") or length (" + sourceLength +
                                                ") for buffer of length " + source.length);
         }
         if (dest == null && destSize != 0) {
-            throw new IllegalArgumentException("null dest requires destSize == 0");
+            throw new global.IllegalArgumentException("null dest requires destSize == 0");
         }
         if ((destSize != 0) &&
             (destStart < 0 || destSize < 0 || destStart + destSize > dest.length)) {
-            throw new IllegalArgumentException("bad dest start (" + destStart +
+            throw new global.IllegalArgumentException("bad dest start (" + destStart +
                                                ") or size (" + destSize +
                                                ") for buffer of length " + dest.length);
         }
         /* Validate input options */
-        if ( ((options&TASHKEEL_MASK) != 0) &&
-             !(((options & TASHKEEL_MASK)==TASHKEEL_BEGIN)  ||
-               ((options & TASHKEEL_MASK)==TASHKEEL_END)    ||
-               ((options & TASHKEEL_MASK)==TASHKEEL_RESIZE) ||
-               ((options & TASHKEEL_MASK)==TASHKEEL_REPLACE_BY_TATWEEL))) {
-            throw new IllegalArgumentException("Wrong Tashkeel argument");
+        if ( ((this.options&this.TASHKEEL_MASK) != 0) &&
+             !(((this.options & this.TASHKEEL_MASK)==this.TASHKEEL_BEGIN)  ||
+               ((this.options & this.TASHKEEL_MASK)==this.TASHKEEL_END)    ||
+               ((this.options & this.TASHKEEL_MASK)==this.TASHKEEL_RESIZE) ||
+               ((this.options & this.TASHKEEL_MASK)==this.TASHKEEL_REPLACE_BY_TATWEEL))) {
+            throw new global.IllegalArgumentException("Wrong Tashkeel argument");
         }
 
         ///CLOVER:OFF
         //According to Steven Loomis, the code is unreachable when you OR all the constants within the if statements
-        if(((options&LAMALEF_MASK) != 0) &&
-               !(((options & LAMALEF_MASK)==LAMALEF_BEGIN)  ||
-                 ((options & LAMALEF_MASK)==LAMALEF_END)    ||
-                 ((options & LAMALEF_MASK)==LAMALEF_RESIZE) ||
-                 ((options & LAMALEF_MASK)==LAMALEF_AUTO)   ||
-                 ((options & LAMALEF_MASK)==LAMALEF_NEAR))) {
-            throw new IllegalArgumentException("Wrong Lam Alef argument");
+        if(((this.options&this.LAMALEF_MASK) != 0) &&
+               !(((this.options & this.LAMALEF_MASK)==this.LAMALEF_BEGIN)  ||
+                 ((this.options & this.LAMALEF_MASK)==this.LAMALEF_END)    ||
+                 ((this.options & this.LAMALEF_MASK)==this.LAMALEF_RESIZE) ||
+                 ((this.options & this.LAMALEF_MASK)==this.LAMALEF_AUTO)   ||
+                 ((this.options & this.LAMALEF_MASK)==this.LAMALEF_NEAR))) {
+            throw new global.IllegalArgumentException("Wrong Lam Alef argument");
         }
         ///CLOVER:ON
 
         /* Validate Tashkeel (Tashkeel replacement options should be enabled in shaping mode only)*/
-        if(((options&TASHKEEL_MASK) != 0) && (options&LETTERS_MASK) == LETTERS_UNSHAPE) {
-            throw new IllegalArgumentException("Tashkeel replacement should not be enabled in deshaping mode ");
+        if(((this.options&this.TASHKEEL_MASK) != 0) && (this.options&this.LETTERS_MASK) == this.LETTERS_UNSHAPE) {
+            throw new global.IllegalArgumentException("Tashkeel replacement should not be enabled in deshaping mode ");
         }
-        return internalShape(source, sourceStart, sourceLength, dest, destStart, destSize);
-    }
-
-
-    /**
-     * Convert a range of text in place.  This may only be used if the Length option
-     * does not grow or shrink the text.
-     *
-     * @param source An array containing the input text
-     * @param start The start of the range of text to convert
-     * @param length The length of the range of text to convert
-     * @throws ArabicShapingException if the text cannot be converted according to the options.
-     * @stable ICU 2.0
-     */
-    function /* public void */ shape(/* char[] */ source, /* int */ start, /* int */ length) /* throws ArabicShapingException */ {
-        if ((options & LAMALEF_MASK) == LAMALEF_RESIZE) {
-            throw new ArabicShapingException("Cannot shape in place with length option resize.");
+        var len = this.internalShape(source, sourceStart, sourceLength, dest, destStart, destSize);
+        if (text !== void)
+        {
+            for (var i = 0; i < dest.count; i += 1)
+            {
+                if (dest[i] !== 0x0000)
+                {
+                    dest[i] = $(dest[i]);
+                }
+                else
+                {
+                    dest[i] = "";
+                }
+            }
+            return dest.join("").substring(0, len);
         }
-        shape(source, start, length, source, start, length);
+        return len;
     }
-
-    /**
-     * Convert a string, returning the new string.
-     *
-     * @param text the string to convert
-     * @return the converted string
-     * @throws ArabicShapingException if the string cannot be converted according to the options.
-     * @stable ICU 2.0
-     */
-    function /* public String */ shape( /* String */ text) /* throws ArabicShapingException */ {
-        var /* char[] */ src = text.toCharArray();
-        var /* char[] */ dest = src;
-        if (((options & LAMALEF_MASK) == LAMALEF_RESIZE) &&
-            ((options & LETTERS_MASK) == LETTERS_UNSHAPE)) {
-
-            dest = /* !!FIXME array!! new char[src.length * 2] */ void; // max
-        }
-        var /* int */ len = shape(src, 0, src.length, dest, 0, dest.length);
-
-        return new String(dest, 0, len);
-    }
-
 
     /**
      * Construct ArabicShaping using the options flags.
@@ -172,7 +211,7 @@ class ArabicShaping
      * formed or broken.<br>
      * 'TEXT_DIRECTION' flags control whether the text is read and written
      * in visual order or in logical order.<br>
-     * 'LETTERS_SHAPE' flags control whether conversion is to or from
+     * 'this.LETTERS_SHAPE' flags control whether conversion is to or from
      * presentation forms.<br>
      * 'DIGITS' flags control whether digits are shaped, and whether from
      * European to Arabic-Indic or vice-versa.<br>
@@ -182,17 +221,17 @@ class ArabicShaping
      */
     function /* public */ ArabicShaping(/* int */ options) {
         this.options = options;
-        if ((options & DIGITS_MASK) > 0x80) {
-            throw new IllegalArgumentException("bad DIGITS options");
+        if ((this.options & this.DIGITS_MASK) > 0x80) {
+            throw new global.IllegalArgumentException("bad DIGITS options");
         }
 
-        isLogical = ( (options & TEXT_DIRECTION_MASK) == TEXT_DIRECTION_LOGICAL );
+        this.isLogical = ( (this.options & this.TEXT_DIRECTION_MASK) == this.TEXT_DIRECTION_LOGICAL );
         /* Validate options */
-        spacesRelativeToTextBeginEnd = ( (options & SPACES_RELATIVE_TO_TEXT_MASK) == SPACES_RELATIVE_TO_TEXT_BEGIN_END );
-        if ( (options&SHAPE_TAIL_TYPE_MASK) == SHAPE_TAIL_NEW_UNICODE){
-            tailChar = NEW_TAIL_CHAR;
+        this.spacesRelativeToTextBeginEnd = ( (this.options & this.SPACES_RELATIVE_TO_TEXT_MASK) == this.SPACES_RELATIVE_TO_TEXT_BEGIN_END );
+        if ( (this.options&this.SHAPE_TAIL_TYPE_MASK) == this.SHAPE_TAIL_NEW_UNICODE){
+            this.tailChar = this.NEW_TAIL_CHAR;
         } else {
-            tailChar = OLD_TAIL_CHAR;
+            this.tailChar = this.OLD_TAIL_CHAR;
         }
     }
 
@@ -581,8 +620,9 @@ class ArabicShaping
     /* @Override */
     function /* public boolean */ equals(/* Object */ rhs) {
         return rhs != null &&
-            rhs.getClass() == ArabicShaping.class &&
-            options == (/*(ArabicShaping)*/rhs).options;
+            (rhs instanceof "ArabicShaping") &&
+            /* rhs.getClass() == ArabicShaping.class && */
+            this.options == (/*(ArabicShaping)*/rhs).options;
     }
 
     /**
@@ -591,7 +631,7 @@ class ArabicShaping
      ///CLOVER:OFF
     /* @Override */
     function /* public int */ hashCode() {
-        return options;
+        return this.options;
     }
 
     /**
@@ -599,53 +639,53 @@ class ArabicShaping
      */
     /* @Override */
     function /* public String */ toString() {
-        var /* StringBuilder */ buf = new StringBuilder("" + this/*super.toString()*/);
-        buf.append('[');
+        var /* StringBuilder */ buf = [];
+        buf.add("[");
 
-        switch (options & LAMALEF_MASK) {
-        case LAMALEF_RESIZE: buf.append("LamAlef resize"); break;
-        case LAMALEF_NEAR: buf.append("LamAlef spaces at near"); break;
-        case LAMALEF_BEGIN: buf.append("LamAlef spaces at begin"); break;
-        case LAMALEF_END: buf.append("LamAlef spaces at end"); break;
-        case LAMALEF_AUTO: buf.append("lamAlef auto"); break;
+        switch (this.options & this.LAMALEF_MASK) {
+        case this.LAMALEF_RESIZE: buf.add("LamAlef resize"); break;
+        case this.LAMALEF_NEAR: buf.add("LamAlef spaces at near"); break;
+        case this.LAMALEF_BEGIN: buf.add("LamAlef spaces at begin"); break;
+        case this.LAMALEF_END: buf.add("LamAlef spaces at end"); break;
+        case this.LAMALEF_AUTO: buf.add("lamAlef auto"); break;
         }
-        switch (options & TEXT_DIRECTION_MASK) {
-        case TEXT_DIRECTION_LOGICAL: buf.append(", logical"); break;
-        case TEXT_DIRECTION_VISUAL_LTR: buf.append(", visual"); break;
+        switch (this.options & this.TEXT_DIRECTION_MASK) {
+        case this.TEXT_DIRECTION_LOGICAL: buf.add(", logical"); break;
+        case this.TEXT_DIRECTION_VISUAL_LTR: buf.add(", visual"); break;
         }
-        switch (options & LETTERS_MASK) {
-        case LETTERS_NOOP: buf.append(", no letter shaping"); break;
-        case LETTERS_SHAPE: buf.append(", shape letters"); break;
-        case LETTERS_SHAPE_TASHKEEL_ISOLATED: buf.append(", shape letters tashkeel isolated"); break;
-        case LETTERS_UNSHAPE: buf.append(", unshape letters"); break;
+        switch (this.options & this.LETTERS_MASK) {
+        case this.LETTERS_NOOP: buf.add(", no letter shaping"); break;
+        case this.LETTERS_SHAPE: buf.add(", shape letters"); break;
+        case this.LETTERS_SHAPE_TASHKEEL_ISOLATED: buf.add(", shape letters tashkeel isolated"); break;
+        case this.LETTERS_UNSHAPE: buf.add(", unshape letters"); break;
         }
-        switch (options & SEEN_MASK) {
-        case SEEN_TWOCELL_NEAR: buf.append(", Seen at near"); break;
+        switch (this.options & this.SEEN_MASK) {
+        case this.SEEN_TWOCELL_NEAR: buf.add(", Seen at near"); break;
         }
-        switch (options & YEHHAMZA_MASK) {
-        case YEHHAMZA_TWOCELL_NEAR: buf.append(", Yeh Hamza at near"); break;
+        switch (this.options & this.YEHHAMZA_MASK) {
+        case this.YEHHAMZA_TWOCELL_NEAR: buf.add(", Yeh Hamza at near"); break;
         }
-        switch (options & TASHKEEL_MASK) {
-        case TASHKEEL_BEGIN: buf.append(", Tashkeel at begin"); break;
-        case TASHKEEL_END: buf.append(", Tashkeel at end"); break;
-        case TASHKEEL_REPLACE_BY_TATWEEL: buf.append(", Tashkeel replace with tatweel"); break;
-        case TASHKEEL_RESIZE: buf.append(", Tashkeel resize"); break;
+        switch (this.options & this.TASHKEEL_MASK) {
+        case this.TASHKEEL_BEGIN: buf.add(", Tashkeel at begin"); break;
+        case this.TASHKEEL_END: buf.add(", Tashkeel at end"); break;
+        case this.TASHKEEL_REPLACE_BY_TATWEEL: buf.add(", Tashkeel replace with tatweel"); break;
+        case this.TASHKEEL_RESIZE: buf.add(", Tashkeel resize"); break;
         }
 
-        switch (options & DIGITS_MASK) {
-        case DIGITS_NOOP: buf.append(", no digit shaping"); break;
-        case DIGITS_EN2AN: buf.append(", shape digits to AN"); break;
-        case DIGITS_AN2EN: buf.append(", shape digits to EN"); break;
-        case DIGITS_EN2AN_INIT_LR: buf.append(", shape digits to AN contextually: default EN"); break;
-        case DIGITS_EN2AN_INIT_AL: buf.append(", shape digits to AN contextually: default AL"); break;
+        switch (this.options & this.DIGITS_MASK) {
+        case this.DIGITS_NOOP: buf.add(", no digit shaping"); break;
+        case this.DIGITS_EN2AN: buf.add(", shape digits to AN"); break;
+        case this.DIGITS_AN2EN: buf.add(", shape digits to EN"); break;
+        case this.DIGITS_EN2AN_INIT_LR: buf.add(", shape digits to AN contextually: default EN"); break;
+        case this.DIGITS_EN2AN_INIT_AL: buf.add(", shape digits to AN contextually: default AL"); break;
         }
-        switch (options & DIGIT_TYPE_MASK) {
-        case DIGIT_TYPE_AN: buf.append(", standard Arabic-Indic digits"); break;
-        case DIGIT_TYPE_AN_EXTENDED: buf.append(", extended Arabic-Indic digits"); break;
+        switch (this.options & this.DIGIT_TYPE_MASK) {
+        case this.DIGIT_TYPE_AN: buf.add(", standard Arabic-Indic digits"); break;
+        case this.DIGIT_TYPE_AN_EXTENDED: buf.add(", extended Arabic-Indic digits"); break;
         }
-        buf.append("]");
+        buf.add("]");
 
-        return buf.toString();
+        return buf.join("");
     }
     ///CLOVER:ON
 
@@ -874,7 +914,6 @@ class ArabicShaping
                                                 /* int */ length,
                                                 /* char */ digitBase,
                                                 /* boolean */ lastStrongWasAL) {
-        // TODO FIXME
 /*
         UBiDiProps bdp=UBiDiProps.INSTANCE;
         digitBase -= '0'; // move common adjustment out of loop
@@ -899,13 +938,35 @@ class ArabicShaping
             }
         }
 */
+        var bdp = global.Bidi;
+        digitBase -= #"0"; // move common adjustment out of loop
+
+        for(var /* int */ i = start + length; --i >= start;) {
+            var /* char */ ch = dest[i];
+            switch (bdp.bidi_class_for(ch)) {
+            case /* UCharacterDirection.LEFT_TO_RIGHT */ "L":
+            case /* UCharacterDirection.RIGHT_TO_LEFT */ "R":
+                lastStrongWasAL = false;
+                break;
+            case /* UCharacterDirection.RIGHT_TO_LEFT_ARABIC */ "AL":
+                lastStrongWasAL = true;
+                break;
+            case /* UCharacterDirection.EUROPEAN_NUMBER */ "EN":
+                if (lastStrongWasAL && ch <= 0x0039) {
+                    dest[i] = ch + digitBase;
+                }
+                break;
+            default:
+                break;
+            }
+        }
     }
 
     /*
      * Name    : invertBuffer
      * Function: This function inverts the buffer, it's used
      *           in case the user specifies the buffer to be
-     *           TEXT_DIRECTION_LOGICAL
+     *           this.TEXT_DIRECTION_LOGICAL
      */
     function /* private static void */ invertBuffer(/* char[] */ buffer,
                                      /* int */ start,
@@ -969,13 +1030,13 @@ class ArabicShaping
      */
     function /* private static int */ getLink(/* char */ ch) {
         if (ch >= 0x0622 && ch <= 0x06D3) {
-            return araLink[ch - 0x0622];
+            return this.araLink[ch - 0x0622];
         } else if (ch == 0x200D) {
             return 3;
         } else if (ch >= 0x206D && ch <= 0x206F) {
             return 4;
         } else if (ch >= 0xFE70 && ch <= 0xFEFC) {
-            return presLink[ch - 0xFE70];
+            return this.presLink[ch - 0xFE70];
         } else {
             return 0;
         }
@@ -990,7 +1051,7 @@ class ArabicShaping
                                        /* int */ start,
                                        /* int */ count) {
         for (var /* int */ i = start, e = start + count; i < e; ++i) {
-            if (dest[i] != SPACE_CHAR) {
+            if (dest[i] != this.SPACE_CHAR) {
                 return i - start;
             }
         }
@@ -1002,7 +1063,7 @@ class ArabicShaping
                                         /* int */ count) {
 
         for (var /* int */ i = start + count; --i >= start;) {
-            if (dest[i] != SPACE_CHAR) {
+            if (dest[i] != this.SPACE_CHAR) {
                 return start + count - 1 - i;
             }
         }
@@ -1025,7 +1086,7 @@ class ArabicShaping
 
     function /* private static int */ isSeenTailFamilyChar(/* char */ ch) {
         if (ch >= 0xfeb1 && ch < 0xfebf){
-             return tailFamilyIsolatedFinal [ch - 0xFEB1];
+             return this.tailFamilyIsolatedFinal [ch - 0xFEB1];
         } else {
              return 0;
         }
@@ -1052,7 +1113,7 @@ class ArabicShaping
      */
 
     function /* private static boolean */ isTailChar(/* char */ ch) {
-        if(ch == OLD_TAIL_CHAR || ch == NEW_TAIL_CHAR){
+        if(ch == this.OLD_TAIL_CHAR || ch == this.NEW_TAIL_CHAR){
                 return true;
         }else{
                 return false;
@@ -1098,10 +1159,10 @@ class ArabicShaping
      *           returns 0
      */
     function /* private static int */ isTashkeelOnTatweelChar(/* char */ ch){
-        if (ch >= 0xfe70 && ch <= 0xfe7f && ch != NEW_TAIL_CHAR && ch != 0xFE75 && ch != SHADDA_TATWEEL_CHAR)
+        if (ch >= 0xfe70 && ch <= 0xfe7f && ch != this.NEW_TAIL_CHAR && ch != 0xFE75 && ch != this.SHADDA_TATWEEL_CHAR)
         {
-            return tashkeelMedial [ch - 0xFE70];
-        } else if( (ch >= 0xfcf2 && ch <= 0xfcf4) || (ch == SHADDA_TATWEEL_CHAR)) {
+            return this.tashkeelMedial [ch - 0xFE70];
+        } else if( (ch >= 0xfcf2 && ch <= 0xfcf4) || (ch == this.SHADDA_TATWEEL_CHAR)) {
             return 2;
         } else {
             return 0;
@@ -1116,8 +1177,8 @@ class ArabicShaping
      *           returns 1 otherwise returns 0
      */
     function /* private static int */ isIsolatedTashkeelChar(/* char */ ch){
-        if (ch >= 0xfe70 && ch <= 0xfe7f && ch != NEW_TAIL_CHAR && ch != 0xFE75){
-            return (1 - tashkeelMedial [ch - 0xFE70]);
+        if (ch >= 0xfe70 && ch <= 0xfe7f && ch != this.NEW_TAIL_CHAR && ch != 0xFE75){
+            return (1 - this.tashkeelMedial [ch - 0xFE70]);
         } else if(ch >= 0xfc5e && ch <= 0xfc63){
             return 1;
         } else{
@@ -1156,27 +1217,27 @@ class ArabicShaping
 
         var /* int */ destSize = sourceLength;
 
-        switch (options & LETTERS_MASK) {
-        case LETTERS_SHAPE:
-        case LETTERS_SHAPE_TASHKEEL_ISOLATED:
-            if (isLogical) {
+        switch (this.options & this.LETTERS_MASK) {
+        case this.LETTERS_SHAPE:
+        case this.LETTERS_SHAPE_TASHKEEL_ISOLATED:
+            if (this.isLogical) {
                 for (var /* int */ i = sourceStart, e = sourceStart + sourceLength - 1; i < e; ++i) {
-                    if ((source[i] == LAM_CHAR && isAlefChar(source[i+1])) || isTashkeelCharFE(source[i])){
+                    if ((source[i] == this.LAM_CHAR && this.isAlefChar(source[i+1])) || this.isTashkeelCharFE(source[i])){
                         --destSize;
                     }
                 }
             } else { // visual
                 for(var /* int */ i = sourceStart + 1, e = sourceStart + sourceLength; i < e; ++i) {
-                    if ((source[i] == LAM_CHAR && isAlefChar(source[i-1])) || isTashkeelCharFE(source[i])) {
+                    if ((source[i] == this.LAM_CHAR && this.isAlefChar(source[i-1])) || this.isTashkeelCharFE(source[i])) {
                         --destSize;
                     }
                 }
             }
             break;
 
-        case LETTERS_UNSHAPE:
+        case this.LETTERS_UNSHAPE:
             for(var /* int */ i = sourceStart, e = sourceStart + sourceLength; i < e; ++i) {
-                if (isLamAlefChar(source[i])) {
+                if (this.isLamAlefChar(source[i])) {
                     destSize++;
                 }
             }
@@ -1206,6 +1267,17 @@ class ArabicShaping
         return count;
     }
 
+    /*
+     * Name    : copyArray
+     * Function: Copies array to other array
+     */
+    function /* private static void */ copyArray(/* char [] */ source, /* int */ sourceStart, /* char [] */ dest, /* int */ destStart, /* int */ length)
+    {
+        for (var i = 0; i < length; i += 1)
+        {
+            dest[destStart + i] = source[sourceStart + i];
+        }
+    }
 
     /*
      * Name    : shiftArray
@@ -1257,12 +1329,12 @@ class ArabicShaping
     function /* private static int */ handleTashkeelWithTatweel(/* char[] */ dest, /* int */ sourceLength) {
         var /* int */ i;
         for(i = 0; i < sourceLength; i++){
-            if((isTashkeelOnTatweelChar(dest[i]) == 1)){
-                dest[i] = TATWEEL_CHAR;
-            }else if((isTashkeelOnTatweelChar(dest[i]) == 2)){
-                dest[i] = SHADDA_TATWEEL_CHAR;
-            }else if((isIsolatedTashkeelChar(dest[i])==1) && dest[i] != SHADDA_CHAR){
-                dest[i] = SPACE_CHAR;
+            if((this.isTashkeelOnTatweelChar(dest[i]) == 1)){
+                dest[i] = this.TATWEEL_CHAR;
+            }else if((this.isTashkeelOnTatweelChar(dest[i]) == 2)){
+                dest[i] = this.SHADDA_TATWEEL_CHAR;
+            }else if((this.isIsolatedTashkeelChar(dest[i])==1) && dest[i] != this.SHADDA_CHAR){
+                dest[i] = this.SPACE_CHAR;
             }
         }
         return sourceLength;
@@ -1280,10 +1352,10 @@ class ArabicShaping
      *
      *           There is also Auto option for LamAlef and tashkeel, which will put
      *           the spaces at end of the buffer (or end of text if the user used
-     *           the option SPACES_RELATIVE_TO_TEXT_BEGIN_END).
+     *           the option this.SPACES_RELATIVE_TO_TEXT_BEGIN_END).
      *
      *           If the text type was visual_LTR and the option
-     *           SPACES_RELATIVE_TO_TEXT_BEGIN_END was selected the END
+     *           this.SPACES_RELATIVE_TO_TEXT_BEGIN_END was selected the END
      *           option will place the space at the beginning of the buffer and
      *           BEGIN will place the space at the end of the buffer.
      */
@@ -1291,105 +1363,105 @@ class ArabicShaping
             /* int */ start,
             /* int */ length) {
 
-        var /* int */ lenOptionsLamAlef = options & LAMALEF_MASK;
-        var /* int */ lenOptionsTashkeel = options & TASHKEEL_MASK;
+        var /* int */ lenOptionsLamAlef = this.options & this.LAMALEF_MASK;
+        var /* int */ lenOptionsTashkeel = this.options & this.TASHKEEL_MASK;
         var /* boolean */ lamAlefOn = false;
         var /* boolean */ tashkeelOn = false;
     
-        if (!isLogical & !spacesRelativeToTextBeginEnd) {
+        if (!this.isLogical & !this.spacesRelativeToTextBeginEnd) {
             switch (lenOptionsLamAlef) {
-                case LAMALEF_BEGIN: lenOptionsLamAlef = LAMALEF_END; break;
-                case LAMALEF_END: lenOptionsLamAlef = LAMALEF_BEGIN; break;
+                case this.LAMALEF_BEGIN: lenOptionsLamAlef = this.LAMALEF_END; break;
+                case this.LAMALEF_END: lenOptionsLamAlef = this.LAMALEF_BEGIN; break;
                 default: break;
             }
             switch (lenOptionsTashkeel){
-                case TASHKEEL_BEGIN: lenOptionsTashkeel = TASHKEEL_END; break;
-                case TASHKEEL_END: lenOptionsTashkeel = TASHKEEL_BEGIN; break;
+                case this.TASHKEEL_BEGIN: lenOptionsTashkeel = this.TASHKEEL_END; break;
+                case this.TASHKEEL_END: lenOptionsTashkeel = this.TASHKEEL_BEGIN; break;
                 default: break;
             }
         }
     
     
-        if (lenOptionsLamAlef == LAMALEF_NEAR) {
+        if (lenOptionsLamAlef == this.LAMALEF_NEAR) {
             for (var /* int */ i = start, e = i + length; i < e; ++i) {
-                if (dest[i] == LAMALEF_SPACE_SUB) {
-                    dest[i] = SPACE_CHAR;
+                if (dest[i] == this.LAMALEF_SPACE_SUB) {
+                    dest[i] = this.SPACE_CHAR;
                 }
             }
     
         } else {
     
             var /* final int */ e = start + length;
-            var /* int */ wL = countSpaceSub(dest, length, LAMALEF_SPACE_SUB);
-            var /* int */ wT = countSpaceSub(dest, length, TASHKEEL_SPACE_SUB);
+            var /* int */ wL = this.countSpaceSub(dest, length, this.LAMALEF_SPACE_SUB);
+            var /* int */ wT = this.countSpaceSub(dest, length, this.TASHKEEL_SPACE_SUB);
     
-            if (lenOptionsLamAlef == LAMALEF_END){
+            if (lenOptionsLamAlef == this.LAMALEF_END){
                 lamAlefOn = true;
             }
-            if (lenOptionsTashkeel == TASHKEEL_END){
+            if (lenOptionsTashkeel == this.TASHKEEL_END){
                 tashkeelOn = true;
             }
     
     
-            if (lamAlefOn && (lenOptionsLamAlef == LAMALEF_END)) {
-                shiftArray(dest, start, e, LAMALEF_SPACE_SUB);
+            if (lamAlefOn && (lenOptionsLamAlef == this.LAMALEF_END)) {
+                this.shiftArray(dest, start, e, this.LAMALEF_SPACE_SUB);
                 while (wL > start) {
-                    dest[--wL] = SPACE_CHAR;
+                    dest[--wL] = this.SPACE_CHAR;
                 }
             }
     
-            if (tashkeelOn && (lenOptionsTashkeel == TASHKEEL_END)){
-                shiftArray(dest, start, e, TASHKEEL_SPACE_SUB);
+            if (tashkeelOn && (lenOptionsTashkeel == this.TASHKEEL_END)){
+                this.shiftArray(dest, start, e, this.TASHKEEL_SPACE_SUB);
                 while (wT > start) {
-                     dest[--wT] = SPACE_CHAR;
+                     dest[--wT] = this.SPACE_CHAR;
                 }
             }
     
             lamAlefOn = false;
             tashkeelOn = false;
     
-            if (lenOptionsLamAlef == LAMALEF_RESIZE){
+            if (lenOptionsLamAlef == this.LAMALEF_RESIZE){
                 lamAlefOn = true;
             }
-            if (lenOptionsTashkeel == TASHKEEL_RESIZE){
+            if (lenOptionsTashkeel == this.TASHKEEL_RESIZE){
                 tashkeelOn = true;
             }
     
-            if (lamAlefOn && (lenOptionsLamAlef == LAMALEF_RESIZE)){
-                shiftArray(dest, start, e, LAMALEF_SPACE_SUB);
-                wL = flipArray(dest,start,e, wL);
+            if (lamAlefOn && (lenOptionsLamAlef == this.LAMALEF_RESIZE)){
+                this.shiftArray(dest, start, e, this.LAMALEF_SPACE_SUB);
+                wL = this.flipArray(dest,start,e, wL);
                 length = wL - start;
             }
-            if (tashkeelOn && (lenOptionsTashkeel == TASHKEEL_RESIZE)) {
-                shiftArray(dest, start, e, TASHKEEL_SPACE_SUB);
-                wT = flipArray(dest,start,e, wT);
+            if (tashkeelOn && (lenOptionsTashkeel == this.TASHKEEL_RESIZE)) {
+                this.shiftArray(dest, start, e, this.TASHKEEL_SPACE_SUB);
+                wT = this.flipArray(dest,start,e, wT);
                 length = wT - start;
             }
     
             lamAlefOn = false;
             tashkeelOn = false;
     
-            if ((lenOptionsLamAlef == LAMALEF_BEGIN) ||
-                (lenOptionsLamAlef == LAMALEF_AUTO)){
+            if ((lenOptionsLamAlef == this.LAMALEF_BEGIN) ||
+                (lenOptionsLamAlef == this.LAMALEF_AUTO)){
                 lamAlefOn = true;
             }
-            if (lenOptionsTashkeel == TASHKEEL_BEGIN){
+            if (lenOptionsTashkeel == this.TASHKEEL_BEGIN){
                 tashkeelOn = true;
             }
     
-            if (lamAlefOn && ((lenOptionsLamAlef == LAMALEF_BEGIN)||
-                            (lenOptionsLamAlef == LAMALEF_AUTO))) { // spaces at beginning
-                shiftArray(dest, start, e, LAMALEF_SPACE_SUB);
-                wL = flipArray(dest,start,e, wL);
+            if (lamAlefOn && ((lenOptionsLamAlef == this.LAMALEF_BEGIN)||
+                            (lenOptionsLamAlef == this.LAMALEF_AUTO))) { // spaces at beginning
+                this.shiftArray(dest, start, e, this.LAMALEF_SPACE_SUB);
+                wL = this.flipArray(dest,start,e, wL);
                 while (wL < e) {
-                    dest[wL++] = SPACE_CHAR;
+                    dest[wL++] = this.SPACE_CHAR;
                 }
             }
-            if(tashkeelOn && (lenOptionsTashkeel == TASHKEEL_BEGIN)){
-                shiftArray(dest, start, e, TASHKEEL_SPACE_SUB);
-                wT = flipArray(dest,start,e, wT);
+            if(tashkeelOn && (lenOptionsTashkeel == this.TASHKEEL_BEGIN)){
+                this.shiftArray(dest, start, e, this.TASHKEEL_SPACE_SUB);
+                wT = this.flipArray(dest,start,e, wT);
                 while (wT < e) {
-                    dest[wT++] = SPACE_CHAR;
+                    dest[wT++] = this.SPACE_CHAR;
                 }
             }
         }
@@ -1401,7 +1473,7 @@ class ArabicShaping
    *Name     :expandCompositCharAtBegin
    *Function :Expands the LamAlef character to Lam and Alef consuming the required
    *         space from beginning of the buffer. If the text type was visual_LTR
-   *         and the option SPACES_RELATIVE_TO_TEXT_BEGIN_END was selected
+   *         and the option this.SPACES_RELATIVE_TO_TEXT_BEGIN_END was selected
    *         the spaces will be located at end of buffer.
    *         If there are no spaces to expand the LamAlef, an exception is thrown.
    */
@@ -1409,15 +1481,15 @@ class ArabicShaping
                             /* int */ lacount) {
         var /* boolean */ spaceNotFound = false;
 
-        if (lacount > countSpacesRight(dest, start, length)) {
+        if (lacount > this.countSpacesRight(dest, start, length)) {
             spaceNotFound = true;
             return spaceNotFound;
         }
         for (var /* int */ r = start + length - lacount, w = start + length; --r >= start;) {
             var /* char */ ch = dest[r];
-            if (isNormalizedLamAlefChar(ch)) {
-                dest[--w] = LAM_CHAR;
-                dest[--w] = convertNormalizedLamAlef[ch - 0x065C];
+            if (this.isNormalizedLamAlefChar(ch)) {
+                dest[--w] = this.LAM_CHAR;
+                dest[--w] = this.convertNormalizedLamAlef[ch - 0x065C];
             } else {
                 dest[--w] = ch;
             }
@@ -1430,7 +1502,7 @@ class ArabicShaping
    *Name     : expandCompositCharAtEnd
    *Function : Expands the LamAlef character to Lam and Alef consuming the
    *           required space from end of the buffer. If the text type was
-   *           Visual LTR and the option SPACES_RELATIVE_TO_TEXT_BEGIN_END
+   *           Visual LTR and the option this.SPACES_RELATIVE_TO_TEXT_BEGIN_END
    *           was used, the spaces will be consumed from begin of buffer. If
    *           there are no spaces to expand the LamAlef, an exception is thrown.
    */
@@ -1439,15 +1511,15 @@ class ArabicShaping
                           /* int */ lacount){
         var /*boolean*/ spaceNotFound = false;
 
-        if (lacount > countSpacesLeft(dest, start, length)) {
+        if (lacount > this.countSpacesLeft(dest, start, length)) {
             spaceNotFound = true;
             return spaceNotFound;
         }
         for (var /* int */ r = start + lacount, w = start, e = start + length; r < e; ++r) {
             var /* char */ ch = dest[r];
-            if (isNormalizedLamAlefChar(ch)) {
-                dest[w++] = convertNormalizedLamAlef[ch - 0x065C];
-                dest[w++] = LAM_CHAR;
+            if (this.isNormalizedLamAlefChar(ch)) {
+                dest[w++] = this.convertNormalizedLamAlef[ch - 0x065C];
+                dest[w++] = this.LAM_CHAR;
             } else {
                 dest[w++] = ch;
             }
@@ -1469,32 +1541,32 @@ class ArabicShaping
 
 
 
-        if (isNormalizedLamAlefChar(dest[start])) {
+        if (this.isNormalizedLamAlefChar(dest[start])) {
             spaceNotFound = true;
             return spaceNotFound;
         }
         for (var /* int */ i = start + length; --i >=start;) {
             var /* char */ ch = dest[i];
-            if (lamAlefOption == 1 && isNormalizedLamAlefChar(ch)) {
-                if (i>start &&dest[i-1] == SPACE_CHAR) {
-                    dest[i] = LAM_CHAR;
-                    dest[--i] = convertNormalizedLamAlef[ch - 0x065C];
+            if (lamAlefOption == 1 && this.isNormalizedLamAlefChar(ch)) {
+                if (i>start &&dest[i-1] == this.SPACE_CHAR) {
+                    dest[i] = this.LAM_CHAR;
+                    dest[--i] = this.convertNormalizedLamAlef[ch - 0x065C];
                 } else {
                     spaceNotFound = true;
                     return spaceNotFound;
                 }
-            }else if(seenTailOption == 1 && isSeenTailFamilyChar(ch) == 1){
-                if(i>start &&dest[i-1] == SPACE_CHAR){
-                    dest[i-1] = tailChar;
+            }else if(seenTailOption == 1 && this.isSeenTailFamilyChar(ch) == 1){
+                if(i>start &&dest[i-1] == this.SPACE_CHAR){
+                    dest[i-1] = this.tailChar;
                 } else{
                     spaceNotFound = true;
                     return spaceNotFound;
                 }
-            }else if(yehHamzaOption == 1 && isYehHamzaChar(ch)){
+            }else if(yehHamzaOption == 1 && this.isYehHamzaChar(ch)){
   
-                if(i>start &&dest[i-1] == SPACE_CHAR){
-                    dest[i] = yehHamzaToYeh[ch - YEH_HAMZAFE_CHAR];
-                    dest[i-1] = HAMZAFE_CHAR;
+                if(i>start &&dest[i-1] == this.SPACE_CHAR){
+                    dest[i] = this.yehHamzaToYeh[ch - this.YEH_HAMZAFE_CHAR];
+                    dest[i-1] = this.HAMZAFE_CHAR;
                 }else{
                     spaceNotFound = true;
                     return spaceNotFound;
@@ -1523,65 +1595,65 @@ class ArabicShaping
                               /* int */ lacount,
                               /* int */ shapingMode) /* throws ArabicShapingException */ {
 
-        var /* int */ lenOptionsLamAlef = options & LAMALEF_MASK;
-        var /* int */ lenOptionsSeen = options & SEEN_MASK;
-        var /* int */ lenOptionsYehHamza = options & YEHHAMZA_MASK;
+        var /* int */ lenOptionsLamAlef = this.options & this.LAMALEF_MASK;
+        var /* int */ lenOptionsSeen = this.options & this.SEEN_MASK;
+        var /* int */ lenOptionsYehHamza = this.options & this.YEHHAMZA_MASK;
         var /* boolean */ spaceNotFound = false;
 
-        if (!isLogical && !spacesRelativeToTextBeginEnd) {
+        if (!this.isLogical && !this.spacesRelativeToTextBeginEnd) {
             switch (lenOptionsLamAlef) {
-                case LAMALEF_BEGIN: lenOptionsLamAlef = LAMALEF_END; break;
-                case LAMALEF_END: lenOptionsLamAlef = LAMALEF_BEGIN; break;
+                case this.LAMALEF_BEGIN: lenOptionsLamAlef = this.LAMALEF_END; break;
+                case this.LAMALEF_END: lenOptionsLamAlef = this.LAMALEF_BEGIN; break;
                 default: break;
             }
         }
 
         if(shapingMode == 1){
-            if(lenOptionsLamAlef == LAMALEF_AUTO){
-                if(isLogical){
-                    spaceNotFound = expandCompositCharAtEnd(dest, start, length, lacount);
+            if(lenOptionsLamAlef == this.LAMALEF_AUTO){
+                if(this.isLogical){
+                    spaceNotFound = this.expandCompositCharAtEnd(dest, start, length, lacount);
                     if(spaceNotFound){
-                        spaceNotFound = expandCompositCharAtBegin(dest, start, length, lacount);
+                        spaceNotFound = this.expandCompositCharAtBegin(dest, start, length, lacount);
                     }
                     if(spaceNotFound){
-                        spaceNotFound = expandCompositCharAtNear(dest, start, length,0,0,1);
+                        spaceNotFound = this.expandCompositCharAtNear(dest, start, length,0,0,1);
                     }
                     if(spaceNotFound){
-                        throw new ArabicShapingException("No spacefor lamalef");
+                        throw new global.ArabicShapingException("No spacefor lamalef");
                     }
                 }else{
-                    spaceNotFound = expandCompositCharAtBegin(dest, start, length, lacount);
+                    spaceNotFound = this.expandCompositCharAtBegin(dest, start, length, lacount);
                     if(spaceNotFound){
-                        spaceNotFound = expandCompositCharAtEnd(dest, start, length, lacount);
+                        spaceNotFound = this.expandCompositCharAtEnd(dest, start, length, lacount);
                     }
                     if(spaceNotFound){
-                        spaceNotFound = expandCompositCharAtNear(dest, start, length,0,0,1);
+                        spaceNotFound = this.expandCompositCharAtNear(dest, start, length,0,0,1);
                     }
                     if(spaceNotFound){
-                        throw new ArabicShapingException("No spacefor lamalef");
+                        throw new global.ArabicShapingException("No spacefor lamalef");
                     }
                 }
-            }else if(lenOptionsLamAlef == LAMALEF_END){
-                spaceNotFound = expandCompositCharAtEnd(dest, start, length, lacount);
+            }else if(lenOptionsLamAlef == this.LAMALEF_END){
+                spaceNotFound = this.expandCompositCharAtEnd(dest, start, length, lacount);
                 if(spaceNotFound){
-                    throw new ArabicShapingException("No spacefor lamalef");
+                    throw new global.ArabicShapingException("No spacefor lamalef");
                 }
-            }else if(lenOptionsLamAlef == LAMALEF_BEGIN){
-                spaceNotFound = expandCompositCharAtBegin(dest, start, length, lacount);
+            }else if(lenOptionsLamAlef == this.LAMALEF_BEGIN){
+                spaceNotFound = this.expandCompositCharAtBegin(dest, start, length, lacount);
                 if(spaceNotFound){
-                    throw new ArabicShapingException("No spacefor lamalef");
+                    throw new global.ArabicShapingException("No spacefor lamalef");
                 }
-            }else if(lenOptionsLamAlef == LAMALEF_NEAR){
-                spaceNotFound = expandCompositCharAtNear(dest, start, length,0,0,1);
+            }else if(lenOptionsLamAlef == this.LAMALEF_NEAR){
+                spaceNotFound = this.expandCompositCharAtNear(dest, start, length,0,0,1);
                 if(spaceNotFound){
-                    throw new ArabicShapingException("No spacefor lamalef");
+                    throw new global.ArabicShapingException("No spacefor lamalef");
             }
-            }else if(lenOptionsLamAlef == LAMALEF_RESIZE){
+            }else if(lenOptionsLamAlef == this.LAMALEF_RESIZE){
                 for (var /* int */ r = start + length, w = r + lacount; --r >= start;) {
                     var /* char */ ch = dest[r];
-                    if (isNormalizedLamAlefChar(ch)) {
+                    if (this.isNormalizedLamAlefChar(ch)) {
                         dest[--w] = 0x0644;
-                        dest[--w] = convertNormalizedLamAlef[ch - 0x065C];
+                        dest[--w] = this.convertNormalizedLamAlef[ch - 0x065C];
                     } else {
                         dest[--w] = ch;
                     }
@@ -1589,16 +1661,16 @@ class ArabicShaping
                 length += lacount;
             }
             }else{
-                if(lenOptionsSeen == SEEN_TWOCELL_NEAR){
-                spaceNotFound = expandCompositCharAtNear(dest, start, length,0,1,0);
+                if(lenOptionsSeen == this.SEEN_TWOCELL_NEAR){
+                spaceNotFound = this.expandCompositCharAtNear(dest, start, length,0,1,0);
                 if(spaceNotFound){
-                    throw new ArabicShapingException("No space for Seen tail expansion");
+                    throw new global.ArabicShapingException("No space for Seen tail expansion");
                 }
             }
-            if(lenOptionsYehHamza == YEHHAMZA_TWOCELL_NEAR){
-                spaceNotFound = expandCompositCharAtNear(dest, start, length,1,0,0);
+            if(lenOptionsYehHamza == this.YEHHAMZA_TWOCELL_NEAR){
+                spaceNotFound = this.expandCompositCharAtNear(dest, start, length,1,0,0);
                 if(spaceNotFound){
-                    throw new ArabicShapingException("No space for YehHamza expansion");
+                    throw new global.ArabicShapingException("No space for YehHamza expansion");
                 }
             }
         }
@@ -1614,12 +1686,12 @@ class ArabicShaping
     function /* private int */ normalize(/* char[] */ dest, /* int */ start, /* int */ length) {
         var /* int */ lacount = 0;
         for (var /* int */ i = start, e = i + length; i < e; ++i) {
-            /* char */ ch = dest[i];
+            var /* char */ ch = dest[i];
             if (ch >= 0xFE70 && ch <= 0xFEFC) {
-                if (isLamAlefChar(ch)) {
+                if (this.isLamAlefChar(ch)) {
                     ++lacount;
                 }
-                dest[i] = /* (char) */ convertFEto06[ch - 0xFE70];
+                dest[i] = /* (char) */ this.convertFEto06[ch - 0xFE70];
             }
         }
         return lacount;
@@ -1640,25 +1712,25 @@ class ArabicShaping
         var /* int */ yehHamzaComposeEnabled = 0;
         var /* int */ seenComposeEnabled = 0;
 
-        yehHamzaComposeEnabled = ((options&YEHHAMZA_MASK) == YEHHAMZA_TWOCELL_NEAR) ? 1 : 0;
-        seenComposeEnabled = ((options&SEEN_MASK) == SEEN_TWOCELL_NEAR)? 1 : 0;
+        yehHamzaComposeEnabled = ((this.options&this.YEHHAMZA_MASK) == this.YEHHAMZA_TWOCELL_NEAR) ? 1 : 0;
+        seenComposeEnabled = ((this.options&this.SEEN_MASK) == this.SEEN_TWOCELL_NEAR)? 1 : 0;
 
         for (var /* int */ i = start, e = i + length; i < e; ++i) {
             var /* char */ ch = dest[i];
 
-            if( (yehHamzaComposeEnabled == 1) && ((ch == HAMZA06_CHAR) || (ch == HAMZAFE_CHAR))
-               && (i < (length - 1)) && isAlefMaksouraChar(dest[i+1] )) {
-                dest[i] = SPACE_CHAR;
-                dest[i+1] = YEH_HAMZA_CHAR;
-            } else if ( (seenComposeEnabled == 1) && (isTailChar(ch)) && (i< (length - 1))
-                       && (isSeenTailFamilyChar(dest[i+1])==1) ) {
-                 dest[i] = SPACE_CHAR;
+            if( (yehHamzaComposeEnabled == 1) && ((ch == this.HAMZA06_CHAR) || (ch == this.HAMZAFE_CHAR))
+               && (i < (length - 1)) && this.isAlefMaksouraChar(dest[i+1] )) {
+                dest[i] = this.SPACE_CHAR;
+                dest[i+1] = this.YEH_HAMZA_CHAR;
+            } else if ( (seenComposeEnabled == 1) && (this.isTailChar(ch)) && (i< (length - 1))
+                       && (this.isSeenTailFamilyChar(dest[i+1])==1) ) {
+                 dest[i] = this.SPACE_CHAR;
             }
             else if (ch >= 0xFE70 && ch <= 0xFEFC) {
-                if (isLamAlefChar(ch)) {
+                if (this.isLamAlefChar(ch)) {
                     ++lacount;
                 }
-                dest[i] = /* (char) */ convertFEto06[ch - 0xFE70];
+                dest[i] = /* (char) */ this.convertFEto06[ch - 0xFE70];
             }
         }
         return lacount;
@@ -1676,7 +1748,7 @@ class ArabicShaping
                              /* int */ destSize,
                              /* int */ tashkeelFlag) /* throws ArabicShapingException */ {
 
-        var /* int */ lamalef_count = normalize(dest, start, length);
+        var /* int */ lamalef_count = this.normalize(dest, start, length);
 
         // resolve the link between the characters.
         // Arabic characters have four forms: Isolated, Initial, Medial and Final.
@@ -1686,7 +1758,7 @@ class ArabicShaping
         var /* boolean */ lamalef_found = false, seenfam_found = false;
         var /* boolean */ yehhamza_found = false, tashkeel_found = false;
         var /* int */ i = start + length - 1;
-        var /* int */ currLink = getLink(dest[i]);
+        var /* int */ currLink = this.getLink(dest[i]);
         var /* int */ nextLink = 0;
         var /* int */ prevLink = 0;
         var /* int */ lastLink = 0;
@@ -1697,16 +1769,16 @@ class ArabicShaping
 
         while (i >= 0) {
             // If high byte of currLink != 0 then there might be more than one shape
-            if ((currLink & 0xFF00) != 0 || isTashkeelChar(dest[i])) {
+            if ((currLink & 0xFF00) != 0 || this.isTashkeelChar(dest[i])) {
                 nw = i - 1;
                 nx = -2;
                 while (nx < 0) { // we need to know about next char
                     if (nw == -1) {
                         nextLink = 0;
-                        nx = Integer.MAX_VALUE;
+                        nx = 0x7fffffff /* Integer.MAX_VALUE */;
                     } else {
-                        nextLink = getLink(dest[nw]);
-                        if ((nextLink & IRRELEVANT) == 0) {
+                        nextLink = this.getLink(dest[nw]);
+                        if ((nextLink & this.IRRELEVANT) == 0) {
                             nx = nw;
                         } else {
                             --nw;
@@ -1714,9 +1786,9 @@ class ArabicShaping
                     }
                 }
 
-                if (((currLink & ALEFTYPE) > 0) && ((lastLink & LAMTYPE) > 0)) {
+                if (((currLink & this.ALEFTYPE) > 0) && ((lastLink & this.LAMTYPE) > 0)) {
                     lamalef_found = true;
-                    var /* char */ wLamalef = changeLamAlef(dest[i]); // get from 0x065C-0x065f
+                    var /* char */ wLamalef = this.changeLamAlef(dest[i]); // get from 0x065C-0x065f
                     if (wLamalef != 0x0000) {
                         // replace alef by marker, it will be removed later
                         dest[i] = 0xffff;
@@ -1725,20 +1797,20 @@ class ArabicShaping
                     }
 
                     lastLink = prevLink;
-                    currLink = getLink(wLamalef); // requires 0x0000, unfortunately
+                    currLink = this.getLink(wLamalef); // requires 0x0000, unfortunately
                 }
-                if ((i > 0) && (dest[i-1] == SPACE_CHAR))
+                if ((i > 0) && (dest[i-1] == this.SPACE_CHAR))
                 {
-                    if ( isSeenFamilyChar(dest[i]) == 1){
+                    if ( this.isSeenFamilyChar(dest[i]) == 1){
                         seenfam_found = true;
-                    } else if (dest[i] == YEH_HAMZA_CHAR) {
+                    } else if (dest[i] == this.YEH_HAMZA_CHAR) {
                         yehhamza_found = true;
                     }
                 }
                 else if(i==0){
-                    if ( isSeenFamilyChar(dest[i]) == 1){
+                    if ( this.isSeenFamilyChar(dest[i]) == 1){
                         seenfam_found = true;
-                    } else if (dest[i] == YEH_HAMZA_CHAR) {
+                    } else if (dest[i] == this.YEH_HAMZA_CHAR) {
                         yehhamza_found = true;
                     }
                 }
@@ -1748,26 +1820,26 @@ class ArabicShaping
                 // and of character; depends on the order of the shapes
                 // (isolated, initial, middle, final) in the compatibility area
 
-                var /* int */ flag = specialChar(dest[i]);
+                var /* int */ flag = this.specialChar(dest[i]);
 
-                var /* int */ shape = shapeTable[nextLink & LINK_MASK]
-                    [lastLink & LINK_MASK]
-                    [currLink & LINK_MASK];
+                var /* int */ shape = this.shapeTable[nextLink & this.LINK_MASK]
+                    [lastLink & this.LINK_MASK]
+                    [currLink & this.LINK_MASK];
 
                 if (flag == 1) {
                     shape &= 0x1;
                 } else if (flag == 2) {
                     if (tashkeelFlag == 0 &&
-                        ((lastLink & LINKL) != 0) &&
-                        ((nextLink & LINKR) != 0) &&
+                        ((lastLink & this.LINKL) != 0) &&
+                        ((nextLink & this.LINKR) != 0) &&
                         dest[i] != 0x064C &&
                         dest[i] != 0x064D &&
-                        !((nextLink & ALEFTYPE) == ALEFTYPE &&
-                          (lastLink & LAMTYPE) == LAMTYPE)) {
+                        !((nextLink & this.ALEFTYPE) == this.ALEFTYPE &&
+                          (lastLink & this.LAMTYPE) == this.LAMTYPE)) {
 
                         shape = 1;
 
-                    } else if(tashkeelFlag == 2 && dest[i] == SHADDA06_CHAR){
+                    } else if(tashkeelFlag == 2 && dest[i] == this.SHADDA06_CHAR){
                         shape = 1;
 
                     } else {
@@ -1775,12 +1847,12 @@ class ArabicShaping
                     }
                 }
                 if (flag == 2) {
-                    if (tashkeelFlag == 2 && dest[i] != SHADDA06_CHAR) {
-                        dest[i] = TASHKEEL_SPACE_SUB;
+                    if (tashkeelFlag == 2 && dest[i] != this.SHADDA06_CHAR) {
+                        dest[i] = this.TASHKEEL_SPACE_SUB;
                         tashkeel_found = true;
                     }
                     else{
-                        dest[i] = /* (char) */ (0xFE70 + irrelevantPos[dest[i] - 0x064B] + shape);
+                        dest[i] = /* (char) */ (0xFE70 + this.irrelevantPos[dest[i] - 0x064B] + shape);
                     }
                     // else leave tashkeel alone
                 } else {
@@ -1789,7 +1861,7 @@ class ArabicShaping
             }
 
             // move one notch forward
-            if ((currLink & IRRELEVANT) == 0) {
+            if ((currLink & this.IRRELEVANT) == 0) {
                 prevLink = lastLink;
                 lastLink = currLink;
                 // prevPos = lastPos;
@@ -1801,7 +1873,7 @@ class ArabicShaping
                 currLink = nextLink;
                 nx = -2;
             } else if (i != -1) {
-                currLink = getLink(dest[i]);
+                currLink = this.getLink(dest[i]);
             }
         }
 
@@ -1810,10 +1882,10 @@ class ArabicShaping
 
         destSize = length;
         if (lamalef_found || tashkeel_found) {
-            destSize = handleGeneratedSpaces(dest, start, length);
+            destSize = this.handleGeneratedSpaces(dest, start, length);
         }
         if (seenfam_found || yehhamza_found){
-            destSize = expandCompositChar(dest, start, destSize, lamalef_count, SHAPE_MODE);
+            destSize = this.expandCompositChar(dest, start, destSize, lamalef_count, this.SHAPE_MODE);
         }
         return destSize;
     }
@@ -1829,12 +1901,12 @@ class ArabicShaping
                                /* int */ length,
                                /* int */ destSize) /* throws ArabicShapingException */ {
 
-        var /* int */ lamalef_count = deshapeNormalize(dest, start, length);
+        var /* int */ lamalef_count = this.deshapeNormalize(dest, start, length);
 
         // If there was a lamalef in the buffer call expandLamAlef
         if (lamalef_count != 0) {
             // need to adjust dest to fit expanded buffer... !!!
-            destSize = expandCompositChar(dest, start, length, lamalef_count,DESHAPE_MODE);
+            destSize = this.expandCompositChar(dest, start, length, lamalef_count,this.DESHAPE_MODE);
         } else {
             destSize = length;
         }
@@ -1855,48 +1927,51 @@ class ArabicShaping
         }
 
         if (destSize == 0) {
-            if (((options & LETTERS_MASK) != LETTERS_NOOP) &&
-                ((options & LAMALEF_MASK) == LAMALEF_RESIZE)) {
+            if (((this.options & this.LETTERS_MASK) != this.LETTERS_NOOP) &&
+                ((this.options & this.LAMALEF_MASK) == this.LAMALEF_RESIZE)) {
 
-                return calculateSize(source, sourceStart, sourceLength);
+                return this.calculateSize(source, sourceStart, sourceLength);
             } else {
                 return sourceLength; // by definition
             }
         }
 
         // always use temp buffer
-        var /* char[] */ temp /* !!FIXME array!! = new char[sourceLength * 2] */; // all lamalefs requiring expansion
-        System.arraycopy(source, sourceStart, temp, 0, sourceLength);
+        var /* char[] */ temp = [] /* new char[sourceLength * 2] */; // all lamalefs requiring expansion
+        for (var i = 0; i < sourceLength * 2; i += 1) {
+            temp.add(0x0000);
+        }
+        this.copyArray(source, sourceStart, temp, 0, sourceLength);
 
-        if (isLogical) {
-            invertBuffer(temp, 0, sourceLength);
+        if (this.isLogical) {
+            this.invertBuffer(temp, 0, sourceLength);
         }
 
         var /* int */ outputSize = sourceLength;
 
-        switch (options & LETTERS_MASK) {
-        case LETTERS_SHAPE_TASHKEEL_ISOLATED:
-            outputSize = shapeUnicode(temp, 0, sourceLength, destSize, 1);
+        switch (this.options & this.LETTERS_MASK) {
+        case this.LETTERS_SHAPE_TASHKEEL_ISOLATED:
+            outputSize = this.shapeUnicode(temp, 0, sourceLength, destSize, 1);
             break;
 
-        case LETTERS_SHAPE:
-            if( ((options&TASHKEEL_MASK) != 0) &&
-                ((options&TASHKEEL_MASK) !=TASHKEEL_REPLACE_BY_TATWEEL)) {
+        case this.LETTERS_SHAPE:
+            if( ((this.options&this.TASHKEEL_MASK) != 0) &&
+                ((this.options&this.TASHKEEL_MASK) !=this.TASHKEEL_REPLACE_BY_TATWEEL)) {
                    /* Call the shaping function with tashkeel flag == 2 for removal of tashkeel */
-                    outputSize = shapeUnicode(temp, 0, sourceLength, destSize, 2);
+                    outputSize = this.shapeUnicode(temp, 0, sourceLength, destSize, 2);
                 }else {
                     //default Call the shaping function with tashkeel flag == 1 */
-                    outputSize = shapeUnicode(temp, 0, sourceLength, destSize, 0);
+                    outputSize = this.shapeUnicode(temp, 0, sourceLength, destSize, 0);
 
                     /*After shaping text check if user wants to remove tashkeel and replace it with tatweel*/
-                    if( (options&TASHKEEL_MASK) == TASHKEEL_REPLACE_BY_TATWEEL){
-                        outputSize = handleTashkeelWithTatweel(temp,sourceLength);
+                    if( (this.options&this.TASHKEEL_MASK) == this.TASHKEEL_REPLACE_BY_TATWEEL){
+                        outputSize = this.handleTashkeelWithTatweel(temp,sourceLength);
                     }
                }
             break;
 
-        case LETTERS_UNSHAPE:
-            outputSize = deShapeUnicode(temp, 0, sourceLength, destSize);
+        case this.LETTERS_UNSHAPE:
+            outputSize = this.deShapeUnicode(temp, 0, sourceLength, destSize);
             break;
 
         default:
@@ -1904,17 +1979,17 @@ class ArabicShaping
         }
 
         if (outputSize > destSize) {
-            throw new ArabicShapingException("not enough room for result data");
+            throw new global.ArabicShapingException("not enough room for result data");
         }
 
-        if ((options & DIGITS_MASK) != DIGITS_NOOP) {
+        if ((this.options & this.DIGITS_MASK) != this.DIGITS_NOOP) {
             var /* char */ digitBase = 0x0030; // European digits
-            switch (options & DIGIT_TYPE_MASK) {
-            case DIGIT_TYPE_AN:
+            switch (this.options & this.DIGIT_TYPE_MASK) {
+            case this.DIGIT_TYPE_AN:
                 digitBase = 0x0660;  // Arabic-Indic digits
                 break;
 
-            case DIGIT_TYPE_AN_EXTENDED:
+            case this.DIGIT_TYPE_AN_EXTENDED:
                 digitBase = 0x06f0;  // Eastern Arabic-Indic digits (Persian and Urdu)
                 break;
 
@@ -1922,8 +1997,8 @@ class ArabicShaping
                 break;
             }
 
-            switch (options & DIGITS_MASK) {
-            case DIGITS_EN2AN:
+            switch (this.options & this.DIGITS_MASK) {
+            case this.DIGITS_EN2AN:
                 {
                     var /* int */ digitDelta = digitBase - 0x0030;
                     for (var /* int */ i = 0; i < outputSize; ++i) {
@@ -1935,7 +2010,7 @@ class ArabicShaping
                 }
                 break;
 
-            case DIGITS_AN2EN:
+            case this.DIGITS_AN2EN:
                 {
                     var /* char */ digitTop = /* (char) */ (digitBase + 9);
                     var /* int */ digitDelta = 0x0030 - digitBase;
@@ -1948,12 +2023,12 @@ class ArabicShaping
                 }
                 break;
 
-            case DIGITS_EN2AN_INIT_LR:
-                shapeToArabicDigitsWithContext(temp, 0, outputSize, digitBase, false);
+            case this.DIGITS_EN2AN_INIT_LR:
+                this.shapeToArabicDigitsWithContext(temp, 0, outputSize, digitBase, false);
                 break;
 
-            case DIGITS_EN2AN_INIT_AL:
-                shapeToArabicDigitsWithContext(temp, 0, outputSize, digitBase, true);
+            case this.DIGITS_EN2AN_INIT_AL:
+                this.shapeToArabicDigitsWithContext(temp, 0, outputSize, digitBase, true);
                 break;
 
             default:
@@ -1961,11 +2036,12 @@ class ArabicShaping
             }
         }
 
-        if (isLogical) {
-            invertBuffer(temp, 0, outputSize);
+        if (this.isLogical) {
+            this.invertBuffer(temp, 0, outputSize);
         }
 
-        System.arraycopy(temp, 0, dest, destStart, outputSize);
+        
+        this.copyArray(temp, 0, dest, destStart, outputSize);
 
         return outputSize;
     }
@@ -1973,3 +2049,653 @@ class ArabicShaping
 
 
 }
+
+@if(0)
+// Tests
+{
+    var err = global.Debug.message;
+    var errln = global.Debug.message;
+    var assertEquals = function(msg, lval, rval)
+    {
+        if (lval !== rval)
+        {
+            global.Debug.message(msg);
+        }
+    };
+    var assertTrue = function(msg, lval, rval)
+    {
+        if (lval !== true)
+        {
+            global.Debug.message(msg);
+        }
+    };
+
+    /* constants copied from ArabicShaping for convenience */
+
+    var LENGTH_GROW_SHRINK = 0;
+    var LENGTH_FIXED_SPACES_NEAR = 1;
+    var LENGTH_FIXED_SPACES_AT_END = 2;
+    var LENGTH_FIXED_SPACES_AT_BEGINNING = 3;
+
+    var TEXT_DIRECTION_LOGICAL = 0;
+    var TEXT_DIRECTION_VISUAL_LTR = 4;
+
+    var LETTERS_NOOP = 0;
+    var LETTERS_SHAPE = 8;
+    var LETTERS_SHAPE_TASHKEEL_ISOLATED = 0x18;
+    var LETTERS_UNSHAPE = 0x10;
+
+    var DIGITS_NOOP = 0;
+    var DIGITS_EN2AN = 0x20;
+    var DIGITS_AN2EN = 0x40;
+    var DIGITS_EN2AN_INIT_LR = 0x60;
+    var DIGITS_EN2AN_INIT_AL = 0x80;
+    var DIGITS_RESERVED = 0xa0;
+
+    var DIGIT_TYPE_AN = 0;
+    var DIGIT_TYPE_AN_EXTENDED = 0x100;
+
+    // Some extra constants copied
+    var TEXT_DIRECTION_VISUAL_RTL = 0;
+    var TASHKEEL_BEGIN = 0x40000;
+    var TASHKEEL_END = 0x60000;
+    var TASHKEEL_RESIZE = 0x80000;
+    var TASHKEEL_REPLACE_BY_TATWEEL = 0xC0000;
+
+    // $$ ArabicShapingRegTest
+
+    // TestEquals
+    var /* ArabicShaping */ as1 = new global.ArabicShaping(LETTERS_SHAPE | TEXT_DIRECTION_VISUAL_LTR | LENGTH_FIXED_SPACES_NEAR);
+    var /* ArabicShaping */ as2 = new global.ArabicShaping(LETTERS_SHAPE | TEXT_DIRECTION_VISUAL_LTR | LENGTH_FIXED_SPACES_NEAR);
+    var /* ArabicShaping */ as3 = new global.ArabicShaping(LETTERS_UNSHAPE | TEXT_DIRECTION_LOGICAL | LENGTH_FIXED_SPACES_AT_BEGINNING);
+
+    if (! as1.equals(as1)) {
+        err("as1: " + as1 + " does not equal itself!\n");
+    }
+
+    if (! as1.equals(as2)) {
+        err("as1: " + as1 + ", as2: " + as2 + " are not equal, but should be.\n");
+    }
+
+    if (as1.equals(as3)) {
+        err("as1: " + as1 + ", as3: " + as3 + " are equal but should not be.\n");
+    }
+
+    // TestShape
+    // Tests when
+    //      if (sourceStart < 0 || sourceLength < 0 || sourceStart + sourceLength > source.length)
+    // Is true
+    var /* ArabicShaping */ as = new global.ArabicShaping(0);
+    var /* char[] */ source = [#'d',#'u',#'m',#'m',#'y'];
+    var /* char[] */ dest = [#'d',#'u',#'m',#'m',#'y'];
+    var /* int[] */ negNum = [-1,-2,-5,-10,-100];
+
+
+    for(var /*int*/ i=0; i<negNum.count; i++){
+        try{
+            // Checks when "sourceStart < 0"
+            as.shape(source, negNum[i], 0, dest, 0, 0);
+            errln("ArabicShaping.shape(char[],int,int,char[],int,int) was " +
+                    "suppose to return an exception when 'sourceStart < 0'.");
+        } catch(/* Exception */ e){}
+
+        try{
+            // Checks when "sourceLength < 0"
+            as.shape(source, 0, negNum[i], dest, 0, 0);
+            errln("ArabicShaping.shape(char[],int,int,char[],int,int) was " +
+                    "suppose to return an exception when 'sourceLength < 0'.");
+        } catch(/* Exception */ e){}
+    }
+
+    // Checks when "sourceStart + sourceLength > source.length"
+    try{
+        as.shape(source, 3, 3, dest, 0, 0);
+        errln("ArabicShaping.shape(char[],int,int,char[],int,int) was " +
+                "suppose to return an exception when 'sourceStart + sourceLength > source.length'.");
+    } catch(/* Exception */ e){}
+    try{
+        as.shape(source, 2, 4, dest, 0, 0);
+        errln("ArabicShaping.shape(char[],int,int,char[],int,int) was " +
+                "suppose to return an exception when 'sourceStart + sourceLength > source.length'.");
+    } catch(/* Exception */ e){}
+    try{
+        as.shape(source, 1, 5, dest, 0, 0);
+        errln("ArabicShaping.shape(char[],int,int,char[],int,int) was " +
+                "suppose to return an exception when 'sourceStart + sourceLength > source.length'.");
+    } catch(/* Exception */ e){}
+    try{
+        as.shape(source, 0, 6, dest, 0, 0);
+        errln("ArabicShaping.shape(char[],int,int,char[],int,int) was " +
+                "suppose to return an exception when 'sourceStart + sourceLength > source.length'.");
+    } catch(/* Exception */ e){}
+
+    // Checks when "if (dest == null && destSize != 0)" is true
+    try{
+        as.shape(source, 2, 2, null, 0, 1);
+        errln("ArabicShaping.shape(char[],int,int,char[],int,int) was " +
+                "suppose to return an exception when 'dest == null && destSize != 0'.");
+    } catch(/* Exception */ e){}
+
+    // Checks when
+    // if ((destSize != 0) && (destStart < 0 || destSize < 0 || destStart + destSize > dest.length))
+    for(var /* int */ i=0; i<negNum.length; i++){
+        try{
+            as.shape(source, 2, 2, dest, negNum[i], 1);
+            errln("ArabicShaping.shape(char[],int,int,char[],int,int) was " +
+                    "suppose to return an exception when " +
+                    "(destSize != 0) && (destStart < 0 || destSize < 0 || destStart + destSize > dest.length).");
+        } catch(/* Exception */ e){}
+
+        try{
+            as.shape(source, 2, 2, dest, 0, negNum[i]);
+            errln("ArabicShaping.shape(char[],int,int,char[],int,int) was " +
+                    "suppose to return an exception when " +
+                    "(destSize != 0) && (destStart < 0 || destSize < 0 || destStart + destSize > dest.length).");
+        } catch(/* Exception */ e){}
+    }
+
+    // Checks when "destStart + destSize > dest.length"
+    try{
+        as.shape(source, 2, 2, dest, 3, 3);
+        errln("ArabicShaping.shape(char[],int,int,char[],int,int) was " +
+                "suppose to return an exception when " +
+                "(destSize != 0) && (destStart < 0 || destSize < 0 || destStart + destSize > dest.length).");
+    } catch(/* Exception */ e){}
+    try{
+        as.shape(source, 2, 2, dest, 2, 4);
+        errln("ArabicShaping.shape(char[],int,int,char[],int,int) was " +
+                "suppose to return an exception when " +
+                "(destSize != 0) && (destStart < 0 || destSize < 0 || destStart + destSize > dest.length).");
+    } catch(/* Exception */ e){}
+    try{
+        as.shape(source, 2, 2, dest, 1, 5);
+        errln("ArabicShaping.shape(char[],int,int,char[],int,int) was " +
+                "suppose to return an exception when " +
+                "(destSize != 0) && (destStart < 0 || destSize < 0 || destStart + destSize > dest.length).");
+    } catch(/* Exception */ e){}
+    try{
+        as.shape(source, 2, 2, dest, 0, 6);
+        errln("ArabicShaping.shape(char[],int,int,char[],int,int) was " +
+                "suppose to return an exception when " +
+                "(destSize != 0) && (destStart < 0 || destSize < 0 || destStart + destSize > dest.length).");
+    } catch(/* Exception */ e){}
+
+    // Tests when "throw new IllegalArgumentException("Wrong Tashkeel argument")"
+    var /* int[] */ invalid_Tashkeel = [-1000, -500, -100];
+    for(var /* int */ i=0; i < invalid_Tashkeel.count; i++){
+        var /* ArabicShaping */ arabicShape = new global.ArabicShaping(invalid_Tashkeel[i]);
+        try {
+            arabicShape.shape(source,0,0,dest,0,1);
+            errln("ArabicShaping.shape(char[],int,int,char[],int,int) was " +
+                    "suppose to return an exception for 'Wrong Tashkeel argument' for " +
+                    "an option value of " + invalid_Tashkeel[i]);
+        } catch (/* Exception */ e) {}
+    }
+
+    // TestCoverage
+    var /* ArabicShaping */ shp = new global.ArabicShaping(LETTERS_SHAPE | TEXT_DIRECTION_VISUAL_LTR | LENGTH_FIXED_SPACES_NEAR);
+
+    // Test ArabicShaping#toString();
+    assertEquals("ArabicShaping#toString() failed.",
+            shp.toString(),
+            "[LamAlef spaces at near, visual, shape letters," +
+                    " no digit shaping, standard Arabic-Indic digits]");
+
+    // Test ArabicShaping#hashCode()
+    assertEquals("ArabicShaping#hashCode() failed.", shp.hashCode(), 13);
+
+    // TestHelperFunctions
+    // Test private static helper functions that are used internally:
+
+    // ArabicShaping.isSeenTailFamilyChar(char)
+    assertTrue("ArabicShaping.isSeenTailFamilyChar(char) failed.",
+            as.isSeenTailFamilyChar(0xfeb1));
+
+    // ArabicShaping.isAlefMaksouraChar(char)
+    assertTrue("ArabicShaping.isAlefMaksouraChar(char) failed.",
+            as.isAlefMaksouraChar(0xfeef));
+
+    // ArabicShaping.isTailChar(char)
+    assertTrue("ArabicShaping.isTailChar(char) failed.",
+            as.isTailChar(0x200B));
+
+    // ArabicShaping.isYehHamzaChar(char)
+    assertTrue("ArabicShaping.isYehHamzaChar(char) failed.",
+            as.isYehHamzaChar(0xfe89));
+
+    // $$DataDrivenArabicShapingRegTest
+
+    // TestStandard
+    {
+        var testData = void;
+        {
+            var /* String */ lamAlefSpecialVLTR =
+                "\x0020\x0646\x0622\x0644\x0627\x0020\x0646\x0623\x064E\x0644\x0627\x0020" +
+                "\x0646\x0627\x0670\x0644\x0627\x0020\x0646\x0622\x0653\x0644\x0627\x0020" +
+                "\x0646\x0625\x0655\x0644\x0627\x0020\x0646\x0622\x0654\x0644\x0627\x0020" +
+                "\xFEFC\x0639";
+            var /* String */ tashkeelSpecialVLTR =
+                "\x064A\x0628\x0631\x0639\x0020\x064A\x0628\x0651\x0631\x064E\x0639\x0020" +
+                "\x064C\x064A\x0628\x0631\x064F\x0639\x0020\x0628\x0670\x0631\x0670\x0639" +
+                "\x0020\x0628\x0653\x0631\x0653\x0639\x0020\x0628\x0654\x0631\x0654\x0639" +
+                "\x0020\x0628\x0655\x0631\x0655\x0639\x0020";
+            var /* String */ tashkeelShaddaRTL=
+                "\x0634\x0651\x0645\x0652\x0633";
+            var /* String */ tashkeelShaddaLTR=
+                "\x0633\x0652\x0645\x0651\x0634";
+            var /* String */ ArMathSym =
+                "\xD83B\xDE00\xD83B\xDE01\xD83B\xDE02\xD83B\xDE03\x0020\xD83B\xDE24\xD83B" +
+                "\xDE05\xD83B\xDE06\x0020\xD83B\xDE07\xD83B\xDE08\xD83B\xDE09\x0020\xD83B" +
+                "\xDE0A\xD83B\xDE0B\xD83B\xDE0C\xD83B\xDE0D\x0020\xD83B\xDE0E\xD83B\xDE0F" +
+                "\xD83B\xDE10\xD83B\xDE11\x0020\xD83B\xDE12\xD83B\xDE13\xD83B\xDE14\xD83B" +
+                "\xDE15\x0020\xD83B\xDE16\xD83B\xDE17\xD83B\xDE18\x0020\xD83B\xDE19\xD83B" +
+                "\xDE1A\xD83B\xDE1B";
+            var /* String */ ArMathSymLooped =
+                "\xD83B\xDE80\xD83B\xDE81\xD83B\xDE82\xD83B\xDE83\x0020\xD83B\xDE84\xD83B" +
+                "\xDE85\xD83B\xDE86\x0020\xD83B\xDE87\xD83B\xDE88\xD83B\xDE89\x0020\xD83B" +
+                "\xDE8B\xD83B\xDE8C\xD83B\xDE8D\x0020\xD83B\xDE8E\xD83B\xDE8F\xD83B\xDE90" +
+                "\xD83B\xDE91\x0020\xD83B\xDE92\xD83B\xDE93\xD83B\xDE94\xD83B\xDE95\x0020" +
+                "\xD83B\xDE96\xD83B\xDE97\xD83B\xDE98\x0020\xD83B\xDE99\xD83B\xDE9A\xD83B" +
+                "\xDE9B";
+            var /* String */ ArMathSymDoubleStruck =
+                "\xD83B\xDEA1\xD83B\xDEA2\xD83B\xDEA3\x0020\xD83B\xDEA5\xD83B\xDEA6\x0020" +
+                "\xD83B\xDEA7\xD83B\xDEA8\xD83B\xDEA9\x0020\xD83B\xDEAB\xD83B\xDEAC\xD83B" +
+                "\xDEAD\x0020\xD83B\xDEAE\xD83B\xDEAF\xD83B\xDEB0\xD83B\xDEB1\x0020\xD83B" +
+                "\xDEB2\xD83B\xDEB3\xD83B\xDEB4\xD83B\xDEB5\x0020\xD83B\xDEB6\xD83B\xDEB7" +
+                "\xD83B\xDEB8\x0020\xD83B\xDEB9\xD83B\xDEBA\xD83B\xDEBB";
+            var /* String */ ArMathSymInitial =
+                "\xD83B\xDE21\xD83B\xDE22\x0020\xD83B\xDE27\xD83B\xDE29\x0020\xD83B\xDE2A" +
+                "\xD83B\xDE2B\xD83B\xDE2C\xD83B\xDE2D\x0020\xD83B\xDE2E\xD83B\xDE2F\xD83B" +
+                "\xDE30\xD83B\xDE31\x0020\xD83B\xDE32\xD83B\xDE34\xD83B\xDE35\x0020\xD83B" +
+                "\xDE36\xD83B\xDE37\x0020\xD83B\xDE39\xD83B\xDE3B";
+            var /* String */ ArMathSymTailed =
+                "\xD83B\xDE42\xD83B\xDE47\xD83B\xDE49\xD83B\xDE4B\x0020\xD83B\xDE4D\xD83B" +
+                "\xDE4E\xD83B\xDE4F\x0020\xD83B\xDE51\xD83B\xDE52\xD83B\xDE54\xD83B\xDE57" +
+                "\x0020\xD83B\xDE59\xD83B\xDE5B\xD83B\xDE5D\xD83B\xDE5F";
+            var /* String */ ArMathSymStretched =
+                "\xD83B\xDE21\x0633\xD83B\xDE62\x0647";
+            var /* String */ logicalUnshape =
+                "\x0020\x0020\x0020\xFE8D\xFEF5\x0020\xFEE5\x0020\xFE8D\xFEF7\x0020\xFED7" +
+                "\xFEFC\x0020\xFEE1\x0020\xFE8D\xFEDF\xFECC\xFEAE\xFE91\xFEF4\xFE94\x0020" +
+                "\xFE8D\xFEDF\xFEA4\xFEAE\xFE93\x0020\x0020\x0020\x0020";
+            var /* String */ numSource =
+                "\x0031" +  /* en:1 */
+                "\x0627" +  /* arabic:alef */
+                "\x0032" +  /* en:2 */
+                "\x06f3" +  /* an:3 */
+                "\x0061" +  /* latin:a */
+                "\x0034";   /* en:4 */
+            testData = [
+                /* lam alef special visual ltr */
+                [lamAlefSpecialVLTR,
+                 LETTERS_SHAPE | TEXT_DIRECTION_VISUAL_LTR | LENGTH_FIXED_SPACES_NEAR,
+                 "\x0020\xfee5\x0020\xfef5\xfe8d\x0020\xfee5\x0020\xfe76\xfef7\xfe8d\x0020" +
+                 "\xfee5\x0020\x0670\xfefb\xfe8d\x0020\xfee5\x0020\x0653\xfef5\xfe8d\x0020" +
+                 "\xfee5\x0020\x0655\xfef9\xfe8d\x0020\xfee5\x0020\x0654\xfef5\xfe8d\x0020" +
+                 "\xfefc\xfecb"],
+                [lamAlefSpecialVLTR,
+                 LETTERS_SHAPE | TEXT_DIRECTION_VISUAL_LTR | LENGTH_FIXED_SPACES_AT_END,
+                 "\x0020\xfee5\xfef5\xfe8d\x0020\xfee5\xfe76\xfef7\xfe8d\x0020\xfee5\x0670" +
+                 "\xfefb\xfe8d\x0020\xfee5\x0653\xfef5\xfe8d\x0020\xfee5\x0655\xfef9\xfe8d" +
+                 "\x0020\xfee5\x0654\xfef5\xfe8d\x0020\xfefc\xfecb\x0020\x0020\x0020\x0020" +
+                 "\x0020\x0020"],
+                [lamAlefSpecialVLTR,
+                 LETTERS_SHAPE | TEXT_DIRECTION_VISUAL_LTR | LENGTH_FIXED_SPACES_AT_BEGINNING,
+                 "\x0020\x0020\x0020\x0020\x0020\x0020\x0020\xfee5\xfef5\xfe8d\x0020\xfee5" +
+                 "\xfe76\xfef7\xfe8d\x0020\xfee5\x0670\xfefb\xfe8d\x0020\xfee5\x0653\xfef5" +
+                 "\xfe8d\x0020\xfee5\x0655\xfef9\xfe8d\x0020\xfee5\x0654\xfef5\xfe8d\x0020" +
+                 "\xfefc\xfecb"],
+                [lamAlefSpecialVLTR,
+                 LETTERS_SHAPE | TEXT_DIRECTION_VISUAL_LTR | LENGTH_GROW_SHRINK,
+                 "\x0020\xfee5\xfef5\xfe8d\x0020\xfee5\xfe76\xfef7\xfe8d\x0020\xfee5\x0670" +
+                 "\xfefb\xfe8d\x0020\xfee5\x0653\xfef5\xfe8d\x0020\xfee5\x0655\xfef9\xfe8d" +
+                 "\x0020\xfee5\x0654\xfef5\xfe8d\x0020\xfefc\xfecb"],
+                /* TASHKEEL */
+                [lamAlefSpecialVLTR,
+                 LETTERS_SHAPE_TASHKEEL_ISOLATED | TEXT_DIRECTION_VISUAL_LTR |
+                 LENGTH_FIXED_SPACES_NEAR,
+                 "\x0020\xfee5\x0020\xfef5\xfe8d\x0020\xfee5\x0020\xfe76\xfef7\xfe8d\x0020" +
+                 "\xfee5\x0020\x0670\xfefb\xfe8d\x0020\xfee5\x0020\x0653\xfef5\xfe8d\x0020" +
+                 "\xfee5\x0020\x0655\xfef9\xfe8d\x0020\xfee5\x0020\x0654\xfef5\xfe8d\x0020" +
+                 "\xfefc\xfecb"],
+                [lamAlefSpecialVLTR,
+                 LETTERS_SHAPE_TASHKEEL_ISOLATED | TEXT_DIRECTION_VISUAL_LTR |
+                 LENGTH_FIXED_SPACES_AT_END,
+                 "\x0020\xfee5\xfef5\xfe8d\x0020\xfee5\xfe76\xfef7\xfe8d\x0020\xfee5\x0670" +
+                 "\xfefb\xfe8d\x0020\xfee5\x0653\xfef5\xfe8d\x0020\xfee5\x0655\xfef9\xfe8d" +
+                 "\x0020\xfee5\x0654\xfef5\xfe8d\x0020\xfefc\xfecb\x0020\x0020\x0020\x0020" +
+                 "\x0020\x0020"],
+                [lamAlefSpecialVLTR,
+                 LETTERS_SHAPE_TASHKEEL_ISOLATED | TEXT_DIRECTION_VISUAL_LTR |
+                 LENGTH_FIXED_SPACES_AT_BEGINNING,
+                 "\x0020\x0020\x0020\x0020\x0020\x0020\x0020\xfee5\xfef5\xfe8d\x0020\xfee5" +
+                 "\xfe76\xfef7\xfe8d\x0020\xfee5\x0670\xfefb\xfe8d\x0020\xfee5\x0653\xfef5" +
+                 "\xfe8d\x0020\xfee5\x0655\xfef9\xfe8d\x0020\xfee5\x0654\xfef5\xfe8d\x0020" +
+                 "\xfefc\xfecb"],
+                [lamAlefSpecialVLTR,
+                 LETTERS_SHAPE_TASHKEEL_ISOLATED | TEXT_DIRECTION_VISUAL_LTR |
+                 LENGTH_GROW_SHRINK,
+                 "\x0020\xfee5\xfef5\xfe8d\x0020\xfee5\xfe76\xfef7\xfe8d\x0020\xfee5\x0670" +
+                 "\xfefb\xfe8d\x0020\xfee5\x0653\xfef5\xfe8d\x0020\xfee5\x0655\xfef9\xfe8d" +
+                 "\x0020\xfee5\x0654\xfef5\xfe8d\x0020\xfefc\xfecb"],
+                /* tashkeel special visual ltr */
+                [tashkeelSpecialVLTR,
+                 LETTERS_SHAPE | TEXT_DIRECTION_VISUAL_LTR | LENGTH_FIXED_SPACES_NEAR,
+                 "\xfef2\xfe91\xfeae\xfecb\x0020\xfef2\xfe91\xfe7c\xfeae\xfe77\xfecb\x0020" +
+                 "\xfe72\xfef2\xfe91\xfeae\xfe79\xfecb\x0020\xfe8f\x0670\xfeae\x0670\xfecb" +
+                 "\x0020\xfe8f\x0653\xfeae\x0653\xfecb\x0020\xfe8f\x0654\xfeae\x0654\xfecb" +
+                 "\x0020\xfe8f\x0655\xfeae\x0655\xfecb\x0020"],
+                [tashkeelSpecialVLTR,
+                 LETTERS_SHAPE_TASHKEEL_ISOLATED | TEXT_DIRECTION_VISUAL_LTR |
+                 LENGTH_FIXED_SPACES_NEAR,
+                 "\xfef2\xfe91\xfeae\xfecb\x0020\xfef2\xfe91\xfe7c\xfeae\xfe76\xfecb\x0020" +
+                 "\xfe72\xfef2\xfe91\xfeae\xfe78\xfecb\x0020\xfe8f\x0670\xfeae\x0670\xfecb" +
+                 "\x0020\xfe8f\x0653\xfeae\x0653\xfecb\x0020\xfe8f\x0654\xfeae\x0654\xfecb" +
+                 "\x0020\xfe8f\x0655\xfeae\x0655\xfecb\x0020"],
+                [tashkeelShaddaRTL,
+                 LETTERS_SHAPE | TASHKEEL_BEGIN |
+                 TEXT_DIRECTION_VISUAL_RTL,
+                 "\x0020\xfeb7\xfe7d\xfee4\xfeb2"],
+                [tashkeelShaddaRTL,
+                 LETTERS_SHAPE | TASHKEEL_END |
+                 TEXT_DIRECTION_VISUAL_RTL,
+                 "\xfeb7\xfe7d\xfee4\xfeb2\x0020"],
+                [tashkeelShaddaRTL,
+                 LETTERS_SHAPE | TASHKEEL_RESIZE |
+                 TEXT_DIRECTION_VISUAL_RTL,
+                 "\xfeb7\xfe7d\xfee4\xfeb2"],
+                [tashkeelShaddaRTL,
+                 LETTERS_SHAPE | TASHKEEL_REPLACE_BY_TATWEEL |
+                 TEXT_DIRECTION_VISUAL_RTL,
+                 "\xfeb7\xfe7d\xfee4\x0640\xfeb2"],
+                [tashkeelShaddaLTR,
+                 LETTERS_SHAPE | TASHKEEL_BEGIN |
+                 TEXT_DIRECTION_VISUAL_LTR,
+                 "\x0020\xfeb2\xfee4\xfe7d\xfeb7"],
+                [tashkeelShaddaLTR,
+                 LETTERS_SHAPE | TASHKEEL_END |
+                 TEXT_DIRECTION_VISUAL_LTR,
+                 "\xfeb2\xfee4\xfe7d\xfeb7\x0020"],
+                [tashkeelShaddaLTR,
+                 LETTERS_SHAPE | TASHKEEL_RESIZE |
+                 TEXT_DIRECTION_VISUAL_LTR,
+                 "\xfeb2\xfee4\xfe7d\xfeb7"],
+                [tashkeelShaddaLTR,
+                 LETTERS_SHAPE | TASHKEEL_REPLACE_BY_TATWEEL |
+                 TEXT_DIRECTION_VISUAL_LTR,
+                 "\xfeb2\x0640\xfee4\xfe7d\xfeb7"],
+                [ArMathSym,
+                 LETTERS_SHAPE | TASHKEEL_BEGIN |
+                 TEXT_DIRECTION_VISUAL_RTL,
+                 "\xD83B\xDE00\xD83B\xDE01\xD83B\xDE02\xD83B\xDE03\x0020\xD83B\xDE24\xD83B" +
+                 "\xDE05\xD83B\xDE06\x0020\xD83B\xDE07\xD83B\xDE08\xD83B\xDE09\x0020\xD83B" +
+                 "\xDE0A\xD83B\xDE0B\xD83B\xDE0C\xD83B\xDE0D\x0020\xD83B\xDE0E\xD83B\xDE0F" +
+                 "\xD83B\xDE10\xD83B\xDE11\x0020\xD83B\xDE12\xD83B\xDE13\xD83B\xDE14\xD83B" +
+                 "\xDE15\x0020\xD83B\xDE16\xD83B\xDE17\xD83B\xDE18\x0020\xD83B\xDE19\xD83B" +
+                 "\xDE1A\xD83B\xDE1B"],
+                [ArMathSymLooped,
+                 LETTERS_SHAPE | TASHKEEL_END |
+                 TEXT_DIRECTION_VISUAL_RTL,
+                 "\xD83B\xDE80\xD83B\xDE81\xD83B\xDE82\xD83B\xDE83\x0020\xD83B\xDE84\xD83B" +
+                 "\xDE85\xD83B\xDE86\x0020\xD83B\xDE87\xD83B\xDE88\xD83B\xDE89\x0020\xD83B" +
+                 "\xDE8B\xD83B\xDE8C\xD83B\xDE8D\x0020\xD83B\xDE8E\xD83B\xDE8F\xD83B\xDE90" +
+                 "\xD83B\xDE91\x0020\xD83B\xDE92\xD83B\xDE93\xD83B\xDE94\xD83B\xDE95\x0020" +
+                 "\xD83B\xDE96\xD83B\xDE97\xD83B\xDE98\x0020\xD83B\xDE99\xD83B\xDE9A\xD83B" +
+                 "\xDE9B"],
+                [ArMathSymDoubleStruck,
+                 LETTERS_SHAPE | TASHKEEL_RESIZE|
+                 TEXT_DIRECTION_VISUAL_RTL,
+                 "\xD83B\xDEA1\xD83B\xDEA2\xD83B\xDEA3\x0020\xD83B\xDEA5\xD83B\xDEA6\x0020" +
+                 "\xD83B\xDEA7\xD83B\xDEA8\xD83B\xDEA9\x0020\xD83B\xDEAB\xD83B\xDEAC\xD83B" +
+                 "\xDEAD\x0020\xD83B\xDEAE\xD83B\xDEAF\xD83B\xDEB0\xD83B\xDEB1\x0020\xD83B" +
+                 "\xDEB2\xD83B\xDEB3\xD83B\xDEB4\xD83B\xDEB5\x0020\xD83B\xDEB6\xD83B\xDEB7" +
+                 "\xD83B\xDEB8\x0020\xD83B\xDEB9\xD83B\xDEBA\xD83B\xDEBB"],
+                [ArMathSymInitial,
+                 LETTERS_SHAPE | TASHKEEL_BEGIN |
+                 TEXT_DIRECTION_VISUAL_LTR,
+                 "\xD83B\xDE21\xD83B\xDE22\x0020\xD83B\xDE27\xD83B\xDE29\x0020\xD83B\xDE2A" +
+                 "\xD83B\xDE2B\xD83B\xDE2C\xD83B\xDE2D\x0020\xD83B\xDE2E\xD83B\xDE2F\xD83B" +
+                 "\xDE30\xD83B\xDE31\x0020\xD83B\xDE32\xD83B\xDE34\xD83B\xDE35\x0020\xD83B" +
+                 "\xDE36\xD83B\xDE37\x0020\xD83B\xDE39\xD83B\xDE3B"],
+                [ArMathSymTailed,
+                 LETTERS_SHAPE | TASHKEEL_END |
+                 TEXT_DIRECTION_VISUAL_LTR,
+                 "\xD83B\xDE42\xD83B\xDE47\xD83B\xDE49\xD83B\xDE4B\x0020\xD83B\xDE4D\xD83B" +
+                 "\xDE4E\xD83B\xDE4F\x0020\xD83B\xDE51\xD83B\xDE52\xD83B\xDE54\xD83B\xDE57" +
+                 "\x0020\xD83B\xDE59\xD83B\xDE5B\xD83B\xDE5D\xD83B\xDE5F"],
+                [ArMathSymStretched,
+                 LETTERS_SHAPE|TASHKEEL_RESIZE |
+                 TEXT_DIRECTION_VISUAL_LTR,
+                 "\xD83B\xDE21\xFEB1\xD83B\xDE62\xFEE9"],
+                 /* logical unshape */
+                [logicalUnshape,
+                 LETTERS_UNSHAPE | TEXT_DIRECTION_LOGICAL | LENGTH_FIXED_SPACES_NEAR,
+                 "\x0020\x0020\x0020\x0627\x0644\x0622\x0646\x0020\x0627\x0644\x0623\x0642" +
+                 "\x0644\x0627\x0645\x0020\x0627\x0644\x0639\x0631\x0628\x064a\x0629\x0020" +
+                 "\x0627\x0644\x062d\x0631\x0629\x0020\x0020\x0020\x0020"],
+                [logicalUnshape,
+                 LETTERS_UNSHAPE | TEXT_DIRECTION_LOGICAL | LENGTH_FIXED_SPACES_AT_END,
+                 "\x0020\x0020\x0020\x0627\x0644\x0622\x0020\x0646\x0020\x0627\x0644\x0623" +
+                 "\x0020\x0642\x0644\x0627\x0020\x0645\x0020\x0627\x0644\x0639\x0631\x0628" +
+                 "\x064a\x0629\x0020\x0627\x0644\x062d\x0631\x0629\x0020"],
+                [logicalUnshape,
+                 LETTERS_UNSHAPE | TEXT_DIRECTION_LOGICAL | LENGTH_FIXED_SPACES_AT_BEGINNING,
+                 "\x0627\x0644\x0622\x0020\x0646\x0020\x0627\x0644\x0623\x0020\x0642\x0644" +
+                 "\x0627\x0020\x0645\x0020\x0627\x0644\x0639\x0631\x0628\x064a\x0629\x0020" +
+                 "\x0627\x0644\x062d\x0631\x0629\x0020\x0020\x0020\x0020"],
+                [logicalUnshape,
+                 LETTERS_UNSHAPE | TEXT_DIRECTION_LOGICAL | LENGTH_GROW_SHRINK,
+                 "\x0020\x0020\x0020\x0627\x0644\x0622\x0020\x0646\x0020\x0627\x0644\x0623" +
+                 "\x0020\x0642\x0644\x0627\x0020\x0645\x0020\x0627\x0644\x0639\x0631\x0628" +
+                 "\x064a\x0629\x0020\x0627\x0644\x062d\x0631\x0629\x0020\x0020\x0020\x0020"],
+                /* numbers */
+                [numSource,
+                 DIGITS_EN2AN | DIGIT_TYPE_AN,
+                 "\x0661\x0627\x0662\x06f3\x0061\x0664"],
+                [numSource,
+                 DIGITS_AN2EN | DIGIT_TYPE_AN_EXTENDED,
+                "\x0031\x0627\x0032\x0033\x0061\x0034"],
+                [numSource,
+                 DIGITS_EN2AN_INIT_LR | DIGIT_TYPE_AN,
+                 "\x0031\x0627\x0662\x06f3\x0061\x0034" ],
+                [numSource,
+                 DIGITS_EN2AN_INIT_AL | DIGIT_TYPE_AN_EXTENDED,
+                 "\x06f1\x0627\x06f2\x06f3\x0061\x0034"],
+                [numSource,
+                 DIGITS_EN2AN_INIT_LR | DIGIT_TYPE_AN | TEXT_DIRECTION_VISUAL_LTR,
+                 "\x0661\x0627\x0032\x06f3\x0061\x0034"],
+                [numSource,
+                 DIGITS_EN2AN_INIT_AL | DIGIT_TYPE_AN_EXTENDED | TEXT_DIRECTION_VISUAL_LTR,
+                 "\x06f1\x0627\x0032\x06f3\x0061\x06f4"],
+                /* no-op */
+                [numSource, 0, numSource]
+            ];
+        }
+
+        var escapedString = function(str)
+        {
+            if (str == null) {
+                return null;
+            }
+
+            var /* StringBuffer */ buf = [];
+            for (var /* int */ i = 0; i < str.length; ++i) {
+                var /* char */ ch = #(str.charAt(i));
+                buf.add("\\x%04x".sprintf(ch));
+            }
+            return buf.join("");
+        };
+
+        for (var i = 0; i < testData.count; i += 1)
+        {
+            var item = testData[i];
+            var source = item[0];
+            var flags = item[1];
+            var expected = item[2];
+
+            var /* Exception */ ex = null;
+            var /* String */ actual = null;
+            var /* ArabicShaping */ shaper = null;
+
+            try {
+                shaper = new global.ArabicShaping(flags);
+                actual = shaper.shape(source);
+            }
+            /*
+            catch(MissingResourceException e){
+                throw e;
+            }
+            catch (IllegalStateException ie){
+                warnln("IllegalStateException: "+ ie.toString());
+                return;
+            }
+            */
+            catch (/* Exception */ e) {
+                ex = e;
+            }
+
+            if (ex != null) {
+                var exmsg = "";
+                if (typeof(ex) === "Object" && typeof(ex.message) === "String")
+                {
+                    exmsg = ex.message;
+                }
+                var extrace = "";
+                if (typeof(ex) === "Object" && typeof(ex.trace) === "String")
+                {
+                    extrace = ex.trace;
+                }
+                err("TestStandard Error: Shaper " + shaper.toString() + "\n throws exception '" + ex + "'\n with message '" + exmsg + "'\n with traceback '" + extrace + "'\n for input '" + source);
+            } else if (expected !== actual) {
+                var /* StringBuffer */ buf = []/* new StringBuffer() */;
+                buf.add("TestStandard Error: Shaper: " + shaper.toString() + "\n Input: " + source + "\n Actual: " + actual +
+                           "\n Expected: " + expected + "\n");
+
+                for (var /* int */ i = 0; i < global.Math.max(expected.length, actual.length); ++i) {
+                    var /* String */ temp = "" + i;
+                    if (temp.length < 2) {
+                        temp = " " + temp;
+                    }
+                    var /* char */ trg = i < expected.length ? expected.charAt(i) : '\xffff';
+                    var /* char */ res = i < actual.length ? actual.charAt(i) : '\xffff';
+
+                    buf.add("[" + temp + "] ");
+                    buf.add(escapedString("" + trg) + " ");
+                    buf.add(escapedString("" + res) + " ");
+                    if (trg != res) {
+                        buf.add("***");
+                    }
+                    buf.add("\n");
+                }
+
+                buf.add("Index: " + i + "\n");
+                err(buf.join(""));
+            }
+
+        }
+
+    }
+
+    // PreflightDataTest
+    {
+        var testData = [
+            ["\x0644\x0627", LETTERS_SHAPE | LENGTH_GROW_SHRINK, 1],
+            ["\x0644\x0627\x0031",
+             DIGITS_EN2AN | DIGIT_TYPE_AN_EXTENDED | LENGTH_GROW_SHRINK, 3],
+            ["\x0644\x0644", LETTERS_SHAPE | LENGTH_GROW_SHRINK, 2],
+            ["\xfef7", LETTERS_UNSHAPE | LENGTH_GROW_SHRINK, 2]
+        ];
+
+        for (var i = 0; i < testData.count; i += 1)
+        {
+            var item = testData[i];
+            var source = item[0];
+            var flags = item[1];
+            var length = item[2];
+
+            var /* Exception */ ex = null;
+            var /* char */ src /* [] */ = null;
+            var /* int */ len = 0;
+            var /* ArabicShaping */ shaper = null;
+
+            if (source != null) {
+                src = [];
+                for (var i = 0; i < source.length; i += 1)
+                {
+                    src.add(#(source[i]));
+                }
+            }
+
+            try {
+                shaper = new global.ArabicShaping(flags);
+                len = shaper.shape(src, 0, src.length, null, 0, 0);
+            }
+            catch (/* Exception */ e) {
+                ex = e;
+            }
+
+            if (ex != null) {
+                err("PreflightDataTest Error: Shaper " + shaper.toString() + "\n throws exception '" + ex + "'\n for input '" + source);
+            } else if (length != len) {
+                err("PreflightDataTest Error: Shaper " + shaper.toString() + "\n returns " + len + " characters for input '" +
+                    source + "'\n Expected were " + length + " characters");
+            }
+
+        }
+    }
+
+    // ErrorDataTest
+    {
+        var testData = [
+            /* bad data */
+            ["\x0020\xfef7\x0644\x0020", LETTERS_UNSHAPE | LENGTH_FIXED_SPACES_NEAR,
+             "ArabicShapingException"],
+            ["\x0020\xfef7", LETTERS_UNSHAPE | LENGTH_FIXED_SPACES_AT_END,
+             "ArabicShapingException"],
+            ["\xfef7\x0020", LETTERS_UNSHAPE | LENGTH_FIXED_SPACES_AT_BEGINNING,
+             "ArabicShapingException"],
+            /* bad options */
+            ["\xfef7", 0xffffffff, "IllegalArgumentException"],
+            ["\xfef7", LETTERS_UNSHAPE | LENGTH_GROW_SHRINK, "ArabicShapingException"],
+            [null, LETTERS_UNSHAPE | LENGTH_FIXED_SPACES_AT_END,
+             "IllegalArgumentException"]
+        ];
+
+        for (var i = 0; i < testData.count; i += 1)
+        {
+            var item = testData[i];
+            var source = item[0];
+            var flags = item[1];
+            var error = item[2];
+
+            var /* Exception */ ex = null;
+            var /* char */ src /* [] */ = null;
+            var /* int */ len = 0;
+            var /* ArabicShaping */ shaper = null;
+
+            if (source != null) {
+                src = [];
+                for (var i = 0; i < source.length; i += 1)
+                {
+                    src.add(#(source[i]));
+                }
+                len = src.length;
+            }
+
+            try {
+                shaper = new global.ArabicShaping(flags);
+                shaper.shape(src, 0, len);
+            }
+            catch (/* Exception */ e) {
+                ex = e;
+            }
+
+            if ((ex === null) || !(ex instanceof error)) {
+                err("ErrorDataTest Error: Shaper " + shaper.toString() + "\n throws exception '" + ex + "'\n for input '" +
+                    source + "'\n Expected exception: " + error);
+            }
+
+        }
+    }
+}
+@endif

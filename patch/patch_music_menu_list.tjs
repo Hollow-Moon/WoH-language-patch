@@ -77,10 +77,10 @@ global.get_filtered_bgm_se_by_flags = function(audio_type, flags)
 
 global.generate_bgm_se_list = function()
 {
+	var se_bgm_filelist = global.se_bgm_filelist;
 	if (se_bgm_filelist["music"] !== void) {
 		return se_bgm_filelist;
 	}
-	var se_bgm_filelist = global.se_bgm_filelist;
 @if(GAME_FHAT)
 	se_bgm_filelist["music"] = global.list_and_filter_bgm_se(global.MusicListFile);
 	se_bgm_filelist["se"] = global.list_and_filter_bgm_se(global.SEListFile);

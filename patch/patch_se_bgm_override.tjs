@@ -43,7 +43,7 @@ class SESoundBuffer_patch_se_bgm_override extends global.SESoundBuffer_patch_se_
 		found = global.check_if_audio_exists(storage);
 @endif
 		if(!found)
-			throw new global.Exception(__("効果音 %s が見つかりません").sprintf(storage));
+			throw new global.Exception(global.__("効果音 %s が見つかりません").sprintf(storage));
 		var loop = elm.loop === void ? false : +elm.loop;
 		this.looping = loop;
 		if(loop)
@@ -53,7 +53,7 @@ class SESoundBuffer_patch_se_bgm_override extends global.SESoundBuffer_patch_se_
 		try
 		{
 			(global.WaveSoundBuffer.open incontextof this)(storage);
-			if(resetvolume) *(&(global.WaveSoundBuffer.volume) incontextof this) = currentVolume * 1000;
+			if(resetvolume) *(&(global.WaveSoundBuffer.volume) incontextof this) = this.currentVolume * 1000;
 			// 再生位置指定
 			if (start !== void &&
 				(*(&(global.WaveSoundBuffer.labels) incontextof this)) !== void &&

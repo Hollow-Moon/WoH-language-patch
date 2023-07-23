@@ -894,13 +894,15 @@ global.addConductorVerbosityMenu = function()
 
 global.addMovieContentMenu = function(patchMenu)
 {
+	var flagDefault = "";
+	var insertIndex = 0;
 @if(GAME_FATE)
-	var flagDefault = "realta";
-	var insertIndex = 2;
+	flagDefault = "realta";
+	insertIndex = 2;
 @endif
 @if(GAME_FHAT)
-	var flagDefault = "classic";
-	var insertIndex = 1;
+	flagDefault = "classic";
+	insertIndex = 1;
 @endif
 
 	var movieContentFlag = new global.GameFlag(this, this.sflags, "gmovie", global.get_opPatchExists(this) ? "mixed" : flagDefault);
@@ -1179,7 +1181,7 @@ global.addHdMenu = function(displayMenu)
 		for (var i=0; i<global.scaleFactors.count; i++) {
 			var hqMenuItemName = "hq%.1fMenuItem".sprintf(global.scaleFactors[i]).replace(/\./g, "_");
 
-			if (global.scaleFactors[i] <= 2.4 || System.exeBits == 64) {
+			if (global.scaleFactors[i] <= 2.4 || global.System.exeBits == 64) {
 				if (global.patchExists(global.hdPatchesNames[i])) {
 					this.qualityMenu.add(this[hqMenuItemName] = new global.KAGMenuItem(this, global.__t("高いx%.1f(&H)"), 1, function(sender) { global.onQualityMenuItemClick(sender); }, false));
 					this[hqMenuItemName].enabled = true;
@@ -1207,7 +1209,7 @@ global.addHdMenu = function(displayMenu)
 	this.notWideMenuItem.checked = true if !this.wideScreen;
 
 	if (global.get_systemRatio() > global.cubicRatio && global.get_systemRatio() != global.standardWideRatio) {
-		this.wideMenu.add(this.wideMenuItem = new global.KAGMenuItem(this, __t("デスクトップと同じ(&M) (%s)"), 1,
+		this.wideMenu.add(this.wideMenuItem = new global.KAGMenuItem(this, global.__t("デスクトップと同じ(&M) (%s)"), 1,
 			function(sender) { global.onWideMenuItemClick(sender,'wide'); }, false));
 		this.wideMenuItem.captionArg = [global.getRatioName(global.System.screenWidth, global.System.screenHeight)];
 		this.wideMenuItem.checked = true if this.wideScreen && this.isAutoWide;
@@ -1240,7 +1242,7 @@ global.addHdMenu = function(displayMenu)
 			var hMarker = wideDevResolutions[i][1];
 			var wideMenuItemName = "wideRatio" + wMarker + hMarker + "MenuItem";
 
-			this.wideMenu.add(this[wideMenuItemName] = new global.KAGMenuItem(this, __t("デバッグ (%d:%d)"), 1, function(sender) { global.onWideMenuItemClick(sender, sender.ratio); }));
+			this.wideMenu.add(this[wideMenuItemName] = new global.KAGMenuItem(this, global.__t("デバッグ (%d:%d)"), 1, function(sender) { global.onWideMenuItemClick(sender, sender.ratio); }));
 			this[wideMenuItemName].captionArg = [wMarker, hMarker];
 			this[wideMenuItemName].ratio = wMarker/hMarker;
 			if (global.floatEquals(this.wideRatio, wMarker/hMarker)) {

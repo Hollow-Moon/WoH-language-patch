@@ -162,7 +162,7 @@ class Window_hint_override extends global.Window_hint_original
 			return;
 		}
 		if (isshow) {
-			if (kag.sflags["showHoverTips"] == 0)
+			if (global.Window.mainWindow.sflags["showHoverTips"] == 0)
 				return;
 
 			var lines = text.split("\n");
@@ -224,7 +224,7 @@ class Window_hint_override extends global.Window_hint_original
 			var widthOffsetAbs = 0;
 			var heightOffsetAbs = 0;
 			
-			if (typeof this.maximized === "Integer" && maximized)
+			if (typeof(this.maximized) === "Integer" && this.maximized)
 			{
 				widthOffsetAbs = (clientRect.w  - pxWidth_abs) / 2;
 				heightOffsetAbs = (clientRect.h - pxHeight_abs) / 2;

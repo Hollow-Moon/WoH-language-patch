@@ -34,8 +34,8 @@
 				var lf = mlf;
 				elm.maxwidth = this.current.relinexpos - this.current.x if elm.maxwidth === void;
 
-				var tf_uppers	= isNoSpaceLanguage()? [].split("/,", elm.upper) : wordWrapSplit(elm.upper, elm.maxwidth, lf);
-				var tf_lowers	= isNoSpaceLanguage()? [].split("/,", elm.lower) : wordWrapSplit(elm.lower, elm.maxwidth, lf);
+				var tf_uppers	= global.isNoSpaceLanguage()? [].split("/,", elm.upper) : global.wordWrapSplit(elm.upper, elm.maxwidth, lf);
+				var tf_lowers	= global.isNoSpaceLanguage()? [].split("/,", elm.lower) : global.wordWrapSplit(elm.lower, elm.maxwidth, lf);
 				var tf_lcount	= tf_uppers.count > tf_lowers.count ? tf_uppers.count : tf_lowers.count;
 				var tf_offsetline	= tf_uppers.count;
 				var tf_lindex	= 0;
@@ -82,7 +82,7 @@
 						var tf_lastleft = message_layer_x - message_layer.marginL;
 						var tf_lasttop = message_layer_y - message_layer.marginT;
 	
-						message_layer_x = (isNoSpaceLanguage()? tf_lastleft : tf_lwidth) + message_layer.marginL;					
+						message_layer_x = (global.isNoSpaceLanguage()? tf_lastleft : tf_lwidth) + message_layer.marginL;					
 						message_layer_y += (message_layer.fontSize + message_layer.lineSpacing) * tf_offsetline;
 						tag_queue.add(%[tagname: "locate", x: message_layer_x - message_layer.marginL, y: message_layer_y - message_layer.marginT]);
 							
@@ -134,7 +134,7 @@
 				// 下の行の改行を入れる
 				for (var tf_i = tf_uppers.count + tf_lowers.count; tf_i > tf_lcount; tf_i--)
 				{
-					dm('ret');
+					global.dm('ret');
 					tag_queue.add("\n");
 				}
 					
@@ -161,7 +161,7 @@
 
 				// 履歴情報を正しくする
 				for(var tf_i=0; tf_i<tf_uppers.count; tf_i++) {
-					tf_hist[tf_pos] = tf_uppers[tf_i], dm((tf_pos)+": "+tf_hist[tf_pos]);
+					tf_hist[tf_pos] = tf_uppers[tf_i], global.dm((tf_pos)+": "+tf_hist[tf_pos]);
 					tf_histFont[tf_pos] = [];
 					for(var tf_j=0; tf_j<tf_uppers[tf_i].length; tf_j++) {
 						tf_histFont[tf_pos].add(lf.height);
@@ -169,7 +169,7 @@
 					tf_pos++;
 				}
 				for(var tf_i=0; tf_i<tf_lowers.count; tf_i++) {
-					tf_hist[tf_pos] = tf_lowers[tf_i], dm((tf_pos)+": "+tf_hist[tf_pos]);
+					tf_hist[tf_pos] = tf_lowers[tf_i], global.dm((tf_pos)+": "+tf_hist[tf_pos]);
 					tf_histFont[tf_pos] = [];
 					for(var tf_j=0; tf_j<tf_lowers[tf_i].length; tf_j++) {
 						tf_histFont[tf_pos].add(lf.height);

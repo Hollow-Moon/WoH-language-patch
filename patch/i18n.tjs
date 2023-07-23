@@ -50,7 +50,11 @@ global._n = function(textSingle, textPlural, pluralNumber, domain=global.default
 	if (result === void) {
 		return global.plural == 0? textSingle : textPlural;
 	}
-	return result[global.plural];
+	var result2 = result[global.plural];
+	if (result2 === void) {
+		return global.plural == 0? textSingle : textPlural;
+	}
+	return result2;
 } incontextof global;
 
 global.removeAllMO = function()

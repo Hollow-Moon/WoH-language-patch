@@ -48,11 +48,12 @@ class Layer_patch_rtl_override extends global.Layer_patch_rtl_original
 
 	function drawText(left, top, text, color, opacity, aa, slevel, scolor, swidth, sofsx, sofsy)
 	{
-		if (!global.get_rtl_enabled(typeof(global.kag) === "Object" ? global.kag : this.window) || (this instanceof "ConfigMenuLayer"))
+		if (!global.get_rtl_enabled(typeof(global.kag) === "Object" ? global.kag : this.window))
 		{
 			return (global.Layer_patch_rtl_original.drawText incontextof this)(...);
 		}
 		text += "";
+		var avoid_reposition_cond = (typeof(this.in_text_drawer) === "Integer" && this.in_text_drawer) || (this instanceof "MenuItemChildLayer") || (this.parent !== null && isvalid(this.parent) && this.parent instanceof "ConfigMenuLayer");
 		if (global.get_arabic_shaping_enabled(typeof(global.kag) === "Object" ? global.kag : this.window))
 		{
 			if (this.name !== "行描画用浮遊メッセージレイヤ") /* Message layer */
@@ -63,21 +64,29 @@ class Layer_patch_rtl_override extends global.Layer_patch_rtl_original
 				}
 				text = global.arabic_shaper_instance_ltr.shape(text);
 			}
-			if (global.get_half_height_offset_hack(typeof(global.kag) === "Object" ? global.kag : this.window))
+			// Don't reposition in text drawer
+			if (!avoid_reposition_cond)
 			{
-				top -= this.font.height \ 2;
+				if (global.get_half_height_offset_hack(typeof(global.kag) === "Object" ? global.kag : this.window))
+				{
+					top -= this.font.height \ 2;
+				}
 			}
 		}
 		
-		if (this.name === "行描画用浮遊メッセージレイヤ") /* Message layer */
+		// Don't reposition in text drawer
+		if (!avoid_reposition_cond)
 		{
-			left = this.parent.relinexpos - left;
+			if (this.name === "行描画用浮遊メッセージレイヤ") /* Message layer */
+			{
+				left = this.parent.relinexpos - left;
+			}
+			else
+			{
+				left = this.width - left;
+			}
+			left -= this.font.getTextWidth(text);
 		}
-		else
-		{
-			left = this.width - left;
-		}
-		left -= this.font.getTextWidth(text);
 		return (global.Layer_patch_rtl_original.drawText incontextof this)(left, top, text, color, opacity, aa, slevel, scolor, swidth, sofsx, sofsy);
 	}
 }

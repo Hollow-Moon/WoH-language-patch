@@ -29,6 +29,7 @@ global.hdPatchesNames = [
 ];
 global.scaleFactors = [1, 1.6, 2, 2.4, 3, 4];
 global.hdNames = ["sd", "hd", "hd_1600", "hd_1920", "hd_2400", "hd_3200"];
+global.renderScaleFactors = [1, 2];
 @endif
 @if(GAME_FHAT)
 global.hdPatchesNames = [
@@ -38,6 +39,7 @@ global.hdPatchesNames = [
 ];
 global.scaleFactors = [1, 2, 4];
 global.hdNames = ["sd", "hd", "fhd"];
+global.renderScaleFactors = [1, 2];
 @endif
 @if(GAME_WOHN)
 global.hdPatchesNames = [
@@ -47,6 +49,7 @@ global.hdPatchesNames = [
 ];
 global.scaleFactors = [1, 2, 4];
 global.hdNames = ["sd", "hd", "fhd"];
+global.renderScaleFactors = [1, 2];
 @endif
 
 global.scaleFactorsToPatchName = %[];
@@ -60,6 +63,7 @@ global.get_widePatchName = function() { { return global.devMode? "ImagesPatch" :
 global.wideFolderName = "wide";
 
 global.hdScaleFactorFlagName = "hdScaleFactor";
+global.hdRenderScaleFactorFlagName = "hdRenderScaleFactor";
 global.wideScreenFlagName = "wideScreen";
 global.autoWideRatioFlagName = "autoWideRatio";
 global.wideRatioFlagName = "wideRatio";
@@ -85,8 +89,8 @@ global.get_inverseWideFactor = function(kag=global.kag) { { return 1/kag.wideFac
 global.get_inverseCubicRatio = function() { { return 1/global.cubicRatio; } };
 global.get_wideScaleFactor = function(kag=global.kag) { { return kag.hdScaleFactor * kag.wideFactor; } };
 
-global.get_hdPatchName = function(kag=global.kag) { { return global.scaleFactorsToPatchName[kag.hdScaleFactor]; } };
-global.get_hdFolderName = function(kag=global.kag) { { return global.scaleFactorsToHdNames[kag.hdScaleFactor]; } };
+global.get_hdPatchName = function(kag=global.kag) { { return global.scaleFactorsToPatchName[kag.hdAssetScaleFactor]; } };
+global.get_hdFolderName = function(kag=global.kag) { { return global.scaleFactorsToHdNames[kag.hdAssetScaleFactor]; } };
 global.get_hdFolderSuffix = function(kag=global.kag) { { return "-" + global.get_hdFolderName(kag); } };
 global.get_hdPatchSuffix = function(kag=global.kag) { { return "_" + global.get_hdFolderName(kag); } };
 
@@ -117,20 +121,20 @@ global.addHdPaths = function(kag=global.kag, patches_arr, patchName, folder="", 
 
 global.unloadAllHdPatches = function(kag=global.kag)
 {
-	var originalScaleFactor = kag.hdScaleFactor;
+	var originalScaleFactor = kag.hdAssetScaleFactor;
 
 	for (var i = 0; i < global.scaleFactors.count; i++) {
-		kag.hdScaleFactor = global.scaleFactors[i];
+		kag.hdAssetScaleFactor = global.scaleFactors[i];
 		global.unloadHdPatch(kag);
 	}
-	kag.hdScaleFactor = originalScaleFactor;
+	kag.hdAssetScaleFactor = originalScaleFactor;
 };
 
 global.getHdPatchesArray = function(kag=global.kag)
 {
 	var patches_arr = [];
 	patches_arr.add([global.get_hdPatchName(kag)]);
-	if (global.devMode && kag.hdScaleFactor === global.scaleFactors[1]) {
+	if (global.devMode && kag.hdAssetScaleFactor === global.scaleFactors[1]) {
 		for (var i = 0, internal_forloop_count = global.devHdImageFolders.count; i < internal_forloop_count; i += 1) {
 			patches_arr.add([global.devHdImageFolders[i]]);
 		}
@@ -195,11 +199,12 @@ global.unloadHdPatch = function(kag=global.kag)
 	}
 };
 
-global.initializeQuality = function(scale)
+global.initializeQuality = function(hdAssetScaleFactor, hdRenderScaleFactor)
 {
 	global.unloadHdPatch(this);
 
-	this.hdScaleFactor = scale;
+	this.hdAssetScaleFactor = hdAssetScaleFactor;
+	this.hdRenderScaleFactor = hdRenderScaleFactor;
 
 	global.loadHdPatch(this);
 };
@@ -244,21 +249,41 @@ global.onQualityMenuItemClick = function(sender)
 	{
 		var w = sender.owner;
 		var changed = false;
-		if (sender.hdScaleFactor !== w.hdScaleFactor) {
+		var should_reload = false;
+		var hdAssetScaleFactor = w.hdAssetScaleFactor;
+		var hdRenderScaleFactor = w.hdRenderScaleFactor;
+		var extra_args = [];
+		if (typeof(sender.hdAssetScaleFactor) !== "undefined" && sender.hdAssetScaleFactor !== hdAssetScaleFactor)
+		{
+			hdAssetScaleFactor = sender.hdAssetScaleFactor;
+			extra_args.add("-hdassetscalefactor=" + global.number_to_hex_string(hdAssetScaleFactor));
+			should_reload = true;
+		}
+		if (typeof(sender.hdRenderScaleFactor) !== "undefined" && sender.hdRenderScaleFactor !== hdRenderScaleFactor)
+		{
+			hdRenderScaleFactor = sender.hdRenderScaleFactor;
+			extra_args.add("-hdrenderscalefactor=" + global.number_to_hex_string(hdRenderScaleFactor));
+			should_reload = true;
+		}
 @if(!KIRIKIROID&&!KIRIKIRISDL2)
-			{
-				global.full_game_reload("-hdscalefactor=" + global.number_to_hex_string(sender.hdScaleFactor));
-			}
+		if (extra_args.count > 0)
+		{
+			global.full_game_reload(extra_args*);
+			// Should be unreachable here
+		}
 @endif
+		if (should_reload)
+		{
 			w.extraConductor.clear();
 			w.lineBreak.loadedImage = null;
 			w.pageBreak.loadedImage = null;
 			w.reload_scenario_prepare();
-			(global.initializeQuality incontextof sender.owner)(sender.hdScaleFactor);
+			(global.initializeQuality incontextof w)(hdAssetScaleFactor, hdRenderScaleFactor);
 			changed = true;
 			sender.checked = true;
 		}
-		if (changed) {
+		if (changed)
+		{
 			global.changeResolution(sender.owner);
 			w.reload_scenario_execute();
 		}
@@ -478,8 +503,18 @@ global.initializeHDPatch = function()
 		this.hdScaleFactor = +global.System.getArgument("-hdscalefactor");
 	}
 
-	if (this.hdScaleFactor > 2.4 && System.exeBits == 32) {
-		this.hdScaleFactor = 1;
+	if (global.System.getArgument("-hdassetscalefactor") !== void)
+	{
+		this.hdAssetScaleFactor = +global.System.getArgument("-hdassetscalefactor");
+	}
+
+	if (global.System.getArgument("-hdrenderscalefactor") !== void)
+	{
+		this.hdRenderScaleFactor = +global.System.getArgument("-hdrenderscalefactor");
+	}
+
+	if (this.hdAssetScaleFactor > 2.4 && global.System.exeBits == 32) {
+		this.hdAssetScaleFactor = 1;
 	}
 
 	for (var i=global.scaleFactors.count-1; i>=0; i--) {
@@ -487,9 +522,9 @@ global.initializeHDPatch = function()
 		{
 			continue;
 		}
-		if (global.scaleFactors[i] == this.hdScaleFactor) {
+		if (global.scaleFactors[i] == this.hdAssetScaleFactor) {
 			if (!global.patchExists(global.hdPatchesNames[i])) {
-				this.hdScaleFactor = 1;
+				this.hdAssetScaleFactor = 1;
 				break;
 			}
 		}
@@ -498,7 +533,7 @@ global.initializeHDPatch = function()
 	global.initialize_scale_types();
 
 	global.unloadAllHdPatches(this);
-	(global.initializeQuality incontextof this)(this.hdScaleFactor);
+	(global.initializeQuality incontextof this)(this.hdAssetScaleFactor, this.hdRenderScaleFactor);
 	if (global.System.getArgument("-wideratio") !== void)
 	{
 		(global.initializeWide incontextof this)(global.System.getArgument("-wideratio") * 1.0);

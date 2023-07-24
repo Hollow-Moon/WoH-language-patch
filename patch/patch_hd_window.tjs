@@ -28,12 +28,30 @@ class Window_patch_hd_layer_override extends global.Window_patch_hd_layer_origin
 	property isMainWindow { getter { return this === global.Window.mainWindow; } }
 	property body { getter() { return this.fore; } }
 
-	property hdScaleFactor
+	property hdRenderScaleFactor
 	{
 		getter
 		{
 			if (!this.isMainWindow) {
-				return global.Window.mainWindow.hdScaleFactor;
+				return global.Window.mainWindow.hdRenderScaleFactor;
+			}
+			if (this.scflags[global.hdRenderScaleFactorFlagName] === void) {
+				this.scflags[global.hdRenderScaleFactorFlagName] = 1;
+			}
+			return this.scflags[global.hdRenderScaleFactorFlagName];
+		}
+		setter(v)
+		{
+			this.scflags[global.hdRenderScaleFactorFlagName] = v;
+		}
+	}
+
+	property hdAssetScaleFactor
+	{
+		getter
+		{
+			if (!this.isMainWindow) {
+				return global.Window.mainWindow.hdAssetScaleFactor;
 			}
 			if (this.scflags[global.hdScaleFactorFlagName] === void) {
 				for (var i=global.scaleFactors.count-1; i>=0; i--) {
@@ -52,6 +70,22 @@ class Window_patch_hd_layer_override extends global.Window_patch_hd_layer_origin
 		setter(v)
 		{
 			this.scflags[global.hdScaleFactorFlagName] = v;
+		}
+	}
+
+	property hdScaleFactor
+	{
+		getter
+		{
+			if (!this.isMainWindow) {
+				return global.Window.mainWindow.hdScaleFactor;
+			}
+			return this.hdAssetScaleFactor * this.hdRenderScaleFactor;
+		}
+		setter(v)
+		{
+			this.hdAssetScaleFactor = v;
+			this.hdRenderScaleFactor = 1;
 		}
 	}
 

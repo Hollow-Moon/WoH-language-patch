@@ -1201,9 +1201,34 @@ global.addHdMenu = function(displayMenu)
 
 		this.qualityMenu.add(this[hqMenuItemName] = new global.KAGMenuItem(this, hqMenuItemText, 1, function(sender) { global.onQualityMenuItemClick(sender); }, false));
 		this[hqMenuItemName].enabled = hqMenuItemEnabled;
-		this[hqMenuItemName].hdScaleFactor = global.scaleFactors[i];
-		this[hqMenuItemName].captionArg = this[hqMenuItemName].hdScaleFactor;
-		this[hqMenuItemName].checked = this.hdScaleFactor === global.scaleFactors[i];
+		this[hqMenuItemName].hdAssetScaleFactor = global.scaleFactors[i];
+		this[hqMenuItemName].captionArg = this[hqMenuItemName].hdAssetScaleFactor;
+		this[hqMenuItemName].checked = this.hdAssetScaleFactor === global.scaleFactors[i];
+	}
+
+	displayMenu.add(this.renderScaleMenu = new global.KAGMenuItem(this, global.__t("レンダリングスケール(&R)"), 0, void, false));
+	this.restart_menu_items.add(this.renderScaleMenu);
+
+	for (var i = 0; i < global.renderScaleFactors.count; i += 1)
+	{
+		var renderScaleMenuItemName = "renderScale%.1fMenuItem".sprintf(global.renderScaleFactors[i]).replace(/\./g, "_");
+		var renderScaleMenuItemText = "";
+		var renderScaleMenuItemEnabled = true;
+
+		if (global.renderScaleFactors[i] === 1)
+		{
+			renderScaleMenuItemText = global.__t("低い(&L)");
+		}
+		else
+		{
+			renderScaleMenuItemText = global.__t("高いx%.1f(&H)");
+		}
+
+		this.renderScaleMenu.add(this[renderScaleMenuItemName] = new global.KAGMenuItem(this, renderScaleMenuItemText, 1, function(sender) { global.onQualityMenuItemClick(sender); }, false));
+		this[renderScaleMenuItemName].enabled = renderScaleMenuItemEnabled;
+		this[renderScaleMenuItemName].hdRenderScaleFactor = global.renderScaleFactors[i];
+		this[renderScaleMenuItemName].captionArg = this[renderScaleMenuItemName].hdRenderScaleFactor;
+		this[renderScaleMenuItemName].checked = this.hdRenderScaleFactor === global.renderScaleFactors[i];
 	}
 
 	displayMenu.add(this.wideMenu = new global.KAGMenuItem(this, global.__t("アスペクト比(&A)"), 0, void, false));

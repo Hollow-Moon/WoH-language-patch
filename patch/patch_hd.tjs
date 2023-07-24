@@ -84,13 +84,15 @@ global.scale_type_exbuttonlayer = "stLinear";
 
 global.get_systemRatio = function() { { return global.System.screenWidth / global.System.screenHeight; } };
 
-global.get_inverseScaleFactor = function(kag=global.kag) { { return 1/kag.hdScaleFactor; } };
+global.get_hdAssetScaleFactor = function(kag=global.kag) { return (typeof(kag.hdAssetScaleFactor) !== "undefined") ? kag.hdAssetScaleFactor : 1; };
+
+global.get_inverseScaleFactor = function(kag=global.kag) { { return 1/global.get_hdScaleFactor(kag); } };
 global.get_inverseWideFactor = function(kag=global.kag) { { return 1/kag.wideFactor; } };
 global.get_inverseCubicRatio = function() { { return 1/global.cubicRatio; } };
-global.get_wideScaleFactor = function(kag=global.kag) { { return kag.hdScaleFactor * kag.wideFactor; } };
+global.get_wideScaleFactor = function(kag=global.kag) { { return global.get_hdScaleFactor(kag) * kag.wideFactor; } };
 
-global.get_hdPatchName = function(kag=global.kag) { { return global.scaleFactorsToPatchName[kag.hdAssetScaleFactor]; } };
-global.get_hdFolderName = function(kag=global.kag) { { return global.scaleFactorsToHdNames[kag.hdAssetScaleFactor]; } };
+global.get_hdPatchName = function(kag=global.kag) { { return global.scaleFactorsToPatchName[global.get_hdAssetScaleFactor(kag)]; } };
+global.get_hdFolderName = function(kag=global.kag) { { return global.scaleFactorsToHdNames[global.get_hdAssetScaleFactor(kag)]; } };
 global.get_hdFolderSuffix = function(kag=global.kag) { { return "-" + global.get_hdFolderName(kag); } };
 global.get_hdPatchSuffix = function(kag=global.kag) { { return "_" + global.get_hdFolderName(kag); } };
 
@@ -121,7 +123,7 @@ global.addHdPaths = function(kag=global.kag, patches_arr, patchName, folder="", 
 
 global.unloadAllHdPatches = function(kag=global.kag)
 {
-	var originalScaleFactor = kag.hdAssetScaleFactor;
+	var originalScaleFactor = global.get_hdAssetScaleFactor(kag);
 
 	for (var i = 0; i < global.scaleFactors.count; i++) {
 		kag.hdAssetScaleFactor = global.scaleFactors[i];
@@ -134,7 +136,7 @@ global.getHdPatchesArray = function(kag=global.kag)
 {
 	var patches_arr = [];
 	patches_arr.add([global.get_hdPatchName(kag)]);
-	if (global.devMode && kag.hdAssetScaleFactor === global.scaleFactors[1]) {
+	if (global.devMode && global.get_hdAssetScaleFactor(kag) === global.scaleFactors[1]) {
 		for (var i = 0, internal_forloop_count = global.devHdImageFolders.count; i < internal_forloop_count; i += 1) {
 			patches_arr.add([global.devHdImageFolders[i]]);
 		}

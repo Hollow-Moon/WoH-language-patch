@@ -1256,42 +1256,73 @@ global.addHdMenu = function(displayMenu)
 
 	if (typeof(global.scale_types_list) === "Object")
 	{
-		var upscaleMethodDefault = "stCubic";
+		var scaleMethodDefault = "stCubic";
 
-		var upscaleMethodFlag = new global.GameFlag(this, this.sflags, "upscalemethod", upscaleMethodDefault);
-
-		if (!global.has_scale_type(upscaleMethodFlag.value))
+		var upscaleMethodFlag = new global.GameFlag(this, this.sflags, "upscalemethod", scaleMethodDefault);
+		var downscaleMethodFlag = new global.GameFlag(this, this.sflags, "downscalemethod", scaleMethodDefault);
+		var scaleMethodFlags = [
+			upscaleMethodFlag,
+			downscaleMethodFlag,
+		];
+		for (var i = 0; i < scaleMethodFlags.count; i += 1)
 		{
-			upscaleMethodFlag.value = upscaleMethodDefault;
+			var scaleMethodFlag = scaleMethodFlags[i];
+			if (typeof(scaleMethodFlag) !== "Object")
+			{
+				continue;
+			}
+			if (!global.has_scale_type(scaleMethodFlag.value))
+			{
+				scaleMethodFlag.value = scaleMethodDefault;
+			}
 		}
 
-		var upscaleMethodCallback = function(sender)
+		var scaleMethodCallback = function(sender)
 		{
-			global.set_scale_type(sender.flag.value);
+			global.set_scale_type(sender.flag.value, sender.updownscale);
 		};
 
 		displayMenu.add(this.upscaleMethodMenu = new global.KAGMenuItem(this, global.__t("拡大メソッド(&U)"), 0, void, false));
-		var upscaleMethodMenu = this.upscaleMethodMenu;
+		displayMenu.add(this.downscaleMethodMenu = new global.KAGMenuItem(this, global.__t("縮小メソッド(&D)"), 0, void, false));
+		var scaleMethodMenus = [
+			this.upscaleMethodMenu,
+			this.downscaleMethodMenu,
+		];
+
 		var scale_types_list = global.scale_types_list;
-		for (var i = 0; i < scale_types_list.count; i += 1)
+		for (var i = 0; i < scaleMethodMenus.count; i += 1)
 		{
-			var scale_type = scale_types_list[i];
-			if (scale_type === void)
+			var scaleMethodMenu = scaleMethodMenus[i];
+			if (typeof(scaleMethodMenu) !== "Object")
 			{
 				continue;
 			}
-			if (scale_type === "-")
+			var testflag = (1 << i);
+			for (var j = 0; j < scale_types_list.count; j += 1)
 			{
-				this.upscaleMethodMenu.add(new global.MenuItem(this, "-"));
-				continue;
+				var scale_type = scale_types_list[j];
+				if (scale_type === void)
+				{
+					continue;
+				}
+				if (scale_type === "-")
+				{
+					scaleMethodMenu.add(new global.MenuItem(this, "-"));
+					continue;
+				}
+				if ((scale_type[4] & testflag) === 0)
+				{
+					continue;
+				}
+				var scaleMethodMenuItemName = "%sscaleMethod_%s_MenuItem".sprintf((i === 0) ? "up" : "down", scale_type[0]);
+				scaleMethodMenu.add(this[scaleMethodMenuItemName] = new global.KAGFlagMenuItem(this, scale_type[3], 1, scaleMethodFlags[i], scale_type[0]));
+				this[scaleMethodMenuItemName].updownscale = testflag;
+				this[scaleMethodMenuItemName].afterCallback = scaleMethodCallback;
+				if (scale_type[0] === "stCubic")
+				{
+					scaleMethodCallback(this[scaleMethodMenuItemName], testflag);
+				}
 			}
-			var upscaleMethodMenuItemName = "upscaleMethod_%s_MenuItem".sprintf(scale_type[0]);
-			upscaleMethodMenu.add(this[upscaleMethodMenuItemName] = new global.KAGFlagMenuItem(this, scale_type[3], 1, upscaleMethodFlag, scale_type[0]));
-			this[upscaleMethodMenuItemName].afterCallback = upscaleMethodCallback;
-		}
-		if (typeof(this.upscaleMethod_stCubic_MenuItem) === "Object")
-		{
-			upscaleMethodCallback(this.upscaleMethod_stCubic_MenuItem);
 		}
 	}
 

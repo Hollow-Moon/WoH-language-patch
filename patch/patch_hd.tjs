@@ -29,7 +29,7 @@ global.hdPatchesNames = [
 ];
 global.scaleFactors = [1, 1.6, 2, 2.4, 3, 4];
 global.hdNames = ["sd", "hd", "hd_1600", "hd_1920", "hd_2400", "hd_3200"];
-global.renderScaleFactors = [1, 2];
+global.renderScaleFactors = [0.25, 0.5, 1, 2];
 @endif
 @if(GAME_FHAT)
 global.hdPatchesNames = [
@@ -39,7 +39,7 @@ global.hdPatchesNames = [
 ];
 global.scaleFactors = [1, 2, 4];
 global.hdNames = ["sd", "hd", "fhd"];
-global.renderScaleFactors = [1, 2];
+global.renderScaleFactors = [0.25, 0.5, 1, 2];
 @endif
 @if(GAME_WOHN)
 global.hdPatchesNames = [
@@ -49,7 +49,7 @@ global.hdPatchesNames = [
 ];
 global.scaleFactors = [1, 2, 4];
 global.hdNames = ["sd", "hd", "fhd"];
-global.renderScaleFactors = [1, 2];
+global.renderScaleFactors = [0.25, 0.5, 1, 2];
 @endif
 
 global.scaleFactorsToPatchName = %[];
@@ -79,7 +79,8 @@ global.devHdImageFolders = ["BGImageHD", "FGImageHD", "ImageHD", "ImagesConfigHD
 
 global.scale_types_list = [];
 global.scale_types_dict = %[];
-global.scale_type_default = "stCubic";
+global.upscale_type_default = "stCubic";
+global.downscale_type_default = "stCubic";
 global.scale_type_exbuttonlayer = "stLinear";
 
 global.get_systemRatio = function() { { return global.System.screenWidth / global.System.screenHeight; } };
@@ -407,36 +408,34 @@ global.initialize_scale_types = function()
 	}
 
 	var def_func = global.layer_stretch_copy_wrapper;
-	var x = function(ident, desc)
+	var x = function(ident, desc, updownscale)
 	{
 		var scale_types_list = global.scale_types_list;
 		if (typeof(global[ident]) === "Integer")
 		{
-			scale_types_list.add([ident, global.layer_stretch_copy_wrapper, [global[ident]], desc]);
+			scale_types_list.add([ident, global.layer_stretch_copy_wrapper, [global[ident]], desc, updownscale]);
 		}
 	};
-	x(/* In Kirikiri 2 */ "stNearest", global.__t("最近傍点"));
-	x(/* In Kirikiri 2 */ "stFastLinear", global.__t("低精度の線形"));
-	x(/* In Kirikiri Z version >= 1.3 */ "stSemiFastLinear", global.__t("固定小数線形"));
-	x(/* In Kirikiri 2; Implementation changed in Kirikiri Z version >= 1.3 */ "stLinear", global.__t("線形"));
-	x(/* In Kirikiri Z version >= 1.3 */ "stFastCubic", global.__t("固定小数３次元"));
-	x(/* In Kirikiri 2; Implementation changed in Kirikiri Z version >= 1.3 */ "stCubic", global.__t("３次元"));
-	x(/* In Kirikiri Z version >= 1.3 */ "stFastLanczos2", global.__t("固定小数Lanczos 4x4"));
-	x(/* In Kirikiri Z version >= 1.3 */ "stLanczos2", global.__t("Lanczos 4x4"));
-	x(/* In Kirikiri Z version >= 1.3 */ "stFastLanczos3", global.__t("固定小数Lanczos 6x6"));
-	x(/* In Kirikiri Z version >= 1.3 */ "stLanczos3", global.__t("Lanczos 6x6"));
-	x(/* In Kirikiri Z version >= 1.3 */ "stFastSpline16", global.__t("固定小数スプライン4x4"));
-	x(/* In Kirikiri Z version >= 1.3 */ "stSpline16", global.__t("スプライン4x4"));
-	x(/* In Kirikiri Z version >= 1.3 */ "stFastSpline36", global.__t("固定小数スプライン6x6"));
-	x(/* In Kirikiri Z version >= 1.3 */ "stSpline36", global.__t("スプライン6x6"));
-@if(0)
-	x(/* In Kirikiri Z version >= 1.3; Downscale only */ "stFastAreaAvg", global.__t("固定小数面積平均縮小"));
-	x(/* In Kirikiri Z version >= 1.3; Downscale only */ "stAreaAvg", global.__t("面積平均縮小"));
-@endif
-	x(/* In Kirikiri Z version >= 1.3 */ "stFastGaussian", global.__t("固定小数ガウス4x4"));
-	x(/* In Kirikiri Z version >= 1.3 */ "stGaussian", global.__t("ガウス4x4"));
-	x(/* In Kirikiri Z version >= 1.3 */ "stFastBlackmanSinc", global.__t("固定小数Blackman-Sinc 8x8"));
-	x(/* In Kirikiri Z version >= 1.3 */ "stBlackmanSinc", global.__t("Blackman-Sinc 8x8"));
+	x(/* In Kirikiri 2 */ "stNearest", global.__t("最近傍点"), 1 | 2);
+	x(/* In Kirikiri 2 */ "stFastLinear", global.__t("低精度の線形"), 1 | 2);
+	x(/* In Kirikiri Z version >= 1.3 */ "stSemiFastLinear", global.__t("固定小数線形"), 1 | 2);
+	x(/* In Kirikiri 2; Implementation changed in Kirikiri Z version >= 1.3 */ "stLinear", global.__t("線形"), 1 | 2);
+	x(/* In Kirikiri Z version >= 1.3 */ "stFastCubic", global.__t("固定小数３次元"), 1 | 2);
+	x(/* In Kirikiri 2; Implementation changed in Kirikiri Z version >= 1.3 */ "stCubic", global.__t("３次元"), 1 | 2);
+	x(/* In Kirikiri Z version >= 1.3 */ "stFastLanczos2", global.__t("固定小数Lanczos 4x4"), 1 | 2);
+	x(/* In Kirikiri Z version >= 1.3 */ "stLanczos2", global.__t("Lanczos 4x4"), 1 | 2);
+	x(/* In Kirikiri Z version >= 1.3 */ "stFastLanczos3", global.__t("固定小数Lanczos 6x6"), 1 | 2);
+	x(/* In Kirikiri Z version >= 1.3 */ "stLanczos3", global.__t("Lanczos 6x6"), 1 | 2);
+	x(/* In Kirikiri Z version >= 1.3 */ "stFastSpline16", global.__t("固定小数スプライン4x4"), 1 | 2);
+	x(/* In Kirikiri Z version >= 1.3 */ "stSpline16", global.__t("スプライン4x4"), 1 | 2);
+	x(/* In Kirikiri Z version >= 1.3 */ "stFastSpline36", global.__t("固定小数スプライン6x6"), 1 | 2);
+	x(/* In Kirikiri Z version >= 1.3 */ "stSpline36", global.__t("スプライン6x6"), 1 | 2);
+	x(/* In Kirikiri Z version >= 1.3; Downscale only */ "stFastAreaAvg", global.__t("固定小数面積平均縮小"), 2);
+	x(/* In Kirikiri Z version >= 1.3; Downscale only */ "stAreaAvg", global.__t("面積平均縮小"), 2);
+	x(/* In Kirikiri Z version >= 1.3 */ "stFastGaussian", global.__t("固定小数ガウス4x4"), 1 | 2);
+	x(/* In Kirikiri Z version >= 1.3 */ "stGaussian", global.__t("ガウス4x4"), 1 | 2);
+	x(/* In Kirikiri Z version >= 1.3 */ "stFastBlackmanSinc", global.__t("固定小数Blackman-Sinc 8x8"), 1 | 2);
+	x(/* In Kirikiri Z version >= 1.3 */ "stBlackmanSinc", global.__t("Blackman-Sinc 8x8"), 1 | 2);
 
 	// Create dict for quick indexing
 	var scale_types_dict = global.scale_types_dict;
@@ -461,7 +460,7 @@ global.has_scale_type = function(scale_type)
 	return scale_types_dict[scale_type] !== void;
 };
 
-global.set_scale_type = function(scale_type)
+global.set_scale_type = function(scale_type, updownscale)
 {
 	var wanted_scale_type = scale_type;
 	var scale_types_dict = global.scale_types_dict;
@@ -469,7 +468,14 @@ global.set_scale_type = function(scale_type)
 	{
 		wanted_scale_type = "stCubic";
 	}
-	global.scale_type_default = wanted_scale_type;
+	if ((updownscale & 1) !== 0)
+	{
+		global.upscale_type_default = wanted_scale_type;
+	}
+	if ((updownscale & 2) !== 0)
+	{
+		global.downscale_type_default = wanted_scale_type;
+	}
 };
 
 global.layer_stretch_copy_wrapper = function(dlayer, dleft, dtop, dwidth, dheight, slayer, sleft, stop, swidth, sheight, *)
@@ -483,7 +489,14 @@ global.perform_upscale_on_layer = function(dlayer, dleft, dtop, dwidth, dheight,
 	var x_scale_type = scale_type;
 	if (x_scale_type === void)
 	{
-		x_scale_type = global.scale_type_default;
+		if ((dwidth < swidth) && (dheight < sheight))
+		{
+			x_scale_type = global.downscale_type_default;
+		}
+		else
+		{
+			x_scale_type = global.upscale_type_default;
+		}
 	}
 	if (x_scale_type === void)
 	{

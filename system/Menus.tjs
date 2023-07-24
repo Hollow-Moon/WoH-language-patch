@@ -246,11 +246,10 @@ class KAGMenuItem extends MenuItem
 @if(GAME_WOHN)
 	var groupTag;
 @endif
-	var originalCaption;
 
 	function KAGMenuItem(window, caption, group, command, autoenable)
 	{
-		super.MenuItem(window, __(caption));
+		super.MenuItem(window, caption);
 		this.owner = window;
 @if(GAME_WOHN)
 		// command が辞書配列だった場合は exp, clickse, clicksebuf を参照して効果音をつける
@@ -265,7 +264,6 @@ class KAGMenuItem extends MenuItem
 			this.group = group;
 			this.radio = true;
 		}
-		originalCaption = caption;
 	}
 
 	function finalize()

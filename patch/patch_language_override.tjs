@@ -93,3 +93,21 @@ class KAGWindow_patch_language_override_override extends global.KAGWindow_patch_
 	}
 }
 global.KAGWindow = global.KAGWindow_patch_language_override_override;
+
+global.KAGMenuItem_patch_language_override_original = global.KAGMenuItem;
+class KAGMenuItem_patch_language_override_override extends global.KAGMenuItem_patch_language_override_original
+{
+	var originalCaption;
+
+	function KAGMenuItem_patch_language_override_override(window, caption, *)
+	{
+		super.KAGMenuItem(window, global.__(caption), *);
+		this.originalCaption = caption;
+	}
+
+	function KAGMenuItem()
+	{
+		this.KAGMenuItem_patch_language_override_override(...);
+	}
+}
+global.KAGMenuItem = global.KAGMenuItem_patch_language_override_override;

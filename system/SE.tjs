@@ -36,29 +36,6 @@ class SESoundBuffer extends WaveSoundBuffer
 		super.finalize(...);
 	}
 
-@if(GAME_WOHN)
-	//サウンドデバイスが動作していない状態でゼロ除算ハード例外が出る問題の回避
-	property totalTime
-	{
-		getter()
-		{
-			if(status == "unload")
-				return 0;	//	未読込なので
-			try
-			{
-				var tt;
-				tt = super.totalTime;
-				return tt;
-			}
-			catch(e)
-			{
-				dm("SESoundBuffer：メディアの総再生時間取得に失敗しました(実行は続行できます) : " + e.message);
-				return 0;
-			}
-		}
-	}
-@endif
-
 	function play(elm, resetvolume = true)
 	{
 		// play オーバーライド

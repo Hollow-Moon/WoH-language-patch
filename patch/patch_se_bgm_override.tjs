@@ -12,6 +12,27 @@ class SESoundBuffer_patch_se_bgm_override extends global.SESoundBuffer_patch_se_
 		this.SESoundBuffer_patch_se_bgm_override(...);
 	}
 
+	//サウンドデバイスが動作していない状態でゼロ除算ハード例外が出る問題の回避
+	property totalTime
+	{
+		getter()
+		{
+			if(status == "unload")
+				return 0;	//	未読込なので
+			try
+			{
+				var tt;
+				tt = super.totalTime;
+				return tt;
+			}
+			catch(e)
+			{
+				global.dm("SESoundBuffer：メディアの総再生時間取得に失敗しました(実行は続行できます) : " + e.message);
+				return 0;
+			}
+		}
+	}
+
 	function play(elm, resetvolume = true)
 	{
 		// play オーバーライド
@@ -70,6 +91,40 @@ class SESoundBuffer_patch_se_bgm_override extends global.SESoundBuffer_patch_se_
 	}
 }
 global.SESoundBuffer = global.SESoundBuffer_patch_se_bgm_override;
+
+global.KAGWaveSoundBuffer_patch_se_bgm_original = global.KAGWaveSoundBuffer;
+class KAGWaveSoundBuffer_patch_se_bgm_override extends global.KAGWaveSoundBuffer_patch_se_bgm_original
+{
+	function KAGWaveSoundBuffer_patch_se_bgm_override()
+	{
+		super.KAGWaveSoundBuffer(...);
+	}
+
+	function KAGWaveSoundBuffer()
+	{
+		this.KAGWaveSoundBuffer_patch_se_bgm_override(...);
+	}
+
+	//サウンドデバイスが動作していない状態でゼロ除算ハード例外が出る問題の回避
+	property totalTime
+	{
+		getter()
+		{
+			try
+			{
+				var tt;
+				tt = global.WaveSoundBuffer.totalTime;
+				return tt;
+			}
+			catch(e)
+			{
+				global.dm("KAGWaveSoundBuffer：メディアの総再生時間取得に失敗しました(実行は続行できます) : " + e.message);
+				return 0;
+			}
+		}
+	}
+}
+global.KAGWaveSoundBuffer = global.KAGWaveSoundBuffer_patch_se_bgm_override;
 
 global.BGM_patch_se_bgm_original = global.BGM;
 class BGM_patch_se_bgm_override extends global.BGM_patch_se_bgm_original

@@ -123,27 +123,6 @@ class KAGWaveSoundBuffer extends WaveSoundBuffer, KAGSoundBuffer
     function onLabel(label) {
         owner.owner.onBGMLabel(label);
     }
-
-@if(GAME_WOHN)
-	//サウンドデバイスが動作していない状態でゼロ除算ハード例外が出る問題の回避
-	property totalTime
-	{
-		getter()
-		{
-			try
-			{
-				var tt;
-				tt = global.WaveSoundBuffer.totalTime;
-				return tt;
-			}
-			catch(e)
-			{
-				dm("KAGWaveSoundBuffer：メディアの総再生時間取得に失敗しました(実行は続行できます) : " + e.message);
-				return 0;
-			}
-		}
-	}
-@endif
 }
 
 

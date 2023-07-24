@@ -1065,6 +1065,15 @@ global.addWindowSizeMenu = function(displayMenu)
 				var windowMenuItemName = "window%dMenuItem".sprintf(item_width);
 				var windowMenuItemText = "";
 				var windowMenuItemEnabled = true;
+				var windowMenuItemCaptionCallback = function(sender)
+				{
+					var curstr = sender.originalCaption;
+					if (sender.window_scale === 1.0)
+					{
+						curstr += " " + global.__("(デフォルト)");
+					}
+					return curstr;
+				};
 
 @if(HD_MODE)
 				windowMenuItemText = "%.2fx".sprintf(item);
@@ -1075,10 +1084,8 @@ global.addWindowSizeMenu = function(displayMenu)
 
 				this.windowSizeMenu.add(this[windowMenuItemName] = new global.KAGMenuItem(this, windowMenuItemText, 1, function(sender) { sender.owner.onWindowSizeMenuItemClick(,sender.window_width); }, false));
 				this[windowMenuItemName].window_width = item_width;
-				if (item === 1.0)
-				{
-					this[windowMenuItemName].is_default_size = true;
-				}
+				this[windowMenuItemName].window_scale = item;
+				this[windowMenuItemName].captionArg = windowMenuItemCaptionCallback;
 			}
 
 			this.windowSizeMenu.add(new global.MenuItem(this, "-"));

@@ -57,7 +57,14 @@ global.refreshMenuString = function(kag, menu)
 	}
 	if (typeof(menu.captionArg) !== "undefined") {
 		if (typeof(menu.captionArg) === "Object") {
-			menu.caption = menu.caption.sprintf(menu.captionArg*);
+			if (menu.captionArg instanceof "Function")
+			{
+				menu.caption = menu.captionArg(menu);
+			}
+			else
+			{
+				menu.caption = menu.caption.sprintf(menu.captionArg*);
+			}
 		} else {
 			menu.caption = menu.caption.sprintf(menu.captionArg);
 		}

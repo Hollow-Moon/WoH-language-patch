@@ -1,8 +1,9 @@
 ﻿global.VideoOverlay_patch_hd_layer_original = global.VideoOverlay;
 class VideoOverlay_patch_hd_layer_override extends global.VideoOverlay_patch_hd_layer_original
 {
-	function VideoOverlay_patch_hd_layer_override()
+	function VideoOverlay_patch_hd_layer_override(owner)
 	{
+		this.patch_hd_layer_owner = owner;
 		super.VideoOverlay(...);
 	}
 
@@ -22,10 +23,10 @@ class VideoOverlay_patch_hd_layer_override extends global.VideoOverlay_patch_hd_
 			}
 @endif
 @if(SCALE_USING_FLOATING_POINT)
-			return super.width / global.get_wideScaleFactor();
+			return super.width / global.get_wideScaleFactor(this.patch_hd_layer_owner);
 @endif
 @if(!SCALE_USING_FLOATING_POINT)
-			return super.width \ global.get_wideScaleFactor();
+			return super.width \ global.get_wideScaleFactor(this.patch_hd_layer_owner);
 @endif
 		}
 	}
@@ -41,10 +42,10 @@ class VideoOverlay_patch_hd_layer_override extends global.VideoOverlay_patch_hd_
 			}
 @endif
 @if(SCALE_USING_FLOATING_POINT)
-			return super.height / global.scaleFactor;
+			return super.height / this.patch_hd_layer_owner.hdScaleFactor;
 @endif
 @if(!SCALE_USING_FLOATING_POINT)
-			return super.height \ global.scaleFactor;
+			return super.height \ this.patch_hd_layer_owner.hdScaleFactor;
 @endif
 		}
 	}
@@ -54,10 +55,10 @@ class VideoOverlay_patch_hd_layer_override extends global.VideoOverlay_patch_hd_
 		getter
 		{
 @if(SCALE_USING_FLOATING_POINT)
-			return super.originalWidth / global.get_wideScaleFactor();
+			return super.originalWidth / global.get_wideScaleFactor(this.patch_hd_layer_owner);
 @endif
 @if(!SCALE_USING_FLOATING_POINT)
-			return super.originalWidth \ global.get_wideScaleFactor();
+			return super.originalWidth \ global.get_wideScaleFactor(this.patch_hd_layer_owner);
 @endif
 		}
 	}
@@ -67,10 +68,10 @@ class VideoOverlay_patch_hd_layer_override extends global.VideoOverlay_patch_hd_
 		getter
 		{
 @if(SCALE_USING_FLOATING_POINT)
-			return super.originalHeight / global.scaleFactor;
+			return super.originalHeight / this.patch_hd_layer_owner.hdScaleFactor;
 @endif
 @if(!SCALE_USING_FLOATING_POINT)
-			return super.originalHeight \ global.scaleFactor;
+			return super.originalHeight \ this.patch_hd_layer_owner.hdScaleFactor;
 @endif
 		}
 	}
@@ -83,7 +84,7 @@ class VideoOverlay_patch_hd_layer_override extends global.VideoOverlay_patch_hd_
 			return super.setBounds(left, top, width, height);
 		}
 @endif
-		return super.setBounds(left*global.get_wideScaleFactor(), top*global.scaleFactor, width*global.get_wideScaleFactor(), height*global.scaleFactor);
+		return super.setBounds(left*global.get_wideScaleFactor(this.patch_hd_layer_owner), top*this.patch_hd_layer_owner.hdScaleFactor, width*global.get_wideScaleFactor(this.patch_hd_layer_owner), height*this.patch_hd_layer_owner.hdScaleFactor);
 	}
 }
 global.VideoOverlay = global.VideoOverlay_patch_hd_layer_override;

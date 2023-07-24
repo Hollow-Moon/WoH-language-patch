@@ -1811,13 +1811,15 @@ global.split_text_by_grapheme = function(kag=global.kag, text, cb, userdata)
 	}
 };
 
-global.recalcExtraMenuButtonX = function(buttonName,xPosOld,imgWidthNew) {
+global.recalcExtraMenuButtonX = function(buttonName, xPosOld, layer)
+{
 	var wideFactor = 1;
 @if(WIDE_MODE)
-	wideFactor = global.wideFactor;
+	wideFactor = layer.window.wideFactor;
 @endif
 	var defaultImageWidth = %["ex_prologue" => 428, "ex_gallery" => 360, "ex_music" => 296, "ex_movie" => 308, "ex_edlist" => 352, "ex_status" => 304, "ex_weapon" => 400, "ex_scene" => 400, "ex_back" => 284, "ss_backボタン" => 300, "gl_anotherボタン" => 412];
 	var imgWidthOld = defaultImageWidth[buttonName];
+	var imgWidthNew = layer.imageWidth;
 	
 	var btnWidthOld = imgWidthOld / 4;
 	var btnWidthNew = imgWidthNew / 4;

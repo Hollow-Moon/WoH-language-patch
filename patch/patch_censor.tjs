@@ -111,18 +111,18 @@ global.updateDecensorConfig = function(kag=global.kag)
 				{
 					var patches_arr = [[global.hPatchName, decensorFullPath]];
 @if(HD_MODE)
-					addHdPaths(patches_arr, global.hPatchName, global.decensoredFolderName, decensorInnerPath) if kag.isHd;
+					global.addHdPaths(kag, patches_arr, global.hPatchName, global.decensoredFolderName, decensorInnerPath) if kag.isHd;
 @endif
 					patches_arr.add([global.decensoredPatchName, decensorFullPath]);
 @if(HD_MODE)
-					addHdPaths(patches_arr, global.decensoredPatchName, global.decensoredFolderName, decensorInnerPath) if kag.isHd;
+					global.addHdPaths(kag, patches_arr, global.decensoredPatchName, global.decensoredFolderName, decensorInnerPath) if kag.isHd;
 @endif
 					global.load_patches(patches_arr);
 
 					patches_arr = [];
 @if(HD_MODE)
-					addHdPaths(patches_arr, global.decensoredPatchName, global.decensoredFolderName, decensorInnerPath) if !kag.isHd;
-					addHdPaths(patches_arr, global.hPatchName, global.decensoredFolderName, decensorInnerPath) if !kag.isHd;
+					global.addHdPaths(kag, patches_arr, global.decensoredPatchName, global.decensoredFolderName, decensorInnerPath) if !kag.isHd;
+					global.addHdPaths(kag, patches_arr, global.hPatchName, global.decensoredFolderName, decensorInnerPath) if !kag.isHd;
 @endif
 					global.unload_patches(patches_arr);
 				}
@@ -130,11 +130,11 @@ global.updateDecensorConfig = function(kag=global.kag)
 				{
 					var patches_arr = [[global.decensoredPatchName, decensorFullPath]];
 @if(HD_MODE)
-					addHdPaths(patches_arr, global.decensoredPatchName, global.decensoredFolderName, decensorInnerPath) if kag.isHd;
+					global.addHdPaths(kag, patches_arr, global.decensoredPatchName, global.decensoredFolderName, decensorInnerPath) if kag.isHd;
 @endif
 					patches_arr.add([global.hPatchName, decensorFullPath]);
 @if(HD_MODE)
-					addHdPaths(patches_arr, global.hPatchName, global.decensoredFolderName, decensorInnerPath) if kag.isHd;
+					global.addHdPaths(kag, patches_arr, global.hPatchName, global.decensoredFolderName, decensorInnerPath) if kag.isHd;
 @endif
 					global.unload_patches(patches_arr);
 				}
@@ -143,11 +143,11 @@ global.updateDecensorConfig = function(kag=global.kag)
 			{
 				var patches_arr = [[global.decensoredPatchName, decensorFullPath]];
 @if(HD_MODE)
-				addHdPaths(patches_arr, global.decensoredPatchName, global.decensoredFolderName, decensorInnerPath) if kag.isHd;
+				global.addHdPaths(kag, patches_arr, global.decensoredPatchName, global.decensoredFolderName, decensorInnerPath) if kag.isHd;
 @endif
 				patches_arr.add([global.hPatchName, decensorFullPath]);
 @if(HD_MODE)
-				addHdPaths(patches_arr, global.hPatchName, global.decensoredFolderName, decensorInnerPath) if kag.isHd;
+				global.addHdPaths(kag, patches_arr, global.hPatchName, global.decensoredFolderName, decensorInnerPath) if kag.isHd;
 @endif
 				global.unload_patches(patches_arr);
 			}

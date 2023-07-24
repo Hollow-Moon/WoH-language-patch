@@ -20,12 +20,11 @@ class Window_patch_hd_layer_override extends global.Window_patch_hd_layer_origin
 
 	function scaleTopScroll(topScroll)
 	{
-		return global.Math.round(global.originalResHeight * (this.wideFactor - 1) * global.scaleFactor * topScroll / 150) | 0;
+		return global.Math.round(global.originalResHeight * (this.wideFactor - 1) * this.hdScaleFactor * topScroll / 150) | 0;
 	}
 
-	property widthScale { getter { return this.isMainWindow? global.get_wideScaleFactor() : global.scaleFactor; } }
-	property heightScale { getter { return global.scaleFactor * (this.isMainWindow? global.cropFactor : 1); } }
-	property wideFactor { getter { return this.isMainWindow? global.wideFactor : 1; } }
+	property widthScale { getter { return this.isMainWindow? global.get_wideScaleFactor(this) : this.hdScaleFactor; } }
+	property heightScale { getter { return this.hdScaleFactor * (this.isMainWindow? global.cropFactor : 1); } }
 	property isMainWindow { getter { return this === global.Window.mainWindow; } }
 	property body { getter() { return this.fore; } }
 
@@ -34,7 +33,7 @@ class Window_patch_hd_layer_override extends global.Window_patch_hd_layer_origin
 		getter
 		{
 			if (!this.isMainWindow) {
-				return global.Window.mainWindow.scflags[global.hdScaleFactorFlagName];
+				return global.Window.mainWindow.hdScaleFactor;
 			}
 			if (this.scflags[global.hdScaleFactorFlagName] === void) {
 				for (var i=global.scaleFactors.count-1; i>=0; i--) {
@@ -61,6 +60,19 @@ class Window_patch_hd_layer_override extends global.Window_patch_hd_layer_origin
 		getter
 		{
 			return this.hdScaleFactor > 1;
+		}
+	}
+
+	var _wideFactor = void;
+	property wideFactor
+	{
+		getter
+		{
+			if (this._wideFactor === void)
+			{
+				return 1;
+			}
+			return this.isMainWindow ? this._wideFactor : 1;
 		}
 	}
 
@@ -108,6 +120,17 @@ class Window_patch_hd_layer_override extends global.Window_patch_hd_layer_origin
 			}
 			this.scflags[global.autoWideRatioFlagName] = global.floatEquals(v, global.get_systemRatio());
 			this.scflags[global.wideRatioFlagName] = v;
+
+@if(SCALE_USING_FLOATING_POINT)
+			this._wideFactor = (global.originalResHeight / global.originalResWidth) * v; // order of operations is important to avoid floating point errors causing visual glitch
+@endif
+@if(!SCALE_USING_FLOATING_POINT)
+			this._wideFactor = global.originalResHeight * v \ global.originalResWidth;
+			if (!this._wideFactor)
+			{
+				this._wideFactor = 1;
+			}
+@endif
 		}
 	}
 
@@ -364,7 +387,7 @@ class Window_patch_hd_layer_override extends global.Window_patch_hd_layer_origin
 
 	function scaleHeight(h)
 	{
-		return global.scaleSize(h, global.scaleFactor);
+		return global.scaleSize(h, this.hdScaleFactor);
 	}
 
 	function unscaleHeight(h)
@@ -372,10 +395,10 @@ class Window_patch_hd_layer_override extends global.Window_patch_hd_layer_origin
 		// unscaleSize() outputs float to offer higher precision to whoever needs it. (Font kerning in HD relies on it!).
 		// For window size handling we need rounding to prevent unintended downsizing cascades.
 @if(!SCALE_ROUND_TOWARDS_NEAREST)
-		return global.Math.ceil(global.unscaleSize(h, global.scaleFactor)) | 0;
+		return global.Math.ceil(global.unscaleSize(h, this.hdScaleFactor)) | 0;
 @endif
 @if(SCALE_ROUND_TOWARDS_NEAREST)
-		return global.Math.round(global.unscaleSize(h, global.scaleFactor)) | 0;
+		return global.Math.round(global.unscaleSize(h, this.hdScaleFactor)) | 0;
 @endif
 	}
 
@@ -387,7 +410,7 @@ class Window_patch_hd_layer_override extends global.Window_patch_hd_layer_origin
 
 	function unscaleHeightFloat(h)
 	{
-		return global.unscaleSize(h, global.scaleFactor);
+		return global.unscaleSize(h, this.hdScaleFactor);
 	}
 
 	function setPos(left, top)

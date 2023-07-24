@@ -445,7 +445,7 @@ class KAGFlagFolderMenuItem extends global.KAGFlagMenuItem
 @if(HD_MODE)
 					if (this.owner.isHd)
 					{
-						global.addHdPaths(patches_arr, patchNames[i], folderNames[i]);
+						global.addHdPaths(this.owner, patches_arr, patchNames[i], folderNames[i]);
 					}
 @endif
 				}
@@ -488,7 +488,7 @@ class KAGFlagFolderMenuItem extends global.KAGFlagMenuItem
 @if(HD_MODE)
 					if (this.owner.isHd)
 					{
-						global.addHdPaths(patches_arr, patchNames[i], folderNames[i]);
+						global.addHdPaths(this.owner, patches_arr, patchNames[i], folderNames[i]);
 					}
 @endif
 					patches_arr.add([patchNames[i], folderNames[i]]);
@@ -730,7 +730,7 @@ class KAGMessageWindowMenuItem extends global.KAGMenuItem
 	function updateMobileWide() {
 		var patches_arr = [[global.wideMobileWindowPatchName, global.wideMobileWindowFolderName]];
 @if(HD_MODE)
-		global.addHdPaths(patches_arr, global.wideMobileWindowPatchName, global.wideMobileWindowFolderName) if this.owner.isHd;
+		global.addHdPaths(this.owner, patches_arr, global.wideMobileWindowPatchName, global.wideMobileWindowFolderName) if this.owner.isHd;
 @endif
 		if (this.wideWindowFlag.value && this.mobileWindowFlag.value && this.owner.wideScreen) {
 			global.load_patches(patches_arr);
@@ -1174,8 +1174,8 @@ global.addHdMenu = function(displayMenu)
 		this.qualityMenu.add(this.lqMenuItem = new global.KAGMenuItem(this, global.__t("低い(&L)"), 1,
 			function(sender) { global.onQualityMenuItemClick(sender); }, false));
 		this.lqMenuItem.checked = this.hdScaleFactor === 1;
-		this.lqMenuItem.scaleFactor = 1;
-		this.lqMenuItem.captionArg = this.lqMenuItem.scaleFactor;
+		this.lqMenuItem.hdScaleFactor = 1;
+		this.lqMenuItem.captionArg = this.lqMenuItem.hdScaleFactor;
 		
 		for (var i=0; i<global.scaleFactors.count; i++) {
 			var hqMenuItemName = "hq%.1fMenuItem".sprintf(global.scaleFactors[i]).replace(/\./g, "_");
@@ -1195,8 +1195,8 @@ global.addHdMenu = function(displayMenu)
 				this[hqMenuItemName].enabled = false;
 			}
 
-			this[hqMenuItemName].scaleFactor = global.scaleFactors[i];
-			this[hqMenuItemName].captionArg = this[hqMenuItemName].scaleFactor;
+			this[hqMenuItemName].hdScaleFactor = global.scaleFactors[i];
+			this[hqMenuItemName].captionArg = this[hqMenuItemName].hdScaleFactor;
 			this[hqMenuItemName].checked = this.hdScaleFactor === global.scaleFactors[i];
 		}
 

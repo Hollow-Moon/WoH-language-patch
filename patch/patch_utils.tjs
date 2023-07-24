@@ -887,6 +887,19 @@ global.real_to_hex_string = function(v)
 	return ("%s0x1.%013Xp%d").sprintf(s ? "-" : "", global.binary_to_decimal(fbits_arr), global.binary_to_decimal(ebits_arr) - 1023);
 };
 
+global.number_to_hex_string = function(v)
+{
+	if (typeof(v) === "Integer")
+	{
+		return ("0x%016x").sprintf(v);
+	}
+	else if (typeof(v) === "Real")
+	{
+		return global.real_to_hex_string(v);
+	}
+	throw new global.Exception("Invalid type");
+};
+
 global.reload_messagelayer_config = function(window=global.kag)
 {
 	var ignore_changes_tmp = false;

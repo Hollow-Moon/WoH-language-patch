@@ -93,7 +93,15 @@ class Window_patch_hd_layer_override extends global.Window_patch_hd_layer_origin
 	{
 		getter
 		{
-			return this.hdScaleFactor > 1;
+			return this.hdAssetScaleFactor > 1;
+		}
+	}
+
+	property isHdScaled
+	{
+		getter
+		{
+			return (this.hdScaleFactor != 1) || (this.wideScreen);
 		}
 	}
 

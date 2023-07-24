@@ -1390,7 +1390,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 			throw new global.Exception("expected 4 args");
 		}
 		// Optimization for 1x size.
-		if (!this.window.isHd && !this.window.wideScreen)
+		if (!this.window.isHdScaled)
 		{
 			return (global.Layer_patch_hd_layer_original.update incontextof this)(...);
 		}
@@ -1438,7 +1438,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 		this.updateBgFromSource(src, swidth, sheight);
 
 		// Optimization for 1x size.
-		if (!this.window.isHd && !this.window.wideScreen)
+		if (!this.window.isHdScaled)
 		{
 			return (global.Layer_patch_hd_layer_original.operateRect incontextof this)(...);
 		}
@@ -1500,7 +1500,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 		this.updateBgFromSource(src, swidth, sheight);
 
 		// Optimization for 1x size.
-		if (!this.window.isHd && !this.window.wideScreen)
+		if (!this.window.isHdScaled)
 		{
 			return (global.Layer_patch_hd_layer_original.copyRect incontextof this)(...);
 		}
@@ -1539,7 +1539,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 	function copy9Patch_patch_hd_layer(src)
 	{
 		// Optimization for 1x size.
-		if (!this.window.isHd && !this.window.wideScreen)
+		if (!this.window.isHdScaled)
 		{
 			return (global.Layer_patch_hd_layer_original.copy9Patch incontextof this)(...);
 		}
@@ -1579,7 +1579,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 	function flipLR_patch_hd_layer()
 	{
 		// Optimization for 1x size.
-		if (!this.window.isHd && !this.window.wideScreen)
+		if (!this.window.isHdScaled)
 		{
 			return (global.Layer_patch_hd_layer_original.flipLR incontextof this)(...);
 		}
@@ -1608,7 +1608,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 	function flipUD_patch_hd_layer()
 	{
 		// Optimization for 1x size.
-		if (!this.window.isHd && !this.window.wideScreen)
+		if (!this.window.isHdScaled)
 		{
 			return (global.Layer_patch_hd_layer_original.flipUD incontextof this)(...);
 		}
@@ -1637,7 +1637,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 	function adjustGamma_patch_hd_layer()
 	{
 		// Optimization for 1x size.
-		if (!this.window.isHd && !this.window.wideScreen)
+		if (!this.window.isHdScaled)
 		{
 			return (global.Layer_patch_hd_layer_original.adjustGamma incontextof this)(...);
 		}
@@ -1666,7 +1666,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 	function doGrayScale_patch_hd_layer()
 	{
 		// Optimization for 1x size.
-		if (!this.window.isHd && !this.window.wideScreen)
+		if (!this.window.isHdScaled)
 		{
 			return (global.Layer_patch_hd_layer_original.doGrayScale incontextof this)(...);
 		}
@@ -1750,7 +1750,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 			return this.operateAffine_patch_hd_layer(src, sleft, stop, swidth, sheight, false, left_offset, top_offset, right_offset, top_offset, left_offset, bottom_offset, mode, opacity, type);
 		}
 		// Optimization for 1x size.
-		if (!this.window.isHd && !this.window.wideScreen)
+		if (!this.window.isHdScaled)
 		{
 			return (global.Layer_patch_hd_layer_original.operateStretch incontextof this)(...);
 		}
@@ -1840,7 +1840,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 			return this.affineCopy_patch_hd_layer(src, sleft, stop, swidth, sheight, false, left_offset, top_offset, right_offset, top_offset, left_offset, bottom_offset, type, false);
 		}
 		// Optimization for 1x size.
-		if (!this.window.isHd && !this.window.wideScreen)
+		if (!this.window.isHdScaled)
 		{
 			return (global.Layer_patch_hd_layer_original.stretchCopy incontextof this)(...);
 		}
@@ -1896,7 +1896,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 		this.updateBgFromSource(src, swidth, sheight);
 
 		// Optimization for 1x size.
-		if (!this.window.isHd && !this.window.wideScreen)
+		if (!this.window.isHdScaled)
 		{
 			return (global.Layer_patch_hd_layer_original.piledCopy incontextof this)(...);
 		}
@@ -1949,7 +1949,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 		clear = !!clear;
 
 		// Optimization for 1x size.
-		if (!this.window.isHd && !this.window.wideScreen)
+		if (!this.window.isHdScaled)
 		{
 			return (global.Layer_patch_hd_layer_original.affineCopy incontextof this)(...);
 		}
@@ -2010,7 +2010,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 		type = +type;
 
 		// Optimization for 1x size.
-		if (!this.window.isHd && !this.window.wideScreen)
+		if (!this.window.isHdScaled)
 		{
 			return (global.Layer_patch_hd_layer_original.operateAffine incontextof this)(...);
 		}
@@ -2060,7 +2060,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 		yblur = +yblur;
 
 		// Optimization for 1x size.
-		if (!this.window.isHd && !this.window.wideScreen)
+		if (!this.window.isHdScaled)
 		{
 			return (global.Layer_patch_hd_layer_original.doBoxBlur incontextof this)(...);
 		}
@@ -2106,7 +2106,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 		color = +color;
 
 		// Optimization for 1x size.
-		if (!this.window.isHd && !this.window.wideScreen)
+		if (!this.window.isHdScaled)
 		{
 			return (global.Layer_patch_hd_layer_original.fillRect incontextof this)(...);
 		}
@@ -2168,7 +2168,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 			return;
 		}
 		// Optimization for 1x size.
-		if (!this.window.isHd && !this.window.wideScreen)
+		if (!this.window.isHdScaled)
 		{
 			return (global.Layer_patch_hd_layer_original.colorRect incontextof this)(...);
 		}
@@ -2230,7 +2230,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 		sofsy = +sofsy;
 
 		// Optimization for 1x size.
-		if (!this.window.isHd && !this.window.wideScreen)
+		if (!this.window.isHdScaled)
 		{
 			return (global.Layer_patch_hd_layer_original.drawText incontextof this)(...);
 		}
@@ -2280,7 +2280,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 		sofsy = +sofsy;
 
 		// Optimization for 1x size.
-		if (!this.window.isHd && !this.window.wideScreen)
+		if (!this.window.isHdScaled)
 		{
 			return (global.Layer_patch_hd_layer_original.drawGlyph incontextof this)(...);
 		}

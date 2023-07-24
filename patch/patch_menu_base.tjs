@@ -1173,7 +1173,7 @@ global.addHdMenu = function(displayMenu)
 
 		this.qualityMenu.add(this.lqMenuItem = new global.KAGMenuItem(this, global.__t("低い(&L)"), 1,
 			function(sender) { global.onQualityMenuItemClick(sender); }, false));
-		this.lqMenuItem.checked = true if this.hdScaleFactor === 1;
+		this.lqMenuItem.checked = this.hdScaleFactor === 1;
 		this.lqMenuItem.scaleFactor = 1;
 		this.lqMenuItem.captionArg = this.lqMenuItem.scaleFactor;
 		
@@ -1197,7 +1197,7 @@ global.addHdMenu = function(displayMenu)
 
 			this[hqMenuItemName].scaleFactor = global.scaleFactors[i];
 			this[hqMenuItemName].captionArg = this[hqMenuItemName].scaleFactor;
-			this[hqMenuItemName].checked = true if this.hdScaleFactor === global.scaleFactors[i];
+			this[hqMenuItemName].checked = this.hdScaleFactor === global.scaleFactors[i];
 		}
 
 	displayMenu.add(this.wideMenu = new global.KAGMenuItem(this, global.__t("アスペクト比(&A)"), 0, void, false));
@@ -1205,13 +1205,13 @@ global.addHdMenu = function(displayMenu)
 
 	this.wideMenu.add(this.notWideMenuItem = new global.KAGMenuItem(this, global.__t("基準(4:3)(&S)"), 1,
 		function(sender) { global.onWideMenuItemClick(sender,'standard'); }, false));
-	this.notWideMenuItem.checked = true if !this.wideScreen;
+	this.notWideMenuItem.checked = !this.wideScreen;
 
 	if (global.get_systemRatio() > global.cubicRatio && global.get_systemRatio() != global.standardWideRatio) {
 		this.wideMenu.add(this.wideMenuItem = new global.KAGMenuItem(this, global.__t("デスクトップと同じ(&M) (%s)"), 1,
 			function(sender) { global.onWideMenuItemClick(sender,'wide'); }, false));
 		this.wideMenuItem.captionArg = [global.getRatioName(global.System.screenWidth, global.System.screenHeight)];
-		this.wideMenuItem.checked = true if this.wideScreen && this.isAutoWide;
+		this.wideMenuItem.checked = this.wideScreen && this.isAutoWide;
 	}
 
 	var keys = [];

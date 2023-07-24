@@ -20,30 +20,33 @@ global.standardWideRatio = 16/9;
 
 @if(GAME_FATE)
 global.hdPatchesNames = [
+	global.devMode? "ImagesSD" : "sd", // 800x600
 	global.devMode? "ImagesHD" : "hd", // 1280x960
 	global.devMode? "ImagesHD_1600" : "hd_1600", // 1600x1200
 	global.devMode? "ImagesHD_1920" : "hd_1920", // 1920x1440
 	global.devMode? "ImagesHD_2400" : "hd_2400", // 2400x1800
 	global.devMode? "ImagesHD_3200" : "hd_3200" // 3200x2400
 ];
-global.scaleFactors = [1.6, 2, 2.4, 3, 4];
-global.hdNames = ["hd", "hd_1600", "hd_1920", "hd_2400", "hd_3200"];
+global.scaleFactors = [1, 1.6, 2, 2.4, 3, 4];
+global.hdNames = ["sd", "hd", "hd_1600", "hd_1920", "hd_2400", "hd_3200"];
 @endif
 @if(GAME_FHAT)
 global.hdPatchesNames = [
+	global.devMode? "ImageSD" : "SD",
 	global.devMode? "ImageHD" : "HD",
 	global.devMode?  "ImageHD2" : "FHD",
 ];
-global.scaleFactors = [2, 4];
-global.hdNames = ["hd", "fhd"];
+global.scaleFactors = [1, 2, 4];
+global.hdNames = ["sd", "hd", "fhd"];
 @endif
 @if(GAME_WOHN)
 global.hdPatchesNames = [
+	global.devMode? "ImageSD" : "SD",
 	global.devMode? "ImageHD" : "HD",
 	global.devMode?  "ImageHD2" : "FHD",
 ];
-global.scaleFactors = [2, 4];
-global.hdNames = ["hd", "fhd"];
+global.scaleFactors = [1, 2, 4];
+global.hdNames = ["sd", "hd", "fhd"];
 @endif
 
 global.scaleFactorsToPatchName = %[];
@@ -127,7 +130,7 @@ global.getHdPatchesArray = function(kag=global.kag)
 {
 	var patches_arr = [];
 	patches_arr.add([global.get_hdPatchName(kag)]);
-	if (global.devMode && kag.hdScaleFactor === global.scaleFactors[0]) {
+	if (global.devMode && kag.hdScaleFactor === global.scaleFactors[1]) {
 		for (var i = 0, internal_forloop_count = global.devHdImageFolders.count; i < internal_forloop_count; i += 1) {
 			patches_arr.add([global.devHdImageFolders[i]]);
 		}
@@ -480,6 +483,10 @@ global.initializeHDPatch = function()
 	}
 
 	for (var i=global.scaleFactors.count-1; i>=0; i--) {
+		if (global.scaleFactors[i] === 1)
+		{
+			continue;
+		}
 		if (global.scaleFactors[i] == this.hdScaleFactor) {
 			if (!global.patchExists(global.hdPatchesNames[i])) {
 				this.hdScaleFactor = 1;

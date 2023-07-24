@@ -773,6 +773,7 @@ global.addEnableDisableRestartMenuFunctions = function()
 {
 	this.restart_menu_state = true;
 	this.restart_menu_state_stack = [];
+	this.restart_menu_items = [];
 	this.pushRestartMenuState = function()
 	{
 		this.restart_menu_state_stack.add(this.restart_menu_state);
@@ -790,17 +791,11 @@ global.addEnableDisableRestartMenuFunctions = function()
 	this.setRestartMenuState = function(state)
 	{
 		this.restart_menu_state = state;
-@if(HD_MODE)
-		this.qualityMenu.enabled = state;
-		this.wideMenu.enabled = state;
-@endif
-		if (typeof(this.titleThemeMenuItem) === "Object")
+		var restart_menu_items = this.restart_menu_items;
+		for (var i = 0; i < restart_menu_items.count; i += 1)
 		{
-			this.titleThemeMenuItem.enabled = state;
-		}
-		if (typeof(this.routeMenuItem) === "Object")
-		{
-			this.routeMenuItem.enabled = state;
+			var item = restart_menu_items[i];
+			item.enabled = state;
 		}
 		if (typeof(this.languageMenu) === "Object")
 		{
@@ -819,12 +814,16 @@ global.addEnableDisableRestartMenuFunctions = function()
 	{
 		this.setRestartMenuState(false);
 	};
+};
 
+global.prepareRestartMenuFunctions = function()
+{
 	this.disableRestartMenus();
 };
 
 global.addPatchMenu = function()
 {
+	(global.addEnableDisableRestartMenuFunctions incontextof this)();
 	this.menu.insert(this.patchMenu = new global.KAGMenuItem(this, global.__t("パッチ(&P)"), 0, void, false), global.getPatchMenuIndex(this));
 	(global.addCensorMenu incontextof this)(this.patchMenu, global.__t("検閲(&C)"));
 	(global.addVoiceMenu incontextof this)(this.patchMenu);
@@ -851,7 +850,7 @@ global.addPatchMenu = function()
 @endif
 	this.patchMenu.add(new global.MenuItem(this, "-"));
 	(global.addActionsMenu incontextof this)(this.patchMenu);
-	(global.addEnableDisableRestartMenuFunctions incontextof this)();
+	(global.prepareRestartMenuFunctions incontextof this)();
 };
 
 global.addDevelopmentMenu = function()
@@ -1170,7 +1169,7 @@ global.addHdMenu = function(displayMenu)
 	displayMenu.add(new global.MenuItem(this, "-"));
 
 	displayMenu.add(this.qualityMenu = new global.KAGMenuItem(this, global.__t("画質(&Q)"), 0, void, false));
-	this.qualityMenu.enabled = false;
+	this.restart_menu_items.add(this.qualityMenu);
 
 		this.qualityMenu.add(this.lqMenuItem = new global.KAGMenuItem(this, global.__t("低い(&L)"), 1,
 			function(sender) { global.onQualityMenuItemClick(sender); }, false));
@@ -1202,7 +1201,7 @@ global.addHdMenu = function(displayMenu)
 		}
 
 	displayMenu.add(this.wideMenu = new global.KAGMenuItem(this, global.__t("アスペクト比(&A)"), 0, void, false));
-	this.wideMenu.enabled = false;
+	this.restart_menu_items.add(this.wideMenu);
 
 	this.wideMenu.add(this.notWideMenuItem = new global.KAGMenuItem(this, global.__t("基準(4:3)(&S)"), 1,
 		function(sender) { global.onWideMenuItemClick(sender,'standard'); }, false));

@@ -374,6 +374,7 @@ class MpvNamedPipeClientIPC
 
 if ((typeof(global.NamedPipeClient) === "Object") && (typeof(global.Scripts.evalJSON) === "Object") && (typeof(global.Array.pack) === "Object"))
 {
+	global.iswine = typeof(global.System.readRegValue("HKEY_CURRENT_USER\\Software\\Wine\\FileOpenAssociations\\Enable")) === "String";
 	global.mpvNPCIPCObj = new global.MpvNamedPipeClientIPC();
 	if (!global.mpvNPCIPCObj.find_extract_mpv())
 	{
@@ -403,7 +404,6 @@ if ((typeof(global.NamedPipeClient) === "Object") && (typeof(global.Scripts.eval
 		global.Debug.notice(msg);
 		return;
 	}
-	global.iswine = typeof(global.System.readRegValue("HKEY_CURRENT_USER\\Software\\Wine\\FileOpenAssociations\\Enable")) === "String";
 
 	global.playVideoMPV = function(name)
 	{

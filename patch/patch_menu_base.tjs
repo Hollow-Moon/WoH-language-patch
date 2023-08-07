@@ -1086,15 +1086,24 @@ global.addWindowSizeMenu = function(displayMenu)
 				this[windowMenuItemName].window_width = item_width;
 				this[windowMenuItemName].window_scale = item;
 				this[windowMenuItemName].captionArg = windowMenuItemCaptionCallback;
+				this[windowMenuItemName].checked = item_width === (this.fullScreen ? 0 : this.innerWidth);
 			}
 
 			this.windowSizeMenu.add(new global.MenuItem(this, "-"));
 
-			this.windowSizeMenu.add(this.windowResizeableMenuItem = new global.KAGMenuItem(this, global.__t("サイズを固定する"), 0,
-				function(sender) { sender.owner.onWindowSizeMenuItemClick(,0); }, false));
+			if (typeof(this.windowResizeable) === "Integer")
+			{
+				this.windowSizeMenu.add(this.windowResizeableMenuItem = new global.KAGMenuItem(this, global.__t("サイズを固定する"), 0,
+					function(sender) { sender.owner.onWindowSizeMenuItemClick(,0); }, false));
+				this.windowResizeableMenuItem.checked = this.windowResizeable;
+			}
 
-			this.windowSizeMenu.add(this.limitWindowSizeMenuItem = new global.KAGMenuItem(this, global.__t("画面サイズに限る"), 0,
-				function(sender) { sender.owner.onLimitWindowSizeMenuItemClick(); }, false));
+			if (typeof(this.limitWindowSize) === "Integer")
+			{
+				this.windowSizeMenu.add(this.limitWindowSizeMenuItem = new global.KAGMenuItem(this, global.__t("画面サイズに限る"), 0,
+					function(sender) { sender.owner.onLimitWindowSizeMenuItemClick(); }, false));
+				this.limitWindowSizeMenuItem.checked = this.limitWindowSize;
+			}
 };
 
 

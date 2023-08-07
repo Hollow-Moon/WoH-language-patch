@@ -416,6 +416,7 @@ class KAGWindow extends Window
 		// ウィンドウ外見の調整
 		if(ismain)
 		{
+@if(!KIRIKIRISDL2)
 @if(!ZOOM_WINDOW)
 			borderStyle = bsSingle;
 			if (typeof(this.innerSunken) === "Integer")
@@ -430,6 +431,14 @@ class KAGWindow extends Window
 				innerSunken = false;
 			}
 			init_zoom_window_menubar_hide();
+@endif
+@endif
+@if(KIRIKIRISDL2)
+			borderStyle = bsSizeable;
+			if (typeof(this.innerSunken) === "Integer")
+			{
+				innerSunken = false;
+			}
 @endif
 		}
 		else

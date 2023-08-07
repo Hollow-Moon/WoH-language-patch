@@ -200,6 +200,7 @@
 	["patch_movie_override.tjs", ,,, "!GAME_WOHN"],
 	"patch_window_hook.tjs",
 	["patch_zoom_window.tjs", ,,, "ZOOM_WINDOW"],
+	["patch_window_size_no_zoom_window.tjs", ,,, "!ZOOM_WINDOW"],
 	["patch_fix_call_stack.tjs", ,,, "GAME_FATE||GAME_FHAT"],
 	"patch_fix_savedata_by_jump.tjs",
 	"patch_align.tjs",

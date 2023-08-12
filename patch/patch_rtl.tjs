@@ -93,3 +93,30 @@ class Layer_patch_rtl_override extends global.Layer_patch_rtl_original
 	}
 }
 global.Layer = global.Layer_patch_rtl_override;
+
+
+// horizontal flip of linebreak glyph for rtl
+global.AnimationLayer_patch_rtl_original = global.AnimationLayer;
+class AnimationLayer_patch_rtl_override extends global.AnimationLayer_patch_rtl_original
+{
+	function AnimationLayer_patch_rtl_override()
+	{
+		super.AnimationLayer(...);
+	}
+
+	function AnimationLayer()
+	{
+		this.AnimationLayer_patch_rtl_override(...);
+	}
+
+	function loadImages(elm)
+	{
+		if (global.get_rtl_enabled(typeof(global.kag) === "Object" ? global.kag : this.window)) {
+			if (typeof(elm) === "Object" && (elm.storage === "LineBreak" || elm.storage === "PageBreak")) {
+				elm.fliplr = true;
+			}
+		}
+		super.loadImages(elm);
+	}
+}
+global.AnimationLayer = global.AnimationLayer_patch_rtl_override;

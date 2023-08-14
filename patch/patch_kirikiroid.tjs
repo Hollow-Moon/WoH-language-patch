@@ -5,7 +5,73 @@ global.isKirikiroid = (typeof(global.Window) === "Object")
 	&& (typeof(global.Window.BasicDrawDevice) === "Object")
 	&& (typeof(global.Window.BasicDrawDevice.dtNone) === "Integer");
 
-if (global.isKirikiroid)
 {
-	global.Scripts.eval("@set(KIRIKIROID=1)");
+	// strings --encoding=l ./Kirikiroid2\ 1.3.9/lib/arm64-v8a/libgame.so | grep .dll
+	global.kirikiroid2_builtin_plugin_list = [
+		"AlphaMovie.dll",
+		"DrawDeviceD3D.dll",
+		"DrawDeviceD3DZ.dll",
+		"emoteplayer.dll",
+		"xp3filter.dll",
+		"KAGParserEx.dll",
+		"KAGParserExb.dll",
+		"layerExAreaAverage.dll",
+		"LayerExDraw.dll",
+		"LayerExImage.dll",
+		"PSBFile.dll",
+		"PackinOne.dll",
+		"fstat.dll",
+		"savestruct.dll",
+		"scriptsEx.dll",
+		"shrinkCopy.dll",
+		"layerExBTOA.dll",
+		"layerExImage.dll",
+		"layerExRaster.dll",
+		"csvParser.dll",
+		"TextRender.dll",
+		"addFont.dll",
+		"dirlist.dll",
+		"extNagano.dll",
+		"fftgraph.dll",
+		"getSample.dll",
+		"getabout.dll",
+		"gfxEffect.dll",
+		"json.dll",
+		"kirikiroid2.dll",
+		"layerExAlpha.dll",
+		"layerExMovie.dll",
+		"perspective.dll",
+		"LayerExSave.dll",
+		"layerExShimmer.dll",
+		"lzfs.dll",
+		"minizip.dll",
+		"saveStruct.dll",
+		"util_generic.dll",
+		"util_graph.dll",
+		"util_system.dll",
+		"varfile.dll",
+		"win32dialog.dll",
+		"windowEx.dll",
+		"wutcwf.dll",
+		"ExtKAGParser.dll",
+		"KaichoTrans.dll",
+		"motionplayer.dll",
+		"multiimage.dll",
+		"expat.dll",
+		"sqlite3.dll",
+		"extrans.dll"
+	];
+	if (global.isKirikiroid)
+	{
+		global.Scripts.eval("@set(KIRIKIROID=1)");
+		global.get_full_path_of_plugin = function(storage)
+		{
+			var storage_name = global.Storages.extractStorageName(storage);
+			if (global.kirikiroid2_builtin_plugin_list.find(storage_name) !== -1)
+			{
+				return storage_name;
+			}
+			return "";
+		};
+	}
 }

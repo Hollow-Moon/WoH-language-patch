@@ -27,14 +27,16 @@ global.PatchInfoURL = "https://hollow-moon.github.io/wohn/";
 global.PatchSupportURL = "https://hollow-moon.github.io/wohn/support/";
 @endif
 
-if ((typeof(global.PatchVersion) !== "Object") || (typeof(global.PatchDescription) !== "String") || (typeof(global.PatchInfoURL) !== "String"))
 {
-	throw new Exception("Patch was not initialized in a correct manner.");
+	if ((typeof(global.PatchVersion) !== "Object") || (typeof(global.PatchDescription) !== "String") || (typeof(global.PatchInfoURL) !== "String"))
+	{
+		throw new global.Exception("Patch was not initialized in a correct manner.");
+	}
 }
 
-System.exceptionHandler = function(e)
+global.System.exceptionHandler = function(e)
 {
-	Debug.logAsError();
+	global.Debug.logAsError();
 
 	if (typeof(global.kag) === "Object" && isvalid(global.kag) && typeof(global.kag.fullScreened) === "Integer" && global.kag.fullScreened && typeof(global.kag.onWindowedMenuItemClick) === "Object" && isvalid(global.kag.onWindowedMenuItemClick))
 	{
@@ -49,11 +51,11 @@ System.exceptionHandler = function(e)
 			exception_message = e.message;
 		}
 	}
-	Debug.message("Exception: " + exception_message);
-	var trace_string = Scripts.getTraceString();
+	global.Debug.message("Exception: " + exception_message);
+	var trace_string = global.Scripts.getTraceString();
 	if (trace_string !== "")
 	{
-		Debug.message("Trace: " + trace_string);
+		global.Debug.message("Trace: " + trace_string);
 	}
 	var msg_components = [];
 	msg_components.add("\"krkr.console.log\" and \"hwexcept.log\" have been created in either the game's or savedata directory.");
@@ -65,20 +67,20 @@ System.exceptionHandler = function(e)
 	msg_components.add(exception_message);
 	msg_components.add("--------------------------------------------------------------------------------");
 	var msg = msg_components.join("\n");
-	System.inform(msg);
+	global.System.inform(msg);
 
 @if(!KIRIKIROID)
 	if ((typeof(global.devMode) === "Integer" ? !global.devMode : true) && (typeof(global.devMode2) === "Integer" ? !global.devMode2 : true))
 	{
-		if (System.getArgument('-openpatchinfourlonerror') !== "no" && typeof(global.PatchInfoURL) === "String")
+		if (global.System.getArgument('-openpatchinfourlonerror') !== "no" && typeof(global.PatchInfoURL) === "String")
 		{
-			System.shellExecute(global.PatchInfoURL);
+			global.System.shellExecute(global.PatchInfoURL);
 		}
 	}
 
 	if (typeof(global.kag) === "Object" && isvalid(global.kag) && typeof(global.kag.visible) == "Integer" && global.kag.visible == false)
 	{
-		System.exit(127);
+		global.System.exit(127);
 	}
 @endif
 
@@ -88,7 +90,10 @@ System.exceptionHandler = function(e)
 // Prevent premature exit after startup script execution but before main window is created
 global.System.exitOnNoWindowStartup = false;
 
-function dmt(msg*) { Debug.message(msg.join(", ")+": "+Scripts.getTraceString()); }
+global.dmt = function(msg*)
+{
+	global.Debug.message(msg.join(", ") + ": " + global.Scripts.getTraceString());
+};
 
 // Default settings
 //プラグインへのイベント配信時にエラー停止しないよう暫定的にトラップさせる=1 / させない=0
@@ -175,8 +180,8 @@ function dmt(msg*) { Debug.message(msg.join(", ")+": "+Scripts.getTraceString())
 {
 	if (typeof(global.KirikiriSDL2Internal) === "Object")
 	{
-		Scripts.eval("@set(ZOOM_WINDOW=0)");
-		Scripts.eval("@set(USE_MENU_LAYER=1)");
+		global.Scripts.eval("@set(ZOOM_WINDOW=0)");
+		global.Scripts.eval("@set(USE_MENU_LAYER=1)");
 	}
 }
 
@@ -220,38 +225,38 @@ function dmt(msg*) { Debug.message(msg.join(", ")+": "+Scripts.getTraceString())
 }
 
 // Ensure patch version gets placed in the log
-Debug.notice(("Patch Description: %s").sprintf(global.PatchDescription));
+global.Debug.notice(("Patch Description: %s").sprintf(global.PatchDescription));
 
 {
 	var basepath = "";
-	var arcdelim = System.getArgument("-arcdelim");
+	var arcdelim = global.System.getArgument("-arcdelim");
 	if (!arcdelim)
 	{
 		arcdelim = ">";
 	}
-	var currentpath = Storages.getFullPath("./");
+	var currentpath = global.Storages.getFullPath("./");
 	if (currentpath.indexOf(arcdelim) === -1)
 	{
-		basepath = Storages.getFullPath("../");
+		basepath = global.Storages.getFullPath("../");
 	}
 	else
 	{
-		basepath = System.exePath;
+		basepath = global.System.exePath;
 	}
-	global.devMode = ((("" + System.getArgument('-devmode')).indexOf("1") !== -1) || Storages.isExistentStorage(basepath + "dev.txt"));
-	global.devMode2 = ((("" + System.getArgument('-devmode')).indexOf("2") !== -1) || Storages.isExistentStorage(basepath + "dev2.txt"));
-	global.forceLog = ((System.getArgument('-forcelog') !== void) || Storages.isExistentStorage(basepath + "forceLog.txt"));
-	global.useUnencryptedXP3Archive = ((System.getArgument('-useunencryptedxp3archive') !== void) || Storages.isExistentStorage(basepath + "useunencryptedxp3archive.txt"));
+	global.devMode = ((("" + global.System.getArgument('-devmode')).indexOf("1") !== -1) || global.Storages.isExistentStorage(basepath + "dev.txt"));
+	global.devMode2 = ((("" + global.System.getArgument('-devmode')).indexOf("2") !== -1) || global.Storages.isExistentStorage(basepath + "dev2.txt"));
+	global.forceLog = ((global.System.getArgument('-forcelog') !== void) || global.Storages.isExistentStorage(basepath + "forceLog.txt"));
+	global.useUnencryptedXP3Archive = ((global.System.getArgument('-useunencryptedxp3archive') !== void) || global.Storages.isExistentStorage(basepath + "useunencryptedxp3archive.txt"));
 
 	var version_info_path = "patch_versioninfo.tjs";
 	try
 	{
-		if (Storages.isExistentStorage(version_info_path))
+		if (global.Storages.isExistentStorage(version_info_path))
 		{
-			var verinfo = Scripts.execStorage(version_info_path);
+			var verinfo = global.Scripts.execStorage(version_info_path);
 			// Ensure patch info gets put in the log
-			Debug.notice(("Patch Commit: %s").sprintf(verinfo.hexsha));
-			Debug.notice(("Patch Creation Time: %i").sprintf(verinfo.archive_created_time));
+			global.Debug.notice(("Patch Commit: %s").sprintf(verinfo.hexsha));
+			global.Debug.notice(("Patch Creation Time: %i").sprintf(verinfo.archive_created_time));
 		}
 	}
 	catch (e)
@@ -261,21 +266,21 @@ Debug.notice(("Patch Description: %s").sprintf(global.PatchDescription));
 
 	// Override settings
 	var settingsPath = basepath + "settings.tjs";
-	if (Storages.isExistentStorage(settingsPath))
+	if (global.Storages.isExistentStorage(settingsPath))
 	{
-		var _ = Scripts.evalStorage(settingsPath);
+		var _ = global.Scripts.evalStorage(settingsPath);
 	}
 
 	global.typemoon_repo_root = void;
 	if (global.devMode)
 	{
-		global.typemoon_repo_root = Storages.getFullPath(basepath + "/../");
-		Storages.addAutoPath(global.typemoon_repo_root + "common/data/");
-		Storages.addAutoPath(global.typemoon_repo_root + "common/patch/");
-		Storages.addAutoPath(global.typemoon_repo_root + "common/plugin/");
-		Storages.addAutoPath(global.typemoon_repo_root + "common/pluginpatch/");
-		Storages.addAutoPath(basepath + "/plugin/");
-		Storages.addAutoPath(basepath + "/pluginpatch/");
+		global.typemoon_repo_root = global.Storages.getFullPath(basepath + "/../");
+		global.Storages.addAutoPath(global.typemoon_repo_root + "common/data/");
+		global.Storages.addAutoPath(global.typemoon_repo_root + "common/patch/");
+		global.Storages.addAutoPath(global.typemoon_repo_root + "common/plugin/");
+		global.Storages.addAutoPath(global.typemoon_repo_root + "common/pluginpatch/");
+		global.Storages.addAutoPath(basepath + "/plugin/");
+		global.Storages.addAutoPath(basepath + "/pluginpatch/");
 	}
 }
 
@@ -325,18 +330,24 @@ Debug.notice(("Patch Description: %s").sprintf(global.PatchDescription));
 	global.apply_plugins_link_override();
 }
 
+{
 @if(GAME_FHAT)
-var mainPatchName = devMode? "data" : "3";
+	global.mainPatchName = global.devMode ? "data" : "3";
 @endif
 @if(GAME_FATE||GAME_WOHN)
-var mainPatchName = devMode? "data" : "";
+	global.mainPatchName = global.devMode ? "data" : "";
 @endif
-
-if (forceLog)
-{
-	Debug.startLogToFile(false);
 }
 
-KAGLoadScript("patch_initialize.tjs");
+{
+	if (global.forceLog)
+	{
+		global.Debug.startLogToFile(false);
+	}
+}
+
+{
+	global.KAGLoadScript("patch_initialize.tjs");
+}
 
 @endif

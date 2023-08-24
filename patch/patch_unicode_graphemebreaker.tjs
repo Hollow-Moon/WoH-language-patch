@@ -313,8 +313,8 @@ class GraphemeBreaker
 @if(0)
 	{
 		// basic test
-		var broken = GraphemeBreaker.break_('Z͑ͫ̓ͪ̂ͫ̽͏̴̙̤̞͉͚̯̞̠͍A̴̵̜̰͔ͫ͗͢L̠ͨͧͩ͘G̴̻͈͍͔̹̑͗̎̅͛́Ǫ̵̹̻̝̳͂̌̌͘!͖̬̰̙̗̿̋ͥͥ̂ͣ̐́́͜͞');
-		var expected = ['Z͑ͫ̓ͪ̂ͫ̽͏̴̙̤̞͉͚̯̞̠͍', 'A̴̵̜̰͔ͫ͗͢', 'L̠ͨͧͩ͘', 'G̴̻͈͍͔̹̑͗̎̅͛́', 'Ǫ̵̹̻̝̳͂̌̌͘', '!͖̬̰̙̗̿̋ͥͥ̂ͣ̐́́͜͞'];
+		var broken = GraphemeBreaker.break_('\x005A\x0351\x036B\x0343\x036A\x0302\x036B\x033D\x034F\x0334\x0319\x0324\x031E\x0349\x035A\x032F\x031E\x0320\x034D\x0041\x036B\x0357\x0334\x0362\x0335\x031C\x0330\x0354\x004C\x0368\x0367\x0369\x0358\x0320\x0047\x0311\x0357\x030E\x0305\x035B\x0341\x0334\x033B\x0348\x034D\x0354\x0339\x004F\x0342\x030C\x030C\x0358\x0328\x0335\x0339\x033B\x031D\x0333\x0021\x033F\x030B\x0365\x0365\x0302\x0363\x0310\x0301\x0301\x035E\x035C\x0356\x032C\x0330\x0319\x0317');
+		var expected = ['\x005A\x0351\x036B\x0343\x036A\x0302\x036B\x033D\x034F\x0334\x0319\x0324\x031E\x0349\x035A\x032F\x031E\x0320\x034D', '\x0041\x036B\x0357\x0334\x0362\x0335\x031C\x0330\x0354', '\x004C\x0368\x0367\x0369\x0358\x0320', '\x0047\x0311\x0357\x030E\x0305\x035B\x0341\x0334\x033B\x0348\x034D\x0354\x0339', '\x004F\x0342\x030C\x030C\x0358\x0328\x0335\x0339\x033B\x031D\x0333', '\x0021\x033F\x030B\x0365\x0365\x0302\x0363\x0310\x0301\x0301\x035E\x035C\x0356\x032C\x0330\x0319\x0317'];
 		Debug.message(global.struct_is_equal(broken, expected));
 	}
 @endif
@@ -325,7 +325,7 @@ class GraphemeBreaker
 	{
 		// nextBreak
 		var brk;
-		var str = 'Z͑ͫ̓ͪ̂ͫ̽͏̴̙̤̞͉͚̯̞̠͍A̴̵̜̰͔ͫ͗͢L̠ͨͧͩ͘G̴̻͈͍͔̹̑͗̎̅͛́Ǫ̵̹̻̝̳͂̌̌͘!͖̬̰̙̗̿̋ͥͥ̂ͣ̐́́͜͞';
+		var str = '\x005A\x0351\x036B\x0343\x036A\x0302\x036B\x033D\x034F\x0334\x0319\x0324\x031E\x0349\x035A\x032F\x031E\x0320\x034D\x0041\x036B\x0357\x0334\x0362\x0335\x031C\x0330\x0354\x004C\x0368\x0367\x0369\x0358\x0320\x0047\x0311\x0357\x030E\x0305\x035B\x0341\x0334\x033B\x0348\x034D\x0354\x0339\x004F\x0342\x030C\x030C\x0358\x0328\x0335\x0339\x033B\x031D\x0333\x0021\x033F\x030B\x0365\x0365\x0302\x0363\x0310\x0301\x0301\x035E\x035C\x0356\x032C\x0330\x0319\x0317';
 		var index = 0;
 
 		var res = [];
@@ -336,7 +336,7 @@ class GraphemeBreaker
 		}
 
 		res.add(str.substring(index));
-		var expected = ['Z͑ͫ̓ͪ̂ͫ̽͏̴̙̤̞͉͚̯̞̠͍', 'A̴̵̜̰͔ͫ͗͢', 'L̠ͨͧͩ͘', 'G̴̻͈͍͔̹̑͗̎̅͛́', 'Ǫ̵̹̻̝̳͂̌̌͘', '!͖̬̰̙̗̿̋ͥͥ̂ͣ̐́́͜͞'];
+		var expected = ['\x005A\x0351\x036B\x0343\x036A\x0302\x036B\x033D\x034F\x0334\x0319\x0324\x031E\x0349\x035A\x032F\x031E\x0320\x034D', '\x0041\x036B\x0357\x0334\x0362\x0335\x031C\x0330\x0354', '\x004C\x0368\x0367\x0369\x0358\x0320', '\x0047\x0311\x0357\x030E\x0305\x035B\x0341\x0334\x033B\x0348\x034D\x0354\x0339', '\x004F\x0342\x030C\x030C\x0358\x0328\x0335\x0339\x033B\x031D\x0333', '\x0021\x033F\x030B\x0365\x0365\x0302\x0363\x0310\x0301\x0301\x035E\x035C\x0356\x032C\x0330\x0319\x0317'];
 		Debug.message(global.struct_is_equal(res, expected));
 	}
 @endif
@@ -344,7 +344,7 @@ class GraphemeBreaker
 @if(0)
 	{
 		// nextBreak intermediate indexes
-		var str = 'Z͑ͫ̓ͪ̂ͫ̽͏̴̙̤̞͉͚̯̞̠͍A̴̵̜̰͔ͫ͗͢L̠ͨͧͩ͘G̴̻͈͍͔̹̑͗̎̅͛́Ǫ̵̹̻̝̳͂̌̌͘!͖̬̰̙̗̿̋ͥͥ̂ͣ̐́́͜͞';
+		var str = '\x005A\x0351\x036B\x0343\x036A\x0302\x036B\x033D\x034F\x0334\x0319\x0324\x031E\x0349\x035A\x032F\x031E\x0320\x034D\x0041\x036B\x0357\x0334\x0362\x0335\x031C\x0330\x0354\x004C\x0368\x0367\x0369\x0358\x0320\x0047\x0311\x0357\x030E\x0305\x035B\x0341\x0334\x033B\x0348\x034D\x0354\x0339\x004F\x0342\x030C\x030C\x0358\x0328\x0335\x0339\x033B\x031D\x0333\x0021\x033F\x030B\x0365\x0365\x0302\x0363\x0310\x0301\x0301\x035E\x035C\x0356\x032C\x0330\x0319\x0317';
 		var breaks = %[];
 
 		for (var i = -1, end = str.length; i < end; i++)
@@ -370,7 +370,7 @@ class GraphemeBreaker
 	{
 		// previousBreak
 		var brk;
-		var str = 'Z͑ͫ̓ͪ̂ͫ̽͏̴̙̤̞͉͚̯̞̠͍A̴̵̜̰͔ͫ͗͢L̠ͨͧͩ͘G̴̻͈͍͔̹̑͗̎̅͛́Ǫ̵̹̻̝̳͂̌̌͘!͖̬̰̙̗̿̋ͥͥ̂ͣ̐́́͜͞';
+		var str = '\x005A\x0351\x036B\x0343\x036A\x0302\x036B\x033D\x034F\x0334\x0319\x0324\x031E\x0349\x035A\x032F\x031E\x0320\x034D\x0041\x036B\x0357\x0334\x0362\x0335\x031C\x0330\x0354\x004C\x0368\x0367\x0369\x0358\x0320\x0047\x0311\x0357\x030E\x0305\x035B\x0341\x0334\x033B\x0348\x034D\x0354\x0339\x004F\x0342\x030C\x030C\x0358\x0328\x0335\x0339\x033B\x031D\x0333\x0021\x033F\x030B\x0365\x0365\x0302\x0363\x0310\x0301\x0301\x035E\x035C\x0356\x032C\x0330\x0319\x0317';
 		var index = str.length;
 
 		var res = [];
@@ -381,7 +381,7 @@ class GraphemeBreaker
 		}
 
 		res.push(str.substring(0, index));
-		var expected = ['Z͑ͫ̓ͪ̂ͫ̽͏̴̙̤̞͉͚̯̞̠͍', 'A̴̵̜̰͔ͫ͗͢', 'L̠ͨͧͩ͘', 'G̴̻͈͍͔̹̑͗̎̅͛́', 'Ǫ̵̹̻̝̳͂̌̌͘', '!͖̬̰̙̗̿̋ͥͥ̂ͣ̐́́͜͞'];
+		var expected = ['\x005A\x0351\x036B\x0343\x036A\x0302\x036B\x033D\x034F\x0334\x0319\x0324\x031E\x0349\x035A\x032F\x031E\x0320\x034D', '\x0041\x036B\x0357\x0334\x0362\x0335\x031C\x0330\x0354', '\x004C\x0368\x0367\x0369\x0358\x0320', '\x0047\x0311\x0357\x030E\x0305\x035B\x0341\x0334\x033B\x0348\x034D\x0354\x0339', '\x004F\x0342\x030C\x030C\x0358\x0328\x0335\x0339\x033B\x031D\x0333', '\x0021\x033F\x030B\x0365\x0365\x0302\x0363\x0310\x0301\x0301\x035E\x035C\x0356\x032C\x0330\x0319\x0317'];
 		expected.reverse();
 		Debug.message(global.struct_is_equal(res, expected));
 	}
@@ -390,7 +390,7 @@ class GraphemeBreaker
 @if(0)
 	{
 		// previousBreak intermediate indexes
-		var str = 'Z͑ͫ̓ͪ̂ͫ̽͏̴̙̤̞͉͚̯̞̠͍A̴̵̜̰͔ͫ͗͢L̠ͨͧͩ͘G̴̻͈͍͔̹̑͗̎̅͛́Ǫ̵̹̻̝̳͂̌̌͘!͖̬̰̙̗̿̋ͥͥ̂ͣ̐́́͜͞';
+		var str = '\x005A\x0351\x036B\x0343\x036A\x0302\x036B\x033D\x034F\x0334\x0319\x0324\x031E\x0349\x035A\x032F\x031E\x0320\x034D\x0041\x036B\x0357\x0334\x0362\x0335\x031C\x0330\x0354\x004C\x0368\x0367\x0369\x0358\x0320\x0047\x0311\x0357\x030E\x0305\x035B\x0341\x0334\x033B\x0348\x034D\x0354\x0339\x004F\x0342\x030C\x030C\x0358\x0328\x0335\x0339\x033B\x031D\x0333\x0021\x033F\x030B\x0365\x0365\x0302\x0363\x0310\x0301\x0301\x035E\x035C\x0356\x032C\x0330\x0319\x0317';
 		var breaks = %[];
 
 		for (var i = str.length + 1; i >= 0; i -= 1)
@@ -413,31 +413,9 @@ class GraphemeBreaker
 
 @if(0)
 	{
-		// previousBreak handles astral characters (e.g. emoji)
-		// XXX: only works when this file is saved as UTF16LE. UTF8 does not convert correctly.
-		var brk;
-		var str = '😜🇺🇸👍';
-
-		var res = [];
-		var index = str.length;
-		while ((brk = GraphemeBreaker.previousBreak(str, index)) > 0)
-		{
-			res.add(str.substring(brk, index - brk));
-			index = brk;
-		}
-
-		res.add(str.substring(0, index));
-		var expected = ['👍', '🇺🇸', '😜'];
-		Debug.message(global.struct_is_equal(res, expected));
-	}
-@endif
-
-@if(0)
-	{
 		// nextBreak handles astral characters (e.g. emoji)
-		// XXX: only works when this file is saved as UTF16LE. UTF8 does not convert correctly.
 		var brk;
-		var str = '😜🇺🇸👍';
+		var str = '\xD83D\xDE1C\xD83C\xDDFA\xD83C\xDDF8\xD83D\xDC4D';
 
 		var res = [];
 		var index = 0;
@@ -448,7 +426,28 @@ class GraphemeBreaker
 		}
 
 		res.push(str.substring(index));
-		var expected = ['😜', '🇺🇸', '👍'];
+		var expected = ['\xD83D\xDE1C', '\xD83C\xDDFA\xD83C\xDDF8', '\xD83D\xDC4D'];
+		Debug.message(global.struct_is_equal(res, expected));
+	}
+@endif
+
+@if(0)
+	{
+		// previousBreak handles astral characters (e.g. emoji)
+		var brk;
+		var str = '\xD83D\xDE1C\xD83C\xDDFA\xD83C\xDDF8\xD83D\xDC4D';
+
+		var res = [];
+		var index = str.length;
+		while ((brk = GraphemeBreaker.previousBreak(str, index)) > 0)
+		{
+			res.add(str.substring(brk, index - brk));
+			index = brk;
+		}
+
+		res.add(str.substring(0, index));
+		var expected = ['\xD83D\xDE1C', '\xD83C\xDDFA\xD83C\xDDF8', '\xD83D\xDC4D'];
+		expected.reverse();
 		Debug.message(global.struct_is_equal(res, expected));
 	}
 @endif

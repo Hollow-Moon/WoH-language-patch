@@ -1,9 +1,28 @@
 ﻿// Kirikiroid support
 
+global.kirikiroidOsNames = ["android", "iphone", "ipad"];
+
+global.checkIfKirikiroid = function()
+{
+	for (var i = 0, internal_forloop_count = global.kirikiroidOsNames.count; i < internal_forloop_count; i += 1)
+	{
+		if (global.System.osName.substr(0, global.kirikiroidOsNames[i].length).toLowerCase() == global.kirikiroidOsNames[i])
+		{
+			return true;
+		}
+	}
+	return false;
+};
+
+@if(0)
 global.isKirikiroid = (typeof(global.Window) === "Object")
 	&& (typeof(global.Window.PassThroughDrawDevice) === "Object")
 	&& (typeof(global.Window.BasicDrawDevice) === "Object")
 	&& (typeof(global.Window.BasicDrawDevice.dtNone) === "Integer");
+@endif
+@if(1)
+global.isKirikiroid = global.checkIfKirikiroid();
+@endif
 
 {
 	// strings --encoding=l ./Kirikiroid2\ 1.3.9/lib/arm64-v8a/libgame.so | grep .dll

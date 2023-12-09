@@ -311,21 +311,28 @@ global.Debug.notice(("Patch Description: %s").sprintf(global.PatchDescription));
 	{
 		if (storage.indexOf(":") === -1)
 		{
-			var plugin_name_mutated = storage;
-			plugin_name_mutated = plugin_name_mutated.substring(0, plugin_name_mutated.length - 4) + global.plugin_postfix + plugin_name_mutated.substring(plugin_name_mutated.length - 4, 4);
-			var plugin_paths = [
-				plugin_name_mutated,
-@if(GAME_WOHN)
-				global.System.exePath + "content-data/plugin/" + plugin_name_mutated,
-@endif
-			];
-			for (var i = 0, internal_forloop_count = plugin_paths.count; i < internal_forloop_count; i += 1)
+			if (global.System.platformName.substring(0, 3) === "Win")
 			{
-				var path = "" + plugin_paths[i];
-				if (path !== "" && global.Storages.isExistentStorage(path))
+				var plugin_name_mutated = storage;
+				plugin_name_mutated = plugin_name_mutated.substring(0, plugin_name_mutated.length - 4) + global.plugin_postfix + plugin_name_mutated.substring(plugin_name_mutated.length - 4, 4);
+				var plugin_paths = [
+					plugin_name_mutated,
+@if(GAME_WOHN)
+					global.System.exePath + "content-data/plugin/" + plugin_name_mutated,
+@endif
+				];
+				for (var i = 0, internal_forloop_count = plugin_paths.count; i < internal_forloop_count; i += 1)
 				{
-					return path;
+					var path = "" + plugin_paths[i];
+					if (path !== "" && global.Storages.isExistentStorage(path))
+					{
+						return path;
+					}
 				}
+			}
+			if ((typeof(global.Storages.isExistentPlugin) === "Object") && global.Storages.isExistentPlugin(storage))
+			{
+				return storage;
 			}
 		}
 		return "";

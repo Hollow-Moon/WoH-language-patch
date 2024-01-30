@@ -294,7 +294,11 @@
 	var in_archive = false;
 	if (currentpath.indexOf(arcdelim) === -1 && currentpath.indexOf("file:") !== -1)
 	{
-		paths_base.add(global.Storages.getFullPath("../"));
+		var parentpath = global.Storages.getFullPath("../");
+		if (parentpath !== "../")
+		{
+			paths_base.add(parentpath);
+		}
 	}
 	else
 	{

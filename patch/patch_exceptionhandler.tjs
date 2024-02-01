@@ -481,6 +481,13 @@ global.save_troubleshooting_data_and_open_folder_location = function()
 global.exceptionOccured	= false;	//	例外が発生したか？
 global.exception_handler_closure = function(e)
 {
+	if (typeof(global.__) !== "Object")
+	{
+		global.__ = function(x)
+		{
+			return x;
+		};
+	}
 	var print_exception = global.print_exception;
 	print_exception(e);
 

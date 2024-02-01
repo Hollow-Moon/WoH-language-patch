@@ -48,10 +48,7 @@ class Layer_patch_rtl_override extends global.Layer_patch_rtl_original
 
 	function drawText(left, top, text, color, opacity, aa, slevel, scolor, swidth, sofsx, sofsy)
 	{
-		if (!global.get_rtl_enabled(typeof(global.kag) === "Object" ? global.kag : this.window))
-		{
-			return (global.Layer_patch_rtl_original.drawText incontextof this)(...);
-		}
+		var rtl_enabled = global.get_rtl_enabled(typeof(global.kag) === "Object" ? global.kag : this.window);
 		text += "";
 		var avoid_reposition_cond = (typeof(this.in_text_drawer) === "Integer" && this.in_text_drawer) || (this instanceof "MenuItemChildLayer") || (this.parent !== null && isvalid(this.parent) && this.parent instanceof "ConfigMenuLayer");
 		if (global.get_arabic_shaping_enabled(typeof(global.kag) === "Object" ? global.kag : this.window))
@@ -62,9 +59,7 @@ class Layer_patch_rtl_override extends global.Layer_patch_rtl_original
 				{
 					global.init_arabic_shaper_instance();
 				}
-				var bidi_str = global.Bidi.from_string(global.arabic_presentation_tashkil_remap(global.arabic_shaper_instance_rtl.shape(text)), %["direction" => "RTL"]);
-				bidi_str.reorder_visually();
-				text = bidi_str.toString();
+				text = global.arabic_presentation_tashkil_remap(global.arabic_shaper_instance_rtl.shape(text));
 			}
 			// Don't reposition in text drawer
 			if (!avoid_reposition_cond)
@@ -75,19 +70,28 @@ class Layer_patch_rtl_override extends global.Layer_patch_rtl_original
 				}
 			}
 		}
-		
-		// Don't reposition in text drawer
-		if (!avoid_reposition_cond)
+		if (this.name !== "行描画用浮遊メッセージレイヤ") /* Message layer */
 		{
-			if (this.name === "行描画用浮遊メッセージレイヤ") /* Message layer */
+			var bidi_str = global.Bidi.from_string(text, %["direction" => (rtl_enabled ? "RTL" : "LTR")]);
+			bidi_str.reorder_visually();
+			text = bidi_str.toString();
+		}
+
+		if (rtl_enabled)
+		{
+			// Don't reposition in text drawer
+			if (!avoid_reposition_cond)
 			{
-				left = this.parent.relinexpos - left;
+				if (this.name === "行描画用浮遊メッセージレイヤ") /* Message layer */
+				{
+					left = this.parent.relinexpos - left;
+				}
+				else
+				{
+					left = this.width - left;
+				}
+				left -= this.font.getTextWidth(text);
 			}
-			else
-			{
-				left = this.width - left;
-			}
-			left -= this.font.getTextWidth(text);
 		}
 		return (global.Layer_patch_rtl_original.drawText incontextof this)(left, top, text, color, opacity, aa, slevel, scolor, swidth, sofsx, sofsy);
 	}

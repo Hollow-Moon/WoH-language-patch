@@ -1080,9 +1080,36 @@ class KAGWindow_patch_wordwrap_override extends global.KAGWindow_patch_wordwrap_
 		return -1;
 	}
 
-	function processWordWrappingChunkAtOnce(text, conductor, elm)
+	function processWordWrappingChunkAtOnce(in_text, conductor, elm)
 	{
-		var word_wrap_break_position = this.getWordWrapBreakPosition(text);
+		var text = in_text;
+		var rtl_enabled = global.get_rtl_enabled(this);
+		if (typeof(elm.extra_param) !== "Object")
+		{
+			elm.extra_param = %[];
+		}
+		if (elm.extra_param.processed_bidi !== true)
+		{
+			var arabic_shaping_enabled = global.get_arabic_shaping_enabled(this);
+			if (arabic_shaping_enabled)
+			{
+				if (typeof(global.arabic_shaper_instance_ltr) !== "Object")
+				{
+					global.init_arabic_shaper_instance();
+				}
+				text = global.arabic_presentation_tashkil_remap(global.arabic_shaper_instance_rtl.shape(text));
+			}
+			var bidi_str = global.Bidi.from_string(text, %["direction" => (rtl_enabled ? "RTL" : "LTR")]);
+			bidi_str.reorder_visually();
+			text = bidi_str.toString();
+			elm.extra_param.processed_bidi = true;
+		}
+		var wwtext = text;
+		if (rtl_enabled)
+		{
+			wwtext = wwtext.reverse();
+		}
+		var word_wrap_break_position = this.getWordWrapBreakPosition(wwtext);
 		var ttext = text;
 		var should_append_break_tags = true;
 		if (elm.prepend.count > 0)
@@ -1096,23 +1123,32 @@ class KAGWindow_patch_wordwrap_override extends global.KAGWindow_patch_wordwrap_
 		if (word_wrap_break_position > 0)
 		{
 			// Cut before the space
-			var check_if_space = text.substr(word_wrap_break_position - 1, 1);
+			var check_if_space = wwtext.substr(word_wrap_break_position - 1, 1);
 			if (check_if_space === " ")
 			{
 				// Ensure that cutting the space won't result in empty string
-				var check_ttext = text.substr(0, word_wrap_break_position - 1);
+				var check_ttext = wwtext.substr(0, word_wrap_break_position - 1);
 				if (check_ttext !== "")
 				{
 					word_wrap_break_position -= 1;
 				}
 			}
-			var cut_text = text.substr(word_wrap_break_position);
+			var cut_text = wwtext.substr(word_wrap_break_position);
 			if (cut_text.length > 0)
 			{
+				if (rtl_enabled)
+				{
+					cut_text = cut_text.reverse();
+				}
 				conductor.requeueText(cut_text, elm);
 				should_append_break_tags = false;
 			}
-			ttext = text.substr(0, word_wrap_break_position);
+			var wwctext = wwtext.substr(0, word_wrap_break_position);
+			if (rtl_enabled)
+			{
+				wwctext = wwctext.reverse();
+			}
+			ttext = wwctext;
 		}
 @if(0)
 		global.Debug.message("Before cut: " + text + "$");

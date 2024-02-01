@@ -316,6 +316,7 @@ class Conductor_patch_conductor_override extends global.Conductor_patch_conducto
 					ret2.__patch_conductor_storage = save_curStorage;
 					ret2.__patch_conductor_line = save_curLine;
 					ret2.tagname = "ch_patch_conductor_split";
+					ret2.extra_param = %[];
 					ret2.text = temp_text.join("");
 @if(TAG_QUEUE_DEBUG)
 					Debug.message("Submitting text " + ret2.text);
@@ -352,6 +353,7 @@ class Conductor_patch_conductor_override extends global.Conductor_patch_conducto
 					ret2.__patch_conductor_storage = save_curStorage;
 					ret2.__patch_conductor_line = save_curLine;
 					ret2.tagname = "ch_patch_conductor_messagelayer_tag";
+					ret2.extra_param = %[];
 					{
 						ret2.append = messagelayer_tag_append;
 @if(TAG_QUEUE_DEBUG)
@@ -417,6 +419,7 @@ class Conductor_patch_conductor_override extends global.Conductor_patch_conducto
 		ret2.__patch_conductor_line = elm.__patch_conductor_line;
 		ret2.tagname = "ch_patch_conductor_split";
 		ret2.text = text;
+		ret2.extra_param = elm.extra_param;
 		ret2.append = elm.append;
 		ret2.prepend = elm.prepend;
 		this.pendings.insert(0, ret2);

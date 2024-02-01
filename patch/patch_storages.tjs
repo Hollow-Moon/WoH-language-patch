@@ -60,6 +60,45 @@
 	global.cxdec_encryption_list = %[];
 	global.archive_path_mapping = %[];
 	global.archive_path_to_fullpath = %[];
+	global.on_corrupt_archive_failure = function(e, arc_path_failed)
+	{
+		var exception_message = "Unknown error";
+		if (typeof(e) === "Object" && isvalid(e))
+		{
+			if (typeof(e.message) == "String")
+			{
+				exception_message = e.message;
+			}
+		}
+		var msg_components = [];
+		msg_components.add("It appears that a downloaded archive file has been corrupted.");
+		msg_components.add("This issue may be caused by canceling the download before it has finished.");
+		if (typeof(arc_path_failed) === "String")
+		{
+			msg_components.add("Offending file: " + arc_path_failed);
+		}
+		msg_components.add("Please redownload the specified archive file from the project webpage.");
+		msg_components.add("");
+		msg_components.add("The following script error occurred while attempting to read the archive file.");
+		msg_components.add("--------------------------------------------------------------------------------");
+		msg_components.add(exception_message);
+		msg_components.add("--------------------------------------------------------------------------------");
+		msg_components.add(("Support forum thread: %s").sprintf(global.PatchInfoURL));
+		var msg = msg_components.join("\n");
+		global.System.inform(msg);
+
+@if(!KIRIKIROID)
+		if ((typeof(global.devMode) === "Integer" ? !global.devMode : true) && (typeof(global.devMode2) === "Integer" ? !global.devMode2 : true))
+		{
+			if (global.System.getArgument('-openpatchinfourlonerror') !== "no" && typeof(global.PatchInfoURL) === "String")
+			{
+				global.System.shellExecute(global.PatchInfoURL);
+			}
+		}
+
+		global.System.exit(127);
+@endif
+	};
 	global.mount_archive = function(arc_path)
 	{
 		var archive_path_mapping = global.archive_path_mapping;
@@ -193,7 +232,15 @@
 		var arc_mappedpath = archive_path_mapping[archive_path_to_fullpath[arc_path]];
 		if (typeof(arc_mappedpath) !== "String")
 		{
-			var res = global.mount_archive(archive_path_to_fullpath[arc_path]);
+			var res = "";
+			try
+			{
+				res = global.mount_archive(archive_path_to_fullpath[arc_path]);
+			}
+			catch (e)
+			{
+				global.on_corrupt_archive_failure(e, archive_path_to_fullpath[arc_path]);
+			}
 			if (res === "")
 			{
 				return path;
@@ -703,36 +750,6 @@
 	}
 	catch (e)
 	{
-		var exception_message = "Unknown error";
-		if (typeof(e) === "Object" && isvalid(e))
-		{
-			if (typeof(e.message) == "String")
-			{
-				exception_message = e.message;
-			}
-		}
-		var msg_components = [];
-		msg_components.add("It appears that a downloaded archive file has been corrupted.");
-		msg_components.add("This issue may be caused by canceling the download before it has finished.");
-		msg_components.add("Please redownload the specified archive file from the project webpage.");
-		msg_components.add("");
-		msg_components.add("--------------------------------------------------------------------------------");
-		msg_components.add(exception_message);
-		msg_components.add("--------------------------------------------------------------------------------");
-		msg_components.add(("Support forum thread: %s").sprintf(global.PatchInfoURL));
-		var msg = msg_components.join("\n");
-		global.System.inform(msg);
-
-@if(!KIRIKIROID)
-		if ((typeof(global.devMode) === "Integer" ? !global.devMode : true) && (typeof(global.devMode2) === "Integer" ? !global.devMode2 : true))
-		{
-			if (global.System.getArgument('-openpatchinfourlonerror') !== "no" && typeof(global.PatchInfoURL) === "String")
-			{
-				global.System.shellExecute(global.PatchInfoURL);
-			}
-		}
-
-		global.System.exit(127);
-@endif
+		global.on_corrupt_archive_failure(e);
 	}
 }

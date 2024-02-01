@@ -58,14 +58,70 @@ global.System.exceptionHandler = function(e)
 		global.Debug.message("Trace: " + trace_string);
 	}
 	var msg_components = [];
-	msg_components.add("\"krkr.console.log\" and \"hwexcept.log\" have been created in either the game's or savedata directory.");
-	msg_components.add("Please contact the support forum thread with the save data that caused the error, along with the above files and an explanation of when and how it occurred.");
 	msg_components.add(("Support forum thread: %s").sprintf(global.PatchInfoURL));
+	var exception_information_in_clipboard = false;
+@if(0)
+	try
+	{
+		var clip_components = [];
+		clip_components.add("[spoiler=Error contents]");
+		clip_components.add("EXCEPTION MESSAGE [code]");
+		clip_components.add(exception_message);
+		clip_components.add("[/code]");
+		clip_components.add("TRACE [code]");
+		clip_components.add(trace_string);
+		clip_components.add("[/code]");
+		try
+		{
+			if (typeof(global.Debug) === "Object" && typeof(global.Debug.getLastLog) === "Object")
+			{
+				var last_log = global.Debug.getLastLog();
+				clip_components.add("LAST LOG [code]");
+				clip_components.add(last_log);
+				clip_components.add("[/code]");
+			}
+		}
+		catch (e)
+		{
+			// pass
+		}
+		clip_components.add("[/spoiler]");
+		var clip = clip_components.join(" ");
+		if (typeof(global.Clipboard) === "Object" && typeof(global.Debug.getLastLog) === "Object")
+		{
+			var cb = global.Clipboard;
+			var at = &cb.asText;
+			if (typeof(at) === "Object")
+			{
+				*at = clip;
+				var newclipstr = *at;
+				if (typeof(newclipstr) === "String" && newclipstr.length !== 0)
+				{
+					exception_information_in_clipboard = true;
+				}
+			}
+		}
+	}
+	catch (e)
+	{
+		// pass
+	}
+@endif
 	msg_components.add("");
-	msg_components.add("The following script error occurred early in initialization.");
-	msg_components.add("--------------------------------------------------------------------------------");
-	msg_components.add(exception_message);
-	msg_components.add("--------------------------------------------------------------------------------");
+	if (exception_information_in_clipboard)
+	{
+		msg_components.add("Please contact the support forum thread with the contents of your clipboard, containing information about the error, along with an explanation of when and how it occurred.");
+	}
+	else
+	{
+		msg_components.add("\"krkr.console.log\" and \"hwexcept.log\" have been created in either the game's or savedata directory.");
+		msg_components.add("Please contact the support forum thread with the save data that caused the error, along with the above files and an explanation of when and how it occurred.");
+		msg_components.add("");
+		msg_components.add("The following script error occurred early in initialization.");
+		msg_components.add("--------------------------------------------------------------------------------");
+		msg_components.add(exception_message);
+		msg_components.add("--------------------------------------------------------------------------------");
+	}
 	var msg = msg_components.join("\n");
 	global.System.inform(msg);
 

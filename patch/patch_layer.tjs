@@ -66,6 +66,10 @@ global.check_if_image_exists = function(storage)
 	{
 		return false;
 	}
+	if (typeof(global.getImageInfo) === "Object" && typeof(global.getImageInfo(global.Storages.chopStorageExt(global.Storages.extractStorageName(storage)))) !== "Object")
+	{
+		return false;
+	}
 	return global.Storages.isExistentStorage(global.get_file_name_of_image_with_extension_that_exists(storage));
 };
 
@@ -73,6 +77,10 @@ global.get_full_path_of_image = function(storage)
 {
 	storage += "";
 	if (storage === "")
+	{
+		return "";
+	}
+	if (typeof(global.getImageInfo) === "Object" && typeof(global.getImageInfo(global.Storages.chopStorageExt(global.Storages.extractStorageName(storage)))) !== "Object")
 	{
 		return "";
 	}

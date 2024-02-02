@@ -222,7 +222,8 @@ class KAGWindow_patch_menu_layer_override extends global.KAGWindow_patch_menu_la
 
 	function onMouseMove(x, y, shift)
 	{
-		if (y <= this.menu_layer.menu_active_height)
+		var menu_layer = this.menu_layer;
+		if (((typeof(menu_layer.unscaleMouseY) === "Object") ? menu_layer.unscaleMouseY(y) : y) <= menu_layer.menu_active_height)
 		{
 			this.menu_layer.show();
 		}

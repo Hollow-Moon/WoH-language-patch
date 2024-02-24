@@ -102,7 +102,6 @@
 	["k2compat2.tjs", , "(devMode) || (typeof(global.k2compat_exists) === 'Integer')",, "kirikiriz&&(GAME_FATE||GAME_FHAT)"],
 	["patch_forward_compat.tjs", ,,, "GAME_FHAT"],
 	["patch_dictionary_polyfill.tjs", ,,, "0"],
-	["patch_prerendered_font.tjs", ,,, "PRERENDERED_FONTS"],
 	["patch_async_image_load.tjs", , [["Bitmap", , "==="], ["Bitmap.loadAsync", , "==="]],, "ASYNC_IMAGE_LOAD"],
 	["patch_gpu_layer.tjs", , [["BitmapLayerTreeOwner", , "==="], ["Canvas", , "==="]],, "USE_GPU_LAYER"],
 	["patch_mpv_videooverlay_wrapper.tjs", , [["KrMpv", , "==="]]],

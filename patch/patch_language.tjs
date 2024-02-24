@@ -214,40 +214,6 @@ global.load_fonts = function(language)
 	global.loaded_language_fonts.add(language);
 };
 
-global.loaded_language_prerendered_fonts = [];
-global.load_prerendered_fonts = function(language)
-{
-	if (global.loaded_language_prerendered_fonts.contains(language)) {
-		return;
-	}
-
-	if (typeof(global.bitmapFonts) === "Object")
-	{
-		var prerenderedFontFiles = global.getPrerenderedFontFiles(language);
-		for (var i = 0, internal_forloop_count = prerenderedFontFiles.count; i < internal_forloop_count; i += 2)
-		{
-			var prerendered_font_file_path = global.find_file_in_language_paths(prerenderedFontFiles[i + 1], language);
-			if (typeof(prerendered_font_file_path) === "String")
-			{
-				global.dm(("Adding prerendered font %s").sprintf(prerenderedFontFiles[i]));
-				global.bitmapFonts.push(prerenderedFontFiles[i]);
-				global.bitmapFonts.push(prerendered_font_file_path);
-			}
-			else
-			{
-				global.dm(("warning: prerendered font %s does not exist").sprintf(prerenderedFontFiles[i]));
-			}
-		}
-		for (var i = 0, internal_forloop_count = global.bitmapFonts.count; i < internal_forloop_count; i += 2)
-		{
-			global.loadedBitmapFonts[global.bitmapFonts[i]] = global.bitmapFonts[i + 1];
-		}
-	}
-
-	global.loaded_language_prerendered_fonts.add(language);
-};
-
-
 global.setFontWithLanguage = function(language, kag=global.kag)
 {
 	global.load_fonts(language);
@@ -993,13 +959,6 @@ global.getFontFiles = function(language)
 	var fontFiles = global.languageSettings[language].fontFiles;
 	return (fontFiles !== void? fontFiles : []);
 };
-
-global.getPrerenderedFontFiles = function(language)
-{
-	var fontFiles = global.languageSettings[language].prerenderedFontFiles;
-	return (fontFiles !== void? fontFiles : []);
-};
-
 
 global.isChinese = function(kag=global.kag)
 {

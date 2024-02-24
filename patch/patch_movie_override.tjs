@@ -3,32 +3,10 @@ global.Movie_patch_movie_override_original = global.Movie;
 class Movie_patch_movie_override_override extends global.Movie_patch_movie_override_original
 {
 	var isWide = false; // Cannot be a property as this causes issues when stopping a movie in full screen in the movie menu.
-	var haskrdslavf = false;
 
 	function Movie_patch_movie_override_override()
 	{
 		super.Movie(...);
-
-		var videosubsystem = global.System.getArgument("-videosubsystem");
-		if (!this.haskrdslavf)
-		{
-			if ((videosubsystem === void) || (videosubsystem == "krdslavf"))
-			{
-				try
-				{
-					global.Plugins.link("krdslavf.dll");
-					this.haskrdslavf = true;
-				}
-				catch(e)
-				{
-					this.haskrdslavf = false;
-					if (videosubsystem == "krdslavf")
-					{
-						throw e;
-					}
-				}
-			}
-		}
 	}
 
 	function Movie()
@@ -38,15 +16,6 @@ class Movie_patch_movie_override_override extends global.Movie_patch_movie_overr
 
 	function finalize()
 	{
-		if (this.haskrdslavf)
-		{
-			if (this.lastStatus == "play")
-			{
-				this.stop();
-			}
-			global.Plugins.unlink("krdslavf.dll");
-			this.haskrdslavf = false;
-		}
 		super.finalize(...);
 	}
 
@@ -100,10 +69,6 @@ class Movie_patch_movie_override_override extends global.Movie_patch_movie_overr
 					}
 				}
 				else
-				{
-					this.mode = global.vomOverlay;
-				}
-				if (this.haskrdslavf)
 				{
 					this.mode = global.vomOverlay;
 				}

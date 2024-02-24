@@ -470,8 +470,6 @@ function getKAGTagDatas(text)
 }
 
 //	タグリストの保存
-if(typeof Array.save2 == "undefined" && Storages.isExistentStorage("saveStruct.dll"))
-	Plugins.link("saveStruct.dll");
 function saveKAGTagDatas(tags, storage)
 {
 	var	lines	= [], lno = 0;
@@ -510,10 +508,7 @@ function saveKAGTagDatas(tags, storage)
 		if(tag.cmdLine || tag.name == "r" || tag.name == "lr")
 			lno++;
 	}
-	if(typeof lines.save2 != "undefined")
-		lines.save2(storage);
-	else
-		lines.save(storage);
+	lines.save(storage);
 }
 
 @endif

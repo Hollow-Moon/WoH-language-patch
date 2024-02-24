@@ -2033,7 +2033,7 @@ class KAGWindow_override extends KAGWindow_original
 	function onKeyUp(key, shift)
 	{
 		// This is the print screen code
-		if((typeof(global.VK_SCREENSHOT) === "Integer") && (key == VK_SCREENSHOT && (shift & ssAlt)))
+		if ((typeof(global.VK_SCREENSHOT) === "Integer") && (key == VK_SCREENSHOT && (shift & ssAlt)) && (typeof(global.Clipboard.setAsBitmap) === "Object") )
 		{
 			var captureLayer = new Layer(this, primaryLayer);
 			with(captureLayer)
@@ -2739,7 +2739,14 @@ class KAGWindow_override extends KAGWindow_original
 				}
 
 				//	バックグラウンドで画像を保存する
-				startSaveLayerImage(layer, ifn, void);	//	バックグラウンドで保存中
+				if (typeof(this.startSaveLayerImage) === "Object")
+				{
+					this.startSaveLayerImage(layer, ifn, void);	//	バックグラウンドで保存中
+				}
+				else if (typeof(layer.saveLayerImage) === "Object")
+				{
+					layer.saveLayerImage(ifn, "tlg5");
+				}
 				invalidate layer;						//	コピー済みなので不要
 			}
 			else
@@ -3517,7 +3524,7 @@ class KAGWindow_override extends KAGWindow_original
 
 		var exss = Storages.isExistentStorage(ssFn);
 		var exld = Storages.isExistentStorage(ldFn);
-		if( exss && exld )
+		if( exss && exld && (typeof(ssLay.getDiffPixel) === "Object") )
 		{
 			var ssLay = new Layer(this, primaryLayer);
 			var ldLay = new Layer(this, primaryLayer);
@@ -3648,6 +3655,10 @@ class KAGWindow_override extends KAGWindow_original
 		{
 			dm("■ERROR: " + ssFn + " がありません") if !exss;
 			dm("■ERROR: " + ldFn + " がありません") if !exld;
+			if (typeof(ssLay.getDiffPixel) !== "Object")
+			{
+				dm("■ERROR: Layer.getDiffPixel not set");
+			}
 		}
 	}
 

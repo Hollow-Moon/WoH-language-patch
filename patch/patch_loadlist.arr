@@ -20,7 +20,6 @@
 	["systemExAppLockManagement.dll", ,, true],
 	["systemExDxDiag.dll", , [["System.getDxDiag"]], true],
 	["krglhwebp.dll", ,, true, "HD_MODE"],
-	["krglhjxl.dll", ,, true, "HD_MODE"],
 	["wuffmpeg.dll", ,,, "(!KIRIKIROID)&&(USE_WUFFMPEG)"],
 	["wuvorbis.dll", ,,, "(!KIRIKIROID)&&(!USE_WUFFMPEG)"],
 	["kropus.dll", ,, true, "(!KIRIKIROID)&&(!USE_WUFFMPEG)"],

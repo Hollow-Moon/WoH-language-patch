@@ -113,16 +113,6 @@
 			// already mounted
 			return "";
 		}
-		var squashfs_res = "";
-		if (typeof(global.Storages.mountSquashFs) === "Object")
-		{
-			squashfs_res = global.Storages.mountSquashFs(arc_fullpath);
-		}
-		if (squashfs_res.length !== 0)
-		{
-			archive_path_mapping[arc_fullpath] = squashfs_res;
-			return squashfs_res;
-		}
 		var xp3_res = "";
 		if (typeof(global.Storages.mountXP3) === "Object")
 		{
@@ -176,15 +166,6 @@
 		{
 			// not mounted
 			return false;
-		}
-		if (archive_path_mapping[arc_fullpath].substring(0, 6) === "squash" && typeof(global.Storages.unmountSquashFs) === "Object")
-		{
-			var squashfs_res = global.Storages.unmountSquashFs(archive_path_mapping[arc_fullpath]);
-			if (squashfs_res)
-			{
-				delete archive_path_mapping[arc_fullpath];
-				return squashfs_res;
-			}
 		}
 		if (archive_path_mapping[arc_fullpath].substring(0, 3) === "xp3" && typeof(global.Storages.unmountXP3) === "Object")
 		{
@@ -297,13 +278,6 @@
 		if (global.get_full_path_of_plugin("krxp3file.dll") !== "")
 		{
 			global.Plugins.link("krxp3file.dll");
-		}
-	}
-	if ((typeof(global.Storages.mountSquashFs) !== "Object"))
-	{
-		if (global.get_full_path_of_plugin("krsquashfs.dll") !== "")
-		{
-			global.Plugins.link("krsquashfs.dll");
 		}
 	}
 	if ((typeof(global.Storages.mountZIP) !== "Object"))

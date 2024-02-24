@@ -967,12 +967,9 @@ global.addVoiceMenu = function(patchMenu)
 global.addMovieMenu = function(patchMenu)
 {
 	var subbedVideosFlag = new global.GameFlag(this, this.sflags, global.subbedVideosFlagName, true);
-	var forceMpvPlaybackFlag = new global.GameFlag(this, this.sflags, "forceMpvPlayback", false);
 
 	patchMenu.add(this.movieMenuItem = new global.KAGMenuItem(this, global.__t("ムービー(&M)"), 0, void, false));
 	this.movieMenuItem.add(this.subbedVideosMenuItem = new global.KAGFlagFolderMenuItem(this, global.__t("ムービー再生中に字幕を表示する(&S)"),, subbedVideosFlag,,global.videosFolderName));
-	this.movieMenuItem.add(this.forceMpvPlaybackMenuItem = new global.KAGFlagMenuItem(this, global.__t("mpvを使用して強制的に動画を再生する"),,forceMpvPlaybackFlag));
-	this.forceMpvPlaybackMenuItem.enabled = (typeof(global.playVideoMPV) === "Object");
 
 	var movieQualityFlag = new global.GameFlag(this, this.sflags, "movieQuality", "auto");
 

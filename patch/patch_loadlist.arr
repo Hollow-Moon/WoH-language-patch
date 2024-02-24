@@ -88,7 +88,6 @@
 	["stringUtil.dll", , [["initSpline"]], true, "GAME_WOHN"],
 	["patch_plugin_stringUtil.tjs", , [["initSpline"]], , "GAME_WOHN"],
 	["saveStruct.dll", , [["Array.save2"]], , "GAME_WOHN"],
-	["json.dll", , [["Scripts.evalJSON"]], , "GAME_WOHN"],
 	["win32dialog.dll", , [["WIN32Dialog"]], true, "GAME_FATE||GAME_FHAT"],
 	["global.k2compat_exist_check_patch_array = load_patches([[mainPatchName, 'k2compat']]);", , "!devMode", , "GAME_FATE||GAME_FHAT"],
 	["global.k2compat_exist_count_validate = global.k2compat_exist_check_patch_array.count > 0;", , "!devMode", , "GAME_FATE||GAME_FHAT"],
@@ -127,9 +126,7 @@
 	"patch_fsncleaner.tjs",
 	"patch_menu_base.tjs",
 	"patch_menu.tjs",
-	["VideoMPV.tjs", ,,, "0"],
 	["patch_merge.tjs", ,,, "GAME_FATE"],
-	["VideoMPV2.tjs", ,,, "GAME_FATE||GAME_FHAT"],
 	[,,,,, "KAG system scripts"],
 	"Config.tjs",
 

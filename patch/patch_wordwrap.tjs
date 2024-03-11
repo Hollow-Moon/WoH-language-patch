@@ -1083,14 +1083,14 @@ class KAGWindow_patch_wordwrap_override extends global.KAGWindow_patch_wordwrap_
 	function processWordWrappingChunkAtOnce(in_text, conductor, elm)
 	{
 		var text = in_text;
-		var rtl_enabled = global.get_rtl_enabled(this);
+		var rtl_enabled = global.get_rtl_enabled(typeof(global.kag) === "Object" ? global.kag : this);
 		if (typeof(elm.extra_param) !== "Object")
 		{
 			elm.extra_param = %[];
 		}
 		if (elm.extra_param.processed_bidi !== true)
 		{
-			var arabic_shaping_enabled = global.get_arabic_shaping_enabled(this);
+			var arabic_shaping_enabled = global.get_arabic_shaping_enabled(typeof(global.kag) === "Object" ? global.kag : this);
 			if (arabic_shaping_enabled)
 			{
 				if (typeof(global.arabic_shaper_instance_ltr) !== "Object")

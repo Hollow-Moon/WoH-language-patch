@@ -743,6 +743,44 @@ class Conductor_patch_conductor_override extends global.Conductor_patch_conducto
 		}
 		return super.restore(...);
 	}
+
+	function checkForExistingWaitUntil(until)
+	{
+		if (this.debugLevel >= tkdlVerbose)
+		{
+			var	keys_old = [];
+			keys_old.assign(this.waitUntil);
+			for (var i = 0; i < keys_old.count; i += 1)
+			{
+				keys_old.erase(i + 1);
+			}
+			if (keys_old.count !== 0)
+			{
+				var	keys = [];
+				keys.assign(until);
+				for (var i = 0; i < keys.count; i += 1)
+				{
+					keys.erase(i + 1);
+				}
+				global.Debug.message("warning: waiting for trigger when it is already set");
+				global.Debug.message("old values: " + keys_old.join(", "));
+				global.Debug.message("new values: " + keys.join(", "));
+				global.Debug.message("trace: " + global.Scripts.getTraceString());
+			}
+		}
+	}
+
+	function wait(until)
+	{
+		this.checkForExistingWaitUntil(until);
+		return super.wait(...);
+	}
+
+	function waitWithTimeOut(until, timeout)
+	{
+		this.checkForExistingWaitUntil(until);
+		return super.waitWithTimeOut(...);
+	}
 }
 
 global.Conductor = global.Conductor_patch_conductor_override;

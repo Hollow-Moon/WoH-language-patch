@@ -128,10 +128,14 @@ class KAGWindow_override extends KAGWindow_original
 		//	テキスト履歴のビットマップフォントを割り当てる
 		if(historyLayer.font.face == __s("明朝D", "history_prerendered_font_face")) with(historyLayer.font)
 		{//	ビットマップフォントを割り当てる
-			.mapPrerenderedFont(__s("筑紫明朝d.tft", "history_prerendered_font_file"));
+			var history_prerendered_font_file = __s("筑紫明朝d.tft", "history_prerendered_font_file");
+			var history_prerendered_ruby_font_file = __s("筑紫明朝d_rb.tft", "history_prerendered_ruby_font_file");
+			if (Storages.isExistentStorage(history_prerendered_font_file))
+				.mapPrerenderedFont(history_prerendered_font_file);
 			var	fh	= .height;
 			.height	= current.defaultRubySize;
-			.mapPrerenderedFont(__s("筑紫明朝d_rb.tft", "history_prerendered_ruby_font_file"));
+			if (Storages.isExistentStorage(history_prerendered_ruby_font_file))
+				.mapPrerenderedFont(history_prerendered_ruby_font_file);
 			.height	= fh;
 		}
 

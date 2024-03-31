@@ -2600,12 +2600,14 @@ class KAGWindow_override extends KAGWindow_original
 
 @if(DEBUG)
 		//自動セーブで別のキャプションになっている場合があるので戻す
+@if(0)
 		if( load_by_ss && typeof this.captiontmp == "undefined" )
 			this.captiontmp = "";
 
 		if( load_by_ss )
 			caption = captiontmp;
 		else
+@endif
 			caption = global.masterTitle;
 @endif
 
@@ -3062,6 +3064,7 @@ class KAGWindow_override extends KAGWindow_original
 		}
 
 @if(DEBUG)
+@if(0)
 		if(ss_by_label)
 		{
 			if( checkSaveTargetLabel(label.substr(1)) )
@@ -3078,6 +3081,7 @@ class KAGWindow_override extends KAGWindow_original
 //			else
 //				resetWaitStatus();
 		}
+@endif
 @endif
 		return ret;
 	}
@@ -3457,6 +3461,7 @@ class KAGWindow_override extends KAGWindow_original
 	function onAsyncTriggerAfterLoad()
 	{
 		dm("＠ AsyncTrigger LOAD() ");
+@if(0)
 		if(load_by_ss && fnSaveFilesBySS.count)
 		{
 			var msg_end = "自動読み込みテスト終了";
@@ -3493,17 +3498,20 @@ class KAGWindow_override extends KAGWindow_original
 				resetWaitStatus();
 			}
 		}
+@endif
 	}
 
 	function onAsyncTriggerBeforeSave()
 	{
 		dm("＠ AsyncTrigger SAVE() trans=" + fore.base.inTransition);
+@if(0)
 		if( ss_by_label )
 		{
 			saveScreenShotByLabel(1);
 			resetWaitStatus();
 			enterAutoMode();
 		}
+@endif
 	}
 
 	//ロード完了時にConductor.onTagから呼ばれるSS処理〜画像比較

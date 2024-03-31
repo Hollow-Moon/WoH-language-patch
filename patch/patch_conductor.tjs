@@ -162,6 +162,7 @@ class Conductor_patch_conductor_override extends global.Conductor_patch_conducto
 
 	var patch_conductor_temp_array = [];
 	var patch_conductor_temp_array2 = [];
+	var patch_conductor_temp_array3 = [];
 	var patch_conductor_messagelayer_tags = [
 		"font",
 		"deffont",
@@ -233,11 +234,16 @@ class Conductor_patch_conductor_override extends global.Conductor_patch_conducto
 		"wait",
 	];
 
+	var patch_conductor_messagelayer_proconly_attributes = [
+		"time",
+	];
+
 	function getNextTag()
 	{
 		var ret = super.getNextTag(...);
 		var patch_conductor_messagelayer_tags = this.patch_conductor_messagelayer_tags;
 		var patch_conductor_messagelayer_proconly_tags = this.patch_conductor_messagelayer_proconly_tags;
+		var patch_conductor_messagelayer_proconly_attributes = this.patch_conductor_messagelayer_proconly_attributes;
 		if (this.processSpecialTags)
 		{
 			var conductor_split_tags = [];
@@ -245,14 +251,25 @@ class Conductor_patch_conductor_override extends global.Conductor_patch_conducto
 			{
 				var temp_text = this.patch_conductor_temp_array2;
 				temp_text.clear();
+				var temp_ret_attributes = this.patch_conductor_temp_array3;
 				var save_curStorage = this.curStorage;
 				var save_curLine = this.curLine;
 				var messagelayer_tag_prepend = [];
 				var messagelayer_tag_append = [];
 				while (ret !== void)
 				{
+					var has_proconly_attribute = false;
 					this.patch_conductor_temp_array.assign(ret);
-					if (patch_conductor_messagelayer_tags.find(ret.tagname) !== -1 || (messagelayer_tag_prepend.count > 0 && patch_conductor_messagelayer_proconly_tags.find(ret.tagname) !== -1))
+					temp_ret_attributes.assign(ret);
+					for (var i = 0; i < temp_ret_attributes.count; i += 2)
+					{
+						if (patch_conductor_messagelayer_proconly_attributes.find(temp_ret_attributes[i]) !== -1)
+						{
+							has_proconly_attribute = true;
+							break;
+						}
+					}
+					if (patch_conductor_messagelayer_tags.find(ret.tagname) !== -1 || (messagelayer_tag_prepend.count > 0 && (has_proconly_attribute || patch_conductor_messagelayer_proconly_tags.find(ret.tagname) !== -1)))
 					{
 						{
 							var messagelayer_tag_container = %[];
@@ -266,8 +283,18 @@ class Conductor_patch_conductor_override extends global.Conductor_patch_conducto
 				}
 				while (ret !== void)
 				{
+					var has_proconly_attribute = false;
 					this.patch_conductor_temp_array.assign(ret);
-					if (patch_conductor_messagelayer_tags.find(ret.tagname) !== -1 || patch_conductor_messagelayer_proconly_tags.find(ret.tagname) !== -1)
+					temp_ret_attributes.assign(ret);
+					for (var i = 0; i < temp_ret_attributes.count; i += 2)
+					{
+						if (patch_conductor_messagelayer_proconly_attributes.find(temp_ret_attributes[i]) !== -1)
+						{
+							has_proconly_attribute = true;
+							break;
+						}
+					}
+					if (patch_conductor_messagelayer_tags.find(ret.tagname) !== -1 || (has_proconly_attribute || patch_conductor_messagelayer_proconly_tags.find(ret.tagname) !== -1))
 					{
 						break;
 					}
@@ -297,8 +324,18 @@ class Conductor_patch_conductor_override extends global.Conductor_patch_conducto
 				// continue to search for appended MessageLayer related tags
 				while (ret !== void)
 				{
+					var has_proconly_attribute = false;
 					this.patch_conductor_temp_array.assign(ret);
-					if (patch_conductor_messagelayer_tags.find(ret.tagname) !== -1 || (messagelayer_tag_prepend.count > 0 && patch_conductor_messagelayer_proconly_tags.find(ret.tagname) !== -1))
+					temp_ret_attributes.assign(ret);
+					for (var i = 0; i < temp_ret_attributes.count; i += 2)
+					{
+						if (patch_conductor_messagelayer_proconly_attributes.find(temp_ret_attributes[i]) !== -1)
+						{
+							has_proconly_attribute = true;
+							break;
+						}
+					}
+					if (patch_conductor_messagelayer_tags.find(ret.tagname) !== -1 || (messagelayer_tag_prepend.count > 0 && (has_proconly_attribute || patch_conductor_messagelayer_proconly_tags.find(ret.tagname) !== -1)))
 					{
 						{
 							var messagelayer_tag_container = %[];

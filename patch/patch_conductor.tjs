@@ -818,6 +818,86 @@ class Conductor_patch_conductor_override extends global.Conductor_patch_conducto
 		this.checkForExistingWaitUntil(until);
 		return super.waitWithTimeOut(...);
 	}
+
+	function processLine(text)
+	{
+		var depth = 0;
+		var tag;
+		var tagIndex = 0;
+
+		for (var i = 0; i < text.length; i++) {
+			var c = text[i];
+			if (c == "[") {
+				if (depth == 0) {
+					tag = "";
+				}
+				depth++;
+			}
+			else if (c == "]") {
+				depth--;
+				if (depth == 0) {
+					this.queueTag(tagIndex++, parseTag(tag));
+				}
+			}
+			else if (depth > 0) {
+				tag += c;
+			} else {
+				this.queueTag(tagIndex++, %[tagname:"ch", text:c]);
+			}
+		}
+	}
 }
 
 global.Conductor = global.Conductor_patch_conductor_override;
+
+global.parseTag = function(text) {
+	var tag = %[];
+	var i = 0;
+
+	var tagName = "";
+	while (i < text.length && text[i] != " ") {
+		tagName += text[i];
+		i++;
+	}
+	tag["tagname"] = tagName;
+	i++;
+
+	while (i < text.length) {
+		var argName = "";
+		while (i < text.length && text[i] != "=") {
+			argName += text[i];
+			i++;
+		}
+		i++;
+		if (i >= text.length) {
+			break;
+		}
+
+		var argValue = "";
+		var delimiter = " ";
+		if (text[i] == delimiter) {
+			i++;
+		}
+		else if (text[i] == "\"") {
+			delimiter = "\"";
+			i++;
+		}
+
+		while (i < text.length && text[i] != delimiter) {
+			argValue += text[i];
+			i++;
+		}
+
+		tag[argName] = argValue;
+	}
+
+	// patch
+	if (startsWith("line", tagName)) {
+		tag["tagname"] = "line";
+		tag["len"] = +tagName.substring("line".length);
+	} else if (startsWith("block", tagName)) {
+		tag["tagname"] = "block";
+		tag["len"] = +tagName.substring("block".length);
+	}
+	return tag;
+};

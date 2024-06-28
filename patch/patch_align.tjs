@@ -86,79 +86,15 @@ global.MessageLayer = global.MessageLayer_patch_align_override;
 		});
 		global.add_kag_window_tag_handler("align", function(elm)
 		{
-			var textToAlign = elm.text;
-			var textForLength = textToAlign;
-			textForLength = elm.textforlength if elm.textforlength !== void;
-			var offsetText = "";
-			offsetText = elm.offsettext if elm.offsettext !== void;
-			var offsetTextDirection = 0;
-			offsetTextDirection = elm.offsettextdirection if elm.offsettextdirection !== void;
 			if (elm.text !== void) {
-				textToAlign = this.conductor.cleanLine(textToAlign);
-				if (textToAlign.indexOf(this.conductor.dash_character) !== -1 || textToAlign.indexOf(this.conductor.block_character) !== -1)
-				{
-					var tag_index = 0;
-					for (var i = 0, internal_forloop_count = textToAlign.length; i < internal_forloop_count; i += 1) {
-						var character = textToAlign[i];
-						var line_tag = %[tagname:"line", len:0];
-						var block_tag = %[tagname:"block", len:0];
-						while (character == this.conductor.dash_character) {
-							i++;
-							line_tag.len++;
-							character = textToAlign[i];
-						}
-						while (character == this.conductor.block_character) {
-							i++;
-							block_tag.len++;
-							character = textToAlign[i];
-						}
-						if (line_tag.len > 0 || block_tag.len > 0) {
-							if (line_tag.len > 0) {
-								this.conductor.queueTag(tag_index, line_tag);
-								i--;
-							}
-							if (block_tag.len > 0) {
-								this.conductor.queueTag(tag_index, block_tag);
-								i--;
-							}
-						} else {
-							var chTag = %[tagname:"ch", text:textToAlign[i]];
-							this.conductor.queueTag(tag_index, chTag);
-						}
-						tag_index++;
-					}
-				}
-				else
-				{
-					this.conductor.queueText(textToAlign, elm);
-				}
+				conductor.processLine(elm.text);
 			}
-			if (elm.indent) {
-				var indentTag = %[tagname:"indent"];
-				var indentOffset = 0;
-				if (elm.indentoffset !== void) {
-					indentOffset = elm.indentoffset;
-				}
-				this.conductor.queueTag(indentOffset, indentTag);
-			}
-			if (elm.rubytext !== void) {
-				var rubyTag = %[tagname:"ruby", text:elm.rubytext];
-				rubyTag.o2o    = elm.rubyo2o    if elm.rubyo2o    !== void;
-				rubyTag.pos    = elm.rubypos    if elm.rubypos    !== void;
-				rubyTag.char   = elm.rubychar   if elm.rubychar   !== void;
-				rubyTag.offset = elm.rubyoffset if elm.c !== void;
-				var rubyOffset = 0;
-				if (elm.rubyoffset !== void) {
-					rubyOffset = elm.rubyoffset;
-				}
-				this.conductor.queueTag(rubyOffset, rubyTag);
-			}
+
 			if (elm.anchor !== void) {
-				if(elm.rubychar != void && ("" + (+elm.rubychar)) != elm.rubychar) {
-					textForLength = elm.rubychar;
-				}
-				textForLength = this.conductor.cleanLine(textForLength);
-				offsetText = this.conductor.cleanLine(offsetText);
+				var textForLength = this.conductor.cleanLine(elm.textforlength !== void? elm.textforlength : elm.text);
+				var offsetText = elm.offsettext !== void? this.conductor.cleanLine(elm.offsettext) : "";
+				var offsetTextDirection = elm.offsettextdirection !== void? elm.offsettextdirection : 0;
+
 				var locatealignTag = %[tagname:"locatealign", anchor:elm.anchor, textForLength:textForLength, offsetText:offsetText, offsetTextDirection:offsetTextDirection];
 				this.conductor.queueTag(0, locatealignTag);
 			}

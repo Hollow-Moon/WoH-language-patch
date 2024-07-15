@@ -1,0 +1,1783 @@
+
+// Mostly based on https://github.com/kpdecker/jsdiff
+
+// util/string
+// from c8a9cc5cac1f3802d704a6148cb364f1b1b08a40 (jun 7 2024)
+/**
+ * Returns true if the string consistently uses Windows line endings.
+ */
+global.hasOnlyWinLineEndings = function(str)
+{
+	return str.indexOf('\r\n') !== -1 && (/(?<!\r)\n/.match(str).count === 0);
+};
+
+/**
+ * Returns true if the string consistently uses Unix line endings.
+ */
+global.hasOnlyUnixLineEndings = function(str)
+{
+	return str.indexOf('\r\n') === -1 && str.indexOf('\n') !== -1;
+};
+
+// patch/line-endings
+// from c8a9cc5cac1f3802d704a6148cb364f1b1b08a40 (jun 7 2024)
+global.unixToWin = function(patch)
+{
+	if (typeof(patch) === "Object" && (patch instanceof "Array"))
+	{
+		for (var i = 0; i < patch.count; i += 1)
+		{
+			global.unixToWin(patch[i]);
+		}
+		return patch;
+	}
+
+	var index_hunks = patch.hunks;
+	for (var j = 0; j < index_hunks.count; j += 1)
+	{
+		var hunk_lines = index_hunks[j].lines;
+		for (var k = 0; k < hunk_lines.count; k += 1)
+		{
+			var line = hunk_lines[k];
+			hunk_lines[k] = line + ((line.startsWith('\\') || line.endsWith('\r') || (typeof(hunk_lines[k + 1]) === "String" && hunk_lines[k + 1].startsWith('\\'))) ? "" : '\r');
+		}
+	}
+	return patch;
+};
+
+global.winToUnix = function(patch)
+{
+	if (typeof(patch) === "Object" && (patch instanceof "Array"))
+	{
+		for (var i = 0; i < patch.count; i += 1)
+		{
+			global.winToUnix(patch[i]);
+		}
+		return patch;
+	}
+
+	var index_hunks = patch.hunks;
+	for (var j = 0; j < index_hunks.count; j += 1)
+	{
+		var hunk_lines = index_hunks[j].lines;
+		for (var k = 0; k < hunk_lines.count; k += 1)
+		{
+			var line = hunk_lines[k];
+			hunk_lines[k] = line.endsWith('\r') ? line.substr(0, line.length - 1) : line;
+		}
+	}
+	return patch;
+};
+
+/**
+ * Returns true if the patch consistently uses Unix line endings (or only involves one line and has
+ * no line endings).
+ */
+global.isUnix = function(patch)
+{
+	if (typeof(patch) === "Object" && !(patch instanceof "Array")) { patch = [patch]; }
+	var res_count = 0;
+	for (var i = 0; i < patch.count; i += 1)
+	{
+		var index_hunks = patch[i].hunks;
+		for (var j = 0; j < index_hunks.count; j += 1)
+		{
+			var hunk_lines = index_hunks[j].lines;
+			for (var k = 0; k < hunk_lines.count; k += 1)
+			{
+				var line = hunk_lines[k];
+				res_count += (!line.startsWith('\\') && line.endsWith('\r')) ? 1 : 0;
+			}
+		}
+	}
+	return res_count == 0;
+};
+
+/**
+ * Returns true if the patch uses Windows line endings and only Windows line endings.
+ */
+global.isWin = function(patch)
+{
+	if (typeof(patch) === "Object" && !(patch instanceof "Array")) { patch = [patch]; }
+	var res_count = 0;
+	for (var i = 0; i < patch.count; i += 1)
+	{
+		var index_hunks = patch[i].hunks;
+		for (var j = 0; j < index_hunks.count; j += 1)
+		{
+			var hunk_lines = index_hunks[j].lines;
+			for (var k = 0; k < hunk_lines.count; k += 1)
+			{
+				var line = hunk_lines[k];
+				res_count += (line.endsWith('\r')) ? 1 : 0;
+			}
+		}
+	}
+	if (res_count === 0)
+	{
+		return false;
+	}
+	for (var i = 0; i < patch.count; i += 1)
+	{
+		var index_hunks = patch[i].hunks;
+		for (var j = 0; j < index_hunks.count; j += 1)
+		{
+			var hunk_lines = index_hunks[j].lines;
+			for (var k = 0; k < hunk_lines.count; k += 1)
+			{
+				var line = hunk_lines[k];
+				if (!(line.startsWith('\\') || line.endsWith('\r') || (typeof(hunk_lines[k + 1]) === "String" && hunk_lines[k + 1].startsWith('\\'))))
+				{
+					return false;
+				}
+			}
+		}
+	}
+	return true;
+};
+
+// patch/parse
+// from 323e8bb3dd39078843ca44ae5a3daeca1c351492 (jun 24 2024)
+global.parsePatch = function(uniDiff)
+{
+	var diffstr = uniDiff.split("\n");
+	var list = [];
+	var i = 0;
+
+	while (i < diffstr.count)
+	{
+		// parseIndex start
+		var index = %[];
+		list.add(index);
+
+		// Parse diff metadata
+		while (i < diffstr.count)
+		{
+			var line = diffstr[i];
+
+			// File header found, end parsing diff metadata
+			if ((/^(\-\-\-|\+\+\+|@@)\s/).match(line).count > 0)
+			{
+				break;
+			}
+
+			// Diff index
+			var header = (/^(?:Index:|diff(?: -r \w+)+)\s+(.+?)\s*$/).match(line);
+			if (header.count > 0)
+			{
+				index.index = header[1];
+			}
+
+			i += 1;
+		}
+
+		// Parse file headers if they are defined. Unified diff requires them, but
+		// there's no technical issues to have an isolated hunk without file header
+		for (var ii = 0; ii < 2; ii += 1)
+		{
+			// Parses the --- and +++ headers, if none are found, no lines
+			// are consumed.
+
+			// parseFileHeader start
+			var fileHeader = (/^(---|\+\+\+)\s+(.*)\r?$/).match(diffstr[i]);
+			if (fileHeader.count > 0)
+			{
+				var keyPrefix = fileHeader[1] === '---' ? 'old' : 'new';
+				var data = fileHeader[2].split('\t');
+				var fileName = data[0].replace(/\\\\/g, '\\');
+				if ((/^".*"$/).match(fileName).count > 0)
+				{
+					fileName = fileName.substr(1, fileName.length - 2);
+				}
+				index[keyPrefix + 'FileName'] = fileName;
+				index[keyPrefix + 'Header'] = (typeof(data[1]) === "String" ? data[1] : '').trim();
+
+				i += 1;
+			}
+			// parseFileHeader end
+		}
+
+		// Parse hunks
+		index.hunks = [];
+
+		while (i < diffstr.count)
+		{
+			var line = diffstr[i];
+			if ((/^(Index:\s|diff\s|\-\-\-\s|\+\+\+\s|===================================================================)/).match(line).count > 0)
+			{
+				break;
+			}
+			else if ((/^@@/).match(line).count > 0)
+			{
+				// Parses a hunk
+				// This assumes that we are at the start of a hunk.
+				// parseHunk start
+				var chunkHeaderIndex = i;
+				var chunkHeaderLine = diffstr[i];
+				i += 1;
+				var chunkHeader = /@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@/.match(chunkHeaderLine);
+
+				var hunk = %[];
+				hunk.oldStart = +chunkHeader[1];
+				hunk.oldLines = (chunkHeader[2] === "") ? 1 : +chunkHeader[2];
+				hunk.newStart = +chunkHeader[3];
+				hunk.newLines = (chunkHeader[4] === "") ? 1 : +chunkHeader[4];
+				hunk.lines = [];
+
+				// Unified Diff Format quirk: If the chunk size is 0,
+				// the first number is one lower than one would expect.
+				// https://www.artima.com/weblogs/viewpost.jsp?thread=164293
+				if (hunk.oldLines === 0)
+				{
+					hunk.oldStart += 1;
+				}
+				if (hunk.newLines === 0)
+				{
+					hunk.newStart += 1;
+				}
+
+				var addCount = 0;
+				var removeCount = 0;
+				for (
+					;
+					i < diffstr.count && (removeCount < hunk.oldLines || addCount < hunk.newLines || (typeof(diffstr[i]) === "String" && diffstr[i][0] === '\\'));
+					i += 1
+				)
+				{
+					var operation = (diffstr[i].length == 0 && i != (diffstr.length - 1)) ? ' ' : diffstr[i][0];
+					if (operation === '+' || operation === '-' || operation === ' ' || operation === '\\')
+					{
+						hunk.lines.add(diffstr[i]);
+
+						if (operation === '+')
+						{
+							addCount += 1;
+						}
+						else if (operation === '-')
+						{
+							removeCount += 1;
+						}
+						else if (operation === ' ')
+						{
+							addCount += 1;
+							removeCount += 1;
+						}
+					}
+					else
+					{
+						throw new global.Exception('Hunk at line ' + (chunkHeaderIndex + 1) + ' contained invalid line ' + diffstr[i]);
+					}
+				}
+
+				// Handle the empty block count case
+				if (addCount === 0 && hunk.newLines === 1)
+				{
+					hunk.newLines = 0;
+				}
+				if (removeCount === 0 && hunk.oldLines === 1)
+				{
+					hunk.oldLines = 0;
+				}
+
+				// Perform sanity checking
+				if (addCount !== hunk.newLines)
+				{
+					throw new global.Exception('Added line count did not match for hunk at line ' + (chunkHeaderIndex + 1));
+				}
+				if (removeCount !== hunk.oldLines)
+				{
+					throw new global.Exception('Removed line count did not match for hunk at line ' + (chunkHeaderIndex + 1));
+				}
+
+				// parseHunk end ret:hunk
+				index.hunks.add(hunk);
+			}
+			else if (line)
+			{
+				throw new global.Exception('Unknown line ' + (i + 1) + ' ' + line.escape());
+			}
+			else
+			{
+				i += 1;
+			}
+		}
+		// parseIndex end
+	}
+
+	return list;
+};
+
+// util/distance-iterator
+
+// from 21fa47857432cb42f3aa411ee70314c95a3e680b (sep 3 2017)
+// Iterator that traverses in the range of [min, max], stepping
+// by distance from a given start position. I.e. for [0, 4], with
+// start of 2, this will iterate 2, 3, 1, 4, 0.
+global.distanceIterator = function(start, minLine, maxLine)
+{
+	var dic = %[];
+	dic.start = start;
+	dic.minLine = minLine;
+	dic.maxLine = maxLine;
+	dic.wantForward = true;
+	dic.backwardExhausted = false;
+	dic.forwardExhausted = false;
+	dic.localOffset = 1;
+	dic.iterator = function()
+	{
+		var dic = this;
+		if (dic.wantForward && dic.forwardExhausted === false)
+		{
+			if (dic.backwardExhausted)
+			{
+				dic.localOffset += 1;
+			}
+			else
+			{
+				dic.wantForward = false;
+			}
+
+			// Check if trying to fit beyond text length, and if not, check it fits
+			// after offset location (or desired location on first iteration)
+			if (dic.start + dic.localOffset <= dic.maxLine)
+			{
+				return dic.localOffset;
+			}
+
+			dic.forwardExhausted = true;
+		}
+
+		if (dic.backwardExhausted === false)
+		{
+			if (dic.forwardExhausted === false)
+			{
+				dic.wantForward = true;
+			}
+
+			// Check if trying to fit before text beginning, and if not, check it fits
+			// before offset location
+			if (dic.minLine <= dic.start - dic.localOffset)
+			{
+				var tmp = -dic.localOffset;
+				dic.localOffset += 1;
+				// FIXME: check -localOffset++
+				return tmp;
+			}
+
+			dic.backwardExhausted = true;
+			return dic.iterator();
+		}
+
+		// We tried to fit hunk before text beginning and beyond text length, then
+		// hunk can't fit on the text. Return void
+		return void;
+	} incontextof dic;
+
+	return dic.iterator;
+};
+
+// patch/apply
+// from c8a9cc5cac1f3802d704a6148cb364f1b1b08a40 (jun 7 2024)
+
+global.applyPatch = function(source, uniDiff, options)
+{
+	if (typeof(options) !== "Object")
+	{
+		options = %[];
+	}
+	if (typeof(uniDiff) === 'String')
+	{
+		uniDiff = global.parsePatch(uniDiff);
+	}
+
+	if (typeof(uniDiff) === "Object" && (uniDiff instanceof "Array"))
+	{
+		if (uniDiff.count > 1)
+		{
+			throw new global.Exception('applyPatch only works with a single input.');
+		}
+
+		uniDiff = uniDiff[0];
+	}
+
+
+	if (options.autoConvertLineEndings !== false || options.autoConvertLineEndings === null || options.autoConvertLineEndings === void)
+	{
+		if (global.hasOnlyWinLineEndings(source) && global.isUnix(uniDiff))
+		{
+			uniDiff = global.unixToWin(uniDiff);
+		}
+		else if (global.hasOnlyUnixLineEndings(source) && global.isWin(uniDiff))
+		{
+			uniDiff = global.winToUnix(uniDiff);
+		}
+	}
+
+	// Apply the diff to the input
+	var lines = source.split('\n');
+	var hunks = uniDiff.hunks;
+
+	var compareLine = typeof(options.compareLine) === "Object" ? options.compareLine : (function(lineNumber, line, operation, patchContent) { return line === patchContent; } );
+	var errorCount = 0;
+	var fuzzFactor = typeof(options.fuzzFactor) === "Integer" ? options.fuzzFactor : 0;
+	var minLine = 0;
+	var offset = 0;
+
+	var removeEOFNL = void;
+	var addEOFNL = void;
+
+	// Search best fit offsets for each hunk based on the previous ones
+	for (var i = 0; i < hunks.count; i += 1)
+	{
+		var hunk = hunks[i];
+		var maxLine = lines.count - hunk.oldLines;
+		var localOffset = 0;
+		var toPos = offset + hunk.oldStart - 1;
+
+		var iterator = global.distanceIterator(toPos, minLine, maxLine);
+
+		for (; localOffset !== void; localOffset = iterator()) {
+			// hunkFits start
+			/**
+			 * Checks if the hunk exactly fits on the provided location
+			 */
+			var res = true;
+			var toPos_local = toPos + localOffset;
+			for (var j = 0; j < hunk.lines.count; j += 1)
+			{
+				var line = hunk.lines[j];
+				var operation = (line.length > 0 ? line[0] : ' ');
+				var content = (line.length > 0 ? line.substr(1) : line);
+
+				if (operation === ' ' || operation === '-')
+				{
+					// Context sanity check
+					if (!compareLine(toPos_local + 1, lines[toPos_local], operation, content))
+					{
+						errorCount += 1;
+
+						if (errorCount > fuzzFactor)
+						{
+							res = false;
+							break;
+						}
+					}
+					toPos_local += 1;
+				}
+			}
+			// hunkFits end
+
+			if (res)
+			{
+				hunk.offset = offset += localOffset;
+				break;
+			}
+		}
+
+		if (localOffset === void)
+		{
+			return false;
+		}
+
+		// Set lower text limit to end of the current hunk, so next ones don't try
+		// to fit over already patched text
+		minLine = hunk.offset + hunk.oldStart + hunk.oldLines;
+	}
+
+	// Apply patch hunks
+	var diffOffset = 0;
+	for (var i = 0; i < hunks.count; i += 1)
+	{
+		var hunk = hunks[i];
+		var toPos = hunk.oldStart + hunk.offset + diffOffset - 1;
+		diffOffset += hunk.newLines - hunk.oldLines;
+
+		for (var j = 0; j < hunk.lines.count; j += 1)
+		{
+			var line = hunk.lines[j];
+			var operation = (line.length > 0 ? line[0] : ' ');
+			var content = (line.length > 0 ? line.substr(1) : line);
+
+			if (operation === ' ')
+			{
+				toPos += 1;
+			}
+			else if (operation === '-')
+			{
+				lines.erase(toPos);
+			/* istanbul ignore else */
+			}
+			else if (operation === '+')
+			{
+				lines.insert(toPos, content);
+				toPos += 1;
+			}
+			else if (operation === '\\')
+			{
+				var previousOperation = hunk.lines[j - 1] !== void ? hunk.lines[j - 1][0] : void;
+				if (previousOperation === '+')
+				{
+					removeEOFNL = true;
+				}
+				else if (previousOperation === '-')
+				{
+					addEOFNL = true;
+				}
+			}
+		}
+	}
+
+	// Handle EOFNL insertion/removal
+	if (removeEOFNL)
+	{
+		while (lines[lines.count - 1] === "")
+		{
+			lines.erase(lines.count - 1);
+		}
+	}
+	else if (addEOFNL)
+	{
+		lines.add('');
+	}
+	return lines.join('\n');
+};
+
+// Wrapper that supports multiple file patches via callbacks.
+global.applyPatches = function(uniDiff, options)
+{
+	if (typeof(uniDiff) === 'String')
+	{
+		uniDiff = global.parsePatch(uniDiff);
+	}
+
+	var dic = %[];
+	dic.uniDiff = uniDiff;
+	dic.options = options;
+	dic.currentIndex = 0;
+	dic.processIndex = function()
+	{
+		var dic = this;
+		var index = dic.uniDiff[dic.currentIndex];
+		dic.currentIndex += 1;
+		if (index === void)
+		{
+			return dic.options.complete();
+		}
+		dic.index = index;
+
+		dic.options.loadFile(index,
+			function(err, data)
+			{
+				var dic = this;
+
+				if (err !== void)
+				{
+					return dic.options.complete(err);
+				}
+
+				var updatedContent = (global.applyPatch incontextof global)(data, dic.index, dic.options);
+				dic.options.patched(dic.index, updatedContent,
+					function(err)
+					{
+						var dic = this;
+
+						if (err !== void)
+						{
+							return dic.options.complete(err);
+						}
+
+						dic.processIndex();
+					} incontextof dic);
+			} incontextof dic);
+	} incontextof dic;
+	dic.processIndex();
+};
+
+@if(0)
+// test/patch/apply
+// from c8a9cc5cac1f3802d704a6148cb364f1b1b08a40 (jun 7 2024)
+
+class WrapChaiExpect
+{
+	function WrapChaiExpect()
+	{
+		var to = %[];
+		this.to = to;
+		to.equal = this.equal;
+		to.match = this.match;
+		to["throw"] = this.throw_;
+		var to_be = %[];
+		to.be = to_be;
+		to_be.a = this.a;
+		var not = %[];
+		to.not = not;
+		var not_be = %[];
+		not.be = not_be;
+		this.assert_result = false;
+	}
+
+	function check_assertion()
+	{
+		if (this.assert_result === false)
+		{
+			throw new global.Exception("assertion failed: " + this.data);
+		}
+		return this;
+	}
+
+	function init_data(data)
+	{
+		this.data = data;
+	}
+
+	function a(arg)
+	{
+		this.assert_result = typeof(this.data) === arg;
+		return this.check_assertion();
+	}
+
+	function equal(arg)
+	{
+		this.assert_result = this.data === arg;
+		return this.check_assertion();
+	}
+
+	function match(arg)
+	{
+		this.assert_result = arg.match(this.data).count > 0;
+		return this.check_assertion();
+	}
+
+	function throw_(arg)
+	{
+		try
+		{
+			this.assert_result = false;
+			this.data();
+		}
+		catch (e)
+		{
+			this.assert_result = arg === e.message;
+		}
+		return this.check_assertion();
+	}
+}
+
+(function()
+{
+	var expect = function(arg)
+	{
+		var wrapper = new global.WrapChaiExpect();
+		wrapper.init_data(arg);
+		return wrapper;
+	};
+	var parsePatch = global.parsePatch;
+	var applyPatch = global.applyPatch;
+	var applyPatches = global.applyPatches;
+	{
+		// should accept parsed patches
+		{
+			var patch = parsePatch(
+					'Index: test\n'
+					+ '===================================================================\n'
+					+ '--- test\theader1\n'
+					+ '+++ test\theader2\n'
+					+ '@@ -1,3 +1,4 @@\n'
+					+ ' line2\n'
+					+ ' line3\n'
+					+ '+line4\n'
+					+ ' line5\n');
+
+			expect(applyPatch(
+					'line2\n'
+					+ 'line3\n'
+					+ 'line5\n',
+
+					patch))
+				.to.equal(
+					'line2\n'
+					+ 'line3\n'
+					+ 'line4\n'
+					+ 'line5\n');
+
+			expect(applyPatch(
+					'line2\n'
+					+ 'line3\n'
+					+ 'line5\n',
+
+					patch[0]))
+				.to.equal(
+					'line2\n'
+					+ 'line3\n'
+					+ 'line4\n'
+					+ 'line5\n');
+		}
+
+		// should error if passed multiple indexes
+		{
+			expect(function() {
+				global.applyPatch('', [1, 2]);
+			}).to['throw']('applyPatch only works with a single input.');
+		}
+
+		// should apply patches that change the last line
+		{
+			expect(applyPatch(
+					'line2\n'
+					+ 'line3\n'
+					+ 'line5\n',
+
+					'Index: test\n'
+					+ '===================================================================\n'
+					+ '--- test\theader1\n'
+					+ '+++ test\theader2\n'
+					+ '@@ -1,3 +1,4 @@\n'
+					+ ' line2\n'
+					+ ' line3\n'
+					+ '+line4\n'
+					+ ' line5\n'))
+				.to.equal(
+					'line2\n'
+					+ 'line3\n'
+					+ 'line4\n'
+					+ 'line5\n');
+
+			expect(applyPatch(
+					'line2\nline3\nline4\n',
+
+					'Index: test\n'
+					+ '===================================================================\n'
+					+ '--- test\theader1\n'
+					+ '+++ test\theader2\n'
+					+ '@@ -1,3 +1,4 @@\n'
+					+ ' line2\n'
+					+ ' line3\n'
+					+ ' line4\n'
+					+ '+line5\n'))
+				.to.equal('line2\nline3\nline4\nline5\n');
+
+			expect(applyPatch(
+					'line1\nline2\nline3\nline4\n',
+
+					'Index: test\n'
+					+ '===================================================================\n'
+					+ '--- test\theader1\n'
+					+ '+++ test\theader2\n'
+					+ '@@ -1,4 +1,4 @@\n'
+					+ ' line1\n'
+					+ ' line2\n'
+					+ ' line3\n'
+					+ '+line44\n'
+					+ '-line4\n'))
+				.to.equal('line1\nline2\nline3\nline44\n');
+
+			expect(applyPatch(
+					'line1\nline2\nline3\nline4\n',
+
+					'Index: test\n'
+					+ '===================================================================\n'
+					+ '--- test\theader1\n'
+					+ '+++ test\theader2\n'
+					+ '@@ -1,4 +1,5 @@\n'
+					+ ' line1\n'
+					+ ' line2\n'
+					+ ' line3\n'
+					+ '+line44\n'
+					+ '+line5\n'
+					+ '-line4\n'))
+				.to.equal('line1\nline2\nline3\nline44\nline5\n');
+		}
+
+		// should merge EOFNL
+		{
+			expect(applyPatch(
+					'line1\nline2\nline3\nline4\n',
+
+					'Index: test\n'
+					+ '===================================================================\n'
+					+ '--- test\theader1\n'
+					+ '+++ test\theader2\n'
+					+ '@@ -1,4 +1,4 @@\n'
+					+ ' line1\n'
+					+ ' line2\n'
+					+ ' line3\n'
+					+ '+line4\n'
+					+ '\\ No newline at end of file\n'
+					+ '-line4\n'))
+				.to.equal('line1\nline2\nline3\nline4');
+
+			expect(applyPatch(
+					'line1\nline2\nline3\nline4',
+
+					'Index: test\n'
+					+ '===================================================================\n'
+					+ '--- test\theader1\n'
+					+ '+++ test\theader2\n'
+					+ '@@ -1,4 +1,4 @@\n'
+					+ ' line1\n'
+					+ ' line2\n'
+					+ ' line3\n'
+					+ '+line4\n'
+					+ '-line4\n'
+					+ '\\ No newline at end of file\n'))
+				.to.equal('line1\nline2\nline3\nline4\n');
+
+			expect(applyPatch(
+					'line11\nline2\nline3\nline4',
+
+						'Index: test\n'
+						+ '===================================================================\n'
+						+ '--- test\theader1\n'
+						+ '+++ test\theader2\n'
+						+ '@@ -1,4 +1,4 @@\n'
+						+ '+line1\n'
+						+ '-line11\n'
+						+ ' line2\n'
+						+ ' line3\n'
+						+ ' line4\n'
+						+ '\\ No newline at end of file\n'))
+				.to.equal('line1\nline2\nline3\nline4');
+
+			expect(applyPatch(
+					'line11\nline2\nline3\nline4\nline4\nline4\nline4',
+
+					'Index: test\n'
+					+ '===================================================================\n'
+					+ '--- test\theader1\n'
+					+ '+++ test\theader2\n'
+					+ '@@ -1,5 +1,5 @@\n'
+					+ '+line1\n'
+					+ '-line11\n'
+					+ ' line2\n'
+					+ ' line3\n'
+					+ ' line4\n'
+					+ ' line4\n'))
+				.to.equal('line1\nline2\nline3\nline4\nline4\nline4\nline4');
+
+			// Test empty lines in patches
+			expect(applyPatch(
+					'line11\nline2\n\nline4',
+
+						'Index: test\n'
+						+ '===================================================================\n'
+						+ '--- test\theader1\n'
+						+ '+++ test\theader2\n'
+						+ '@@ -1,4 +1,4 @@\n'
+						+ '+line1\n'
+						+ '-line11\n'
+						+ ' line2\n'
+						+ '\n'
+						+ ' line4\n'
+						+ '\\ No newline at end of file\n'))
+				.to.equal('line1\nline2\n\nline4');
+		}
+
+		// should apply patches
+		{
+			var oldFile =
+				'value\n'
+				+ 'context\n'
+				+ 'context\n'
+				+ 'context\n'
+				+ 'context\n'
+				+ 'context\n'
+				+ 'context\n'
+				+ 'context\n'
+				+ 'context\n'
+				+ 'context\n'
+				+ 'remove value\n'
+				+ 'context\n'
+				+ 'context\n'
+				+ 'context\n'
+				+ 'context\n'
+				+ 'context\n'
+				+ 'context\n'
+				+ 'context\n'
+				+ 'context\n'
+				+ 'context\n'
+				+ 'remove value\n'
+				+ 'context\n'
+				+ 'context\n'
+				+ 'context\n'
+				+ 'context\n'
+				+ 'context\n'
+				+ 'context\n'
+				+ 'context\n'
+				+ 'context\n'
+				+ 'context\n'
+				+ 'context\n'
+				+ 'context\n'
+				+ 'context\n'
+				+ 'value\n'
+				+ 'context\n'
+				+ 'context';
+			var newFile =
+				'new value\n'
+				+ 'new value 2\n'
+				+ 'context\n'
+				+ 'context\n'
+				+ 'context\n'
+				+ 'context\n'
+				+ 'context\n'
+				+ 'context\n'
+				+ 'context\n'
+				+ 'context\n'
+				+ 'context\n'
+				+ 'context\n'
+				+ 'context\n'
+				+ 'context\n'
+				+ 'context\n'
+				+ 'context\n'
+				+ 'context\n'
+				+ 'context\n'
+				+ 'context\n'
+				+ 'context\n'
+				+ 'context\n'
+				+ 'context\n'
+				+ 'context\n'
+				+ 'context\n'
+				+ 'context\n'
+				+ 'context\n'
+				+ 'context\n'
+				+ 'context\n'
+				+ 'add value\n'
+				+ 'context\n'
+				+ 'context\n'
+				+ 'context\n'
+				+ 'context\n'
+				+ 'new value\n'
+				+ 'new value 2\n'
+				+ 'context\n'
+				+ 'context';
+			var diffFile =
+				'Index: testFileName\n'
+				+ '===================================================================\n'
+				+ '--- testFileName\tOld Header\n'
+				+ '+++ testFileName\tNew Header\n'
+				+ '@@ -1,5 +1,6 @@\n'
+				+ '+new value\n'
+				+ '+new value 2\n'
+				+ '-value\n'
+				+ ' context\n'
+				+ ' context\n'
+				+ ' context\n'
+				+ ' context\n'
+				+ '@@ -7,9 +8,8 @@\n'
+				+ ' context\n'
+				+ ' context\n'
+				+ ' context\n'
+				+ ' context\n'
+				+ '-remove value\n'
+				+ ' context\n'
+				+ ' context\n'
+				+ ' context\n'
+				+ ' context\n'
+				+ '@@ -17,20 +17,21 @@\n'
+				+ ' context\n'
+				+ ' context\n'
+				+ ' context\n'
+				+ ' context\n'
+				+ '-remove value\n'
+				+ ' context\n'
+				+ ' context\n'
+				+ ' context\n'
+				+ ' context\n'
+				+ ' context\n'
+				+ ' context\n'
+				+ ' context\n'
+				+ ' context\n'
+				+ '+add value\n'
+				+ ' context\n'
+				+ ' context\n'
+				+ ' context\n'
+				+ ' context\n'
+				+ '+new value\n'
+				+ '+new value 2\n'
+				+ '-value\n'
+				+ ' context\n'
+				+ ' context\n'
+				+ '\\ No newline at end of file\n';
+
+			expect(applyPatch(oldFile, diffFile)).to.equal(newFile);
+
+			var identityFile =
+				'Index: testFileName\n'
+				+ '===================================================================\n'
+				+ '--- testFileName\tOld Header\n'
+				+ '+++ testFileName\tNew Header\n';
+			expect(applyPatch(oldFile, identityFile)).to.equal(oldFile);
+		}
+
+		// should apply patches that lack an index header
+		{
+			expect(applyPatch(
+					'line2\n'
+					+ 'line3\n'
+					+ 'line5\n',
+
+					'--- test\theader1\n'
+					+ '+++ test\theader2\n'
+					+ '@@ -1,3 +1,4 @@\n'
+					+ ' line2\n'
+					+ ' line3\n'
+					+ '+line4\n'
+					+ ' line5\n'))
+				.to.equal(
+					'line2\n'
+					+ 'line3\n'
+					+ 'line4\n'
+					+ 'line5\n');
+		}
+
+		// should apply single line patches with zero context and zero removed
+		{
+			expect(applyPatch(
+					'line2\n'
+					+ 'line3\n'
+					+ 'line5\n',
+
+					'--- test\theader1\n'
+					+ '+++ test\theader2\n'
+					+ '@@ -2,0 +3 @@\n'
+					+ '+line4\n'))
+				.to.equal(
+					'line2\n'
+					+ 'line3\n'
+					+ 'line4\n'
+					+ 'line5\n');
+		}
+
+		// should apply multiline patches with zero context and zero removed
+		{
+			expect(applyPatch(
+					'line2\n'
+					+ 'line3\n'
+					+ 'line7\n',
+
+					'--- test\theader1\n'
+					+ '+++ test\theader2\n'
+					+ '@@ -2,0 +3,3 @@\n'
+					+ '+line4\n'
+					+ '+line5\n'
+					+ '+line6\n'))
+				.to.equal(
+					'line2\n'
+					+ 'line3\n'
+					+ 'line4\n'
+					+ 'line5\n'
+					+ 'line6\n'
+					+ 'line7\n');
+		}
+
+		// should apply single line patches with zero context and zero removed at start of file
+		{
+			expect(applyPatch(
+					'line2\n'
+					+ 'line3\n',
+
+					'--- test\theader1\n'
+					+ '+++ test\theader2\n'
+					+ '@@ -0,0 +1 @@\n'
+					+ '+line1\n'))
+				.to.equal(
+					'line1\n'
+					+ 'line2\n'
+					+ 'line3\n');
+		}
+
+		// should apply multi line patches with zero context and zero removed at start of file
+		{
+			expect(applyPatch(
+					'line3\n'
+					+ 'line4\n',
+
+					'--- test\theader1\n'
+					+ '+++ test\theader2\n'
+					+ '@@ -0,0 +1,2 @@\n'
+					+ '+line1\n'
+					+ '+line2\n'))
+				.to.equal(
+					'line1\n'
+					+ 'line2\n'
+					+ 'line3\n'
+					+ 'line4\n');
+		}
+
+		// should apply multi line patches with zero context and zero removed at end of file
+		{
+			expect(applyPatch(
+					'line1\n',
+
+					'--- test\theader1\n'
+					+ '+++ test\theader2\n'
+					+ '@@ -1,0 +2 @@\n'
+					+ '+line2\n'))
+				.to.equal(
+					'line1\n'
+					+ 'line2\n');
+		}
+
+		// should apply multi line patches with zero context and zero removed at end of file
+		{
+			expect(applyPatch(
+					'line1\n',
+
+					'--- test\theader1\n'
+					+ '+++ test\theader2\n'
+					+ '@@ -1,0 +2,2 @@\n'
+					+ '+line2\n'
+					+ '+line3\n'))
+				.to.equal(
+					'line1\n'
+					+ 'line2\n'
+					+ 'line3\n');
+		}
+
+		// should apply single line patches with zero context and zero added at beginning of file
+		{
+			expect(applyPatch(
+					'line1\n'
+					+ 'line2\n',
+
+					'--- test\theader1\n'
+					+ '+++ test\theader2\n'
+					+ '@@ -1 +0,0 @@\n'
+					+ '-line1\n'))
+				.to.equal(
+					'line2\n');
+		}
+
+		// should apply multi line patches with zero context and zero added at beginning of file
+		{
+			expect(applyPatch(
+					'line1\n'
+					+ 'line2\n'
+					+ 'line3\n',
+
+					'--- test\theader1\n'
+					+ '+++ test\theader2\n'
+					+ '@@ -1,2 +0,0 @@\n'
+					+ '-line1\n'
+					+ '-line2\n'))
+				.to.equal(
+					'line3\n');
+		}
+
+		// should apply single line patches with zero context and zero added at end of file
+		{
+			expect(applyPatch(
+					'line1\n'
+					+ 'line2\n',
+
+					'--- test\theader1\n'
+					+ '+++ test\theader2\n'
+					+ '@@ -2 +1,0 @@\n'
+					+ '-line2\n'))
+				.to.equal(
+					'line1\n');
+		}
+
+		// should apply multi line patches with zero context and zero added at end of file
+		{
+			expect(applyPatch(
+					'line1\n'
+					+ 'line2\n'
+					+ 'line3\n',
+
+					'--- test\theader1\n'
+					+ '+++ test\theader2\n'
+					+ '@@ -2,2 +1,0 @@\n'
+					+ '-line2\n'
+					+ '-line3\n'))
+				.to.equal(
+					'line1\n');
+		}
+
+		// should fail on mismatch
+		{
+			expect(applyPatch(
+					'line2\n'
+					+ 'line2\n'
+					+ 'line5\n',
+
+					'--- test\theader1\n'
+					+ '+++ test\theader2\n'
+					+ '@@ -1,3 +1,4 @@\n'
+					+ ' line2\n'
+					+ ' line3\n'
+					+ '+line4\n'
+					+ ' line5\n'))
+				.to.equal(false);
+		}
+
+		// should succeed within fuzz factor
+		{
+			var dic = %[];
+			dic.fuzzFactor = 1;
+			expect(applyPatch(
+					'line2\n'
+					+ 'line2\n'
+					+ 'line5\n',
+
+					'--- test\theader1\n'
+					+ '+++ test\theader2\n'
+					+ '@@ -1,3 +1,4 @@\n'
+					+ ' line2\n'
+					+ ' line3\n'
+					+ '+line4\n'
+					+ ' line5\n',
+					dic))
+				.to.equal(
+					'line2\n'
+					+ 'line2\n'
+					+ 'line4\n'
+					+ 'line5\n');
+		}
+
+		// should succeed when hunk needs a negative offset
+		{
+			expect(applyPatch(
+					'line1\n'
+					+ 'line3\n'
+					+ 'line4\n'
+					+ 'line5\n',
+
+					'--- test\theader1\n'
+					+ '+++ test\theader2\n'
+					+ '@@ -3,2 +3,3 @@\n'
+					+ ' line1\n'
+					+ '+line2\n'
+					+ ' line3\n'))
+				.to.equal(
+					'line1\n'
+					+ 'line2\n'
+					+ 'line3\n'
+					+ 'line4\n'
+					+ 'line5\n');
+		}
+
+		// should succeed when hunk needs a positive offset
+		{
+			expect(applyPatch(
+					'line1\n'
+					+ 'line2\n'
+					+ 'line3\n'
+					+ 'line5\n',
+
+					'--- test\theader1\n'
+					+ '+++ test\theader2\n'
+					+ '@@ -1,2 +1,3 @@\n'
+					+ ' line3\n'
+					+ '+line4\n'
+					+ ' line5\n'))
+				.to.equal(
+					'line1\n'
+					+ 'line2\n'
+					+ 'line3\n'
+					+ 'line4\n'
+					+ 'line5\n');
+		}
+
+		// should succeed when 1st hunk specifies invalid newStart
+		{
+			expect(applyPatch(
+					'line1\n'
+					+ 'line2\n'
+					+ 'line3\n'
+					+ 'line5\n',
+
+					'--- test\theader1\n'
+					+ '+++ test\theader2\n'
+					+ '@@ -1,2 +2,3 @@\n'
+					+ ' line3\n'
+					+ '+line4\n'
+					+ ' line5\n'))
+				.to.equal(
+					'line1\n'
+					+ 'line2\n'
+					+ 'line3\n'
+					+ 'line4\n'
+					+ 'line5\n');
+		}
+
+		// should succeed when 2nd hunk specifies invalid newStart
+		{
+			expect(applyPatch(
+					'line1\n'
+					+ 'line2\n'
+					+ 'line3\n'
+					+ 'line5\n',
+
+					'--- test\theader1\n'
+					+ '+++ test\theader2\n'
+					+ '@@ -1,3 +1,2 @@\n'
+					+ ' line1\n'
+					+ '-line2\n'
+					+ ' line3\n'
+					+ '@@ -3,2 +3,3 @@\n'
+					+ ' line3\n'
+					+ '+line4\n'
+					+ ' line5\n'))
+				.to.equal(
+					'line1\n'
+					+ 'line3\n'
+					+ 'line4\n'
+					+ 'line5\n');
+		}
+
+		// should create a file
+		{
+			expect(applyPatch('',
+
+					'--- test\theader1\n'
+					+ '+++ test\theader2\n'
+					+ '@@ -0,0 +1,4 @@\n'
+					+ '+line1\n'
+					+ '+line2\n'
+					+ '+line3\n'
+					+ '+line4\n'))
+				.to.equal(
+					'line1\n'
+					+ 'line2\n'
+					+ 'line3\n'
+					+ 'line4\n');
+		}
+
+		// should erase a file
+		{
+			expect(applyPatch(
+					'line1\n'
+					+ 'line2\n'
+					+ 'line3\n'
+					+ 'line4\n',
+
+					'--- test\theader1\n'
+					+ '+++ test\theader2\n'
+					+ '@@ -1,4 +0,0 @@\n'
+					+ '-line1\n'
+					+ '-line2\n'
+					+ '-line3\n'
+					+ '-line4\n'))
+				.to.equal('');
+		}
+
+		// should allow custom line comparison
+		{
+			var dic = %[];
+			dic.expect = expect;
+			dic.compareLine = function(lineNumber, line, operation, patchContent)
+			{
+				var dic = this;
+				dic.expect(lineNumber).to.be.a('Integer');
+				if (lineNumber === 2)
+				{
+					dic.expect(line).to.equal('line2');
+					dic.expect(operation).to.equal(' ');
+					dic.expect(patchContent).to.equal('line3');
+				}
+
+				return true;
+			} incontextof dic;
+
+			expect(applyPatch(
+					'line2\n'
+					+ 'line2\n'
+					+ 'line5\n',
+
+					'--- test\theader1\n'
+					+ '+++ test\theader2\n'
+					+ '@@ -1,3 +1,4 @@\n'
+					+ ' line2\n'
+					+ ' line3\n'
+					+ '+line4\n'
+					+ ' line5\n',
+					dic))
+				.to.equal(
+					'line2\n'
+					+ 'line2\n'
+					+ 'line4\n'
+					+ 'line5\n');
+		}
+
+@if(0)
+		// SKIP: createPatch not implemented
+		// should work with unicode newline characters
+		{
+			var oldtext = 'AAAAAAAAAAAAAAAA\n\n';
+			var newtext = 'AAAAAAAAAAAAAAAA\nBBBBBB' + String.fromCharCode(0x2028) + '\nCCCCCCCCCCCCCCCCCC\n\n';
+
+			var diffed = createPatch('test', oldtext, newtext);
+			expect(applyPatch(oldtext, diffed)).to.equal(newtext);
+		}
+
+		// handle empty text
+		{
+			var oldtext = '';
+			var newtext = 'asdasd\n';
+
+			var diffed = createPatch('test', oldtext, newtext);
+			expect(applyPatch(oldtext, diffed)).to.equal(newtext);
+		}
+
+		// handle two common text
+		{
+			var oldtext = 's';
+			var newtext = 'sdfsdf\n';
+			var diffed = createPatch('test', oldtext, newtext);
+			expect(applyPatch(oldtext, diffed)).to.equal(newtext);
+		}
+@endif
+
+@if(0)
+		// SKIP: structuredPatch not implemented
+		// should accept structured patches
+		{
+			var oldContent = [
+				'line1',
+				'line2',
+				''
+			].join('\n');
+			var newContent = [
+				'line1',
+				'line02'
+			].join('\n');
+			var patch = structuredPatch('test.txt', 'test.txt', oldContent, newContent);
+
+			expect(applyPatch(oldContent, patch)).to.equal(newContent);
+		}
+@endif
+
+		// should correctly apply a patch that truncates an entire file
+		// Regression test based on bug https://github.com/kpdecker/jsdiff/issues/177
+		{
+			var patch = parsePatch(
+				'===================================================================\n'
+				+ '--- index.js\n'
+				+ '+++ index.js\n'
+				+ '@@ -1,3 +1,0 @@\n'
+				+ '-this\n'
+				+ '-\n'
+				+ '-tos\n'
+				+ '\\ No newline at end of file\n'
+			);
+			var fileContents = 'this\n\ntos';
+
+			expect(applyPatch(fileContents, patch))
+				.to.equal('');
+		}
+
+		// should automatically convert a patch with Unix file endings to Windows when patching a Windows file
+		{
+			var oldFile = 'foo\r\nbar\r\nbaz\r\nqux\r\n';
+			var diffFile =
+				'Index: testFileName\n'
+				+ '===================================================================\n'
+				+ '--- testFileName\tOld Header\n'
+				+ '+++ testFileName\tNew Header\n'
+				+ '@@ -2,2 +2,3 @@\n'
+				+ '-bar\n'
+				+ '-baz\n'
+				+ '+new\n'
+				+ '+two\n'
+				+ '+three\n';
+
+			expect(applyPatch(oldFile, diffFile)).to.equal('foo\r\nnew\r\ntwo\r\nthree\r\nqux\r\n');
+		}
+
+		// should automatically convert a patch with Windows file endings to Unix when patching a Unix file
+		{
+			var oldFile = 'foo\nbar\nbaz\nqux\n';
+			var diffFile =
+				'Index: testFileName\r\n'
+				+ '===================================================================\r\n'
+				+ '--- testFileName\tOld Header\r\n'
+				+ '+++ testFileName\tNew Header\r\n'
+				+ '@@ -2,2 +2,3 @@\r\n'
+				+ '-bar\r\n'
+				+ '-baz\r\n'
+				+ '+new\r\n'
+				+ '+two\r\n'
+				+ '+three\r\n';
+
+			expect(applyPatch(oldFile, diffFile)).to.equal('foo\nnew\ntwo\nthree\nqux\n');
+		}
+
+		// should leave line endings in the patch alone if the target file has mixed file endings, even if this means the patch does not apply
+		{
+			var oldFile1 = 'foo\r\nbar\nbaz\nqux\n';
+			var oldFile2 = 'foo\nbar\r\nbaz\r\nqux\n';
+			var diffFile =
+				'Index: testFileName\r\n'
+				+ '===================================================================\r\n'
+				+ '--- testFileName\tOld Header\r\n'
+				+ '+++ testFileName\tNew Header\r\n'
+				+ '@@ -2,2 +2,3 @@\r\n'
+				+ '-bar\r\n'
+				+ '-baz\r\n'
+				+ '+new\r\n'
+				+ '+two\r\n'
+				+ '+three\r\n';
+
+			expect(applyPatch(oldFile1, diffFile)).to.equal(false);
+			expect(applyPatch(oldFile2, diffFile)).to.equal('foo\nnew\r\ntwo\r\nthree\r\nqux\n');
+		}
+
+		// should leave patch file endings alone if autoConvertLineEndings=false
+		{
+			var oldFile = 'foo\r\nbar\r\nbaz\r\nqux\r\n';
+			var diffFile =
+				'Index: testFileName\n'
+				+ '===================================================================\n'
+				+ '--- testFileName\tOld Header\n'
+				+ '+++ testFileName\tNew Header\n'
+				+ '@@ -2,2 +2,3 @@\n'
+				+ '-bar\n'
+				+ '-baz\n'
+				+ '+new\n'
+				+ '+two\n'
+				+ '+three\n';
+
+			var dic = %[];
+			dic.autoConvertLineEndings = false;
+			expect(applyPatch(oldFile, diffFile, dic)).to.equal(false);
+		}
+	}
+
+	{
+		var patch =
+					'Index: test\n'
+					+ '===================================================================\n'
+					+ '--- test\theader1\n'
+					+ '+++ test\theader2\n'
+					+ '@@ -1,3 +1,4 @@\n'
+					+ ' line2\n'
+					+ ' line3\n'
+					+ '+line4\n'
+					+ ' line5\n'
+					+ 'Index: test2\n'
+					+ '===================================================================\n'
+					+ '--- test\theader1\n'
+					+ '+++ test\theader2\n'
+					+ '@@ -1,3 +1,4 @@\n'
+					+ ' foo2\n'
+					+ ' foo3\n'
+					+ '+foo4\n'
+					+ ' foo5\n';
+		var contents = %[];
+		contents.test = 'line2\n'
+					+ 'line3\n'
+					+ 'line5\n';
+		contents.test2 = 'foo2\n'
+					+ 'foo3\n'
+					+ 'foo5\n';
+		var expected = %[];
+		expected.test = 'line2\n'
+					+ 'line3\n'
+					+ 'line4\n'
+					+ 'line5\n';
+		expected.test2 = 'foo2\n'
+					+ 'foo3\n'
+					+ 'foo4\n'
+					+ 'foo5\n';
+
+		var done = function() {};
+
+		// should handle errors on complete
+		{
+			var expected = new global.Exception('foo');
+
+			var dic = %[];
+			dic.contents = contents;
+			dic.expected = expected;
+			dic.expect = expect;
+			dic.done = done;
+			dic.loadFile = function(index, callback)
+			{
+				var dic = this;
+				callback(void, dic.contents[index.index]);
+			} incontextof dic;
+			dic.patched = function(index, content, callback)
+			{
+				var dic = this;
+				callback(dic.expected);
+			} incontextof dic;
+			dic.complete = function(err)
+			{
+				var dic = this;
+				dic.expect(err)
+						.to.equal(dic.expected)
+						.to.be.a('Object');
+
+				dic.done();
+			};
+
+			applyPatches(patch, dic);
+		}
+
+		// should handle multiple files
+		{
+			var dic = %[];
+			dic.contents = contents;
+			dic.expected = expected;
+			dic.expect = expect;
+			dic.loadFile = function(index, callback)
+			{
+				var dic = this;
+				callback(void, dic.contents[index.index]);
+			} incontextof dic;
+			dic.patched = function(index, content, callback)
+			{
+				var dic = this;
+				dic.expect(content)
+						.to.equal(dic.expected[index.index])
+						.to.be.a('String');
+
+				callback();
+			} incontextof dic;
+			dic.complete = done;
+
+			applyPatches(patch, dic);
+		}
+		// should handle parsed patches
+		{
+			var dic = %[];
+			dic.contents = contents;
+			dic.expected = expected;
+			dic.expect = expect;
+			dic.loadFile = function(index, callback)
+			{
+				var dic = this;
+				callback(void, dic.contents[index.index]);
+			} incontextof dic;
+			dic.patched = function(index, content, callback)
+			{
+				var dic = this;
+				dic.expect(content)
+						.to.equal(dic.expected[index.index])
+						.to.be.a('String');
+
+				callback();
+			} incontextof dic;
+			dic.complete = done;
+
+			applyPatches(parsePatch(patch), dic);
+		}
+		// should propagate errors
+		{
+			var dic = %[];
+			dic.expect = expect;
+			dic.done = done;
+			dic.loadFile = function(index, callback)
+			{
+				callback("foo");
+			} incontextof dic;
+			dic.complete = function(err)
+			{
+				var dic = this;
+				dic.expect(err).to.equal("foo");
+				dic.done();
+			} incontextof dic;
+
+			applyPatches(patch, dic);
+		}
+		// should handle patches without Index
+		{
+			var patch =
+						'===================================================================\n'
+						+ '--- test\theader1\n'
+						+ '+++ test\theader2\n'
+						+ '@@ -1,3 +1,4 @@\n'
+						+ ' line2\n'
+						+ ' line3\n'
+						+ '+line4\n'
+						+ ' line5\n'
+						+ '===================================================================\n'
+						+ '--- test2\theader1\n'
+						+ '+++ test2\theader2\n'
+						+ '@@ -1,3 +1,4 @@\n'
+						+ ' foo2\n'
+						+ ' foo3\n'
+						+ '+foo4\n'
+						+ ' foo5\n';
+
+			var dic = %[];
+			dic.contents = contents;
+			dic.expected = expected;
+			dic.expect = expect;
+			dic.loadFile = function(index, callback)
+			{
+				var dic = this;
+				callback(void, dic.contents[index.oldFileName]);
+			} incontextof dic;
+			dic.patched = function(index, content, callback)
+			{
+				var dic = this;
+				dic.expect(content)
+						.to.equal(dic.expected[index.newFileName])
+						.to.be.a('String');
+
+				callback();
+			} incontextof dic;
+			dic.complete = done;
+
+			applyPatches(patch, dic);
+		}
+
+		// should handle file names containing spaces
+		{
+			var patch =
+				"===================================================================\n" +
+				"--- test file\theader1\n" +
+				"+++ test file\theader2\n" +
+				"@@ -1,2 +1,3 @@\n" +
+				" line1\n" +
+				"+line2\n" +
+				" line3\n" +
+				"===================================================================\n" +
+				"--- test file 2\theader1\n" +
+				"+++ test file 2\theader2\n" +
+				"@@ -1,2 +1,3 @@\n" +
+				" foo1\n" +
+				"+foo2\n" +
+				" foo3\n"
+				;
+
+			var contents = %[];
+			contents['test file'] = "line1\n" +
+									"line3\n";
+			contents['test file 2'] = "foo1\n" +
+										"foo3\n";
+			var expected = %[];
+			expected['test file'] = "line1\n" +
+									"line2\n" +
+									"line3\n";
+			expected['test file 2'] = "foo1\n" +
+									"foo2\n" +
+									"foo3\n";
+
+			var dic = %[];
+			dic.contents = contents;
+			dic.expected = expected;
+			dic.expect = expect;
+			dic.loadFile = function(index, callback)
+			{
+				var dic = this;
+				callback(void, dic.contents[index.oldFileName]);
+			} incontextof dic;
+			dic.patched = function(index, content, callback)
+			{
+				var dic = this;
+				dic.expect(content)
+						.to.equal(dic.expected[index.newFileName])
+						.to.be.a('String');
+
+				callback();
+			} incontextof dic;
+			dic.complete = done;
+
+			applyPatches(patch, dic);
+		}
+	}
+})();
+@endif
+

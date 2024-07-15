@@ -882,9 +882,15 @@ global.addDevelopmentMenu = function()
 	this.menu.add(this.devMenuItem = new global.KAGMenuItem(this, "&Development", 0, void, false));
 	this.devMenuItem.visible = global.devMode || global.devMode2;
 	(global.addDevelopmentMenuItems incontextof this)(this.devMenuItem);
+
+	this.devMenuItem.add(new global.MenuItem(this, "-"));
+
 	this.devMenuItem.add(this.throwExceptionItem = new global.KAGMenuItem(this, "Throw Exception", 1, function(sender) { throw new global.Exception("This is a test Exception."); }, false));
 	this.devMenuItem.add(this.throwConductorExceptionItem = new global.KAGMenuItem(this, "Throw ConductorException", 1, function(sender) { throw new global.ConductorException("This is a test ConductorException."); }, false));
 	this.devMenuItem.add(this.accessNullPointerItem = new global.KAGMenuItem(this, "Access null pointer", 1, function(sender) { global.System.nullpo(); }, false));
+
+	this.devMenuItem.add(new global.MenuItem(this, "-"));
+
 	global.git_base_path = global.Storages.getFullPath(".");
 	if (global.git_base_path.indexOf(">") === -1)
 	{
@@ -898,6 +904,11 @@ global.addDevelopmentMenu = function()
 	this.devMenuItem.add(this.openCommandPromptInProjectDirectory = new global.KAGMenuItem(this, "Open command prompt in project directory", 1, function(sender) { global.System.shellExecute("cmd.exe", "/k cd " + ('"%s"').sprintf(global.git_base_path)); }, false));
 	this.devMenuItem.add(this.gitCheckoutDashDashCurrentDirectory = new global.KAGMenuItem(this, "git checkout -- .", 1, function(sender) { global.build_exec_command_line("git.exe", ["-C", global.git_base_path, "checkout", "--", "."], false, false); }, false));
 	this.devMenuItem.add(this.gitPullOriginMaster = new global.KAGMenuItem(this, "git pull origin master", 1, function(sender) { global.build_exec_command_line("git.exe", ["-C", global.git_base_path, "pull", "origin", "master"], false, false); }, false));
+
+	this.devMenuItem.add(new global.MenuItem(this, "-"));
+
+	this.devMenuItem.add(this.openCurrentFileMenuItem = new global.KAGMenuItem(this, "Open Current File", 1, function(sender) { global.open_current_script_file(sender.owner); },false));
+	this.devMenuItem.add(this.openCurrentFileMenuItem = new global.KAGMenuItem(this, "Open Current File in VSCode", 1, function(sender) { global.open_current_script_file(sender.owner, true); },false));
 };
 
 global.addConductorVerbosityMenu = function()

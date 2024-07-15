@@ -898,6 +898,9 @@ global.parseTag = function(text) {
 	} else if (startsWith("block", tagName)) {
 		tag["tagname"] = "block";
 		tag["len"] = +tagName.substring("block".length);
+	} else if (tagName == "italic") {
+		tag["tagname"] = "font";
+		tag["italic"] = true;
 	}
 	return tag;
 };

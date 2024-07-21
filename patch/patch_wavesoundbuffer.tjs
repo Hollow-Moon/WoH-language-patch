@@ -105,6 +105,18 @@ global.getExistSoundName = function(storage)
 	return global.get_full_path_of_audio(storage);
 };
 
+global.wavesoundbuffer_alternate_filename = %[];
+
+@if(GAME_WOHN)
+{
+	var alternate_filename_filename = "patch_wohn_audio_alternate_filename.ksc";
+	if (global.Storages.isExistentStorage(alternate_filename_filename))
+	{
+		global.wavesoundbuffer_alternate_filename = global.Scripts.evalStorage("patch_wohn_audio_alternate_filename.ksc");
+	}
+}
+@endif
+
 global.WaveSoundBuffer_patch_wavesoundbuffer_original = global.WaveSoundBuffer;
 class WaveSoundBuffer_patch_wavesoundbuffer_override extends global.WaveSoundBuffer_patch_wavesoundbuffer_original
 {
@@ -120,10 +132,27 @@ class WaveSoundBuffer_patch_wavesoundbuffer_override extends global.WaveSoundBuf
 
 	function open(storage)
 	{
-		var file_name = global.get_full_path_of_audio(storage);
+		storage += "";
+		var file_name = "";
+		var alternate_filenames = global.wavesoundbuffer_alternate_filename[global.chop_audio_extension(global.Storages.extractStorageName(storage.toLowerCase()))];
+		if (alternate_filenames !== void)
+		{
+			for (var i = 0; i < alternate_filenames.count; i += 1)
+			{
+				file_name = global.get_full_path_of_audio(alternate_filenames[i]);
+				if (file_name !== "")
+				{
+					break;
+				}
+			}
+		}
 		if (file_name === "")
 		{
-			throw new global.Exception(("Audio \"%s\" not found").sprintf(storage));
+			file_name = global.get_full_path_of_audio(storage);
+			if (file_name === "")
+			{
+				throw new global.Exception(("Audio \"%s\" not found%s").sprintf(storage, (alternate_filenames !== void) ? " and also checked alternate filenames" : ""));
+			}
 		}
 		return super.open(file_name);
 	}

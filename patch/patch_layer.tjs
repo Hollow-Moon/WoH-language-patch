@@ -119,10 +119,20 @@ global.System.touchImages = function(storage, limitbytes=0, timeout=0)
 };
 
 global.layer_tagdata_replacement = %[];
+global.layer_alternate_filename = %[];
 
 @if(GAME_WOHN)
 {
-	global.layer_tagdata_replacement = global.Scripts.evalStorage("patch_wohn_image_tagdata.ksc");
+	var tagdata_replacement_filename = "patch_wohn_image_tagdata.ksc";
+	var alternate_filename_filename = "patch_wohn_image_alternate_filename.ksc";
+	if (global.Storages.isExistentStorage(tagdata_replacement_filename))
+	{
+		global.layer_tagdata_replacement = global.Scripts.evalStorage(tagdata_replacement_filename);
+	}
+	if (global.Storages.isExistentStorage(alternate_filename_filename))
+	{
+		global.layer_alternate_filename = global.Scripts.evalStorage(alternate_filename_filename);
+	}
 }
 @endif
 
@@ -224,13 +234,30 @@ class Layer_patch_layer_override extends global.Layer_patch_layer_original
 
 	function loadImages(storage, key)
 	{
-		var file_name = global.get_full_path_of_image(storage);
+		storage += "";
+		var file_name = "";
+		var alternate_filenames = global.layer_alternate_filename[global.chop_image_extension(global.Storages.extractStorageName(storage.toLowerCase()))];
+		if (alternate_filenames !== void)
+		{
+			for (var i = 0; i < alternate_filenames.count; i += 1)
+			{
+				file_name = global.get_full_path_of_image(alternate_filenames[i]);
+				if (file_name !== "")
+				{
+					break;
+				}
+			}
+		}
 		if (file_name === "")
 		{
-			throw new global.Exception(("Image \"%s\" not found").sprintf(storage));
+			file_name = global.get_full_path_of_image(storage);
+			if (file_name === "")
+			{
+				throw new global.Exception(("Image \"%s\" not found%s").sprintf(storage, (alternate_filenames !== void) ? " and also checked alternate filenames" : ""));
+			}
 		}
 		var res = super.loadImages(file_name, key);
-		var replacement_tagdata = global.layer_tagdata_replacement[global.Storages.chopStorageExt(global.Storages.extractStorageName(file_name))];
+		var replacement_tagdata = global.layer_tagdata_replacement[global.chop_image_extension(global.Storages.extractStorageName(file_name.toLowerCase()))];
 		if (replacement_tagdata !== void)
 		{
 			if (res === null)

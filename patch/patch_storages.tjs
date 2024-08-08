@@ -141,6 +141,28 @@
 			}
 			return xp3_res;
 		}
+		var smash_res = "";
+		if (typeof(global.Storages.mountSmash) === "Object")
+		{
+			var cur_dirname = global.Storages.extractStoragePath(arc_fullpath);
+			var cur_basename = global.Storages.extractStorageName(arc_fullpath);
+			var cur_basename_no_ext = global.Storages.chopStorageExt(cur_basename);
+			var cur_ext = global.Storages.extractStorageExt(cur_basename);
+			if (cur_ext === ".dat")
+			{
+				var fileinfo_basename = "%sfileinfo_%s.txt".sprintf(cur_dirname, cur_basename_no_ext);
+				var fileinfo_fullpath = global.Storages.getFullPath(fileinfo_basename);
+				if (fileinfo_fullpath.length !== 0)
+				{
+					smash_res = global.Storages.mountSmash(arc_fullpath, fileinfo_fullpath);
+				}
+			}
+		}
+		if (smash_res.length !== 0)
+		{
+			archive_path_mapping[arc_fullpath] = smash_res;
+			return smash_res;
+		}
 		var zip_res = "";
 		if (typeof(global.Storages.mountZIP) === "Object")
 		{
@@ -174,6 +196,15 @@
 			{
 				delete archive_path_mapping[arc_fullpath];
 				return xp3_res;
+			}
+		}
+		if (archive_path_mapping[arc_fullpath].substring(0, 3) === "mfi" && typeof(global.Storages.unmountSmash) === "Object")
+		{
+			var smash_res = global.Storages.unmountSmash(archive_path_mapping[arc_fullpath]);
+			if (smash_res)
+			{
+				delete archive_path_mapping[arc_fullpath];
+				return smash_res;
 			}
 		}
 		if (archive_path_mapping[arc_fullpath].substring(0, 3) === "zip" && typeof(global.Storages.unmountZIP) === "Object")
@@ -285,6 +316,13 @@
 		if (global.get_full_path_of_plugin("krzipfile.dll") !== "")
 		{
 			global.Plugins.link("krzipfile.dll");
+		}
+	}
+	if ((typeof(global.Storages.mountSmash) !== "Object"))
+	{
+		if (global.get_full_path_of_plugin("krsmashfile.dll") !== "")
+		{
+			global.Plugins.link("krsmashfile.dll");
 		}
 	}
 	{
@@ -517,10 +555,20 @@
 			break;
 		}
 	}
+	var paths_smash = [
+		"ex_pack",
+		"movie",
+		"patch",
+		"rin",
+		"saber",
+		"sakura",
+		"save_thumb",
+	];
 	var paths_to_search = [
 		"data.xp3" + arcdelim + "%s",
 		"%s.xp3",
 		"data",
+		"$smash",
 		".",
 		"patch",
 		"content-data",
@@ -548,36 +596,54 @@
 			{
 				var path = paths[j];
 				var path_to_search = paths_to_search[i];
-				if (path_to_search.indexOf("%s") !== -1)
+				if (path_to_search === "$smash")
 				{
-					path = path_to_search.sprintf(paths[j]);
-					path_to_search = ".";
-				}
-				var path_dirlist = paths_base_dirlist[paths_base[k]][path_to_search];
-				var spos = path.indexOf(arcdelim);
-				var extra_path = "";
-				if (path_to_search !== ".")
-				{
-					extra_path = path_to_search + "/";
-				}
-				paths_to_remove.add(paths_base[k] + extra_path + path + "/");
-				paths_to_remove.add(paths_base[k] + extra_path + path + arcdelim);
-				if (spos !== -1)
-				{
-					if (path_dirlist.find(path.substring(0, spos)) !== -1)
+					if (typeof(global.Storages.mountSmash) === "Object")
 					{
-						paths_to_add.add(paths_base[k] + extra_path + path + "/");
+						for (var l = 0, internal_forloop_count = paths_smash.count; l < internal_forloop_count && typeof(paths_smash[l]) === "String"; l += 1)
+						{
+							var target_path = "%s/obb/pack/%s.dat".sprintf(paths_base[k], paths_smash[l]);
+							if (global.Storages.isExistentStorage(target_path))
+							{
+								paths_to_remove.add(target_path + arcdelim);
+								paths_to_add.add(target_path + arcdelim);
+							}
+						}
 					}
 				}
 				else
 				{
-					if (path_dirlist.find(path + "/") !== -1)
+					if (path_to_search.indexOf("%s") !== -1)
 					{
-						paths_to_add.add(paths_base[k] + extra_path + path + "/");
+						path = path_to_search.sprintf(paths[j]);
+						path_to_search = ".";
 					}
-					else if (path_dirlist.find(path) !== -1)
+					var path_dirlist = paths_base_dirlist[paths_base[k]][path_to_search];
+					var spos = path.indexOf(arcdelim);
+					var extra_path = "";
+					if (path_to_search !== ".")
 					{
-						paths_to_add.add(paths_base[k] + extra_path + path + arcdelim);
+						extra_path = path_to_search + "/";
+					}
+					paths_to_remove.add(paths_base[k] + extra_path + path + "/");
+					paths_to_remove.add(paths_base[k] + extra_path + path + arcdelim);
+					if (spos !== -1)
+					{
+						if (path_dirlist.find(path.substring(0, spos)) !== -1)
+						{
+							paths_to_add.add(paths_base[k] + extra_path + path + "/");
+						}
+					}
+					else
+					{
+						if (path_dirlist.find(path + "/") !== -1)
+						{
+							paths_to_add.add(paths_base[k] + extra_path + path + "/");
+						}
+						else if (path_dirlist.find(path) !== -1)
+						{
+							paths_to_add.add(paths_base[k] + extra_path + path + arcdelim);
+						}
 					}
 				}
 			}

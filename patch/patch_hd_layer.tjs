@@ -48,7 +48,8 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 	var shouldUpdateBgFromSource = true; // auto update bg from layer operations
 	var _stretch = void; // used to stretch the message window (optional)
 	var _topScroll = 0; // used to position the layer according to the scroll
-	var _positionScaleMode = 0; // type of coordinate scaling (0: discrete transform / 1: center point scaling)
+	var _leftScaleMode = 0; // type of coordinate scaling (0: discrete transform / 1: center point scaling)
+	var _topScaleMode = 0;
 	var unstretchLeft = false;
 	var isWideImage = false; // if the image is already wide, use constant upscale.
 @endif
@@ -99,9 +100,14 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 		setter(v) { this._topScroll = v; this.top = this.top; }
 	}
 
-	property positionScaleMode {
-		getter { return this._positionScaleMode; }
-		setter(v) { this._positionScaleMode = v; }
+	property leftScaleMode {
+		getter { return this._leftScaleMode; }
+		setter(v) { this._leftScaleMode = v; this.left = this.left; }
+	}
+
+	property topScaleMode {
+		getter { return this._topScaleMode; }
+		setter(v) { this._topScaleMode = v; this.top = this.top; }
 	}
 
 	property stretch {
@@ -146,7 +152,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 		if (this.absoluteMode || this.parent == null) {
 			return x;
 		}
-        return global.scalePosition(x, this.widthForScale, this.widthForScaleOriginal, this.parent.widthForScale, this.parent.widthForScaleOriginal, this.horizontalAlignment, this.positionScaleMode) / (this.unstretchLeft? this.window.wideFactor : 1);
+        return global.scalePosition(x, this.widthForScale, this.widthForScaleOriginal, this.parent.widthForScale, this.parent.widthForScaleOriginal, this.horizontalAlignment, this.leftScaleMode) / (this.unstretchLeft? this.window.wideFactor : 1);
     }
 
     function scaleTop(y)
@@ -158,17 +164,17 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 		var parentHeightOriginal = this.parent.isbg && !this.isbg? this.parent.heightForScaleOriginal / this.window.wideFactor : this.parent.heightForScaleOriginal;
 		var topScroll = this.window.shouldScroll? this.topScroll : 0;
 
-        return global.scalePosition(y, this.heightForScale, this.heightForScaleOriginal, this.parent.heightForScale, parentHeightOriginal, this.verticalAlignment, this.positionScaleMode) + this.window.scaleTopScroll(topScroll);
+        return global.scalePosition(y, this.heightForScale, this.heightForScaleOriginal, this.parent.heightForScale, parentHeightOriginal, this.verticalAlignment, this.topScaleMode) + this.window.scaleTopScroll(topScroll);
     }
 
 	function scaleImageLeft(x)
 	{
-		return global.scalePosition(x, this._width, this.widthOriginal, this._imageWidth, this.imageWidthOriginal, this.imageHorizontalAlignment, this.positionScaleMode);
+		return global.scalePosition(x, this._width, this.widthOriginal, this._imageWidth, this.imageWidthOriginal, this.imageHorizontalAlignment, this.leftScaleMode);
 	}
 
 	function scaleImageTop(y)
 	{
-		return global.scalePosition(y, this._height, this.heightOriginal, this._imageHeight, this.imageHeightOriginal, this.imageVerticalAlignment, this.positionScaleMode);
+		return global.scalePosition(y, this._height, this.heightOriginal, this._imageHeight, this.imageHeightOriginal, this.imageVerticalAlignment, this.topScaleMode);
 	}
 
 	function unscaleCursorX(x)
@@ -298,12 +304,12 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 
 	function scaleInsideImageLeft(x, w, wOriginal)
 	{
-		return global.scalePosition(x, w, wOriginal, this.widthForScaleInside, this.widthForScaleInsideOriginal, this.positionScaleMode);
+		return global.scalePosition(x, w, wOriginal, this.widthForScaleInside, this.widthForScaleInsideOriginal, this.leftScaleMode);
 	}
 
 	function scaleInsideImageTop(y, h, hOriginal)
 	{
-		return global.scalePosition(y, h, hOriginal, this.heightForScaleInside, this.heightForScaleInsideOriginal, this.positionScaleMode);
+		return global.scalePosition(y, h, hOriginal, this.heightForScaleInside, this.heightForScaleInsideOriginal, this.topScaleMode);
 	}
 
 	function scaleInsideImageWidthF(w)
@@ -328,14 +334,14 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 
 	function scaleInsideLeft(x, w, wOriginal, horizontalAlignment)
 	{
-		return global.scalePosition(x, w, wOriginal, this.widthForScale, this.widthForScaleOriginal, horizontalAlignment, this.positionScaleMode);
+		return global.scalePosition(x, w, wOriginal, this.widthForScale, this.widthForScaleOriginal, horizontalAlignment, this.leftScaleMode);
 	}
 
 	function scaleInsideTop(y, h, hOriginal, verticalAlignment)
 	{
 		var topScroll = this.window.shouldScroll? (this.isbg? this.window.scrollYOffset : 0) : 0;
 		var heightForScaleOriginal = this.isbg? this.heightForScaleOriginal / this.window.wideFactor : this.heightForScaleOriginal;
-		return global.scalePosition(y, h, hOriginal, this.heightForScale, heightForScaleOriginal, verticalAlignment, this.positionScaleMode) + this.window.scaleTopScroll(topScroll);
+		return global.scalePosition(y, h, hOriginal, this.heightForScale, heightForScaleOriginal, verticalAlignment, this.topScaleMode) + this.window.scaleTopScroll(topScroll);
 	}
 
     property left
@@ -984,7 +990,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 			this.isbg = imageInfo["bg"] !== void ? imageInfo["bg"] : false;
 			this.isWideImage = isbg;
 			
-			this.positionScaleMode = imageInfo["positionScaleMode"] !== void ? imageInfo["positionScaleMode"] : 0;
+			this.leftScaleMode = this.topScaleMode = imageInfo["positionScaleMode"] !== void ? imageInfo["positionScaleMode"] : 0;
 		}
 
 @if(GAME_FATE||GAME_FHAT)

@@ -1163,13 +1163,14 @@ global.addHdMenu = function(displayMenu)
 
 	for (var i = 0; i < global.scaleFactors.count; i += 1)
 	{
-		var hqMenuItemName = (global.scaleFactors[i] === 1) ? "lqMenuItem" : ("hq%.1fMenuItem".sprintf(global.scaleFactors[i]).replace(/\./g, "_"));
+		var hqMenuItemScaleFactor = global.scaleFactors[i];
+		var hqMenuItemName = (hqMenuItemScaleFactor === 1) ? "lqMenuItem" : ("hq%.1fMenuItem".sprintf(hqMenuItemScaleFactor).replace(/\./g, "_"));
 		var hqMenuItemText = "";
 		var hqMenuItemEnabled = true;
 
-		if (global.scaleFactors[i] <= 2.4 || global.System.exeBits == 64)
+		if (hqMenuItemScaleFactor <= 2.4 || global.System.exeBits == 64)
 		{
-			if (global.scaleFactors[i] === 1)
+			if (hqMenuItemScaleFactor === 1)
 			{
 				hqMenuItemText = global.__t("低い(&L)");
 			}
@@ -1180,20 +1181,22 @@ global.addHdMenu = function(displayMenu)
 			else
 			{
 				hqMenuItemText = global.__t("高いx%.1f(&H) — パッチ欠落");
+				global.Debug.notice(("W: Scale factor x%.1f is disabled because the associated patch file is not found").sprintf(hqMenuItemScaleFactor));
 				hqMenuItemEnabled = false;
 			}
 		}
 		else
 		{
 			hqMenuItemText = global.__t("高いx%.1f(&H) — x64のみ");
+			global.Debug.notice(("W: Scale factor x%.1f is disabled because executable is not 64 bits").sprintf(hqMenuItemScaleFactor));
 			hqMenuItemEnabled = false;
 		}
 
 		this.qualityMenu.add(this[hqMenuItemName] = new global.KAGMenuItem(this, hqMenuItemText, 1, function(sender) { global.onQualityMenuItemClick(sender); }, false));
 		this[hqMenuItemName].enabled = hqMenuItemEnabled;
-		this[hqMenuItemName].hdAssetScaleFactor = global.scaleFactors[i];
+		this[hqMenuItemName].hdAssetScaleFactor = hqMenuItemScaleFactor;
 		this[hqMenuItemName].captionArg = this[hqMenuItemName].hdAssetScaleFactor;
-		this[hqMenuItemName].checked = this.hdAssetScaleFactor === global.scaleFactors[i];
+		this[hqMenuItemName].checked = this.hdAssetScaleFactor === hqMenuItemScaleFactor;
 	}
 
 	displayMenu.add(this.renderScaleMenu = new global.KAGMenuItem(this, global.__t("レンダリングスケール(&R)"), 0, void, false));

@@ -132,7 +132,8 @@ global.unload_patches = function(patch_array)
 		}
 		if (name === void)
 		{
-			throw new global.Exception("Expected a string when unloading patch");
+			global.Debug.message("Warning: Expected a string when unloading patch");
+			continue;
 		}
 		var folderName = "";
 		if (typeof(patch_array[i][1]) === "String")

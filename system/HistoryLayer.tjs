@@ -109,12 +109,12 @@ class HistoryLayer extends Layer
 
 		name = "メッセージ履歴レイヤ";
 
-@if(WIDE_MODE)
-		setImageSize(parent.width * this.window.wideFactor, parent.height);
-@endif
-@if(!WIDE_MODE)
-		setImageSize(parent.width, parent.height);
-@endif
+		var windowWideFactor = 1;
+		if (["Integer", "Real"].find(typeof(this.window.wideFactor)) !== -1)
+		{
+			windowWideFactor = this.window.wideFactor;
+		}
+		setImageSize(parent.width * windowWideFactor, parent.height);
 		setSizeToImageSize();
 		hitType = htMask;
 		hitThreshold = 1;

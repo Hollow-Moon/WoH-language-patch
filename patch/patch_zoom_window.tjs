@@ -558,23 +558,26 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 	function resetPrimaryPos(max = 0, w, h) {
 		if (typeof(_primaryLayer) === "Object")
 		{
-			var wideFactor = 1;
+			var windowWideFactor = 1;
 			if (typeof(this.absoluteMode) === "Integer")
 			{
-				wideFactor = this.wideFactor;
+				if (["Integer", "Real"].find(typeof(this.wideFactor)) !== -1)
+				{
+					windowWideFactor = this.wideFactor;
+				}
 			}
 			with (_primaryLayer) {
 				if (max) { // Maximized window
 					// z is the zoom factor between screen space and base resolution when touching the window borders from inside.
-					var z = w / (pxWidth * wideFactor);
-					if ((innerWidth / innerHeight) > (pxWidth * wideFactor / pxHeight))
+					var z = w / (pxWidth * windowWideFactor);
+					if ((innerWidth / innerHeight) > (pxWidth * windowWideFactor / pxHeight))
 						z = h / pxHeight;
 
 					// Scale values from screen space to base resolution. They will be upscaled again by setPos and setSize for internal usage.
 					var x = (innerWidth  - w) / (z * 2);
-					var y = (innerHeight - h) / (z * 2 * wideFactor);					// isbg=1, so y will be handled by this.window.scaleWidth(), which will multiply in an unwanted wideFactor
-					var w = global.Math.ceil(innerWidth / (z * wideFactor));
-					var h = global.Math.ceil((innerHeight / (z * wideFactor)) - y);	// y substracted to make the viewport smaller than the clientRect, in order to add a black bar at the bottom in wide mode.
+					var y = (innerHeight - h) / (z * 2 * windowWideFactor);					// isbg=1, so y will be handled by this.window.scaleWidth(), which will multiply in an unwanted wideFactor
+					var w = global.Math.ceil(innerWidth / (z * windowWideFactor));
+					var h = global.Math.ceil((innerHeight / (z * windowWideFactor)) - y);	// y substracted to make the viewport smaller than the clientRect, in order to add a black bar at the bottom in wide mode.
 
 					if (typeof(sysbase) === "Object")
 					{
@@ -590,7 +593,7 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 						sysbase.setPos(0, 0);
 					}
 					.hasImage = false;
-					.setSize(pxWidth, pxHeight / wideFactor);	// isbg=1, so both coordinates will be handled by this.window.scaleWidth() -> fine for width, but height would be larger then the window frame in wide mode (paints even outside of client area)
+					.setSize(pxWidth, pxHeight / windowWideFactor);	// isbg=1, so both coordinates will be handled by this.window.scaleWidth() -> fine for width, but height would be larger then the window frame in wide mode (paints even outside of client area)
 				}
 			}
 		}

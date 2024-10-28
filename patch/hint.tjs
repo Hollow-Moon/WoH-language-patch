@@ -201,14 +201,14 @@ class Window_hint_override extends global.Window_hint_original
 			{
 				pxHeight = this.pxHeight;
 			}
-			var wideFactor = 1;
-			if (typeof(this.wideFactor) === "Integer" || typeof(this.wideFactor) === "Real")
+			var windowWideFactor = 1;
+			if (["Integer", "Real"].find(typeof(this.wideFactor)) !== -1)
 			{
-				wideFactor = this.wideFactor;
+				windowWideFactor = this.wideFactor;
 			}
 
 			// Calculate the actually used (absolute) width/height the game content uses (so without black borders in fullscreen/maximized)
-			var pxWidth_abs = global.Math.floor(clientRect.h * pxWidth * wideFactor / pxHeight) | 0;
+			var pxWidth_abs = global.Math.floor(clientRect.h * pxWidth * windowWideFactor / pxHeight) | 0;
 			var pxHeight_abs = clientRect.h;
 			//var z = clientRect.h / this.pxHeight;
 			
@@ -216,8 +216,8 @@ class Window_hint_override extends global.Window_hint_original
 			if (pxWidth_abs > clientRect.w)
 				{
 				pxWidth_abs = clientRect.w;
-				pxHeight_abs = global.Math.floor(clientRect.w * pxHeight / (pxWidth * wideFactor)) | 0;
-				//z = clientRect.w / global.Math.floor(pxWidth * wideFactor);
+				pxHeight_abs = global.Math.floor(clientRect.w * pxHeight / (pxWidth * windowWideFactor)) | 0;
+				//z = clientRect.w / global.Math.floor(pxWidth * windowWideFactor);
 				}
 			
 			// Calculate the offset introduced by the black borders in maximized mode.
@@ -262,7 +262,7 @@ class Window_hint_override extends global.Window_hint_original
 			if ((y + mouseCursorSizeAdjusted + h) > pxHeight)
 				y = pxHeight - h - mouseCursorSizeAdjusted;
 
-			x = (x*wideFactor) * (pxWidth - w) / ((pxWidth * wideFactor) - w);	// Inverse discrete transform to compensate from offset that will be introduced during setPos()
+			x = (x * windowWideFactor) * (pxWidth - w) / ((pxWidth * windowWideFactor) - w);	// Inverse discrete transform to compensate from offset that will be introduced during setPos()
 
 			this.hintlayer.setPos(x, y + mouseCursorSizeAdjusted);
 

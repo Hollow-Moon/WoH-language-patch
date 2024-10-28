@@ -687,15 +687,12 @@ global.unload_language_patch = function(language, kag)
 	var patches_arr = [];
 
 	if (language != global.japaneseLanguage) {
-@if(HD_MODE)
-		if (typeof(kag) === "Object")
-		{
-			global.addHdPaths(kag, patches_arr, languagePatchName, global.imagesFolderName) if kag.isHd;
-		}
-@endif
 		patches_arr.add([languagePatchName, global.imagesFolderName]);
 		if (typeof(kag) === "Object")
 		{
+@if(HD_MODE)
+			global.addHdPaths(kag, patches_arr, languagePatchName, global.imagesFolderName) if kag.isHd;
+@endif
 			patches_arr.add([languagePatchName, global.get_isHCensored(kag)? global.censoredHFolderName : global.uncensoredHFolderName]);
 			patches_arr.add([languagePatchName, global.get_isMatureCensored(kag)? global.censoredMatureFolderName: global.uncensoredMatureFolderName]);
 			patches_arr.add([languagePatchName, global.get_isEcchiCensored(kag)? global.censoredEcchiFolderName: global.uncensoredEcchiFolderName]);

@@ -217,6 +217,7 @@ if(typeof(global.frFreeType) === "Integer" && typeof(global.Font.rasterizer) ===
 {
 	if (typeof(global.Font) === "Object" && typeof(global.Font.addFont) === "Object")
 	{
+		var default_font = "";
 @if(!FREETYPE_FONT)
 		var orig_rasterizer = 0;
 		var rasterizers = [];
@@ -259,12 +260,14 @@ if(typeof(global.frFreeType) === "Integer" && typeof(global.Font.rasterizer) ===
 						{
 							if (res[j] === "MS PGothic")
 							{
-								global.System.setArgument("-deffont", res[j]);
-								global.System.assignMessage("TVPDefaultFontName", res[j]);
+								default_font = res[j];
 								break;
 							}
 						}
-						global.Debug.message(("Successfully added font \"%s\" from file \"%s\"").sprintf(res[0], item));
+						for (var j = 0, internal_forloop_count = res.count; j < internal_forloop_count; j += 1)
+						{
+							global.Debug.message(("Successfully added font \"%s\" from file \"%s\"").sprintf(res[j], item));
+						}
 					}
 					else
 					{
@@ -279,6 +282,15 @@ if(typeof(global.frFreeType) === "Integer" && typeof(global.Font.rasterizer) ===
 			global.Font.rasterizer = orig_rasterizer;
 		}
 @endif
+		if (default_font !== "")
+		{
+			global.System.setArgument("-deffont", default_font);
+			global.System.assignMessage("TVPDefaultFontName", default_font);
+			if (typeof(global.Font.defaultFaceName) === "String")
+			{
+				global.Font.defaultFaceName = default_font;
+			}
+		}
 	}
 	else if (typeof(global.System.addFont) === "Object")
 	{

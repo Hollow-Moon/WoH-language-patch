@@ -50,6 +50,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 	var _topScroll = 0; // used to position the layer according to the scroll
 	var _positionScaleMode = 0; // type of coordinate scaling (0: discrete transform / 1: center point scaling)
 	var unstretchLeft = false;
+	var isWideImage = false; // if the image is already wide, use constant upscale.
 @endif
 
 	var isThumbnail = false;
@@ -155,9 +156,9 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 		}
 
 		var parentHeightOriginal = this.parent.isbg && !this.isbg? this.parent.heightForScaleOriginal / this.window.wideFactor : this.parent.heightForScaleOriginal;
-		var topScroll = this.window.wideScreen? this.topScroll : 0;
+		var topScroll = this.window.shouldScroll? this.topScroll : 0;
 
-        return global.scalePosition(y, this.heightForScale, this.heightForScaleOriginal, this.parent.heightForScale, parentHeightOriginal, this.verticalAlignment, this.positionScaleMode) + this.window.scaleTopScroll(this.topScroll);
+        return global.scalePosition(y, this.heightForScale, this.heightForScaleOriginal, this.parent.heightForScale, parentHeightOriginal, this.verticalAlignment, this.positionScaleMode) + this.window.scaleTopScroll(topScroll);
     }
 
 	function scaleImageLeft(x)
@@ -177,7 +178,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 
 	function unscaleCursorY(y)
 	{
-		var topScroll = this.window.wideScreen? (this.isbg? this.window.scrollYOffset : 0) : 0;
+		var topScroll = this.window.shouldScroll? (this.isbg? this.window.scrollYOffset : 0) : 0;
 		return this.window.unscaleHeight(y - this.window.scaleTopScroll(topScroll));
 	}
 
@@ -188,7 +189,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 
 	function scaleCursorY(y)
 	{
-		var topScroll = this.window.wideScreen? (this.isbg? this.window.scrollYOffset : 0) : 0;
+		var topScroll = this.window.shouldScroll? (this.isbg? this.window.scrollYOffset : 0) : 0;
 		return this.window.scaleHeight(y) + this.window.scaleTopScroll(topScroll);
 	}
 
@@ -332,7 +333,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 
 	function scaleInsideTop(y, h, hOriginal, verticalAlignment)
 	{
-		var topScroll = this.window.wideScreen? (this.isbg? this.window.scrollYOffset : 0) : 0;
+		var topScroll = this.window.shouldScroll? (this.isbg? this.window.scrollYOffset : 0) : 0;
 		var heightForScaleOriginal = this.isbg? this.heightForScaleOriginal / this.window.wideFactor : this.heightForScaleOriginal;
 		return global.scalePosition(y, h, hOriginal, this.heightForScale, heightForScaleOriginal, verticalAlignment, this.positionScaleMode) + this.window.scaleTopScroll(topScroll);
 	}
@@ -688,6 +689,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 		// When copying a background image, set this this.layer to be background as well
 		if (src.isbg && src.imageWidth == swidth && src.imageHeight == sheight) {
 			this.isbg = src.isbg;
+			this.isWideImage = src.isWideImage;
 			if (src.imageWidth > this.imageWidth && src.imageHeight > this.imageHeight) {
 				this.setSize_patch_hd_layer(src.imageWidth, src.imageHeight);
 			}
@@ -971,6 +973,10 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 				} else if (global.autoExtendFrames.contains(this.imageStorage) && this.window.sflags.wideWindow) {
 					autoExtend = true;
 				}
+
+				if (imageInfo["wide"] === true) {
+					this.isWideImage = true;
+				}
 			} else {
 				this._imageWidth = imageInfo["width"];
 			}
@@ -1125,8 +1131,9 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 
 	function upscale()
 	{
+		var wideImageHeightAdjustment = (this.isbg && this.isWideImage)? this.window.wideFactor : 1;
 		var scaledImageWidth = this.scaleImageWidth(this._imageWidth);
-		var scaledImageHeight = this.scaleImageHeight(this._imageHeight);
+		var scaledImageHeight = this.scaleImageHeight(this._imageHeight / wideImageHeightAdjustment);
 		if (this.imageWidthOriginal == scaledImageWidth && this.imageHeightOriginal == scaledImageHeight) return;
 
 @if(SCALE_USING_FLOATING_POINT)
@@ -1199,6 +1206,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 		this._imageHeight = src._imageHeight;
 		this.imageStorage = src.imageStorage;
 		this.isbg = src.isbg;
+		this.isWideImage = src.isWideImage;
 		this.stretch |= src._stretch;
 		this.updateSize();
 	}

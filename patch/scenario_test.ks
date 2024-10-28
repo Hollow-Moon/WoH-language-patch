@@ -24,18 +24,84 @@
 @cm
 @rclick call=true
 @textoff
+@if exp=false
+@fadein file=o山門階段(遠景)-(深夜) time=0
+@texton
+　Slide open combo 3[wonnl]
+@slideopencombo nextimage=01月夜d time=2500 count=1 type=3
+　Slide open combo 2[wonnl]
+@slideopencombo nextimage=01月夜d time=2500 count=1 type=2
+　Slide close combo 0[wonnl]
+@slideclosecombo nextimage=01月夜d time=2500 count=1 type=0
+　Slide close combo 1[wonnl]
+@slideclosecombo nextimage=01月夜d time=2500 count=1 type=1
+　Slide close combo 2[wonnl]
+@slideclosecombo nextimage=01月夜d time=2500 count=1 type=2
+　Slide close combo 3[wonnl]
+@slideclosecombo nextimage=01月夜d time=2500 count=1 type=3
+　Slide open combo 0[wonnl]
+@slideopencombo nextimage=01月夜d time=2500 count=1 type=0
+　Slide open combo 1[wonnl]
+@slideopencombo nextimage=01月夜d time=2500 count=1 type=1
+　Text off, Slide close combo T, text on[wonnl]
+@textoff
+@slideclosecomboT nextimage=襖 type=0 count=1 time=400
+@endif
+@if exp=!false
 @blackout time=800 method=crossfade
 @date_title date=131 route=セイバー
 @blackout method=crossfade time=400
 @waitT time=2000
 @shockT hmax=10 time=5000 count=20
+@endif
 @texton
-　[ruby text=b]That [ruby text=l]is [ruby text=a]ten [ruby text=b]years [ruby text=l]ago.
-@texton
-@wonpb
-　...... I'm [ruby text=berew]looking at a [ruby text=qwerty]nostalgic [ruby text=asdfgh]person.[wonnl]
+@if exp=false
+　Slide open combo[wonnl]
+@slideopencombo nextimage=i言峰教会礼拝堂-(曇) type=0 count=1 time=2500 accel=5
+　Text off, Slide open combo T, text on[wonnl]
 @textoff
+@slideopencomboT nextimage=i言峰教会礼拝堂-(夜) type=0 count=1 time=2500 accel=-3
+@endif
+@if exp=!false
+　[ruby text=b]That [ruby text=l]is [ruby text=a]ten [ruby text=b]years [ruby text=l]ago.
+@endif
+@texton
+@if exp=false
+　Haze, whazein[wonnl]
+@haze layer=base upper=300 upperpow=0
+@whazein
+　Stop haze, whazeout[wonnl]
+@stophaze
+@whazeout
+　Haze lwaves[wonnl]
+@haze layer=base lwaves=(1,0,10)
+　Stop haze, whaze[wonnl]
+@stophaze time=400
+@whaze
+@wonpb
+　Contrast[wonnl]
+@contrast textoff=0 time=200 level=-100
+　Contrast off[wonnl]
+@contrastoff textoff=0 time=200
+@endif
+@wonpb
+@if exp=false
+　Textoff, contrastT, texton[wonnl]
+@textoff
+@contrastT time=1000 level=70
+@texton
+　Textoff, contrastoffT, texton[wonnl]
+@endif
+@if exp=!false
+　...... I'm [ruby text=berew]looking at a [ruby text=qwerty]nostalgic [ruby text=asdfgh]person.[wonnl]
+@endif
+@textoff
+@if exp=false
+@contrastoffT time=1000
+@endif
+@if exp=!false
 @fadein file=o山門階段(遠景)-(深夜) time=800
+@endif
 @texton
 　Flush combo[wonnl]
 @flushcombo time=200
@@ -109,6 +175,7 @@
 @texton
 　Move spline[wonnl]
 @move layer=4 magnify=1 spline=true path=(160,300,255,2.0)(700,300,255,1.5)(400,300,255,1) time=2000
+@if exp=!false
 　Haze, whazein[wonnl]
 @haze layer=base upper=300 upperpow=0
 @whazein
@@ -121,6 +188,7 @@
 　Stop haze, whaze[wonnl]
 @stophaze time=400
 @whaze
+@endif
 @wonpb
 　Textoff, cl_notrans, ld_notrans, occur, fadein, texton[wonnl]
 @textoff
@@ -222,6 +290,7 @@
 @shock hmax=5 vmax=3 count=16 time=1600
 　Dash combo[wonnl]
 @dashcombo cx=c cy=c imag=3.0 mag=1.0 opacity=128 time=2000
+@if exp=!false
 　Slide close combo[wonnl]
 @slideclosecombo nextimage=01月夜d time=4000 count=1
 　Text off, Slide close combo T, text on[wonnl]
@@ -234,6 +303,7 @@
 @textoff
 @slideopencomboT nextimage=i言峰教会礼拝堂-(夜) type=0 count=1 time=2500 accel=-3
 @texton
+@endif
 @wonpb
 　Textoff, cl_notrans, ld_notrans, fadein, text on[wonnl]
 @textoff
@@ -457,6 +527,7 @@
 @defocus displacement=20 blur=0
 @texton
 @wonpb
+@if exp=!false
 　Contrast[wonnl]
 @contrast textoff=0 time=200 level=-100
 　Contrast off[wonnl]
@@ -471,6 +542,7 @@
 @contrastoffT time=1000
 @texton
 @wonpb
+@endif
 　Pedal init[wonnl]
 @petalinit opacity=0
 　Pedal opt[wonnl]

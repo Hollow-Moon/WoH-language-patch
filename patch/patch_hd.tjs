@@ -131,7 +131,8 @@ global.addHdPaths = function(kag=global.kag, patches_arr, patchName, folder="", 
 		return;
 	}
 	if (folder != "") {
-		patches_arr.add([patchNameHd, folder + innerPath]);
+		patches_arr.add([patchNameHd, folder + innerPath]) if addHd;
+		patches_arr.add([patchNameHd + "_wide", folder + innerPath]) if addWide;
 	}
 	for (var i = 0; i < global.hdNames.count; i++) {
 @if(HD_MODE)
@@ -245,13 +246,21 @@ global.initializeQuality = function(hdAssetScaleFactor, hdRenderScaleFactor)
 
 global.getWidePatchesArray = function(kag=global.kag)
 {
-	var patches_arr = [global.get_widePatchName()];
+	var patches_arr = [];
+	patches_arr.add([global.get_widePatchName()]);
 	global.addOnlyWidePaths(kag, patches_arr, global.get_widePatchName());
+
+	patches_arr.add([global.wideWindowPatchName, global.wideWindowFolderName]) if kag.sflags[global.wideWindowFlagName];
+	patches_arr.add([global.wideMobileWindowPatchName, global.wideMobileWindowFolderName]) if kag.sflags[global.wideWindowFlagName] && kag.sflags[global.mobileWindowFlagName];
 	global.addOnlyHdPaths(kag, patches_arr, global.wideWindowPatchName, global.wideWindowFolderName) if kag.sflags[global.wideWindowFlagName];
 	global.addOnlyHdPaths(kag, patches_arr, global.wideMobileWindowPatchName, global.wideMobileWindowFolderName) if kag.sflags[global.wideWindowFlagName] && kag.sflags[global.mobileWindowFlagName];
 
 	patches_arr.add([global.widePatchName]);
+	patches_arr.add([global.widePatchName, global.wideWindowFolderName]) if kag.sflags[global.wideWindowFlagName];
+	patches_arr.add([global.widePatchName, global.wideMobileWindowFolderName]) if kag.sflags[global.wideWindowFlagName] && kag.sflags[global.mobileWindowFlagName];
 	patches_arr.add([global.get_wideHdPatchName(kag)]);
+	patches_arr.add([global.get_wideHdPatchName(kag), global.wideWindowFolderName]) if kag.sflags[global.wideWindowFlagName];
+	patches_arr.add([global.get_wideHdPatchName(kag), global.wideMobileWindowFolderName]) if kag.sflags[global.wideWindowFlagName] && kag.sflags[global.mobileWindowFlagName];
 
 	global.addOnlyWidePaths(kag, patches_arr, global.opPatchName) if global.get_opPatchExists();
 	global.addOnlyWidePaths(kag, patches_arr, global.maturePatchName, global.uncensoredMatureFolderName) if kag.sflags[global.matureFlagName];

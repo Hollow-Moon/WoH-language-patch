@@ -58,8 +58,22 @@ for (var i=0; i<global.scaleFactors.count; i++) {
 	global.scaleFactorsToHdNames[global.scaleFactors[i]] = global.hdNames[i];
 }
 
+global.get_wideHdPatchName = function(kag=global.kag) { { return get_hdPatchName(kag) + "_wide"; } };
 global.get_widePatchName = function() { { return global.devMode? "ImagesPatch" : global.mainPatchName; } };
+global.widePatchName = "wide";
 global.wideFolderName = "wide";
+global.calculateAnyWidePatchExists = function() {
+	if (global.patchExists(widePatchName)) {
+		return true;
+	}
+	for (var i=0; i<hdPatchesNames.count; i++) {
+		if (global.patchExists(hdPatchesNames[i] + "_wide")) {
+			return true;
+		}
+	}
+	return false;
+};
+global.isAnyWidePatchExists = calculateAnyWidePatchExists();
 
 global.hdScaleFactorFlagName = "hdScaleFactor";
 global.hdRenderScaleFactorFlagName = "hdRenderScaleFactor";
@@ -97,11 +111,16 @@ global.get_hdFolderName = function(kag=global.kag) { { return global.scaleFactor
 global.get_hdFolderSuffix = function(kag=global.kag) { { return "-" + global.get_hdFolderName(kag); } };
 global.get_hdPatchSuffix = function(kag=global.kag) { { return "_" + global.get_hdFolderName(kag); } };
 
-global.addHdPaths = function(kag=global.kag, patches_arr, patchName, folder="", innerPath="")
+global.addHdPaths = function(kag=global.kag, patches_arr, patchName, folder="", innerPath="", addHd, addWide)
 {
+	addHd = kag.isHd if addHd === void;
+	addWide = kag.wideScreen if addWide === void;
 	var separator = folder === ""? "" : "-";
 	for (var i = 0; i < global.hdNames.count; i++) {
-		patches_arr.add([patchName, folder + separator + global.hdNames[i] + innerPath]);
+@if(HD_MODE)
+		patches_arr.add([patchName, folder + separator + global.hdNames[i] + innerPath]) if addHd;
+@endif
+		patches_arr.add([patchName, folder + separator + global.hdNames[i] + "-" + global.wideFolderName + innerPath]) if addWide;
 		if (global.hdNames[i] == global.get_hdFolderName(kag)) {
 			break;
 		}
@@ -115,11 +134,22 @@ global.addHdPaths = function(kag=global.kag, patches_arr, patchName, folder="", 
 		patches_arr.add([patchNameHd, folder + innerPath]);
 	}
 	for (var i = 0; i < global.hdNames.count; i++) {
-		patches_arr.add([patchNameHd, folder + separator + global.hdNames[i] + innerPath]);
+@if(HD_MODE)
+		patches_arr.add([patchNameHd, folder + separator + global.hdNames[i] + innerPath]) if addHd;
+@endif
+		patches_arr.add([patchNameHd, folder + separator + global.hdNames[i] + "-" + global.wideFolderName + innerPath]) if addWide;
 		if (global.hdNames[i] == global.get_hdFolderName(kag)) {
 			break;
 		}
 	}
+};
+global.addOnlyHdPaths = function(kag, patches_arr, patchName, folder, innerPath, addHd, addWide)
+{
+	return addHdPaths(kag, patches_arr, patchName, folder, innerPath, true, false);
+};
+global.addOnlyWidePaths = function(kag, patches_arr, patchName, folder, innerPath, addHd, addWide)
+{
+	return addHdPaths(kag, patches_arr, patchName, folder, innerPath, false, true);
 };
 
 global.unloadAllHdPatches = function(kag=global.kag)
@@ -144,21 +174,22 @@ global.getHdPatchesArray = function(kag=global.kag)
 	}
 	if (typeof(kag) === "Object")
 	{
-		global.addHdPaths(kag, patches_arr, global.opPatchName) if global.get_opPatchExists();
+		global.addOnlyHdPaths(kag, patches_arr, global.opPatchName) if global.get_opPatchExists();
 
-		global.addHdPaths(kag, patches_arr, global.get_widePatchName(), global.wideFolderName) if kag.scflags[global.wideScreenFlagName];
+		global.addOnlyHdPaths(kag, patches_arr, global.get_widePatchName(), global.wideFolderName) if kag.scflags[global.wideScreenFlagName];
+		global.addOnlyHdPaths(kag, patches_arr, widePatchName) if kag.scflags[global.wideScreenFlagName];
 
-		global.addHdPaths(kag, patches_arr, global.mobileBreakGlyphsPatchName, global.mobileBreakGlyphsFolderName) if kag.sflags[global.mobileBreakGlyphsFlagName];
-		global.addHdPaths(kag, patches_arr, global.mobileWindowPatchName, global.mobileWindowFolderName) if kag.sflags[global.mobileWindowFlagName];
-		global.addHdPaths(kag, patches_arr, global.wideWindowPatchName, global.wideWindowFolderName) if kag.scflags[global.wideScreenFlagName] && kag.sflags[global.wideWindowFlagName];
-		global.addHdPaths(kag, patches_arr, global.wideMobileWindowPatchName, global.wideMobileWindowFolderName) if kag.scflags[global.wideScreenFlagName] && kag.sflags[global.wideWindowFlagName] && kag.sflags[global.mobileWindowFlagName];
+		global.addOnlyHdPaths(kag, patches_arr, global.mobileBreakGlyphsPatchName, global.mobileBreakGlyphsFolderName) if kag.sflags[global.mobileBreakGlyphsFlagName];
+		global.addOnlyHdPaths(kag, patches_arr, global.mobileWindowPatchName, global.mobileWindowFolderName) if kag.sflags[global.mobileWindowFlagName];
+		global.addOnlyHdPaths(kag, patches_arr, global.wideWindowPatchName, global.wideWindowFolderName) if kag.scflags[global.wideScreenFlagName] && kag.sflags[global.wideWindowFlagName];
+		global.addOnlyHdPaths(kag, patches_arr, global.wideMobileWindowPatchName, global.wideMobileWindowFolderName) if kag.scflags[global.wideScreenFlagName] && kag.sflags[global.wideWindowFlagName] && kag.sflags[global.mobileWindowFlagName];
 
-		global.addHdPaths(kag, patches_arr, global.maturePatchName, global.uncensoredMatureFolderName) if kag.sflags[global.matureFlagName];
-		global.addHdPaths(kag, patches_arr, global.ecchiPatchName, global.uncensoredEcchiFolderName) if kag.sflags[global.ecchiFlagName];
-		global.addHdPaths(kag, patches_arr, global.hPatchName, global.uncensoredHFolderName) if kag.sflags[global.hFlagName];
+		global.addOnlyHdPaths(kag, patches_arr, global.maturePatchName, global.uncensoredMatureFolderName) if kag.sflags[global.matureFlagName];
+		global.addOnlyHdPaths(kag, patches_arr, global.ecchiPatchName, global.uncensoredEcchiFolderName) if kag.sflags[global.ecchiFlagName];
+		global.addOnlyHdPaths(kag, patches_arr, global.hPatchName, global.uncensoredHFolderName) if kag.sflags[global.hFlagName];
 
-		global.addHdPaths(kag, patches_arr, global.languagePatchName(global.japaneseLanguage), global.imagesFolderName);
-		global.addHdPaths(kag, patches_arr, global.languagePatchName(kag.sflags.language), global.imagesFolderName) if kag.sflags.language !== void && kag.sflags.language !== global.japaneseLanguage;
+		global.addOnlyHdPaths(kag, patches_arr, global.languagePatchName(global.japaneseLanguage), global.imagesFolderName);
+		global.addOnlyHdPaths(kag, patches_arr, global.languagePatchName(kag.sflags.language), global.imagesFolderName) if kag.sflags.language !== void && kag.sflags.language !== global.japaneseLanguage;
 	}
 
 	return patches_arr;
@@ -214,16 +245,21 @@ global.initializeQuality = function(hdAssetScaleFactor, hdRenderScaleFactor)
 
 global.getWidePatchesArray = function(kag=global.kag)
 {
-	var patches_arr = [[global.get_widePatchName(), global.wideFolderName]];
-	patches_arr.add([global.wideWindowPatchName, global.wideWindowFolderName]) if kag.sflags[global.wideWindowFlagName];
-	patches_arr.add([global.wideMobileWindowPatchName, global.wideMobileWindowFolderName]) if kag.sflags[global.wideWindowFlagName] && kag.sflags[global.mobileWindowFlagName];
-@if(HD_MODE)
-	if (kag.isHd) {
-		global.addHdPaths(kag, patches_arr, global.get_widePatchName(), global.wideFolderName);
-		global.addHdPaths(kag, patches_arr, global.wideWindowPatchName, global.wideWindowFolderName) if kag.sflags[global.wideWindowFlagName];
-		global.addHdPaths(kag, patches_arr, global.wideMobileWindowPatchName, global.wideMobileWindowFolderName) if kag.sflags[global.wideWindowFlagName] && kag.sflags[global.mobileWindowFlagName];
-	}
-@endif
+	var patches_arr = [global.get_widePatchName()];
+	global.addOnlyWidePaths(kag, patches_arr, global.get_widePatchName());
+	global.addOnlyHdPaths(kag, patches_arr, global.wideWindowPatchName, global.wideWindowFolderName) if kag.sflags[global.wideWindowFlagName];
+	global.addOnlyHdPaths(kag, patches_arr, global.wideMobileWindowPatchName, global.wideMobileWindowFolderName) if kag.sflags[global.wideWindowFlagName] && kag.sflags[global.mobileWindowFlagName];
+
+	patches_arr.add([global.widePatchName]);
+	patches_arr.add([global.get_wideHdPatchName(kag)]);
+
+	global.addOnlyWidePaths(kag, patches_arr, global.opPatchName) if global.get_opPatchExists();
+	global.addOnlyWidePaths(kag, patches_arr, global.maturePatchName, global.uncensoredMatureFolderName) if kag.sflags[global.matureFlagName];
+	global.addOnlyWidePaths(kag, patches_arr, global.ecchiPatchName, global.uncensoredEcchiFolderName) if kag.sflags[global.ecchiFlagName];
+	global.addOnlyWidePaths(kag, patches_arr, global.hPatchName, global.uncensoredHFolderName) if kag.sflags[global.hFlagName];
+	global.addOnlyWidePaths(kag, patches_arr, global.languagePatchName(global.japaneseLanguage), global.imagesFolderName);
+	global.addOnlyWidePaths(kag, patches_arr, global.languagePatchName(kag.sflags.language), global.imagesFolderName) if kag.sflags.language !== void && kag.sflags.language !== global.japaneseLanguage;
+
 	return patches_arr;
 };
 

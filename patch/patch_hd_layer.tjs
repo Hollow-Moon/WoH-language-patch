@@ -1131,7 +1131,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 
 	function upscale()
 	{
-		var wideImageHeightAdjustment = (this.isbg && this.isWideImage)? this.window.wideFactor : 1;
+		var wideImageHeightAdjustment = (this.isbg && this.isWideImage && global.isAnyWidePatchExists)? this.window.wideFactor : 1;
 		var scaledImageWidth = this.scaleImageWidth(this._imageWidth);
 		var scaledImageHeight = this.scaleImageHeight(this._imageHeight / wideImageHeightAdjustment);
 		if (this.imageWidthOriginal == scaledImageWidth && this.imageHeightOriginal == scaledImageHeight) return;

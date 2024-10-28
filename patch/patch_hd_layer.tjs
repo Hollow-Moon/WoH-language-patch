@@ -973,10 +973,6 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 				} else if (global.autoExtendFrames.contains(this.imageStorage) && this.window.sflags.wideWindow) {
 					autoExtend = true;
 				}
-
-				if (imageInfo["wide"] === true) {
-					this.isWideImage = true;
-				}
 			} else {
 				this._imageWidth = imageInfo["width"];
 			}
@@ -986,6 +982,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 			this._imageWidth *= this.numberOfImages;
 			
 			this.isbg = imageInfo["bg"] !== void ? imageInfo["bg"] : false;
+			this.isWideImage = isbg;
 			
 			this.positionScaleMode = imageInfo["positionScaleMode"] !== void ? imageInfo["positionScaleMode"] : 0;
 		}

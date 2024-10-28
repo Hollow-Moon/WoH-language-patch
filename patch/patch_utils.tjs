@@ -68,6 +68,11 @@ global.load_patches = function(patch_array, should_add_to_auto_path=true)
 		{
 			name = patch_array[i][0];
 		}
+		// FIXME: tTJSVariant_S->vt has an invalid value which causes empty string to be returned
+		if (typeof(patch_array[i][0]) === "")
+		{
+			continue;
+		}
 		if (name === void)
 		{
 			throw new global.Exception("Expected a string when loading patch, instead got ");

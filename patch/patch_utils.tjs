@@ -63,21 +63,25 @@ global.load_patches = function(patch_array, should_add_to_auto_path=true)
 		{
 			continue;
 		}
-		var name = patch_array[i][0];
-		if (typeof(name) !== "String")
+		var name = void;
+		if (typeof(patch_array[i][0]) === "String")
 		{
-			throw new global.Exception("Expected a string when loading patch");
+			name = patch_array[i][0];
 		}
-		var folderName = patch_array[i][1];
-		if (typeof(folderName) !== "String")
+		if (name === void)
 		{
-			folderName = "";
+			throw new global.Exception("Expected a string when loading patch, instead got ");
+		}
+		var folderName = "";
+		if (typeof(patch_array[i][1]) === "String")
+		{
+			folderName = patch_array[i][1];
 		}
 		folderName += "/" if folderName != "";
-		var basePath = patch_array[i][2];
-		if (typeof(basePath) !== "String")
+		var basePath = global.paths_base[0];
+		if (typeof(patch_array[i][2]) === "String")
 		{
-			basePath = global.paths_base[0];
+			basePath = patch_array[i][2];
 		}
 		if (!global.devMode)
 		{
@@ -116,21 +120,25 @@ global.unload_patches = function(patch_array)
 		{
 			continue;
 		}
-		var name = patch_array[i][0];
-		if (typeof(name) !== "String")
+		var name = void;
+		if (typeof(patch_array[i][0]) === "String")
+		{
+			name = patch_array[i][0];
+		}
+		if (name === void)
 		{
 			throw new global.Exception("Expected a string when unloading patch");
 		}
-		var folderName = patch_array[i][1];
-		if (typeof(folderName) !== "String")
+		var folderName = "";
+		if (typeof(patch_array[i][1]) === "String")
 		{
-			folderName = "";
+			folderName = patch_array[i][1];
 		}
 		folderName += "/" if folderName != "";
-		var basePath = patch_array[i][2];
-		if (typeof(basePath) !== "String")
+		var basePath = global.paths_base[0];
+		if (typeof(patch_array[i][2]) === "String")
 		{
-			basePath = global.paths_base[0];
+			basePath = patch_array[i][2];
 		}
 		patches_to_remove.add(global.name_to_patch_path(name, false, basePath) + folderName);
 		patches_to_remove.add(global.name_to_patch_path(name, true, basePath) + folderName);

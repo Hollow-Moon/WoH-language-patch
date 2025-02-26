@@ -192,6 +192,33 @@ global.inverseFlag = function(flag)
 	return new global.GameFlag(flag.owner, flag.holder, flag.name, !flag.defaultValue, !flag.reverse);
 };
 
+class CompositeFlag
+{
+	var flags;
+
+	function CompositeFlag(flags)
+	{
+		this.flags = flags;
+	}
+
+	property value {
+		getter
+		{
+			var values = [];
+			for (var i = 0, internal_forloop_count = this.flags.count; i < internal_forloop_count; i += 1) {
+				values[i] = flags[i].value;
+			}
+			return values;
+		}
+		setter(v)
+		{
+			for (var i = 0, internal_forloop_count = this.flags.count; i < internal_forloop_count; i += 1) {
+				this.flags[i].value = v[i];
+			}
+		}
+	}
+}
+
 class CompositeAndFlag
 {
 	var flags;

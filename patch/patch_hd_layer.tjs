@@ -69,35 +69,90 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 	property horizontalAlignment
 	{
 		getter { return this._horizontalAlignment; }
-		setter(v) { this._horizontalAlignment = v; this.left = this.left; }
+		setter(v)
+		{
+			this._horizontalAlignment = v;
+@if(GAME_WOHN)
+			this.setPos_patch_hd_layer(this._left, this._top);
+@endif
+@if(!GAME_WOHN)
+			this.left = this.left;
+@endif
+		}
 	}
 
 	property verticalAlignment
 	{
 		getter { return this._verticalAlignment; }
-		setter(v) { this._verticalAlignment = v; this.top = this.top; }
+		setter(v)
+		{
+			this._verticalAlignment = v;
+@if(GAME_WOHN)
+			this.setPos_patch_hd_layer(this._left, this._top);
+@endif
+@if(!GAME_WOHN)
+			this.top = this.top;
+@endif
+		}
 	}
 
 	property imageHorizontalAlignment
 	{
 		getter { return this._imageHorizontalAlignment; }
-		setter(v) { this._imageHorizontalAlignment = v; this.imageLeft = this.imageLeft; }
+		setter(v)
+		{
+			this._imageHorizontalAlignment = v;
+@if(GAME_WOHN)
+			this.setImagePos_patch_hd_layer(this._imageLeft, this._imageTop);
+@endif
+@if(!GAME_WOHN)
+			this.imageLeft = this.imageLeft;
+@endif
+		}
 	}
 
 	property imageVerticalAlignment
 	{
 		getter { return this._imageVerticalAlignment; }
-		setter(v) { this._imageVerticalAlignment = v; this.imageTop = this.imageTop; }
+		setter(v)
+		{
+			this._imageVerticalAlignment = v;
+@if(GAME_WOHN)
+			this.setImagePos_patch_hd_layer(this._imageLeft, this._imageTop);
+@endif
+@if(!GAME_WOHN)
+			this.imageTop = this.imageTop;
+@endif
+		}
 	}
 
 	property isbg {
 		getter { return this._isbg; }
-		setter(v) { this._isbg = v; this.updateTopScroll(); this.setPos(this._left, this._top); }
+		setter(v)
+		{
+			this._isbg = v;
+			this.updateTopScroll();
+@if(GAME_WOHN)
+			this.setPos_patch_hd_layer(this._left, this._top);
+@endif
+@if(!GAME_WOHN)
+			this.setPos(this._left, this._top);
+@endif
+		}
 	}
 
 	property topScroll {
 		getter { return this._topScroll; }
-		setter(v) { this._topScroll = v; this.top = this.top; }
+		setter(v)
+		{
+			this._topScroll = v;
+@if(GAME_WOHN)
+			this.setPos_patch_hd_layer(this._left, this._top);
+@endif
+@if(!GAME_WOHN)
+			this.top = this.top;
+@endif
+		}
 	}
 
 	property leftScaleMode {
@@ -407,13 +462,37 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 	property width
 	{
 		getter { return this.absoluteMode? this.widthOriginal : this._width; }
-		setter(v) { v = +v; this._width = v; this.widthOriginal = this.scaleWidth(v); this.updateImageSize(); this.left = this._left; }
+		setter(v)
+		{
+			v = +v;
+			this._width = v;
+			this.widthOriginal = this.scaleWidth(v);
+			this.updateImageSize();
+@if(GAME_WOHN)
+			this.setPos_patch_hd_layer(this._left, this._top);
+@endif
+@if(!GAME_WOHN)
+			this.left = this._left;
+@endif
+		}
 	}
 
 	property height
 	{
 		getter { return this.absoluteMode? this.heightOriginal : this._height; }
-		setter(v) { v = +v; this._height = v; this.heightOriginal = this.scaleHeight(v); this.updateImageSize(); this.top = this._top; }
+		setter(v)
+		{
+			v = +v;
+			this._height = v;
+			this.heightOriginal = this.scaleHeight(v);
+			this.updateImageSize();
+@if(GAME_WOHN)
+			this.setPos_patch_hd_layer(this._left, this._top);
+@endif
+@if(!GAME_WOHN)
+			this.top = this._top;
+@endif
+		}
 	}
 
 	property imageWidth
@@ -560,7 +639,12 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 		this._height = height;
 		(global.Layer_patch_hd_layer_original.setSize incontextof this)(this.scaleWidth(width), this.scaleHeight(height));
 		this.updateImageSize();
+@if(GAME_WOHN)
+		this.setPos_patch_hd_layer(this._left, this._top);
+@endif
+@if(!GAME_WOHN)
 		this.setPos(this._left, this._top);
+@endif
 	}
 
 	function setSize(width, height)
@@ -594,18 +678,68 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 
 	function updateImageSize()
 	{
-		if (this.hasImage) {
-			if (this.imageWidth < this.width) {
+@if(GAME_WOHN)
+		if (this.hasImageOriginal)
+@endif
+@if(!GAME_WOHN)
+		if (this.hasImage)
+@endif
+		{
+@if(GAME_WOHN)
+			if (this._imageWidth < this._width)
+@endif
+@if(!GAME_WOHN)
+			if (this.imageWidth < this.width)
+@endif
+			{
+@if(GAME_WOHN)
+				this._imageWidth = this._width;
+@endif
+@if(!GAME_WOHN)
 				this._imageWidth = this.width;
+@endif
 			}
-			if (this.imageWidth + this.imageLeft < this.width) {
+@if(GAME_WOHN)
+			if (this._imageWidth + this._imageLeft < this._width)
+@endif
+@if(!GAME_WOHN)
+			if (this.imageWidth + this.imageLeft < this.width)
+@endif
+			{
+@if(GAME_WOHN)
+				this._imageLeft = this._width - this._imageWidth;
+@endif
+@if(!GAME_WOHN)
 				this._imageLeft = this.width - this.imageWidth;
+@endif
 			}
-			if (this.imageHeight < this.height) {
+@if(GAME_WOHN)
+			if (this._imageHeight < this._height)
+@endif
+@if(!GAME_WOHN)
+			if (this.imageHeight < this.height)
+@endif
+			{
+@if(GAME_WOHN)
+				this._imageHeight = this._height;
+@endif
+@if(!GAME_WOHN)
 				this._imageHeight = this.height;
+@endif
 			}
-			if (this.imageHeight + this.imageTop < this.height) {
+@if(GAME_WOHN)
+			if (this._imageHeight + this._imageTop < this._height)
+@endif
+@if(!GAME_WOHN)
+			if (this.imageHeight + this.imageTop < this.height)
+@endif
+			{
+@if(GAME_WOHN)
+				this._imageTop = this._height - this._imageHeight;
+@endif
+@if(!GAME_WOHN)
 				this._imageTop = this.height - this.imageHeight;
+@endif
 			}
 			this.resetClip();
 		}
@@ -633,7 +767,12 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 			this._imageTop = this._height - this._imageHeight;
 		}
 
+@if(GAME_WOHN)
+		if (this.hasImageOriginal)
+@endif
+@if(!GAME_WOHN)
 		if (this.hasImage)
+@endif
 		{
 			this.resetClip();
 		}
@@ -2140,7 +2279,12 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 		var heightOriginal = bottomOriginal - topOriginal;
 
 		// if passed in values include the whole layer...
+@if(GAME_WOHN)
+		if (left == 0 && top == 0 && width == this._imageWidth && height == this._imageHeight)
+@endif
+@if(!GAME_WOHN)
 		if (left == 0 && top == 0 && width == this.imageWidth && height == this.imageHeight)
+@endif
 		{
 			// ...draw on the whole layer
 			widthOriginal = this.imageWidthOriginal;
@@ -2202,7 +2346,12 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 		var heightOriginal = bottomOriginal - topOriginal;
 
 		// if passed in values include the whole layer...
+@if(GAME_WOHN)
+		if (left == 0 && top == 0 && width == this._imageWidth && height == this._imageHeight)
+@endif
+@if(!GAME_WOHN)
 		if (left == 0 && top == 0 && width == this.imageWidth && height == this.imageHeight)
+@endif
 		{
 			// ...draw on the whole layer
 			widthOriginal = this.imageWidthOriginal;

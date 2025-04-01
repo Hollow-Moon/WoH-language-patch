@@ -96,11 +96,21 @@
 		clean_technical(translated_lines);
 		if (dest_notechnical.count !== translated_lines.count)
 		{
+			while (translated_lines.count > dest_notechnical.count)
+			{
+				if (translated_lines[translated_lines.count - 1] === "[l][r]")
+				{
+					translated_lines.pop();
+				}
+			}
+		}
+		if (dest_notechnical.count !== translated_lines.count)
+		{
 @if(DEBUG_FSNCLEANER)
 			global.Debug.message("Dest:");
 			for (var i = 0; i < dest_notechnical.count; i += 1)
 			{
-				Debug.message(dest_notechnical[i]);
+				global.Debug.message(dest_notechnical[i]);
 			}
 			global.Debug.message("Src:");
 			for (var i = 0; i < translated_lines.count; i += 1)
@@ -108,7 +118,7 @@
 				global.Debug.message(translated_lines[i]);
 			}
 @endif
-			throw new global.Exception("Line count doesn't match while attempting to clean!");
+			throw new global.Exception(("Line count doesn't match while attempting to clean! Destcnt: %d Srccnt: %d").sprintf(translated_lines.count, dest_notechnical.count));
 		}
 		// ReplaceText
 		for (var i = 0, internal_forloop_count_i = dest.count, j = 0, internal_forloop_count_j = translated_lines.count; (i < internal_forloop_count_i && j < internal_forloop_count_j); i += 1)

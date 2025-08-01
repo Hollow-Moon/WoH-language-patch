@@ -15,8 +15,8 @@ class KAGWindow_patch_window_hook_override extends global.KAGWindow_patch_window
 	function callHook(tag, *)
 	{
 		// 文字列を渡されたときはテーブルから参照
-		var array = (typeof tag == "String" && tag != "") ? this.hookMap[tag] : tag;
-		if (typeof array != "Object" || array.count <= 0) return false;
+		var array = (typeof(tag) == "String" && tag != "") ? this.hookMap[tag] : tag;
+		if (typeof(array) !== "Object" || array.count <= 0) return false;
 
 		// 順番に呼び出し
 		var ret = false, tmp = [];
@@ -24,24 +24,24 @@ class KAGWindow_patch_window_hook_override extends global.KAGWindow_patch_window
 		for (var i = 0, cnt = tmp.count; i < cnt; i += 1)
 		{
 			var func = tmp[i];
-			ret |= func(*) if (typeof func == "Object");
+			ret |= func(*) if (typeof(func) === "Object");
 		}
 		return !!ret;
 	}
 	function addHook(tag, func)
 	{
 		var array = tag;
-		if (typeof tag == "String" && tag != "")
+		if (typeof(tag) === "String" && tag != "")
 		{
 			array = this.hookMap[tag];
 			array = this.hookMap[tag] = [] if (array === void);
 		}
-		array.add(func) if (typeof array == "Object");
+		array.add(func) if (typeof(array) === "Object");
 	}
 	function removeHook(tag, func)
 	{
-		var array = (typeof tag == "String" && tag != "") ? this.hookMap[tag] : tag;
-		array.remove(func, true) if (typeof array == "Object");
+		var array = (typeof(tag) === "String" && tag != "") ? this.hookMap[tag] : tag;
+		array.remove(func, true) if (typeof(array) === "Object");
 	}
 }
 global.KAGWindow = global.KAGWindow_patch_window_hook_override;

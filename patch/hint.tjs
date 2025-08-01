@@ -188,8 +188,10 @@ class Window_hint_override extends global.Window_hint_original
 				clientRect.h = this.height;
 			}
 			
-			if (typeof this.fullScreened === "Integer" && this.fullScreened)
+			if (typeof(this.fullScreened) === "Integer" && this.fullScreened)
+			{
 				clientRect.h = global.System.screenHeight;	// clientRect.h can be bigger than screenHeight when fullScreened, with some black border at the bottom, for unknown reasons.
+			}
 
 			var pxWidth = this.scWidth;
 			if (typeof(this.pxWidth) === "Integer" || typeof(this.pxWidth) === "Real")

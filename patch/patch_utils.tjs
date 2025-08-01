@@ -1409,7 +1409,7 @@ global._dm = function() {};
 @endif
 
 //	krkr 2.25 beta 8 より前のexeには"imageTagLayerType"が存在しないので、仮に定義する
-if (typeof global.imageTagLayerType == "undefined")
+if (typeof(global.imageTagLayerType) === "undefined")
 {
 	global.imageTagLayerType	= %[
 		opaque:		%[type:global.ltOpaque],
@@ -1437,7 +1437,7 @@ global.getDebugStringFromElm = function( elm, str="", maxdepth=3, depth=0 )
 		tmp.assign(elm);
 		for(var i=0; i<tmp.count; i+=2 ){
 			ret += (string)tmp[i] + "=>";
-			if( maxdepth == depth || typeof tmp[i+1] != "Object" ){
+			if( maxdepth == depth || typeof(tmp[i+1]) !== "Object" ){
 				ret += (string)tmp[i+1] + ",";
 			}else{
 				ret += getDebugStringFromElm(tmp[i+1], "", maxdepth, depth+1) + ",";
@@ -1447,7 +1447,7 @@ global.getDebugStringFromElm = function( elm, str="", maxdepth=3, depth=0 )
 	}else if( elm instanceof "Array" ){
 		ret = str;
 		for(var i=0; i<elm.count; i++){
-			if( maxdepth == depth || typeof elm[i] != "Object" ){
+			if( maxdepth == depth || typeof(elm[i]) !== "Object" ){
 				ret += (string)i + ":" + (string)elm[i] + ",";
 			}else{
 				ret += getDebugStringFromElm(elm[i], "(array["+i+"])", maxdepth, depth+1) + ",";
@@ -1474,7 +1474,7 @@ global.getDebugStringFromElm = function() { return ""; };
 /*
 	実行オプションのチェック
 */
-if(typeof global.Plugins.cxdec != "undefined" && typeof global.Plugins.cxdec.embedOptions != "undefined")
+if(typeof(global.Plugins.cxdec) !== "undefined" && typeof(global.Plugins.cxdec.embedOptions) !== "undefined")
 {
 	var emb = global.Plugins.cxdec.embedOptions.split("\n");
 	var opt, ep, tag, val, now;
@@ -1501,7 +1501,7 @@ global.getClassName = function( obj )
 {
 	var tmp = [];
 	var ret = [];
-	if( typeof obj == "Object" ){
+	if( typeof(obj) === "Object" ){
 		ret = global.Scripts.getClassNames(obj);
 		if( ret instanceof "Array" ){
 			tmp.assign( ret );
@@ -1527,18 +1527,18 @@ global.getLayerInfo = function()
 					continue;
 				if(children[i] instanceof "MessageCharLayer")
 					continue;
-				text	+= indent + (c.visible ? "■" : "□")+" "+c.name+(typeof c.layerID != "undefined" ? "/"+c.layerID : "")+
-					(typeof c.storage != "undefined" ? " <"+global.Storages.extractStorageName(c.storage)+">" : "")+
+				text	+= indent + (c.visible ? "■" : "□")+" "+c.name+(typeof(c.layerID) !== "undefined" ? "/"+c.layerID : "")+
+					(typeof(c.storage) !== "undefined" ? " <"+global.Storages.extractStorageName(c.storage)+">" : "")+
 					"["+c.type+"]"+
-//					"["+(isbase ? ._effect +"/in:"+.childEffect : (typeof ._effect != "undefined" ? (._effect != "" ? ._effect : (typeof .parent.childEffect != "undefined" ? .parent.childEffect : "")): ""))+"]"+
-					" ("+c.left+", "+c.top+(typeof c.realLeft != "undefined" ? "/"+c.realLeft+","+c.realTop+"/"+c.realImageLeft+","+c.realImageTop : "")+")-"+
-					(typeof c.center != "undefined" ? ("(C:"+c.center+", "+c.vcenter+")-") : "")+
+//					"["+(isbase ? ._effect +"/in:"+.childEffect : (typeof(._effect) !== "undefined" ? (._effect != "" ? ._effect : (typeof(.parent.childEffect) !== "undefined" ? .parent.childEffect : "")): ""))+"]"+
+					" ("+c.left+", "+c.top+(typeof(c.realLeft) !== "undefined" ? "/"+c.realLeft+","+c.realTop+"/"+c.realImageLeft+","+c.realImageTop : "")+")-"+
+					(typeof(c.center) !== "undefined" ? ("(C:"+c.center+", "+c.vcenter+")-") : "")+
 					"("+c.width+", "+c.height+") opac="+c.opacity+
-					(typeof c.zoomx != "undefined" ? " zoom="+(c.zoomx == c.zoomy ? "%4.2f".sprintf(c.zoomx) : "(%4.2f, %4.2f)".sprintf(c.zoomx, c.zoomy)) : "")+
-					(typeof c.rotate != "undefined" ? " rot=%4.2f".sprintf(c.rotate) : "")+
-					(typeof c.afx != "undefined" ? " af=(%d, %d)".sprintf(c.afx, c.afy) : "")+
-					(typeof c.srcleft != "undefined" ? " (%4.2f, %4.2f)[%4.2f/%4.2f](%d, %d)".sprintf(c.srcleft, c.srctop, c.srczoomx, c.srcrotate, c.srcafx, c.srcafy): "")+
-					(typeof c.notuse != "undefined" ? " use=%d".sprintf(!c.notuse) : "")+"\r\n";
+					(typeof(c.zoomx) !== "undefined" ? " zoom="+(c.zoomx == c.zoomy ? "%4.2f".sprintf(c.zoomx) : "(%4.2f, %4.2f)".sprintf(c.zoomx, c.zoomy)) : "")+
+					(typeof(c.rotate) !== "undefined" ? " rot=%4.2f".sprintf(c.rotate) : "")+
+					(typeof(c.afx) !== "undefined" ? " af=(%d, %d)".sprintf(c.afx, c.afy) : "")+
+					(typeof(c.srcleft) !== "undefined" ? " (%4.2f, %4.2f)[%4.2f/%4.2f](%d, %d)".sprintf(c.srcleft, c.srctop, c.srczoomx, c.srcrotate, c.srcafx, c.srcafy): "")+
+					(typeof(c.notuse) !== "undefined" ? " use=%d".sprintf(!c.notuse) : "")+"\r\n";
 				text	+= func(c.children, indent + "  ", func);
 			}
 		}

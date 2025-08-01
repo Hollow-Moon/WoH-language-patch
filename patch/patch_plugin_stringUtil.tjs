@@ -139,8 +139,10 @@ global.parseKeyFrame = function(keyframe)
 global.parseKeyFrame_alternate = function(keyframe)
 {
 	//	解析する必要がなければ、そのまま返す
-	if(typeof keyframe == "Object" && keyframe instanceof "Array")
+	if (typeof(keyframe) == "Object" && keyframe instanceof "Array")
+	{
 		return keyframe;
+	}
 
 //	var	keys	= keyframe.split("()",, true);	//	この方法でやると、要素部分に()が含まれているときに意図しない動作になる
 	if(keyframe[0] != "(")

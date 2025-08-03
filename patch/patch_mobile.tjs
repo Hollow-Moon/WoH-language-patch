@@ -2,6 +2,9 @@
 
 global.ssf = %[];
 
+// Remaster only.
+global.checklastep = false;
+
 global.playMenuOpenSE = function()
 {
     //Mobile only.
@@ -15,65 +18,60 @@ global.kag.setVirtualWideMode = function(value) {
 	//Mobile only.
 };
 
-global.add_kag_window_tag_handler("download", function(mp) {
-	// Mobile only.
-	return 0;
-});
+global.patch_mobile_stub_tag_names = [
+	// Added in Mobile
+	"download",
+	"openflowchart",
+	"setbgmnonstopmode",
+	"fixedframemode",
+	"texturemag",
+	"setwipemode",
+	"setignorecinescoautofitmode",
+	"setnocameraresetmode",
+	"dflick",
+	"lflick",
+	"rflick",
+	"uflick",
+@if(USE_REMASTER_WORKAROUNDS)
+	// Added in Remaster
+	"cl_fadein",
+	"conddodgemode",
+	"erasestaffroll",
+	"faddein",
+	"fzlv2cond",
+	"i2o_curtain",
+	"locktextshowing",
+	"noskipmode",
+	"setantiquakemode",
+	"setblendmode",
+	"setframe",
+	"setframebufmode",
+	"setnocaemraresetmode",
+	"showstaffrole",
+	"smudge2",
+	"smudge3",
+	"staffrollappearimage",
+	"staffrollinit",
+	"staffrollstart",
+	"staffrolltext",
+	"staffrolluninit",
+	"textwindowoff",
+	"unlockachievement",
+	"wstaffroll",
+@endif
+];
 
-global.add_kag_window_tag_handler("openflowchart", function(mp) {
-	// Mobile only.
-	return 0;
-});
-
-global.add_kag_window_tag_handler("setbgmnonstopmode", function(mp) {
-	// Mobile only.
-	return 0;
-});
-
-global.add_kag_window_tag_handler("fixedframemode", function(mp) {
-	// Mobile only.
-	return 0;
-});
-
-global.add_kag_window_tag_handler("texturemag", function(mp) {
-	// Mobile only.
-	return 0;
-});
-
-global.add_kag_window_tag_handler("setwipemode", function(mp) {
-	// Mobile only.
-	return 0;
-});
-
-global.add_kag_window_tag_handler("setignorecinescoautofitmode", function(mp) {
-	// Mobile only.
-	return 0;
-});
-
-global.add_kag_window_tag_handler("setnocameraresetmode", function(mp) {
-	// Mobile only.
-	return 0;
-});
-
-global.add_kag_window_tag_handler("dflick", function(mp) {
-	// Mobile only.
-	return 0;
-});
-
-global.add_kag_window_tag_handler("lflick", function(mp) {
-	// Mobile only.
-	return 0;
-});
-
-global.add_kag_window_tag_handler("rflick", function(mp) {
-	// Mobile only.
-	return 0;
-});
-
-global.add_kag_window_tag_handler("uflick", function(mp) {
-	// Mobile only.
-	return 0;
-});
+{
+	var patch_mobile_stub_tag_names = global.patch_mobile_stub_tag_names;
+	for (var i = 0, internal_forloop_count = patch_mobile_stub_tag_names.count; i < internal_forloop_count; i += 1)
+	{
+		if (patch_mobile_stub_tag_names[i] === void)
+		{
+			continue;
+		}
+		global.add_kag_window_tag_handler(patch_mobile_stub_tag_names[i], function(mp) { return 0; });
+	}
+}
 
 global.add_kag_window_tag_handler("fillcolor", function(mp) {
 	var layer = global.kag[mp.page].base;

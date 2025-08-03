@@ -32,6 +32,9 @@ global.patch_conductor_regex_4 = /(?:\["[a-zA-Z0-9_-]*"]|\['[a-zA-Z0-9_-]*']|\[[
 global.patch_conductor_regex_5 = /(?:(?<=^)|(?<=\n))(?:@|;|\*).*?(?=$|\n)/g;
 global.patch_conductor_regex_6 = /(?s)(?:(?:^|\n)\[iscript\]|(?:^|\n)\[iscript\]\\(?:\n)|(?:^|\n)@iscript(?:\n)).*?(?:(?:^|\n)\[endscript\]|(?:^|\n)\[endscript\]\\(?:\n)|(?:^|\n)@endscript(?:\n))/g;
 
+global.patch_conductor_regex_7 = /(?:(?<=^)|(?<=\n))(?:@|@;.*?)(?=$|\n)/g;
+global.patch_conductor_regex_8 = /(?:(?<=^)|(?<=\n))(?:@.*?)=(?=$|\n)/g;
+
 global.Conductor_patch_conductor_original = global.Conductor;
 
 class Conductor_patch_conductor_override extends global.Conductor_patch_conductor_original
@@ -137,6 +140,16 @@ class Conductor_patch_conductor_override extends global.Conductor_patch_conducto
 		// Remove arrays with number indexes (required or it will break when there is nested []s)
 		// Remove arrays with variable index (i.e. [+mp.pos])
 		// Remove tags
+		return line;
+	}
+
+	function fixScenario(line)
+	{
+@if(USE_REMASTER_WORKAROUNDS)
+		// Fix issues that would work in fuzz smash engine but won't work with KAGParser
+		line = line.replace(global.patch_conductor_regex_7, "@eval exp=\"\"");
+		line = line.replace(global.patch_conductor_regex_8, "=\"\"");
+@endif
 		return line;
 	}
 
@@ -689,7 +702,7 @@ class Conductor_patch_conductor_override extends global.Conductor_patch_conducto
 		// Use Array.load for loading scenario
 		this.lines.clear();
 		this.lines.load(name);
-		var joined_lines = this.lines.join("\n");
+		var joined_lines = this.fixScenario(this.lines.join("\n"));
 		var joined_cleaned_lines = this.cleanMultiLine(joined_lines);
 		if (typeof(this.owner.replace_characters_regex) === "Object")
 		{

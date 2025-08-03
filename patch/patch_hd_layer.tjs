@@ -1089,7 +1089,13 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 
 			if (typeof(imageInfo) !== "Object")
 			{
+@if(!USE_REMASTER_WORKAROUNDS)
 				throw new global.Exception("Missing image in images_hd.dic: " + imageKey);
+@endif
+@if(USE_REMASTER_WORKAROUNDS)
+				global.Debug.message("W: Missing image in images_hd.dic: " + imageKey);
+				return;
+@endif
 			}
 
 			if (imageInfo["hd_name"] !== void && this.window.isHd) {

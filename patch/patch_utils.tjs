@@ -2110,3 +2110,115 @@ global.calc_epk_hash = function(intext)
 	}
 	return ar.join("");
 };
+
+global.read_decrypted_epk = function(infile)
+{
+	var finarr = [];
+	var arf = [];
+	arf.load(infile);
+	if (arf[0] !== "DAT")
+	{
+		return finarr;
+	}
+	if (arf[1] === void)
+	{
+		return finarr;
+	}
+	var key_strs = [];
+	var key_types = [];
+	var splteq = [];
+	var curstr = arf[1];
+	for (var i = 0; i !== void;)
+	{
+		var old_i = i;
+		i = curstr.indexOf("::", old_i);
+		if (i === -1)
+		{
+			i = void;
+		}
+		splteq.split("=", curstr.substring(old_i, i - old_i));
+		key_strs.add(splteq[0]);
+		key_types.add(splteq[1]);
+		if (i !== void)
+		{
+			i += 2;
+		}
+	}
+	for (var i = 2; i < arf.count; i += 1)
+	{
+		var dic = %[];
+		var curstr = arf[i];
+		if (curstr === "" || curstr === void)
+		{
+			continue;
+		}
+		for (var j = 0, jx = 0; j !== void; jx += 1)
+		{
+			var old_j = j;
+			j = curstr.indexOf("::", old_j);
+			if (j === -1)
+			{
+				j = void;
+			}
+			var key_str = key_strs[jx];
+			if (key_str !== void && key_str !== "")
+			{
+				var val_prepared = curstr.substring(old_j, j - old_j);
+				switch (key_types[jx])
+				{
+					case "qid":
+					case "i":
+					case "r":
+						val_prepared |= 0;
+						break;
+					case "f":
+						val_prepared += 0.0;
+						break;
+					case "str":
+					case "lstr":
+					default:
+						break;
+				}
+				dic[key_str] = val_prepared;
+			}
+			if (j !== void)
+			{
+				j += 2;
+			}
+		}
+		finarr.add(dic);
+	}
+	return finarr;
+};
+
+global.get_epk_scenario_replacements = function(scenario_path)
+{
+	var xpos1 = scenario_path.reverse().indexOf("/");
+	var xpos = scenario_path.length - xpos1;
+	if (xpos1 === -1)
+	{
+		xpos = 0;
+	}
+	var substr1 = scenario_path.substr(xpos);
+	var ypos = substr1.indexOf(".");
+	if (ypos === -1)
+	{
+		ypos = void;
+	}
+	var scenario_basename = substr1.substr(0, ypos);
+	var epk_fn = global.calc_epk_hash(scenario_basename) + ".epk_dec";
+	var replacementdic = %[];
+	if (global.Storages.isExistentStorage(epk_fn))
+	{
+		var finarr = global.read_decrypted_epk(epk_fn);
+		for (var i = 0; i < finarr.count; i += 1)
+		{
+			var ky = finarr[i]["label"];
+			if (ky !== void && ky !== "")
+			{
+				replacementdic[ky] = finarr[i]["text"];
+			}
+		}
+	}
+	return replacementdic;
+};

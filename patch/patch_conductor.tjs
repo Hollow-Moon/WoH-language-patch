@@ -34,6 +34,7 @@ global.patch_conductor_regex_6 = /(?s)(?:(?:^|\n)\[iscript\]|(?:^|\n)\[iscript\]
 
 global.patch_conductor_regex_7 = /(?:(?<=^)|(?<=\n))(?:@|@;.*?)(?=$|\n)/g;
 global.patch_conductor_regex_8 = /(?:(?<=^)|(?<=\n))(?:@.*?)=(?=$|\n)/g;
+global.patch_conductor_regex_9 = /\$\$\$.*?\$\$\$/g;
 
 global.Conductor_patch_conductor_original = global.Conductor;
 
@@ -143,12 +144,28 @@ class Conductor_patch_conductor_override extends global.Conductor_patch_conducto
 		return line;
 	}
 
+	var patch_conductor_dollar_replacements = %[];
+	function dollarReplace(matcharr)
+	{
+		var matchstr = matcharr[0];
+		if (matchstr !== "" && matchstr !== void)
+		{
+			var newstr = this.patch_conductor_dollar_replacements[matchstr];
+			if (newstr !== void && newstr !== "")
+			{
+				return newstr;
+			}
+		}
+		return matchstr;
+	}
+
 	function fixScenario(line)
 	{
 @if(USE_REMASTER_WORKAROUNDS)
 		// Fix issues that would work in fuzz smash engine but won't work with KAGParser
 		line = line.replace(global.patch_conductor_regex_7, "@eval exp=\"\"");
 		line = line.replace(global.patch_conductor_regex_8, "=\"\"");
+		line = line.replace(global.patch_conductor_regex_9, this.dollarReplace);
 @endif
 		return line;
 	}
@@ -702,6 +719,9 @@ class Conductor_patch_conductor_override extends global.Conductor_patch_conducto
 		// Use Array.load for loading scenario
 		this.lines.clear();
 		this.lines.load(name);
+@if(USE_REMASTER_WORKAROUNDS)
+		this.patch_conductor_dollar_replacements = global.get_epk_scenario_replacements(name);
+@endif
 		var joined_lines = this.fixScenario(this.lines.join("\n"));
 		var joined_cleaned_lines = this.cleanMultiLine(joined_lines);
 		if (typeof(this.owner.replace_characters_regex) === "Object")

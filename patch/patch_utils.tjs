@@ -1854,3 +1854,259 @@ global.recalcExtraMenuButtonX = function(buttonName, xPosOld, layer)
 
 	return xPosIDC;
 };
+
+global.utf8_calculate_len = function(codepoint)
+{
+	if (codepoint < 0x7f)
+	{
+		return 1;
+	}
+	if (codepoint < 0x7ff)
+	{
+		return 2;
+	}
+	if (codepoint < 0xffff)
+	{
+		return 3;
+	}
+	return 4;
+};
+global.utf8_leading_bytes = [
+	[0x80, 0x00],
+	[0xE0, 0xC0],
+	[0xF0, 0xE0],
+	[0xF8, 0xF0],
+];
+
+global.utf8_encode_codepoint = function(codepoint)
+{
+	var sz = global.utf8_calculate_len(codepoint);
+	var ar = [];
+	for (var i = 0; i < sz - 1; i += 1)
+	{
+		ar.unshift((((codepoint >> (6 * i)) & (0xC0 ^ 0xFFFFFFFF)) & 0xFF) | 0x80);
+	}
+	var pattern = global.utf8_leading_bytes[sz - 1];
+	ar.unshift((((codepoint >> (6 * (sz - 1))) & ((pattern[0]) ^ 0xFFFFFFFF)) & 0xFF) | pattern[1]);
+	return ar;
+};
+global.utf8_encode_string = function(strval)
+{
+	var ar = [];
+	for (var i = 0; i < strval.length; i += 1)
+	{
+		var arx = global.utf8_encode_codepoint(#strval[i]);
+		ar.push(arx*);
+	}
+	return ar;
+};
+global.md5_SV = [
+	0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee,
+	0xf57c0faf, 0x4787c62a, 0xa8304613, 0xfd469501,
+	0x698098d8, 0x8b44f7af, 0xffff5bb1, 0x895cd7be,
+	0x6b901122, 0xfd987193, 0xa679438e, 0x49b40821,
+	0xf61e2562, 0xc040b340, 0x265e5a51, 0xe9b6c7aa,
+	0xd62f105d, 0x02441453, 0xd8a1e681, 0xe7d3fbc8,
+	0x21e1cde6, 0xc33707d6, 0xf4d50d87, 0x455a14ed,
+	0xa9e3e905, 0xfcefa3f8, 0x676f02d9, 0x8d2a4c8a,
+	0xfffa3942, 0x8771f681, 0x6d9d6122, 0xfde5380c,
+	0xa4beea44, 0x4bdecfa9, 0xf6bb4b60, 0xbebfbc70,
+	0x289b7ec6, 0xeaa127fa, 0xd4ef3085, 0x04881d05,
+	0xd9d4d039, 0xe6db99e5, 0x1fa27cf8, 0xc4ac5665,
+	0xf4292244, 0x432aff97, 0xab9423a7, 0xfc93a039,
+	0x655b59c3, 0x8f0ccc92, 0xffeff47d, 0x85845dd1,
+	0x6fa87e4f, 0xfe2ce6e0, 0xa3014314, 0x4e0811a1,
+	0xf7537e82, 0xbd3af235, 0x2ad7d2bb, 0xeb86d391,
+];
+global.leftCircularShift = function(k, bits)
+{
+	bits &= 0x1f;
+	k &= 0xffffffff;
+	return ((k << bits) & 0xffffffff) | (k >> (32 - bits));
+};
+global.md5_F = function(X, Y, Z)
+{
+	return (X & Y) | ((X ^ 0xffffffff) & Z);
+};
+global.md5_G = function(X, Y, Z)
+{
+	return (X & Z) | (Y & (Z ^ 0xffffffff));
+};
+global.md5_H = function(X, Y, Z)
+{
+	return X ^ Y ^ Z;
+};
+global.md5_I = function(X, Y, Z)
+{
+	return Y ^ (X | (Z ^ 0xffffffff));
+};
+global.md5proc = function(a, b, c, d, M, s, t, f)
+{
+	return b + global.leftCircularShift(a + f(b, c, d) + M + t, s);
+};
+global.md5bitlen = function(bitstring)
+{
+	return bitstring.count << 3;
+};
+global.md5sum = function(inmsg)
+{
+	var md5bitlen = global.md5bitlen;
+	var md5proc = global.md5proc;
+	var F = global.md5_F;
+	var G = global.md5_G;
+	var H = global.md5_H;
+	var I = global.md5_I;
+	var SV = global.md5_SV;
+	var msg = [];
+	msg.assign(inmsg);
+	var msgLen = md5bitlen(msg) & 0xFFFFFFFFFFFFFFFF;
+	msg.add(0x80);
+	var padlen = ((0x1c0 - (msgLen + 8)) & 0x1ff) >> 3;
+	for (var i = 0; i < padlen; i += 1)
+	{
+		msg.add(0x00);
+	}
+	msg.add((msgLen >> 0) & 0xFF);
+	msg.add((msgLen >> 8) & 0xFF);
+	msg.add((msgLen >> 16) & 0xFF);
+	msg.add((msgLen >> 24) & 0xFF);
+	msg.add((msgLen >> 32) & 0xFF);
+	msg.add((msgLen >> 40) & 0xFF);
+	msg.add((msgLen >> 48) & 0xFF);
+	msg.add((msgLen >> 56) & 0xFF);
+	msgLen = md5bitlen(msg);
+	var A = 0x67452301;
+	var B = 0xefcdab89;
+	var C = 0x98badcfe;
+	var D = 0x10325476;
+	var mlen = msgLen >> 9;
+	for (var i = 0; i < mlen; i += 1)
+	{
+		var a = A;
+		var b = B;
+		var c = C;
+		var d = D;
+		var M = [];
+		var xoffs = i << 6;
+		for (var j = 0; j < 16; j += 1)
+		{
+			var yoffs = xoffs + (j << 2);
+			M.add((msg[yoffs + 3] << 24) | (msg[yoffs + 2] << 16) | (msg[yoffs + 1] << 8) | (msg[yoffs + 0] << 0));
+		}
+		a = md5proc(a, b, c, d, M[0], 7, SV[0], F);
+		d = md5proc(d, a, b, c, M[1], 12, SV[1], F);
+		c = md5proc(c, d, a, b, M[2], 17, SV[2], F);
+		b = md5proc(b, c, d, a, M[3], 22, SV[3], F);
+		a = md5proc(a, b, c, d, M[4], 7, SV[4], F);
+		d = md5proc(d, a, b, c, M[5], 12, SV[5], F);
+		c = md5proc(c, d, a, b, M[6], 17, SV[6], F);
+		b = md5proc(b, c, d, a, M[7], 22, SV[7], F);
+		a = md5proc(a, b, c, d, M[8], 7, SV[8], F);
+		d = md5proc(d, a, b, c, M[9], 12, SV[9], F);
+		c = md5proc(c, d, a, b, M[10], 17, SV[10], F);
+		b = md5proc(b, c, d, a, M[11], 22, SV[11], F);
+		a = md5proc(a, b, c, d, M[12], 7, SV[12], F);
+		d = md5proc(d, a, b, c, M[13], 12, SV[13], F);
+		c = md5proc(c, d, a, b, M[14], 17, SV[14], F);
+		b = md5proc(b, c, d, a, M[15], 22, SV[15], F);
+		a = md5proc(a, b, c, d, M[1], 5, SV[16], G);
+		d = md5proc(d, a, b, c, M[6], 9, SV[17], G);
+		c = md5proc(c, d, a, b, M[11], 14, SV[18], G);
+		b = md5proc(b, c, d, a, M[0], 20, SV[19], G);
+		a = md5proc(a, b, c, d, M[5], 5, SV[20], G);
+		d = md5proc(d, a, b, c, M[10], 9, SV[21], G);
+		c = md5proc(c, d, a, b, M[15], 14, SV[22], G);
+		b = md5proc(b, c, d, a, M[4], 20, SV[23], G);
+		a = md5proc(a, b, c, d, M[9], 5, SV[24], G);
+		d = md5proc(d, a, b, c, M[14], 9, SV[25], G);
+		c = md5proc(c, d, a, b, M[3], 14, SV[26], G);
+		b = md5proc(b, c, d, a, M[8], 20, SV[27], G);
+		a = md5proc(a, b, c, d, M[13], 5, SV[28], G);
+		d = md5proc(d, a, b, c, M[2], 9, SV[29], G);
+		c = md5proc(c, d, a, b, M[7], 14, SV[30], G);
+		b = md5proc(b, c, d, a, M[12], 20, SV[31], G);
+		a = md5proc(a, b, c, d, M[5], 4, SV[32], H);
+		d = md5proc(d, a, b, c, M[8], 11, SV[33], H);
+		c = md5proc(c, d, a, b, M[11], 16, SV[34], H);
+		b = md5proc(b, c, d, a, M[14], 23, SV[35], H);
+		a = md5proc(a, b, c, d, M[1], 4, SV[36], H);
+		d = md5proc(d, a, b, c, M[4], 11, SV[37], H);
+		c = md5proc(c, d, a, b, M[7], 16, SV[38], H);
+		b = md5proc(b, c, d, a, M[10], 23, SV[39], H);
+		a = md5proc(a, b, c, d, M[13], 4, SV[40], H);
+		d = md5proc(d, a, b, c, M[0], 11, SV[41], H);
+		c = md5proc(c, d, a, b, M[3], 16, SV[42], H);
+		b = md5proc(b, c, d, a, M[6], 23, SV[43], H);
+		a = md5proc(a, b, c, d, M[9], 4, SV[44], H);
+		d = md5proc(d, a, b, c, M[12], 11, SV[45], H);
+		c = md5proc(c, d, a, b, M[15], 16, SV[46], H);
+		b = md5proc(b, c, d, a, M[2], 23, SV[47], H);
+		a = md5proc(a, b, c, d, M[0], 6, SV[48], I);
+		d = md5proc(d, a, b, c, M[7], 10, SV[49], I);
+		c = md5proc(c, d, a, b, M[14], 15, SV[50], I);
+		b = md5proc(b, c, d, a, M[5], 21, SV[51], I);
+		a = md5proc(a, b, c, d, M[12], 6, SV[52], I);
+		d = md5proc(d, a, b, c, M[3], 10, SV[53], I);
+		c = md5proc(c, d, a, b, M[10], 15, SV[54], I);
+		b = md5proc(b, c, d, a, M[1], 21, SV[55], I);
+		a = md5proc(a, b, c, d, M[8], 6, SV[56], I);
+		d = md5proc(d, a, b, c, M[15], 10, SV[57], I);
+		c = md5proc(c, d, a, b, M[6], 15, SV[58], I);
+		b = md5proc(b, c, d, a, M[13], 21, SV[59], I);
+		a = md5proc(a, b, c, d, M[4], 6, SV[60], I);
+		d = md5proc(d, a, b, c, M[11], 10, SV[61], I);
+		c = md5proc(c, d, a, b, M[2], 15, SV[62], I);
+		b = md5proc(b, c, d, a, M[9], 21, SV[63], I);
+		A = (A + a) & 0xFFFFFFFF;
+		B = (B + b) & 0xFFFFFFFF;
+		C = (C + c) & 0xFFFFFFFF;
+		D = (D + d) & 0xFFFFFFFF;
+	}
+	var finarr = [];
+	finarr.push((A >> 0) & 0xFF, (A >> 8) & 0xFF, (A >> 16) & 0xFF, (A >> 24) & 0xFF);
+	finarr.push((B >> 0) & 0xFF, (B >> 8) & 0xFF, (B >> 16) & 0xFF, (B >> 24) & 0xFF);
+	finarr.push((C >> 0) & 0xFF, (C >> 8) & 0xFF, (C >> 16) & 0xFF, (C >> 24) & 0xFF);
+	finarr.push((D >> 0) & 0xFF, (D >> 8) & 0xFF, (D >> 16) & 0xFF, (D >> 24) & 0xFF);
+	return finarr;
+};
+global.calc_epk_hash = function(intext)
+{
+	var hashbase_val = "0123456789abcdefghijklmnopqrstuvwxyz";
+	var strar = global.utf8_encode_string(intext);
+	var digest = global.md5sum(strar);
+	var ar = [];
+	for (var i = 0; i < 26; i += 1)
+	{
+		var noffs = (i * 5) - 2;
+		var offs1r = noffs & 7;
+		var offs1 = noffs >> 3;
+		var offs2 = (noffs + 5) >> 3;
+		var digithi = 0;
+		var digitlo = 0;
+		if (noffs >= 0 || offs1 >= 0)
+		{
+			var shhi = offs1r - 3;
+			if (digest.count > offs1)
+			{
+				if (shhi > 0)
+				{
+					digithi = (digest[offs1] << shhi) & 0x1F;
+				}
+				else
+				{
+					digithi = (digest[offs1] >> -shhi) & 0x1F;
+				}
+			}
+			if (shhi > 0 && digest.count > offs2)
+			{
+				digitlo = (digest[offs2] >> (8 - shhi)) & 0x1F;
+			}
+		}
+		else
+		{
+			digithi = (digest[0] >> (7 + noffs)) & 0x1F;
+		}
+		ar.add(hashbase_val[digithi | digitlo]);
+	}
+	return ar.join("");
+};

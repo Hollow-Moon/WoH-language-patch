@@ -1841,7 +1841,7 @@ global.recalcExtraMenuButtonX = function(buttonName, xPosOld, layer)
 	var btnWidthNew = imgWidthNew / 4;
 	var imgCenter = xPosOld + (btnWidthOld/2);
 
-	var wideResWidth = int(global.originalResWidth * windowWideFactor);
+	var wideResWidth = (global.originalResWidth * windowWideFactor) | 0;
 
 	var xPosNew;
 	if (buttonName == "gl_anotherボタン")
@@ -1850,7 +1850,7 @@ global.recalcExtraMenuButtonX = function(buttonName, xPosOld, layer)
 		xPosNew = wideResWidth - global.originalResWidth + imgCenter - (btnWidthNew/2); // Right side buttons should keep their center's distance to the right border
 
 	// Inverse discrete transform the value, so the button will really be drawn at xPosNew
-	var xPosIDC = int(global.Math.round(xPosNew * (global.originalResWidth - btnWidthNew) / (wideResWidth - btnWidthNew)));
+	var xPosIDC = (global.Math.round(xPosNew * (global.originalResWidth - btnWidthNew) / (wideResWidth - btnWidthNew))) | 0;
 
 	return xPosIDC;
 };

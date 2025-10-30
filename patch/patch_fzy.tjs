@@ -1,0 +1,447 @@
+﻿
+// Based on https://github.com/jhawthorn/fzy.js 327b2ae5dbd99623469c061d82a25fdc5201a465
+
+global.FZY_SCORE_MIN = -Infinity;
+global.FZY_SCORE_MAX = Infinity;
+
+global.FZY_SCORE_GAP_LEADING = -0.005;
+global.FZY_SCORE_GAP_TRAILING = -0.005;
+global.FZY_SCORE_GAP_INNER = -0.01;
+global.FZY_SCORE_MATCH_CONSECUTIVE = 1.0;
+global.FZY_SCORE_MATCH_SLASH = 0.9;
+global.FZY_SCORE_MATCH_WORD = 0.8;
+global.FZY_SCORE_MATCH_CAPITAL = 0.7;
+global.FZY_SCORE_MATCH_DOT = 0.6;
+
+global.fzy_compute = function(needle, haystack, D, M)
+{
+	var precompute_bonus = function(haystack)
+	{
+		var islower = function(s)
+		{
+			return s.toLowerCase() === s;
+		};
+
+		var isupper = function(s)
+		{
+			return s.toUpperCase() === s;
+		};
+		/* Which positions are beginning of words */
+		var m = haystack.length;
+		var match_bonus = [];
+		match_bonus.count = m;
+
+		var last_ch = '/';
+		var score_dic = %[];
+		score_dic['/'] = global.FZY_SCORE_MATCH_SLASH;
+		score_dic['-'] = global.FZY_SCORE_MATCH_WORD;
+		score_dic['_'] = global.FZY_SCORE_MATCH_WORD;
+		score_dic[' '] = global.FZY_SCORE_MATCH_WORD;
+		score_dic['.'] = global.FZY_SCORE_MATCH_DOT;
+		for (var i = 0; i < m; i += 1)
+		{
+			var ch = haystack[i];
+
+			if (score_dic[last_ch] !== void)
+			{
+				match_bonus[i] = score_dic[last_ch];
+			}
+			else if (islower(last_ch) && isupper(ch))
+			{
+				match_bonus[i] = global.FZY_SCORE_MATCH_CAPITAL;
+			}
+			else
+			{
+				match_bonus[i] = 0;
+			}
+
+			last_ch = ch;
+		}
+
+		return match_bonus;
+	};
+
+	var n = needle.length;
+	var m = haystack.length;
+
+	var lower_needle = needle.toLowerCase();
+	var lower_haystack = haystack.toLowerCase();
+
+	var match_bonus = precompute_bonus(haystack);
+
+	/*
+	 * D[][] Stores the best score for this position ending with a match.
+	 * M[][] Stores the best possible score at this position.
+	 */
+
+	for (var i = 0; i < n; i += 1)
+	{
+		D[i] = [];
+		D[i].count = m;
+		M[i] = [];
+		M[i].count = m;
+
+		var prev_score = global.FZY_SCORE_MIN;
+		var gap_score = (i === n - 1) ? global.FZY_SCORE_GAP_TRAILING : global.FZY_SCORE_GAP_INNER;
+
+		for (var j = 0; j < m; j += 1)
+		{
+			if (lower_needle[i] === lower_haystack[j])
+			{
+				var score = global.FZY_SCORE_MIN;
+				if (!i)
+				{
+					score = (j * global.FZY_SCORE_GAP_LEADING) + match_bonus[j];
+				}
+				else if (j)
+				{ /* i > 0 && j > 0*/
+					score = global.Math.max(
+						M[i - 1][j - 1] + match_bonus[j],
+
+						/* consecutive match, doesn't stack with match_bonus */
+						D[i - 1][j - 1] + global.FZY_SCORE_MATCH_CONSECUTIVE);
+				}
+				D[i][j] = score;
+				M[i][j] = prev_score = global.Math.max(score, prev_score + gap_score);
+			}
+			else
+			{
+				D[i][j] = global.FZY_SCORE_MIN;
+				M[i][j] = prev_score = prev_score + gap_score;
+			}
+		}
+	}
+};
+
+global.fzy_score = function(needle, haystack)
+{
+	var n = needle.length;
+	var m = haystack.length;
+
+	if (!n || !m)
+	{
+		return global.FZY_SCORE_MIN;
+	}
+
+	if (n === m)
+	{
+		/* Since this method can only be called with a haystack which
+		 * matches needle. If the lengths of the strings are equal the
+		 * strings themselves must also be equal (ignoring case).
+		 */
+		return global.FZY_SCORE_MAX;
+	}
+
+	if (m > 1024)
+	{
+		/*
+		 * Unreasonably large candidate: return no score
+		 * If it is a valid match it will still be returned, it will
+		 * just be ranked below any reasonably sized candidates
+		 */
+		return global.FZY_SCORE_MIN;
+	}
+
+	var D = [];
+	D.count = n;
+	var M = [];
+	M.count = n;
+
+	global.fzy_compute(needle, haystack, D, M);
+
+	return M[n - 1][m - 1];
+};
+
+global.fzy_positions = function(needle, haystack)
+{
+	var n = needle.length;
+	var m = haystack.length;
+
+	var positions = [];
+	positions.count = n;
+
+	if (!n || !m)
+	{
+		return positions;
+	}
+
+	if (n === m)
+	{
+		for (var i = 0; i < n; i += 1)
+		{
+			positions[i] = i;
+		}
+		return positions;
+	}
+
+	if (m > 1024)
+	{
+		return positions;
+	}
+
+	var D = [];
+	D.count = n;
+	var M = [];
+	M.count = n;
+
+	global.fzy_compute(needle, haystack, D, M);
+
+	/* backtrack to find the positions of optimal matching */
+	var match_required = false;
+
+	for (var i = n - 1, j = m - 1; i >= 0; i -= 1)
+	{
+		for (; j >= 0; j -= 1)
+		{
+			/*
+			 * There may be multiple paths which result in
+			 * the optimal weight.
+			 *
+			 * For simplicity, we will pick the first one
+			 * we encounter, the latest in the candidate
+			 * string.
+			 */
+			if (D[i][j] !== global.FZY_SCORE_MIN && (match_required || D[i][j] === M[i][j])) {
+				/* If this score was determined using
+				 * FZY_SCORE_MATCH_CONSECUTIVE, the
+				 * previous character MUST be a match
+				 */
+				match_required = i && j && M[i][j] === D[i - 1][j - 1] + global.FZY_SCORE_MATCH_CONSECUTIVE;
+				positions[i] = j--;
+				break;
+			}
+		}
+	}
+
+	return positions;
+};
+
+global.fzy_hasMatch = function(needle, haystack)
+{
+	needle = needle.toLowerCase();
+	haystack = haystack.toLowerCase();
+	var l = needle.length;
+	for (var i = 0, j = 0; i < l; i += 1)
+	{
+		j = haystack.indexOf(needle[i], j) + 1;
+		if (j === 0)
+		{
+			return false;
+		}
+	}
+	return true;
+};
+
+@if(0)
+export {
+	/* constants */
+	FZY_SCORE_MIN,
+	FZY_SCORE_MAX,
+
+	FZY_SCORE_GAP_LEADING,
+	FZY_SCORE_GAP_TRAILING,
+	FZY_SCORE_GAP_INNER,
+	FZY_SCORE_MATCH_CONSECUTIVE,
+	FZY_SCORE_MATCH_SLASH,
+	FZY_SCORE_MATCH_WORD,
+	FZY_SCORE_MATCH_CAPITAL,
+	FZY_SCORE_MATCH_DOT,
+
+	/* functions */
+	fzy_score,
+	fzy_positions,
+	fzy_hasMatch
+}
+@endif
+
+@if(1)
+{
+	var score = global.fzy_score;
+	var positions = global.fzy_positions;
+
+	var FZY_SCORE_MIN = global.FZY_SCORE_MIN;
+	var FZY_SCORE_MAX = global.FZY_SCORE_MAX;
+
+	var FZY_SCORE_GAP_LEADING = global.FZY_SCORE_GAP_LEADING;
+	var FZY_SCORE_GAP_TRAILING = global.FZY_SCORE_GAP_TRAILING;
+	var FZY_SCORE_GAP_INNER = global.FZY_SCORE_GAP_INNER;
+	var FZY_SCORE_MATCH_CONSECUTIVE = global.FZY_SCORE_MATCH_CONSECUTIVE;
+	var FZY_SCORE_MATCH_SLASH = global.FZY_SCORE_MATCH_SLASH;
+	var FZY_SCORE_MATCH_WORD = global.FZY_SCORE_MATCH_WORD;
+	var FZY_SCORE_MATCH_CAPITAL = global.FZY_SCORE_MATCH_CAPITAL;
+	var FZY_SCORE_MATCH_DOT = global.FZY_SCORE_MATCH_DOT;
+
+	var expect = function(xval)
+	{
+		var dic = %[];
+		dic.xval = xval;
+		dic.toBeGreaterThan = function(yval)
+		{
+			var xval = this.xval;
+			if (xval > yval)
+			{
+				return;
+			}
+			throw new global.Exception("Assert failure " + xval + ";" + yval);
+		} incontextof dic;
+		dic.toBeLessThan = function(yval)
+		{
+			var xval = this.xval;
+			if (xval < yval)
+			{
+				return;
+			}
+			throw new global.Exception("Assert failure " + xval + ";" + yval);
+		} incontextof dic;
+		dic.toBe = function(yval)
+		{
+			var xval = this.xval;
+			if (xval === yval)
+			{
+				return;
+			}
+			throw new global.Exception("Assert failure " + xval + ";" + yval);
+		} incontextof dic;
+		dic.toEqual = function(yval)
+		{
+			var xval = this.xval;
+			if (xval.join(",") === yval.join(","))
+			{
+				return;
+			}
+			throw new global.Exception("Assert failure " + xval.join(",") + ";" + yval.join(","));
+		} incontextof dic;
+		return dic;
+	};
+
+	/* score(needle, haystack) */
+
+	// should_prefer_starts_of_words
+	{
+		/* App/Models/Order is better than App/MOdels/zRder  */
+		expect(score("amor", "app/models/order")).toBeGreaterThan(score("amor", "app/models/zrder"));
+	}
+
+	// should_prefer_consecutive_letters
+	{
+		/* App/MOdels/foo is better than App/M/fOo  */
+		expect(score("amo", "app/m/foo")).toBeLessThan(score("amo", "app/models/foo"));
+	}
+
+	// should_prefer_contiguous_over_letter_following_period
+	{
+		/* GEMFIle.Lock < GEMFILe  */
+		expect(score("gemfil", "Gemfile.lock")).toBeLessThan(score("gemfil", "Gemfile"));
+	}
+
+	// should_prefer_shorter_matches
+	{
+		expect(score("abce", "abcdef")).toBeGreaterThan(score("abce", "abc de"));
+		expect(score("abc", "    a b c ")).toBeGreaterThan(score("abc", " a  b  c "));
+		expect(score("abc", " a b c    ")).toBeGreaterThan(score("abc", " a  b  c "));
+	}
+
+	// should_prefer_shorter_candidates
+	{
+		expect(score("test", "tests")).toBeGreaterThan(score("test", "testing"));
+	}
+
+	// should_prefer_start_of_candidate
+	{
+		/* Scores first letter highly */
+		expect(score("test", "testing")).toBeGreaterThan(score("test", "/testing"));
+	}
+
+	// score_exact_score
+	{
+		/* Exact match is FZY_SCORE_MAX */
+		expect(score("abc", "abc")).toBe(FZY_SCORE_MAX);
+		expect(score("aBc", "abC")).toBe(FZY_SCORE_MAX);
+	}
+
+	// score_empty_query
+	{
+		/* Empty query always results in FZY_SCORE_MIN */
+		expect(score("", "")).toBe(FZY_SCORE_MIN);
+		expect(score("", "a")).toBe(FZY_SCORE_MIN);
+		expect(score("", "bb")).toBe(FZY_SCORE_MIN);
+	}
+
+	// score_gaps
+	{
+		expect(score("a", "*a")).toBe(FZY_SCORE_GAP_LEADING);
+		expect(score("a", "*ba")).toBe(FZY_SCORE_GAP_LEADING*2);
+		expect(score("a", "**a*")).toBe(FZY_SCORE_GAP_LEADING*2 + FZY_SCORE_GAP_TRAILING);
+		expect(score("a", "**a**")).toBe(FZY_SCORE_GAP_LEADING*2 + FZY_SCORE_GAP_TRAILING*2);
+		expect(score("aa", "**aa**")).toBe(FZY_SCORE_GAP_LEADING*2 + FZY_SCORE_MATCH_CONSECUTIVE + FZY_SCORE_GAP_TRAILING*2);
+		expect(score("aa", "**a*a**")).toBe(FZY_SCORE_GAP_LEADING + FZY_SCORE_GAP_LEADING + FZY_SCORE_GAP_INNER + FZY_SCORE_GAP_TRAILING + FZY_SCORE_GAP_TRAILING);
+	}
+
+	// score_consecutive
+	{
+		expect(score("aa", "*aa")).toBe(FZY_SCORE_GAP_LEADING + FZY_SCORE_MATCH_CONSECUTIVE);
+		expect(score("aaa", "*aaa")).toBe(FZY_SCORE_GAP_LEADING + FZY_SCORE_MATCH_CONSECUTIVE*2);
+		expect(score("aaa", "*a*aa")).toBe(FZY_SCORE_GAP_LEADING + FZY_SCORE_GAP_INNER + FZY_SCORE_MATCH_CONSECUTIVE);
+	}
+
+	// score_slash
+	{
+		expect(score("a", "/a")).toBe(FZY_SCORE_GAP_LEADING + FZY_SCORE_MATCH_SLASH);
+		expect(score("a", "*/a")).toBe(FZY_SCORE_GAP_LEADING*2 + FZY_SCORE_MATCH_SLASH);
+		expect(score("aa", "a/aa")).toBe(FZY_SCORE_GAP_LEADING*2 + FZY_SCORE_MATCH_SLASH + FZY_SCORE_MATCH_CONSECUTIVE);
+	}
+
+	// score_capital
+	{
+		expect(score("a", "bA")).toBe(FZY_SCORE_GAP_LEADING + FZY_SCORE_MATCH_CAPITAL);
+		expect(score("a", "baA")).toBe(FZY_SCORE_GAP_LEADING*2 + FZY_SCORE_MATCH_CAPITAL);
+		expect(score("aa", "baAa")).toBe(FZY_SCORE_GAP_LEADING*2 + FZY_SCORE_MATCH_CAPITAL + FZY_SCORE_MATCH_CONSECUTIVE);
+	}
+
+	// score_dot
+	{
+		expect(score("a", ".a")).toBe(FZY_SCORE_GAP_LEADING + FZY_SCORE_MATCH_DOT);
+		expect(score("a", "*a.a")).toBe(FZY_SCORE_GAP_LEADING*3 + FZY_SCORE_MATCH_DOT);
+		expect(score("a", "*a.a")).toBe(FZY_SCORE_GAP_LEADING + FZY_SCORE_GAP_INNER + FZY_SCORE_MATCH_DOT);
+	}
+
+	/* positions(needle, haystack) */
+
+	// positions_consecutive
+	{
+		var p = positions("amo", "app/models/foo");
+		expect(p).toEqual([0,4,5]);
+	}
+
+	// positions_start_of_word
+	{
+		/*
+		 * We should prefer matching the 'o' in order, since it's the beginning
+		 * of a word.
+		 */
+		var p = positions("amor", "app/models/order");
+		expect(p).toEqual([0,4,11,12]);
+	}
+
+	// positions_no_bonuses
+	{
+		var p = positions("as", "tags");
+		expect(p).toEqual([1,3]);
+
+		var p = positions("as", "examples.txt");
+		expect(p).toEqual([2,7]);
+	}
+
+	// positions_multiple_candidates_start_of_words
+	{
+		var p = positions("abc", "a/a/b/c/c");
+		expect(p).toEqual([2,4,6]);
+	}
+
+	// positions_exact_match
+	{
+		var p = positions("foo", "foo");
+		expect(p).toEqual([0,1,2]);
+	}
+}
+@endif

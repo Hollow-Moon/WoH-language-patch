@@ -1,0 +1,536 @@
+﻿
+// Based on https://github.com/pierreinglebert/json-merge-patch commit e915ee199e7ccc65200b156ed2ca787f7503cba3
+
+global.deep_equal = function(s1, s2)
+{
+	if (s1 === s2)
+	{
+		return true;
+	}
+	else if (s1 instanceof "Array" && s2 instanceof "Array" && s1.count == s2.count)
+	{
+		for (var i = 0, internal_forloop_count = s1.count; i < internal_forloop_count; i += 1)
+		{
+			var s1item = s1[i];
+			var s2item = s2[i];
+			if (!global.deep_equal(s1item, s2item))
+			{
+				return false;
+			}
+		}
+	}
+	else if (s1 instanceof "Dictionary" && s2 instanceof "Dictionary")
+	{
+		var key1 = [];
+		var key2 = [];
+		key1.assign(s1);
+		key2.assign(s2);
+		if (key1.count !== key2.count)
+		{
+			return false;
+		}
+		for (var i = 0, internal_forloop_count = key1.count; i < internal_forloop_count; i += 2)
+		{
+			var key = key1[i];
+			var s1item = s1[key];
+			var s2item = s2[key];
+			if (!global.deep_equal(s1item, s2item))
+			{
+				return false;
+			}
+		}
+	}
+	else
+	{
+		return false;
+	}
+	return true;
+};
+
+global.rfc7396_serialize = function(value)
+{
+	return (value && typeof(value) === "Object" && typeof(value.toJSON) === "Object") ? value.toJSON() : value;
+};
+
+global.rfc7396_object_keys = function(source)
+{
+	var target = [];
+	target.assign(source);
+	for (var i = target.count - 1; i >= 0; i -= 2)
+	{
+		target.erase(i);
+	}
+	return target;
+};
+
+global.rfc7396_apply = function(target, patch)
+{
+	patch = global.rfc7396_serialize(patch);
+	if (patch === null || typeof(patch) !== "Object" || (patch instanceof "Array"))
+	{
+		return patch;
+	}
+
+	target = global.rfc7396_serialize(target);
+	if (target === null || typeof(target) !== "Object" || (target instanceof "Array"))
+	{
+		target = %[];
+	}
+	var keys = global.rfc7396_object_keys(patch);
+	for (var i = 0; i < keys.count; i++)
+	{
+		var key = keys[i];
+		if (patch[key] === null)
+		{
+			if (typeof(target[key]) !== "void")
+			{
+				delete target[key];
+			}
+		}
+		else
+		{
+			target[key] = global.rfc7396_apply(target[key], patch[key]);
+		}
+	}
+	return target;
+};
+
+global.rfc7396_generate = function(before, after)
+{
+	before = global.rfc7396_serialize(before);
+	after = global.rfc7396_serialize(after);
+
+	if (before === null || after === null || typeof(before) !== "Object" || typeof(after) !== "Object" || (before instanceof "Array") !== (after instanceof "Array"))
+	{
+		return after;
+	}
+
+	if ((before instanceof "Array"))
+	{
+		return (!global.deep_equal(before, after)) ? after : void;
+	}
+
+	var patch = %[];
+	var beforeKeys = global.rfc7396_object_keys(before);
+	var afterKeys = global.rfc7396_object_keys(after);
+
+	// new elements
+	var newKeys = %[];
+	for (var i = 0; i < afterKeys.count; i++)
+	{
+		var key = afterKeys[i];
+		if (beforeKeys.find(key) === -1)
+		{
+			newKeys[key] = true;
+			patch[key] = global.rfc7396_serialize(after[key]);
+		}
+	}
+
+	// removed & modified elements
+	var removedKeys = %[];
+	for (var i = 0; i < beforeKeys.count; i++)
+	{
+		var key = beforeKeys[i];
+		if (afterKeys.find(key) === -1)
+		{
+			removedKeys[key] = true;
+			patch[key] = null;
+		}
+		else
+		{
+			if (before[key] !== null && typeof(before[key]) === "Object")
+			{
+				var subPatch = global.rfc7396_generate(before[key], after[key]);
+				if (subPatch !== void)
+				{
+					patch[key] = subPatch;
+				}
+			}
+			else if (before[key] !== after[key])
+			{
+				patch[key] = global.rfc7396_serialize(after[key]);
+			}
+		}
+	}
+
+	return (global.rfc7396_object_keys(patch).count > 0 ? patch : void);
+};
+
+global.rfc7396_merge = function(patch1, patch2)
+{
+	if (patch1 === null || patch2 === null || typeof(patch1) !== "Object" || typeof(patch2) !== "Object" || (patch1 instanceof "Array") !== (patch2 instanceof "Array"))
+	{
+		return patch2;
+	}
+	var patch = patch1;
+
+	var keys = global.rfc7396_object_keys(patch2);
+	for (var i = 0, internal_forloop_count = keys.count; i < internal_forloop_count; i += 1)
+	{
+		var key = keys[i];
+		patch[key] = (patch1[key] !== void) ? global.rfc7396_merge(patch1[key], patch2[key]) : patch2[key];
+	}
+	return patch;
+};
+
+@if(0)
+// tests
+{
+	var assert_deepEqual = function(x, y)
+	{
+		if (global.deep_equal(x, y))
+		{
+			return;
+		}
+		throw new global.Exception("Assert failure");
+	};
+	var apply = global.rfc7396_apply;
+	var generate = global.rfc7396_generate;
+	var merge = global.rfc7396_merge;
+	// apply
+	// should replace an attribute
+	{
+		assert_deepEqual(
+			apply(%[a: 'b'], %[a: 'c']),
+			%[a: 'c']
+		);
+	}
+
+	// should add an attribute
+	{
+		assert_deepEqual(
+			apply(%[a: 'b'], %[b: 'c']),
+			%[a: 'b', b: 'c']
+		);
+	}
+
+	// should delete attribute
+	{
+		assert_deepEqual(
+			apply(%[a: 'b'], %[a: null]),
+			%[]
+		);
+	}
+
+	// should delete attribute without affecting others
+	{
+		assert_deepEqual(
+			apply(%[a: 'b', b: 'c'], %[a: null]),
+			%[b: 'c']
+		);
+	}
+
+	// should replace array with a string
+	{
+		assert_deepEqual(
+			apply(%[a: ['b']], %[a: 'c']),
+			%[a: 'c']
+		);
+	}
+
+	// should replace an string with an array
+	{
+		assert_deepEqual(
+			apply(%[a: 'c'], %[a: ['b']]),
+			%[a: ['b']]
+		);
+	}
+
+	// should apply recursively
+	{
+		assert_deepEqual(
+			apply(%[a: %[b: 'c']], %[a: %[b: 'd', c: null]]),
+			%[a: %[b: 'd']]
+		);
+	}
+
+	// should replace an object array with a number array
+	{
+		assert_deepEqual(
+			apply(%[a: [%[b: 'c']]], %[a: [1]]),
+			%[a: [1]]
+		);
+	}
+
+	// should replace an array
+	{
+		assert_deepEqual(
+			apply(['a', 'b'], ['c', 'd']),
+			['c', 'd']
+		);
+	}
+
+	// should replace an object with an array
+	{
+		assert_deepEqual(
+			apply(%[a: 'b'], ['c']),
+			['c']
+		);
+	}
+
+	// should replace an object with null
+	{
+		assert_deepEqual(
+			apply(%[a: 'foo'], null),
+			null
+		);
+	}
+
+	// should replace an object with a string
+	{
+		assert_deepEqual(
+			apply(%[a: 'foo'], 'bar'),
+			'bar'
+		);
+	}
+
+	// should not change null attributes
+	{
+		assert_deepEqual(
+			apply(%[e: null], %[a: 1]),
+			%[e: null, a: 1]
+		);
+	}
+
+	// should not set an attribute to null
+	{
+		assert_deepEqual(
+			apply([1, 2], %[a: 'b', c: null]),
+			%[a: 'b']
+		);
+	}
+
+	// should not set an attribute to null in a sub object
+	{
+		assert_deepEqual(
+			apply(%[], %[a: %[bb: %[ccc: null]]]),
+			%[a: %[bb: %[]]]
+		);
+	}
+
+	// generate
+	// should generate a patch replacing an attribute
+	{
+		assert_deepEqual(
+			generate(%[a: 'b'], %[a: 'c']),
+			%[a: 'c']
+		);
+	}
+
+	// should generate a patch adding an attribute
+	{
+		assert_deepEqual(
+			generate(%[a: 'b'], %[ a: 'b', b: 'c']),
+			%[b: 'c']
+		);
+	}
+
+	// should generate a patch deleting an attribute
+	{
+		assert_deepEqual(
+			generate(%[a: 'b'], %[]),
+			%[a: null]
+		);
+	}
+
+	// should generate a patch deleting an attribute without affecting others
+	{
+		assert_deepEqual(
+			generate(%[a: 'b', b: 'c'], %[b: 'c']),
+			%[a: null]
+		);
+	}
+
+	// should generate a patch replacing an attribute if its an array
+	{
+		assert_deepEqual(
+			generate(%[a: ['b']], %[a: 'c']),
+			%[a: 'c']
+		);
+	}
+
+	// should generate a patch replacing the attribute with an array
+	{
+		assert_deepEqual(
+			generate(%[a: 'c'], %[a: ['b']]),
+			%[a: ['b']]
+		);
+	}
+
+	// should generate a patch replacing an object array with a number array
+	{
+		assert_deepEqual(
+			generate(%[a: [%[b: 'c']]], %[a: [1]]),
+			%[a: [1]]
+		);
+	}
+
+	// should generate a patch replacing whole array if one element has changed
+	{
+		assert_deepEqual(
+			generate(['a', 'b'], ['c', 'd']),
+			['c', 'd']
+		);
+	}
+
+	// should generate a patch replacing whole array if one element has been deleted
+	{
+		assert_deepEqual(
+			generate(['a', 'b'], ['a']),
+			['a']
+		);
+	}
+
+	// should generate a patch replacing with an array
+	{
+		assert_deepEqual(
+			generate(%[a: 'b'], ['c']),
+			['c']
+		);
+	}
+
+	// should generate a patch replacing with null
+	{
+		assert_deepEqual(
+			generate(%[a: 'foo'], null),
+			null
+		);
+	}
+
+	// should generate a patch replacing with a string
+	{
+		assert_deepEqual(
+			generate(%[a: 'foo'], 'bar'),
+			'bar'
+		);
+	}
+
+	// should generate a patch keeping null attributes
+	{
+		assert_deepEqual(
+			generate(%[e: null], %[e: null, a: 1]),
+			%[a: 1]
+		);
+	}
+
+	// should work recursively
+	{
+		assert_deepEqual(
+			generate(%[], %[a: %[bb: %[]]]),
+			%[a: %[bb: %[]]]
+		);
+	}
+
+	// should return void if the object hasnt changed
+	{
+		assert_deepEqual(
+			generate(%[a: 'a'], %[a: 'a']),
+			void
+		);
+	}
+
+	// should return void if the object with sub attributes hasnt changed
+	{
+		assert_deepEqual(
+			generate(%[a: %[b: 'c']], %[a: %[b: 'c']]),
+			void
+		);
+	}
+
+	// should return void if the array hasnt changed
+	{
+		assert_deepEqual(
+			generate([1, 2, 3], [1, 2, 3]),
+			void
+		);
+	}
+	// merge
+	// should merge 2 patches with different attributes
+	{
+		assert_deepEqual(
+			merge(%[a: 'b'], %[b: 'c']),
+			%[a: 'b', b: 'c']
+		);
+	}
+
+	// should merge take last patch attributes for rewriting
+	{
+		assert_deepEqual(
+			merge(%[a: 'b'], %[a: 'c']),
+			%[a: 'c']
+		);
+	}
+
+	// should merge take last patch attributes for rewriting and keep other attributes
+	{
+		assert_deepEqual(
+			merge(%[a: 'b', b: 'd'], %[a: 'c']),
+			%[a: 'c', b: 'd']
+		);
+	}
+
+	// should keep null attributes for deleting
+	{
+		assert_deepEqual(
+			merge(%[a: null], %[b: 'c']),
+			%[a: null, b: 'c']
+		);
+	}
+
+	// should replace null with newer attribute
+	{
+		assert_deepEqual(
+			merge(%[a: null], %[a: 'b']),
+			%[a: 'b']
+		);
+	}
+
+	// should replace an attribute with null if newer
+	{
+		assert_deepEqual(
+			merge(%[a: 'b'], %[a: null]),
+			%[a: null]
+		);
+	}
+
+	// should replace an array with an object
+	{
+		assert_deepEqual(
+			merge([], %[a: 'b']),
+			%[a: 'b']
+		);
+	}
+
+	// should replace an object with an array
+	{
+		assert_deepEqual(
+			merge(%[a: 'b'], []),
+			[]
+		);
+	}
+
+	// should merge sub objects
+	{
+		assert_deepEqual(
+			merge(%[a: %[b: %[c: 'd']], d: 'e'], %[a: %[b: 'a']]),
+			%[a: %[b: 'a'], d: 'e']
+		);
+	}
+
+	// should merge recursively
+	{
+		assert_deepEqual(
+			merge(%[a: %[b: %[c: 'd'], d: 'e']], %[a: %[b: %[c: 'e']]]),
+			%[a: %[b: %[c: 'e'], d: 'e']]
+		);
+	}
+
+	// should replace object with with null value
+	{
+		assert_deepEqual(
+			merge(%[a: 'b'], null),
+			null
+		);
+	}
+}
+@endif

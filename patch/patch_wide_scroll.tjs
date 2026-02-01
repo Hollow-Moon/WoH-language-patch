@@ -22,10 +22,10 @@ global.add_kag_window_tag_handler("initscroll", function(mp) {
 global.add_kag_window_tag_handler("dispscroll", function(mp) {
 	// Parameters: from, to, time
 	this.originalscrollYOffset = void;
-	var moveTime = (mp.time != 0)? mp.time : 600;
+	var moveTime = (mp.time != 0) ? mp.time : 600;
 	var yFrom = +mp.from;
 	var yTo = +mp.to;
-	var scrollAll = mp.all? true : false;
+	var scrollAll = mp.all ? true : false;
 
 	// TODO time=-1 is a patch when being called from initscroll
 	if ((!this.wideScreen && !global.isCropped) || mp.time == -1) {
@@ -35,7 +35,7 @@ global.add_kag_window_tag_handler("dispscroll", function(mp) {
 
 	var pendingIndex = 0;
 	if (this.scrollYOffset != yFrom) {
-		var firstMoveTime = yFrom != yTo? 300 : moveTime;
+		var firstMoveTime = (yFrom != yTo) ? 300 : moveTime;
 		this.conductor.pendings.insert(pendingIndex++, %[tagname: "move", layer: "primaryLayer", time: firstMoveTime, bg: true, textoff: 1, path: "(0,"+("" + yFrom)+",255)", all: scrollAll]);
 	}
 	if (yFrom != yTo) {

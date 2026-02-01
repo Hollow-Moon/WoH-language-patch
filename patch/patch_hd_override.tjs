@@ -16,8 +16,8 @@ class AnimationLayer_patch_hd_layer_override extends global.AnimationLayer_patch
 	{
 		var storageToAdd = %["linebreak_a" => 32, "pagebreak_a" => 3];
 		var storage = this.Anim_cellLayer.imageStorage;
-		var mobileAdd = storageToAdd[storage] !== void? storageToAdd[storage] : 0;
-		return +elm.time + (this.window.sflags.mobileBreakGlyphs? mobileAdd : 0);
+		var mobileAdd = (storageToAdd[storage] !== void) ? storageToAdd[storage] : 0;
+		return +elm.time + (this.window.sflags.mobileBreakGlyphs ? mobileAdd : 0);
 	}
 }
 global.AnimationLayer = global.AnimationLayer_patch_hd_layer_override;

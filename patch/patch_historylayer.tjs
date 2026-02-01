@@ -51,7 +51,7 @@ class HistoryLayer_patch_historylayer_override extends global.HistoryLayer_patch
 			if(len >= this.relinePos)
 			{
 				var curlen = this.currentLine.length;
-				var lastch = curlen >= 2 ? this.currentLine[curlen - 2] : '';
+				var lastch = (curlen >= 2) ? this.currentLine[curlen - 2] : '';
 
 				if(((lastch=='' || this.wwLeading.indexOf(lastch)==-1) &&
 					this.wwFollowing.indexOf(ch)==-1) ||
@@ -71,7 +71,7 @@ class HistoryLayer_patch_historylayer_override extends global.HistoryLayer_patch
 @if(0)
 					this.currentLine = ch;
 @endif
-					this.currentLine = ch != " "? ch : "";
+					this.currentLine = (ch != " ") ? ch : "";
 				}
 			}
 		}

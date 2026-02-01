@@ -1084,14 +1084,14 @@ class KAGWindow_patch_wordwrap_override extends global.KAGWindow_patch_wordwrap_
 	function processWordWrappingChunkAtOnce(in_text, conductor, elm)
 	{
 		var text = in_text;
-		var rtl_enabled = global.get_rtl_enabled(typeof(global.kag) === "Object" ? global.kag : this);
+		var rtl_enabled = global.get_rtl_enabled((typeof(global.kag) === "Object") ? global.kag : this);
 		if (typeof(elm.extra_param) !== "Object")
 		{
 			elm.extra_param = %[];
 		}
 		if (elm.extra_param.processed_bidi !== true)
 		{
-			var arabic_shaping_enabled = global.get_arabic_shaping_enabled(typeof(global.kag) === "Object" ? global.kag : this);
+			var arabic_shaping_enabled = global.get_arabic_shaping_enabled((typeof(global.kag) === "Object") ? global.kag : this);
 			if (arabic_shaping_enabled)
 			{
 				if (typeof(global.arabic_shaper_instance_ltr) !== "Object")
@@ -1312,9 +1312,9 @@ global.KAGWindow = global.KAGWindow_patch_wordwrap_override;
 // Note: Breaking on characters other than space (e.g. tab, hyphen) is not supported.
 global.wordWrapSplit = function(text, maxWidth, font, offset=0, maxLines=0, directiveCharacters="", delimiter=" ", delimiterOnNewLine=false)
 {
-	var directiveCharactersRegex = directiveCharacters != ""? new global.RegExp("["+directiveCharacters+"]", "g") : void;
+	var directiveCharactersRegex = (directiveCharacters != "") ? new global.RegExp("["+directiveCharacters+"]", "g") : void;
 
-	var totalTextToTest = directiveCharactersRegex === void? text : text.replace(directiveCharactersRegex, "");
+	var totalTextToTest = (directiveCharactersRegex === void) ? text : text.replace(directiveCharactersRegex, "");
 	var textwidth = font.getTextWidth(totalTextToTest);
 	if (textwidth+offset < maxWidth || maxLines == 1) {
 		return [text];
@@ -1326,9 +1326,9 @@ global.wordWrapSplit = function(text, maxWidth, font, offset=0, maxLines=0, dire
 	var tmp = "";
 	for (var i = 0, internal_forloop_count = words.count; i < internal_forloop_count; i += 1)
 	{
-		var space = i != 0 ? delimiter : "";
+		var space = (i != 0) ? delimiter : "";
 		var word = space + words[i];
-		var textToTest = directiveCharactersRegex === void? (tmp+word) : (tmp+word).replace(directiveCharactersRegex, "");
+		var textToTest = (directiveCharactersRegex === void) ? (tmp+word) : (tmp+word).replace(directiveCharactersRegex, "");
 		if (font.getTextWidth(textToTest)+offset < maxWidth) {
 			tmp += word;
 		} else {
@@ -1343,7 +1343,7 @@ global.wordWrapSplit = function(text, maxWidth, font, offset=0, maxLines=0, dire
 				return out;
 			} else {
 				offset = 0;
-				tmp = delimiterOnNewLine? delimiter + words[i] : words[i];
+				tmp = delimiterOnNewLine ? delimiter + words[i] : words[i];
 			}
 		}
 	}

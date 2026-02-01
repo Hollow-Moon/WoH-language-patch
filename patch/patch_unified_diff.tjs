@@ -188,7 +188,7 @@ global.parsePatch = function(uniDiff)
 			var fileHeader = (/^(---|\+\+\+)\s+(.*)\r?$/).match(diffstr[i]);
 			if (fileHeader.count > 0)
 			{
-				var keyPrefix = fileHeader[1] === '---' ? 'old' : 'new';
+				var keyPrefix = (fileHeader[1] === '---') ? 'old' : 'new';
 				var data = fileHeader[2].split('\t');
 				var fileName = data[0].replace(/\\\\/g, '\\');
 				if ((/^".*"$/).match(fileName).count > 0)
@@ -196,7 +196,7 @@ global.parsePatch = function(uniDiff)
 					fileName = fileName.substr(1, fileName.length - 2);
 				}
 				index[keyPrefix + 'FileName'] = fileName;
-				index[keyPrefix + 'Header'] = (typeof(data[1]) === "String" ? data[1] : '').trim();
+				index[keyPrefix + 'Header'] = ((typeof(data[1]) === "String") ? data[1] : '').trim();
 
 				i += 1;
 			}
@@ -423,9 +423,9 @@ global.applyPatch = function(source, uniDiff, options)
 	var lines = source.split('\n');
 	var hunks = uniDiff.hunks;
 
-	var compareLine = typeof(options.compareLine) === "Object" ? options.compareLine : (function(lineNumber, line, operation, patchContent) { return line === patchContent; } );
+	var compareLine = (typeof(options.compareLine) === "Object") ? options.compareLine : (function(lineNumber, line, operation, patchContent) { return line === patchContent; } );
 	var errorCount = 0;
-	var fuzzFactor = typeof(options.fuzzFactor) === "Integer" ? options.fuzzFactor : 0;
+	var fuzzFactor = (typeof(options.fuzzFactor) === "Integer") ? options.fuzzFactor : 0;
 	var minLine = 0;
 	var offset = 0;
 
@@ -452,8 +452,8 @@ global.applyPatch = function(source, uniDiff, options)
 			for (var j = 0; j < hunk.lines.count; j += 1)
 			{
 				var line = hunk.lines[j];
-				var operation = (line.length > 0 ? line[0] : ' ');
-				var content = (line.length > 0 ? line.substr(1) : line);
+				var operation = ((line.length > 0) ? line[0] : ' ');
+				var content = ((line.length > 0) ? line.substr(1) : line);
 
 				if (operation === ' ' || operation === '-')
 				{
@@ -501,8 +501,8 @@ global.applyPatch = function(source, uniDiff, options)
 		for (var j = 0; j < hunk.lines.count; j += 1)
 		{
 			var line = hunk.lines[j];
-			var operation = (line.length > 0 ? line[0] : ' ');
-			var content = (line.length > 0 ? line.substr(1) : line);
+			var operation = ((line.length > 0) ? line[0] : ' ');
+			var content = ((line.length > 0) ? line.substr(1) : line);
 
 			if (operation === ' ')
 			{
@@ -520,7 +520,7 @@ global.applyPatch = function(source, uniDiff, options)
 			}
 			else if (operation === '\\')
 			{
-				var previousOperation = hunk.lines[j - 1] !== void ? hunk.lines[j - 1][0] : void;
+				var previousOperation = (hunk.lines[j - 1] !== void) ? hunk.lines[j - 1][0] : void;
 				if (previousOperation === '+')
 				{
 					removeEOFNL = true;

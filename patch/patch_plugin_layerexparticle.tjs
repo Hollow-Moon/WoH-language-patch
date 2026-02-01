@@ -870,7 +870,7 @@ class layerExParticle_impl
 	{
 		getter
 		{
-			return typeof(this.layerExParticle_particleType) === "Integer" ? this.layerExParticle_particleType : 0;
+			return (typeof(this.layerExParticle_particleType) === "Integer") ? this.layerExParticle_particleType : 0;
 		}
 	}
 
@@ -1583,10 +1583,10 @@ global.Layer.updateParticle = function(tick)
 		(global.Layer.operateAffine incontextof this)(operateAffine_src, operateAffine_sleft, operateAffine_stop, operateAffine_swidth, operateAffine_sheight, operateAffine_affine, operateAffine_a, operateAffine_b, operateAffine_c, operateAffine_d, operateAffine_e, operateAffine_f, operateAffine_mode, operateAffine_opa);
 @if(0)
 		// https://stackoverflow.com/questions/39974191/triangle-bounding-box
-		var xmax = sx1 > sx2 ? (sx1 > sx3 ? sx1 : (sx3 > sx4 ? sx3 : sx4)) : (sx2 > sx3 ? sx2 : (sx3 > sx4 ? sx3 : sx4));
-		var ymax = sy1 > sy2 ? (sy1 > sy3 ? sy1 : (sy3 > sy4 ? sy3 : sy4)) : (sy2 > sy3 ? sy2 : (sy3 > sy4 ? sy3 : sy4));
-		var xmin = sx1 < sx2 ? (sx1 < sx3 ? sx1 : (sx3 < sx4 ? sx3 : sx4)) : (sx2 < sx3 ? sx2 : (sx3 < sx4 ? sx3 : sx4));
-		var ymin = sy1 < sy2 ? (sy1 < sy3 ? sy1 : (sy3 < sy4 ? sy3 : sy4)) : (sy2 < sy3 ? sy2 : (sy3 < sy4 ? sy3 : sy4));
+		var xmax = (sx1 > sx2) ? ((sx1 > sx3) ? sx1 : ((sx3 > sx4) ? sx3 : sx4)) : ((sx2 > sx3) ? sx2 : ((sx3 > sx4) ? sx3 : sx4));
+		var ymax = (sy1 > sy2) ? ((sy1 > sy3) ? sy1 : ((sy3 > sy4) ? sy3 : sy4)) : ((sy2 > sy3) ? sy2 : ((sy3 > sy4) ? sy3 : sy4));
+		var xmin = (sx1 < sx2) ? ((sx1 < sx3) ? sx1 : ((sx3 < sx4) ? sx3 : sx4)) : ((sx2 < sx3) ? sx2 : ((sx3 < sx4) ? sx3 : sx4));
+		var ymin = (sy1 < sy2) ? ((sy1 < sy3) ? sy1 : ((sy3 < sy4) ? sy3 : sy4)) : ((sy2 < sy3) ? sy2 : ((sy3 < sy4) ? sy3 : sy4));
 
 		var cur_particle_rect = this.particle_rects[this.particle_rect_count];
 		cur_particle_rect[0] = xmin;

@@ -137,8 +137,8 @@ class Layer_patch_textdrawer_override_override extends global.Layer_patch_textdr
 							var wd = wds[i];
 							if (wd[0] === weapon_name)
 							{
-								var localizedName = wd[6] !== void? __(wd[6]) : __(wd[0]);
-								var localizedRuby = wd[7] !== void? __(wd[7]) : void;
+								var localizedName = (wd[6] !== void) ? __(wd[6]) : __(wd[0]);
+								var localizedRuby = (wd[7] !== void) ? __(wd[7]) : void;
 								this.in_text_drawer = true;
 								this.getTextDrawer().drawWeaponsTitle(this, "wp_" + weapon_menu_layer.currentweapon + "title", localizedName, localizedRuby);
 								this.in_text_drawer = false;
@@ -181,7 +181,7 @@ class Layer_patch_textdrawer_override_override extends global.Layer_patch_textdr
 						var wd = wds[i];
 						if (wd[0] === weapon_name)
 						{
-							var localizedName = wd[6] !== void ? __(wd[6]) : __(wd[0]);
+							var localizedName = (wd[6] !== void) ? __(wd[6]) : __(wd[0]);
 							this.in_text_drawer = true;
 							this.getTextDrawer().drawWeaponsName(this, "wp_"+wd[0], localizedName); // 名称画像を読み込んでおく
 							this.in_text_drawer = false;

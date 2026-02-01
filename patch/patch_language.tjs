@@ -259,7 +259,7 @@ global.setFontWithLanguage = function(language, kag=global.kag)
 	}
 
 	/// History ///
-	var hf = kag.chDefaultFace !== void && global.get_historyFont(kag)[kag.chDefaultFace] !== void ? global.get_historyFont(kag)[kag.chDefaultFace] : global.get_historyFontDefault(kag);
+	var hf = (kag.chDefaultFace !== void && global.get_historyFont(kag)[kag.chDefaultFace] !== void) ? global.get_historyFont(kag)[kag.chDefaultFace] : global.get_historyFontDefault(kag);
 
 	if (typeof(kag.historyLayer) === "Object")
 	{
@@ -338,7 +338,7 @@ global.chara2displayname = %[];
 global.imagesFolderName = "images";
 global.subbedVideosFlagName = "subbedVideos";
 global.videosFolderName = "videos";
-global.japanese_patch_name = global.devMode? "Japanese" : global.mainPatchName;
+global.japanese_patch_name = global.devMode ? "Japanese" : global.mainPatchName;
 global.japaneseLanguageLoaded = false;
 global.languageSearchPathFile = "LanguageSearchpath.ksc";
 global.languageSearchPath = [];
@@ -566,7 +566,7 @@ global.Storages.getPlacedPath = function(filename, exts)
 
 global.languagePatchName = function(language)
 {
-	return language == global.japaneseLanguage? global.japanese_patch_name : global.language_patch_prefix + language;
+	return (language == global.japaneseLanguage) ? global.japanese_patch_name : global.language_patch_prefix + language;
 };
 
 global.languagePatchExists = function(language)
@@ -610,9 +610,9 @@ global.load_language_patch = function(language, kag)
 @if(HD_MODE)
 					global.addHdPaths(kag, patches_arr, languagePatchName, global.imagesFolderName) if kag.isHd;
 @endif
-					patches_arr.add([languagePatchName, global.get_isHCensored(kag)? global.censoredHFolderName : global.uncensoredHFolderName]);
-					patches_arr.add([languagePatchName, global.get_isMatureCensored(kag)? global.censoredMatureFolderName: global.uncensoredMatureFolderName]);
-					patches_arr.add([languagePatchName, global.get_isEcchiCensored(kag)? global.censoredEcchiFolderName: global.uncensoredEcchiFolderName]);
+					patches_arr.add([languagePatchName, global.get_isHCensored(kag) ? global.censoredHFolderName : global.uncensoredHFolderName]);
+					patches_arr.add([languagePatchName, global.get_isMatureCensored(kag) ? global.censoredMatureFolderName: global.uncensoredMatureFolderName]);
+					patches_arr.add([languagePatchName, global.get_isEcchiCensored(kag) ? global.censoredEcchiFolderName: global.uncensoredEcchiFolderName]);
 					patches_arr.add([languagePatchName, global.fullyCensoredFolderName]) if global.get_fullyCensored(kag);
 					patches_arr.add([languagePatchName, global.videosFolderName]) if kag.sflags[global.subbedVideosFlagName];
 				}
@@ -693,9 +693,9 @@ global.unload_language_patch = function(language, kag)
 @if(HD_MODE)
 			global.addHdPaths(kag, patches_arr, languagePatchName, global.imagesFolderName) if kag.isHd;
 @endif
-			patches_arr.add([languagePatchName, global.get_isHCensored(kag)? global.censoredHFolderName : global.uncensoredHFolderName]);
-			patches_arr.add([languagePatchName, global.get_isMatureCensored(kag)? global.censoredMatureFolderName: global.uncensoredMatureFolderName]);
-			patches_arr.add([languagePatchName, global.get_isEcchiCensored(kag)? global.censoredEcchiFolderName: global.uncensoredEcchiFolderName]);
+			patches_arr.add([languagePatchName, global.get_isHCensored(kag) ? global.censoredHFolderName : global.uncensoredHFolderName]);
+			patches_arr.add([languagePatchName, global.get_isMatureCensored(kag) ? global.censoredMatureFolderName: global.uncensoredMatureFolderName]);
+			patches_arr.add([languagePatchName, global.get_isEcchiCensored(kag) ? global.censoredEcchiFolderName: global.uncensoredEcchiFolderName]);
 			patches_arr.add([languagePatchName, global.fullyCensoredFolderName]) if global.get_fullyCensored(kag);
 			patches_arr.add([languagePatchName, global.videosFolderName]) if kag.sflags[global.subbedVideosFlagName];
 		}
@@ -850,7 +850,7 @@ global.loadLanguagesList = function()
 	return loadedLanguages;
 };
 
-global.language_patch_prefix = global.devMode? "" : "lang_";
+global.language_patch_prefix = global.devMode ? "" : "lang_";
 global.languageMenuItemFormat = "language%sMenuItem";
 
 global.languages = [];
@@ -860,7 +860,7 @@ global.languageSettings = %[];
 
 // For convenience
 global.get_currentLanguageSettings = function(kag=global.kag) { { return global.languageSettings[kag.sflags.language]; } };
-global.get_special_characters = function(kag=global.kag) { { return global.get_currentLanguageSettings(kag).special_characters !== void? global.get_currentLanguageSettings(kag).special_characters : %[]; } };
+global.get_special_characters = function(kag=global.kag) { { return (global.get_currentLanguageSettings(kag).special_characters !== void) ? global.get_currentLanguageSettings(kag).special_characters : %[]; } };
 global.get_default_history_font = function(kag=global.kag)
 {
 	var cur_langset = global.get_currentLanguageSettings(kag);
@@ -880,7 +880,7 @@ global.get_default_history_bold = function(kag=global.kag)
 	return cur_langset.history_default_bold;
 };
 global.get_historyFontDefault = function(kag=global.kag) { { return [ global.get_default_history_font(kag), global.get_default_history_bold(kag) ]; } };
-global.get_historyFont = function(kag=global.kag) { { return global.get_currentLanguageSettings(kag).history !== void? global.get_currentLanguageSettings(kag).history : %[]; } };
+global.get_historyFont = function(kag=global.kag) { { return (global.get_currentLanguageSettings(kag).history !== void) ? global.get_currentLanguageSettings(kag).history : %[]; } };
 global.get_fsncleaner_rescript_enabled = function(kag=global.kag) { { return !!(global.get_currentLanguageSettings(kag).fsncleaner_rescript_enabled); } };
 global.get_replace_jp_tilde_disabled = function(kag=global.kag) { { return !!(global.get_currentLanguageSettings(kag).replace_jp_tilde_disabled); } };
 global.get_replace_jp_whitespace_disabled = function(kag=global.kag) { { return !!(global.get_currentLanguageSettings(kag).replace_jp_whitespace_disabled); } };
@@ -954,7 +954,7 @@ global.get_default_history_settings = function()
 global.getFontFiles = function(language)
 {
 	var fontFiles = global.languageSettings[language].fontFiles;
-	return (fontFiles !== void? fontFiles : []);
+	return ((fontFiles !== void) ? fontFiles : []);
 };
 
 global.isChinese = function(kag=global.kag)

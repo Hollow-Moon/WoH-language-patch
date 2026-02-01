@@ -1,9 +1,9 @@
 ﻿// Patch names
-global.vitaAssetsPatchName = global.devMode? "ImagesVita" : "vita"; // not the best place to declare the vita patch name but we need it at this stage
+global.vitaAssetsPatchName = global.devMode ? "ImagesVita" : "vita"; // not the best place to declare the vita patch name but we need it at this stage
 @if(GAME_FATE)
 global.hPatchName = "h";
 global.hCensorPatchName = global.mainPatchName;
-global.maturePatchName = global.devMode? "ImagesPatch" : global.mainPatchName;
+global.maturePatchName = global.devMode ? "ImagesPatch" : global.mainPatchName;
 global.ecchiPatchName = "h";
 global.decensoredPatchName = "h";
 @endif
@@ -25,7 +25,7 @@ global.decensoredFlagName = "decensor";
 global.decensorConfigFlagName = "decensorConfig";
 
 global.get_hPatchExists = function() { { return global.patchExists(global.hPatchName); } };
-global.get_isHCensored = function(kag=global.kag) { { return kag.sflags[global.hCensoredFlagName] !== void? kag.sflags[global.hCensoredFlagName] : !kag.sflags[global.hFlagName]; } }; // RN uses hFlagName while HA uses hCensoredFlagName
+global.get_isHCensored = function(kag=global.kag) { { return (kag.sflags[global.hCensoredFlagName] !== void) ? kag.sflags[global.hCensoredFlagName] : !kag.sflags[global.hFlagName]; } }; // RN uses hFlagName while HA uses hCensoredFlagName
 global.get_isMatureCensored = function(kag=global.kag) { { return !kag.sflags[global.matureFlagName]; } };
 global.get_isEcchiTextCensored = function(kag=global.kag) { { return !kag.sflags[global.ecchitextFlagname]; } };
 global.get_isEcchiCensored = function(kag=global.kag) { { return !kag.sflags[global.ecchiFlagName]; } };

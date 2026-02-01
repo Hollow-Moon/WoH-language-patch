@@ -34,9 +34,9 @@
 				var lf = mlf;
 				elm.maxwidth = this.current.relinexpos - this.current.x if elm.maxwidth === void;
 
-				var tf_uppers	= global.isNoSpaceLanguage()? [].split("/,", elm.upper) : global.wordWrapSplit(elm.upper, elm.maxwidth, lf);
-				var tf_lowers	= global.isNoSpaceLanguage()? [].split("/,", elm.lower) : global.wordWrapSplit(elm.lower, elm.maxwidth, lf);
-				var tf_lcount	= tf_uppers.count > tf_lowers.count ? tf_uppers.count : tf_lowers.count;
+				var tf_uppers	= global.isNoSpaceLanguage() ? [].split("/,", elm.upper) : global.wordWrapSplit(elm.upper, elm.maxwidth, lf);
+				var tf_lowers	= global.isNoSpaceLanguage() ? [].split("/,", elm.lower) : global.wordWrapSplit(elm.lower, elm.maxwidth, lf);
+				var tf_lcount	= (tf_uppers.count > tf_lowers.count) ? tf_uppers.count : tf_lowers.count;
 				var tf_offsetline	= tf_uppers.count;
 				var tf_lindex	= 0;
 				var history_layer = this.historyLayer;
@@ -61,8 +61,8 @@
 				// 行のループ
 				do // label: doublecolumn_lloop
 				{
-					var tf_uline = tf_uppers.count > tf_lindex ? tf_uppers[tf_lindex] : '';
-					var tf_lline = tf_lowers.count > tf_lindex ? tf_lowers[tf_lindex] : '';
+					var tf_uline = (tf_uppers.count > tf_lindex) ? tf_uppers[tf_lindex] : '';
+					var tf_lline = (tf_lowers.count > tf_lindex) ? tf_lowers[tf_lindex] : '';
 
 					tf_uline_split.clear();
 					tf_lline_split.clear();
@@ -70,19 +70,19 @@
 					global.split_text_by_grapheme(this, tf_lline, do_insert_text, tf_lline_split);
 
 					var tf_cindex = 0;
-					var tf_length = tf_uline_split.count > tf_lline_split.count ? tf_uline_split.count : tf_lline_split.count;
+					var tf_length = (tf_uline_split.count > tf_lline_split.count) ? tf_uline_split.count : tf_lline_split.count;
 					var tf_lwidth = 0;
 					// 桁(文字)のループ
 					do // label: doublecolumn_cloop
 					{
 						// 二行に文字を描画する
-						var tf_uc = tf_cindex < tf_uline_split.count ? tf_uline_split[tf_cindex] : '';
-						var tf_lc = tf_cindex < tf_lline_split.count ? tf_lline_split[tf_cindex] : '';
+						var tf_uc = (tf_cindex < tf_uline_split.count) ? tf_uline_split[tf_cindex] : '';
+						var tf_lc = (tf_cindex < tf_lline_split.count) ? tf_lline_split[tf_cindex] : '';
 						
 						var tf_lastleft = message_layer_x - message_layer.marginL;
 						var tf_lasttop = message_layer_y - message_layer.marginT;
 	
-						message_layer_x = (global.isNoSpaceLanguage()? tf_lastleft : tf_lwidth) + message_layer.marginL;					
+						message_layer_x = (global.isNoSpaceLanguage() ? tf_lastleft : tf_lwidth) + message_layer.marginL;					
 						message_layer_y += (message_layer.fontSize + message_layer.lineSpacing) * tf_offsetline;
 						tag_queue.add(%[tagname: "locate", x: message_layer_x - message_layer.marginL, y: message_layer_y - message_layer.marginT]);
 							

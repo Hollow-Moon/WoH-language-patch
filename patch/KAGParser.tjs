@@ -1393,7 +1393,7 @@ class __internal_KAGParser
 			// check special control tags
 			if (this.processSpecialTags)
 			{
-				tagkind = global.special_kag_tags.find(tagname) !== -1 ? tagname : "";
+				tagkind = (global.special_kag_tags.find(tagname) !== -1) ? tagname : "";
 			}
 			else
 			{
@@ -1795,7 +1795,7 @@ class __internal_KAGParser
 				}
 
 				var attribnamestart = this.curPos;
-				while (this.curLineStr.length !== this.curPos && !this.TVPIsWS(this.curLineStr[this.curPos]) && this.curLineStr[this.curPos] !== "=" && (ldelim !== "" ? this.curLineStr[this.curPos] !== ldelim : true))
+				while (this.curLineStr.length !== this.curPos && !this.TVPIsWS(this.curLineStr[this.curPos]) && this.curLineStr[this.curPos] !== "=" && ((ldelim !== "") ? this.curLineStr[this.curPos] !== ldelim : true))
 				{
 					this.curPos += 1;
 				}
@@ -1861,7 +1861,7 @@ class __internal_KAGParser
 
 					var valuestart = this.curPos;
 
-					while (this.curLineStr.length !== this.curPos && (vdelim !== 0 ? (this.curLineStr[this.curPos] !== vdelim) : (this.curLineStr[this.curPos] !== ldelim && !this.TVPIsWS(this.curLineStr[this.curPos]))))
+					while (this.curLineStr.length !== this.curPos && ((vdelim !== 0) ? (this.curLineStr[this.curPos] !== vdelim) : (this.curLineStr[this.curPos] !== ldelim && !this.TVPIsWS(this.curLineStr[this.curPos]))))
 					{
 						if (this.curLineStr[this.curPos] === "`")
 						{

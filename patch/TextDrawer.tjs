@@ -349,7 +349,7 @@ class TextDrawer
 			}
 
 			if (settings.cleanBgImage != void) {
-				l.loadImages(global.isExistentImage(settings.cleanBgImage)? settings.cleanBgImage : storage, frameKey);
+				l.loadImages(global.isExistentImage(settings.cleanBgImage) ? settings.cleanBgImage : storage, frameKey);
 				l.setSizeToImageSize() if settings.updateSize;
 			} else {
 				if (settings.imageWidth != void && settings.imageHeight != void) {
@@ -528,7 +528,7 @@ class TextDrawer
 		var y = 0;
 		{
 			var l = layer;
-			var maxHeight = textSettings.maxHeight != void? textSettings.maxHeight : l.imageHeight - textSettings.verticalOffset;
+			var maxHeight = (textSettings.maxHeight != void) ? textSettings.maxHeight : l.imageHeight - textSettings.verticalOffset;
 
 			if (textSettings.verticalAlignment == "center") {
 				y = textSettings.topOffset + (maxHeight - textHeight)/2;
@@ -563,7 +563,7 @@ class TextDrawer
 
 			var abilities = settings.dictionary[storage];
 
-			l.loadImages(global.isExistentImage(settings.cleanBgImage + abilities.count)? (settings.cleanBgImage + abilities.count) : storage);
+			l.loadImages(global.isExistentImage(settings.cleanBgImage + abilities.count) ? (settings.cleanBgImage + abilities.count) : storage);
 			l.setSizeToImageSize();
 
 			var longestTitleWidth = this.getLongestTitle(l.font, settings.title, abilities);

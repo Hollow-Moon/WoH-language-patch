@@ -123,16 +123,16 @@ global.SetWindowControlMenu = function(win, min, max, res, cls)
 			/**/            win.windowControlMenusNames : %[];
 		// メニューアイテム生成
 		with (names) btns = %[
-		minimize: new MenuItem(win, .minimize !== void ? .minimize : ''),
-		maximize: new MenuItem(win, .maximize !== void ? .maximize : ''),
-		restore:  new MenuItem(win, .restore  !== void ? .restore  : ''),
-		close:    new MenuItem(win, .close    !== void ? .close    : '')
+		minimize: new MenuItem(win, (.minimize !== void) ? .minimize : ''),
+		maximize: new MenuItem(win, (.maximize !== void) ? .maximize : ''),
+		restore:  new MenuItem(win, (.restore  !== void) ? .restore  : ''),
+		close:    new MenuItem(win, (.close    !== void) ? .close    : '')
 			];
 		with (btns) {
-			with (.minimize) .icon = .caption != "" ? MenuItem.biPopupMinimize : MenuItem.biMinimize;
-			with (.maximize) .icon =                  MenuItem.biPopupMaximize;
-			with (.restore ) .icon = .caption != "" ? MenuItem.biPopupRestore  : MenuItem.biRestore;
-			with (.close   ) .icon = .caption != "" ? MenuItem.biPopupClose    : MenuItem.biClose;
+			with (.minimize) .icon = (.caption != "") ? MenuItem.biPopupMinimize : MenuItem.biMinimize;
+			with (.maximize) .icon =                    MenuItem.biPopupMaximize;
+			with (.restore ) .icon = (.caption != "") ? MenuItem.biPopupRestore  : MenuItem.biRestore;
+			with (.close   ) .icon = (.caption != "") ? MenuItem.biPopupClose    : MenuItem.biClose;
 
 			// クリック処理
 			.minimize.onClick = win.minimize;
@@ -889,7 +889,7 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 	function trackTempMenu(vis, bykey, force) {
 		if (vis && !bykey && ignoreTrackPseudoMenu) return;
 		var old = trackTempMenuShowing;
-		trackTempMenuShowing = !vis ? 0 : bykey ? -1 : 1;
+		trackTempMenuShowing = (!vis) ? 0 : (bykey ? -1 : 1);
 		if ((force || !old != !vis)) {
 			if  (vis) menu.visible = true;
 			else {
@@ -1350,9 +1350,9 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 	function setSystemStateFromSystemVariables()
 	{
 		super.setSystemStateFromSystemVariables();
-		windowResizeable = scflags.windowResizeable !== void ? scflags.windowResizeable : false;
-		limitWindowSize = scflags.limitWindowSize !== void ? scflags.limitWindowSize : true;
-		changeMenuBarState(scflags.menuBarState !== void ? scflags.menuBarState : defaultMenuBarState);
+		windowResizeable = (scflags.windowResizeable !== void) ? scflags.windowResizeable : false;
+		limitWindowSize = (scflags.limitWindowSize !== void) ? scflags.limitWindowSize : true;
+		changeMenuBarState((scflags.menuBarState !== void) ? scflags.menuBarState : defaultMenuBarState);
 	}
 
 @if(GAME_WOHN)

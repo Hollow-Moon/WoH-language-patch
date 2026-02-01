@@ -815,7 +815,7 @@ class MessageLayer_patch_messagelayer_prelayout_override extends global.MessageL
 			if(enabledCharAppearAction && appearType != void && (aa = appearActions[appearType]) != void)
 			{
 				var	init	= appearActions[appearType+"_init"];
-				charlayer.queued_appear_action = [init, aa, appearTimeRate != void ? appearTimeRate * charcnt : charcnt];
+				charlayer.queued_appear_action = [init, aa, (appearTimeRate != void) ? appearTimeRate * charcnt : charcnt];
 			}
 			if (continuous)
 			{
@@ -837,7 +837,7 @@ class MessageLayer_patch_messagelayer_prelayout_override extends global.MessageL
 				(init incontextof this)() if init != void;
 
 				//	実行
-				actionLastChar((aa incontextof this)(), appearTimeRate != void ? appearTimeRate * charcnt : charcnt);
+				actionLastChar((aa incontextof this)(), (appearTimeRate != void) ? appearTimeRate * charcnt : charcnt);
 			}
 
 			if (continuous)

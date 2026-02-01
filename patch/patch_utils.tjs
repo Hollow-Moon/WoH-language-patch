@@ -887,13 +887,13 @@ global.real_to_hex_string = function(v)
 	var fbits_arr = [];
 	for (var i = fbits; i !== 0; i -= 1)
 	{
-		fbits_arr.insert(0, f % 2 ? 1 : 0);
+		fbits_arr.insert(0, (f % 2) ? 1 : 0);
 		f = global.Math.floor(f / 2);
 	}
 	var ebits_arr = [];
 	for (var i = ebits; i !== 0; i -= 1)
 	{
-		ebits_arr.insert(0, e % 2 ? 1 : 0);
+		ebits_arr.insert(0, (e % 2) ? 1 : 0);
 		e = global.Math.floor(e / 2);
 	}
 
@@ -929,7 +929,7 @@ global.reload_messagelayer_config = function(window=global.kag)
 	window.allocateMessageLayers(0);
 	window.allocateCharacterLayers(old_chr_count);
 	window.allocateMessageLayers(old_msg_count);
-	window.current = (window.currentPage?window.back:window.fore).messages[old_current];
+	window.current = (window.currentPage ? window.back : window.fore).messages[old_current];
 	if (ignore_changes_tmp)
 	{
 		window.ignore_font_changes = true;
@@ -993,7 +993,7 @@ global.open_current_script_file = function(kag=global.kag, vsCode=false)
 	if (kag !== void && kag.conductor !== void && kag.conductor.curStorage != void)
 	{
 		if (vsCode) {
-			var line = kag.conductor.curLine != void? kag.conductor.curLine - 1 : 1;
+			var line = (kag.conductor.curLine != void) ? kag.conductor.curLine - 1 : 1;
 			var column = 1;
 			global.System.shellExecute("code", "--goto \"%s:%s:%s\"".sprintf(Storages.getLocalName(Storages.getPlacedPath(kag.conductor.curStorage)), line, column));
 		} else {
@@ -1527,18 +1527,18 @@ global.getLayerInfo = function()
 					continue;
 				if(children[i] instanceof "MessageCharLayer")
 					continue;
-				text	+= indent + (c.visible ? "■" : "□")+" "+c.name+(typeof(c.layerID) !== "undefined" ? "/"+c.layerID : "")+
-					(typeof(c.storage) !== "undefined" ? " <"+global.Storages.extractStorageName(c.storage)+">" : "")+
+				text	+= indent + (c.visible ? "■" : "□")+" "+c.name+((typeof(c.layerID) !== "undefined") ? "/"+c.layerID : "")+
+					((typeof(c.storage) !== "undefined") ? " <"+global.Storages.extractStorageName(c.storage)+">" : "")+
 					"["+c.type+"]"+
-//					"["+(isbase ? ._effect +"/in:"+.childEffect : (typeof(._effect) !== "undefined" ? (._effect != "" ? ._effect : (typeof(.parent.childEffect) !== "undefined" ? .parent.childEffect : "")): ""))+"]"+
-					" ("+c.left+", "+c.top+(typeof(c.realLeft) !== "undefined" ? "/"+c.realLeft+","+c.realTop+"/"+c.realImageLeft+","+c.realImageTop : "")+")-"+
-					(typeof(c.center) !== "undefined" ? ("(C:"+c.center+", "+c.vcenter+")-") : "")+
+//					"["+(isbase ? ._effect +"/in:"+.childEffect : ((typeof(._effect) !== "undefined") ? ((._effect != "") ? ._effect : ((typeof(.parent.childEffect) !== "undefined") ? .parent.childEffect : "")): ""))+"]"+
+					" ("+c.left+", "+c.top+((typeof(c.realLeft) !== "undefined") ? "/"+c.realLeft+","+c.realTop+"/"+c.realImageLeft+","+c.realImageTop : "")+")-"+
+					((typeof(c.center) !== "undefined") ? ("(C:"+c.center+", "+c.vcenter+")-") : "")+
 					"("+c.width+", "+c.height+") opac="+c.opacity+
-					(typeof(c.zoomx) !== "undefined" ? " zoom="+(c.zoomx == c.zoomy ? "%4.2f".sprintf(c.zoomx) : "(%4.2f, %4.2f)".sprintf(c.zoomx, c.zoomy)) : "")+
-					(typeof(c.rotate) !== "undefined" ? " rot=%4.2f".sprintf(c.rotate) : "")+
-					(typeof(c.afx) !== "undefined" ? " af=(%d, %d)".sprintf(c.afx, c.afy) : "")+
-					(typeof(c.srcleft) !== "undefined" ? " (%4.2f, %4.2f)[%4.2f/%4.2f](%d, %d)".sprintf(c.srcleft, c.srctop, c.srczoomx, c.srcrotate, c.srcafx, c.srcafy): "")+
-					(typeof(c.notuse) !== "undefined" ? " use=%d".sprintf(!c.notuse) : "")+"\r\n";
+					((typeof(c.zoomx) !== "undefined") ? " zoom="+((c.zoomx == c.zoomy) ? "%4.2f".sprintf(c.zoomx) : "(%4.2f, %4.2f)".sprintf(c.zoomx, c.zoomy)) : "")+
+					((typeof(c.rotate) !== "undefined") ? " rot=%4.2f".sprintf(c.rotate) : "")+
+					((typeof(c.afx) !== "undefined") ? " af=(%d, %d)".sprintf(c.afx, c.afy) : "")+
+					((typeof(c.srcleft) !== "undefined") ? " (%4.2f, %4.2f)[%4.2f/%4.2f](%d, %d)".sprintf(c.srcleft, c.srctop, c.srczoomx, c.srcrotate, c.srcafx, c.srcafy): "")+
+					((typeof(c.notuse) !== "undefined") ? " use=%d".sprintf(!c.notuse) : "")+"\r\n";
 				text	+= func(c.children, indent + "  ", func);
 			}
 		}
@@ -1722,7 +1722,7 @@ global.strftime = function(sFormat, date)
 	var match_tbl_func = function(sMatch)
 	{
 		var match_tbl_data = this[sMatch[0]];
-		return ((match_tbl_data !== void ? (match_tbl_data + "") : sMatch) + '');
+		return (((match_tbl_data !== void) ? (match_tbl_data + "") : sMatch) + '');
 	};
 	return fmt_regex.replace(sFormat, match_tbl_func incontextof match_tbl);
 };

@@ -91,9 +91,9 @@ global.MessageLayer = global.MessageLayer_patch_align_override;
 			}
 
 			if (elm.anchor !== void) {
-				var textForLength = this.conductor.cleanLine(elm.textforlength !== void? elm.textforlength : elm.text);
-				var offsetText = elm.offsettext !== void? this.conductor.cleanLine(elm.offsettext) : "";
-				var offsetTextDirection = elm.offsettextdirection !== void? elm.offsettextdirection : 0;
+				var textForLength = (this.conductor.cleanLine(elm.textforlength !== void) ? elm.textforlength : elm.text);
+				var offsetText = (elm.offsettext !== void) ? this.conductor.cleanLine(elm.offsettext) : "";
+				var offsetTextDirection = (elm.offsettextdirection !== void) ? elm.offsettextdirection : 0;
 
 				var locatealignTag = %[tagname:"locatealign", anchor:elm.anchor, textForLength:textForLength, offsetText:offsetText, offsetTextDirection:offsetTextDirection];
 				this.conductor.queueTag(0, locatealignTag);

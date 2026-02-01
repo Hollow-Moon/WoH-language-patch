@@ -77,7 +77,7 @@ class BidiUtilities
 				break;
 			}
 		}
-		for (i = _j = start_index, _ref = arr.count; start_index <= _ref ? _j <= _ref : _j >= _ref; i = start_index <= _ref ? ++_j : --_j)
+		for (i = _j = start_index, _ref = arr.count; (start_index <= _ref) ? _j <= _ref : _j >= _ref; i = (start_index <= _ref) ? ++_j : --_j)
 		{
 			if (arr[i] > max)
 			{
@@ -100,7 +100,7 @@ class BidiUtilities
 				break;
 			}
 		}
-		for (i = _j = start_index, _ref = arr.count; start_index <= _ref ? _j <= _ref : _j >= _ref; i = start_index <= _ref ? ++_j : --_j)
+		for (i = _j = start_index, _ref = arr.count; (start_index <= _ref) ? _j <= _ref : _j >= _ref; i = (start_index <= _ref) ? ++_j : --_j)
 		{
 			if (arr[i] < min)
 			{
@@ -133,12 +133,12 @@ class Bidi
 		{
 			options = %[];
 		}
-		this.string_arr = options.string_arr !== void ? options.string_arr : options.types;
-		this.types = options.types !== void ? options.types : [];
+		this.string_arr = (options.string_arr !== void) ? options.string_arr : options.types;
+		this.types = (options.types !== void) ? options.types : [];
 		this.levels = [];
 		this.runs = [];
 		this.direction = options.direction;
-		this.default_direction = options.default_direction !== void ? options.default_direction : "LTR";
+		this.default_direction = (options.default_direction !== void) ? options.default_direction : "LTR";
 		this.count = this.types.count;
 		this.run_bidi();
 	}
@@ -241,7 +241,7 @@ class Bidi
 				lowest_odd = global.BidiUtilities.min([lowest_odd, level]);
 			}
 		}
-		for (depth = _j = max; max <= 0 ? _j < 0 : _j > 0; depth = max <= 0 ? ++_j : --_j)
+		for (depth = _j = max; (max <= 0) ? _j < 0 : _j > 0; depth = (max <= 0) ? ++_j : --_j)
 		{
 			start = 0;
 			while (start < this.levels.count)
@@ -259,7 +259,7 @@ class Bidi
 				{
 					finish += 1;
 				}
-				for (i = _k = 0, _ref1 = (finish - start) \ 2; 0 <= _ref1 ? _k < _ref1 : _k > _ref1; i = 0 <= _ref1 ? ++_k : --_k)
+				for (i = _k = 0, _ref1 = (finish - start) \ 2; (0 <= _ref1) ? _k < _ref1 : _k > _ref1; i = (0 <= _ref1) ? ++_k : --_k)
 				{
 					tmpb = this.levels[finish - i - 1];
 					this.levels[finish - i - 1] = this.levels[start + i];
@@ -279,7 +279,7 @@ class Bidi
 		var type, _i, _len, _ref;
 		if (["LTR", "RTL"].find(this.direction) !== -1)
 		{
-			return this.direction === "LTR" ? 0 : 1;
+			return (this.direction === "LTR") ? 0 : 1;
 		}
 		else
 		{
@@ -296,7 +296,7 @@ class Bidi
 					return 1;
 				}
 			}
-			return this.default_direction === "LTR" ? 0 : 1;
+			return (this.default_direction === "LTR") ? 0 : 1;
 		}
 	}
 
@@ -311,7 +311,7 @@ class Bidi
 			this.formatter_indices = [];
 		}
 		sp = 0;
-		for (i = _i = 0, _ref = this.count; 0 <= _ref ? _i < _ref : _i > _ref; i = 0 <= _ref ? ++_i : --_i)
+		for (i = _i = 0, _ref = this.count; (0 <= _ref) ? _i < _ref : _i > _ref; i = (0 <= _ref) ? ++_i : --_i)
 		{
 			is_ltr = false;
 			is_special = true;
@@ -332,7 +332,7 @@ class Bidi
 						embedding_stack[sp] = current_embedding;
 						current_embedding = new_embedding;
 						sp += 1;
-						directional_override = this.types[i] === "LRO" ? "L" : this.types[i] === "RLO" ? "R" : -1;
+						directional_override = (this.types[i] === "LRO") ? "L" : (this.types[i] === "RLO") ? "R" : -1;
 					}
 					break;
 				case "PDF":
@@ -341,7 +341,7 @@ class Bidi
 						sp -= 1;
 						new_embedding = embedding_stack[sp];
 						current_embedding = new_embedding & 0x7f;
-						directional_override = new_embedding < 0 ? ((_ref1 = (new_embedding & 1) === 0) !== 0) ? _ref1 : %["L" => "R"] : -1;
+						directional_override = (new_embedding < 0) ? ((_ref1 = (new_embedding & 1) === 0) !== 0) ? _ref1 : %["L" => "R"] : -1;
 					}
 					break;
 				default:
@@ -360,9 +360,9 @@ class Bidi
 		output = 0;
 		input = 0;
 		size = this.formatter_indices.count;
-		for (i = _j = 0; 0 <= size ? _j <= size : _j >= size; i = 0 <= size ? ++_j : --_j)
+		for (i = _j = 0; (0 <= size) ? _j <= size : _j >= size; i = (0 <= size) ? ++_j : --_j)
 		{
-			next_fmt = i === size ? this.count : this.formatter_indices[i];
+			next_fmt = (i === size) ? this.count : this.formatter_indices[i];
 			len = next_fmt - input;
 			global.BidiUtilities.arraycopy(this.levels, input, this.levels, output, len);
 			global.BidiUtilities.arraycopy(this.types, input, this.types, output, len);
@@ -377,7 +377,7 @@ class Bidi
 		var current_embedding, i, last_run_start, run_count, where, _i, _j, _ref, _ref1;
 		run_count = 0;
 		current_embedding = this.base_embedding;
-		for (i = _i = 0, _ref = this.count; 0 <= _ref ? _i < _ref : _i > _ref; i = 0 <= _ref ? ++_i : --_i)
+		for (i = _i = 0, _ref = this.count; (0 <= _ref) ? _i < _ref : _i > _ref; i = (0 <= _ref) ? ++_i : --_i)
 		{
 			if (this.levels[i] !== current_embedding)
 			{
@@ -388,7 +388,7 @@ class Bidi
 		where = 0;
 		last_run_start = 0;
 		current_embedding = this.base_embedding;
-		for (i = _j = 0, _ref1 = this.count; 0 <= _ref1 ? _j < _ref1 : _j > _ref1; i = 0 <= _ref1 ? ++_j : --_j)
+		for (i = _j = 0, _ref1 = this.count; (0 <= _ref1) ? _j < _ref1 : _j > _ref1; i = (0 <= _ref1) ? ++_j : --_j)
 		{
 			if (this.levels[i] !== current_embedding)
 			{
@@ -406,7 +406,7 @@ class Bidi
 		var eor, finish, i, j, k, level, next_level, next_type, prev_strong_type, prev_type, previous_level, run_count, run_idx, sor, start, _i, _j, _k;
 		run_count = this.runs.count;
 		previous_level = this.base_embedding;
-		for (run_idx = _i = 0; 0 <= run_count ? _i < run_count : _i > run_count; run_idx = 0 <= run_count ? ++_i : --_i)
+		for (run_idx = _i = 0; (0 <= run_count) ? _i < run_count : _i > run_count; run_idx = (0 <= run_count) ? ++_i : --_i)
 		{
 			start = this.get_run_start(run_idx);
 			finish = this.get_run_limit(run_idx);
@@ -424,7 +424,7 @@ class Bidi
 			eor = global.BidiUtilities.is_even(global.BidiUtilities.max([level, next_level])) ? "L" : "R";
 			prev_type = sor;
 			prev_strong_type = sor;
-			for (i = _j = start; start <= finish ? _j < finish : _j > finish; i = start <= finish ? ++_j : --_j)
+			for (i = _j = start; (start <= finish) ? _j < finish : _j > finish; i = (start <= finish) ? ++_j : --_j)
 			{
 				next_type = i === (finish - 1) ? eor : this.types[i + 1];
 				if (this.types[i] === "NSM")
@@ -476,7 +476,7 @@ class Bidi
 						}
 						if (j < finish && this.types[j] === "EN")
 						{
-							for (k = _k = i; i <= j ? _k < j : _k > j; k = i <= j ? ++_k : --_k)
+							for (k = _k = i; (i <= j) ? _k < j : _k > j; k = (i <= j) ? ++_k : --_k)
 							{
 								this.types[k] = "EN";
 							}
@@ -526,7 +526,7 @@ class Bidi
 	function resolve_implicit_levels()
 	{
 		var i, _i, _ref;
-		for (i = _i = 0, _ref = this.count; 0 <= _ref ? _i < _ref : _i > _ref; i = 0 <= _ref ? ++_i : --_i)
+		for (i = _i = 0, _ref = this.count; (0 <= _ref) ? _i < _ref : _i > _ref; i = (0 <= _ref) ? ++_i : --_i)
 		{
 			if ((this.levels[i] & 1) === 0)
 			{
@@ -554,7 +554,7 @@ class Bidi
 		var embedding_direction, eor, finish, i, j, level, neutral_start, new_strong, next_level, override, prev_strong, previous_level, run, run_count, sor, start, this_type, _i, _j, _k;
 		run_count = this.get_run_count();
 		previous_level = this.base_embedding;
-		for (run = _i = 0; 0 <= run_count ? _i < run_count : _i > run_count; run = 0 <= run_count ? ++_i : --_i)
+		for (run = _i = 0; (0 <= run_count) ? _i < run_count : _i > run_count; run = (0 <= run_count) ? ++_i : --_i)
 		{
 			start = this.get_run_start(run);
 			finish = this.get_run_limit(run);
@@ -569,10 +569,10 @@ class Bidi
 			eor = global.BidiUtilities.is_even(global.BidiUtilities.max([level, next_level])) ? "L" : "R";
 			prev_strong = sor;
 			neutral_start = -1;
-			for (i = _j = start; start <= finish ? _j <= finish : _j >= finish; i = start <= finish ? ++_j : --_j)
+			for (i = _j = start; (start <= finish) ? _j <= finish : _j >= finish; i = (start <= finish) ? ++_j : --_j)
 			{
 				new_strong = -1;
-				this_type = i === finish ? eor : this.types[i];
+				this_type = (i === finish) ? eor : this.types[i];
 				switch (this_type)
 				{
 					case "L":
@@ -597,8 +597,8 @@ class Bidi
 				{
 					if (neutral_start !== -1)
 					{
-						override = prev_strong === new_strong ? prev_strong : embedding_direction;
-						for (j = _k = neutral_start; neutral_start <= i ? _k < i : _k > i; j = neutral_start <= i ? ++_k : --_k)
+						override = (prev_strong === new_strong) ? prev_strong : embedding_direction;
+						for (j = _k = neutral_start; (neutral_start <= i) ? _k < i : _k > i; j = (neutral_start <= i) ? ++_k : --_k)
 						{
 							this.types[j] = override;
 						}
@@ -618,7 +618,7 @@ class Bidi
 		{
 			input = this.count;
 			output = this.levels.count;
-			for (index = _i = _ref = this.formatter_indices.count - 1; _ref <= 0 ? _i <= 0 : _i >= 0; index = _ref <= 0 ? ++_i : --_i)
+			for (index = _i = _ref = this.formatter_indices.count - 1; (_ref <= 0) ? _i <= 0 : _i >= 0; index = (_ref <= 0) ? ++_i : --_i)
 			{
 				next_fmt = this.formatter_indices[index];
 				len = output - next_fmt - 1;
@@ -628,8 +628,8 @@ class Bidi
 				{
 					global.BidiUtilities.arraycopy(this.levels, input, this.levels, next_fmt + 1, len);
 				}
-				right_level = output === this.levels.count - 1 ? this.base_embedding : this.levels[output + 1] !== void ? this.levels[output + 1] : 0;
-				left_level = input === 0 ? this.base_embedding : this.levels[input] !== void ? this.levels[input] : 0;
+				right_level = (output === this.levels.count - 1) ? this.base_embedding : (this.levels[output + 1] !== void) ? this.levels[output + 1] : 0;
+				left_level = (input === 0) ? this.base_embedding : (this.levels[input] !== void) ? this.levels[input] : 0;
 				this.levels[output] = global.BidiUtilities.max([left_level, right_level]);
 			}
 		}

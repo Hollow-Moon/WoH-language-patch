@@ -21,12 +21,12 @@ global.standardWideRatio = 16/9;
 
 @if(GAME_FATE)
 global.hdPatchesNames = [
-	global.devMode? "ImagesSD" : "sd", // 800x600
-	global.devMode? "ImagesHD" : "hd", // 1280x960
-	global.devMode? "ImagesHD_1600" : "hd_1600", // 1600x1200
-	global.devMode? "ImagesHD_1920" : "hd_1920", // 1920x1440
-	global.devMode? "ImagesHD_2400" : "hd_2400", // 2400x1800
-	global.devMode? "ImagesHD_3200" : "hd_3200" // 3200x2400
+	global.devMode ? "ImagesSD" : "sd", // 800x600
+	global.devMode ? "ImagesHD" : "hd", // 1280x960
+	global.devMode ? "ImagesHD_1600" : "hd_1600", // 1600x1200
+	global.devMode ? "ImagesHD_1920" : "hd_1920", // 1920x1440
+	global.devMode ? "ImagesHD_2400" : "hd_2400", // 2400x1800
+	global.devMode ? "ImagesHD_3200" : "hd_3200" // 3200x2400
 ];
 global.scaleFactors = [1, 1.6, 2, 2.4, 3, 4];
 global.hdNames = ["sd", "hd", "hd_1600", "hd_1920", "hd_2400", "hd_3200"];
@@ -34,9 +34,9 @@ global.renderScaleFactors = [0.25, 0.5, 1, 2];
 @endif
 @if(GAME_FHAT)
 global.hdPatchesNames = [
-	global.devMode? "ImageSD" : "SD",
-	global.devMode? "ImageHD" : "HD",
-	global.devMode?  "ImageHD2" : "FHD",
+	global.devMode ? "ImageSD" : "SD",
+	global.devMode ? "ImageHD" : "HD",
+	global.devMode ?  "ImageHD2" : "FHD",
 ];
 global.scaleFactors = [1, 2, 4];
 global.hdNames = ["sd", "hd", "fhd"];
@@ -44,9 +44,9 @@ global.renderScaleFactors = [0.25, 0.5, 1, 2];
 @endif
 @if(GAME_WOHN)
 global.hdPatchesNames = [
-	global.devMode? "ImageSD" : "SD",
-	global.devMode? "ImageHD" : "HD",
-	global.devMode?  "ImageHD2" : "FHD",
+	global.devMode ? "ImageSD" : "SD",
+	global.devMode ? "ImageHD" : "HD",
+	global.devMode ?  "ImageHD2" : "FHD",
 ];
 global.scaleFactors = [1, 2, 4];
 global.hdNames = ["sd", "hd", "fhd"];
@@ -61,7 +61,7 @@ for (var i=0; i<global.scaleFactors.count; i++) {
 }
 
 global.get_wideHdPatchName = function(kag=global.kag) { { return get_hdPatchName(kag) + "_wide"; } };
-global.get_widePatchName = function() { { return global.devMode? "ImagesPatch" : global.mainPatchName; } };
+global.get_widePatchName = function() { { return global.devMode ? "ImagesPatch" : global.mainPatchName; } };
 global.widePatchName = "wide";
 global.wideFolderName = "wide";
 global.calculateAnyWidePatchExists = function() {
@@ -117,7 +117,7 @@ global.addHdPaths = function(kag=global.kag, patches_arr, patchName, folder="", 
 {
 	addHd = kag.isHd if addHd === void;
 	addWide = kag.wideScreen if addWide === void;
-	var separator = folder === ""? "" : "-";
+	var separator = (folder === "") ? "" : "-";
 	for (var i = 0; i < global.hdNames.count; i++) {
 @if(HD_MODE)
 		patches_arr.add([patchName, folder + separator + global.hdNames[i] + innerPath]) if addHd;
@@ -127,7 +127,7 @@ global.addHdPaths = function(kag=global.kag, patches_arr, patchName, folder="", 
 			break;
 		}
 	}
-	var patchNameHd = (patchName === global.mainPatchName || (global.devMode && global.devImageFolders.contains(patchName)))? global.get_hdPatchName(kag) : (patchName + global.get_hdPatchSuffix(kag));
+	var patchNameHd = (patchName === global.mainPatchName || (global.devMode && global.devImageFolders.contains(patchName))) ? global.get_hdPatchName(kag) : (patchName + global.get_hdPatchSuffix(kag));
 	if (patchNameHd === void)
 	{
 		return;

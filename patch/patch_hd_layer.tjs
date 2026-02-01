@@ -186,7 +186,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 
 	property widthForScale {
 		getter {
-			var w = this._width !== void? this._width : (this._imageWidth !== void? this._imageWidth : 32);
+			var w = (this._width !== void) ? this._width : ((this._imageWidth !== void) ? this._imageWidth : 32);
 			if (["Integer", "Real"].find(typeof(this.correctleft)) !== -1) {
 				w -= 2 * this.correctleft;
 			}
@@ -194,20 +194,20 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 		}
 	}
 	property widthForScaleOriginal { getter { return this.scaleWidth(this.widthForScale); } }
-	property heightForScale { getter { return this._height !== void? this._height : (this._imageHeight !== void? this._imageHeight : 32);  }}
+	property heightForScale { getter { return (this._height !== void) ? this._height : ((this._imageHeight !== void) ? this._imageHeight : 32);  }}
 	property heightForScaleOriginal { getter { return this.scaleHeight(this.heightForScale); } }
 
-	property widthForScaleInside { getter { return this.hasImage && this._imageWidth !== void? this._imageWidth : (this._width !== void? this._width : 32); } }
-	property widthForScaleInsideOriginal { getter { return this.hasImage && this._imageWidth !== void? this.imageWidthOriginal : (this._width !== void? this.widthOriginal : this.window.scaleWidth(32)); } }
-	property heightForScaleInside { getter { return this.hasImage && this._imageHeight !== void? this._imageHeight : (this._height !== void? this._height : 32);  }}
-	property heightForScaleInsideOriginal { getter { return this.hasImage && this._imageHeight !== void? this.imageHeightOriginal : (this._height !== void? this.heightOriginal : this.window.scaleHeight(32)); } }
+	property widthForScaleInside { getter { return (this.hasImage && this._imageWidth !== void) ? this._imageWidth : ((this._width !== void) ? this._width : 32); } }
+	property widthForScaleInsideOriginal { getter { return (this.hasImage && this._imageWidth !== void) ? this.imageWidthOriginal : ((this._width !== void) ? this.widthOriginal : this.window.scaleWidth(32)); } }
+	property heightForScaleInside { getter { return (this.hasImage && this._imageHeight !== void) ? this._imageHeight : ((this._height !== void) ? this._height : 32);  }}
+	property heightForScaleInsideOriginal { getter { return (this.hasImage && this._imageHeight !== void) ? this.imageHeightOriginal : ((this._height !== void) ? this.heightOriginal : this.window.scaleHeight(32)); } }
 
 	function scaleLeft(x)
     {
 		if (this.absoluteMode || this.parent == null) {
 			return x;
 		}
-        return global.scalePosition(x, this.widthForScale, this.widthForScaleOriginal, this.parent.widthForScale, this.parent.widthForScaleOriginal, this.horizontalAlignment, this.leftScaleMode) / (this.unstretchLeft? this.window.wideFactor : 1);
+        return global.scalePosition(x, this.widthForScale, this.widthForScaleOriginal, this.parent.widthForScale, this.parent.widthForScaleOriginal, this.horizontalAlignment, this.leftScaleMode) / (this.unstretchLeft ? this.window.wideFactor : 1);
     }
 
     function scaleTop(y)
@@ -216,8 +216,8 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 			return y;
 		}
 
-		var parentHeightOriginal = this.parent.isbg && !this.isbg? this.parent.heightForScaleOriginal / this.window.wideFactor : this.parent.heightForScaleOriginal;
-		var topScroll = this.window.shouldScroll? this.topScroll : 0;
+		var parentHeightOriginal = (this.parent.isbg && !this.isbg) ? this.parent.heightForScaleOriginal / this.window.wideFactor : this.parent.heightForScaleOriginal;
+		var topScroll = this.window.shouldScroll ? this.topScroll : 0;
 
         return global.scalePosition(y, this.heightForScale, this.heightForScaleOriginal, this.parent.heightForScale, parentHeightOriginal, this.verticalAlignment, this.topScaleMode) + this.window.scaleTopScroll(topScroll);
     }
@@ -239,7 +239,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 
 	function unscaleCursorY(y)
 	{
-		var topScroll = this.window.shouldScroll? (this.isbg? this.window.scrollYOffset : 0) : 0;
+		var topScroll = this.window.shouldScroll ? (this.isbg ? this.window.scrollYOffset : 0) : 0;
 		return this.window.unscaleHeight(y - this.window.scaleTopScroll(topScroll));
 	}
 
@@ -250,7 +250,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 
 	function scaleCursorY(y)
 	{
-		var topScroll = this.window.shouldScroll? (this.isbg? this.window.scrollYOffset : 0) : 0;
+		var topScroll = this.window.shouldScroll ? (this.isbg ? this.window.scrollYOffset : 0) : 0;
 		return this.window.scaleHeight(y) + this.window.scaleTopScroll(topScroll);
 	}
 
@@ -394,74 +394,74 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 
 	function scaleInsideTop(y, h, hOriginal, verticalAlignment)
 	{
-		var topScroll = this.window.shouldScroll? (this.isbg? this.window.scrollYOffset : 0) : 0;
-		var heightForScaleOriginal = this.isbg? this.heightForScaleOriginal / this.window.wideFactor : this.heightForScaleOriginal;
+		var topScroll = this.window.shouldScroll ? (this.isbg ? this.window.scrollYOffset : 0) : 0;
+		var heightForScaleOriginal = this.isbg ? this.heightForScaleOriginal / this.window.wideFactor : this.heightForScaleOriginal;
 		return global.scalePosition(y, h, hOriginal, this.heightForScale, heightForScaleOriginal, verticalAlignment, this.topScaleMode) + this.window.scaleTopScroll(topScroll);
 	}
 
     property left
 	{
-		getter { return this.absoluteMode? this.leftOriginal : this._left; }
+		getter { return this.absoluteMode ? this.leftOriginal : this._left; }
 		setter(v) { v = +v; this._left = v; this.leftOriginal = this.scaleLeft(v); }
 	}
 
     property top
     {
-        getter { return this.absoluteMode? this.topOriginal : this._top; }
+        getter { return this.absoluteMode ? this.topOriginal : this._top; }
         setter(v) { v = +v; this._top = v; this.topOriginal = this.scaleTop(v); }
     }
 
 	property imageLeft
 	{
-		getter { return this.absoluteMode? this.imageLeftOriginal : this._imageLeft; }
+		getter { return this.absoluteMode ? this.imageLeftOriginal : this._imageLeft; }
 		setter(v) { v = +v; this._imageLeft = v; this.imageLeftOriginal = this.scaleImageLeft(v); }
 	}
 
     property imageTop
     {
-        getter { return this.absoluteMode? this.imageTopOriginal : this._imageTop; }
+        getter { return this.absoluteMode ? this.imageTopOriginal : this._imageTop; }
         setter(v) { v = +v; this._imageTop = v; this.imageTopOriginal = this.scaleImageTop(v); }
     }
 
 	property clipLeft
 	{
-		getter { return this.absoluteMode? this.clipLeftOriginal : this._clipLeft; }
+		getter { return this.absoluteMode ? this.clipLeftOriginal : this._clipLeft; }
 		setter(v) { v = +v; this._clipLeft = v; this.clipLeftOriginal = this.scaleInsideImageLeft(v, this._clipWidth, this.clipWidthOriginal); this.updateClipSize(); }
 	}
 
     property clipTop
     {
-        getter { return this.absoluteMode? this.clipTopOriginal : this._clipTop; }
+        getter { return this.absoluteMode ? this.clipTopOriginal : this._clipTop; }
         setter(v) { v = +v; this._clipTop = v; this.clipTopOriginal = this.scaleInsideImageTop(v, this._clipHeight, this.clipHeightOriginal); this.updateClipSize(); }
     }
 
     property attentionLeft
 	{
-		getter { return this.absoluteMode? this.attentionLeftOriginal : this._attentionLeft; }
+		getter { return this.absoluteMode ? this.attentionLeftOriginal : this._attentionLeft; }
 		setter(v) { v = +v; this._attentionLeft = v; this.attentionLeftOriginal = this.scaleInsideImageWidth(v); }
 	}
 
     property attentionTop
     {
-        getter { return this.absoluteMode? this.attentionTopOriginal : this._attentionTop; }
+        getter { return this.absoluteMode ? this.attentionTopOriginal : this._attentionTop; }
         setter(v) { v = +v; this._attentionTop = v; this.attentionTopOriginal = this.scaleInsideImageHeight(v); }
     }
 
     property cursorX
 	{
-		getter { return this.absoluteMode? this.cursorXOriginal : this.unscaleCursorX(this.cursorXOriginal); }
+		getter { return this.absoluteMode ? this.cursorXOriginal : this.unscaleCursorX(this.cursorXOriginal); }
 		setter(v) { v = +v; this.cursorXOriginal = this.scaleCursorX(v); }
 	}
 
     property cursorY
     {
-        getter { return this.absoluteMode? this.cursorYOriginal : this.unscaleCursorY(this.cursorYOriginal); }
+        getter { return this.absoluteMode ? this.cursorYOriginal : this.unscaleCursorY(this.cursorYOriginal); }
 		setter(v) { v = +v; this.cursorYOriginal = this.scaleCursorY(v); }
     }
 
 	property width
 	{
-		getter { return this.absoluteMode? this.widthOriginal : this._width; }
+		getter { return this.absoluteMode ? this.widthOriginal : this._width; }
 		setter(v)
 		{
 			v = +v;
@@ -479,7 +479,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 
 	property height
 	{
-		getter { return this.absoluteMode? this.heightOriginal : this._height; }
+		getter { return this.absoluteMode ? this.heightOriginal : this._height; }
 		setter(v)
 		{
 			v = +v;
@@ -497,25 +497,25 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 
 	property imageWidth
 	{
-		getter { return this.absoluteMode? this.imageWidthOriginal : (this._imageWidth === void? 32 : this._imageWidth); }
+		getter { return this.absoluteMode ? this.imageWidthOriginal : ((this._imageWidth === void) ? 32 : this._imageWidth); }
 		setter(v) { v = +v; this._imageWidth = v; this.imageWidthOriginal = this.scaleImageWidth(v); this.updateSize(); }
 	}
 
 	property imageHeight
 	{
-		getter { return this.absoluteMode? this.imageHeightOriginal : (this._imageHeight === void? 32: this._imageHeight); }
+		getter { return this.absoluteMode ? this.imageHeightOriginal : ((this._imageHeight === void) ? 32: this._imageHeight); }
 		setter(v) { v = +v; this._imageHeight = v; this.imageHeightOriginal = this.scaleImageHeight(v); this.updateSize(); }
 	}
 
 	property clipWidth
 	{
-		getter { return this.absoluteMode? this.clipWidthOriginal : this._clipWidth; }
+		getter { return this.absoluteMode ? this.clipWidthOriginal : this._clipWidth; }
 		setter(v) { v = +v; this._clipWidth = v; this.clipWidthOriginal = this.scaleInsideImageWidth(v); }
 	}
 
 	property clipHeight
 	{
-		getter { return this.absoluteMode? this.clipHeightOriginal : this._clipHeight; }
+		getter { return this.absoluteMode ? this.clipHeightOriginal : this._clipHeight; }
 		setter(v) { v = +v; this._clipHeight = v; this.clipHeightOriginal = this.scaleInsideImageHeight(v); }
 	}
 
@@ -804,7 +804,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 				this.children[i].updateTopScroll(scrollAll);
 			}
 		} else if (this.parent !== null && this.parent.isbg) {
-			this.topScroll = scrollAll? this.topScroll : this.window.scrollYOffset;
+			this.topScroll = scrollAll ? this.topScroll : this.window.scrollYOffset;
 		} else {
 			this.topScroll = 0;
 		}
@@ -1107,7 +1107,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 			if (imageInfo["number_of_images_mobile"] !== void && this.window.sflags.mobileBreakGlyphs) {
 				this.numberOfImages = imageInfo["number_of_images_mobile"];
 			} else {
-				this.numberOfImages = imageInfo["number_of_images"] !== void ? imageInfo["number_of_images"] : 1;
+				this.numberOfImages = (imageInfo["number_of_images"] !== void) ? imageInfo["number_of_images"] : 1;
 			}
 
 			if (this.window.wideScreen) {
@@ -1132,10 +1132,10 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 
 			this._imageWidth *= this.numberOfImages;
 			
-			this.isbg = imageInfo["bg"] !== void ? imageInfo["bg"] : false;
+			this.isbg = (imageInfo["bg"] !== void) ? imageInfo["bg"] : false;
 			this.isWideImage = isbg;
 			
-			this.leftScaleMode = this.topScaleMode = imageInfo["positionScaleMode"] !== void ? imageInfo["positionScaleMode"] : 0;
+			this.leftScaleMode = this.topScaleMode = (imageInfo["positionScaleMode"] !== void) ? imageInfo["positionScaleMode"] : 0;
 		}
 
 @if(GAME_FATE||GAME_FHAT)
@@ -1279,7 +1279,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 
 	function upscale()
 	{
-		var wideImageHeightAdjustment = (this.isbg && this.isWideImage && global.isAnyWidePatchExists)? this.window.wideFactor : 1;
+		var wideImageHeightAdjustment = (this.isbg && this.isWideImage && global.isAnyWidePatchExists) ? this.window.wideFactor : 1;
 		var scaledImageWidth = this.scaleImageWidth(this._imageWidth);
 		var scaledImageHeight = this.scaleImageHeight(this._imageHeight / wideImageHeightAdjustment);
 		if (this.imageWidthOriginal == scaledImageWidth && this.imageHeightOriginal == scaledImageHeight) return;
@@ -1382,8 +1382,8 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 			destwidth = this._imageWidth;
 			destheight = this._imageHeight;
 		}
-		destwidth = ((destwidth < 0 ? -destwidth : destwidth) & 0x7fffffff) * (destwidth < 0 ? -1 : 1);
-		destheight = ((destheight < 0 ? -destheight : destheight) & 0x7fffffff) * (destheight < 0 ? -1 : 1);
+		destwidth = (((destwidth < 0) ? -destwidth : destwidth) & 0x7fffffff) * ((destwidth < 0) ? -1 : 1);
+		destheight = (((destheight < 0) ? -destheight : destheight) & 0x7fffffff) * ((destheight < 0) ? -1 : 1);
 		if (typeof(transsrc) === "Object" && transsrc !== null && isvalid(transsrc) && transsrc instanceof "Layer")
 		{
 			if (withchildren)
@@ -1396,8 +1396,8 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 				srcwidth = transsrc._imageWidth;
 				srcheight = transsrc._imageHeight;
 			}
-			srcwidth = ((srcwidth < 0 ? -srcwidth : srcwidth) & 0x7fffffff) * (srcwidth < 0 ? -1 : 1);
-			srcheight = ((srcheight < 0 ? -srcheight : srcheight) & 0x7fffffff) * (srcheight < 0 ? -1 : 1);
+			srcwidth = (((srcwidth < 0) ? -srcwidth : srcwidth) & 0x7fffffff) * ((srcwidth < 0) ? -1 : 1);
+			srcheight = (((srcheight < 0) ? -srcheight : srcheight) & 0x7fffffff) * ((srcheight < 0) ? -1 : 1);
 		}
 		if ((name === "crossfade" || name === "scroll" || name === "universal") && (srcwidth !== destwidth || srcheight !== destheight))
 		{

@@ -172,7 +172,7 @@ class Equations
 	function OutElastic     (p) { return this.sin((p * -40.0 - 3.0) * 0.5235987755982988) * this.exp(p * -6.931471805599453) + 1.0;}
 
 	// NOTE: 'Exponent2' needs clamping for 0 and 1 respectively
-	function InExponent2    (p) { return p <= 0.0 ? 0.0 : this.exp((p - 1.0) * 6.931471805599453); }
+	function InExponent2    (p) { return (p <= 0.0) ? 0.0 : this.exp((p - 1.0) * 6.931471805599453); }
 	function InOutExponent2 (p) {
 									if (p <= 0.0)
 									{
@@ -182,9 +182,9 @@ class Equations
 									{
 										return 1.0;
 									}
-									return p >= 0.5 ? 1.0 - this.exp(((p + p - 1.0) * -10.0 - 1.0) * 0.6931471805599453) : this.exp(((p + p - 1.0) * 10.0 - 1.0) * 0.6931471805599453);
+									return (p >= 0.5) ? 1.0 - this.exp(((p + p - 1.0) * -10.0 - 1.0) * 0.6931471805599453) : this.exp(((p + p - 1.0) * 10.0 - 1.0) * 0.6931471805599453);
 								}
-	function OutExponent2   (p) { return p >= 1.0 ? 1.0 : 1.0 - this.exp(p * -6.931471805599453); }
+	function OutExponent2   (p) { return (p >= 1.0) ? 1.0 : 1.0 - this.exp(p * -6.931471805599453); }
 
 	function InSine         (p) { return 1.0 - this.cos(1.570796326794897 * p);  }
 	function InOutSine      (p) { return (1.0 - this.cos(3.141592653589793 * p)) * 0.5; }

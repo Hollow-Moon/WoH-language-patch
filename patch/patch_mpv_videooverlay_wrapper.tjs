@@ -319,13 +319,13 @@ class VideoOverlay
 @if(1)
 				if (e.name === "pause")
 				{
-					this.onStatusChanged(e.data == "no" ? "play" : "pause");
+					this.onStatusChanged((e.data == "no") ? "play" : "pause");
 				}
 				else if (e.name === "seek")
 				{
 					if (e.data == 0)
 					{
-						this.onStatusChanged(this.mp.get_property("pause") === "yes" ? "stop" : "play");
+						this.onStatusChanged((this.mp.get_property("pause") === "yes") ? "stop" : "play");
 					}
 				}
 @endif

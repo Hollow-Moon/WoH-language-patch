@@ -44,15 +44,15 @@ global._n = function(textSingle, textPlural, pluralNumber, domain=global.default
 
 	var dict = global.domains[domain];
 	if (dict === void) {
-		return global.plural == 0? textSingle : textPlural;
+		return (global.plural == 0) ? textSingle : textPlural;
 	}
 	var result = dict[global.defaultContext + global.contextDelimiter + textSingle + global.contextDelimiter + textPlural];
 	if (result === void) {
-		return global.plural == 0? textSingle : textPlural;
+		return (global.plural == 0) ? textSingle : textPlural;
 	}
 	var result2 = result[global.plural];
 	if (result2 === void) {
-		return global.plural == 0? textSingle : textPlural;
+		return (global.plural == 0) ? textSingle : textPlural;
 	}
 	return result2;
 } incontextof global;

@@ -159,7 +159,7 @@ global.initialize_patch = function()
 					for (var j = 0, internal_forloop_count = load[2].count; j < internal_forloop_count; j += 1)
 					{
 						var item = load[2][j];
-						tjs_expression_array.add(("typeof(global.%s) %s \"%s\"").sprintf(item[0], typeof(item[2]) === "String" ? item[2] : "!==", typeof(item[1]) === "String" ? item[1] : "Object"));
+						tjs_expression_array.add(("typeof(global.%s) %s \"%s\"").sprintf(item[0], (typeof(item[2]) === "String") ? item[2] : "!==", (typeof(item[1]) === "String") ? item[1] : "Object"));
 					}
 					tjs_expression += tjs_expression_array.join("&&");
 				}

@@ -59,8 +59,8 @@ class Conductor_patch_async_image_load_override_override extends global.Conducto
 
 	function onTag(elm)
 	{
-		var	canskip	= elm.canskip === void ? false : +elm.canskip;
-		if (!this.is_immediate && !this.owner.usingExtraConductor && (elm.tagname === "playtimeline" ? ((canskip && !this.owner.skipMode) || !canskip) : true) && this.owner.isSkippingToTarget === void && !global.not_image_tags[elm.tagname] && this.processSpecialTags)
+		var	canskip	= (elm.canskip === void) ? false : +elm.canskip;
+		if (!this.is_immediate && !this.owner.usingExtraConductor && ((elm.tagname === "playtimeline") ? ((canskip && !this.owner.skipMode) || !canskip) : true) && this.owner.isSkippingToTarget === void && !global.not_image_tags[elm.tagname] && this.processSpecialTags)
 		{
 			var list = [];
 			var storage = elm.storage;

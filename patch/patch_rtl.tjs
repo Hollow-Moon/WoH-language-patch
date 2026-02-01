@@ -26,7 +26,7 @@ class Layer_patch_rtl_override extends global.Layer_patch_rtl_original
 
 	function operateRect(left, top, src, sleft, stop, swidth, sheight, mode, opacity)
 	{
-		if (this.name === "行描画用浮遊メッセージレイヤ" && global.get_rtl_enabled(typeof(global.kag) === "Object" ? global.kag : this.window))
+		if (this.name === "行描画用浮遊メッセージレイヤ" && global.get_rtl_enabled((typeof(global.kag) === "Object") ? global.kag : this.window))
 		{
 			left = this.parent.relinexpos - left;
 			left -= src.imageWidth;
@@ -37,7 +37,7 @@ class Layer_patch_rtl_override extends global.Layer_patch_rtl_original
 
 	function setPos(left, top, width, height)
 	{
-		if ((this instanceof "ClickGlyphLayer") && global.get_rtl_enabled(typeof(global.kag) === "Object" ? global.kag : this.window))
+		if ((this instanceof "ClickGlyphLayer") && global.get_rtl_enabled((typeof(global.kag) === "Object") ? global.kag : this.window))
 		{
 			left = this.parent.relinexpos - (this.parent.lineLayerPos);
 			left += this.imageWidth;
@@ -48,10 +48,10 @@ class Layer_patch_rtl_override extends global.Layer_patch_rtl_original
 
 	function drawText(left, top, text, color, opacity, aa, slevel, scolor, swidth, sofsx, sofsy)
 	{
-		var rtl_enabled = global.get_rtl_enabled(typeof(global.kag) === "Object" ? global.kag : this.window);
+		var rtl_enabled = global.get_rtl_enabled((typeof(global.kag) === "Object") ? global.kag : this.window);
 		text += "";
 		var avoid_reposition_cond = (typeof(this.in_text_drawer) === "Integer" && this.in_text_drawer) || (this instanceof "MenuItemChildLayer") || (this.parent !== null && isvalid(this.parent) && this.parent instanceof "ConfigMenuLayer");
-		if (global.get_arabic_shaping_enabled(typeof(global.kag) === "Object" ? global.kag : this.window))
+		if (global.get_arabic_shaping_enabled((typeof(global.kag) === "Object") ? global.kag : this.window))
 		{
 			if (this.name !== "行描画用浮遊メッセージレイヤ") /* Message layer */
 			{
@@ -64,7 +64,7 @@ class Layer_patch_rtl_override extends global.Layer_patch_rtl_original
 			// Don't reposition in text drawer
 			if (!avoid_reposition_cond)
 			{
-				if (global.get_half_height_offset_hack(typeof(global.kag) === "Object" ? global.kag : this.window))
+				if (global.get_half_height_offset_hack((typeof(global.kag) === "Object") ? global.kag : this.window))
 				{
 					top -= this.font.height \ 2;
 				}
@@ -115,7 +115,7 @@ class AnimationLayer_patch_rtl_override extends global.AnimationLayer_patch_rtl_
 
 	function loadImages(elm)
 	{
-		if (global.get_rtl_enabled(typeof(global.kag) === "Object" ? global.kag : this.window)) {
+		if (global.get_rtl_enabled((typeof(global.kag) === "Object") ? global.kag : this.window)) {
 			if (typeof(elm) === "Object" && (elm.storage === "LineBreak" || elm.storage === "PageBreak")) {
 				elm.fliplr = true;
 			}

@@ -1713,7 +1713,7 @@ class ArabicShaping
         var /* int */ seenComposeEnabled = 0;
 
         yehHamzaComposeEnabled = ((this.options&this.YEHHAMZA_MASK) == this.YEHHAMZA_TWOCELL_NEAR) ? 1 : 0;
-        seenComposeEnabled = ((this.options&this.SEEN_MASK) == this.SEEN_TWOCELL_NEAR)? 1 : 0;
+        seenComposeEnabled = ((this.options&this.SEEN_MASK) == this.SEEN_TWOCELL_NEAR) ? 1 : 0;
 
         for (var /* int */ i = start, e = i + length; i < e; ++i) {
             var /* char */ ch = dest[i];
@@ -2576,8 +2576,8 @@ class ArabicShaping
                     if (temp.length < 2) {
                         temp = " " + temp;
                     }
-                    var /* char */ trg = i < expected.length ? expected.charAt(i) : '\xffff';
-                    var /* char */ res = i < actual.length ? actual.charAt(i) : '\xffff';
+                    var /* char */ trg = (i < expected.length) ? expected.charAt(i) : '\xffff';
+                    var /* char */ res = (i < actual.length) ? actual.charAt(i) : '\xffff';
 
                     buf.add("[" + temp + "] ");
                     buf.add(escapedString("" + trg) + " ");

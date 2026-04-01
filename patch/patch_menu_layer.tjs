@@ -3,6 +3,7 @@
 class MenuItemRootLayer extends global.Layer
 {
 	var menu;
+	var menu_active_enabled = true;
 	var menu_active_height = 20;
 	var menu_active_base_height = 20;
 	var menu_stack = [];
@@ -16,7 +17,7 @@ class MenuItemRootLayer extends global.Layer
 
 	function show()
 	{
-		if (this.visible)
+		if (!this.menu_active_enabled || this.visible)
 		{
 			return;
 		}

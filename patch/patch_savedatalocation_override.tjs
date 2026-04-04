@@ -263,7 +263,18 @@ class KAGWindow_patch_savedatalocation_override_override extends global.KAGWindo
 				}
 				catch (e) {}
 
-				(global.Dictionary.saveStruct incontextof config)(configconfigfile);
+				try
+				{
+					(global.Dictionary.saveStruct incontextof config)(configconfigfile);
+				}
+				catch (e)
+				{
+					var strarr = [];
+					strarr.add((global.__("「%s」にある設定ファイルを保存できませんでした。")).sprintf(global.Storages.getFullPath(configconfigfile)));
+					strarr.add((global.__("「%s」にあるゲームディレクトリを、デスクトップなどの書き込み可能なフォルダに移動してください。")).sprintf(global.Storages.getFullPath(configconfigfile)));
+					global.System.inform(strarr.join("\n"));
+					global.System.exit();
+				}
 			}
 		}
 

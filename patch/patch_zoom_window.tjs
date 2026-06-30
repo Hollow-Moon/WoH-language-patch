@@ -558,14 +558,7 @@ class KAGWindow_patch_zoom_window_override extends KAGWindow_patch_zoom_window_o
 	function resetPrimaryPos(max = 0, w, h) {
 		if (typeof(_primaryLayer) === "Object")
 		{
-			var windowWideFactor = 1;
-			if (typeof(this.absoluteMode) === "Integer")
-			{
-				if (["Integer", "Real"].find(typeof(this.wideFactor)) !== -1)
-				{
-					windowWideFactor = this.wideFactor;
-				}
-			}
+			var windowWideFactor = ((typeof(this.absoluteMode) === "Integer") && (["Integer", "Real"].find(typeof(this.wideFactor)) !== -1)) ? this.wideFactor : 1;
 			with (_primaryLayer) {
 				if (max) { // Maximized window
 					// z is the zoom factor between screen space and base resolution when touching the window borders from inside.

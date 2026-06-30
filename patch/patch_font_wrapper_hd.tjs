@@ -24,11 +24,7 @@
 
 	function getTextWidth()
 	{
-		var windowWideFactor = 1;
-		if (["Integer", "Real"].find(typeof(this.layer.window.wideFactor)) !== -1)
-		{
-			windowWideFactor = this.layer.window.wideFactor;
-		}
+		var windowWideFactor = (["Integer", "Real"].find(typeof(this.layer.window.wideFactor)) !== -1) ? this.layer.window.wideFactor : 1;
 		var factor = this.layer.stretch ? windowWideFactor : 1;
 		return this.layer.window.unscaleHeightFloat(super.getTextWidth(...)) / factor;
 	}

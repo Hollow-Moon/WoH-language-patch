@@ -187,9 +187,7 @@ class Layer_patch_hd_layer_override extends global.Layer_patch_hd_layer_original
 	property widthForScale {
 		getter {
 			var w = (this._width !== void) ? this._width : ((this._imageWidth !== void) ? this._imageWidth : 32);
-			if (["Integer", "Real"].find(typeof(this.correctleft)) !== -1) {
-				w -= 2 * this.correctleft;
-			}
+			w -= (["Integer", "Real"].find(typeof(this.correctleft)) !== -1) ? (2 * this.correctleft) : 0;
 			return w;
 		}
 	}

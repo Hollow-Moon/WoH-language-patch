@@ -203,11 +203,7 @@ class Window_hint_override extends global.Window_hint_original
 			{
 				pxHeight = this.pxHeight;
 			}
-			var windowWideFactor = 1;
-			if (["Integer", "Real"].find(typeof(this.wideFactor)) !== -1)
-			{
-				windowWideFactor = this.wideFactor;
-			}
+			var windowWideFactor = (["Integer", "Real"].find(typeof(this.wideFactor)) !== -1) ? this.wideFactor : 1;
 
 			// Calculate the actually used (absolute) width/height the game content uses (so without black borders in fullscreen/maximized)
 			var pxWidth_abs = global.Math.floor(clientRect.h * pxWidth * windowWideFactor / pxHeight) | 0;

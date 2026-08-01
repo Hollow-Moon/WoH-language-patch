@@ -44,12 +44,9 @@ global.System.exceptionHandler = function(e)
 	}
 
 	var exception_message = "Unknown error";
-	if (typeof(e) === "Object" && isvalid(e))
+	if (typeof(e) === "Object" && isvalid(e) && (typeof(e.message) == "String"))
 	{
-		if (typeof(e.message) == "String")
-		{
-			exception_message = e.message;
-		}
+		exception_message = e.message;
 	}
 	global.Debug.message("Exception: " + exception_message);
 	var trace_string = global.Scripts.getTraceString();
@@ -126,12 +123,9 @@ global.System.exceptionHandler = function(e)
 	global.System.inform(msg);
 
 @if(!KIRIKIROID)
-	if ((typeof(global.devMode) === "Integer" ? !global.devMode : true) && (typeof(global.devMode2) === "Integer" ? !global.devMode2 : true))
+	if (((typeof(global.devMode) === "Integer" ? !global.devMode : true) && (typeof(global.devMode2) === "Integer" ? !global.devMode2 : true)) && (global.System.getArgument('-openpatchinfourlonerror') !== "no" && typeof(global.PatchInfoURL) === "String"))
 	{
-		if (global.System.getArgument('-openpatchinfourlonerror') !== "no" && typeof(global.PatchInfoURL) === "String")
-		{
-			global.System.shellExecute(global.PatchInfoURL);
-		}
+		global.System.shellExecute(global.PatchInfoURL);
 	}
 
 	if (typeof(global.kag) === "Object" && isvalid(global.kag) && typeof(global.kag.visible) == "Integer" && global.kag.visible == false)
@@ -277,21 +271,12 @@ global.dmt = function(msg*)
 global.Debug.notice(("Patch Description: %s").sprintf(global.PatchDescription));
 
 {
-	var basepath = "";
 	var arcdelim = global.System.getArgument("-arcdelim");
 	if (!arcdelim)
 	{
 		arcdelim = ">";
 	}
-	var currentpath = global.Storages.getFullPath("./");
-	if (currentpath.indexOf(arcdelim) === -1)
-	{
-		basepath = global.Storages.getFullPath("../");
-	}
-	else
-	{
-		basepath = global.System.exePath;
-	}
+	var basepath = (global.Storages.getFullPath("./").indexOf(arcdelim) === -1) ? global.Storages.getFullPath("../") : global.System.exePath;
 	global.devMode = ((("" + global.System.getArgument('-devmode')).indexOf("1") !== -1) || global.Storages.isExistentStorage(basepath + "dev.txt") || global.Storages.isExistentStorage(basepath + "devmode.txt"));
 	global.devMode2 = ((("" + global.System.getArgument('-devmode')).indexOf("2") !== -1) || global.Storages.isExistentStorage(basepath + "dev2.txt") || global.Storages.isExistentStorage(basepath + "devmode2.txt"));
 	global.forceLog = ((global.System.getArgument('-forcelog') !== void) || global.Storages.isExistentStorage(basepath + "forceLog.txt"));
@@ -334,6 +319,7 @@ global.Debug.notice(("Patch Description: %s").sprintf(global.PatchDescription));
 	var settingsPath = basepath + "settings.tjs";
 	if (global.Storages.isExistentStorage(settingsPath))
 	{
+		// NOTE: a dummy variable is set because Scripts.evalStorage will not evaluate the expression if the result variable pointer is NULL
 		var _ = global.Scripts.evalStorage(settingsPath);
 	}
 
@@ -351,11 +337,7 @@ global.Debug.notice(("Patch Description: %s").sprintf(global.PatchDescription));
 }
 
 {
-	global.plugin_postfix = "";
-	if (global.System.platformName.substring(0, 5) === "Win64" && global.System.exeBits === 64)
-	{
-		global.plugin_postfix = "_intel64";
-	}
+	global.plugin_postfix = (global.System.platformName.substring(0, 5) === "Win64" && global.System.exeBits === 64) ? "_intel64" : "";
 	global.get_full_path_of_plugin = function(storage)
 	{
 		if (storage.indexOf(":") === -1)
@@ -391,13 +373,8 @@ global.Debug.notice(("Patch Description: %s").sprintf(global.PatchDescription));
 		global.Plugins.link_patch_storages_original = global.Plugins.link;
 		global.Plugins.link = function(storage)
 		{
-			var storage_cur = storage;
 			var fullpath = global.get_full_path_of_plugin(storage);
-			if (fullpath !== "")
-			{
-				storage_cur = fullpath;
-			}
-			return global.Plugins.link_patch_storages_original(storage_cur);
+			return global.Plugins.link_patch_storages_original((fullpath !== "") ? fullpath : storage);
 		};
 	};
 	global.apply_plugins_link_override();

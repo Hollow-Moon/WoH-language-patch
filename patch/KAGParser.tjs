@@ -505,11 +505,11 @@ class __internal_KAGParser
 					var new_excludeLevelStack = [];
 					this.restoreIntStackFromStr(new_excludeLevelStack, item.ExcludeLevelStack);
 					call_frame.excludeLevelStack = new_excludeLevelStack;
-					
+
 					var new_ifLevelExecutedStack = [];
 					this.restoreBoolStackFromStr(new_ifLevelExecutedStack, item.IfLevelExecutedStack);
 					call_frame.ifLevelExecutedStack = new_ifLevelExecutedStack;
-					
+
 					this.callStack.add(call_frame);
 				}
 			}
@@ -580,7 +580,7 @@ class __internal_KAGParser
 		{
 			(this.dicAssign incontextof this.macros)(ref.macros);
 		}
-		
+
 		// copy MacroArgs
 		{
 			this.clearMacroArgs();
@@ -601,7 +601,7 @@ class __internal_KAGParser
 		// copy StorageName, StorageShortName
 		this.storageName = ref.storageName;
 		this.storageShortName = ref.storageShortName;
-		
+
 
 		// copy Scenario
 		if (this.scenario !== ref.scenario)
@@ -669,7 +669,7 @@ class __internal_KAGParser
 			}
 			this.lines = this.scenario.getLines();
 			this.lineCount = this.scenario.getLineCount();
-			
+
 			this.rewind();
 
 			this.storageName = name;
@@ -1214,7 +1214,7 @@ class __internal_KAGParser
 
 			if (this.curLine >= this.lineCount)
 			{
-				break; // all of scenario was decoded 
+				break; // all of scenario was decoded
 			}
 
 			var tagstartpos = this.curPos;
@@ -1239,7 +1239,7 @@ class __internal_KAGParser
 						this.curPos >= 3 &&
 						this.curLineStr[this.curPos - 3] === "[" &&
 						this.curLineStr[this.curPos - 2] === "p" && // for line ending with [p]
-						this.curLineStr[this.curPos - 2] === "]" 
+						this.curLineStr[this.curPos - 2] === "]"
 					)
 				)
 				{

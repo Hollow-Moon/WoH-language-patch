@@ -71,7 +71,7 @@ class Window_hint_override extends global.Window_hint_original
 					this.onHintChanged(hint, this.patch_hint_last_x, this.patch_hint_last_y, true);
 				}
 			}
-			
+
 		}
 		catch (e)
 		{
@@ -187,7 +187,7 @@ class Window_hint_override extends global.Window_hint_original
 				clientRect.w = this.width;
 				clientRect.h = this.height;
 			}
-			
+
 			if (typeof(this.fullScreened) === "Integer" && this.fullScreened)
 			{
 				clientRect.h = global.System.screenHeight;	// clientRect.h can be bigger than screenHeight when fullScreened, with some black border at the bottom, for unknown reasons.
@@ -209,7 +209,7 @@ class Window_hint_override extends global.Window_hint_original
 			var pxWidth_abs = global.Math.floor(clientRect.h * pxWidth * windowWideFactor / pxHeight) | 0;
 			var pxHeight_abs = clientRect.h;
 			//var z = clientRect.h / this.pxHeight;
-			
+
 			// If neccessary, recalculate to fit from inside
 			if (pxWidth_abs > clientRect.w)
 			{
@@ -217,11 +217,11 @@ class Window_hint_override extends global.Window_hint_original
 				pxHeight_abs = global.Math.floor(clientRect.w * pxHeight / (pxWidth * windowWideFactor)) | 0;
 				//z = clientRect.w / global.Math.floor(pxWidth * windowWideFactor);
 			}
-			
+
 			// Calculate the offset introduced by the black borders in maximized mode.
 			var widthOffsetAbs = 0;
 			var heightOffsetAbs = 0;
-			
+
 			if (typeof(this.maximized) === "Integer" && this.maximized)
 			{
 				widthOffsetAbs = (clientRect.w  - pxWidth_abs) / 2;
@@ -251,7 +251,7 @@ class Window_hint_override extends global.Window_hint_original
 			// Position tip layer
 
 			var mouseCursorSizeAdjusted = this.mouseCursorSize * pxHeight / pxHeight_abs;
-			
+
 			if ((x + w) > pxWidth)
 				x = pxWidth - w;
 

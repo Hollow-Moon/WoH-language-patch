@@ -1367,7 +1367,7 @@ class ArabicShaping
         var /* int */ lenOptionsTashkeel = this.options & this.TASHKEEL_MASK;
         var /* boolean */ lamAlefOn = false;
         var /* boolean */ tashkeelOn = false;
-    
+
         if (!this.isLogical & !this.spacesRelativeToTextBeginEnd) {
             switch (lenOptionsLamAlef) {
                 case this.LAMALEF_BEGIN: lenOptionsLamAlef = this.LAMALEF_END; break;
@@ -1380,53 +1380,53 @@ class ArabicShaping
                 default: break;
             }
         }
-    
-    
+
+
         if (lenOptionsLamAlef == this.LAMALEF_NEAR) {
             for (var /* int */ i = start, e = i + length; i < e; ++i) {
                 if (dest[i] == this.LAMALEF_SPACE_SUB) {
                     dest[i] = this.SPACE_CHAR;
                 }
             }
-    
+
         } else {
-    
+
             var /* final int */ e = start + length;
             var /* int */ wL = this.countSpaceSub(dest, length, this.LAMALEF_SPACE_SUB);
             var /* int */ wT = this.countSpaceSub(dest, length, this.TASHKEEL_SPACE_SUB);
-    
+
             if (lenOptionsLamAlef == this.LAMALEF_END){
                 lamAlefOn = true;
             }
             if (lenOptionsTashkeel == this.TASHKEEL_END){
                 tashkeelOn = true;
             }
-    
-    
+
+
             if (lamAlefOn && (lenOptionsLamAlef == this.LAMALEF_END)) {
                 this.shiftArray(dest, start, e, this.LAMALEF_SPACE_SUB);
                 while (wL > start) {
                     dest[--wL] = this.SPACE_CHAR;
                 }
             }
-    
+
             if (tashkeelOn && (lenOptionsTashkeel == this.TASHKEEL_END)){
                 this.shiftArray(dest, start, e, this.TASHKEEL_SPACE_SUB);
                 while (wT > start) {
                      dest[--wT] = this.SPACE_CHAR;
                 }
             }
-    
+
             lamAlefOn = false;
             tashkeelOn = false;
-    
+
             if (lenOptionsLamAlef == this.LAMALEF_RESIZE){
                 lamAlefOn = true;
             }
             if (lenOptionsTashkeel == this.TASHKEEL_RESIZE){
                 tashkeelOn = true;
             }
-    
+
             if (lamAlefOn && (lenOptionsLamAlef == this.LAMALEF_RESIZE)){
                 this.shiftArray(dest, start, e, this.LAMALEF_SPACE_SUB);
                 wL = this.flipArray(dest,start,e, wL);
@@ -1437,10 +1437,10 @@ class ArabicShaping
                 wT = this.flipArray(dest,start,e, wT);
                 length = wT - start;
             }
-    
+
             lamAlefOn = false;
             tashkeelOn = false;
-    
+
             if ((lenOptionsLamAlef == this.LAMALEF_BEGIN) ||
                 (lenOptionsLamAlef == this.LAMALEF_AUTO)){
                 lamAlefOn = true;
@@ -1448,7 +1448,7 @@ class ArabicShaping
             if (lenOptionsTashkeel == this.TASHKEEL_BEGIN){
                 tashkeelOn = true;
             }
-    
+
             if (lamAlefOn && ((lenOptionsLamAlef == this.LAMALEF_BEGIN)||
                             (lenOptionsLamAlef == this.LAMALEF_AUTO))) { // spaces at beginning
                 this.shiftArray(dest, start, e, this.LAMALEF_SPACE_SUB);
@@ -1465,7 +1465,7 @@ class ArabicShaping
                 }
             }
         }
-    
+
         return length;
     }
 
@@ -1563,7 +1563,7 @@ class ArabicShaping
                     return spaceNotFound;
                 }
             }else if(yehHamzaOption == 1 && this.isYehHamzaChar(ch)){
-  
+
                 if(i>start &&dest[i-1] == this.SPACE_CHAR){
                     dest[i] = this.yehHamzaToYeh[ch - this.YEH_HAMZAFE_CHAR];
                     dest[i-1] = this.HAMZAFE_CHAR;
@@ -1571,8 +1571,8 @@ class ArabicShaping
                     spaceNotFound = true;
                     return spaceNotFound;
                 }
-  
-  
+
+
             }
         }
         return false;
@@ -2040,7 +2040,7 @@ class ArabicShaping
             this.invertBuffer(temp, 0, outputSize);
         }
 
-        
+
         this.copyArray(temp, 0, dest, destStart, outputSize);
 
         return outputSize;

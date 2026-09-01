@@ -19,7 +19,7 @@ global.test_write_in_directory = function(test_directory)
 		test_file_size = global.Storages.fstat(test_file_path).size;
 	}
 	catch {}
-	
+
 	// When TJS_TEXT_OUT_CRLF is defined, there will be a carriage return in the last log string.
 	// Use this information to adjust the size calculation
 	var has_carriage_return = ((typeof(global.Debug.getLastLog) !== "Object") || (global.Debug.getLastLog().indexOf("\r") !== -1)) ? 1 : 0;

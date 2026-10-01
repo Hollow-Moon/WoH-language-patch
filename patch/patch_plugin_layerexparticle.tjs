@@ -61,12 +61,12 @@ class VectorParticle extends global.Particle
 		this.particle_magnify = this.particle_magnifyvaridation * a2 + this.particle_magnify;
 		this.particle_angle = this.particle_angleomega * a2 + this.particle_angle;
 		this.particle_opacity = this.particle_opacityvaridation * a2 + this.particle_opacity;
-		var v5 = this.particle_accel_cos * a2;
-		var v6 = this.particle_accel_sin * a2;
-		this.particle_pos_left = a2 * v5 * 0.5 + this.particle_speed_cos * a2 + this.particle_pos_left;
-		this.particle_pos_top = a2 * v6 * 0.5 + this.particle_speed_sin * a2 + this.particle_pos_top;
-		this.particle_speed_cos += v5;
-		this.particle_speed_sin += v6;
+		var accel_cos_val = this.particle_accel_cos * a2;
+		var accel_sin_val = this.particle_accel_sin * a2;
+		this.particle_pos_left = a2 * accel_cos_val * 0.5 + this.particle_speed_cos * a2 + this.particle_pos_left;
+		this.particle_pos_top = a2 * accel_sin_val * 0.5 + this.particle_speed_sin * a2 + this.particle_pos_top;
+		this.particle_speed_cos += accel_cos_val;
+		this.particle_speed_sin += accel_sin_val;
 	}
 }
 
@@ -86,9 +86,9 @@ class RotateParticle extends global.Particle
 		this.particlecount_magic_double = particlecount_magic_double;
 		var particle_rotateradius = this.particle_rotateradiusvaridation * a2 + this.particle_rotateradius;
 		this.particle_rotateradius = particle_rotateradius;
-		var v5 = this.particleManager_owner;
-		this.particle_pos_left = v5.particleRotateCenterX + global.Math.cos(particlecount_magic_double) * particle_rotateradius;
-		this.particle_pos_top = v5.particleRotateCenterY - global.Math.sin(particlecount_magic_double) * particle_rotateradius;
+		var ownr = this.particleManager_owner;
+		this.particle_pos_left = ownr.particleRotateCenterX + global.Math.cos(particlecount_magic_double) * particle_rotateradius;
+		this.particle_pos_top = ownr.particleRotateCenterY - global.Math.sin(particlecount_magic_double) * particle_rotateradius;
 	}
 }
 
@@ -211,11 +211,11 @@ class ParticleManager
 	{
 		for ( var i = 0; i < this.particleMaxCount_allocated; i += 1 )
 		{
-			var v2 = this.particle_objects;
-			if ( v2[i] != null )
+			var obj = this.particle_objects;
+			if ( obj[i] != null )
 			{
-				invalidate v2[i];
-				v2[i] = null;
+				invalidate obj[i];
+				obj[i] = null;
 			}
 		}
 		invalidate this.particle_objects;
@@ -253,28 +253,28 @@ class ParticleManager
 	}
 	function mark_particle_for_gc(a1)
 	{
-		var v2 = a1;
-		if (v2 < 0)
+		var cur_idx = a1;
+		if (cur_idx < 0)
 		{
-			var v3 = 0;
+			var cur_ticks = 0;
 			for ( var i = 0; i < this.particleMaxCount_allocated; i += 1 )
 			{
-				if (this.particle_objects[i] != null && v3 < this.particle_objects[i].ticks_stepped)
+				if (this.particle_objects[i] != null && cur_ticks < this.particle_objects[i].ticks_stepped)
 				{
-					v3 = this.particle_objects[i].ticks_stepped;
-					v2 = i;
+					cur_ticks = this.particle_objects[i].ticks_stepped;
+					cur_idx = i;
 				}
 			}
 		}
-		if (v2 < 0 || v2 >= this.particleMaxCount_allocated)
+		if (cur_idx < 0 || cur_idx >= this.particleMaxCount_allocated)
 		{
 			return;
 		}
-		if (this.particle_objects[v2] === null)
+		if (this.particle_objects[cur_idx] === null)
 		{
 			return;
 		}
-		this.particle_objects[v2].ticks_stepped = -1;
+		this.particle_objects[cur_idx].ticks_stepped = -1;
 		this.particleCount -= 1;
 	}
 	function resize_particle_count(a1)
@@ -307,70 +307,70 @@ class ParticleManager
 		}
 		for (var i = 0; i < this.particleMaxCount_allocated; i += 1)
 		{
-			var v4 = this.particle_objects[i];
-			if (v4 !== null && v4.ticks_stepped >= 0)
+			var obj = this.particle_objects[i];
+			if (obj !== null && obj.ticks_stepped >= 0)
 			{
-				v4.timestep(a2);
-				if (v4.ready_for_gc())
+				obj.timestep(a2);
+				if (obj.ready_for_gc())
 				{
 					this.mark_particle_for_gc(i);
 				}
 			}
 		}
-		var v5 = (a2 * 1.0) * this.particleGenerateRate + this.particleGenerateRate_total;
-		this.particleGenerateRate_total = v5;
-		if (v5 < 1.0)
+		var rate_tmp = (a2 * 1.0) * this.particleGenerateRate + this.particleGenerateRate_total;
+		this.particleGenerateRate_total = rate_tmp;
+		if (rate_tmp < 1.0)
 		{
-			if (v5 <= -1.0)
+			if (rate_tmp <= -1.0)
 			{
-				var v8 = v5 | 0;
-				var v9 = this.particleCount;
-				this.particleGenerateRate_total = v5 - ((v5 | 0) * 1.0);
-				if (v9 + (v5 | 0) < 0)
+				var rate_int = rate_tmp | 0;
+				var cnt_tmp = this.particleCount;
+				this.particleGenerateRate_total = rate_tmp - ((rate_tmp | 0) * 1.0);
+				if (cnt_tmp + (rate_tmp | 0) < 0)
 				{
-					v8 = -v9;
+					rate_int = -cnt_tmp;
 				}
-				if (v8 < 0)
+				if (rate_int < 0)
 				{
-					var v14 = -v8;
+					var cur_cnt = -rate_int;
 					do
 					{
 						if (this.particleMaxCount_allocated > 0)
 						{
-							var v2 = -1;
-							if (v2 < 0)
+							var cur_idx = -1;
+							if (cur_idx < 0)
 							{
-								var v3 = 0;
+								var cur_ticks = 0;
 								for ( var i = 0; i < this.particleMaxCount_allocated; i += 1 )
 								{
-									if (this.particle_objects[i] != null && v3 < this.particle_objects[i].ticks_stepped)
+									if (this.particle_objects[i] != null && cur_ticks < this.particle_objects[i].ticks_stepped)
 									{
-										v3 = this.particle_objects[i].ticks_stepped;
-										v2 = i;
+										cur_ticks = this.particle_objects[i].ticks_stepped;
+										cur_idx = i;
 									}
 								}
 							}
-							if (v2 >= 0)
+							if (cur_idx >= 0)
 							{
-								this.mark_particle_for_gc(v2);
+								this.mark_particle_for_gc(cur_idx);
 							}
 						}
-						v14 -= 1;
+						cur_cnt -= 1;
 					}
-					while (v14);
+					while (cur_cnt);
 				}
 			}
 		}
 		else
 		{
-			var v6 = v5 | 0;
-			var v7 = this.particleMaxCount - this.particleCount;
-			this.particleGenerateRate_total = v5 - ((v5 | 0) * 1.0);
-			if ((v5 | 0) > v7)
+			var rate_int = rate_tmp | 0;
+			var particle_diff_count = this.particleMaxCount - this.particleCount;
+			this.particleGenerateRate_total = rate_tmp - ((rate_tmp | 0) * 1.0);
+			if ((rate_tmp | 0) > particle_diff_count)
 			{
-				v6 = v7;
+				rate_int = particle_diff_count;
 			}
-			for (; v6 > 0; v6 -= 1)
+			for (; rate_int > 0; rate_int -= 1)
 			{
 				this.init_new_particle();
 			}
@@ -406,9 +406,9 @@ class ParticleManager
 			this.delete_particles();
 		}
 		this.particleCount = a2.particleCount;
-		var v4 = a2.particleMaxCount_allocated;
-		this.particleMaxCount_allocated = v4;
-		this.particle_objects = this.alloc_particles(v4);
+		var alloc_cnt = a2.particleMaxCount_allocated;
+		this.particleMaxCount_allocated = alloc_cnt;
+		this.particle_objects = this.alloc_particles(alloc_cnt);
 		for (var i = 0; i < this.particleMaxCount_allocated; i += 1)
 		{
 			if ( a2.particle_objects[i] != null )
@@ -432,8 +432,7 @@ class ParticleManager
 		a2.particle_angleomega = global.Math.random() * this.diffParticleAngleOmega + this.minParticleAngleOmega;
 		if ( this.rotateReverse )
 		{
-			var v6 = (global.Math.random() <= 0.5) ? 1.0 : -1.0;
-			a2.particle_angleomega *= v6;
+			a2.particle_angleomega *= (global.Math.random() <= 0.5) ? 1.0 : -1.0;
 		}
 		a2.particle_opacity = global.Math.random() * this.diffParticleOpacity + this.minParticleOpacity;
 		a2.particle_opacityvaridation = global.Math.random() * this.diffParticleOpacityVaridation + this.minParticleOpacityVaridation;
@@ -486,30 +485,30 @@ class VectorParticleManager extends global.ParticleManager
 		super.reset(a2);
 		if ( this.particleInitializer !== null )
 		{
-			var v13 = this.particleInitializer;
+			var init_arr = this.particleInitializer;
 			a2.ticks_stepped = 0;
-			a2.particle_pos_left = v13[0];
-			a2.particle_pos_top = v13[1];
-			a2.particle_opacity = v13[2];
-			a2.particle_speed_cos = v13[3];
-			a2.particle_speed_sin = v13[4];
-			a2.particle_accel_cos = v13[5];
-			a2.particle_accel_sin = v13[6];
+			a2.particle_pos_left = init_arr[0];
+			a2.particle_pos_top = init_arr[1];
+			a2.particle_opacity = init_arr[2];
+			a2.particle_speed_cos = init_arr[3];
+			a2.particle_speed_sin = init_arr[4];
+			a2.particle_accel_cos = init_arr[5];
+			a2.particle_accel_sin = init_arr[6];
 		}
 		else
 		{
-			var v23 = global.Math.random() * this.diffParticleVectorAngle + this.minParticleVectorAngle;
-			var v21 = global.Math.random() * this.diffParticleSpeed + this.minParticleSpeed;
-			var v5 = global.Math.random() * this.diffParticleVectorRotate + this.minParticleVectorRotate;
-			var v22 = global.Math.random() * this.diffParticalAccel + this.minParticleAccel;
+			var angle_val = global.Math.random() * this.diffParticleVectorAngle + this.minParticleVectorAngle;
+			var speed_val = global.Math.random() * this.diffParticleSpeed + this.minParticleSpeed;
+			var rotate_val = global.Math.random() * this.diffParticleVectorRotate + this.minParticleVectorRotate;
+			var accel_val = global.Math.random() * this.diffParticalAccel + this.minParticleAccel;
 			a2.ticks_stepped = 0;
 			a2.particle_pos_left = global.Math.random() * this.particleAppearWidth + this.particleAppearLeft;
 			a2.particle_pos_top = global.Math.random() * this.particleAppearHeight + this.particleAppearTop;
 			a2.particle_opacity = global.Math.random() * this.diffParticleOpacity + this.minParticleOpacity;
-			a2.particle_speed_cos = global.Math.cos(v23) * v21;
-			a2.particle_speed_sin = -(global.Math.sin(v23) * v21);
-			a2.particle_accel_cos = global.Math.cos(v5) * v22;
-			a2.particle_accel_sin = -(global.Math.sin(v5) * v22);
+			a2.particle_speed_cos = global.Math.cos(angle_val) * speed_val;
+			a2.particle_speed_sin = -(global.Math.sin(angle_val) * speed_val);
+			a2.particle_accel_cos = global.Math.cos(rotate_val) * accel_val;
+			a2.particle_accel_sin = -(global.Math.sin(rotate_val) * accel_val);
 		}
 	}
 
@@ -559,29 +558,29 @@ class RotateParticleManager extends global.ParticleManager
 		super.reset(a2);
 		if ( this.particleInitializer !== null )
 		{
-			var v13 = this.particleInitializer;
+			var init_arr = this.particleInitializer;
 			a2.ticks_stepped = 0;
 			a2.particle_pos_left = 0.0;
 			a2.particle_pos_top = 0.0;
-			a2.particle_opacity = v13[2];
-			a2.particlecount_magic_double = v13[3];
-			a2.particle_rotateomega = v13[4];
-			a2.particle_rotateradius = v13[5];
-			a2.particle_rotateradiusvaridation = v13[6];
+			a2.particle_opacity = init_arr[2];
+			a2.particlecount_magic_double = init_arr[3];
+			a2.particle_rotateomega = init_arr[4];
+			a2.particle_rotateradius = init_arr[5];
+			a2.particle_rotateradiusvaridation = init_arr[6];
 		}
 		else
 		{
-			var v5 = global.Math.random() * this.diffParticleRotateOmega + this.minParticleRotateOmega;
+			var omega_val = global.Math.random() * this.diffParticleRotateOmega + this.minParticleRotateOmega;
 			if ( this.particleRotateReverse )
 			{
-				v5 *= (global.Math.random() <= 0.5) ? 1.0 : -1.0;
+				omega_val *= (global.Math.random() <= 0.5) ? 1.0 : -1.0;
 			}
 			a2.ticks_stepped = 0;
 			a2.particle_pos_left = 0.0;
 			a2.particle_pos_top = 0.0;
 			a2.particle_opacity = global.Math.random() * this.diffParticleOpacity + this.minParticleOpacity;
 			a2.particlecount_magic_double = global.Math.random() * 6.283185307179586;
-			a2.particle_rotateomega = v5;
+			a2.particle_rotateomega = omega_val;
 			a2.particle_rotateradius = global.Math.random() * this.diffParticleRotateRadius + this.minParticleRotateRadius;
 			a2.particle_rotateradiusvaridation = global.Math.random() * this.diffParticleRotateRadiusVaridation + this.minParticleRotateRadiusVaridation;
 		}
@@ -615,23 +614,23 @@ class AccelRotateParticleManager extends global.RotateParticleManager
 		super.reset(a2);
 		if ( this.particleInitializer !== null )
 		{
-			var v15 = this.particleInitializer;
+			var init_arr = this.particleInitializer;
 			a2.ticks_stepped = 0;
 			a2.particle_pos_left = 0.0;
 			a2.particle_pos_top = 0.0;
-			a2.particle_opacity = v15[2];
-			a2.particlecount_magic_double = v15[3];
-			a2.particle_rotateradius = v15[5];
-			a2.particle_rotateradiusvaridation = v15[6];
-			a2.particle_rotateomega_accel = v15[4];
-			a2.particle_rotateomegatime_accel = v15[7];
+			a2.particle_opacity = init_arr[2];
+			a2.particlecount_magic_double = init_arr[3];
+			a2.particle_rotateradius = init_arr[5];
+			a2.particle_rotateradiusvaridation = init_arr[6];
+			a2.particle_rotateomega_accel = init_arr[4];
+			a2.particle_rotateomegatime_accel = init_arr[7];
 		}
 		else
 		{
-			var v5 = global.Math.random() * this.diffParticleRotateOmega + this.minParticleRotateOmega;
+			var omega_val = global.Math.random() * this.diffParticleRotateOmega + this.minParticleRotateOmega;
 			if ( this.particleRotateReverse )
 			{
-				v5 *= (global.Math.random() <= 0.5) ? 1.0 : -1.0;
+				omega_val *= (global.Math.random() <= 0.5) ? 1.0 : -1.0;
 			}
 			a2.ticks_stepped = 0;
 			a2.particle_pos_left = 0.0;
@@ -640,8 +639,8 @@ class AccelRotateParticleManager extends global.RotateParticleManager
 			a2.particlecount_magic_double = global.Math.random() * 6.283185307179586;
 			a2.particle_rotateradius = global.Math.random() * this.diffParticleRotateRadius + this.minParticleRotateRadius;
 			a2.particle_rotateradiusvaridation = global.Math.random() * this.diffParticleRotateRadiusVaridation + this.minParticleRotateRadiusVaridation;
-			a2.particle_rotateomega_accel = v5;
-			a2.particle_rotateomegatime_accel = v5 / (global.Math.random() * this.diffParticleRotateOmegaTime + this.minParticleRotateOmegaTime);
+			a2.particle_rotateomega_accel = omega_val;
+			a2.particle_rotateomegatime_accel = omega_val / (global.Math.random() * this.diffParticleRotateOmegaTime + this.minParticleRotateOmegaTime);
 		}
 	}
 
@@ -690,37 +689,37 @@ class BlinkParticleManager extends global.ParticleManager
 		super.reset(a2);
 		if ( this.particleInitializer !== null )
 		{
-			var v11 = this.particleInitializer;
+			var initarr = this.particleInitializer;
 			a2.ticks_stepped = 0;
-			a2.particle_pos_left = v11[0];
-			a2.particle_pos_top = v11[1];
+			a2.particle_pos_left = initarr[0];
+			a2.particle_pos_top = initarr[1];
 			a2.particle_magnify = 1.0;
 			a2.particle_magnifyvaridation = 0.0;
 			a2.particle_angle = 0.0;
 			a2.particle_angleomega = 0.0;
 			a2.particle_opacity = 0.0;
-			a2.particle_opacityvaridation = v11[3];
-			a2.particle_blinktime = v11[2] & 0xffffffff;
-			a2.particle_blinkcount = v11[4] & 0xffffffff;
+			a2.particle_opacityvaridation = initarr[3];
+			a2.particle_blinktime = initarr[2] & 0xffffffff;
+			a2.particle_blinkcount = initarr[4] & 0xffffffff;
 		}
 		else
 		{
-			var v3 = global.Math.random() * this.diffParticleBlinkTime + this.minParticleBlinkTime;
-			var v5 = global.Math.random() * this.diffParticleOpacity + this.minParticleOpacity;
-			var v8 = global.Math.random() * this.diffParticleBlinkCount + this.minParticleBlinkCount;
-			var v9 = global.Math.random() * this.particleAppearWidth + this.particleAppearLeft;
-			var v10 = global.Math.random() * this.particleAppearHeight + this.particleAppearTop;
+			var blink_time_value = global.Math.random() * this.diffParticleBlinkTime + this.minParticleBlinkTime;
+			var opacity_value = global.Math.random() * this.diffParticleOpacity + this.minParticleOpacity;
+			var blink_count_value = global.Math.random() * this.diffParticleBlinkCount + this.minParticleBlinkCount;
+			var particle_appear_left_value = global.Math.random() * this.particleAppearWidth + this.particleAppearLeft;
+			var particle_appear_top_value = global.Math.random() * this.particleAppearHeight + this.particleAppearTop;
 			a2.ticks_stepped = 0;
-			a2.particle_pos_left = v9;
-			a2.particle_pos_top = v10;
+			a2.particle_pos_left = particle_appear_left_value;
+			a2.particle_pos_top = particle_appear_top_value;
 			a2.particle_magnify = 1.0;
 			a2.particle_magnifyvaridation = 0.0;
 			a2.particle_angle = 0.0;
 			a2.particle_angleomega = 0.0;
 			a2.particle_opacity = 0.0;
-			a2.particle_blinktime = v5 & 0xffffffff;
-			a2.particle_blinkcount = v8 & 0xffffffff;
-			a2.particle_opacityvaridation = (v5 / v3) * 2;
+			a2.particle_blinktime = opacity_value & 0xffffffff;
+			a2.particle_blinkcount = blink_count_value & 0xffffffff;
+			a2.particle_opacityvaridation = (opacity_value / blink_time_value) * 2;
 		}
 	}
 
@@ -833,15 +832,12 @@ class layerExParticle_impl
 		}
 		setter (v)
 		{
-			var v4 = this.layerExParticle_particleManager.particleMaxCount_allocated;
+			var alloc_count_old = this.layerExParticle_particleManager.particleMaxCount_allocated;
 			this.layerExParticle_particleManager.resize_particle_count(v);
-			var v5 = this.layerExParticle_particleManager.particleMaxCount_allocated;
-			if (v4 < v5)
+			var alloc_count_new = this.layerExParticle_particleManager.particleMaxCount_allocated;
+			for (var i = alloc_count_old; i < alloc_count_new; i += 1)
 			{
-				for (var i = v4; i < v5; i += 1)
-				{
-					this.particle_rects.add([0.0, 0.0, 0.0, 0.0]);
-				}
+				this.particle_rects.add([0.0, 0.0, 0.0, 0.0]);
 			}
 		}
 	}
